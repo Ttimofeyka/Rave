@@ -8,7 +8,7 @@ void main()
 {
 	Lexer lexer = new Lexer(
 	"
-	def main {
+	def main() {
 		int a=0;
 	}
 	");
