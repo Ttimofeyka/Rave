@@ -66,7 +66,7 @@ class Lexer {
                         i+=1;
                     } while(this.input_str[i]!='\'');
                     this.tokens.add_new_token(
-                        "\'"~this.input_str[i+1]~"\'"
+                        "\'"~temp~"\'"
                     );
                     i+=3;
                 }
