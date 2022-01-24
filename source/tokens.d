@@ -10,6 +10,7 @@ enum tok_type {
     tok_char,
     tok_string,
     tok_hex,
+    tok_void,
 
     // Commands
     tok_def,
@@ -23,10 +24,16 @@ enum tok_type {
     tok_sarrcode,
     tok_earrcode,
 
+    tok_sarr, //[
+    tok_earr, //],
+
     tok_lparen,
     tok_rparen,
 
     tok_equal, tok_nequal,
+
+    tok_as,
+    tok_zap,
 
     tok_plus,
     tok_minus,
@@ -46,7 +53,9 @@ bool isOperator(char c){
         case '*': case '/':
         case '{': case '}':
         case '(': case ')':
-        case ';': case '=': return true;
+        case ';': case '=': 
+        case '[': case ']':
+        case ':': case ',': return true;
         default: return false;
     }
 }
@@ -62,17 +71,22 @@ tok_type get_tok_type(string value) {
         case "/": return tok_type.tok_divide;
         case "{": return tok_type.tok_sarrcode;
         case "}": return tok_type.tok_earrcode;
+        case ":": return tok_type.tok_as;
+        case ",": return tok_type.tok_zap;
         case "string": return tok_type.tok_stringcmd;
         case "int": return tok_type.tok_intcmd;
         case "char": return tok_type.tok_charcmd;
         case "def": return tok_type.tok_def;
         case "ret": return tok_type.tok_ret;
+        case "void": return tok_type.tok_void;
         case "(": return tok_type.tok_lparen;
         case ")": return tok_type.tok_rparen;
         case ";": return tok_type.tok_endl;
         case "=": return tok_type.tok_set;
         case "==": return tok_type.tok_equal;
         case "!=": return tok_type.tok_nequal;
+        case "[": return tok_type.tok_sarr;
+        case "]": return tok_type.tok_earr;
         default:
             // Other's toks
             if(isNum(val[0])) {
@@ -127,6 +141,5 @@ class TokenList {
     long length() {return this.tokens.length;}
     Token get_currtoken() {return this.tokens[this.currtoken];}
     void move_ptr(int i){this.currtoken+=i;}
-    bool has(int n){return (n in this.tokens);}
     void set_ptr(int i){this.currtoken=i;}
 }

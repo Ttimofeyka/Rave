@@ -6,7 +6,6 @@ import std.array;
 public import logger;
 import std.stdio;
 import std.conv : to;
-public import ast;
 
 class Lexer {
     private string input_str;
