@@ -6,6 +6,7 @@ import std.array;
 public import logger;
 import std.stdio;
 import std.conv : to;
+import std.uni : isWhite;
 
 class Lexer {
     private string input_str;
@@ -19,10 +20,8 @@ class Lexer {
         
         int i=0;
         while(i<this.input_str.length) {
-            // is a whitespace or newline or tab?
-            if(this.input_str[i]==' '
-             ||this.input_str[i]=='\t'
-             ||this.input_str[i]=='\n') {
+            // is a whitespace?
+            if(isWhite(cast(dchar)this.input_str[i])) {
                  i+=1; continue;
             }
             
@@ -37,15 +36,14 @@ class Lexer {
                 }
             }
 
-            // is a nequal?
-            if(this.input_str[i]=='!'&&this.input_str[i+1]=='=') {
-                this.tokens.add_new_token("!=");
-                i+=2;
-            }
             // is a operator?
             else if(isOperator(this.input_str[i])) {
                 if(this.input_str[i]=='='&&this.input_str[i+1]=='=') {
                     this.tokens.add_new_token("==");
+                    i+=2;
+                }
+                else if(this.input_str[i]=='!'&&this.input_str[i+1]=='=') {
+                    this.tokens.add_new_token("!=");
                     i+=2;
                 }
                 else {
@@ -61,6 +59,12 @@ class Lexer {
                 }
                 // else
                 else {
+                    string temp="";
+                    i+=1;
+                    do {
+                        temp~=this.input_str[i];
+                        i+=1;
+                    } while(this.input_str[i]!='\'');
                     this.tokens.add_new_token(
                         "\'"~this.input_str[i+1]~"\'"
                     );
