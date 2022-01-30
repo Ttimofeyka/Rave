@@ -46,6 +46,10 @@ enum tok_type {
     tok_minus,
     tok_multiply,
     tok_divide,
+    tok_shortplu,
+    tok_shortmin,
+    tok_shortmul,
+    tok_shortdiv,
     // Other
     tok_identifier,
     tok_endl,
@@ -100,6 +104,10 @@ tok_type get_tok_type(string value) {
         case "for": return tok_type.forr;
         case "&&": return tok_type.and;
         case "||": return tok_type.nand;
+        case "+=": return tok_type.shortplu;
+        case "-=": return tok_type.shotmin;
+        case "*=": return tok_type.shortmul;
+        case "/=": return tok_type.shotdiv;
         default:
             // Other's toks
             if(isNum(val[0])) {
