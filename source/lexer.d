@@ -46,6 +46,30 @@ class Lexer {
                     this.tokens.add_new_token("!=");
                     i+=2;
                 }
+                else if(this.input_str[i]=='&') {
+                    this.tokens.add_new_token("&&");
+                    i+=2;
+                }
+                else if(this.input_str[i]='|') {
+                    this.tokens.add_new_token("||");
+                    i+=2;
+                }
+                else if(this.input_str[i]=='+'&&this.input_str[i+1]=='=') {
+                    this.tokens.add_new_token("+=");
+                    i+=2;
+                }
+                else if(this.input_str[i]=='-'&&this.input_str[i+1]=='=') {
+                    this.tokens.add_new_token("-=");
+                    i+=2;
+                }
+                else if(this.input_str[i]=='*'&&this.input_str[i+1]=='=') {
+                    this.tokens.add_new_token("*=");
+                    i+=2;
+                }
+                else if(this.input_str[i]=='/'&&this.input_str[i+1]=='=') {
+                    this.tokens.add_new_token("/=");
+                    i+=2;
+                }
                 else {
                     this.tokens.add_new_token(""~this.input_str[i]);
                     i+=1; continue;
