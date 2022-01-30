@@ -33,6 +33,9 @@ enum tok_type {
 
     tok_lparen,
     tok_rparen,
+    
+    tok_and,
+    tok_nand,
 
     tok_equal, tok_nequal,
 
@@ -59,7 +62,7 @@ bool isOperator(char c){
         case '(': case ')':
         case ';': case '=': 
         case '[': case ']':
-        case ':': case ',': return true;
+        case ':': case ',': case '&', return true;
         default: return false;
     }
 }
@@ -95,6 +98,8 @@ tok_type get_tok_type(string value) {
         case "else": return tok_type.tok_else;
         case "while": return tok_type.tok_while;
         case "for": return tok_type.forr;
+        case "&&": return tok_type.and;
+        case "||": return tok_type.nand;
         default:
             // Other's toks
             if(isNum(val[0])) {
