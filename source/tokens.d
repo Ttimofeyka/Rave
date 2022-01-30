@@ -19,6 +19,10 @@ enum tok_type {
     tok_charcmd,
     tok_stringcmd,
     tok_set,
+    tok_if,
+    tok_else,
+    tok_while,
+    tok_forr,
 
     // Operators
     tok_sarrcode,
@@ -87,6 +91,10 @@ tok_type get_tok_type(string value) {
         case "!=": return tok_type.tok_nequal;
         case "[": return tok_type.tok_sarr;
         case "]": return tok_type.tok_earr;
+        case "if": return tok_type.tok_if;
+        case "else": return tok_type.tok_else;
+        case "while": return tok_type.tok_while;
+        case "for": return tok_type.forr;
         default:
             // Other's toks
             if(isNum(val[0])) {
