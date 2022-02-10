@@ -66,7 +66,7 @@ bool isOperator(char c){
         case '(': case ')':
         case ';': case '=': 
         case '[': case ']':
-        case ':': case ',': case '&', return true;
+        case ':': case ',': case '&': return true;
         default: return false;
     }
 }
@@ -101,13 +101,13 @@ tok_type get_tok_type(string value) {
         case "if": return tok_type.tok_if;
         case "else": return tok_type.tok_else;
         case "while": return tok_type.tok_while;
-        case "for": return tok_type.forr;
-        case "&&": return tok_type.and;
-        case "||": return tok_type.nand;
-        case "+=": return tok_type.shortplu;
-        case "-=": return tok_type.shotmin;
-        case "*=": return tok_type.shortmul;
-        case "/=": return tok_type.shotdiv;
+        case "for": return tok_type.tok_forr;
+        case "&&": return tok_type.tok_and;
+        case "||": return tok_type.tok_nand;
+        case "+=": return tok_type.tok_shortplu;
+        case "-=": return tok_type.tok_shortmin;
+        case "*=": return tok_type.tok_shortmul;
+        case "/=": return tok_type.tok_shortdiv;
         default:
             // Other's toks
             if(isNum(val[0])) {

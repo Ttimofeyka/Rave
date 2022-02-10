@@ -50,7 +50,7 @@ class Lexer {
                     this.tokens.add_new_token("&&");
                     i+=2;
                 }
-                else if(this.input_str[i]='|') {
+                else if(this.input_str[i]=='|') {
                     this.tokens.add_new_token("||");
                     i+=2;
                 }
