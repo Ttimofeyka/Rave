@@ -19,7 +19,9 @@ class Lexer {
             s=="-"||s=="*"||s=="/"||s=="="
             ||s=="["||s=="]"||s=="{"||s=="}"
             ||s=="("||s==")"||s==","||s=="\""
-            ||s=="'"||s==";"
+            ||s=="'"||s==";"||s=="<"||s==">"
+            ||s=="!"||s=="^"||s=="~"||s=="&&"
+            ||s=="&"||s=="||"||s=="|"
         );
     }
 
@@ -59,9 +61,10 @@ class Lexer {
                 temp ~= lex[i-2];
                 return to!char(
                     temp.replace("\\n","\n").replace("\\t","\t")
+                    .replace("\\n","\r").replace("\\b","\b")
                 );
             }
-            else {
+            else if(lex[i+4]=='\''){
                 // Hardest char
                 i+=5;
                 temp = ""~lex[i-4];
@@ -69,6 +72,7 @@ class Lexer {
                 temp ~= lex[i-2];
                 return parseOctalEscape(temp);
             }
+            else {lexer_error("The char is too long!"); return 0;}
         }
     }
 
@@ -100,6 +104,9 @@ class Lexer {
                     }
                     else if(lex[i+1]=='\'') {
                         temp ~= "\'";
+                    }
+                    else if(lex[i+1]=='b') {
+                        temp ~= "\b";
                     }
                     i+=2;
                 }
@@ -172,6 +179,62 @@ class Lexer {
                 case '*': tokens.insertFront(new Token("*")); i+=1; break;
                 case ',': tokens.insertFront(new Token(",")); i+=1;break;
                 case ';': tokens.insertFront(new Token(";")); i+=1; break;
+                case '^': tokens.insertFront(new Token("^")); i+=1; break;
+                case '~': tokens.insertFront(new Token("~")); i+=1; break;
+                case '!':
+                    if(lex[i+1]=='=') {
+                        tokens.insertFront(new Token("!="));
+                        i+=2;
+                    }
+                    else {
+                        tokens.insertFront(new Token("!"));
+                        i+=1;
+                    }
+                    break;
+                case '=':
+                    if(lex[i+1]=='=') {
+                        tokens.insertFront(new Token("=="));
+                        i+=2;
+                    }
+                    else {
+                        tokens.insertFront(new Token("="));
+                        i+=1;
+                    }
+                    break;
+                case '&':
+                    if(lex[i+1]=='&') {
+                        tokens.insertFront(new Token("&&"));
+                        i+=2;
+                    }
+                    else {
+                        tokens.insertFront(new Token("&"));
+                        i+=1;
+                    }
+                    break;
+                case '|':
+                    if(lex[i+1]=='|') {
+                        tokens.insertFront(new Token("||"));
+                        i+=2;
+                    }
+                    else {
+                        tokens.insertFront(new Token("|"));
+                        i+=1;
+                    }
+                    break;
+                case '<':
+                    if(lex[i+1]=='<') {
+                        tokens.insertFront(new Token("<<"));
+                        i+=2;
+                    }
+                    else lexer_error("Undefined operator '<'!");
+                    break;
+                case '>':
+                    if(lex[i+1]=='>') {
+                        tokens.insertFront(new Token(">"));
+                        i+=2;
+                    }
+                    else lexer_error("Undefined operator '>'!");
+                    break;
                 default:
                     tokens.insertFront(new Token(getTID()));
                     break;

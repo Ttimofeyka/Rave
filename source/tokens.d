@@ -3,7 +3,7 @@ import std.array;
 import logger;
 import std.uni : isNumber;
 
-enum tok_type {
+enum TokType {
     tok_num = 0, // Число
     tok_id = 1, // Идентификатор
     tok_equ = 2, //=
@@ -30,10 +30,19 @@ enum tok_type {
     tok_shortplu = 23, //+=
     tok_shortmin = 24, //-=
     tok_shortmul = 25, //*=
-    tok_shortdiv = 26 // /=
+    tok_shortdiv = 26, // /=
+    tok_and = 27, // &&
+    tok_or = 28, // ||
+    tok_bit_and = 29, // &
+    tok_bit_or = 30, // |
+    tok_bit_ls = 31, // <<
+    tok_bit_rs = 32, // >>
+    tok_bit_xor = 33, // ^
+    tok_bit_not = 34, // ~
+    tok_not = 35 // !
 }
 
-enum tok_command {
+enum TokCmd {
     cmd_if = 0,
     cmd_else = 1,
     cmd_while = 2,
@@ -54,89 +63,98 @@ enum tok_command {
 }
 
 class Token {
-    tok_type type;
-    tok_command cmd;
+    TokType type;
+    TokCmd cmd;
     string value;
 
     this(string s) {
         this.value = s;
         if(s[0]=='"') {
             if(s[s.length-1]=='"') {
-                this.type = tok_type.tok_string;
+                this.type = TokType.tok_string;
             }
             else lexer_error("Undefined token <"~s~">!");
         }
         else if(s[0]=='\'') {
             if(s[s.length-1]=='\'') {
-                this.type = tok_type.tok_char;
+                this.type = TokType.tok_char;
             }
             else lexer_error("Undefined token <"~s~">!");
         }
         else if(isNumber(cast(dchar)s[0])) {
-            this.type = tok_type.tok_num;
+            this.type = TokType.tok_num;
         }
-        else if(s[0]=='(') this.type = tok_type.tok_lpar;
-        else if(s[0]==')') this.type = tok_type.tok_rpar;
-        else if(s[0]=='[') this.type = tok_type.tok_lbra;
-        else if(s[0]==']') this.type = tok_type.tok_rbra;
-        else if(s[0]=='{') this.type = tok_type.tok_2lbra;
-        else if(s[0]=='}') this.type = tok_type.tok_2rbra;
-        else if(s[0]==',') this.type = tok_type.tok_comma;
-        else if(s=="->") this.type = tok_type.tok_struct_get;
-        else if(s==";") this.type = tok_type.tok_semicolon;
-        else if(s=="*=") this.type = tok_type.tok_shortmul;
-        else if(s=="-=") this.type = tok_type.tok_shortmin;
-        else if(s=="/=") this.type = tok_type.tok_shortdiv;
-        else if(s=="+=") this.type = tok_type.tok_shortplu;
+        else if(s[0]=='(') this.type = TokType.tok_lpar;
+        else if(s[0]==')') this.type = TokType.tok_rpar;
+        else if(s[0]=='[') this.type = TokType.tok_lbra;
+        else if(s[0]==']') this.type = TokType.tok_rbra;
+        else if(s[0]=='{') this.type = TokType.tok_2lbra;
+        else if(s[0]=='}') this.type = TokType.tok_2rbra;
+        else if(s[0]==',') this.type = TokType.tok_comma;
+        else if(s=="->") this.type = TokType.tok_struct_get;
+        else if(s==";") this.type = TokType.tok_semicolon;
+        else if(s=="*=") this.type = TokType.tok_shortmul;
+        else if(s=="-=") this.type = TokType.tok_shortmin;
+        else if(s=="/=") this.type = TokType.tok_shortdiv;
+        else if(s=="+=") this.type = TokType.tok_shortplu;
+        else if(s=="<<") this.type = TokType.tok_bit_ls;
+        else if(s==">>") this.type = TokType.tok_bit_rs;
+        else if(s=="&&") this.type = TokType.tok_and;
+        else if(s=="||") this.type = TokType.tok_or;
+        else if(s=="|") this.type = TokType.tok_bit_or;
+        else if(s=="&") this.type = TokType.tok_bit_and;
+        else if(s=="^") this.type = TokType.tok_bit_xor;
+        else if(s=="~") this.type = TokType.tok_bit_not;
+        else if(s=="!") this.type = TokType.tok_not;
         else {
             // Commands or Variables(or Defines)
             switch(s.toLower()) {
-                case "if": this.type=tok_type.tok_cmd;
-                           this.cmd=tok_command.cmd_if;
+                case "if": this.type=TokType.tok_cmd;
+                           this.cmd=TokCmd.cmd_if;
                            break;
-                case "else": this.type=tok_type.tok_cmd;
-                           this.cmd=tok_command.cmd_else;
+                case "else": this.type=TokType.tok_cmd;
+                           this.cmd=TokCmd.cmd_else;
                            break;
-                case "while": this.type=tok_type.tok_cmd;
-                           this.cmd=tok_command.cmd_while;
+                case "while": this.type=TokType.tok_cmd;
+                           this.cmd=TokCmd.cmd_while;
                            break;
-                case "do": this.type=tok_type.tok_cmd;
-                           this.cmd=tok_command.cmd_do;
+                case "do": this.type=TokType.tok_cmd;
+                           this.cmd=TokCmd.cmd_do;
                            break;
-                case "define": this.type=tok_type.tok_cmd;
-                           this.cmd=tok_command.cmd_define;
+                case "define": this.type=TokType.tok_cmd;
+                           this.cmd=TokCmd.cmd_define;
                            break;
-                case "extern": this.type=tok_type.tok_cmd;
-                           this.cmd=tok_command.cmd_extern;
+                case "extern": this.type=TokType.tok_cmd;
+                           this.cmd=TokCmd.cmd_extern;
                            break;
-                case "include": this.type=tok_type.tok_cmd;
-                           this.cmd=tok_command.cmd_include;
+                case "include": this.type=TokType.tok_cmd;
+                           this.cmd=TokCmd.cmd_include;
                            break;
-                case "asm": this.type=tok_type.tok_cmd;
-                           this.cmd=tok_command.cmd_asm;
+                case "asm": this.type=TokType.tok_cmd;
+                           this.cmd=TokCmd.cmd_asm;
                            break;
-                case "int": this.type=tok_type.tok_cmd;
-                           this.cmd=tok_command.cmd_int;
+                case "int": this.type=TokType.tok_cmd;
+                           this.cmd=TokCmd.cmd_int;
                            break;
-                case "char": this.type=tok_type.tok_cmd;
-                           this.cmd=tok_command.cmd_char;
+                case "char": this.type=TokType.tok_cmd;
+                           this.cmd=TokCmd.cmd_char;
                            break;
-                case "string": this.type=tok_type.tok_cmd;
-                           this.cmd=tok_command.cmd_string;
+                case "string": this.type=TokType.tok_cmd;
+                           this.cmd=TokCmd.cmd_string;
                            break;
-                case "struct": this.type=tok_type.tok_cmd;
-                           this.cmd=tok_command.cmd_struct;
+                case "struct": this.type=TokType.tok_cmd;
+                           this.cmd=TokCmd.cmd_struct;
                            break;
-                case "ret": this.type=tok_type.tok_cmd;
-                           this.cmd=tok_command.cmd_ret;
+                case "ret": this.type=TokType.tok_cmd;
+                           this.cmd=TokCmd.cmd_ret;
                            break;
-                case "break": this.type=tok_type.tok_cmd;
-                           this.cmd=tok_command.cmd_break;
+                case "break": this.type=TokType.tok_cmd;
+                           this.cmd=TokCmd.cmd_break;
                            break;
-                case "continue": this.type=tok_type.tok_cmd;
-                           this.cmd=tok_command.cmd_continue;
+                case "continue": this.type=TokType.tok_cmd;
+                           this.cmd=TokCmd.cmd_continue;
                            break;
-                default: this.type = tok_type.tok_id; break;
+                default: this.type = TokType.tok_id; break;
             }
         }
     }
