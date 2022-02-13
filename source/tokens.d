@@ -1,166 +1,155 @@
-module tokens;
-
 import std.string;
 import std.array;
-import std.ascii : isDigit;
-import std.stdio;
+import logger;
+import std.uni : isNumber;
 
 enum tok_type {
-    tok_int,
-    tok_char,
-    tok_string,
-    tok_hex,
-    tok_void,
-
-    // Commands
-    tok_def,
-    tok_ret,
-    tok_intcmd,
-    tok_charcmd,
-    tok_stringcmd,
-    tok_set,
-    tok_if,
-    tok_else,
-    tok_while,
-    tok_forr,
-
-    // Operators
-    tok_sarrcode,
-    tok_earrcode,
-
-    tok_sarr, //[
-    tok_earr, //],
-
-    tok_lparen,
-    tok_rparen,
-    
-    tok_and,
-    tok_nand,
-
-    tok_equal, tok_nequal,
-
-    tok_as,
-    tok_zap,
-
-    tok_plus,
-    tok_minus,
-    tok_multiply,
-    tok_divide,
-    tok_shortplu,
-    tok_shortmin,
-    tok_shortmul,
-    tok_shortdiv,
-    // Other
-    tok_identifier,
-    tok_endl,
-    tok_none,
+    tok_num = 0, // Число
+    tok_id = 1, // Идентификатор
+    tok_equ = 2, //=
+    tok_lbra = 3, //[
+    tok_rbra = 4, //]
+    tok_lpar = 5, //(
+    tok_rpar = 6, //)
+    tok_plus = 7, //+
+    tok_minus = 8, //-
+    tok_multiply = 9, //*(но может быть признаком указателя, погугли что такое указатель в С)
+    tok_divide = 10, // /
+    tok_more = 11, // >
+    tok_less = 12, // <
+    tok_equal = 13, // ==
+    tok_nequal = 14, // !=
+    tok_string = 15, // строка
+    tok_char = 16, // символ
+    tok_comma = 17, // ,
+    tok_cmd = 18, // команда
+    tok_2rbra = 19, //{
+    tok_2lbra = 20, //}
+    tok_struct_get = 21, //->
+    tok_semicolon = 22, //;
+    tok_shortplu = 23, //+=
+    tok_shortmin = 24, //-=
+    tok_shortmul = 25, //*=
+    tok_shortdiv = 26 // /=
 }
 
-bool isNum(char c){return isDigit(cast(dchar)c);}
-
-bool isOperator(char c){
-    switch(c) {
-        case '+': case '-':
-        case '*': case '/':
-        case '{': case '}':
-        case '(': case ')':
-        case ';': case '=': 
-        case '[': case ']':
-        case ':': case ',': case '&': return true;
-        default: return false;
-    }
-}
-
-tok_type get_tok_type(string value) {
-    string val=value.strip();
-
-    switch(val) {
-        // Main toks
-        case "+": return tok_type.tok_plus;
-        case "-": return tok_type.tok_minus;
-        case "*": return tok_type.tok_multiply;
-        case "/": return tok_type.tok_divide;
-        case "{": return tok_type.tok_sarrcode;
-        case "}": return tok_type.tok_earrcode;
-        case ":": return tok_type.tok_as;
-        case ",": return tok_type.tok_zap;
-        case "string": return tok_type.tok_stringcmd;
-        case "int": return tok_type.tok_intcmd;
-        case "char": return tok_type.tok_charcmd;
-        case "def": return tok_type.tok_def;
-        case "ret": return tok_type.tok_ret;
-        case "void": return tok_type.tok_void;
-        case "(": return tok_type.tok_lparen;
-        case ")": return tok_type.tok_rparen;
-        case ";": return tok_type.tok_endl;
-        case "=": return tok_type.tok_set;
-        case "==": return tok_type.tok_equal;
-        case "!=": return tok_type.tok_nequal;
-        case "[": return tok_type.tok_sarr;
-        case "]": return tok_type.tok_earr;
-        case "if": return tok_type.tok_if;
-        case "else": return tok_type.tok_else;
-        case "while": return tok_type.tok_while;
-        case "for": return tok_type.tok_forr;
-        case "&&": return tok_type.tok_and;
-        case "||": return tok_type.tok_nand;
-        case "+=": return tok_type.tok_shortplu;
-        case "-=": return tok_type.tok_shortmin;
-        case "*=": return tok_type.tok_shortmul;
-        case "/=": return tok_type.tok_shortdiv;
-        default:
-            // Other's toks
-            if(isNum(val[0])) {
-                // is hex
-                if(val.indexOf('x')!=-1) {
-                    return tok_type.tok_hex;
-                }
-                // is integer
-                return tok_type.tok_int;
-            }
-            // Is a char
-            else if(val[0]=='\'') return tok_type.tok_char;
-            // Is a string
-            else if(val[0]=='\"') return tok_type.tok_string;
-            // Is a identifier
-            else return tok_type.tok_identifier;
-    }
+enum tok_command {
+    cmd_if = 0,
+    cmd_else = 1,
+    cmd_while = 2,
+    cmd_do = 3,
+    cmd_include = 4,
+    cmd_extern = 5,
+    cmd_int = 6,
+    cmd_string = 7,
+    cmd_char = 8,
+    cmd_byte = 9,
+    cmd_bit = 10,
+    cmd_asm = 11,
+    cmd_struct = 12,
+    cmd_define = 13,
+    cmd_ret = 14,
+    cmd_break = 15,
+    cmd_continue = 16
 }
 
 class Token {
-    private tok_type type;
-    private string value;
-    Token[int] childs;
+    tok_type type;
+    tok_command cmd;
+    string value;
 
-    this(string value) {
-        this.value=value.strip();
-        this.type=get_tok_type(this.value);
+    this(string s) {
+        this.value = s;
+        if(s[0]=='"') {
+            if(s[s.length-1]=='"') {
+                this.type = tok_type.tok_string;
+            }
+            else lexer_error("Undefined token <"~s~">!");
+        }
+        else if(s[0]=='\'') {
+            if(s[s.length-1]=='\'') {
+                this.type = tok_type.tok_char;
+            }
+            else lexer_error("Undefined token <"~s~">!");
+        }
+        else if(isNumber(cast(dchar)s[0])) {
+            this.type = tok_type.tok_num;
+        }
+        else if(s[0]=='(') this.type = tok_type.tok_lpar;
+        else if(s[0]==')') this.type = tok_type.tok_rpar;
+        else if(s[0]=='[') this.type = tok_type.tok_lbra;
+        else if(s[0]==']') this.type = tok_type.tok_rbra;
+        else if(s[0]=='{') this.type = tok_type.tok_2lbra;
+        else if(s[0]=='}') this.type = tok_type.tok_2rbra;
+        else if(s[0]==',') this.type = tok_type.tok_comma;
+        else if(s=="->") this.type = tok_type.tok_struct_get;
+        else if(s==";") this.type = tok_type.tok_semicolon;
+        else if(s=="*=") this.type = tok_type.tok_shortmul;
+        else if(s=="-=") this.type = tok_type.tok_shortmin;
+        else if(s=="/=") this.type = tok_type.tok_shortdiv;
+        else if(s=="+=") this.type = tok_type.tok_shortplu;
+        else {
+            // Commands or Variables(or Defines)
+            switch(s.toLower()) {
+                case "if": this.type=tok_type.tok_cmd;
+                           this.cmd=tok_command.cmd_if;
+                           break;
+                case "else": this.type=tok_type.tok_cmd;
+                           this.cmd=tok_command.cmd_else;
+                           break;
+                case "while": this.type=tok_type.tok_cmd;
+                           this.cmd=tok_command.cmd_while;
+                           break;
+                case "do": this.type=tok_type.tok_cmd;
+                           this.cmd=tok_command.cmd_do;
+                           break;
+                case "define": this.type=tok_type.tok_cmd;
+                           this.cmd=tok_command.cmd_define;
+                           break;
+                case "extern": this.type=tok_type.tok_cmd;
+                           this.cmd=tok_command.cmd_extern;
+                           break;
+                case "include": this.type=tok_type.tok_cmd;
+                           this.cmd=tok_command.cmd_include;
+                           break;
+                case "asm": this.type=tok_type.tok_cmd;
+                           this.cmd=tok_command.cmd_asm;
+                           break;
+                case "int": this.type=tok_type.tok_cmd;
+                           this.cmd=tok_command.cmd_int;
+                           break;
+                case "char": this.type=tok_type.tok_cmd;
+                           this.cmd=tok_command.cmd_char;
+                           break;
+                case "string": this.type=tok_type.tok_cmd;
+                           this.cmd=tok_command.cmd_string;
+                           break;
+                case "struct": this.type=tok_type.tok_cmd;
+                           this.cmd=tok_command.cmd_struct;
+                           break;
+                case "ret": this.type=tok_type.tok_cmd;
+                           this.cmd=tok_command.cmd_ret;
+                           break;
+                case "break": this.type=tok_type.tok_cmd;
+                           this.cmd=tok_command.cmd_break;
+                           break;
+                case "continue": this.type=tok_type.tok_cmd;
+                           this.cmd=tok_command.cmd_continue;
+                           break;
+                default: this.type = tok_type.tok_id; break;
+            }
+        }
     }
-
-    string get_val() {return this.value;}
-    tok_type get_type() {return this.type;}
 }
 
-class TokenList {
-    private Token[int] tokens;
-    private int currtoken;
+class TList {
+    Token[int] tokens;
+    int i = 0;
 
-    this() {this.currtoken=0;}
-    this(Token[int] tokens) {this.tokens=tokens;}
+    this() {}
+    this(Token t){tokens[i] = t; i+=1;}
 
-    Token get_token(int num) {return this.tokens[num];}
-    void set_token(Token tok, int num) {this.tokens[num]=tok;}
-    void add_token(Token tok) {
-        this.tokens[this.currtoken]=tok;
-        this.currtoken+=1;
-    }
-    void add_new_token(string tok) {
-        this.tokens[this.currtoken]=new Token(tok);
-        this.currtoken+=1;
-    }
-    Token[int] get_tokens() {return this.tokens;}
-    long length() {return this.tokens.length;}
-    Token get_currtoken() {return this.tokens[this.currtoken];}
-    void move_ptr(int i){this.currtoken+=i;}
-    void set_ptr(int i){this.currtoken=i;}
+    void insertFront(Token t){tokens[i] = t; i+=1;}
+    int length(){return cast(int)tokens.length;}
+    Token get(int n){return tokens[n];}
 }
