@@ -60,7 +60,8 @@ enum TokCmd {
     cmd_ret = 14,
     cmd_break = 15,
     cmd_continue = 16,
-    cmd_sizeof = 17
+    cmd_sizeof = 17,
+    cmd_float = 18
 }
 
 class Token {
@@ -157,6 +158,9 @@ class Token {
                            break;
                 case "sizeof": this.type=TokType.tok_cmd;
                            this.cmd=TokCmd.cmd_sizeof;
+                           break;
+                case "float": this.type=TokType.tok_cmd;
+                           this.cmd=TokCmd.cmd_float;
                            break;
                 default: this.type = TokType.tok_id; break;
             }
