@@ -1,9 +1,10 @@
 {
 	"authors": [
-		"Timofeyka"
+		"Timofeyka",
+		"somerandomdev49"
 	],
 	"copyright": "Copyright © 2022, Timofeyka",
-	"description": "A minimal D application.",
+	"description": "EPL programming language",
 	"license": "proprietary",
 	"name": "epl"
 }
