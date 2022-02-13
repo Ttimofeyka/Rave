@@ -1,6 +1,8 @@
 include <std>
 
 extern extern_function;
+define bool byte;
+define lol 10;
 
 int main {
     if(1 == 1) { }
@@ -18,9 +20,7 @@ int main {
     byte d = 5;
     # bit e = 0; # 0 or 1
 
-    asm(
-		mov ax, 10
-	);
+    asm("mov ax, 10");
     
     struct st {
         int a;
@@ -29,9 +29,6 @@ int main {
 
     st st1;
     st1->a = 5;
-
-    define bool byte
-    define lol 10
 
     while(1 == 1)
 	{
