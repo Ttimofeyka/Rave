@@ -2,15 +2,14 @@ import std.stdio;
 import lexer;
 import tokens;
 import std.conv : to;
+import core.stdc.stdlib : exit;
+import cmd;
+import std.file : readText;
 
-void main()
+void main(string[] args)
 {
-	Lexer lexer = new Lexer(
-	`
-	int main() {
-		ret 0<<8;
-	}
-	`);
+	input(args);
+	Lexer lexer = new Lexer(readText(source_file));
 	for(int i=0; i<lexer.getTokens().length; i++) {
 		TokType type = lexer.getTokens().get(i).type;
 		string value = lexer.getTokens().get(i).value;
