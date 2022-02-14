@@ -218,19 +218,20 @@ class Token {
     }
 }
 
-// What is this??
+
 // class TList {
-//     Token[int] tokens;
-//     int i = 0;
+//     Token[] tokens;
 
-//     this() {}
-//     this(Token t){tokens[i] = t; i+=1;}
+//     Token opIndex(size_t index) {
+//         return tokens[index];
+//     }
 
-//     void insertFront(Token t){tokens[i] = t; i+=1;}
-//     int length(){return cast(int)tokens.length;}
-//     Token get(int n){return tokens[n];}
+//     void insertBack(Token token) {
+//         tokens ~= token;
+//     }
+
+//     size_t length() { return tokens.length; }
 // }
-
 
 class TList {
     Token[int] tokens;

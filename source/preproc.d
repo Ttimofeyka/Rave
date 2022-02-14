@@ -24,7 +24,7 @@ class Preprocessor {
 
     private void insertDefine(TList t) {
         for(int j=0; j<t.length; j++) {
-            newtokens.insertBack(t[i]);
+            newtokens.insertBack(t[j]);
         }
     }
 
