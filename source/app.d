@@ -14,14 +14,11 @@ void main(string[] args)
 	auto preproc = new Preprocessor(lexer.getTokens());
 
 	for(int i=0; i<preproc.getTokens().length; i++) {
-		TokType type = preproc.getTokens()[i].type;
-		string value = preproc.getTokens()[i].value;
-
-		if(type == TokType.tok_cmd) {
-			writeln("Type: "~to!string(preproc.getTokens()[i].cmd)~" "~value);
+		TokType type = preproc.getTokens().get(i).type;
+		string value = preproc.getTokens().get(i).value;
+		if(type==TokType.tok_cmd) {
+			writeln("Type: "~to!string(preproc.getTokens().get(i).cmd)~" "~value);
 		}
-		else {
-			writeln("Type: "~to!string(type)~" "~value);
-		}
+		else writeln("Type: "~to!string(type)~" "~value);
 	}
 }
