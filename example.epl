@@ -2,5 +2,9 @@ include "std";
 define toret 0;
 
 int main {
+	if(toret == 0) {
+		ret toret + 1;
+	}
+
 	ret toret;
 }

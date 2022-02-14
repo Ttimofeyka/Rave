@@ -150,97 +150,97 @@ class Lexer {
                 case '0': case '1': case '2':
                 case '3': case '4': case '5':
                 case '6': case '7': case '8': case '9':
-                    tokens.insertFront(new Token(getTNum()));
+                    tokens.insertBack(new Token(getTNum()));
                     break;
                 case '\'':
-                    tokens.insertFront(new Token("'"~getTChar()~"'"));
+                    tokens.insertBack(new Token("'"~getTChar()~"'"));
                     break;
                 case '"':
-                    tokens.insertFront(new Token("\""~getTStr()~"\""));
+                    tokens.insertBack(new Token("\""~getTStr()~"\""));
                     break;
-                case '+': tokens.insertFront(new Token("+")); i+=1; break;
-                case '/': tokens.insertFront(new Token("/")); i+=1; break;
-                case '(': tokens.insertFront(new Token("(")); i+=1; break;
-                case ')': tokens.insertFront(new Token(")")); i+=1; break;
-                case '{': tokens.insertFront(new Token("{")); i+=1; break;
-                case '}': tokens.insertFront(new Token("}")); i+=1; break;
-                case '[': tokens.insertFront(new Token("[")); i+=1; break;
-                case ']': tokens.insertFront(new Token("]")); i+=1; break;
+                case '+': tokens.insertBack(new Token("+")); i+=1; break;
+                case '/': tokens.insertBack(new Token("/")); i+=1; break;
+                case '(': tokens.insertBack(new Token("(")); i+=1; break;
+                case ')': tokens.insertBack(new Token(")")); i+=1; break;
+                case '{': tokens.insertBack(new Token("{")); i+=1; break;
+                case '}': tokens.insertBack(new Token("}")); i+=1; break;
+                case '[': tokens.insertBack(new Token("[")); i+=1; break;
+                case ']': tokens.insertBack(new Token("]")); i+=1; break;
                 case '-':
                     if(lex[i+1]=='>') {
-                        tokens.insertFront(new Token("->"));
+                        tokens.insertBack(new Token("->"));
                         i+=2;
                     }
                     else {
-                        tokens.insertFront(new Token("-"));
+                        tokens.insertBack(new Token("-"));
                         i+=1;
                     }
                     break;
-                case '*': tokens.insertFront(new Token("*")); i+=1; break;
-                case ',': tokens.insertFront(new Token(",")); i+=1;break;
-                case ';': tokens.insertFront(new Token(";")); i+=1; break;
-                case '^': tokens.insertFront(new Token("^")); i+=1; break;
-                case '~': tokens.insertFront(new Token("~")); i+=1; break;
+                case '*': tokens.insertBack(new Token("*")); i+=1; break;
+                case ',': tokens.insertBack(new Token(",")); i+=1;break;
+                case ';': tokens.insertBack(new Token(";")); i+=1; break;
+                case '^': tokens.insertBack(new Token("^")); i+=1; break;
+                case '~': tokens.insertBack(new Token("~")); i+=1; break;
                 case '!':
                     if(lex[i+1]=='=') {
-                        tokens.insertFront(new Token("!="));
+                        tokens.insertBack(new Token("!="));
                         i+=2;
                     }
                     else {
-                        tokens.insertFront(new Token("!"));
+                        tokens.insertBack(new Token("!"));
                         i+=1;
                     }
                     break;
                 case '=':
                     if(lex[i+1]=='=') {
-                        tokens.insertFront(new Token("=="));
+                        tokens.insertBack(new Token("=="));
                         i+=2;
                     }
                     else {
-                        tokens.insertFront(new Token("="));
+                        tokens.insertBack(new Token("="));
                         i+=1;
                     }
                     break;
                 case '&':
                     if(lex[i+1]=='&') {
-                        tokens.insertFront(new Token("&&"));
+                        tokens.insertBack(new Token("&&"));
                         i+=2;
                     }
                     else {
-                        tokens.insertFront(new Token("&"));
+                        tokens.insertBack(new Token("&"));
                         i+=1;
                     }
                     break;
                 case '|':
                     if(lex[i+1]=='|') {
-                        tokens.insertFront(new Token("||"));
+                        tokens.insertBack(new Token("||"));
                         i+=2;
                     }
                     else {
-                        tokens.insertFront(new Token("|"));
+                        tokens.insertBack(new Token("|"));
                         i+=1;
                     }
                     break;
                 case '<':
                     if(lex[i+1]=='<') {
-                        tokens.insertFront(new Token("<<"));
+                        tokens.insertBack(new Token("<<"));
                         i+=2;
                     }
                     else lexer_error("Undefined operator '<'!");
                     break;
                 case '>':
                     if(lex[i+1]=='>') {
-                        tokens.insertFront(new Token(">"));
+                        tokens.insertBack(new Token(">"));
                         i+=2;
                     }
                     else lexer_error("Undefined operator '>'!");
                     break;
                 default:
-                    tokens.insertFront(new Token(getTID()));
+                    tokens.insertBack(new Token(getTID()));
                     break;
             }
         }
     }
 
-    TList getTokens() {return tokens;}
+    TList getTokens() { return tokens;}
 }

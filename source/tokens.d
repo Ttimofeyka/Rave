@@ -1,4 +1,5 @@
 import std.string;
+import std.container : Array;
 import std.array;
 import logger;
 import std.uni : isNumber;
@@ -63,6 +64,51 @@ enum TokCmd {
     cmd_sizeof = 17,
     cmd_float = 18,
     cmd_void = 19
+}
+
+// FIXME: Change name
+string tokTypeToUserFriendlyString(TokType type)
+{
+	switch(type)
+	{
+	case TokType.tok_num: return "num";
+	case TokType.tok_id: return "id";
+	case TokType.tok_equ: return "equ";
+	case TokType.tok_lbra: return "lbra";
+	case TokType.tok_rbra: return "rbra";
+	case TokType.tok_lpar: return "lpar";
+	case TokType.tok_rpar: return "rpar";
+	case TokType.tok_plus: return "plus";
+	case TokType.tok_minus: return "minus";
+	case TokType.tok_multiply: return "multiply";
+	case TokType.tok_divide: return "divide";
+	case TokType.tok_more: return "more";
+	case TokType.tok_less: return "less";
+	case TokType.tok_equal: return "equal";
+	case TokType.tok_nequal: return "nequal";
+	case TokType.tok_string: return "string";
+	case TokType.tok_char: return "char";
+	case TokType.tok_comma: return "comma";
+	case TokType.tok_cmd: return "cmd";
+	case TokType.tok_2rbra: return "2rbra";
+	case TokType.tok_2lbra: return "2lbra";
+	case TokType.tok_struct_get: return "struct_get";
+	case TokType.tok_semicolon: return "semicolon";
+	case TokType.tok_shortplu: return "shortplu";
+	case TokType.tok_shortmin: return "shortmin";
+	case TokType.tok_shortmul: return "shortmul";
+	case TokType.tok_shortdiv: return "shortdiv";
+	case TokType.tok_and: return "and";
+	case TokType.tok_or: return "or";
+	case TokType.tok_bit_and: return "bit_and";
+	case TokType.tok_bit_or: return "bit_or";
+	case TokType.tok_bit_ls: return "bit_ls";
+	case TokType.tok_bit_rs: return "bit_rs";
+	case TokType.tok_bit_xor: return "bit_xor";
+	case TokType.tok_bit_not: return "bit_not";
+	case TokType.tok_not: return "not";
+	default: return "?";
+	}
 }
 
 class Token {
@@ -172,14 +218,30 @@ class Token {
     }
 }
 
+// What is this??
+// class TList {
+//     Token[int] tokens;
+//     int i = 0;
+
+//     this() {}
+//     this(Token t){tokens[i] = t; i+=1;}
+
+//     void insertFront(Token t){tokens[i] = t; i+=1;}
+//     int length(){return cast(int)tokens.length;}
+//     Token get(int n){return tokens[n];}
+// }
+
+
 class TList {
-    Token[int] tokens;
-    int i = 0;
+    Token[] tokens;
 
-    this() {}
-    this(Token t){tokens[i] = t; i+=1;}
+    Token opIndex(size_t index) {
+        return tokens[index];
+    }
 
-    void insertFront(Token t){tokens[i] = t; i+=1;}
-    int length(){return cast(int)tokens.length;}
-    Token get(int n){return tokens[n];}
+    void insertBack(Token token) {
+        tokens ~= token;
+    }
+
+    size_t length() { return tokens.length; }
 }

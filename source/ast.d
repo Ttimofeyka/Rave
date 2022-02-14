@@ -5,13 +5,23 @@ module ast;
 // Abstract type syntax tree node.
 class AtstNode { }
 
-class AtstNodeVoid {}
+class AtstNodeVoid : AtstNode {}
 
-class AtstNodeName { string name; }
+class AtstNodeName : AtstNode {
+	string name;
+	this(string name) {
+		this.name = name;
+	}
+}
 
 struct FuncSignature {
 	AtstNode ret;
 	AtstNode[] args;
+
+	this(AtstNode ret, AtstNode[] args) {
+		this.ret = ret;
+		this.args = args;
+	}
 }
 
 // Abstract syntax tree Node.
@@ -65,6 +75,10 @@ class AstNodeAsm : AstNode {
 	string value; // TODO
 }
 
+class AstNodeBlock : AstNode {
+	AstNode[] nodes;
+}
+
 class AstNodeIden : AstNode { string name; }
 class AstNodeLabel : AstNode { string name; }
 class AstNodeBreak : AstNode { string label; /* optional */ }
@@ -72,3 +86,4 @@ class AstNodeContinue : AstNode { string label; /* optional */ }
 class AstNodeExtern : AstNode { FuncSignature sig; string name; }
 class AstNodeFuncCall : AstNode { AstNode func; AstNode[] args; }
 class AstNodeInt : AstNode { uint value; }
+class AstNodeFloat : AstNode { float value; }
