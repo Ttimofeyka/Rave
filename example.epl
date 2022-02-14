@@ -1,5 +1,6 @@
 include "std";
+define toret 0;
 
 int main {
-    ret 0;
+	ret toret;
 }
