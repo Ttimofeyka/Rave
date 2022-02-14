@@ -1,5 +1,5 @@
 include "std";
 
 int main {
-	ret 0;
+    ret 0;
 }
