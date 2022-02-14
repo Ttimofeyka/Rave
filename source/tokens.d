@@ -233,15 +233,17 @@ class Token {
 
 
 class TList {
-    Token[] tokens;
+    Token[int] tokens;
+    int i = 0;
 
-    Token opIndex(size_t index) {
+    Token opIndex(int index) {
         return tokens[index];
     }
 
     void insertBack(Token token) {
-        tokens ~= token;
+        tokens[i] = token;
+        i+=1;
     }
 
-    size_t length() { return tokens.length; }
+    int length() { return cast(int)tokens.length; }
 }
