@@ -2,25 +2,10 @@ module parser;
 
 import std.string;
 import std.array;
-import std.container : Array;
+import std.container : DList;
 import std.stdio;
 import ast;
 import tokens;
-
-struct FunctionDeclaration {
-	FuncSignature signature;
-	string name;
-	string[] argNames;
-}
-
-struct FunctionArgument {
-	string name;
-	AtstNode type;
-}
-
-struct TypeDeclaration {
-	AtstNode value;
-}
 
 class Parser {
 	private TList _toks;
@@ -103,30 +88,33 @@ class Parser {
 		return [];
 	}
 
+	private VariableDeclaration parseVarDecl() {
+		// <type> <id:name> [':' <qualified-id:attr> (',' qualified-id:attr)*]
+		// Example? int abcd : volatile, std.profile.watch;
+		
+		auto type = parseType;
+		auto nameToken = expectToken(TokType.tok_id);
+		if(nameToken is null) nameToken = new Token("<error>");
+
+		return VariableDeclaration(type, nameToken.value);
+	}
+
 	private FunctionArgument[] parseFuncArgumentDecls() {
 		FunctionArgument[] args;
 		
-		if(peek(p).type != TokType.tok_lbra) {
-			errorExpected(p, "Expected an opening parenthesis.");
-			return [];
-		}
+		auto lbra = expectToken(TokType.tok_lbra);
+		if(lbra is null) return [];
 
-		next();
-
-		while(peek(p).type != TokType.tok_rbra)
+		while(peek().type != TokType.tok_rbra)
 		{
-			args ~= parseExpr(p);
-			if(p_peek(p).type == tt_close_paren) break;
-			if(p_peek(p).type != tt_cma)
-				return parser_error(p, "expected a comma"), l;
-			p_del(p);
+			auto decl = parseVarDecl();
+			args ~= FunctionArgument(decl.name, decl.type);
+			if(peek().type == TokType.tok_rbra) break;
+			expectToken(TokType.tok_comma);
 		}
 
-		// if loop finishes, this error is not needed.
-		// if(p_peek(p).type != tt_close_paren)
-		// 		return parser_error(p, "expected a closing parenthesis"), l;
-		p_del(p);
-		return l;
+		next(); // skip the right parenthesis.
+		return args;
 	}
 
 	/** 
@@ -161,20 +149,53 @@ class Parser {
 		return FunctionDeclaration(FuncSignature(retType, []), name.value, []);
 	}
 
+	private TypeDeclarationStruct parseStructTypeDecl() {
+		// TODO: Parse structs
+		return new TypeDeclarationStruct();
+	}
+
 	private TypeDeclaration parseTypeDecl() {
 		if(peek().type == TokType.tok_cmd) {
 			if(peek().cmd == TokCmd.cmd_struct) {
-				return parseStructDecl();
+				return parseStructTypeDecl();
 			}
 		}
 
 		errorExpected("Expected a type declaration");
-		return TypeDeclaration(null);
+		return new TypeDeclaration();
+	}
+
+	private AstNode parseStmt() {
+		// if(peek().type == TokType.tok_)
+		return null;
+	}
+
+	private AstNodeBlock parseBlock() {
+		AstNode[] nodes;
+		while(peek().type != TokType.tok_2rbra) {
+			nodes ~= parseStmt();
+		}
+		next();
+		return new AstNodeBlock(nodes);
+	}
+
+	private AstNode parseFunc() {
+		auto decl = parseFuncDecl(function(Token tok) { return tok.type == TokType.tok_2lbra; });
+		return new AstNodeFunction(decl, parseBlock());
+	}
+
+	private AstNode parseExtern() {
+		return null;
+	}
+
+	private bool isTypeDecl() {
+		return peek().type == TokType.tok_cmd && peek().cmd == TokCmd.cmd_struct;
 	}
 
 	private AstNode parseTopLevel() {
 		// top-level ::= <func-decl> (';' | <block>)
 		//             | extern <func-decl> ';'
+		//             | <var-decl>
 		//             | <type-decl>
 		//             | ';'
 
@@ -200,10 +221,10 @@ class Parser {
 		}
 	}
 
-	public Array!AstNode parseProgram() {
-		Array!AstNode nodes;
+	public AstNode[] parseProgram() {
+		AstNode[] nodes;
 		while(peek() !is null) {
-			nodes.insertBack(parseTopLevel());
+			nodes ~= parseTopLevel();
 		}
 
 		return nodes;

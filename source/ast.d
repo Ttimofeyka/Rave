@@ -27,9 +27,39 @@ struct FuncSignature {
 // Abstract syntax tree Node.
 class AstNode { }
 
-class AstNodeFunction : AstNode {
+
+struct FunctionDeclaration {
+	FuncSignature signature;
 	string name;
-	AtstNode retType;
+	string[] argNames;
+}
+
+struct FunctionArgument {
+	string name;
+	AtstNode type;
+}
+
+struct VariableDeclaration {
+	AtstNode type;
+	string name;
+}
+
+class TypeDeclaration {
+	string name;
+}
+
+class TypeDeclarationStruct : TypeDeclaration {
+	VariableDeclaration[] decls;
+}
+
+class AstNodeFunction : AstNode {
+	FunctionDeclaration decl;
+	AstNode body_;
+
+	this(FunctionDeclaration decl, AstNode body_) {
+		this.decl = decl;
+		this.body_ = body_;
+	}
 }
 
 enum BinaryOpType {
@@ -50,16 +80,6 @@ class AstNodeBinary : AstNode {
 	BinaryOpType type;
 }
 
-struct Declaration {
-	AtstNode type;
-	string name;
-}
-
-class AstNodeStruct : AstNode {
-	string name; 
-	Declaration[] decls;
-}
-
 class AstNodeIf : AstNode {
 	AstNode cond;
 	AstNode body_;
@@ -77,6 +97,10 @@ class AstNodeAsm : AstNode {
 
 class AstNodeBlock : AstNode {
 	AstNode[] nodes;
+
+	this(AstNode[] nodes) {
+		this.nodes = nodes;
+	}
 }
 
 class AstNodeIden : AstNode { string name; }
