@@ -1,4 +1,4 @@
-include "std"
+include "std";
 
 int main {
 	ret 0;
