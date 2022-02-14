@@ -33,9 +33,6 @@ enum BinaryOpType {
 	binary_op_leq, // less than or equal
 	binary_op_eql, // equal to
 	binary_op_neq, // not equal to
-	binary_op_neq, // not equal to
-	binary_op_neq, // not equal to
-	binary_op_neq, // not equal to
 }
 
 class AstNodeBinary : AstNode {
