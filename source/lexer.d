@@ -61,7 +61,7 @@ class Lexer {
                 temp ~= lex[i-2];
                 return to!char(
                     temp.replace("\\n","\n").replace("\\t","\t")
-                    .replace("\\n","\r").replace("\\b","\b")
+                    .replace("\\r","\r").replace("\\b","\b")
                 );
             }
             else if(lex[i+4]=='\''){
@@ -107,6 +107,9 @@ class Lexer {
                     }
                     else if(lex[i+1]=='b') {
                         temp ~= "\b";
+                    }
+                    else if(lex[i+1]=='r') {
+                        temp ~= "\r";
                     }
                     i+=2;
                 }
