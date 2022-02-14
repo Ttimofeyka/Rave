@@ -67,7 +67,7 @@ enum TokCmd {
 }
 
 // FIXME: Change name
-string tokTypeToUserFriendlyString(TokType type)
+string tokTypeToStr(TokType type)
 {
 	switch(type)
 	{
@@ -217,20 +217,6 @@ class Token {
         }
     }
 }
-
-// What is this??
-// class TList {
-//     Token[int] tokens;
-//     int i = 0;
-
-//     this() {}
-//     this(Token t){tokens[i] = t; i+=1;}
-
-//     void insertFront(Token t){tokens[i] = t; i+=1;}
-//     int length(){return cast(int)tokens.length;}
-//     Token get(int n){return tokens[n];}
-// }
-
 
 class TList {
     Token[int] tokens;

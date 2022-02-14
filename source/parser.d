@@ -22,7 +22,7 @@ class Parser {
 	}
 
 	private void errorExpected(string msg) {
-		error(msg ~ " Got: " ~ tokTypeToUserFriendlyString(next().type));
+		error(msg ~ " Got: " ~ tokTypeToStr(next().type));
 	}
 
 	private Token next() {
@@ -41,7 +41,7 @@ class Parser {
 	private Token expectToken(TokType type) {
 		auto t = peek();
 		if(t.type != type) {
-			errorExpected("Expected " ~ tokTypeToUserFriendlyString(type) ~ ".");
+			errorExpected("Expected " ~ tokTypeToStr(type) ~ ".");
 			return null;
 		}
 		next();
