@@ -1,49 +1,5 @@
-include <std>
-
-extern extern_function;
-define bool byte;
-define lol 10;
+include "std"
 
 int main {
-    if(1 == 1) { }
-    else { }
-
-    while(1 != 1) { }
-
-    do { break; }
-
-    extern_function();
-
-    int a = 0;
-    char b = 'a';
-    string c = "HELLO!";
-    byte d = 5;
-    # bit e = 0; # 0 or 1
-
-    asm("mov ax, 10");
-    
-    struct st {
-        int a;
-        int b;
-    }
-
-    st st1;
-    st1->a = 5;
-
-    while(1 == 1)
-	{
-		if(lol == 1)
-		{
-			continue;
-		}
-		else
-		{
-			break;
-		}
-	}
-
-    int abc = 65;
-    byte abcde = cast(byte) abc;
-
-    ret lol;
+	ret 0;
 }
