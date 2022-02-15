@@ -66,7 +66,6 @@ enum TokCmd {
     cmd_void = 19
 }
 
-// FIXME: Change name
 string tokTypeToStr(TokType type)
 {
 	switch(type)
@@ -170,7 +169,7 @@ class Token {
                 case "do": this.type=TokType.tok_cmd;
                            this.cmd=TokCmd.cmd_do;
                            break;
-                case "define": this.type=TokType.tok_cmd;
+                case "def": this.type=TokType.tok_cmd;
                            this.cmd=TokCmd.cmd_define;
                            break;
                 case "extern": this.type=TokType.tok_cmd;

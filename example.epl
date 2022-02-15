@@ -1,5 +1,5 @@
 include "std";
-define toret 0;
+def toret 0;
 
 int main {
 	if(toret == 0) {
