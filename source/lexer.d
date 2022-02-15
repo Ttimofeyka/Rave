@@ -2,33 +2,31 @@ module lexer;
 
 import std.string;
 import std.array;
-import std.container : DList;
 import tokens;
 import logger;
 import std.conv : to;
 import std.stdio;
+import std.algorithm: canFind;
+
+const string[] operators = [
+    "=", "==", "!=", "+=",
+    "-=", "*=", "/=", "+",
+    "-", "*", "/", "\"",
+    "\'", "(", ")", "{",
+    "}", ";", ",", "<", ">",
+    "&", "&&", "^", "~", "|",
+    "||"
+];
 
 class Lexer {
     string lex = "";
     auto tokens = new TList();
     int i = 0;
 
-    private bool isOperator(string s) {
-        return (
-            s=="=="||s=="!="||s=="+"||
-            s=="-"||s=="*"||s=="/"||s=="="
-            ||s=="["||s=="]"||s=="{"||s=="}"
-            ||s=="("||s==")"||s==","||s=="\""
-            ||s=="'"||s==";"||s=="<"||s==">"
-            ||s=="!"||s=="^"||s=="~"||s=="&&"
-            ||s=="&"||s=="||"||s=="|"
-        );
-    }
-
     private string getTNum() {
         string temp = "";
         while(
-            !isOperator(""~lex[i])
+            !canFind(operators,""~lex[i])
             &&lex[i]!=' '&&lex[i]!='\n'
             &&lex[i]!='\t'
         ) {temp~=lex[i]; i+=1;}
@@ -129,7 +127,7 @@ class Lexer {
     private string getTID() {
         string temp = "";
         while(
-            !isOperator(""~lex[i])
+            !canFind(operators,""~lex[i])
             &&lex[i]!=' '
             &&lex[i]!='\n'
             &&lex[i]!='\t'

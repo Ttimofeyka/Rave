@@ -154,6 +154,9 @@ class Token {
         else if(s=="^") this.type = TokType.tok_bit_xor;
         else if(s=="~") this.type = TokType.tok_bit_not;
         else if(s=="!") this.type = TokType.tok_not;
+        else if(s=="!=") this.type = TokType.tok_nequal;
+        else if(s=="==") this.type = TokType.tok_equal;
+        else if(s=="=") this.type = TokType.tok_equ;
         else {
             // Commands or Variables(or Defines)
             switch(s.toLower()) {
