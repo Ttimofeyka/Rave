@@ -185,6 +185,7 @@ class Parser {
 	}
 
 	private AstNode parseExtern() {
+		// TODO: Parse extern
 		return null;
 	}
 
