@@ -211,6 +211,9 @@ class Token {
                 case "void": this.type=TokType.tok_cmd;
                            this.cmd=TokCmd.cmd_void;
                            break;
+                case "bit": this.type=TokType.tok_cmd;
+                           this.cmd=TokCmd.cmd_bit;
+                           break;
                 default: this.type = TokType.tok_id; break;
             }
         }
