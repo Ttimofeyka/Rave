@@ -7,6 +7,7 @@ import logger;
 import std.conv : to;
 import std.stdio;
 import std.algorithm: canFind;
+import std.ascii : isWhite;
 
 const string[] operators = [
     "=", "==", "!=", "+=",
@@ -141,13 +142,10 @@ class Lexer {
     this(string lex) {
         this.lex = lex;
         while(i<lex.length) {
-            switch(lex[i]) {
-                case ' ':
-                case '\n':
-                case '\t':
-                case '\r':
-                    i+=1;
-                    break;
+            if(isWhite(cast(dchar)lex[i])) {
+                i+=1;
+            }
+            else switch(lex[i]) {
                 case '0': case '1': case '2':
                 case '3': case '4': case '5':
                 case '6': case '7': case '8': case '9':
