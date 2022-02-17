@@ -1,3 +1,15 @@
-int main(int a, void b) {
-	{}
+
+extern exit(int code);
+extern abort;
+
+main(int a, void b) {
+	a + b;
+
+	if(a == b) {
+		a - b;
+		exit(0);
+	} else {
+		b - a;
+		abort();
+	}
 }

@@ -7,6 +7,7 @@ import std.stdio, std.conv;
 import ast;
 import tokens;
 import std.algorithm.iteration : map;
+import std.algorithm : canFind;
 
 class Parser {
 	private TList _toks;
@@ -19,7 +20,7 @@ class Parser {
 
 	// TODO: Source location data.
 	private void error(string msg) {
-		writeln("\033[0;31mError: " ~ msg);
+		writeln("\033[0;31mError: " ~ msg ~ "\033[0;0m");
 	}
 
 	private void errorExpected(string msg) {
@@ -62,33 +63,6 @@ class Parser {
 		return null;
 	}
 
-	private FunctionArgument[] parseFuncArguments() {
-		// FunctionArgument[] args;
-		
-		// if(peek(p).type != TokType.tok_lpar) {
-		// 	errorExpected(p, "Expected an opening parenthesis.");
-		// 	return [];
-		// }
-
-		// next();
-
-		// while(peek(p).type != TokType.tok_rbra)
-		// {
-		// 	args ~= parseExpr(p);
-		// 	if(p_peek(p).type == tt_close_paren) break;
-		// 	if(p_peek(p).type != tt_cma)
-		// 		return parser_error(p, "expected a comma"), l;
-		// 	p_del(p);
-		// }
-
-		// // if loop finishes, this error is not needed.
-		// // if(p_peek(p).type != tt_close_paren)
-		// // 		return parser_error(p, "expected a closing parenthesis"), l;
-		// p_del(p);
-		// return l;
-		return [];
-	}
-
 	private VariableDeclaration parseVarDecl() {
 		// <type> <id:name> [':' <qualified-id:attr> (',' qualified-id:attr)*]
 		// Example? int abcd : volatile, std.profile.watch;
@@ -126,18 +100,41 @@ class Parser {
 	 */
 	private FunctionDeclaration parseFuncDecl(bool function(Token) isEnd) {
 		// [<type:ret-type>] <id:fun-name> ['(' <args> ')'] (';'|'{')
+		
+		// TODO: Allow for types that don't start with an id.
+		// probably do the skipping thing if the peeked token
+		// is an identifier, otherwise parse the type.
+
+		// NOTE: Due do this syntax, types cannot be the form
+		// of (<id> '(' ...) because that would make the grammar
+		// ambiguous.
+
 		auto firstToken = expectToken(TokType.tok_id);
+
 		assert(firstToken !is null); // shouldn't be calling this function if this fails.
 		if(isEnd(peek())) { // the decl has ended, the return type is void and there are no args.
 			return FunctionDeclaration(FuncSignature(new AtstNodeVoid(), []), firstToken.value, []);
 		}
 
-		// otherwise, if this is not the end, firstToken is the first token of the return type
-		// so we need to decrement the _idx so the type parsing function doesn't fail.
-		_idx -= 1;
+		AtstNode retType;
+		Token name = firstToken;
+		
+		// If the next token is not a '(' (which would mean that
+		// the function has no return type and it's just the id)
+		if(peek().type != TokType.tok_lpar) {
+			// otherwise, if this is not the end, firstToken is the first token of the return type
+			// so we need to decrement the _idx so the type parsing function doesn't fail.
+			_idx -= 1;
 
-		auto retType = parseType();
-		auto name = expectToken(TokType.tok_id);
+			writeln("parsing return type, peek: ", tokTypeToStr(peek().type));
+			retType = parseType();
+
+			// The name will be the next token.
+			name = expectToken(TokType.tok_id);
+		} else {
+			retType = new AtstNodeVoid();
+		}
+
 		if(name is null) {
 			errorExpected("Expected the name of the function.");
 			name = new Token("<error>");
@@ -171,7 +168,29 @@ class Parser {
 		return new TypeDeclaration();
 	}
 
+	private AstNode[] parseFuncArguments() {
+		AstNode[] args;
+		
+		auto lpar = expectToken(TokType.tok_lpar);
+		if(lpar is null) return [];
+
+		while(peek().type != TokType.tok_rpar)
+		{
+			args ~= parseExpr();
+			if(peek().type == TokType.tok_rpar) break;
+			expectToken(TokType.tok_comma);
+		}
+
+		next(); // skip the right parenthesis.
+		return args;
+	}
+
+	private AstNode parseFuncCall(AstNode func) {
+		return new AstNodeFuncCall(func, parseFuncArguments());
+	}
+
 	private AstNode parseSuffix(AstNode base) {
+		writeln("parseSuffix, peek: ", tokTypeToStr(peek().type));
 		if(peek().type == TokType.tok_lpar) {
 			return parseFuncCall(base);
 		}
@@ -181,18 +200,23 @@ class Parser {
 
 	private AstNode parseAtom() {
 		auto t = next();
-		if(t.type == TokType.tok_num) return new AstNodeInt(parse!uint(t));
-		// if(t.type == TokType.tok_string) return new AstNodeInt(parse!uint(t));
+		if(t.type == TokType.tok_num) return new AstNodeInt(parse!uint(t.value));
+		if(t.type == TokType.tok_id) return new AstNodeIden(t.value);
+		else if(t.type == TokType.tok_lpar) {
+			next();
+			auto e = parseExpr();
+			expectToken(TokType.tok_rpar);
+			return e;
+		}
 		else errorExpected("Expected a number, a string or an expression in parentheses.");
 		return null;
 	}
 
 	private AstNode parsePrefix() {
-		if(peek().type == TokType.tok_multiply) { // pointer dereference
-			return new AstNodeDeref(parseAtom());
-		}
-		else if(peek().type == TokType.tok_bit_and) { // pointer reference
-			return new AstNodeDeref(parseAtom());
+		const TokType[] OPERATORS = [TokType.tok_multiply, TokType.tok_bit_and];
+		if(OPERATORS.canFind(peek().type)) { // pointer dereference
+			auto tok = next().type;
+			return new AstNodeUnary(parseAtom(), tok);
 		}
 		return parseAtom();
 	}
@@ -202,7 +226,7 @@ class Parser {
 	}
 
 	private AstNode parseInfix() {
-		int[TokType] OPERATORS = [
+		const int[TokType] OPERATORS = [
 			TokType.tok_plus: 0,
 			TokType.tok_minus: 0,
 			TokType.tok_multiply: 1,
@@ -212,6 +236,9 @@ class Parser {
 			TokType.tok_shortmin: -99,
 			TokType.tok_shortmul: -99,
 			TokType.tok_shortdiv: -99,
+			TokType.tok_equal: -80,
+			TokType.tok_less: -70,
+			TokType.tok_more: -70,
 			TokType.tok_or: -50,
 			TokType.tok_and: -50,
 			TokType.tok_bit_and: -20,
@@ -221,18 +248,21 @@ class Parser {
 			TokType.tok_bit_xor: -30,
 		];
 
-		TokType[] operatorStack = [];
-		SList!AstNode nodeStack = [parseAtom()];
+		SList!TokType operatorStack;
+		SList!AstNode nodeStack;
 		uint nodeStackSize = 0;
+
+		nodeStack.insertFront(parseBasic());
 
 		while(peek().type in OPERATORS)
 		{
-			if(operatorStack.length == 0)
-				operatorStack ~= next().type;
+			if(operatorStack.empty) {
+				operatorStack.insertFront(next().type);
+			}
 			else {
 				auto t = next().type;
 				int prec = OPERATORS[t];
-				while(prec <= OPERATORS[operatorStack[operatorStack.length - 1]]) {
+				while(prec <= OPERATORS[operatorStack.front()]) {
 					// push the operator onto the nodeStack
 					assert(nodeStackSize >= 2);
 
@@ -240,13 +270,30 @@ class Parser {
 					auto lhs = nodeStack.front(); nodeStack.removeFront();
 					auto rhs = nodeStack.front(); nodeStack.removeFront();
 
-					nodeStack.insertFront(new AstNodeBinary(lhs, rhs, t));
+					nodeStack.insertFront(new AstNodeBinary(lhs, rhs, operatorStack.front()));
 					nodeStackSize -= 1;
+
+					operatorStack.removeFront();
 				}
+
+				operatorStack.insertFront(t);
 			}
 
-			nodeStack.insertFront(parseAtom());
+			nodeStack.insertFront(parseBasic());
 			nodeStackSize += 2;
+		}
+
+		// push the remaining operator onto the nodeStack
+		foreach(op; operatorStack) {
+			assert(nodeStackSize >= 2);
+
+			auto lhs = nodeStack.front(); nodeStack.removeFront();
+			auto rhs = nodeStack.front(); nodeStack.removeFront();
+
+			nodeStack.insertFront(new AstNodeBinary(lhs, rhs, operatorStack.front()));
+			nodeStackSize -= 1;
+
+			operatorStack.removeFront();
 		}
 		
 		return nodeStack.front();
@@ -257,12 +304,23 @@ class Parser {
 	}
 
 	private AstNode parseIf() {
-		assert(next().cmd == TokCmd.cmd_if);
-		return null;
+		assert(peek().cmd == TokCmd.cmd_if);
+		next();
+		expectToken(TokType.tok_lpar);
+		auto cond = parseExpr();
+		expectToken(TokType.tok_rpar);
+		auto body_ = parseStmt();
+		if(peek().type == TokType.tok_cmd && peek().cmd == TokCmd.cmd_else) {
+			next();
+			auto othr = parseStmt();
+			return new AstNodeIf(cond, body_, othr);
+		}
+		return new AstNodeIf(cond, body_, null);
 	}
 
 	private AstNode parseWhile() {
-		assert(next().cmd == TokCmd.cmd_while);
+		assert(peek().cmd == TokCmd.cmd_while);
+		next();
 		return null;
 	}
 
@@ -288,7 +346,10 @@ class Parser {
 				return new AstNodeReturn(e);
 			}
 		}
-		return parseExpr();
+
+		auto e = parseExpr();
+		expectToken(TokType.tok_semicolon);
+		return e;
 	}
 
 	private AstNodeBlock parseBlock() {

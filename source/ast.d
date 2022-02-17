@@ -148,14 +148,66 @@ class AstNodeBinary : AstNode {
 	}
 
 	override void gen(GenerationContext ctx) {}
+
+	debug {
+		override void debugPrint(int indent) {
+			writeTabs(indent);
+			writeln("Binary ", tokTypeToStr(type));
+			lhs.debugPrint(indent + 1);
+			rhs.debugPrint(indent + 1);
+		}
+	}
 }
+
+class AstNodeUnary : AstNode {
+	AstNode node;
+	TokType type;
+
+	this(AstNode node, TokType type) {
+		this.node = node;
+		this.type = type;
+	}
+
+	override void gen(GenerationContext ctx) {}
+
+	debug {
+		override void debugPrint(int indent) {
+			writeTabs(indent);
+			writeln("Unary ", tokTypeToStr(type));
+			node.debugPrint(indent + 1);
+		}
+	}
+}
+
 
 class AstNodeIf : AstNode {
 	AstNode cond;
 	AstNode body_;
 	AstNode else_;
 
+	this(AstNode cond, AstNode body_, AstNode else_) {
+		this.cond = cond;
+		this.body_ = body_;
+		this.else_ = else_;
+	}
+
 	override void gen(GenerationContext ctx) {}
+	
+	debug {
+		override void debugPrint(int indent) {
+			writeTabs(indent);
+			writeln("If:");
+			cond.debugPrint(indent + 1);
+			writeTabs(indent);
+			writeln("^Then:");
+			body_.debugPrint(indent + 1);
+			if(else_ !is null) {
+				writeTabs(indent);
+				writeln("^Else:");
+				body_.debugPrint(indent + 1);
+			}
+		}
+	}
 }
 
 class AstNodeWhile : AstNode {
@@ -228,12 +280,16 @@ class AstNodeReturn : AstNode {
 class AstNodeIden : AstNode {
 	string name;
 
+	this(string name) {
+		this.name = name;
+	}
+
 	override void gen(GenerationContext ctx) {}
 
 	debug {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
-			writeln("?");
+			writeln("Identifier: ", name);
 		}
 	}
 }
@@ -278,14 +334,25 @@ class AstNodeContinue : AstNode {
 }
 
 class AstNodeFuncCall : AstNode {
-	AstNode func; AstNode[] args;
+	AstNode func;
+	AstNode[] args;
+
+	this(AstNode func, AstNode[] args) {
+		this.func = func;
+		this.args = args;
+	}
 
 	override void gen(GenerationContext ctx) {}
 
 	debug {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
-			writeln("?");
+			writeln("Func Call:");
+			func.debugPrint(indent + 1);
+			writeTabs(indent);
+			writeln("^Arguments:");
+			foreach(AstNode arg; args)
+				arg.debugPrint(indent + 1);
 		}
 	}
 }
