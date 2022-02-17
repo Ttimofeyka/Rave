@@ -1,0 +1,5 @@
+module gen;
+
+class GenerationContext {
+    
+}

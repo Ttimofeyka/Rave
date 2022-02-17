@@ -2,8 +2,8 @@ module parser;
 
 import std.string;
 import std.array;
-import std.container : DList;
-import std.stdio;
+import std.container : DList, SList;
+import std.stdio, std.conv;
 import ast;
 import tokens;
 import std.algorithm.iteration : map;
@@ -171,12 +171,89 @@ class Parser {
 		return new TypeDeclaration();
 	}
 
-	private AstNode parseAdd() {
+	private AstNode parseSuffix(AstNode base) {
+		if(peek().type == TokType.tok_lpar) {
+			return parseFuncCall(base);
+		}
+
+		return base;
+	}
+
+	private AstNode parseAtom() {
+		auto t = next();
+		if(t.type == TokType.tok_num) return new AstNodeInt(parse!uint(t));
+		// if(t.type == TokType.tok_string) return new AstNodeInt(parse!uint(t));
+		else errorExpected("Expected a number, a string or an expression in parentheses.");
 		return null;
 	}
 
+	private AstNode parsePrefix() {
+		if(peek().type == TokType.tok_multiply) { // pointer dereference
+			return new AstNodeDeref(parseAtom());
+		}
+		else if(peek().type == TokType.tok_bit_and) { // pointer reference
+			return new AstNodeDeref(parseAtom());
+		}
+		return parseAtom();
+	}
+
+	private AstNode parseBasic() {
+		return parseSuffix(parsePrefix());
+	}
+
+	private AstNode parseInfix() {
+		int[TokType] OPERATORS = [
+			TokType.tok_plus: 0,
+			TokType.tok_minus: 0,
+			TokType.tok_multiply: 1,
+			TokType.tok_divide: 1,
+			TokType.tok_equ: -98,
+			TokType.tok_shortplu: -99,
+			TokType.tok_shortmin: -99,
+			TokType.tok_shortmul: -99,
+			TokType.tok_shortdiv: -99,
+			TokType.tok_or: -50,
+			TokType.tok_and: -50,
+			TokType.tok_bit_and: -20,
+			TokType.tok_bit_or: -22,
+			TokType.tok_bit_ls: -25,
+			TokType.tok_bit_rs: -25,
+			TokType.tok_bit_xor: -30,
+		];
+
+		TokType[] operatorStack = [];
+		SList!AstNode nodeStack = [parseAtom()];
+		uint nodeStackSize = 0;
+
+		while(peek().type in OPERATORS)
+		{
+			if(operatorStack.length == 0)
+				operatorStack ~= next().type;
+			else {
+				auto t = next().type;
+				int prec = OPERATORS[t];
+				while(prec <= OPERATORS[operatorStack[operatorStack.length - 1]]) {
+					// push the operator onto the nodeStack
+					assert(nodeStackSize >= 2);
+
+
+					auto lhs = nodeStack.front(); nodeStack.removeFront();
+					auto rhs = nodeStack.front(); nodeStack.removeFront();
+
+					nodeStack.insertFront(new AstNodeBinary(lhs, rhs, t));
+					nodeStackSize -= 1;
+				}
+			}
+
+			nodeStack.insertFront(parseAtom());
+			nodeStackSize += 2;
+		}
+		
+		return nodeStack.front();
+	}
+
 	private AstNode parseExpr() {
-		return parseAdd();
+		return parseInfix();
 	}
 
 	private AstNode parseIf() {

@@ -2,6 +2,7 @@ module ast;
 import std.stdio;
 import std.array : join;
 import std.algorithm.iteration : map;
+import gen, tokens;
 
 /// We have two separate syntax trees: for types and for values.
 
@@ -53,6 +54,8 @@ struct FuncSignature {
 
 // Abstract syntax tree Node.
 class AstNode {
+	void gen(GenerationContext ctx) {}
+
 	debug {
 		void writeTabs(int indent) {
 			for(int i = 0; i < indent; ++i)
@@ -106,6 +109,8 @@ class AstNodeFunction : AstNode {
 		this.body_ = body_;
 	}
 
+	override void gen(GenerationContext ctx) {}
+
 	debug {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
@@ -115,37 +120,55 @@ class AstNodeFunction : AstNode {
 	}
 }
 
-enum BinaryOpType {
-	binary_op_add, // addition
-	binary_op_sub, // substraction
-	binary_op_mul, // multiplication
-	binary_op_div, // division
-	binary_op_grt, // greater than
-	binary_op_lst, // less than
-	binary_op_geq, // greater than or equal
-	binary_op_leq, // less than or equal
-	binary_op_eql, // equal to
-	binary_op_neq, // not equal to
-}
+// token naming sucks
+// enum BinaryOpType {
+// 	binary_op_add, // addition
+// 	binary_op_sub, // substraction
+// 	binary_op_mul, // multiplication
+// 	binary_op_div, // division
+// 	binary_op_and, // boolean and
+// 	binary_op_cor, // boolean or
+// 	binary_op_xor, // exclusive or
+// 	binary_op_grt, // greater than
+// 	binary_op_lst, // less than
+// 	binary_op_geq, // greater than or equal
+// 	binary_op_leq, // less than or equal
+// 	binary_op_eql, // equal to
+// 	binary_op_neq, // not equal to
+// }
 
 class AstNodeBinary : AstNode {
 	AstNode lhs, rhs;
-	BinaryOpType type;
+	TokType type;
+
+	this(AstNode lhs, AstNode rhs, TokType type) {
+		this.lhs = lhs;
+		this.rhs = rhs;
+		this.type = type;
+	}
+
+	override void gen(GenerationContext ctx) {}
 }
 
 class AstNodeIf : AstNode {
 	AstNode cond;
 	AstNode body_;
 	AstNode else_;
+
+	override void gen(GenerationContext ctx) {}
 }
 
 class AstNodeWhile : AstNode {
 	AstNode cond;
 	AstNode body_;
+
+	override void gen(GenerationContext ctx) {}
 }
 
 class AstNodeAsm : AstNode {
 	string value; // TODO
+
+	override void gen(GenerationContext ctx) {}
 }
 
 class AstNodeBlock : AstNode {
@@ -154,6 +177,8 @@ class AstNodeBlock : AstNode {
 	this(AstNode[] nodes) {
 		this.nodes = nodes;
 	}
+
+	override void gen(GenerationContext ctx) {}
 
 	debug {
 		override void debugPrint(int indent) {
@@ -174,6 +199,8 @@ class AstNodeExtern : AstNode {
 		this.decl = decl;
 	}
 
+	override void gen(GenerationContext ctx) {}
+
 	debug {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
@@ -187,6 +214,8 @@ class AstNodeReturn : AstNode {
 
 	this(AstNode value) { this.value = value; }
 
+	override void gen(GenerationContext ctx) {}
+
 	debug {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
@@ -196,11 +225,71 @@ class AstNodeReturn : AstNode {
 	}
 }
 
-class AstNodeIden : AstNode { string name; }
-class AstNodeLabel : AstNode { string name; }
-class AstNodeBreak : AstNode { string label; /* optional */ }
-class AstNodeContinue : AstNode { string label; /* optional */ }
-class AstNodeFuncCall : AstNode { AstNode func; AstNode[] args; }
+class AstNodeIden : AstNode {
+	string name;
+
+	override void gen(GenerationContext ctx) {}
+
+	debug {
+		override void debugPrint(int indent) {
+			writeTabs(indent);
+			writeln("?");
+		}
+	}
+}
+
+class AstNodeLabel : AstNode {
+	string name;
+
+	override void gen(GenerationContext ctx) {}
+
+	debug {
+		override void debugPrint(int indent) {
+			writeTabs(indent);
+			writeln("?");
+		}
+	}
+}
+
+class AstNodeBreak : AstNode {
+	string label; /* optional */
+
+	override void gen(GenerationContext ctx) {}
+
+	debug {
+		override void debugPrint(int indent) {
+			writeTabs(indent);
+			writeln("?");
+		}
+	}
+}
+
+class AstNodeContinue : AstNode {
+	string label; /* optional */
+
+	override void gen(GenerationContext ctx) {}
+
+	debug {
+		override void debugPrint(int indent) {
+			writeTabs(indent);
+			writeln("?");
+		}
+	}
+}
+
+class AstNodeFuncCall : AstNode {
+	AstNode func; AstNode[] args;
+
+	override void gen(GenerationContext ctx) {}
+
+	debug {
+		override void debugPrint(int indent) {
+			writeTabs(indent);
+			writeln("?");
+		}
+	}
+}
+
 
 class AstNodeInt : AstNode {
 	uint value;
@@ -214,4 +303,5 @@ class AstNodeInt : AstNode {
 		}
 	}
 }
-class AstNodeFloat : AstNode { float value; }
+
+// class AstNodeFloat : AstNode { float value; }

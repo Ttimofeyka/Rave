@@ -5,32 +5,32 @@ import logger;
 import std.uni : isNumber;
 
 enum TokType {
-    tok_num = 0, // Число
-    tok_id = 1, // Идентификатор
-    tok_equ = 2, //=
-    tok_lbra = 3, //[
-    tok_rbra = 4, //]
-    tok_lpar = 5, //(
-    tok_rpar = 6, //)
-    tok_plus = 7, //+
-    tok_minus = 8, //-
-    tok_multiply = 9, //*(но может быть признаком указателя, погугли что такое указатель в С)
+    tok_num = 0, // number
+    tok_id = 1, // identifier
+    tok_equ = 2, // =
+    tok_lbra = 3, // [
+    tok_rbra = 4, // ]
+    tok_lpar = 5, // (
+    tok_rpar = 6, // )
+    tok_plus = 7, // +
+    tok_minus = 8, // -
+    tok_multiply = 9, // *
     tok_divide = 10, // /
     tok_more = 11, // >
     tok_less = 12, // <
     tok_equal = 13, // ==
     tok_nequal = 14, // !=
-    tok_string = 15, // строка
-    tok_char = 16, // символ
+    tok_string = 15, // string
+    tok_char = 16, // character
     tok_comma = 17, // ,
-    tok_cmd = 18, // команда
-    tok_2rbra = 19, //{
-    tok_2lbra = 20, //}
-    tok_struct_get = 21, //->
-    tok_semicolon = 22, //;
-    tok_shortplu = 23, //+=
-    tok_shortmin = 24, //-=
-    tok_shortmul = 25, //*=
+    tok_cmd = 18, // keyword
+    tok_2rbra = 19, // {
+    tok_2lbra = 20, // }
+    tok_struct_get = 21, // ->
+    tok_semicolon = 22, // ;
+    tok_shortplu = 23, // +=
+    tok_shortmin = 24, // -=
+    tok_shortmul = 25, // *=
     tok_shortdiv = 26, // /=
     tok_and = 27, // &&
     tok_or = 28, // ||
