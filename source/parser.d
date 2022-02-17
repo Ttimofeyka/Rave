@@ -171,9 +171,47 @@ class Parser {
 		return new TypeDeclaration();
 	}
 
-	private AstNode parseStmt() {
-		// if(peek().type == TokType.tok_)
+	private AstNode parseAdd() {
 		return null;
+	}
+
+	private AstNode parseExpr() {
+		return parseAdd();
+	}
+
+	private AstNode parseIf() {
+		assert(next().cmd == TokCmd.cmd_if);
+		return null;
+	}
+
+	private AstNode parseWhile() {
+		assert(next().cmd == TokCmd.cmd_while);
+		return null;
+	}
+
+	private AstNode parseStmt() {
+		if(peek().type == TokType.tok_2lbra) {
+			return parseBlock();
+		}
+		else if(peek().type == TokType.tok_semicolon) {
+			next();
+			return parseStmt();
+		}
+		else if(peek().type == TokType.tok_cmd) {
+			/**/ if(peek().cmd == TokCmd.cmd_if) {
+				return parseIf();
+			}
+			else if(peek().cmd == TokCmd.cmd_while) {
+				return parseWhile();
+			}
+			else if(peek().cmd == TokCmd.cmd_ret) {
+				next();
+				auto e = parseExpr();
+				expectToken(TokType.tok_semicolon);
+				return new AstNodeReturn(e);
+			}
+		}
+		return parseExpr();
 	}
 
 	private AstNodeBlock parseBlock() {

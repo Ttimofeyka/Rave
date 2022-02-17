@@ -154,6 +154,16 @@ class AstNodeBlock : AstNode {
 	this(AstNode[] nodes) {
 		this.nodes = nodes;
 	}
+
+	debug {
+		override void debugPrint(int indent) {
+			writeTabs(indent);
+			writeln("Block: ", nodes.length, " statements");
+			foreach(AstNode node; nodes) {
+				node.debugPrint(indent + 1);
+			}
+		}
+	}
 }
 
 class AstNodeExtern : AstNode {
@@ -163,6 +173,27 @@ class AstNodeExtern : AstNode {
 	this(FunctionDeclaration decl) {
 		this.decl = decl;
 	}
+
+	debug {
+		override void debugPrint(int indent) {
+			writeTabs(indent);
+			writeln("Extern: ", decl.toString());
+		}
+	}
+}
+
+class AstNodeReturn : AstNode {
+	AstNode value;
+
+	this(AstNode value) { this.value = value; }
+
+	debug {
+		override void debugPrint(int indent) {
+			writeTabs(indent);
+			writeln("Return:");
+			value.debugPrint(indent  + 1);
+		}
+	}
 }
 
 class AstNodeIden : AstNode { string name; }
@@ -170,5 +201,17 @@ class AstNodeLabel : AstNode { string name; }
 class AstNodeBreak : AstNode { string label; /* optional */ }
 class AstNodeContinue : AstNode { string label; /* optional */ }
 class AstNodeFuncCall : AstNode { AstNode func; AstNode[] args; }
-class AstNodeInt : AstNode { uint value; }
+
+class AstNodeInt : AstNode {
+	uint value;
+
+	this(uint value) { this.value = value; }
+
+	debug {
+		override void debugPrint(int indent) {
+			writeTabs(indent);
+			writeln("Int: ", value);
+		}
+	}
+}
 class AstNodeFloat : AstNode { float value; }

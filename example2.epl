@@ -1,1 +1,3 @@
-int main(int a, void b) {}
+int main(int a, void b) {
+	{}
+}
