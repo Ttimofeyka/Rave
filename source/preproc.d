@@ -15,7 +15,7 @@ class Preprocessor {
         TList define_toks = new TList();
 
         while(tokens[i].type != TokType.tok_semicolon) {
-            define_toks.insertBack(tokens[i]);
+            define_toks.insertBack(tokens[i]); 
             i+=1;
         }
 

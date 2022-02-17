@@ -6,6 +6,7 @@ import std.container : DList;
 import std.stdio;
 import ast;
 import tokens;
+import std.algorithm.iteration : map;
 
 class Parser {
 	private TList _toks;
@@ -64,7 +65,7 @@ class Parser {
 	private FunctionArgument[] parseFuncArguments() {
 		// FunctionArgument[] args;
 		
-		// if(peek(p).type != TokType.tok_lbra) {
+		// if(peek(p).type != TokType.tok_lpar) {
 		// 	errorExpected(p, "Expected an opening parenthesis.");
 		// 	return [];
 		// }
@@ -102,14 +103,14 @@ class Parser {
 	private FunctionArgument[] parseFuncArgumentDecls() {
 		FunctionArgument[] args;
 		
-		auto lbra = expectToken(TokType.tok_lbra);
-		if(lbra is null) return [];
+		auto lpar = expectToken(TokType.tok_lpar);
+		if(lpar is null) return [];
 
-		while(peek().type != TokType.tok_rbra)
+		while(peek().type != TokType.tok_rpar)
 		{
 			auto decl = parseVarDecl();
 			args ~= FunctionArgument(decl.name, decl.type);
-			if(peek().type == TokType.tok_rbra) break;
+			if(peek().type == TokType.tok_rpar) break;
 			expectToken(TokType.tok_comma);
 		}
 
@@ -142,8 +143,13 @@ class Parser {
 			name = new Token("<error>");
 		}
 		
-		if(peek().type == TokType.tok_lbra) { // Arguments
+		if(peek().type == TokType.tok_lpar) { // Arguments
 			auto args = parseFuncArgumentDecls();
+			
+			AtstNode[] argTypes = array(map!(a => a.type)(args));
+			string[] argNames = array(map!(a => a.name)(args));
+
+			return FunctionDeclaration(FuncSignature(retType, argTypes), name.value, argNames);
 		}
 
 		return FunctionDeclaration(FuncSignature(retType, []), name.value, []);
@@ -172,6 +178,7 @@ class Parser {
 
 	private AstNodeBlock parseBlock() {
 		AstNode[] nodes;
+		assert(next().type == TokType.tok_2lbra);
 		while(peek().type != TokType.tok_2rbra) {
 			nodes ~= parseStmt();
 		}
@@ -185,8 +192,9 @@ class Parser {
 	}
 
 	private AstNode parseExtern() {
-		// TODO: Parse extern
-		return null;
+		assert(next().cmd == TokCmd.cmd_extern);
+		auto decl = parseFuncDecl(function(Token tok) { return tok.type == TokType.tok_semicolon; });
+		return new AstNodeExtern(decl);
 	}
 
 	private bool isTypeDecl() {

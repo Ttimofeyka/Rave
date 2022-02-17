@@ -50,11 +50,6 @@ enum TokCmd {
     cmd_do = 3,
     cmd_include = 4,
     cmd_extern = 5,
-    cmd_int = 6,
-    cmd_string = 7,
-    cmd_char = 8,
-    cmd_byte = 9,
-    cmd_bit = 10,
     cmd_asm = 11,
     cmd_struct = 12,
     cmd_define = 13,
@@ -62,7 +57,6 @@ enum TokCmd {
     cmd_break = 15,
     cmd_continue = 16,
     cmd_sizeof = 17,
-    cmd_float = 18,
     cmd_void = 19
 }
 
@@ -184,15 +178,6 @@ class Token {
                 case "asm": this.type=TokType.tok_cmd;
                            this.cmd=TokCmd.cmd_asm;
                            break;
-                case "int": this.type=TokType.tok_cmd;
-                           this.cmd=TokCmd.cmd_int;
-                           break;
-                case "char": this.type=TokType.tok_cmd;
-                           this.cmd=TokCmd.cmd_char;
-                           break;
-                case "string": this.type=TokType.tok_cmd;
-                           this.cmd=TokCmd.cmd_string;
-                           break;
                 case "struct": this.type=TokType.tok_cmd;
                            this.cmd=TokCmd.cmd_struct;
                            break;
@@ -207,15 +192,6 @@ class Token {
                            break;
                 case "sizeof": this.type=TokType.tok_cmd;
                            this.cmd=TokCmd.cmd_sizeof;
-                           break;
-                case "float": this.type=TokType.tok_cmd;
-                           this.cmd=TokCmd.cmd_float;
-                           break;
-                case "void": this.type=TokType.tok_cmd;
-                           this.cmd=TokCmd.cmd_void;
-                           break;
-                case "bit": this.type=TokType.tok_cmd;
-                           this.cmd=TokCmd.cmd_bit;
                            break;
                 default: this.type = TokType.tok_id; break;
             }
