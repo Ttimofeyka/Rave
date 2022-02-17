@@ -11,5 +11,5 @@ int main {
 ## Goals
 * ~~Make a lexer~~ (100%)
 * ~~Make a preprocessor~~ (100%)
-* Make a parser (60%)
+* Make a parser (80%)
 * Make a code generator (0%)
