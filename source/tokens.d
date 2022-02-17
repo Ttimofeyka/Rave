@@ -151,6 +151,10 @@ class Token {
         else if(s=="!=") this.type = TokType.tok_nequal;
         else if(s=="==") this.type = TokType.tok_equal;
         else if(s=="=") this.type = TokType.tok_equ;
+        else if(s=="+") this.type = TokType.tok_plus;
+        else if(s=="-") this.type = TokType.tok_minus;
+        else if(s=="*") this.type = TokType.tok_multiply;
+        else if(s=="/") this.type = TokType.tok_divide;
         else {
             // Commands or Variables(or Defines)
             switch(s.toLower()) {
