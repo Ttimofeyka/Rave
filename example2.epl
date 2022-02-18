@@ -1,13 +1,14 @@
-extern exit(int code);
+extern exit(code: int);
 extern abort;
 def nullptr 0;
 
-int main {
-	int[10] vals;
-	vals[0] = 3;
-	int *ptr = &vals;
+main: int {
+	vals: int[10];
+	vals[0] = 2;
+	ptr: int* = &vals;
 	ptr[0] = 3;
 	ptr = nullptr;
 	ptr[3] = 4;
 	exit(ptr[2]);
+	ret 0;
 }
