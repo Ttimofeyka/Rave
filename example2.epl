@@ -1,10 +1,14 @@
-
-extern exit(int code);
+extern exit(code: int);
 extern abort;
+def nullptr 0;
 
-int main {
-	if((1+1) == (2+2)) {
-		exit(0);
-	}
+main: int {
+	vals: int[10];
+	vals[0] = 2;
+	ptr: int* = &vals;
+	ptr[0] = 3;
+	ptr = nullptr;
+	ptr[3] = 4;
+	exit(ptr[2]);
 	ret 0;
 }

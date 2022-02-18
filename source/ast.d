@@ -1,5 +1,5 @@
 module ast;
-import std.stdio;
+import std.stdio, std.conv;
 import std.array : join;
 import std.algorithm.iteration : map;
 import gen, tokens;
@@ -37,6 +37,40 @@ class AtstNodeName : AtstNode {
 	}
 }
 
+class AtstNodePointer : AtstNode {
+	AtstNode node;
+
+	this(AtstNode node) {
+		this.node = node;
+	}
+
+	debug {
+		override string toString() const {
+			return node.toString() ~ "*";
+		}
+	}
+}
+
+class AtstNodeArray : AtstNode {
+	AtstNode node;
+	uint count;
+
+	this(AtstNode node, uint count) {
+		this.node = node;
+		this.count = count;
+	}
+
+	debug {
+		override string toString() const {
+			if(count == 0) {
+				return node.toString() ~ "[]";
+			}
+			else {
+				return node.toString() ~ "[" ~ to!string(count)  ~ "]";
+			}
+		}
+	}
+}
 struct FuncSignature {
 	AtstNode ret;
 	AtstNode[] args;
@@ -294,6 +328,29 @@ class AstNodeReturn : AstNode {
 	}
 }
 
+class AstNodeIndex : AstNode {
+	AstNode base;
+	AstNode index;
+
+	this(AstNode base, AstNode index) {
+		this.base = base;
+		this.index = index;
+	}
+
+	override void gen(GenerationContext ctx) {}
+
+	debug {
+		override void debugPrint(int indent) {
+			writeTabs(indent);
+			writeln("Index:");
+			base.debugPrint(indent + 1);
+			writeTabs(indent);
+			writeln("^By:");
+			index.debugPrint(indent + 1);
+		}
+	}
+}
+
 class AstNodeIden : AstNode {
 	string name;
 
@@ -307,6 +364,32 @@ class AstNodeIden : AstNode {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
 			writeln("Identifier: ", name);
+		}
+	}
+}
+
+class AstNodeDecl : AstNode {
+	string name;
+	AtstNode type;
+	AstNode value; // can be null!
+
+	this(string name, AtstNode type, AstNode value) {
+		this.name = name;
+		this.type = type;
+		this.value = value;
+	}
+
+	override void gen(GenerationContext ctx) {}
+
+	debug {
+		override void debugPrint(int indent) {
+			writeTabs(indent);
+			writeln("Variable Declaration: ", name, ": ", type.toString());
+			if(value !is null) {
+				writeTabs(indent);
+				writeln("^Default Value:");
+				value.debugPrint(indent + 1);
+			}
 		}
 	}
 }

@@ -1,6 +1,7 @@
 import std.string;
 import std.container : Array;
 import std.array;
+import std.stdio;
 import logger;
 import std.uni : isNumber;
 
@@ -113,6 +114,13 @@ class Token {
 
     this(string s) {
         this.value = s;
+        if(s.length == 0) {
+            debug {
+                writeln("Error: Token(\"\") called!");
+            }
+            return;
+        }
+
         if(s[0]=='"') {
             if(s[s.length-1]=='"') {
                 this.type = TokType.tok_string;

@@ -50,9 +50,9 @@ class Parser {
 		return t;
 	}
 
-	private AtstNode parseType() {
+	private AtstNode parseTypeAtom() {
 		if(peek().type == TokType.tok_id) {
-			auto t= next();
+			auto t = next();
 			if(t.value == "void")
 				return new AtstNodeVoid();
 			return new AtstNodeName(t.value);
@@ -63,15 +63,26 @@ class Parser {
 		return null;
 	}
 
-	private VariableDeclaration parseVarDecl() {
-		// <type> <id:name> [':' <qualified-id:attr> (',' qualified-id:attr)*]
-		// Example? int abcd : volatile, std.profile.watch;
-		
-		auto type = parseType;
-		auto nameToken = expectToken(TokType.tok_id);
-		if(nameToken is null) nameToken = new Token("<error>");
+	private AtstNode parseType() {
+		auto t = parseTypeAtom();
+		while(peek().type == TokType.tok_multiply || peek().type == TokType.tok_lbra) {
+			writeln("type ptr or []");
+			/**/ if(peek().type == TokType.tok_multiply) {
+				next();
+				t = new AtstNodePointer(t);
+			}
+			else if(peek().type == TokType.tok_lbra) {
+				next();
+				uint num = 0;
+				if(peek().type == TokType.tok_num) {
+					num = to!uint(next().value);
+				}
+				expectToken(TokType.tok_rbra);
+				t = new AtstNodeArray(t, num);
+			}
+		}
 
-		return VariableDeclaration(type, nameToken.value);
+		return t;
 	}
 
 	private FunctionArgument[] parseFuncArgumentDecls() {
@@ -82,8 +93,10 @@ class Parser {
 
 		while(peek().type != TokType.tok_rpar)
 		{
-			auto decl = parseVarDecl();
-			args ~= FunctionArgument(decl.name, decl.type);
+			auto name = expectToken(TokType.tok_id);
+			expectToken(TokType.tok_type);
+			auto type = parseType();
+			args ~= FunctionArgument(name.value, type);
 			if(peek().type == TokType.tok_rpar) break;
 			expectToken(TokType.tok_comma);
 		}
@@ -99,57 +112,29 @@ class Parser {
 	 * Returns: Function declaration with all of the necessary information in it.
 	 */
 	private FunctionDeclaration parseFuncDecl(bool function(Token) isEnd) {
-		// [<type:ret-type>] <id:fun-name> ['(' <args> ')'] (';'|'{')
-		
-		// TODO: Allow for types that don't start with an id.
-		// probably do the skipping thing if the peeked token
-		// is an identifier, otherwise parse the type.
+		// <id:fun-name> ['(' <args> ')'] [':' <type:rettype>] end
+		// <id:fun-name> ['(' <args> ')'] [':' [<type:rettype>]] end <-- future
 
-		// NOTE: Due do this syntax, types cannot be the form
-		// of (<id> '(' ...) because that would make the grammar
-		// ambiguous.
+		auto name = expectToken(TokType.tok_id);
 
-		auto firstToken = expectToken(TokType.tok_id);
-
-		assert(firstToken !is null); // shouldn't be calling this function if this fails.
 		if(isEnd(peek())) { // the decl has ended, the return type is void and there are no args.
-			return FunctionDeclaration(FuncSignature(new AtstNodeVoid(), []), firstToken.value, []);
+			return FunctionDeclaration(FuncSignature(new AtstNodeVoid(), []), name.value, []);
 		}
 
-		AtstNode retType;
-		Token name = firstToken;
+		AtstNode retType = new AtstNodeVoid();
+		FunctionArgument[] args = [];
 		
-		// If the next token is not a '(' (which would mean that
-		// the function has no return type and it's just the id)
-		if(peek().type != TokType.tok_lpar) {
-			// otherwise, if this is not the end, firstToken is the first token of the return type
-			// so we need to decrement the _idx so the type parsing function doesn't fail.
-			_idx -= 1;
+		if(peek().type == TokType.tok_lpar) args = parseFuncArgumentDecls();
 
-			writeln("parsing return type, peek: ", tokTypeToStr(peek().type));
+		if(peek().type == TokType.tok_type) {
+			next();
 			retType = parseType();
-
-			// The name will be the next token.
-			name = expectToken(TokType.tok_id);
-		} else {
-			retType = new AtstNodeVoid();
 		}
 
-		if(name is null) {
-			errorExpected("Expected the name of the function.");
-			name = new Token("<error>");
-		}
-		
-		if(peek().type == TokType.tok_lpar) { // Arguments
-			auto args = parseFuncArgumentDecls();
-			
-			AtstNode[] argTypes = array(map!(a => a.type)(args));
-			string[] argNames = array(map!(a => a.name)(args));
+		AtstNode[] argTypes = array(map!(a => a.type)(args));
+		string[] argNames = array(map!(a => a.name)(args));
 
-			return FunctionDeclaration(FuncSignature(retType, argTypes), name.value, argNames);
-		}
-
-		return FunctionDeclaration(FuncSignature(retType, []), name.value, []);
+		return FunctionDeclaration(FuncSignature(retType, argTypes), name.value, argNames);
 	}
 
 	private TypeDeclarationStruct parseStructTypeDecl() {
@@ -190,9 +175,16 @@ class Parser {
 	}
 
 	private AstNode parseSuffix(AstNode base) {
-		writeln("parseSuffix, peek: ", tokTypeToStr(peek().type));
-		if(peek().type == TokType.tok_lpar) {
-			return parseFuncCall(base);
+		while(peek().type == TokType.tok_lpar || peek().type == TokType.tok_lbra) {
+			if(peek().type == TokType.tok_lpar) {
+				base = parseFuncCall(base);
+			}
+			else if(peek().type == TokType.tok_lbra) {
+				next();
+				auto idx = parseExpr();
+				expectToken(TokType.tok_rbra);
+				base = new AstNodeIndex(base, idx);
+			}
 		}
 
 		return base;
@@ -251,11 +243,14 @@ class Parser {
 		SList!AstNode nodeStack;
 		uint nodeStackSize = 0;
 
+		// writeln("nodeStack.push#0, peek - ", tokTypeToStr(peek().type));
 		nodeStack.insertFront(parseBasic());
+		nodeStackSize += 1;
 
 		while(peek().type in OPERATORS)
 		{
 			if(operatorStack.empty) {
+				// writeln("EMPTY OPERATORS");
 				operatorStack.insertFront(next().type);
 			}
 			else {
@@ -264,7 +259,6 @@ class Parser {
 				while(prec <= OPERATORS[operatorStack.front()]) {
 					// push the operator onto the nodeStack
 					assert(nodeStackSize >= 2);
-
 
 					auto lhs = nodeStack.front(); nodeStack.removeFront();
 					auto rhs = nodeStack.front(); nodeStack.removeFront();
@@ -278,16 +272,20 @@ class Parser {
 				operatorStack.insertFront(t);
 			}
 
+			// writeln("nodeStack.push, peek - ", tokTypeToStr(peek().type));
 			nodeStack.insertFront(parseBasic());
-			nodeStackSize += 2;
+			nodeStackSize += 1;
 		}
 
+		// writeln("done");
 		// push the remaining operator onto the nodeStack
 		foreach(op; operatorStack) {
+			// writeln("OP:", tokTypeToStr(op));
+			nodeStack.front().debugPrint(0);
 			assert(nodeStackSize >= 2);
 
-			auto lhs = nodeStack.front(); nodeStack.removeFront();
 			auto rhs = nodeStack.front(); nodeStack.removeFront();
+			auto lhs = nodeStack.front(); nodeStack.removeFront();
 
 			nodeStack.insertFront(new AstNodeBinary(lhs, rhs, operatorStack.front()));
 			nodeStackSize -= 1;
@@ -349,7 +347,31 @@ class Parser {
 				return new AstNodeReturn(e);
 			}
 		}
-
+		else if(peek().type == TokType.tok_id) {
+			writeln("ID");
+			// might be
+			//   <name:id> ':' <type:id> [ '=' <expr> ] ';'
+			writeln("Type: "~to!string(peek().type)~" "~peek().value);
+			auto name = next().value;
+			if(peek().type != TokType.tok_type) {
+				writeln("we aint bad bruh m8");
+				_idx -= 1; // oops, this is not a declaration!
+				writeln("Type: "~to!string(peek().type)~" "~peek().value);
+				auto e = parseExpr();
+				expectToken(TokType.tok_semicolon);
+				return e;
+			}
+			next(); // skip ':' if it exists'
+			auto type = parseType();
+			auto decl = new AstNodeDecl(name, type, null);
+			if(peek().type == TokType.tok_equ) {
+				next();
+				decl.value = parseExpr();
+			}
+			expectToken(TokType.tok_semicolon);
+			return decl;
+		}
+		
 		auto e = parseExpr();
 		expectToken(TokType.tok_semicolon);
 		return e;
