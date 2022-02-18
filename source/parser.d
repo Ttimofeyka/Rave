@@ -2,7 +2,7 @@ module parser;
 
 import std.string;
 import std.array;
-import std.container : DList, SList;
+import std.container : SList;
 import std.stdio, std.conv;
 import ast;
 import tokens;
