@@ -3,6 +3,7 @@ import std.stdio;
 import std.array : join;
 import std.algorithm.iteration : map;
 import gen, tokens;
+import llvm;
 
 /// We have two separate syntax trees: for types and for values.
 
@@ -378,6 +379,10 @@ class AstNodeInt : AstNode {
 	uint value;
 
 	this(uint value) { this.value = value; }
+
+	override LLVMValueRef gen(GenerationContext ctx) {
+		
+	}
 
 	debug {
 		override void debugPrint(int indent) {
