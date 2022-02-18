@@ -11,5 +11,5 @@ main : int {
 ## Goals
 * ~~Make a lexer~~ (100%)
 * ~~Make a preprocessor~~ (100%)
-* Make a parser (90%)
+* Make a parser (95%) (TODO: `struct`s and type inference syntax)
 * Make a code generator (1%)
