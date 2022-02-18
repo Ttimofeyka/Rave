@@ -227,7 +227,7 @@ class AstNodeWhile : AstNode {
 			writeln("While:");
 			cond.debugPrint(indent + 1);
 			writeTabs(indent);
-			writeln("^Then:");
+			writeln("^Body:");
 			body_.debugPrint(indent + 1);
 		}
 	}

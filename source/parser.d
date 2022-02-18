@@ -203,12 +203,11 @@ class Parser {
 		if(t.type == TokType.tok_num) return new AstNodeInt(parse!uint(t.value));
 		if(t.type == TokType.tok_id) return new AstNodeIden(t.value);
 		else if(t.type == TokType.tok_lpar) {
-			next();
 			auto e = parseExpr();
 			expectToken(TokType.tok_rpar);
 			return e;
 		}
-		else errorExpected("Expected a number, a string or an expression in parentheses.");
+		else error("Expected a number, a string or an expression in parentheses. Got: " ~ tokTypeToStr(t.type));
 		return null;
 	}
 
