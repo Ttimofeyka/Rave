@@ -380,7 +380,7 @@ class AstNodeInt : AstNode {
 
 	this(uint value) { this.value = value; }
 
-	override LLVMValueRef gen(GenerationContext ctx) {
+	override void gen(GenerationContext ctx) {
 		
 	}
 
