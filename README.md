@@ -12,4 +12,4 @@ int main {
 * ~~Make a lexer~~ (100%)
 * ~~Make a preprocessor~~ (100%)
 * Make a parser (90%)
-* Make a code generator (0.01%)
+* Make a code generator (1%)

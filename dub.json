@@ -4,7 +4,12 @@
 		"somerandomdev49"
 	],
 	"copyright": "Copyright © 2022, Timofeyka",
+	"dependencies": {
+		"llvm-d": "~>3.0.0"
+	},
 	"description": "EPL programming language",
 	"license": "proprietary",
-	"name": "epl"
+	"name": "epl",
+	"lflags": ["-L/usr/lib/llvm-10/lib", "-R/usr/lib/llvm-10/lib"],
+	"libs": ["LLVM", "LTO"]
 }

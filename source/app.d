@@ -7,9 +7,12 @@ import cmd;
 import std.file : readText;
 import preproc;
 import parser;
+import llvm;
 
 void main(string[] args)
 {
+  	LLVMInitializeNativeTarget();
+
 	input(args);
 	auto lexer = new Lexer(readText(source_file));
 	auto preproc = new Preprocessor(lexer.getTokens());
