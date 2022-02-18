@@ -3,7 +3,7 @@ EPL - is a compiled, procedural and statically typed high-level programming lang
 ## "Hello, world!" Example
 ```c
 include "std";
-int main {
+main : int {
   print("Hello, world!");
   ret 0;
 }
