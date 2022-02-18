@@ -214,7 +214,23 @@ class AstNodeWhile : AstNode {
 	AstNode cond;
 	AstNode body_;
 
+	this(AstNode cond, AstNode body_) {
+		this.cond = cond;
+		this.body_ = body_;
+	}
+
 	override void gen(GenerationContext ctx) {}
+
+	debug {
+		override void debugPrint(int indent) {
+			writeTabs(indent);
+			writeln("While:");
+			cond.debugPrint(indent + 1);
+			writeTabs(indent);
+			writeln("^Then:");
+			body_.debugPrint(indent + 1);
+		}
+	}
 }
 
 class AstNodeAsm : AstNode {

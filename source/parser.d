@@ -321,7 +321,11 @@ class Parser {
 	private AstNode parseWhile() {
 		assert(peek().cmd == TokCmd.cmd_while);
 		next();
-		return null;
+		expectToken(TokType.tok_lpar);
+		auto cond = parseExpr();
+		expectToken(TokType.tok_rpar);
+		auto body_ = parseStmt();
+		return new AstNodeWhile(cond, body_);
 	}
 
 	private AstNode parseStmt() {

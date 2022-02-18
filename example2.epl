@@ -2,14 +2,9 @@
 extern exit(int code);
 extern abort;
 
-main(int a, void b) {
-	a + b;
-
-	if(a == b) {
-		a - b;
+int main {
+	if((1+1) == (2+2)) {
 		exit(0);
-	} else {
-		b - a;
-		abort();
 	}
+	ret 0;
 }
