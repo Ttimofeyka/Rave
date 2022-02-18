@@ -1,10 +1,10 @@
 include "std";
-def toret 0;
+def zero 0;
 
-int main {
-	if(toret == 0) {
-		ret toret + 1;
-	}
-
-	ret toret;
+main(argc: int, argv: char*[]): int {
+    if(zero == 0) {
+        ret zero + 1;
+    }
+    
+    ret zero;
 }
