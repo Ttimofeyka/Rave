@@ -381,7 +381,7 @@ class AstNodeInt : AstNode {
 	this(uint value) { this.value = value; }
 
 	override void gen(GenerationContext ctx) {
-		
+		ctx.values.insertBack(LLVMConstInt(LLVMInt32Type(),cast(ulong)value,false));
 	}
 
 	debug {

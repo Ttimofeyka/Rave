@@ -40,7 +40,8 @@ enum TokType {
     tok_bit_rs = 32, // >>
     tok_bit_xor = 33, // ^
     tok_bit_not = 34, // ~
-    tok_not = 35 // !
+    tok_not = 35, // !
+    tok_type = 36 // :
 }
 
 enum TokCmd {
@@ -100,6 +101,7 @@ string tokTypeToStr(TokType type)
 	case TokType.tok_bit_xor: return "bit_xor";
 	case TokType.tok_bit_not: return "bit_not";
 	case TokType.tok_not: return "not";
+    case TokType.tok_type: return "type";
 	default: return "?";
 	}
 }
@@ -155,6 +157,7 @@ class Token {
         else if(s=="-") this.type = TokType.tok_minus;
         else if(s=="*") this.type = TokType.tok_multiply;
         else if(s=="/") this.type = TokType.tok_divide;
+        else if(s==":") this.type = TokType.tok_type;
         else {
             // Commands or Variables(or Defines)
             switch(s.toLower()) {
