@@ -367,6 +367,32 @@ class AstNodeIden : AstNode {
 	}
 }
 
+class AstNodeDecl : AstNode {
+	string name;
+	AtstNode type;
+	AstNode value; // can be null!
+
+	this(string name, AtstNode type, AstNode value) {
+		this.name = name;
+		this.type = type;
+		this.value = value;
+	}
+
+	override void gen(GenerationContext ctx) {}
+
+	debug {
+		override void debugPrint(int indent) {
+			writeTabs(indent);
+			writeln("Variable Declaration: ", name, ": ", type.toString());
+			if(value !is null) {
+				writeTabs(indent);
+				writeln("^Default Value:");
+				value.debugPrint(indent + 1);
+			}
+		}
+	}
+}
+
 class AstNodeLabel : AstNode {
 	string name;
 
