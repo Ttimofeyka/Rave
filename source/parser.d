@@ -50,7 +50,7 @@ class Parser {
 		return t;
 	}
 
-	private AtstNode parseType() {
+	private AtstNode parseTypeAtom() {
 		if(peek().type == TokType.tok_id) {
 			auto t= next();
 			if(t.value == "void")
@@ -61,6 +61,29 @@ class Parser {
 			errorExpected("Expected a typename.");
 		}
 		return null;
+	}
+
+	private AtstNode parseType() {
+		auto t = parseTypeAtom();
+		while(peek().type == TokType.tok_multiply || peek().type == TokType.tok_lbra) {
+			/**/ if(peek().type == TokType.tok_multiply) {
+				next();
+				t = new AtstNodePointer(t);
+			}
+			else if(peek().type == TokType.tok_lbra) {
+				next();
+				uint num = 0;
+				if(peek().type == TokType.tok_num) {
+					num = to!uint(next().value);
+				}
+				else {
+					expectToken(TokType.tok_rbra);
+				}
+				t = new AtstNodeArray(t, num);
+			}
+		}
+
+		return t;
 	}
 
 	private VariableDeclaration parseVarDecl() {
@@ -190,9 +213,16 @@ class Parser {
 	}
 
 	private AstNode parseSuffix(AstNode base) {
-		writeln("parseSuffix, peek: ", tokTypeToStr(peek().type));
-		if(peek().type == TokType.tok_lpar) {
-			return parseFuncCall(base);
+		while(peek().type == TokType.tok_lpar || peek().type == TokType.tok_lbra) {
+			if(peek().type == TokType.tok_lpar) {
+				base = parseFuncCall(base);
+			}
+			else if(peek().type == TokType.tok_lbra) {
+				next();
+				auto idx = parseExpr();
+				expectToken(TokType.tok_rbra);
+				base = new AstNodeIndex(base, idx);
+			}
 		}
 
 		return base;
@@ -279,7 +309,7 @@ class Parser {
 			}
 
 			nodeStack.insertFront(parseBasic());
-			nodeStackSize += 2;
+			nodeStackSize += 1;
 		}
 
 		// push the remaining operator onto the nodeStack
