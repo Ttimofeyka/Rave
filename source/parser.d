@@ -92,6 +92,7 @@ class Parser {
 		while(peek().type != TokType.tok_rpar)
 		{
 			auto name = expectToken(TokType.tok_id);
+			// Allow type inference in argument types?
 			expectToken(TokType.tok_type);
 			auto type = parseType();
 			args ~= FunctionArgument(name.value, type);
@@ -109,9 +110,8 @@ class Parser {
 	 *   isEnd = Returns whether the passed token is the end of the declaration,
 	 * Returns: Function declaration with all of the necessary information in it.
 	 */
-	private FunctionDeclaration parseFuncDecl(bool function(Token) isEnd) {
-		// <id:fun-name> ['(' <args> ')'] [':' <type:rettype>] end
-		// <id:fun-name> ['(' <args> ')'] [':' [<type:rettype>]] end <-- future
+	private FunctionDeclaration parseFuncDecl(bool function(Token) isEnd, bool allowRetTypeInference) {
+		// <id:fun-name> ['(' <args> ')'] [':' [<type:rettype>]] end
 
 		auto name = expectToken(TokType.tok_id);
 
@@ -126,7 +126,8 @@ class Parser {
 
 		if(peek().type == TokType.tok_type) {
 			next();
-			retType = parseType();
+			if(isEnd(peek()) && allowRetTypeInference) retType = new AtstNodeUnknown();
+			else retType = parseType();
 		}
 
 		AtstNode[] argTypes = array(map!(a => a.type)(args));
@@ -350,7 +351,15 @@ class Parser {
 				return e;
 			}
 			next(); // skip ':' if it exists'
-			auto type = parseType();
+
+			AtstNode type;
+			if(peek().type == TokType.tok_equ || peek().type == TokType.tok_semicolon) {
+				type = new AtstNodeUnknown();
+			}
+			else {
+				type = parseType();
+			}
+			
 			auto decl = new AstNodeDecl(name, type, null);
 			if(peek().type == TokType.tok_equ) {
 				next();
@@ -376,13 +385,13 @@ class Parser {
 	}
 
 	private AstNode parseFunc() {
-		auto decl = parseFuncDecl(function(Token tok) { return tok.type == TokType.tok_2lbra; });
+		auto decl = parseFuncDecl(function(Token tok) { return tok.type == TokType.tok_2lbra; }, true);
 		return new AstNodeFunction(decl, parseBlock());
 	}
 
 	private AstNode parseExtern() {
 		assert(next().cmd == TokCmd.cmd_extern);
-		auto decl = parseFuncDecl(function(Token tok) { return tok.type == TokType.tok_semicolon; });
+		auto decl = parseFuncDecl(function(Token tok) { return tok.type == TokType.tok_semicolon; }, false);
 		return new AstNodeExtern(decl);
 	}
 

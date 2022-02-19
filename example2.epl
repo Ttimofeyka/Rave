@@ -1,9 +1,9 @@
 inc "std/os/*";
 
-main: int {
+main: {
 	vals: int[10];
 	vals[0] = 2;
-	ptr: int* = &vals;
+	ptr := &vals;
 	ptr[0] = 3;
 	ptr = nullptr;
 	ptr[3] = 4;

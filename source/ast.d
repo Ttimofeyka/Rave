@@ -27,6 +27,16 @@ class AtstNodeVoid : AtstNode {
 	}
 }
 
+class AtstNodeUnknown : AtstNode {
+	// For inference
+	
+	debug {
+		override string toString() const {
+			return "unknown";
+		}
+	}
+}
+
 class AtstNodeName : AtstNode {
 	string name;
 	this(string name) {
