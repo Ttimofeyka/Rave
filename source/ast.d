@@ -4,6 +4,9 @@ import std.array : join;
 import std.algorithm.iteration : map;
 import gen, tokens;
 import llvm;
+import std.conv : to;
+import core.stdc.stdlib : exit;
+import core.stdc.stdlib : malloc;
 
 /// We have two separate syntax trees: for types and for values.
 
@@ -89,7 +92,10 @@ struct FuncSignature {
 
 // Abstract syntax tree Node.
 class AstNode {
-	void gen(GenerationContext ctx) {}
+	LLVMValueRef gen(GenerationContext ctx) {
+		LLVMValueRef a;
+		return a;
+	}
 
 	debug {
 		void writeTabs(int indent) {
@@ -144,7 +150,10 @@ class AstNodeFunction : AstNode {
 		this.body_ = body_;
 	}
 
-	override void gen(GenerationContext ctx) {}
+	override LLVMValueRef gen(GenerationContext ctx) {
+		LLVMValueRef a;
+		return a;
+	}
 
 	debug {
 		override void debugPrint(int indent) {
@@ -182,7 +191,24 @@ class AstNodeBinary : AstNode {
 		this.type = type;
 	}
 
-	override void gen(GenerationContext ctx) {}
+	override LLVMValueRef gen(GenerationContext ctx) {
+		LLVMValueRef LHS = lhs.gen(ctx);
+		LLVMValueRef RHS = rhs.gen(ctx);
+
+		switch(type) {
+			case TokType.tok_plus:
+				return LLVMBuildFAdd(ctx.builder,LHS,RHS,cast(const char*)"addtmp");
+			case TokType.tok_minus:
+				return LLVMBuildFSub(ctx.builder,LHS,RHS,cast(const char*)"subtmp");
+			case TokType.tok_multiply:
+				return LLVMBuildFMul(ctx.builder,LHS,RHS,cast(const char*)"multmp");
+			case TokType.tok_divide:
+				return LLVMBuildFDiv(ctx.builder,LHS,RHS,cast(const char*)"divtmp");
+			default:
+				writeln("\033[0;31mError: Undefined operator "~to!string(type)~"!\033[0;0m");
+				return LHS;
+		}
+	}
 
 	debug {
 		override void debugPrint(int indent) {
@@ -203,7 +229,10 @@ class AstNodeUnary : AstNode {
 		this.type = type;
 	}
 
-	override void gen(GenerationContext ctx) {}
+	override LLVMValueRef gen(GenerationContext ctx) {
+		LLVMValueRef a;
+		return a;
+	}
 
 	debug {
 		override void debugPrint(int indent) {
@@ -226,7 +255,10 @@ class AstNodeIf : AstNode {
 		this.else_ = else_;
 	}
 
-	override void gen(GenerationContext ctx) {}
+	override LLVMValueRef gen(GenerationContext ctx) {
+		LLVMValueRef a;
+		return a;
+	}
 	
 	debug {
 		override void debugPrint(int indent) {
@@ -254,7 +286,10 @@ class AstNodeWhile : AstNode {
 		this.body_ = body_;
 	}
 
-	override void gen(GenerationContext ctx) {}
+	override LLVMValueRef gen(GenerationContext ctx) {
+		LLVMValueRef a;
+		return a;
+	}
 
 	debug {
 		override void debugPrint(int indent) {
@@ -271,7 +306,10 @@ class AstNodeWhile : AstNode {
 class AstNodeAsm : AstNode {
 	string value; // TODO
 
-	override void gen(GenerationContext ctx) {}
+	override LLVMValueRef gen(GenerationContext ctx) {
+		LLVMValueRef a;
+		return a;
+	}
 }
 
 class AstNodeBlock : AstNode {
@@ -281,7 +319,10 @@ class AstNodeBlock : AstNode {
 		this.nodes = nodes;
 	}
 
-	override void gen(GenerationContext ctx) {}
+	override LLVMValueRef gen(GenerationContext ctx) {
+		LLVMValueRef a;
+		return a;
+	}
 
 	debug {
 		override void debugPrint(int indent) {
@@ -302,7 +343,10 @@ class AstNodeExtern : AstNode {
 		this.decl = decl;
 	}
 
-	override void gen(GenerationContext ctx) {}
+	override LLVMValueRef gen(GenerationContext ctx) {
+		LLVMValueRef a;
+		return a;
+	}
 
 	debug {
 		override void debugPrint(int indent) {
@@ -317,7 +361,10 @@ class AstNodeReturn : AstNode {
 
 	this(AstNode value) { this.value = value; }
 
-	override void gen(GenerationContext ctx) {}
+	override LLVMValueRef gen(GenerationContext ctx) {
+		LLVMValueRef a;
+		return a;
+	}
 
 	debug {
 		override void debugPrint(int indent) {
@@ -337,7 +384,10 @@ class AstNodeIndex : AstNode {
 		this.index = index;
 	}
 
-	override void gen(GenerationContext ctx) {}
+	override LLVMValueRef gen(GenerationContext ctx) {
+		LLVMValueRef a;
+		return a;
+	}
 
 	debug {
 		override void debugPrint(int indent) {
@@ -358,7 +408,15 @@ class AstNodeIden : AstNode {
 		this.name = name;
 	}
 
-	override void gen(GenerationContext ctx) {}
+	override LLVMValueRef gen(GenerationContext ctx) {
+		if(name in ctx.values) {
+			return ctx.values[name];
+		}
+		else {
+			writeln("\033[0;31mError: Undefined variable "~name~"!\033[0;0m");
+			exit(-1);
+		}
+	}
 
 	debug {
 		override void debugPrint(int indent) {
@@ -379,7 +437,10 @@ class AstNodeDecl : AstNode {
 		this.value = value;
 	}
 
-	override void gen(GenerationContext ctx) {}
+	override LLVMValueRef gen(GenerationContext ctx) {
+		LLVMValueRef a;
+		return a;
+	}
 
 	debug {
 		override void debugPrint(int indent) {
@@ -397,7 +458,10 @@ class AstNodeDecl : AstNode {
 class AstNodeLabel : AstNode {
 	string name;
 
-	override void gen(GenerationContext ctx) {}
+	override LLVMValueRef gen(GenerationContext ctx) {
+		LLVMValueRef a;
+		return a;
+	}
 
 	debug {
 		override void debugPrint(int indent) {
@@ -410,7 +474,10 @@ class AstNodeLabel : AstNode {
 class AstNodeBreak : AstNode {
 	string label; /* optional */
 
-	override void gen(GenerationContext ctx) {}
+	override LLVMValueRef gen(GenerationContext ctx) {
+		LLVMValueRef a;
+		return a;
+	}
 
 	debug {
 		override void debugPrint(int indent) {
@@ -423,7 +490,10 @@ class AstNodeBreak : AstNode {
 class AstNodeContinue : AstNode {
 	string label; /* optional */
 
-	override void gen(GenerationContext ctx) {}
+	override LLVMValueRef gen(GenerationContext ctx) {
+		LLVMValueRef a;
+		return a;
+	}
 
 	debug {
 		override void debugPrint(int indent) {
@@ -442,7 +512,26 @@ class AstNodeFuncCall : AstNode {
 		this.args = args;
 	}
 
-	override void gen(GenerationContext ctx) {}
+	override LLVMValueRef gen(GenerationContext ctx) {
+		AstNodeIden mn = cast(AstNodeIden)func;
+		string n = mn.name;
+		LLVMValueRef func = LLVMGetNamedFunction(
+			ctx.main_module,
+			cast(const char*)n
+		);
+		if(LLVMCountParams(func) != cast(uint)args.length) {
+			writeln("\033[0;31mError: Too little or too more args!\033[0;0m");
+		}
+
+		LLVMValueRef* argss = cast(LLVMValueRef*)malloc(LLVMValueRef.sizeof*args.length);
+		for(int i=0; i<args.length; i++) {
+			argss[i] = args[i].gen(ctx);
+		}
+		
+		return LLVMBuildCall(
+			ctx.builder,func,argss,cast(uint)args.length,cast(const char*)"calltmp"
+		);
+	}
 
 	debug {
 		override void debugPrint(int indent) {
@@ -463,8 +552,8 @@ class AstNodeInt : AstNode {
 
 	this(uint value) { this.value = value; }
 
-	override void gen(GenerationContext ctx) {
-		ctx.values.insertBack(LLVMConstInt(LLVMInt32Type(),cast(ulong)value,false));
+	override LLVMValueRef gen(GenerationContext ctx) {
+		return LLVMConstInt(LLVMInt32Type(),cast(ulong)value,false);
 	}
 
 	debug {
