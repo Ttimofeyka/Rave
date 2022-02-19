@@ -143,6 +143,8 @@ class AstNode {
 		return TypecheckResult(false);
 	}
 
+	Type getType(TypecheckContext ctx);
+
 	debug {
 		void writeTabs(int indent) {
 			for(int i = 0; i < indent; ++i)
@@ -236,7 +238,7 @@ class AstNodeFunction : AstNode {
 	override LLVMValueRef gen(GenerationContext ctx) {
 		LLVMTypeRef *params = 
 			cast(LLVMTypeRef*)malloc(LLVMTypeRef.sizeof*decl.argNames.length);
-		for(i=0; i<decl.argNames.length; i++) {
+		for(int i=0; i<decl.argNames.length; i++) {
             params[i] = LLVMInt16Type();
         }
 		LLVMValueRef a;
@@ -698,7 +700,8 @@ class AstNodeString : AstNode {
 	this(string value) { this.value = value; }
 
 	override LLVMValueRef gen(GenerationContext ctx) {
-		
+		LLVMValueRef a;
+		return a;
 	}
 
 	debug {
