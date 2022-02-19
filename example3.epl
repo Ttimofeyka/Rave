@@ -1,5 +1,4 @@
-inc "std/os/*";
-
-main {
+main : int {
 	exit(0);
+	ret 0;
 }

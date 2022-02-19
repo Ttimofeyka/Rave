@@ -8,6 +8,7 @@ import std.file : readText;
 import preproc;
 import parser;
 import llvm;
+import gen;
 
 void main(string[] args)
 {
@@ -28,7 +29,9 @@ void main(string[] args)
 	}
 
 	writeln("------------------ AST -------------------");
+	GenerationContext gencontext = new GenerationContext();
 	for(int i = 0; i < nodes.length; ++i) {
 		nodes[i].debugPrint(0);
+		nodes[i].gen(gencontext);
 	}
 }

@@ -267,6 +267,13 @@ class AstNodeFunction : AstNode {
 
 		LLVMSetLinkage(func,LLVMExternalLinkage);
 
+		LLVMBasicBlockRef block = LLVMAppendBasicBlock(func,
+			cast(const char*)"entry");
+		LLVMPositionBuilderAtEnd(ctx.builder,block);
+
+		LLVMValueRef _body = body_.gen(ctx);
+		LLVMBuildRet(ctx.builder,_body);
+
 		return func;
 	}
 
