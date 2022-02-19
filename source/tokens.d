@@ -44,7 +44,7 @@ enum TokType {
     tok_bit_not = 34, // ~
     tok_not = 35, // !
     tok_type = 36, // :
-    tok_eof = 37, // :
+    tok_eof = 37, // eof
     tok_dot = 38, // .
 
     tok_bit_and_eq = 39, // &=
@@ -54,7 +54,9 @@ enum TokType {
     tok_more_more_eq = 43, // >>=
     tok_less_less_eq = 44, // <<=
     tok_min_min = 45, // --
-    tok_plu_plu = 46 // ++
+    tok_plu_plu = 46, // ++
+    tok_r_min_min = 47, // -- on the right (unused by lexer)
+    tok_r_plu_plu = 48, // ++ on the right (unused by lexer)
 }
 
 enum TokCmd {

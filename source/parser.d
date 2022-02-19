@@ -279,7 +279,9 @@ class Parser {
 		while(peek().type == TokType.tok_lpar
 		   || peek().type == TokType.tok_lbra
 		   || peek().type == TokType.tok_struct_get
-		   || peek().type == TokType.tok_dot)
+		   || peek().type == TokType.tok_dot
+		   || peek().type == TokType.tok_plu_plu
+		   || peek().type == TokType.tok_min_min)
 		{
 			if(peek().type == TokType.tok_lpar) {
 				base = parseFuncCall(base);
@@ -296,6 +298,14 @@ class Parser {
 				auto t = next().type;
 				string field = expectToken(TokType.tok_id).value;
 				base = new AstNodeGet(base, field, t == TokType.tok_struct_get);
+			}
+			else if(peek().type == TokType.tok_plu_plu) {
+				next();
+				base = new AstNodeUnary(base, TokType.tok_r_plu_plu);
+			}
+			else if(peek().type == TokType.tok_min_min) {
+				next();
+				base = new AstNodeUnary(base, TokType.tok_r_min_min);
 			}
 		}
 
@@ -316,10 +326,16 @@ class Parser {
 	}
 
 	private AstNode parsePrefix() {
-		const TokType[] OPERATORS = [TokType.tok_multiply, TokType.tok_bit_and];
-		if(OPERATORS.canFind(peek().type)) { // pointer dereference
+		const TokType[] OPERATORS = [
+			TokType.tok_multiply,
+			TokType.tok_bit_and,
+			TokType.tok_plu_plu,
+			TokType.tok_min_min
+		];
+
+		if(OPERATORS.canFind(peek().type)) {
 			auto tok = next().type;
-			return new AstNodeUnary(parseAtom(), tok);
+			return new AstNodeUnary(parsePrefix(), tok);
 		}
 		return parseAtom();
 	}
@@ -334,11 +350,17 @@ class Parser {
 			TokType.tok_minus: 0,
 			TokType.tok_multiply: 1,
 			TokType.tok_divide: 1,
-			TokType.tok_equ: -98,
-			TokType.tok_shortplu: -99,
-			TokType.tok_shortmin: -99,
-			TokType.tok_shortmul: -99,
-			TokType.tok_shortdiv: -99,
+			TokType.tok_equ: -95,
+			TokType.tok_shortplu: -97,
+			TokType.tok_shortmin: -97,
+			TokType.tok_shortmul: -97,
+			TokType.tok_shortdiv: -97,
+			TokType.tok_bit_and_eq: -97,
+			TokType.tok_bit_or_eq: -97,
+			TokType.tok_and_eq: -97,
+			TokType.tok_or_eq: -97,
+			TokType.tok_more_more_eq: -97,
+			TokType.tok_less_less_eq: -97,
 			TokType.tok_equal: -80,
 			TokType.tok_nequal: -80,
 			TokType.tok_less: -70,

@@ -6,7 +6,7 @@ struct A {
 	z: {
 		while(this->x != 0x1823F) {
 			write(this->y);
-			this->x -= 1;
+			++this->x;
 		}
 	}
 }
