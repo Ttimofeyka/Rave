@@ -16,7 +16,12 @@ const string[] operators = [
     "\'", "(", ")", "{",
     "}", ";", ",", "<", ">",
     "&", "&&", "^", "~", "|",
-    "||", "[", "]"
+    "||", "[", "]",
+
+    "|=", "&=",
+    "||=", "&&=",
+    ">>=", "<<=",
+    "++", "--"
 ];
 
 class Lexer {
@@ -213,6 +218,10 @@ class Lexer {
                         tokens.insertBack(new Token("+="));
                         i+=2;
                     }
+                    else if(get(+1)=='+') {
+                        tokens.insertBack(new Token("++"));
+                        i+=2;
+                    }
                     else {
                         tokens.insertBack(new Token("+"));
                         i+=1;
@@ -247,6 +256,10 @@ class Lexer {
                         tokens.insertBack(new Token("-="));
                         i+=2;
                     }
+                    else if(get(+1)=='-') {
+                        tokens.insertBack(new Token("--"));
+                        i+=2;
+                    }
                     else {
                         tokens.insertBack(new Token("-"));
                         i+=1;
@@ -279,7 +292,17 @@ class Lexer {
                     break;
                 case '&':
                     if(get(+1)=='&') {
-                        tokens.insertBack(new Token("&&"));
+                        if(get(+2)=='=') {
+                            tokens.insertBack(new Token("&&="));
+                            i+=3;
+                        }
+                        else {
+                            tokens.insertBack(new Token("&&"));
+                            i+=2;
+                        }
+                    }
+                    else if(get(+1)=='=') {
+                        tokens.insertBack(new Token("&="));
                         i+=2;
                     }
                     else {
@@ -289,7 +312,17 @@ class Lexer {
                     break;
                 case '|':
                     if(get(+1)=='|') {
-                        tokens.insertBack(new Token("||"));
+                        if(get(+2)=='=') {
+                            tokens.insertBack(new Token("||="));
+                            i+=3;
+                        }
+                        else {
+                            tokens.insertBack(new Token("||"));
+                            i+=2;
+                        }
+                    }
+                    else if(get(+1)=='=') {
+                        tokens.insertBack(new Token("|="));
                         i+=2;
                     }
                     else {

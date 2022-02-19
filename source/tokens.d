@@ -45,7 +45,16 @@ enum TokType {
     tok_not = 35, // !
     tok_type = 36, // :
     tok_eof = 37, // :
-    tok_dot = 38 // .
+    tok_dot = 38, // .
+
+    tok_bit_and_eq = 39, // &=
+    tok_and_eq = 40, // &&=
+    tok_bit_or_eq = 41, // |=
+    tok_or_eq = 42, // ||=
+    tok_more_more_eq = 43, // >>=
+    tok_less_less_eq = 44, // <<=
+    tok_min_min = 45, // --
+    tok_plu_plu = 46 // ++
 }
 
 enum TokCmd {
@@ -108,6 +117,14 @@ string tokTypeToStr(TokType type)
     case TokType.tok_type: return "type";
     case TokType.tok_eof: return "eof";
     case TokType.tok_dot: return "dot";
+    case TokType.tok_min_min: return "min_min";
+    case TokType.tok_plu_plu: return "plu_plu";
+    case TokType.tok_bit_and_eq: return "bit_and_eq";
+    case TokType.tok_bit_or_eq: return "bit_or_eq";
+    case TokType.tok_and_eq: return "and_eq";
+    case TokType.tok_or_eq: return "or_eq";
+    case TokType.tok_more_more_eq: return "more_more_eq";
+    case TokType.tok_less_less_eq: return "less_less_eq";
 	default: return "?";
 	}
 }
@@ -177,6 +194,14 @@ class Token {
         else if(s=="/=") this.type = TokType.tok_shortdiv;
         else if(s==":")  this.type = TokType.tok_type;
         else if(s==".") this.type = TokType.tok_dot;
+        else if(s=="&=") this.type = TokType.tok_bit_and_eq;
+        else if(s=="&&=") this.type = TokType.tok_and_eq;
+        else if(s=="|=") this.type = TokType.tok_bit_or_eq;
+        else if(s=="||=") this.type = TokType.tok_or_eq;
+        else if(s=="++") this.type = TokType.tok_plu_plu;
+        else if(s=="--") this.type = TokType.tok_min_min;
+        else if(s==">>=") this.type = TokType.tok_more_more_eq;
+        else if(s=="<<=") this.type = TokType.tok_less_less_eq;
         else {
             // Commands or Variables(or Defines)
             switch(s.toLower()) {
