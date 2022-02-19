@@ -241,10 +241,33 @@ class AstNodeFunction : AstNode {
 		LLVMTypeRef *params = 
 			cast(LLVMTypeRef*)malloc(LLVMTypeRef.sizeof*decl.argNames.length);
 		for(int i=0; i<decl.argNames.length; i++) {
-            params[i] = LLVMInt16Type();
+			if(cast(AtstNodeVoid)decl.signature.args[i]) {
+				params[i] = LLVMVoidType();
+			}
+			else {
+				params[i] = LLVMInt16Type();
+			}
         }
-		LLVMValueRef a;
-		return a;
+
+		LLVMTypeRef retType;
+		if(cast(AtstNodeVoid)decl.signature.ret) retType = LLVMVoidType();
+		else retType = LLVMInt16Type();
+
+		LLVMTypeRef funcType = LLVMFunctionType(
+			retType, params,
+			cast(uint)decl.argNames.length,
+			false
+		);
+
+		LLVMValueRef func = LLVMAddFunction(
+			ctx.main_module,
+			cast(const char*)decl.name,
+			funcType
+		);
+
+		LLVMSetLinkage(func,LLVMExternalLinkage);
+
+		return func;
 	}
 
 	debug {
