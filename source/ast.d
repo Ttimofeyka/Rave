@@ -234,6 +234,11 @@ class AstNodeFunction : AstNode {
 	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
+		LLVMTypeRef *params = 
+			cast(LLVMTypeRef*)malloc(LLVMTypeRef.sizeof*decl.argNames.length);
+		for(i=0; i<decl.argNames.length; i++) {
+            params[i] = LLVMInt16Type();
+        }
 		LLVMValueRef a;
 		return a;
 	}
@@ -441,7 +446,7 @@ class AstNodeBlock : AstNode {
 class AstNodeExtern : AstNode {
 	FunctionDeclaration decl;
 	// TODO: Maybe something else? Like calling convention and etc.
-
+	
 	this(FunctionDeclaration decl) {
 		this.decl = decl;
 	}
@@ -673,8 +678,10 @@ class AstNodeFloat : AstNode {
 	this(float value) { this.value = value; }
 
 	override LLVMValueRef gen(GenerationContext ctx) {
-		return null;
-		// return LLVMConstInt(LLVMInt32Type(),value,false);
+		return LLVMConstReal(
+			LLVMDoubleType(),
+			cast(double)value
+		);
 	}
 
 	debug {
@@ -691,8 +698,7 @@ class AstNodeString : AstNode {
 	this(string value) { this.value = value; }
 
 	override LLVMValueRef gen(GenerationContext ctx) {
-		return null;
-		// return LLVMConstInt(LLVMInt32Type(),value,false);
+		
 	}
 
 	debug {
@@ -709,8 +715,7 @@ class AstNodeChar : AstNode {
 	this(char value) { this.value = value; }
 
 	override LLVMValueRef gen(GenerationContext ctx) {
-		return null;
-		// return LLVMConstInt(LLVMInt32Type(),value,false);
+		return LLVMConstInt(LLVMInt8Type(),value,false);
 	}
 
 	debug {
@@ -720,4 +725,3 @@ class AstNodeChar : AstNode {
 		}
 	}
 }
-// class AstNodeFloat : AstNode { float value; }
