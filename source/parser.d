@@ -30,18 +30,20 @@ class Parser {
 	}
 
 	private void errorExpected(string msg) {
-		error(msg ~ " Got: " ~ tokTypeToStr(next().type));
+		auto t = next();
+		error(msg ~ " Got: " ~ tokTypeToStr(t.type) ~ "\nAt: "
+			~ t.loc.fname ~ ":" ~ to!string(t.loc.line + 1) ~ ":" ~ to!string(t.loc.col));
 	}
 
 	private Token next() {
 		if(_idx == _toks.length)
-			return new Token("");
+			return new Token(SourceLocation(-1, -1, ""), "");
 		return _toks[_idx++];
 	}
 
 	private Token peek() {
 		if(_idx == _toks.length)
-			return new Token("");
+			return new Token(SourceLocation(-1, -1, ""), "");
 		return _toks[_idx];
 	}
 
@@ -77,12 +79,12 @@ class Parser {
 			}
 			else if(peek().type == TokType.tok_lbra) {
 				next();
-				uint num = 0;
+				ulong num = 0;
 				if(peek().type == TokType.tok_num) {
-					num = to!uint(next().value);
+					num = to!ulong(next().value);
 				}
 				expectToken(TokType.tok_rbra);
-				t = new AtstNodeArray(t, num);
+				t = new AtstNodeArray(t, num); 
 			}
 		}
 
@@ -142,11 +144,42 @@ class Parser {
 		return FunctionDeclaration(FuncSignature(retType, argTypes), name.value, argNames);
 	}
 
+	private TypeDeclarationEnum parseEnumTypeDecl() {
+		auto en = new TypeDeclarationEnum();
+		next(); // skip the 'enum' token
+
+		en.name = expectToken(TokType.tok_id).value;
+		expectToken(TokType.tok_2lbra);
+		
+		ulong counter = 0;
+		while(peek().type != TokType.tok_2rbra) {
+			auto name = expectToken(TokType.tok_id).value;
+			if(peek().type == TokType.tok_equ) { // default value
+				next();
+				counter = to!ulong(expectToken(TokType.tok_num).value);
+			}
+			en.entries ~= EnumEntry(name, counter);
+			++counter;
+			
+			if(peek().type == TokType.tok_2rbra) break;
+			expectToken(TokType.tok_comma);
+		}
+		expectToken(TokType.tok_2rbra);
+		
+		return en;
+	}
+
 	private TypeDeclarationStruct parseStructTypeDecl() {
 		auto st = new TypeDeclarationStruct();
-		next(); // skip 'struct' token
+		next(); // skip the 'struct' token
 
 		st.name = expectToken(TokType.tok_id).value;
+
+		if(peek().type == TokType.tok_type) {
+			next();
+			auto base = parseType();
+			st.fieldDecls ~= VariableDeclaration(base, "#base");
+		}
 
 		expectToken(TokType.tok_2lbra);
 

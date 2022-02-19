@@ -1,4 +1,4 @@
-main : int {
+main: int {
 	exit(0);
 	ret 0;
 }

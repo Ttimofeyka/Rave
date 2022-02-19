@@ -85,9 +85,9 @@ class AtstNodePointer : AtstNode {
 
 class AtstNodeArray : AtstNode {
 	AtstNode node;
-	uint count;
+	ulong count;
 
-	this(AtstNode node, uint count) {
+	this(AtstNode node, ulong count) {
 		this.node = node;
 		this.count = count;
 	}
@@ -187,14 +187,32 @@ class TypeDeclaration {
 	string name;
 }
 
+struct EnumEntry {
+	string name;
+	ulong value;
+}
+
+class TypeDeclarationEnum : TypeDeclaration {
+	EnumEntry[] entries;
+
+	override string toString() const {
+		string s = "enum " ~ name ~ "{";
+		if(entries.length > 0) {
+			s ~= '\n';
+		}
+		foreach(entry; entries) {
+			s ~= "    " ~ entry.name ~ " = " ~ to!string(entry.value) ~ "\n";
+		}
+		return s ~ "}";
+	}
+}
+
 class TypeDeclarationStruct : TypeDeclaration {
 	VariableDeclaration[] fieldDecls;
 	FunctionDeclaration[] methodDecls;
 
 	AstNode[string] fieldValues;
 	AstNode[string] methodValues;
-
-	string name;
 
 	override string toString() const {
 		string s = "struct " ~ name ~ " {";

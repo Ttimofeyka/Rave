@@ -131,12 +131,20 @@ string tokTypeToStr(TokType type)
 	}
 }
 
+struct SourceLocation {
+    uint line;
+    uint col;
+    string fname;
+}
+
 class Token {
     TokType type;
     TokCmd cmd;
     string value;
+    SourceLocation loc;
 
-    this(string s) {
+    this(SourceLocation loc, string s) {
+        this.loc = loc;
         this.value = s;
         if(s.length == 0) {
             // debug {

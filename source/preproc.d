@@ -6,7 +6,7 @@ import std.stdio;
 import std.array;
 import std.path;
 import std.conv;
-import std.file : readText;
+import std.file : readText, isDir, exists;
 import glob : glob;
 import lexer;
 
@@ -23,7 +23,7 @@ class Preprocessor {
 
     private Token get() {
         if(i < tokens.length()) return tokens[i];
-        return new Token("");
+        return new Token(SourceLocation(-1, -1, ""), "");
     }
 
     private TList getDefine() {
@@ -44,8 +44,10 @@ class Preprocessor {
     }
 
     private void insertFile(string pattern) {
-        pattern = absolutePath(pattern);
+        writeln(pattern);
         foreach(fname; glob(pattern)) {
+            writeln("-> ", fname);
+            if(isDir(fname)) continue;
             auto l = new Lexer(readText(fname));
             auto preproc = new Preprocessor(l.getTokens());
             foreach(token; preproc.getTokens().tokens) {
@@ -84,7 +86,9 @@ class Preprocessor {
                         continue;
                     }
                     i += 1;
-                    insertFile(name);
+                    name = absolutePath(name);
+                    if(exists(name) && isDir(name)) insertFile(buildPath(name, "*"));
+                    else insertFile(name);
                 }
                 else {
                     newtokens.insertBack(get());

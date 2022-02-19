@@ -1,6 +1,23 @@
 inc "std/*";
 def zero 0;
 
+struct Test {
+    val : uint = 0;
+    get: {
+        ret zero + this->val;
+    }
+}
+
+enum Values {
+    GOOD,
+    BAD,
+    UNKNOWN = 17,
+    UNKNOWN2,
+    ACTUAL = 4,
+    ACTUAL2 = 4,
+    ACTUAL3,
+}
+
 main(argc: int, argv: char*[]): int {
     if(zero == 0) {
         ret zero + 1;
