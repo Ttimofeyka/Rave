@@ -9,6 +9,8 @@ import tokens;
 import std.algorithm.iteration : map;
 import std.algorithm : canFind;
 
+// TODO: Add `cast(type) value` create AstNodeCast.
+//       see Parser.parsePrefix()`
 class Parser {
 	private TList _toks;
 	private uint _idx = 0;
@@ -330,7 +332,8 @@ class Parser {
 		}
 		
 		writeln(t.value);
-		error("Expected a variable, a number, a string, a char or an expression in parentheses. Got: " ~ tokTypeToStr(t.type));
+		error("Expected a variable, a number, a string, a char or an expression in parentheses. Got: "
+			~ tokTypeToStr(t.type));
 		return null;
 	}
 

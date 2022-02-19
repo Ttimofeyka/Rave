@@ -528,6 +528,7 @@ class AstNodeIden : AstNode {
 			writeln("\033[0;31mError: Undefined variable "~name~"!\033[0;0m");
 			exit(-1);
 		}
+		assert(0);
 	}
 
 	debug {
@@ -668,7 +669,7 @@ class AstNodeInt : AstNode {
 		return LLVMConstInt(LLVMInt32Type(),value,false);
 	}
 
-	private ulong pow2(uchar n) {
+	private ulong pow2(char n) {
 		ulong l = 2;
 		while(n--) l *= 2;
 		return l;
