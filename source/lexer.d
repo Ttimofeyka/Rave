@@ -35,9 +35,45 @@ class Lexer {
 
     private string getTNum() {
         string temp = "";
-        while(get() >= '0' && get() <= '9') {
-            temp ~= get();
-            i += 1;
+        if(get() == '0' && get(+1) == 'x') {
+            temp ~= "0x";
+            i += 2;
+            while((get() >= '0' && get() <= '9')
+               || (get() >= 'a' && get() <= 'f')
+               || (get() >= 'A' && get() <= 'F')) {
+                temp ~= get();
+                i += 1;
+            }
+        }
+        else if(get() == '0' && get(+1) == 'o') {
+            temp ~= "0o";
+            i += 2;
+            while((get() >= '0' && get() <= '7')) {
+                temp ~= get();
+                i += 1;
+            }
+        }
+        else if(get() == '0' && get(+1) == 'b') {
+            temp ~= "0b";
+            i += 2;
+            while((get() >= '0' && get() <= '1')) {
+                temp ~= get();
+                i += 1;
+            }
+        }
+        else if(get() == '0' && get(+1) == 'd') {
+            temp ~= "0d";
+            i += 2;
+            while((get() >= '0' && get() <= '9')) {
+                temp ~= get();
+                i += 1;
+            }
+        }
+        else {
+            while((get() >= '0' && get() <= '9')) {
+                temp ~= get();
+                i += 1;
+            }
         }
         return temp;
     }
