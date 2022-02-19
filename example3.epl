@@ -1,0 +1,5 @@
+inc "std/os/*";
+
+main {
+	exit(0);
+}

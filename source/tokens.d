@@ -2,6 +2,7 @@ import std.string;
 import std.container : Array;
 import std.array;
 import std.stdio;
+import std.conv;
 import logger;
 import std.uni : isNumber;
 
@@ -42,7 +43,8 @@ enum TokType {
     tok_bit_xor = 33, // ^
     tok_bit_not = 34, // ~
     tok_not = 35, // !
-    tok_type = 36 // :
+    tok_type = 36, // :
+    tok_eof = 37 // :
 }
 
 enum TokCmd {
@@ -103,6 +105,7 @@ string tokTypeToStr(TokType type)
 	case TokType.tok_bit_not: return "bit_not";
 	case TokType.tok_not: return "not";
     case TokType.tok_type: return "type";
+    case TokType.tok_eof: return "eof";
 	default: return "?";
 	}
 }
@@ -115,9 +118,10 @@ class Token {
     this(string s) {
         this.value = s;
         if(s.length == 0) {
-            debug {
-                writeln("Error: Token(\"\") called!");
-            }
+            // debug {
+            //     writeln("Error: Token(\"\") called!");
+            // }
+            this.type = TokType.tok_eof;
             return;
         }
 
@@ -187,7 +191,7 @@ class Token {
                 case "extern": this.type=TokType.tok_cmd;
                            this.cmd=TokCmd.cmd_extern;
                            break;
-                case "include": this.type=TokType.tok_cmd;
+                case "inc": this.type=TokType.tok_cmd;
                            this.cmd=TokCmd.cmd_include;
                            break;
                 case "asm": this.type=TokType.tok_cmd;
@@ -215,17 +219,30 @@ class Token {
 }
 
 class TList {
-    Token[int] tokens;
-    int i = 0;
+    public Token[] tokens;
 
-    Token opIndex(int index) {
+    public this() {
+        this.tokens = [];
+    }
+
+    public Token opIndex(int index) {
         return tokens[index];
     }
 
-    void insertBack(Token token) {
-        tokens[i] = token;
-        i+=1;
+    public void insertBack(Token token) {
+        tokens ~= token;
     }
 
-    int length() { return cast(int)tokens.length; }
+    public int length() const { return cast(int)tokens.length; }
+
+    public void debugPrint() const {
+        foreach(tok; tokens) {
+            if(tok.type == TokType.tok_cmd) {
+                writeln("Type: ", to!string(tok.cmd), " ", tok.value);
+            }
+            else {
+                writeln("Type: ", tokTypeToStr(tok.type), " ", tok.value);
+            }
+        }
+    }
 }

@@ -1,4 +1,4 @@
-include "std";
+inc "std";
 def zero 0;
 
 main(argc: int, argv: char*[]): int {

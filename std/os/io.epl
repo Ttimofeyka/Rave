@@ -1,0 +1,2 @@
+
+extern write(msg: char*): void;

@@ -1,5 +1,4 @@
-extern exit(code: int);
-extern abort;
+inc "std/os/*";
 
 main: int {
 	vals: int[10];

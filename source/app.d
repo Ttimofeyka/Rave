@@ -16,8 +16,8 @@ void main(string[] args)
 	input(args);
 	auto lexer = new Lexer(readText(source_file));
 	auto preproc = new Preprocessor(lexer.getTokens());
+
 	auto parse = new Parser(preproc.getTokens());
-	
 	auto nodes = parse.parseProgram();
 	
 	for(int i = 0; i < nodes.length; ++i) {

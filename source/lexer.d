@@ -20,9 +20,9 @@ const string[] operators = [
 ];
 
 class Lexer {
-    string lex = "";
-    auto tokens = new TList();
-    int i = 0;
+    string lex;
+    TList tokens;
+    int i;
 
     private char get(uint x = 0) {
         if(i < lex.length) {
@@ -147,6 +147,9 @@ class Lexer {
 
     this(string lex) {
         this.lex = lex;
+        this.tokens = new TList();
+        this.i = 0;
+        
         while(i<lex.length) {
             if(isWhite(cast(dchar)get())) {
                 i+=1;
@@ -248,5 +251,5 @@ class Lexer {
         }
     }
 
-    TList getTokens() { return tokens;}
+    TList getTokens() { return tokens; }
 }

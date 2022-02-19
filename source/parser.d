@@ -29,14 +29,13 @@ class Parser {
 
 	private Token next() {
 		if(_idx == _toks.length)
-			return null;
+			return new Token("");
 		return _toks[_idx++];
 	}
 
 	private Token peek() {
 		if(_idx == _toks.length)
-			return null;
-
+			return new Token("");
 		return _toks[_idx];
 	}
 
@@ -413,6 +412,9 @@ class Parser {
 			_decls ~= parseTypeDecl();
 			return parseTopLevel(); // we ignore type declarations.
 		}
+		else if(peek().type == TokType.tok_eof) {
+			return null;
+		}
 		else {
 			errorExpected("Expected either a function, an extern, a type declaration or a semicolon.");
 			next();
@@ -422,8 +424,10 @@ class Parser {
 
 	public AstNode[] parseProgram() {
 		AstNode[] nodes;
-		while(peek() !is null) {
-			nodes ~= parseTopLevel();
+		while(peek().type != TokType.tok_eof) {
+			auto n = parseTopLevel();
+			if(n is null) break;
+			nodes ~= n;
 		}
 
 		return nodes;
