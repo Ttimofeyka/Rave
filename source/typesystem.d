@@ -1,4 +1,5 @@
 module typesystem;
+import util;
 
 class Type {
     bool assignable(Type other) { return false; }
@@ -9,6 +10,16 @@ class TypeVoid : Type {
 }
 
 class TypeUnknown : Type {
+    override bool assignable(Type other) { return false; }
+}
+
+class TypeConst : Type {
+    Type base;
+
+    this(Type base) {
+        this.base = base;
+    }
+
     override bool assignable(Type other) { return false; }
 }
 
@@ -43,6 +54,7 @@ class TypePointer : Type {
     }
 
     override bool assignable(Type other) {
+        if(other.instanceof!(TypePointer)) return true;
         return false;
     }
 }

@@ -143,7 +143,9 @@ class AstNode {
 		return TypecheckResult(false);
 	}
 
-	Type getType(TypecheckContext ctx);
+	Type getType(TypecheckContext ctx) {
+		return new TypeUnknown();
+	}
 
 	debug {
 		void writeTabs(int indent) {
@@ -666,6 +668,31 @@ class AstNodeInt : AstNode {
 		return LLVMConstInt(LLVMInt32Type(),value,false);
 	}
 
+	private ulong pow2(uchar n) {
+		ulong l = 2;
+		while(n--) l *= 2;
+		return l;
+	}
+
+	override Type getType(TypecheckContext _ctx) {
+		if(this.value > 0) {
+			// might and might not work for pow2(N)/2
+			if(this.value < pow2(8)/2)  return new TypeBasic(BasicType.t_char);
+			if(this.value < pow2(8))    return new TypeBasic(BasicType.t_uchar);
+			if(this.value < pow2(16)/2) return new TypeBasic(BasicType.t_short);
+			if(this.value < pow2(16))   return new TypeBasic(BasicType.t_ushort);
+			if(this.value < pow2(32)/2) return new TypeBasic(BasicType.t_int);
+			if(this.value < pow2(32))   return new TypeBasic(BasicType.t_uint);
+			if(this.value < pow2(64)/2) return new TypeBasic(BasicType.t_long);
+			if(this.value < pow2(64))   return new TypeBasic(BasicType.t_ulong);
+			assert(0);
+		}
+		else {
+			// TODO implement something similar to above.
+			return new TypeBasic(BasicType.t_long);
+		}
+	}
+
 	debug {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
@@ -678,7 +705,11 @@ class AstNodeFloat : AstNode {
 	float value;
 
 	this(float value) { this.value = value; }
-
+	
+	override Type getType(TypecheckContext _ctx) {
+		return new TypeBasic(BasicType.t_float);
+	}
+		
 	override LLVMValueRef gen(GenerationContext ctx) {
 		return LLVMConstReal(
 			LLVMDoubleType(),
@@ -699,6 +730,10 @@ class AstNodeString : AstNode {
 
 	this(string value) { this.value = value; }
 
+	override Type getType(TypecheckContext _ctx) {
+		return new TypeConst(new TypeBasic(BasicType.t_char));
+	}
+
 	override LLVMValueRef gen(GenerationContext ctx) {
 		LLVMValueRef a;
 		return a;
@@ -716,6 +751,10 @@ class AstNodeChar : AstNode {
 	char value;
 
 	this(char value) { this.value = value; }
+
+	override Type getType(TypecheckContext _ctx) {
+		return new TypeBasic(BasicType.t_char);
+	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
 		return LLVMConstInt(LLVMInt8Type(),value,false);
