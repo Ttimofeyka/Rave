@@ -7,11 +7,23 @@ import llvm;
 import std.conv : to;
 import core.stdc.stdlib : exit;
 import core.stdc.stdlib : malloc;
+import typesystem;
 
 /// We have two separate syntax trees: for types and for values.
 
+class AtstTypeContext {
+	Type[string] types;
+
+	Type getType(string name) {
+		// TODO
+		return null;
+	}
+}
+
 // Abstract type syntax tree node.
 class AtstNode {
+	Type get(AtstTypeContext ctx) { return new Type(); }
+
 	debug {
 		override string toString() const {
 			return "?";
@@ -20,6 +32,8 @@ class AtstNode {
 }
 
 class AtstNodeVoid : AtstNode {
+	override Type get(AtstTypeContext ctx) { return new TypeVoid(); }
+
 	debug {
 		override string toString() const {
 			return "void";
@@ -27,8 +41,9 @@ class AtstNodeVoid : AtstNode {
 	}
 }
 
+// For inferenceS
 class AtstNodeUnknown : AtstNode {
-	// For inference
+	override Type get(AtstTypeContext ctx) { return new TypeUnknown(); }
 	
 	debug {
 		override string toString() const {
@@ -43,6 +58,8 @@ class AtstNodeName : AtstNode {
 		this.name = name;
 	}
 
+	override Type get(AtstTypeContext ctx) { return ctx.getType(name); }
+
 	debug {
 		override string toString() const {
 			return name;
@@ -56,6 +73,8 @@ class AtstNodePointer : AtstNode {
 	this(AtstNode node) {
 		this.node = node;
 	}
+
+	override Type get(AtstTypePointer ctx) { return new TypePointer(node.get(ctx)); }
 
 	debug {
 		override string toString() const {
@@ -73,6 +92,8 @@ class AtstNodeArray : AtstNode {
 		this.count = count;
 	}
 
+	override Type get(AtstTypePointer ctx) { /* TODO */ return null; }
+
 	debug {
 		override string toString() const {
 			if(count == 0) {
@@ -84,6 +105,7 @@ class AtstNodeArray : AtstNode {
 		}
 	}
 }
+
 struct FuncSignature {
 	AtstNode ret;
 	AtstNode[] args;
@@ -100,11 +122,25 @@ struct FuncSignature {
 	}
 }
 
+struct TypecheckResult {
+	bool success;
+	// TODO? see AstNode.typechecK
+}
+
+class TypecheckContext {
+	// TODO? see AstNode.typechecK
+}
+
 // Abstract syntax tree Node.
 class AstNode {
 	LLVMValueRef gen(GenerationContext ctx) {
 		LLVMValueRef a;
 		return a;
+	}
+
+	// TODO: Propagate to child classes.
+	TypecheckResult typecheck(TypecheckContext ctx) {
+		return TypecheckResult(false);
 	}
 
 	debug {
@@ -580,14 +616,14 @@ class AstNodeFuncCall : AstNode {
 	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
-		AstNodeIden mn = cast(AstNodeIden)func;
+		AstNodeIden mn = cast(AstNodeIden)func; // FIXME
 		string n = mn.name;
 		LLVMValueRef func = LLVMGetNamedFunction(
 			ctx.main_module,
 			cast(const char*)n
 		);
 		if(LLVMCountParams(func) != cast(uint)args.length) {
-			writeln("\033[0;31mError: Too little or too more args!\033[0;0m");
+			writeln("\033[0;31mError: Too little or too much args!\033[0;0m");
 		}
 
 		LLVMValueRef* argss = cast(LLVMValueRef*)malloc(LLVMValueRef.sizeof*args.length);
