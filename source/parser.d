@@ -66,7 +66,6 @@ class Parser {
 	private AtstNode parseType() {
 		auto t = parseTypeAtom();
 		while(peek().type == TokType.tok_multiply || peek().type == TokType.tok_lbra) {
-			writeln("type ptr or []");
 			/**/ if(peek().type == TokType.tok_multiply) {
 				next();
 				t = new AtstNodePointer(t);
@@ -243,14 +242,12 @@ class Parser {
 		SList!AstNode nodeStack;
 		uint nodeStackSize = 0;
 
-		// writeln("nodeStack.push#0, peek - ", tokTypeToStr(peek().type));
 		nodeStack.insertFront(parseBasic());
 		nodeStackSize += 1;
 
 		while(peek().type in OPERATORS)
 		{
 			if(operatorStack.empty) {
-				// writeln("EMPTY OPERATORS");
 				operatorStack.insertFront(next().type);
 			}
 			else {
@@ -272,15 +269,12 @@ class Parser {
 				operatorStack.insertFront(t);
 			}
 
-			// writeln("nodeStack.push, peek - ", tokTypeToStr(peek().type));
 			nodeStack.insertFront(parseBasic());
 			nodeStackSize += 1;
 		}
 
-		// writeln("done");
 		// push the remaining operator onto the nodeStack
 		foreach(op; operatorStack) {
-			// writeln("OP:", tokTypeToStr(op));
 			nodeStack.front().debugPrint(0);
 			assert(nodeStackSize >= 2);
 
@@ -348,15 +342,11 @@ class Parser {
 			}
 		}
 		else if(peek().type == TokType.tok_id) {
-			writeln("ID");
 			// might be
 			//   <name:id> ':' <type:id> [ '=' <expr> ] ';'
-			writeln("Type: "~to!string(peek().type)~" "~peek().value);
 			auto name = next().value;
 			if(peek().type != TokType.tok_type) {
-				writeln("we aint bad bruh m8");
 				_idx -= 1; // oops, this is not a declaration!
-				writeln("Type: "~to!string(peek().type)~" "~peek().value);
 				auto e = parseExpr();
 				expectToken(TokType.tok_semicolon);
 				return e;
