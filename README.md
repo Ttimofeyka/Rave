@@ -11,5 +11,5 @@ main: int {
 ## Goals
 * ~~Make a lexer~~ (100%)
 * ~~Make a preprocessor~~ (100%)
-* Make a parser (98%) (TODO: `struct`s)
+* Make a parser (99.98%) (TODO: (missing from lexer) `&=`, `|=`, `&&=`, `||=`, `>>=`, `<<=`, `--`, `++`)
 * Make a code generator (1%)

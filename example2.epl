@@ -1,5 +1,16 @@
 inc "std/os/*";
 
+struct A {
+	x: int;
+	y: char*;
+	z: {
+		while(this->x != 0) {
+			write(this->y);
+			this->x -= 1;
+		}
+	}
+}
+
 main: {
 	vals: int[10];
 	vals[0] = 2;

@@ -17,10 +17,18 @@ void main(string[] args)
 	auto lexer = new Lexer(readText(source_file));
 	auto preproc = new Preprocessor(lexer.getTokens());
 
-	auto parse = new Parser(preproc.getTokens());
-	auto nodes = parse.parseProgram();
+	preproc.getTokens().debugPrint();
+
+	auto parser = new Parser(preproc.getTokens());
+	auto nodes = parser.parseProgram();
 	
-	for(int i = 0; i < nodes.length; ++i) {
-		nodes[i].debugPrint(0);
+	writeln("-------------- Declarations --------------");
+	foreach(decl; parser.getDecls()) {
+		writeln(decl.toString());
 	}
+
+	// writeln("------------------ AST -------------------");
+	// for(int i = 0; i < nodes.length; ++i) {
+	// 	nodes[i].debugPrint(0);
+	// }
 }

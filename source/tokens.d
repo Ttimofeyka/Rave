@@ -167,11 +167,15 @@ class Token {
         else if(s=="!=") this.type = TokType.tok_nequal;
         else if(s=="==") this.type = TokType.tok_equal;
         else if(s=="=") this.type = TokType.tok_equ;
-        else if(s=="+") this.type = TokType.tok_plus;
-        else if(s=="-") this.type = TokType.tok_minus;
+        else if(s=="+=") this.type = TokType.tok_shortplu;
+        else if(s=="+")  this.type = TokType.tok_plus;
+        else if(s=="-=") this.type = TokType.tok_shortmin;
+        else if(s=="-")  this.type = TokType.tok_minus;
         else if(s=="*") this.type = TokType.tok_multiply;
-        else if(s=="/") this.type = TokType.tok_divide;
-        else if(s==":") this.type = TokType.tok_type;
+        else if(s=="*=") this.type = TokType.tok_shortmul;
+        else if(s=="/")  this.type = TokType.tok_divide;
+        else if(s=="/=") this.type = TokType.tok_shortdiv;
+        else if(s==":")  this.type = TokType.tok_type;
         else if(s==".") this.type = TokType.tok_dot;
         else {
             // Commands or Variables(or Defines)

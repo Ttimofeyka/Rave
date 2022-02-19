@@ -149,7 +149,7 @@ class Lexer {
         this.lex = lex;
         this.tokens = new TList();
         this.i = 0;
-        
+
         while(i<lex.length) {
             if(isWhite(cast(dchar)get())) {
                 i+=1;
@@ -166,17 +166,49 @@ class Lexer {
                 case '"':
                     tokens.insertBack(new Token("\""~getTStr()~"\""));
                     break;
-                case '+': tokens.insertBack(new Token("+")); i+=1; break;
-                case '/': tokens.insertBack(new Token("/")); i+=1; break;
                 case '(': tokens.insertBack(new Token("(")); i+=1; break;
                 case ')': tokens.insertBack(new Token(")")); i+=1; break;
                 case '{': tokens.insertBack(new Token("{")); i+=1; break;
                 case '}': tokens.insertBack(new Token("}")); i+=1; break;
                 case '[': tokens.insertBack(new Token("[")); i+=1; break;
                 case ']': tokens.insertBack(new Token("]")); i+=1; break;
+                case '+': 
+                    if(get(+1)=='=') {
+                        tokens.insertBack(new Token("+="));
+                        i+=2;
+                    }
+                    else {
+                        tokens.insertBack(new Token("+"));
+                        i+=1;
+                    }
+                    break;
+                case '*': 
+                    if(get(+1)=='=') {
+                        tokens.insertBack(new Token("*="));
+                        i+=2;
+                    }
+                    else {
+                        tokens.insertBack(new Token("*"));
+                        i+=1;
+                    }
+                    break;
+                case '/': 
+                    if(get(+1)=='=') {
+                        tokens.insertBack(new Token("/="));
+                        i+=2;
+                    }
+                    else {
+                        tokens.insertBack(new Token("/"));
+                        i+=1;
+                    }
+                    break;
                 case '-':
                     if(get(+1)=='>') {
                         tokens.insertBack(new Token("->"));
+                        i+=2;
+                    }
+                    else if(get(+1)=='=') {
+                        tokens.insertBack(new Token("-="));
                         i+=2;
                     }
                     else {
@@ -184,7 +216,6 @@ class Lexer {
                         i+=1;
                     }
                     break;
-                case '*': tokens.insertBack(new Token("*")); i+=1; break;
                 case ',': tokens.insertBack(new Token(",")); i+=1;break;
                 case ';': tokens.insertBack(new Token(";")); i+=1; break;
                 case ':': tokens.insertBack(new Token(":")); i+=1; break;

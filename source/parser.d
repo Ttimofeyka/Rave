@@ -18,6 +18,10 @@ class Parser {
 		this._toks = toks;
 	}
 
+	public TypeDeclaration[] getDecls() {
+		return _decls;
+	}
+
 	// TODO: Source location data.
 	private void error(string msg) {
 		writeln("\033[0;31mError: " ~ msg ~ "\033[0;0m");
@@ -137,8 +141,106 @@ class Parser {
 	}
 
 	private TypeDeclarationStruct parseStructTypeDecl() {
-		// TODO: Parse structs
-		return new TypeDeclarationStruct();
+		auto st = new TypeDeclarationStruct();
+		next(); // skip 'struct' token
+
+		st.name = expectToken(TokType.tok_id).value;
+
+		expectToken(TokType.tok_2lbra);
+
+		while(peek().type != TokType.tok_2rbra) {
+			auto name = expectToken(TokType.tok_id).value;
+			
+			AtstNode type;
+			FunctionArgument[] args;
+			AstNode value;
+			bool isMethod;
+
+			if(peek().type == TokType.tok_lpar) {
+				// function with void return type and args.
+				isMethod = true;
+				type = new AtstNodeVoid();
+				args = parseFuncArgumentDecls();
+				value = parseBlock();
+			}
+			else if(peek().type == TokType.tok_equ) {
+				// error! field cannot be void type.
+				error("Field cannot be of void type! Maybe you forgot ':'?");
+				next();
+				isMethod = false;
+				type = new AtstNodeUnknown();
+				args = [];
+				value = parseExpr();
+				expectToken(TokType.tok_semicolon);
+			}
+			else if(peek().type == TokType.tok_semicolon) {
+				// error! field cannot be void type.
+				error("Field cannot be of void type! Maybe you forgot ':'?");
+				next();
+				isMethod = false;
+				type = new AtstNodeVoid();
+				args = [];
+				value = null;
+			}
+			else if(peek().type == TokType.tok_type) {
+				// field or function with return type.
+				next();
+				if(peek().type == TokType.tok_equ || peek().type == TokType.tok_2lbra) {
+					type = new AtstNodeUnknown();
+				} else {
+					type = parseType();
+				}
+
+				if(peek().type == TokType.tok_equ) {
+					next();
+					isMethod = false;
+					value = parseExpr();
+				}
+				else if(peek().type == TokType.tok_2lbra) {
+					isMethod = true;
+					value = parseBlock();
+				}
+				// can't happen?
+				// else if(peek().type == TokType.tok_semicolon && type is null) {
+				// 	error("Cannot infer type for a field with a default value");
+				// 	next();
+				// }
+				else {
+					isMethod = false;
+					expectToken(TokType.tok_semicolon);
+				}
+
+				args = [];
+				value = null;
+			}
+			else {
+				// function with void return type and no args.
+				isMethod = true;
+				type = new AtstNodeVoid();
+				args = [];
+				value = parseBlock();
+			}
+
+			if(canFind!((decl, name) => decl.name == name)(st.fieldDecls, name)
+			|| canFind!((decl, name) => decl.name == name)(st.methodDecls, name)) {
+				error("Field or function with the same name already exists: " ~ name);
+			}
+			else {
+				if(!isMethod) {
+					st.fieldDecls ~= VariableDeclaration(type, name);
+					if(value !is null) st.fieldValues[name] = value;
+				}
+				else {
+					AtstNode[] argTypes = array(map!(a => a.type)(args));
+					string[] argNames = array(map!(a => a.name)(args));
+					st.methodDecls ~= FunctionDeclaration(FuncSignature(type, argTypes), name, argNames);
+					if(value !is null) st.methodValues[name] = value;
+				}
+			}
+		}
+
+		expectToken(TokType.tok_2rbra);
+		return st;
 	}
 
 	private TypeDeclaration parseTypeDecl() {
@@ -174,7 +276,11 @@ class Parser {
 	}
 
 	private AstNode parseSuffix(AstNode base) {
-		while(peek().type == TokType.tok_lpar || peek().type == TokType.tok_lbra) {
+		while(peek().type == TokType.tok_lpar
+		   || peek().type == TokType.tok_lbra
+		   || peek().type == TokType.tok_struct_get
+		   || peek().type == TokType.tok_dot)
+		{
 			if(peek().type == TokType.tok_lpar) {
 				base = parseFuncCall(base);
 			}
@@ -183,6 +289,13 @@ class Parser {
 				auto idx = parseExpr();
 				expectToken(TokType.tok_rbra);
 				base = new AstNodeIndex(base, idx);
+			}
+			else if(peek().type == TokType.tok_struct_get
+			     || peek().type == TokType.tok_dot)
+			{
+				auto t = next().type;
+				string field = expectToken(TokType.tok_id).value;
+				base = new AstNodeGet(base, field, t == TokType.tok_struct_get);
 			}
 		}
 
@@ -227,6 +340,7 @@ class Parser {
 			TokType.tok_shortmul: -99,
 			TokType.tok_shortdiv: -99,
 			TokType.tok_equal: -80,
+			TokType.tok_nequal: -80,
 			TokType.tok_less: -70,
 			TokType.tok_more: -70,
 			TokType.tok_or: -50,

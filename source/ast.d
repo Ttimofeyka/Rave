@@ -148,7 +148,44 @@ class TypeDeclaration {
 }
 
 class TypeDeclarationStruct : TypeDeclaration {
-	VariableDeclaration[] decls;
+	VariableDeclaration[] fieldDecls;
+	FunctionDeclaration[] methodDecls;
+
+	AstNode[string] fieldValues;
+	AstNode[string] methodValues;
+
+	string name;
+
+	override string toString() const {
+		string s = "struct " ~ name ~ " {";
+		if(fieldDecls.length + methodDecls.length > 0) {
+			s ~= '\n';
+		}
+		foreach(field; fieldDecls) {
+			s ~= "    " ~ field.name ~ ": " ~ field.type.toString();
+			if(field.name in fieldValues) {
+				s ~= " = ..."; // ~ fieldValues[field.name].debugPrint();
+			}
+			s ~= ";\n";
+		}
+		foreach(method; methodDecls) {
+			s ~= "    " ~ method.name ~ "(";
+
+			if(method.signature.args.length > 0) {
+				s ~= method.argNames[0] ~ ": " ~ method.signature.args[0].toString();
+				for(int i = 1; i < method.signature.args.length; ++i) {
+					s ~= ", " ~ method.argNames[i] ~ ": " ~ method.signature.args[i].toString();
+				}
+			}
+			s ~= "): " ~ method.signature.ret.toString();
+			if(method.name in methodValues) {
+				s ~= " { ... }\n"; // ~ fieldValues[field.name].debugPrint();
+			} else {
+				s ~= ";\n";
+			}
+		}
+		return s ~ "}";
+	}
 }
 
 class AstNodeFunction : AstNode {
@@ -190,6 +227,26 @@ class AstNodeFunction : AstNode {
 // 	binary_op_eql, // equal to
 // 	binary_op_neq, // not equal to
 // }
+
+class AstNodeGet : AstNode {
+	AstNode value;
+	string field;
+	bool isSugar; // true if -> false if .
+	
+	this(AstNode value, string field, bool isSugar) {
+		this.value = value;
+		this.field = field;
+		this.isSugar = isSugar;
+	}
+
+	debug {
+		override void debugPrint(int indent) {
+			writeTabs(indent);
+			writeln("Get(" ~ (isSugar?"->":".") ~ ") ", this.field);
+			value.debugPrint(indent + 1);
+		}
+	}
+}
 
 class AstNodeBinary : AstNode {
 	AstNode lhs, rhs;
