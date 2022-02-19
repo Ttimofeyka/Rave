@@ -74,7 +74,7 @@ class AtstNodePointer : AtstNode {
 		this.node = node;
 	}
 
-	override Type get(AtstTypePointer ctx) { return new TypePointer(node.get(ctx)); }
+	override Type get(AtstTypeContext ctx) { return new TypePointer(node.get(ctx)); }
 
 	debug {
 		override string toString() const {
@@ -92,7 +92,7 @@ class AtstNodeArray : AtstNode {
 		this.count = count;
 	}
 
-	override Type get(AtstTypePointer ctx) { /* TODO */ return null; }
+	override Type get(AtstTypeContext ctx) { /* TODO */ return null; }
 
 	debug {
 		override string toString() const {
