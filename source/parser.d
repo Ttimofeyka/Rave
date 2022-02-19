@@ -275,7 +275,6 @@ class Parser {
 
 		// push the remaining operator onto the nodeStack
 		foreach(op; operatorStack) {
-			nodeStack.front().debugPrint(0);
 			assert(nodeStackSize >= 2);
 
 			auto rhs = nodeStack.front(); nodeStack.removeFront();
