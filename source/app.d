@@ -7,8 +7,7 @@ import cmd;
 import std.file : readText;
 import preproc;
 import parser;
-import llvm;
-import gen;
+import gen, llvm;
 
 void main(string[] args)
 {
@@ -32,6 +31,5 @@ void main(string[] args)
 	GenerationContext gencontext = new GenerationContext();
 	for(int i = 0; i < nodes.length; ++i) {
 		nodes[i].debugPrint(0);
-		nodes[i].gen(gencontext);
 	}
 }
