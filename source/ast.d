@@ -615,12 +615,12 @@ class AstNodeFuncCall : AstNode {
 
 
 class AstNodeInt : AstNode {
-	uint value;
+	ulong value;
 
-	this(uint value) { this.value = value; }
+	this(ulong value) { this.value = value; }
 
 	override LLVMValueRef gen(GenerationContext ctx) {
-		return LLVMConstInt(LLVMInt32Type(),cast(ulong)value,false);
+		return LLVMConstInt(LLVMInt32Type(),value,false);
 	}
 
 	debug {
@@ -631,4 +631,57 @@ class AstNodeInt : AstNode {
 	}
 }
 
+class AstNodeFloat : AstNode {
+	float value;
+
+	this(float value) { this.value = value; }
+
+	override LLVMValueRef gen(GenerationContext ctx) {
+		return null;
+		// return LLVMConstInt(LLVMInt32Type(),value,false);
+	}
+
+	debug {
+		override void debugPrint(int indent) {
+			writeTabs(indent);
+			writeln("Float: ", value);
+		}
+	}
+}
+
+class AstNodeString : AstNode {
+	string value;
+
+	this(string value) { this.value = value; }
+
+	override LLVMValueRef gen(GenerationContext ctx) {
+		return null;
+		// return LLVMConstInt(LLVMInt32Type(),value,false);
+	}
+
+	debug {
+		override void debugPrint(int indent) {
+			writeTabs(indent);
+			writeln("String: \"", value, '"');
+		}
+	}
+}
+
+class AstNodeChar : AstNode {
+	char value;
+
+	this(char value) { this.value = value; }
+
+	override LLVMValueRef gen(GenerationContext ctx) {
+		return null;
+		// return LLVMConstInt(LLVMInt32Type(),value,false);
+	}
+
+	debug {
+		override void debugPrint(int indent) {
+			writeTabs(indent);
+			writeln("Char: '", value, '\'');
+		}
+	}
+}
 // class AstNodeFloat : AstNode { float value; }

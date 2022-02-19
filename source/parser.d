@@ -314,14 +314,23 @@ class Parser {
 
 	private AstNode parseAtom() {
 		auto t = next();
-		if(t.type == TokType.tok_num) return new AstNodeInt(parse!uint(t.value));
+		if(t.type == TokType.tok_num) {
+			if(canFind(t.value, '.'))
+				return new AstNodeFloat(parse!float(t.value));
+			else
+				return new AstNodeInt(parse!ulong(t.value));
+		}
+		if(t.type == TokType.tok_string) return new AstNodeString(t.value[1..$]);
+		if(t.type == TokType.tok_char) return new AstNodeChar(t.value[1..$][0]);
 		if(t.type == TokType.tok_id) return new AstNodeIden(t.value);
-		else if(t.type == TokType.tok_lpar) {
+		if(t.type == TokType.tok_lpar) {
 			auto e = parseExpr();
 			expectToken(TokType.tok_rpar);
 			return e;
 		}
-		else error("Expected a number, a string or an expression in parentheses. Got: " ~ tokTypeToStr(t.type));
+		
+		writeln(t.value);
+		error("Expected a variable, a number, a string, a char or an expression in parentheses. Got: " ~ tokTypeToStr(t.type));
 		return null;
 	}
 

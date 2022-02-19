@@ -27,8 +27,8 @@ void main(string[] args)
 		writeln(decl.toString());
 	}
 
-	// writeln("------------------ AST -------------------");
-	// for(int i = 0; i < nodes.length; ++i) {
-	// 	nodes[i].debugPrint(0);
-	// }
+	writeln("------------------ AST -------------------");
+	for(int i = 0; i < nodes.length; ++i) {
+		nodes[i].debugPrint(0);
+	}
 }
