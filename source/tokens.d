@@ -165,13 +165,13 @@ class Token {
         }
 
         if(s[0]=='"') {
-            if(s[$]=='"') {
+            if(s[$-1]=='"') {
                 this.type = TokType.tok_string;
             }
             else lexer_error("Undefined token <"~s~">!");
         }
         else if(s[0]=='\'') {
-            if(s[$]=='\'') {
+            if(s[$-1]=='\'') {
                 this.type = TokType.tok_char;
             }
             else lexer_error("Undefined token <"~s~">!");

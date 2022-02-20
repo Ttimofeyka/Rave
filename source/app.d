@@ -15,7 +15,10 @@ void main(string[] args)
 
 	input(args);
 	auto lexer = new Lexer(source_file, readText(source_file));
+	writeln("Done lexing");
+	lexer.getTokens().debugPrint();
 	auto preproc = new Preprocessor(lexer.getTokens());
+	writeln("Done preprocessing");
 
 	// preproc.getTokens().debugPrint();
 
