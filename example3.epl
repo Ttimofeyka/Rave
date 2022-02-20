@@ -2,3 +2,10 @@ main: int {
 	exit(0);
 	ret 0;
 }
+
+// Single Line Comment
+/*
+Multi
+Line
+Comment
+*/

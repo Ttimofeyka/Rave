@@ -193,6 +193,19 @@ class Lexer {
         i += n;
     }
 
+    private void skipLineCom() {
+        while(get() != '\n' && get() != '\0') {
+            next(1);
+        }
+    }
+
+    private void skipMultiLineCom() {
+        while((get() != '*' && get(+1) != '/') && get() != '\0') {
+            next(1);
+        }
+        if(get() == '*') {next(2);}
+    }
+
     this(string fname, string lex) {
         this.lex = lex;
         this.loc.fname = fname;
@@ -253,6 +266,14 @@ class Lexer {
                     if(get(+1)=='=') {
                         tokens.insertBack(new Token(loc, "/="));
                         next(2);
+                    }
+                    else if(get(+1)=='/') {
+                        next(2);
+                        skipLineCom();
+                    }
+                    else if(get(+1)=='*') {
+                        next(2);
+                        skipMultiLineCom();
                     }
                     else {
                         tokens.insertBack(new Token(loc, "/"));
