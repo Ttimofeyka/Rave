@@ -1,11 +1,27 @@
-main: int {
-	exit(0);
-	ret 0;
+inc "std";
+def zero 0;
+
+struct Test {
+    val: uint = 0;
+    get: {
+        ret zero + this->val;
+    }
 }
 
-// Single Line Comment
-/*
-Multi
-Line
-Comment
-*/
+enum Values {
+    GOOD,
+    BAD,
+    UNKNOWN = 17,
+    UNKNOWN2,
+    ACTUAL = 4,
+    ACTUAL2 = 4,
+    ACTUAL3,
+}
+
+main(argc: int, argv: char*[]): int {
+    if(zero == 0) {
+        ret zero + 1;
+    }
+    
+    ret zero;
+}

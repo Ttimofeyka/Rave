@@ -25,31 +25,31 @@ class GenerationContext {
 	    );
 
 	    LLVMValueRef mainf = LLVMAddFunction(
-		    ctx.mod,
+		    this.mod,
 		    cast(const char*)"main",
 		    ret_type
 	    );
 
 	    LLVMBasicBlockRef entry = LLVMAppendBasicBlock(mainf, "entry");
-	    LLVMPositionBuilderAtEnd(ctx.builder, entry);
+	    LLVMPositionBuilderAtEnd(this.builder, entry);
 
 	    LLVMValueRef retval = LLVMConstInt(
 	    	LLVMInt32Type(),
 	    	cast(ulong)0,
 	    	false
 	    );
-	    LLVMBuildRet(ctx.builder, retval);
+	    LLVMBuildRet(this.builder, retval);
 
 	    char *error;
     	LLVMInitializeNativeTarget();
     	LLVMInitializeNativeAsmPrinter();
     	LLVMInitializeNativeAsmParser();
 
-	    LLVMCreateExecutionEngineForModule(&ctx.engine, ctx.mod, &error);
+	    LLVMCreateExecutionEngineForModule(&this.engine, this.mod, &error);
 
 	    LLVMGenericValueRef* argss;
-	    LLVMGenericValueRef res = LLVMRunFunction(ctx.engine,mainf,0,argss);
+	    LLVMGenericValueRef res = LLVMRunFunction(this.engine,mainf,0,argss);
 	
-	    LLVMWriteBitcodeToFile(ctx.mod, "llvm.bc");
+	    LLVMWriteBitcodeToFile(this.mod, "llvm.bc");
     }
 }
