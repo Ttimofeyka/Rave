@@ -12,12 +12,15 @@ import std.getopt;
 void main(string[] args)
 {
 	string outputFile = "a.o";
-	string debugMode = "false";
+	bool debugMode = false;
+	string entryFunc = "main";
+
 	auto helpInformation = getopt(
 		args,
 		"o", "Output file", &outputFile,
 		"outout", "Output file", &outputFile,
-		"debug", "Debug mode", &debugMode
+		"debug", "Debug mode", &debugMode,
+		"e", "Entry function", &entryFunc
 	);
 	
 	if(helpInformation.helpWanted)
@@ -53,5 +56,5 @@ void main(string[] args)
 	}
 
 	auto ctx = new GenerationContext();
-	ctx.gen(nodes, outputFile, debugMode);
+	ctx.gen(nodes, outputFile, debugMode, entryFunc);
 }

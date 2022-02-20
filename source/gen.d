@@ -5,6 +5,8 @@ import std.stdio : writeln;
 import core.stdc.stdlib : exit;
 import typesystem, util;
 import ast;
+import std.conv : to;
+import std.string;
 
 class GenerationContext {
     LLVMExecutionEngineRef engine;
@@ -54,7 +56,7 @@ class GenerationContext {
 		return llvm_args;
 	}
 
-	void genFunc(AstNode node) {
+	void genFunc(AstNode node,string entryf) {
 		AstNodeFunction astf = 
 			cast(AstNodeFunction)node;
 		LLVMTypeRef* param_types = 
@@ -73,7 +75,7 @@ class GenerationContext {
 
 		LLVMValueRef func = LLVMAddFunction(
 		    this.mod,
-		    cast(const char*)"main\0",
+		    cast(const char*)(astf.decl.name~"\0"),
 		    ret_type
 	    );
 
@@ -89,22 +91,20 @@ class GenerationContext {
 	    LLVMBuildRet(this.builder, retval);
 	}
 
-    void gen(AstNode[] nodes,string file,string debugMode) {
+    void gen(AstNode[] nodes,string file,bool debugMode,string entryf) {
 		for(int i=0; i<nodes.length; i++) {
 			if(nodes[i].instanceof!(AstNodeFunction)) {
-				genFunc(nodes[i]);
+				genFunc(nodes[i],entryf);
 			}
 		}
 		genTarget(file,debugMode);
 	}
 
-	void genTarget(string file,string debugMode) {
-		
-		if(debugMode=="true"||debugMode=="1") 
+	void genTarget(string file,bool d) {
+		if(d) 
 			LLVMWriteBitcodeToFile(this.mod,cast(const char*)(file~".debug.be"));
 
 		char* errors;
-
 		LLVMTargetRef target;
     	LLVMGetTargetFromTriple(LLVMGetDefaultTargetTriple(), &target, &errors);
 
@@ -124,7 +124,8 @@ class GenerationContext {
     	char* datalayout_str = LLVMCopyStringRepOfTargetData(datalayout);
     	LLVMSetDataLayout(this.mod, datalayout_str);
     	LLVMDisposeMessage(datalayout_str);
+		char* file_ptr = cast(char*)toStringz(file);
 
-    	LLVMTargetMachineEmitToFile(machine, this.mod, cast(char*)file, LLVMObjectFile, &errors);
+    	LLVMTargetMachineEmitToFile(machine,this.mod,file_ptr, LLVMObjectFile, &errors);
 	}
 }
