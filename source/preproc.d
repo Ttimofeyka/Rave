@@ -12,6 +12,7 @@ import lexer;
 class Preprocessor {
     TList tokens;
     TList[string] defines;
+    string[TList] replaced_defines;
     TList newtokens;
 
     int i = 0; // Iterate by tokens
@@ -79,6 +80,7 @@ class Preprocessor {
                     string name = get().value;
                     i+=1;
                     this.defines[name] = getDefine();
+                    this.replaced_defines[defines[name]] = name;
                     i+=1;
                 }
                 else if(get().cmd == TokCmd.cmd_include) {
@@ -99,7 +101,10 @@ class Preprocessor {
                     insertFile(name);
                 }
                 else if(get().cmd == TokCmd.cmd_ifdef) {
-                    
+                    i+=1;
+                    TList replaced = getDefine();
+                    i+=1;
+                    // TODO
                 }
                 else {
                     newtokens.insertBack(get());
