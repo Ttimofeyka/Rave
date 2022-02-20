@@ -1,7 +1,7 @@
 # EPL
 
 
-EPL - is a compiled, procedural and statically typed high-level system programming language.
+EPL - is a compiled, procedural and statically typed high-level systems programming language.
 
 ## "Hello, world!" Example
 
