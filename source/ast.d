@@ -292,7 +292,7 @@ class AstNodeFunction : AstNode {
 	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
-
+		
 		LLVMValueRef a;
 		return a;
 	}

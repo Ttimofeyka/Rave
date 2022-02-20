@@ -12,9 +12,9 @@ import lexer;
 class Preprocessor {
     TList tokens;
     TList[string] defines;
+    string[TList] replaced_defines;
     TList newtokens;
 
-    bool _shouldIgnore = false;
     int i = 0; // Iterate by tokens
 
     private void error(string msg) {
@@ -29,7 +29,7 @@ class Preprocessor {
     private TList getDefine() {
         TList define_toks = new TList();
 
-        while(get().type != TokType.tok_hash) {
+        while(get().type != TokType.tok_semicolon) {
             define_toks.insertBack(get()); 
             i+=1;
         }
@@ -70,11 +70,7 @@ class Preprocessor {
         this.newtokens = new TList();
 
         while(i<tokens.length) {
-            if(get().type == TokType.tok_hash) {
-                i+=1;
-                if(get().type != TokType.tok_cmd) {
-                    error("Expected a command after '#'!");
-                }
+            if(get().type == TokType.tok_cmd) {
                 if(get().cmd == TokCmd.cmd_define) {
                     i+=1;
                     if(get().type != TokType.tok_id) {
@@ -84,6 +80,7 @@ class Preprocessor {
                     string name = get().value;
                     i+=1;
                     this.defines[name] = getDefine();
+                    this.replaced_defines[defines[name]] = name;
                     i+=1;
                 }
                 else if(get().cmd == TokCmd.cmd_include) {
@@ -94,46 +91,24 @@ class Preprocessor {
                     }
                     string name = get().value.replace("\"", "");
                     i += 1;
-                    if(get().type != TokType.tok_hash) {
-                        error("Expected a newline at the end of an \"inc\" statement!");
+                    if(get().type != TokType.tok_semicolon) {
+                        error("Expected a semicolon at the end of an \"inc\" statement!");
                         continue;
                     }
                     i += 1;
                     // name = absolutePath(name);
                     // if(exists(name) && isDir(name)) insertFile(buildPath(name, "*"));
-                    if(!_shouldIgnore) insertFile(name);
+                    insertFile(name);
                 }
                 else if(get().cmd == TokCmd.cmd_ifdef) {
                     i+=1;
-                    if(get().type != TokType.tok_id) {
-                        error("Expected an identifier after \"ifdef\"!");
-                        continue;
-                    }
-                    auto name = get().value;
+                    TList replaced = getDefine();
                     i+=1;
-                    if(!_shouldIgnore && name !in defines)
-                        _shouldIgnore = false;
-                }
-                else if(get().cmd == TokCmd.cmd_ifndef) {
-                    i+=1;
-                    if(get().type != TokType.tok_id) {
-                        error("Expected an identifier after \"ifndef\"!");
-                        continue;
-                    }
-                    auto name = get().value;
-                    i+=1;
-                    if(!_shouldIgnore && name in defines)
-                        _shouldIgnore = false;
-                }
-                else if(get().cmd == TokCmd.cmd_endif) {
-                    i+=1;
-                    _shouldIgnore = true;
+                    // TODO
                 }
                 else {
-                    if(!_shouldIgnore) {
-                        newtokens.insertBack(get());
-                        i+=1;
-                    }
+                    newtokens.insertBack(get());
+                    i+=1;
                 }
             }
             else if(get().type == TokType.tok_id) {
