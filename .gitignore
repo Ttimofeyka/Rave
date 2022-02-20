@@ -33,3 +33,4 @@ source/old.ast.d
 *.out
 *.ll
 *.be
+bin

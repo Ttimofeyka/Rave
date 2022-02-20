@@ -1,5 +1,6 @@
 #!/bin/sh
 
-./epl example3.epl -o "$2".o
-as stdimpl/$1/rt.s -o "$1"_rt.o
-ld "$1"_rt.o "$2".o -o "$2" -e _start
+mkdir -p bin
+./epl example3.epl -o bin/"$2".o
+as stdimpl/$1/rt.s -o bin/"$1"_rt.o
+ld bin/"$1"_rt.o bin/"$2".o -o bin/"$2" -e _start
