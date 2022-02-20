@@ -192,8 +192,9 @@ class Lexer {
         i += n;
     }
 
-    this(string lex) {
+    this(string fname, string lex) {
         this.lex = lex;
+        this.loc.fname = fname;
         this.tokens = new TList();
         this.i = 0;
 

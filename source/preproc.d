@@ -6,8 +6,7 @@ import std.stdio;
 import std.array;
 import std.path;
 import std.conv;
-import std.file : readText, isDir, exists;
-import glob : glob;
+import std.file : readText, isDir, exists, dirEntries, SpanMode;
 import lexer;
 
 class Preprocessor {
@@ -49,11 +48,15 @@ class Preprocessor {
     }
 
     private void insertFile(string pattern) {
-        writeln(pattern);
-        foreach(fname; glob(pattern)) {
-            writeln("-> ", fname);
-            if(isDir(fname)) continue;
-            auto l = new Lexer(readText(fname));
+        if(pattern.isDir) {
+            foreach(fname; dirEntries(pattern, SpanMode.breadth)) {
+                // writeln("-> ", fname.name);
+                if(fname.isDir) continue;
+                insertFile(fname.name);
+            }
+        }
+        else {
+            auto l = new Lexer(pattern, readText(pattern));
             auto preproc = new Preprocessor(l.getTokens());
             foreach(token; preproc.getTokens().tokens) {
                 newtokens.insertBack(copyToken(token));
@@ -91,9 +94,9 @@ class Preprocessor {
                         continue;
                     }
                     i += 1;
-                    name = absolutePath(name);
-                    if(exists(name) && isDir(name)) insertFile(buildPath(name, "*"));
-                    else insertFile(name);
+                    // name = absolutePath(name);
+                    // if(exists(name) && isDir(name)) insertFile(buildPath(name, "*"));
+                    insertFile(name);
                 }
                 else {
                     newtokens.insertBack(get());

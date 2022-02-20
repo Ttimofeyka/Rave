@@ -75,6 +75,8 @@ enum TokCmd {
     cmd_sizeof = 17,
     cmd_void = 19,
     cmd_enum = 20,
+    cmd_static = 21,
+    cmd_const = 22,
 }
 
 string tokTypeToStr(TokType type)
@@ -257,6 +259,12 @@ class Token {
                            break;
                 case "enum": this.type=TokType.tok_cmd;
                            this.cmd=TokCmd.cmd_enum;
+                           break;
+                case "static": this.type=TokType.tok_cmd;
+                           this.cmd=TokCmd.cmd_static;
+                           break;
+                case "const": this.type=TokType.tok_cmd;
+                           this.cmd=TokCmd.cmd_const;
                            break;
                 default: this.type = TokType.tok_id; break;
             }

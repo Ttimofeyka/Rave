@@ -14,10 +14,10 @@ void main(string[] args)
   	LLVMInitializeNativeTarget();
 
 	input(args);
-	auto lexer = new Lexer(readText(source_file));
+	auto lexer = new Lexer(source_file, readText(source_file));
 	auto preproc = new Preprocessor(lexer.getTokens());
 
-	preproc.getTokens().debugPrint();
+	// preproc.getTokens().debugPrint();
 
 	auto parser = new Parser(preproc.getTokens());
 	auto nodes = parser.parseProgram();

@@ -1,0 +1,13 @@
+
+struct File {
+    __data: void*;
+
+    static extern open(path: const char*, mode: const char*): File*;
+    extern close();
+
+    extern read(to: char*, count: usize);
+    extern write(from: const char*, count: usize);
+
+    extern get: char;
+    extern put(c: char);
+}

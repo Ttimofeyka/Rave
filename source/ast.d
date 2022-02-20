@@ -83,6 +83,22 @@ class AtstNodePointer : AtstNode {
 	}
 }
 
+class AtstNodeConst : AtstNode {
+	AtstNode node;
+
+	this(AtstNode node) {
+		this.node = node;
+	}
+
+	override Type get(AtstTypeContext ctx) { return new TypeConst(node.get(ctx)); }
+
+	debug {
+		override string toString() const {
+			return "const " ~ node.toString();
+		}
+	}
+}
+
 class AtstNodeArray : AtstNode {
 	AtstNode node;
 	ulong count;
@@ -207,9 +223,14 @@ class TypeDeclarationEnum : TypeDeclaration {
 	}
 }
 
+struct MethodDeclaration {
+	FunctionDeclaration base;
+	bool isStatic, isExtern;
+}
+
 class TypeDeclarationStruct : TypeDeclaration {
 	VariableDeclaration[] fieldDecls;
-	FunctionDeclaration[] methodDecls;
+	MethodDeclaration[] methodDecls;
 
 	AstNode[string] fieldValues;
 	AstNode[string] methodValues;
@@ -227,16 +248,21 @@ class TypeDeclarationStruct : TypeDeclaration {
 			s ~= ";\n";
 		}
 		foreach(method; methodDecls) {
-			s ~= "    " ~ method.name ~ "(";
+			s ~= "    ";
+			
+			if(method.isStatic) s ~= "static ";
+			if(method.isExtern) s ~= "extern ";
 
-			if(method.signature.args.length > 0) {
-				s ~= method.argNames[0] ~ ": " ~ method.signature.args[0].toString();
-				for(int i = 1; i < method.signature.args.length; ++i) {
-					s ~= ", " ~ method.argNames[i] ~ ": " ~ method.signature.args[i].toString();
+			s ~= method.base.name ~ "(";
+
+			if(method.base.signature.args.length > 0) {
+				s ~= method.base.argNames[0] ~ ": " ~ method.base.signature.args[0].toString();
+				for(int i = 1; i < method.base.signature.args.length; ++i) {
+					s ~= ", " ~ method.base.argNames[i] ~ ": " ~ method.base.signature.args[i].toString();
 				}
 			}
-			s ~= "): " ~ method.signature.ret.toString();
-			if(method.name in methodValues) {
+			s ~= "): " ~ method.base.signature.ret.toString();
+			if(method.base.name in methodValues) {
 				s ~= " { ... }\n"; // ~ fieldValues[field.name].debugPrint();
 			} else {
 				s ~= ";\n";

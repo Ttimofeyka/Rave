@@ -70,8 +70,16 @@ class Parser {
 		return null;
 	}
 
+	private AtstNode parseTypePrefix() {
+		if(peek().type == TokType.tok_cmd && peek().cmd == TokCmd.cmd_const) {
+			next();
+			return new AtstNodeConst(parseTypeAtom());
+		}
+		return parseTypeAtom();
+	}
+
 	private AtstNode parseType() {
-		auto t = parseTypeAtom();
+		auto t = parseTypePrefix();
 		while(peek().type == TokType.tok_multiply || peek().type == TokType.tok_lbra) {
 			/**/ if(peek().type == TokType.tok_multiply) {
 				next();
@@ -184,19 +192,47 @@ class Parser {
 		expectToken(TokType.tok_2lbra);
 
 		while(peek().type != TokType.tok_2rbra) {
-			auto name = expectToken(TokType.tok_id).value;
 			
 			AtstNode type;
 			FunctionArgument[] args;
 			AstNode value;
 			bool isMethod;
+			bool allowNoBody = false;
+
+			static TokCmd[] MODS = [TokCmd.cmd_extern, TokCmd.cmd_static];
+			TokCmd[] mods = [];
+
+			while(peek().type == TokType.tok_cmd && canFind(MODS, peek().cmd)) {
+				auto cmd = next().cmd;
+				/**/ if(cmd == TokCmd.cmd_extern && !canFind(mods, cmd)) {
+					mods ~= TokCmd.cmd_extern;
+					allowNoBody = true;
+				}
+				else if(cmd == TokCmd.cmd_static && !canFind(mods, cmd)) mods ~= TokCmd.cmd_static;
+			 	else error("Function modifier already in use!");
+			}
+
+			auto name = expectToken(TokType.tok_id).value;
 
 			if(peek().type == TokType.tok_lpar) {
-				// function with void return type and args.
+				// function with args.
 				isMethod = true;
-				type = new AtstNodeVoid();
 				args = parseFuncArgumentDecls();
-				value = parseBlock();
+				if(peek().type == TokType.tok_type) {
+					next();
+					type = parseType();
+				}
+				else {
+					type = new AtstNodeVoid();
+				}
+
+				if(allowNoBody && peek().type == TokType.tok_semicolon) {
+					next();
+					value = null;
+				}
+				else {
+					value = parseBlock();
+				}
 			}
 			else if(peek().type == TokType.tok_equ) {
 				// error! field cannot be void type.
@@ -257,7 +293,7 @@ class Parser {
 			}
 
 			if(canFind!((decl, name) => decl.name == name)(st.fieldDecls, name)
-			|| canFind!((decl, name) => decl.name == name)(st.methodDecls, name)) {
+			|| canFind!((decl, name) => decl.base.name == name)(st.methodDecls, name)) {
 				error("Field or function with the same name already exists: " ~ name);
 			}
 			else {
@@ -268,7 +304,8 @@ class Parser {
 				else {
 					AtstNode[] argTypes = array(map!(a => a.type)(args));
 					string[] argNames = array(map!(a => a.name)(args));
-					st.methodDecls ~= FunctionDeclaration(FuncSignature(type, argTypes), name, argNames);
+					auto decl = FunctionDeclaration(FuncSignature(type, argTypes), name, argNames);
+					st.methodDecls ~= MethodDeclaration(decl, canFind(mods, TokCmd.cmd_static), canFind(mods, TokCmd.cmd_extern));
 					if(value !is null) st.methodValues[name] = value;
 				}
 			}
@@ -562,7 +599,7 @@ class Parser {
 
 	private AstNodeBlock parseBlock() {
 		AstNode[] nodes;
-		assert(next().type == TokType.tok_2lbra);
+		if(expectToken(TokType.tok_2lbra) is null) assert(0);
 		while(peek().type != TokType.tok_2rbra) {
 			nodes ~= parseStmt();
 		}
