@@ -10,7 +10,8 @@
 	},
 	"description": "EPL programming language",
 	"lflags": [
-		"-L/usr/local/Cellar/llvm/11.0.0/lib"
+		"-L/usr/lib/llvm-10/lib",
+		"-R/usr/lib/llvm-10/lib"
 	],
 	"libs": [
 		"LLVM",

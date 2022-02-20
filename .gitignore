@@ -26,3 +26,4 @@ docs/
 *.lst
 
 epl
+dub.json
