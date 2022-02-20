@@ -1,1 +1,1 @@
-main: int {ret 5;}
+main: int => 5;

@@ -37,7 +37,7 @@ class GenerationContext {
 					return LLVMInt8Type();
 				case BasicType.t_long:
 					return LLVMInt64Type();
-				default: return LLVMIntType(1);
+				default: return LLVMInt16Type();
 			}
 		}
 		assert(0);
@@ -86,7 +86,10 @@ class GenerationContext {
 	    	false
 	    );
 	    LLVMBuildRet(this.builder, retval);
+		genTarget();
+	}
 
+	void genTarget() {
 		char* errors;
 
 		LLVMTargetRef target;
