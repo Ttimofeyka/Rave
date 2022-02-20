@@ -9,6 +9,27 @@ import tokens;
 import std.algorithm.iteration : map;
 import std.algorithm : canFind;
 
+struct Decl {
+	string name;
+	AtstNode type;
+	FunctionArgument[] args;
+	AstNode value;
+	bool isMethod;
+	TokCmd[] mods = [];
+}
+
+VariableDeclaration declToVarDecl(Decl d) {
+	return VariableDeclaration(d.type, d.name,
+		canFind(d.mods, TokCmd.cmd_static), canFind(d.mods, TokCmd.cmd_extern));
+}
+
+FunctionDeclaration declToFuncDecl(Decl d) {
+	AtstNode[] argTypes = array(map!(a => a.type)(d.args));
+	string[] argNames = array(map!(a => a.name)(d.args));
+	return FunctionDeclaration(FuncSignature(d.type, argTypes), d.name, argNames,
+		canFind(d.mods, TokCmd.cmd_static), canFind(d.mods, TokCmd.cmd_extern));
+}
+
 // TODO: Add `cast(type) value` create AstNodeCast.
 //       see Parser.parsePrefix()`
 class Parser {
@@ -152,6 +173,99 @@ class Parser {
 		return FunctionDeclaration(FuncSignature(retType, argTypes), name.value, argNames);
 	}
 
+	private Decl parseDecl(TokCmd[] allowedMods = [TokCmd.cmd_extern, TokCmd.cmd_static], bool allowNoBody = true) {
+		Decl d;
+
+		while(peek().type == TokType.tok_cmd && canFind(allowedMods, peek().cmd)) {
+			auto cmd = next().cmd;
+			/**/ if(cmd == TokCmd.cmd_extern && !canFind(d.mods, cmd)) d.mods ~= TokCmd.cmd_extern;
+			else if(cmd == TokCmd.cmd_static && !canFind(d.mods, cmd)) d.mods ~= TokCmd.cmd_static;
+			else error("Function modifier already in use!");
+		}
+
+		d.name = expectToken(TokType.tok_id).value;
+
+		if(peek().type == TokType.tok_lpar) {
+			// function with args.
+			d.isMethod = true;
+			d.args = parseFuncArgumentDecls();
+			if(peek().type == TokType.tok_type) {
+				next();
+				d.type = parseType();
+			}
+			else {
+				d.type = new AtstNodeVoid();
+			}
+
+			if(allowNoBody && peek().type == TokType.tok_semicolon) {
+				next();
+				d.value = null;
+			}
+			else {
+				d.value = parseBlock();
+			}
+		}
+		else if(peek().type == TokType.tok_equ) {
+			// error! field cannot be void type.
+			error("Field cannot be of void type! Maybe you forgot ':'?");
+			next();
+			d.isMethod = false;
+			d.type = new AtstNodeUnknown();
+			d.args = [];
+			d.value = parseExpr();
+			expectToken(TokType.tok_semicolon);
+		}
+		else if(peek().type == TokType.tok_semicolon) {
+			// error! field cannot be void type.
+			error("Field cannot be of void type! Maybe you forgot ':'?");
+			next();
+			d.isMethod = false;
+			d.type = new AtstNodeVoid();
+			d.args = [];
+			d.value = null;
+		}
+		else if(peek().type == TokType.tok_type) {
+			// field or function with return type.
+			next();
+			if(peek().type == TokType.tok_equ || peek().type == TokType.tok_2lbra) {
+				d.type = new AtstNodeUnknown();
+			} else {
+				d.type = parseType();
+			}
+
+			if(peek().type == TokType.tok_equ) {
+				next();
+				d.isMethod = false;
+				d.value = parseExpr();
+				expectToken(TokType.tok_semicolon);
+			}
+			else if(peek().type == TokType.tok_2lbra) {
+				d.isMethod = true;
+				d.value = parseBlock();
+			}
+			else if(peek().type == TokType.tok_semicolon && d.type is null) {
+				error("Cannot infer type for a field with no default value!");
+				next();
+			}
+			else {
+				d.isMethod = false;
+				expectToken(TokType.tok_semicolon);
+			}
+		}
+		else if(peek().type == TokType.tok_type) {
+			// function with void return type and no args.
+			d.isMethod = true;
+			d.type = new AtstNodeVoid();
+			d.args = [];
+			d.value = parseBlock();
+		}
+		else {
+			errorExpected("Expected either a method or a field.");
+		}
+
+		return d;
+	}
+
 	private TypeDeclarationEnum parseEnumTypeDecl() {
 		auto en = new TypeDeclarationEnum();
 		next(); // skip the 'enum' token
@@ -192,121 +306,20 @@ class Parser {
 		expectToken(TokType.tok_2lbra);
 
 		while(peek().type != TokType.tok_2rbra) {
-			
-			AtstNode type;
-			FunctionArgument[] args;
-			AstNode value;
-			bool isMethod;
-			bool allowNoBody = false;
+			Decl d = parseDecl();
 
-			static TokCmd[] MODS = [TokCmd.cmd_extern, TokCmd.cmd_static];
-			TokCmd[] mods = [];
-
-			while(peek().type == TokType.tok_cmd && canFind(MODS, peek().cmd)) {
-				auto cmd = next().cmd;
-				/**/ if(cmd == TokCmd.cmd_extern && !canFind(mods, cmd)) {
-					mods ~= TokCmd.cmd_extern;
-					allowNoBody = true;
-				}
-				else if(cmd == TokCmd.cmd_static && !canFind(mods, cmd)) mods ~= TokCmd.cmd_static;
-			 	else error("Function modifier already in use!");
-			}
-
-			auto name = expectToken(TokType.tok_id).value;
-
-			if(peek().type == TokType.tok_lpar) {
-				// function with args.
-				isMethod = true;
-				args = parseFuncArgumentDecls();
-				if(peek().type == TokType.tok_type) {
-					next();
-					type = parseType();
-				}
-				else {
-					type = new AtstNodeVoid();
-				}
-
-				if(allowNoBody && peek().type == TokType.tok_semicolon) {
-					next();
-					value = null;
-				}
-				else {
-					value = parseBlock();
-				}
-			}
-			else if(peek().type == TokType.tok_equ) {
-				// error! field cannot be void type.
-				error("Field cannot be of void type! Maybe you forgot ':'?");
-				next();
-				isMethod = false;
-				type = new AtstNodeUnknown();
-				args = [];
-				value = parseExpr();
-				expectToken(TokType.tok_semicolon);
-			}
-			else if(peek().type == TokType.tok_semicolon) {
-				// error! field cannot be void type.
-				error("Field cannot be of void type! Maybe you forgot ':'?");
-				next();
-				isMethod = false;
-				type = new AtstNodeVoid();
-				args = [];
-				value = null;
-			}
-			else if(peek().type == TokType.tok_type) {
-				// field or function with return type.
-				next();
-				if(peek().type == TokType.tok_equ || peek().type == TokType.tok_2lbra) {
-					type = new AtstNodeUnknown();
-				} else {
-					type = parseType();
-				}
-
-				if(peek().type == TokType.tok_equ) {
-					next();
-					isMethod = false;
-					value = parseExpr();
-					expectToken(TokType.tok_semicolon);
-				}
-				else if(peek().type == TokType.tok_2lbra) {
-					isMethod = true;
-					value = parseBlock();
-				}
-				else if(peek().type == TokType.tok_semicolon && type is null) {
-					error("Cannot infer type for a field with no default value!");
-					next();
-				}
-				else {
-					isMethod = false;
-					expectToken(TokType.tok_semicolon);
-				}
-			}
-			else if(peek().type == TokType.tok_type) {
-				// function with void return type and no args.
-				isMethod = true;
-				type = new AtstNodeVoid();
-				args = [];
-				value = parseBlock();
+			if(canFind!((decl, name) => decl.name == name)(st.fieldDecls, d.name)
+			|| canFind!((decl, name) => decl.name == name)(st.methodDecls, d.name)) {
+				error("Field or function with the same name already exists: " ~ d.name);
 			}
 			else {
-				errorExpected("Expected either a method or a field.");
-			}
-
-			if(canFind!((decl, name) => decl.name == name)(st.fieldDecls, name)
-			|| canFind!((decl, name) => decl.base.name == name)(st.methodDecls, name)) {
-				error("Field or function with the same name already exists: " ~ name);
-			}
-			else {
-				if(!isMethod) {
-					st.fieldDecls ~= VariableDeclaration(type, name);
-					if(value !is null) st.fieldValues[name] = value;
+				if(!d.isMethod) {
+					st.fieldDecls ~= VariableDeclaration(d.type, d.name);
+					if(d.value !is null) st.fieldValues[d.name] = d.value;
 				}
 				else {
-					AtstNode[] argTypes = array(map!(a => a.type)(args));
-					string[] argNames = array(map!(a => a.name)(args));
-					auto decl = FunctionDeclaration(FuncSignature(type, argTypes), name, argNames);
-					st.methodDecls ~= MethodDeclaration(decl, canFind(mods, TokCmd.cmd_static), canFind(mods, TokCmd.cmd_extern));
-					if(value !is null) st.methodValues[name] = value;
+					st.methodDecls ~= declToFuncDecl(d);
+					if(d.value !is null) st.methodValues[d.name] = d.value;
 				}
 			}
 		}
@@ -583,7 +596,7 @@ class Parser {
 				type = parseType();
 			}
 			
-			auto decl = new AstNodeDecl(name, type, null);
+			auto decl = new AstNodeDecl(VariableDeclaration(type, name, false, false), null);
 			if(peek().type == TokType.tok_equ) {
 				next();
 				decl.value = parseExpr();
@@ -612,11 +625,11 @@ class Parser {
 		return new AstNodeFunction(decl, parseBlock());
 	}
 
-	private AstNode parseExtern() {
-		assert(next().cmd == TokCmd.cmd_extern);
-		auto decl = parseFuncDecl(function(Token tok) { return tok.type == TokType.tok_semicolon; }, false);
-		return new AstNodeExtern(decl);
-	}
+	// private AstNode parseExtern() {
+	// 	assert(next().cmd == TokCmd.cmd_extern);
+	// 	auto decl = parseFuncDecl(function(Token tok) { return tok.type == TokType.tok_semicolon; }, false);
+	// 	return new AstNodeExtern(decl);
+	// }
 
 	private bool isTypeDecl() {
 		static immutable TokCmd[] CMDS = [TokCmd.cmd_struct, TokCmd.cmd_enum];
@@ -630,14 +643,7 @@ class Parser {
 		//             | <type-decl>
 		//             | ';'
 
-		if(peek().type == TokType.tok_id) {
-			return parseFunc();
-		}
-		else if(peek().type == TokType.tok_cmd
-		     && peek().cmd == TokCmd.cmd_extern) {
-			return parseExtern();
-		}
-		else if(peek().type == TokType.tok_semicolon) {
+		if(peek().type == TokType.tok_semicolon) {
 			next(); // Ignore the semicolon, try again
 			return parseTopLevel();
 		}
@@ -648,10 +654,15 @@ class Parser {
 		else if(peek().type == TokType.tok_eof) {
 			return null;
 		}
+		
+		Decl d = parseDecl();
+		if(!d.isMethod) {
+			auto decl = declToVarDecl(d);
+			return new AstNodeDecl(decl, d.value);
+		}
 		else {
-			errorExpected("Expected either a function, an extern, a type declaration or a semicolon.");
-			next();
-			return parseTopLevel(); // try again
+			auto decl = declToFuncDecl(d);
+			return new AstNodeFunction(decl, d.value);
 		}
 	}
 

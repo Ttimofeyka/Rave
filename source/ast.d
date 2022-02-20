@@ -181,10 +181,15 @@ struct FunctionDeclaration {
 	FuncSignature signature;
 	string name;
 	string[] argNames;
+	bool isStatic;
+	bool isExtern;
 
 	debug {
 		string toString() const {
-			return signature.toString() ~ " [" ~ name ~ "(" ~ join(argNames, ", ") ~ ")]";
+			string s = "";
+			if(isStatic) s ~= "static ";
+			if(isExtern) s ~= "extern ";
+			return s ~ signature.toString() ~ " [" ~ name ~ "(" ~ join(argNames, ", ") ~ ")]";
 		}
 	}
 }
@@ -197,6 +202,17 @@ struct FunctionArgument {
 struct VariableDeclaration {
 	AtstNode type;
 	string name;
+	bool isStatic;
+	bool isExtern;
+
+	debug {
+		string toString() const {
+			string s = "";
+			if(isStatic) s ~= "static ";
+			if(isExtern) s ~= "extern ";
+			return s ~ "name: " ~ type.toString();
+		}
+	}
 }
 
 class TypeDeclaration {
@@ -223,14 +239,9 @@ class TypeDeclarationEnum : TypeDeclaration {
 	}
 }
 
-struct MethodDeclaration {
-	FunctionDeclaration base;
-	bool isStatic, isExtern;
-}
-
 class TypeDeclarationStruct : TypeDeclaration {
 	VariableDeclaration[] fieldDecls;
-	MethodDeclaration[] methodDecls;
+	FunctionDeclaration[] methodDecls;
 
 	AstNode[string] fieldValues;
 	AstNode[string] methodValues;
@@ -253,16 +264,16 @@ class TypeDeclarationStruct : TypeDeclaration {
 			if(method.isStatic) s ~= "static ";
 			if(method.isExtern) s ~= "extern ";
 
-			s ~= method.base.name ~ "(";
+			s ~= method.name ~ "(";
 
-			if(method.base.signature.args.length > 0) {
-				s ~= method.base.argNames[0] ~ ": " ~ method.base.signature.args[0].toString();
-				for(int i = 1; i < method.base.signature.args.length; ++i) {
-					s ~= ", " ~ method.base.argNames[i] ~ ": " ~ method.base.signature.args[i].toString();
+			if(method.signature.args.length > 0) {
+				s ~= method.argNames[0] ~ ": " ~ method.signature.args[0].toString();
+				for(int i = 1; i < method.signature.args.length; ++i) {
+					s ~= ", " ~ method.argNames[i] ~ ": " ~ method.signature.args[i].toString();
 				}
 			}
-			s ~= "): " ~ method.base.signature.ret.toString();
-			if(method.base.name in methodValues) {
+			s ~= "): " ~ method.signature.ret.toString();
+			if(method.name in methodValues) {
 				s ~= " { ... }\n"; // ~ fieldValues[field.name].debugPrint();
 			} else {
 				s ~= ";\n";
@@ -521,27 +532,6 @@ class AstNodeBlock : AstNode {
 	}
 }
 
-class AstNodeExtern : AstNode {
-	FunctionDeclaration decl;
-	// TODO: Maybe something else? Like calling convention and etc.
-	
-	this(FunctionDeclaration decl) {
-		this.decl = decl;
-	}
-
-	override LLVMValueRef gen(GenerationContext ctx) {
-		LLVMValueRef a;
-		return a;
-	}
-
-	debug {
-		override void debugPrint(int indent) {
-			writeTabs(indent);
-			writeln("Extern: ", decl.toString());
-		}
-	}
-}
-
 class AstNodeReturn : AstNode {
 	AstNode value;
 
@@ -614,13 +604,11 @@ class AstNodeIden : AstNode {
 }
 
 class AstNodeDecl : AstNode {
-	string name;
-	AtstNode type;
+	VariableDeclaration decl;
 	AstNode value; // can be null!
 
-	this(string name, AtstNode type, AstNode value) {
-		this.name = name;
-		this.type = type;
+	this(VariableDeclaration decl, AstNode value) {
+		this.decl = decl;
 		this.value = value;
 	}
 
@@ -632,7 +620,7 @@ class AstNodeDecl : AstNode {
 	debug {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
-			writeln("Variable Declaration: ", name, ": ", type.toString());
+			writeln("Variable Declaration: ", decl.toString());
 			if(value !is null) {
 				writeTabs(indent);
 				writeln("^Default Value:");
