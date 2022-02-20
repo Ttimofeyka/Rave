@@ -50,11 +50,14 @@ class GenerationContext {
 		return llvm_args.ptr;
 	}
 
-    void gen() {
-        LLVMTypeRef* param_types;
+    void gen(AstNode mainf_ast) {
+		AstNodeFunction mainf_ast_func = 
+			cast(AstNodeFunction)mainf_ast.decl.signature.args;
+        LLVMTypeRef* param_types = 
+		getLLVMArgs(mainf_ast_func.decl.signature.args);
 
 	    LLVMTypeRef ret_type = LLVMFunctionType(
-		    LLVMInt32Type(),
+		    getLLVMType(mainf_ast_func.decl.signature.ret.get(this.typecontext)),
 		    param_types,
 		    0,
 		    false
