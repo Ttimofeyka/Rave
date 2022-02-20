@@ -3,18 +3,33 @@ import lexer;
 import tokens;
 import std.conv : to;
 import core.stdc.stdlib : exit;
-import cmd;
 import std.file : readText;
 import preproc;
 import parser;
 import gen, llvm;
+import std.getopt;
 
 void main(string[] args)
 {
+	string outputFile;
+	auto helpInformation = getopt(
+		args,
+		"o", "Output file", &outputFile,
+		"outout", "Output file", &outputFile
+	);
+	
+	if(helpInformation.helpWanted)
+	{
+		defaultGetoptPrinter("Some information about the program.", helpInformation.options);
+		return;
+	}
+
+	string[] sourceFiles = args[1..$].dup;
+	string sourceFile = sourceFiles[0];
+
   	LLVMInitializeNativeTarget();
 
-	input(args);
-	auto lexer = new Lexer(source_file, readText(source_file));
+	auto lexer = new Lexer(sourceFile, readText(sourceFile));
 	writeln("Done lexing");
 	lexer.getTokens().debugPrint();
 	auto preproc = new Preprocessor(lexer.getTokens());
@@ -36,5 +51,5 @@ void main(string[] args)
 	}
 
 	auto ctx = new GenerationContext();
-	ctx.gen(nodes);
+	ctx.gen(nodes, outputFile);
 }
