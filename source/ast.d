@@ -187,9 +187,20 @@ struct FunctionDeclaration {
 	debug {
 		string toString() const {
 			string s = "";
+			
 			if(isStatic) s ~= "static ";
 			if(isExtern) s ~= "extern ";
-			return s ~ signature.toString() ~ " [" ~ name ~ "(" ~ join(argNames, ", ") ~ ")]";
+
+			s ~= name ~ "(";
+
+			if(signature.args.length > 0) {
+				s ~= argNames[0] ~ ": " ~ signature.args[0].toString();
+				for(int i = 1; i < signature.args.length; ++i) {
+					s ~= ", " ~ argNames[i] ~ ": " ~ signature.args[i].toString();
+				}
+			}
+			s ~= "): " ~ signature.ret.toString();
+			return s;
 		}
 	}
 }
@@ -210,7 +221,7 @@ struct VariableDeclaration {
 			string s = "";
 			if(isStatic) s ~= "static ";
 			if(isExtern) s ~= "extern ";
-			return s ~ "name: " ~ type.toString();
+			return s ~ name ~ ": " ~ type.toString();
 		}
 	}
 }
@@ -259,20 +270,8 @@ class TypeDeclarationStruct : TypeDeclaration {
 			s ~= ";\n";
 		}
 		foreach(method; methodDecls) {
-			s ~= "    ";
+			s ~= "    " ~ method.toString();
 			
-			if(method.isStatic) s ~= "static ";
-			if(method.isExtern) s ~= "extern ";
-
-			s ~= method.name ~ "(";
-
-			if(method.signature.args.length > 0) {
-				s ~= method.argNames[0] ~ ": " ~ method.signature.args[0].toString();
-				for(int i = 1; i < method.signature.args.length; ++i) {
-					s ~= ", " ~ method.argNames[i] ~ ": " ~ method.signature.args[i].toString();
-				}
-			}
-			s ~= "): " ~ method.signature.ret.toString();
 			if(method.name in methodValues) {
 				s ~= " { ... }\n"; // ~ fieldValues[field.name].debugPrint();
 			} else {
@@ -336,7 +335,7 @@ class AstNodeFunction : AstNode {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
 			writeln("Function decl: ", decl.toString());
-			body_.debugPrint(indent + 1);
+			if(body_ !is null) body_.debugPrint(indent + 1);
 		}
 	}
 }

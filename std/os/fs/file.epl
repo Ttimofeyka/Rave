@@ -7,8 +7,15 @@ struct File {
     extern read(to: char*, count: usize);
     extern write(from: const char*, count: usize);
 
-    extern get: char;
-    extern put(c: char);
+    get(): char {
+        c: char;
+        read(&c, 1);
+        ret c;
+    }
+
+    put(c: char) {
+        write(&c, 1);
+    }
 }
 
 def  stdin_fd 0;
