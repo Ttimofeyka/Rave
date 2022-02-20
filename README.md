@@ -1,7 +1,7 @@
 # EPL
 
 
-EPL - is a compiled, procedural and statically typed high-level programming language.
+EPL - is a compiled, procedural and statically typed high-level system programming language.
 
 ## "Hello, world!" Example
 
@@ -21,8 +21,7 @@ main: int {
 
 ## Building/Running
 
-Copy `base.dub.json` to `dub.json` and change the flags. Thenrun `dub run -- <filename>`
-
+Copy `base.dub.json` to `dub.json` and change the flags. Then run `dub run -- <filename>`
 
 ## Goals
 
