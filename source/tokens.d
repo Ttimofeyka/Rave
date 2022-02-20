@@ -145,6 +145,10 @@ struct SourceLocation {
     uint line;
     uint col;
     string fname;
+
+    string toString() const {
+        return fname ~ ":" ~ to!string(line + 1) ~ ":" ~ to!string(col);
+    }
 }
 
 class Token {

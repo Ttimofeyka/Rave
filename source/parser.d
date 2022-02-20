@@ -52,8 +52,7 @@ class Parser {
 
 	private void errorExpected(string msg) {
 		auto t = next();
-		error(msg ~ " Got: " ~ tokTypeToStr(t.type) ~ "\nAt: "
-			~ t.loc.fname ~ ":" ~ to!string(t.loc.line + 1) ~ ":" ~ to!string(t.loc.col));
+		error(msg ~ " Got: " ~ tokTypeToStr(t.type) ~ "\nAt: " ~ t.loc.toString());
 	}
 
 	private Token next() {
