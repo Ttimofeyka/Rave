@@ -18,9 +18,9 @@ struct File {
     }
 }
 
-def  stdin_fd 0;
-def stdout_fd 1;
-def stderr_fd 2;
+#def  stdin_fd 0;
+#def stdout_fd 1;
+#def stderr_fd 2;
 
 extern stdin: File*;
 extern stdout: File*;

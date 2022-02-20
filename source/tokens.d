@@ -78,6 +78,10 @@ enum TokCmd {
     cmd_enum = 20,
     cmd_static = 21,
     cmd_const = 22,
+    // Preprocessor IF
+    cmd_ifdef = 23,
+    cmd_ifndef = 24,
+    cmd_endif = 25,
 }
 
 string tokTypeToStr(TokType type)
@@ -233,14 +237,8 @@ class Token {
                 case "do": this.type=TokType.tok_cmd;
                            this.cmd=TokCmd.cmd_do;
                            break;
-                case "def": this.type=TokType.tok_cmd;
-                           this.cmd=TokCmd.cmd_define;
-                           break;
                 case "extern": this.type=TokType.tok_cmd;
                            this.cmd=TokCmd.cmd_extern;
-                           break;
-                case "inc": this.type=TokType.tok_cmd;
-                           this.cmd=TokCmd.cmd_include;
                            break;
                 case "asm": this.type=TokType.tok_cmd;
                            this.cmd=TokCmd.cmd_asm;
@@ -269,6 +267,20 @@ class Token {
                 case "const": this.type=TokType.tok_cmd;
                            this.cmd=TokCmd.cmd_const;
                            break;
+                // Preprocessor commands
+                case "#inc": this.type=TokType.tok_cmd;
+                           this.cmd=TokCmd.cmd_include;
+                           break;
+                case "#def": this.type=TokType.tok_cmd;
+                           this.cmd=TokCmd.cmd_define;
+                           break;
+                case "#ifdef": this.type=TokType.tok_cmd;
+                           this.cmd=TokCmd.cmd_ifdef;
+                           break;
+                case "#endif": this.type=TokType.tok_cmd;
+                           this.cmd=TokCmd.cmd_endif;
+                           break;
+                // ...or identifier
                 default: this.type = TokType.tok_id; break;
             }
         }

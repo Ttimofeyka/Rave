@@ -1,5 +1,5 @@
-inc "std";
-def zero 0;
+#inc "std";
+#def zero 0;
 
 struct Test {
     val: uint = 0;

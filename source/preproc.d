@@ -98,6 +98,9 @@ class Preprocessor {
                     // if(exists(name) && isDir(name)) insertFile(buildPath(name, "*"));
                     insertFile(name);
                 }
+                else if(get().cmd == TokCmd.cmd_ifdef) {
+                    
+                }
                 else {
                     newtokens.insertBack(get());
                     i+=1;
