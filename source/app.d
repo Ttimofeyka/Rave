@@ -36,7 +36,6 @@ void main(string[] args)
 
 	auto lexer = new Lexer(sourceFile, readText(sourceFile));
 	writeln("Done lexing");
-	lexer.getTokens().debugPrint();
 	auto preproc = new Preprocessor(lexer.getTokens());
 	writeln("Done preprocessing");
 

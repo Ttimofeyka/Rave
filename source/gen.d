@@ -11,12 +11,10 @@ import std.string;
 class GenerationContext {
     LLVMExecutionEngineRef engine;
     LLVMModuleRef mod;
-    LLVMBuilderRef builder;
 	AtstTypeContext typecontext;
 
     this() {
         mod = LLVMModuleCreateWithName(cast(const char*)"epl");
-        builder = LLVMCreateBuilder();
 
 		// Initialization
 		LLVMInitializeAllTargets();
@@ -57,6 +55,7 @@ class GenerationContext {
 	}
 
 	void genFunc(AstNode node,string entryf) {
+		LLVMBuilderRef builder = LLVMCreateBuilder();
 		AstNodeFunction astf = 
 			cast(AstNodeFunction)node;
 		LLVMTypeRef* param_types = 
@@ -80,7 +79,7 @@ class GenerationContext {
 	    );
 
 		LLVMBasicBlockRef entry = LLVMAppendBasicBlock(func,cast(const char*)"entry");
-	    LLVMPositionBuilderAtEnd(this.builder, entry);
+		LLVMPositionBuilderAtEnd(builder, entry);
 		AstNodeInt retint = cast(AstNodeInt)ret_ast.value;
 
 	    LLVMValueRef retval = LLVMConstInt(
@@ -88,7 +87,11 @@ class GenerationContext {
 	    	retint.value,
 	    	false
 	    );
-	    LLVMBuildRet(this.builder, retval);
+
+		LLVMTypeRef* asm_ptypes;
+		LLVMTypeRef functy = LLVMFunctionType(voidty,asm_ptypes,0,false);
+
+	    LLVMBuildRet(builder, retval);
 	}
 
     void gen(AstNode[] nodes,string file,bool debugMode,string entryf) {
