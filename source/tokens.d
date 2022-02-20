@@ -57,6 +57,7 @@ enum TokType {
     tok_plu_plu = 46, // ++
     tok_r_min_min = 47, // -- on the right (unused by lexer)
     tok_r_plu_plu = 48, // ++ on the right (unused by lexer)
+    tok_arrow
 }
 
 enum TokCmd {
@@ -130,6 +131,7 @@ string tokTypeToStr(TokType type)
     case TokType.tok_or_eq: return "or_eq";
     case TokType.tok_more_more_eq: return "more_more_eq";
     case TokType.tok_less_less_eq: return "less_less_eq";
+    case TokType.tok_arrow: return "arrow";
 	default: return "?";
 	}
 }
@@ -215,6 +217,7 @@ class Token {
         else if(s=="--") this.type = TokType.tok_min_min;
         else if(s==">>=") this.type = TokType.tok_more_more_eq;
         else if(s=="<<=") this.type = TokType.tok_less_less_eq;
+        else if(s=="=>") this.type = TokType.tok_arrow;
         else {
             // Commands or Variables(or Defines)
             switch(s.toLower()) {
