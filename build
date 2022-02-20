@@ -1,4 +1,0 @@
-#!/bin/sh
-
-as stdimpl/$1/rt.s -o "$1"_rt.o
-ld "$1"_rt.o $2 -o test -e _start
