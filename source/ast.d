@@ -16,8 +16,7 @@ class AtstTypeContext {
 	Type[string] types;
 
 	Type getType(string name) {
-		// TODO
-		return null;
+		return types[name];
 	}
 }
 
@@ -293,7 +292,7 @@ class AstNodeFunction : AstNode {
 	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
-
+		
 		LLVMValueRef a;
 		return a;
 	}
