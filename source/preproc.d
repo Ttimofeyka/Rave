@@ -14,6 +14,7 @@ class Preprocessor {
     TList[string] defines;
     TList newtokens;
 
+    bool _shouldIgnore = false;
     int i = 0; // Iterate by tokens
 
     private void error(string msg) {
@@ -28,7 +29,7 @@ class Preprocessor {
     private TList getDefine() {
         TList define_toks = new TList();
 
-        while(get().type != TokType.tok_semicolon) {
+        while(get().type != TokType.tok_hash) {
             define_toks.insertBack(get()); 
             i+=1;
         }
@@ -69,8 +70,11 @@ class Preprocessor {
         this.newtokens = new TList();
 
         while(i<tokens.length) {
-            if(get())
-            if(get().type == TokType.tok_cmd) {
+            if(get().type == TokType.tok_hash) {
+                i+=1;
+                if(get().type != TokType.tok_cmd) {
+                    error("Expected a command after '#'!");
+                }
                 if(get().cmd == TokCmd.cmd_define) {
                     i+=1;
                     if(get().type != TokType.tok_id) {
@@ -90,24 +94,46 @@ class Preprocessor {
                     }
                     string name = get().value.replace("\"", "");
                     i += 1;
-                    if(get().type != TokType.tok_semicolon) {
-                        error("Expected a semicolon at the end of an \"inc\" statement!");
+                    if(get().type != TokType.tok_hash) {
+                        error("Expected a newline at the end of an \"inc\" statement!");
                         continue;
                     }
                     i += 1;
                     // name = absolutePath(name);
                     // if(exists(name) && isDir(name)) insertFile(buildPath(name, "*"));
-                    insertFile(name);
+                    if(!_shouldIgnore) insertFile(name);
                 }
                 else if(get().cmd == TokCmd.cmd_ifdef) {
                     i+=1;
-                    TList replaced = getDefine();
+                    if(get().type != TokType.tok_id) {
+                        error("Expected an identifier after \"ifdef\"!");
+                        continue;
+                    }
+                    auto name = get().value;
                     i+=1;
-                    // TODO
+                    if(!_shouldIgnore && name !in defines)
+                        _shouldIgnore = false;
+                }
+                else if(get().cmd == TokCmd.cmd_ifndef) {
+                    i+=1;
+                    if(get().type != TokType.tok_id) {
+                        error("Expected an identifier after \"ifndef\"!");
+                        continue;
+                    }
+                    auto name = get().value;
+                    i+=1;
+                    if(!_shouldIgnore && name in defines)
+                        _shouldIgnore = false;
+                }
+                else if(get().cmd == TokCmd.cmd_endif) {
+                    i+=1;
+                    _shouldIgnore = true;
                 }
                 else {
-                    newtokens.insertBack(get());
-                    i+=1;
+                    if(!_shouldIgnore) {
+                        newtokens.insertBack(get());
+                        i+=1;
+                    }
                 }
             }
             else if(get().type == TokType.tok_id) {

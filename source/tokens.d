@@ -165,13 +165,13 @@ class Token {
         }
 
         if(s[0]=='"') {
-            if(s[s.length-1]=='"') {
+            if(s[$]=='"') {
                 this.type = TokType.tok_string;
             }
             else lexer_error("Undefined token <"~s~">!");
         }
         else if(s[0]=='\'') {
-            if(s[s.length-1]=='\'') {
+            if(s[$]=='\'') {
                 this.type = TokType.tok_char;
             }
             else lexer_error("Undefined token <"~s~">!");
@@ -223,8 +223,9 @@ class Token {
         else if(s==">>=") this.type = TokType.tok_more_more_eq;
         else if(s=="<<=") this.type = TokType.tok_less_less_eq;
         else if(s=="=>") this.type = TokType.tok_arrow;
+        else if(s=="#") this.type = TokType.tok_hash;
         else {
-            // Commands or Variables(or Defines)
+            // Commands or Variables (or Defines)
             switch(s.toLower()) {
                 case "if": this.type=TokType.tok_cmd;
                            this.cmd=TokCmd.cmd_if;
