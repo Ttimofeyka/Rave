@@ -57,7 +57,8 @@ enum TokType {
     tok_plu_plu = 46, // ++
     tok_r_min_min = 47, // -- on the right (unused by lexer)
     tok_r_plu_plu = 48, // ++ on the right (unused by lexer)
-    tok_arrow
+    tok_arrow = 49, // =>
+    tok_hash = 50, // #
 }
 
 enum TokCmd {
@@ -268,16 +269,16 @@ class Token {
                            this.cmd=TokCmd.cmd_const;
                            break;
                 // Preprocessor commands
-                case "#inc": this.type=TokType.tok_cmd;
+                case "inc": this.type=TokType.tok_cmd;
                            this.cmd=TokCmd.cmd_include;
                            break;
-                case "#def": this.type=TokType.tok_cmd;
+                case "def": this.type=TokType.tok_cmd;
                            this.cmd=TokCmd.cmd_define;
                            break;
-                case "#ifdef": this.type=TokType.tok_cmd;
+                case "ifdef": this.type=TokType.tok_cmd;
                            this.cmd=TokCmd.cmd_ifdef;
                            break;
-                case "#endif": this.type=TokType.tok_cmd;
+                case "endif": this.type=TokType.tok_cmd;
                            this.cmd=TokCmd.cmd_endif;
                            break;
                 // ...or identifier

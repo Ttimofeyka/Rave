@@ -205,6 +205,14 @@ class Parser {
 				d.value = parseBlock();
 			}
 		}
+		else if(peek().type == TokType.tok_arrow) {
+			next();
+			d.isMethod = true;
+			d.value = new AstNodeBlock([
+				new AstNodeReturn(parseExpr())
+			]);
+			expectToken(TokType.tok_semicolon);
+		}
 		else if(peek().type == TokType.tok_equ) {
 			// error! field cannot be void type.
 			error("Field cannot be of void type! Maybe you forgot ':'?");
@@ -227,7 +235,10 @@ class Parser {
 		else if(peek().type == TokType.tok_type) {
 			// field or function with return type.
 			next();
-			if(peek().type == TokType.tok_equ || peek().type == TokType.tok_2lbra) {
+			TokType[] CONTS = [TokType.tok_equ, TokType.tok_2lbra, TokType.tok_arrow];
+
+
+			if(canFind(CONTS, peek().type)) {
 				d.type = new AtstNodeUnknown();
 			} else {
 				d.type = parseType();
@@ -237,6 +248,14 @@ class Parser {
 				next();
 				d.isMethod = false;
 				d.value = parseExpr();
+				expectToken(TokType.tok_semicolon);
+			}
+			else if(peek().type == TokType.tok_arrow) {
+				next();
+				d.isMethod = true;
+				d.value = new AstNodeBlock([
+					new AstNodeReturn(parseExpr())
+				]);
 				expectToken(TokType.tok_semicolon);
 			}
 			else if(peek().type == TokType.tok_2lbra) {
@@ -252,13 +271,13 @@ class Parser {
 				expectToken(TokType.tok_semicolon);
 			}
 		}
-		else if(peek().type == TokType.tok_type) {
-			// function with void return type and no args.
-			d.isMethod = true;
-			d.type = new AtstNodeVoid();
-			d.args = [];
-			d.value = parseBlock();
-		}
+		// else if(peek().type == TokType.tok_type) {
+		// 	// function with void return type and no args.
+		// 	d.isMethod = true;
+		// 	d.type = new AtstNodeVoid();
+		// 	d.args = [];
+		// 	d.value = parseBlock();
+		// }
 		else {
 			errorExpected("Expected either a method or a field.");
 		}

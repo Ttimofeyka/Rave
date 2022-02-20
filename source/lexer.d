@@ -31,6 +31,8 @@ class Lexer {
     int i;
     SourceLocation loc;
 
+    bool _hadHash = false;
+
     private char get(uint x = 0) {
         if(i < lex.length) {
             return lex[i + x];
@@ -197,10 +199,12 @@ class Lexer {
         while(get() != '\n' && get() != '\0') {
             next(1);
         }
+        loc.line += 1;
     }
 
     private void skipMultiLineCom() {
         while((get() != '*' && get(+1) != '/') && get() != '\0') {
+            if(get() == '\n') loc.line += 1;
             next(1);
         }
         if(get() == '*') {next(2);}
@@ -211,16 +215,25 @@ class Lexer {
         this.loc.fname = fname;
         this.tokens = new TList();
         this.i = 0;
+        this._hadHash = false;
 
         while(i<lex.length) {
             if(isWhite(cast(dchar)get())) {
                 if(get() == '\n') {
+                    if(_hadHash) {
+                        _hadHash = false;
+                        tokens.insertBack(new Token(loc, "#"));
+                    }
                     loc.line += 1;
                     loc.col = 0;
                 }
                 next(1);
             }
             else switch(get()) {
+                case '#':
+                    _hadHash = true;
+                    tokens.insertBack(new Token(loc, "#"));
+                    break;
                 case '0': case '1': case '2':
                 case '3': case '4': case '5':
                 case '6': case '7': case '8': case '9':

@@ -1,3 +1,1 @@
-main: int {
-    ret 0;
-}
+main: int => 0;
