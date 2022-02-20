@@ -8,6 +8,7 @@ import std.conv : to;
 import core.stdc.stdlib : exit;
 import core.stdc.stdlib : malloc;
 import typesystem;
+import util;
 
 /// We have two separate syntax trees: for types and for values.
 
@@ -292,43 +293,9 @@ class AstNodeFunction : AstNode {
 	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
-		LLVMTypeRef *params = 
-			cast(LLVMTypeRef*)malloc(LLVMTypeRef.sizeof*decl.argNames.length);
-		for(int i=0; i<decl.argNames.length; i++) {
-			if(cast(AtstNodeVoid)decl.signature.args[i]) {
-				params[i] = LLVMVoidType();
-			}
-			else {
-				params[i] = LLVMInt16Type();
-			}
-        }
 
-		LLVMTypeRef retType;
-		if(cast(AtstNodeVoid)decl.signature.ret) retType = LLVMVoidType();
-		else retType = LLVMInt16Type();
-
-		LLVMTypeRef funcType = LLVMFunctionType(
-			retType, params,
-			cast(uint)decl.argNames.length,
-			false
-		);
-
-		LLVMValueRef func = LLVMAddFunction(
-			ctx.main_module,
-			cast(const char*)decl.name,
-			funcType
-		);
-
-		LLVMSetLinkage(func,LLVMExternalLinkage);
-
-		LLVMBasicBlockRef block = LLVMAppendBasicBlock(func,
-			cast(const char*)"entry");
-		LLVMPositionBuilderAtEnd(ctx.builder,block);
-
-		LLVMValueRef _body = body_.gen(ctx);
-		LLVMBuildRet(ctx.builder,_body);
-
-		return func;
+		LLVMValueRef a;
+		return a;
 	}
 
 	debug {
@@ -388,22 +355,8 @@ class AstNodeBinary : AstNode {
 	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
-		LLVMValueRef LHS = lhs.gen(ctx);
-		LLVMValueRef RHS = rhs.gen(ctx);
-
-		switch(type) {
-			case TokType.tok_plus:
-				return LLVMBuildFAdd(ctx.builder,LHS,RHS,cast(const char*)"addtmp");
-			case TokType.tok_minus:
-				return LLVMBuildFSub(ctx.builder,LHS,RHS,cast(const char*)"subtmp");
-			case TokType.tok_multiply:
-				return LLVMBuildFMul(ctx.builder,LHS,RHS,cast(const char*)"multmp");
-			case TokType.tok_divide:
-				return LLVMBuildFDiv(ctx.builder,LHS,RHS,cast(const char*)"divtmp");
-			default:
-				writeln("\033[0;31mError: Undefined operator "~to!string(type)~"!\033[0;0m");
-				return LHS;
-		}
+		LLVMValueRef a;
+		return a;
 	}
 
 	debug {
@@ -584,14 +537,8 @@ class AstNodeIden : AstNode {
 	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
-		if(name in ctx.values) {
-			return ctx.values[name];
-		}
-		else {
-			writeln("\033[0;31mError: Undefined variable "~name~"!\033[0;0m");
-			exit(-1);
-		}
-		assert(0);
+		LLVMValueRef a;
+		return a;
 	}
 
 	debug {
@@ -687,24 +634,8 @@ class AstNodeFuncCall : AstNode {
 	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
-		AstNodeIden mn = cast(AstNodeIden)func; // FIXME
-		string n = mn.name;
-		LLVMValueRef func = LLVMGetNamedFunction(
-			ctx.main_module,
-			cast(const char*)n
-		);
-		if(LLVMCountParams(func) != cast(uint)args.length) {
-			writeln("\033[0;31mError: Too little or too much args!\033[0;0m");
-		}
-
-		LLVMValueRef* argss = cast(LLVMValueRef*)malloc(LLVMValueRef.sizeof*args.length);
-		for(int i=0; i<args.length; i++) {
-			argss[i] = args[i].gen(ctx);
-		}
-		
-		return LLVMBuildCall(
-			ctx.builder,func,argss,cast(uint)args.length,cast(const char*)"calltmp"
-		);
+		LLVMValueRef a;
+		return a;
 	}
 
 	debug {
@@ -773,10 +704,8 @@ class AstNodeFloat : AstNode {
 	}
 		
 	override LLVMValueRef gen(GenerationContext ctx) {
-		return LLVMConstReal(
-			LLVMDoubleType(),
-			cast(double)value
-		);
+		LLVMValueRef a;
+		return a;
 	}
 
 	debug {

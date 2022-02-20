@@ -1,16 +1,16 @@
 module gen;
 
 import llvm;
+import std.stdio : writeln;
+import core.stdc.stdlib : exit;
 
 class GenerationContext {
-    LLVMContextRef context;
+    LLVMExecutionEngineRef engine;
+    LLVMModuleRef mod;
     LLVMBuilderRef builder;
-    LLVMModuleRef main_module;
-    LLVMValueRef[string] values;
 
     this() {
-        context = LLVMContextCreate();
+        mod = LLVMModuleCreateWithName(cast(const char*)"epl");
         builder = LLVMCreateBuilder();
-        main_module = LLVMModuleCreateWithName(cast(const char*)"main");
     }
 }
