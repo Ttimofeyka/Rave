@@ -40,21 +40,20 @@ class GenerationContext {
 				default: return LLVMIntType(1);
 			}
 		}
+		assert(0);
 	}
 
 	LLVMTypeRef* getLLVMArgs(AtstNode[] args) {
-		LLVMTypeRef[args.length] llvm_args;
+		LLVMTypeRef[] llvm_args;
 		for(int i=0; i<args.length; i++) {
-			llvm_args[i] = getLLVMType(args[i].get(this.typecontext));
+			llvm_args ~= getLLVMType(args[i].get(this.typecontext));
 		}
 		return llvm_args.ptr;
 	}
 
     void gen(AstNode mainf_ast) {
-		AstNodeFunction mainf_ast_func = 
-			cast(AstNodeFunction)mainf_ast.decl.signature.args;
-        LLVMTypeRef* param_types = 
-		getLLVMArgs(mainf_ast_func.decl.signature.args);
+		AstNodeFunction mainf_ast_func = cast(AstNodeFunction)mainf_ast;
+        LLVMTypeRef* param_types = getLLVMArgs(mainf_ast_func.decl.signature.args);
 
 	    LLVMTypeRef ret_type = LLVMFunctionType(
 		    getLLVMType(mainf_ast_func.decl.signature.ret.get(this.typecontext)),

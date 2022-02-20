@@ -28,3 +28,4 @@ docs/
 epl
 dub.json
 llvm.bc
+source/old.ast.d

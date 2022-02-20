@@ -1,4 +1,4 @@
-module old.ast;
+module ast;
 import std.stdio, std.conv;
 import std.array : join;
 import std.algorithm.iteration : map;
