@@ -43,22 +43,29 @@ class GenerationContext {
 		assert(0);
 	}
 
-	LLVMTypeRef* getLLVMArgs(AtstNode[] args) {
-		LLVMTypeRef[] llvm_args;
-		for(int i=0; i<args.length; i++) {
-			llvm_args ~= getLLVMType(args[i].get(this.typecontext));
+	LLVMTypeRef* getLLVMArgs(AtstNode[] argss) {
+		LLVMTypeRef* llvm_args =
+		 cast(LLVMTypeRef*)(LLVMTypeRef.sizeof*argss.length);
+		for(int i=0; i<argss.length; i++) {
+			llvm_args[i] = getLLVMType(argss[i].get(this.typecontext));
 		}
-		return llvm_args.ptr;
+		return llvm_args;
 	}
 
-    void gen(AstNode mainf_ast) {
-		AstNodeFunction mainf_ast_func = cast(AstNodeFunction)mainf_ast;
-        LLVMTypeRef* param_types = getLLVMArgs(mainf_ast_func.decl.signature.args);
+    void gen(AstNode[] nodes) {
+		AstNodeFunction mainf_astf = 
+			cast(AstNodeFunction)nodes[0];
+        LLVMTypeRef* param_types = 
+		getLLVMArgs(mainf_astf.decl.signature.args);
+
+		AstNodeBlock mainf_body = cast(AstNodeBlock)mainf_astf.body_;
+		AstNodeReturn ret_ast = cast(AstNodeReturn)
+			mainf_body.nodes[0];
 
 	    LLVMTypeRef ret_type = LLVMFunctionType(
-		    getLLVMType(mainf_ast_func.decl.signature.ret.get(this.typecontext)),
+		    LLVMInt32Type(),
 		    param_types,
-		    0,
+		    cast(uint)mainf_astf.decl.signature.args.length,
 		    false
 	    );
 
@@ -71,9 +78,11 @@ class GenerationContext {
 	    LLVMBasicBlockRef entry = LLVMAppendBasicBlock(mainf, "entry");
 	    LLVMPositionBuilderAtEnd(this.builder, entry);
 
+		AstNodeInt retint = cast(AstNodeInt)ret_ast.value;
+
 	    LLVMValueRef retval = LLVMConstInt(
 	    	LLVMInt32Type(),
-	    	cast(ulong)5,
+	    	retint.value,
 	    	false
 	    );
 	    LLVMBuildRet(this.builder, retval);

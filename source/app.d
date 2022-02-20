@@ -36,5 +36,5 @@ void main(string[] args)
 	}
 
 	auto ctx = new GenerationContext();
-	ctx.gen(nodes[0]);
+	ctx.gen(nodes);
 }
