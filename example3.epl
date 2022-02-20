@@ -1,1 +1,1 @@
-main: int => 5;
+main: int => 45;

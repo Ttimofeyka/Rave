@@ -11,11 +11,13 @@ import std.getopt;
 
 void main(string[] args)
 {
-	string outputFile;
+	string outputFile = "a.o";
+	string debugMode = "false";
 	auto helpInformation = getopt(
 		args,
 		"o", "Output file", &outputFile,
-		"outout", "Output file", &outputFile
+		"outout", "Output file", &outputFile,
+		"debug", "Debug mode", &debugMode
 	);
 	
 	if(helpInformation.helpWanted)
@@ -51,5 +53,5 @@ void main(string[] args)
 	}
 
 	auto ctx = new GenerationContext();
-	ctx.gen(nodes, outputFile);
+	ctx.gen(nodes, outputFile, debugMode);
 }

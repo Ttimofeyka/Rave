@@ -29,6 +29,7 @@ class GenerationContext {
 			TypeBasic tb = cast(TypeBasic)t;
 			switch(tb.basic) {
 				case BasicType.t_int:
+				case BasicType.t_uint:
 					return LLVMInt32Type();
 				case BasicType.t_short:
 					return LLVMInt16Type();
@@ -36,11 +37,12 @@ class GenerationContext {
 				case BasicType.t_char:
 					return LLVMInt8Type();
 				case BasicType.t_long:
+				case BasicType.t_ulong:
 					return LLVMInt64Type();
 				default: return LLVMInt16Type();
 			}
 		}
-		assert(0);
+		else return LLVMInt32Type();
 	}
 
 	LLVMTypeRef* getLLVMArgs(AtstNode[] argss) {
@@ -52,32 +54,31 @@ class GenerationContext {
 		return llvm_args;
 	}
 
-    void gen(AstNode[] nodes) {
-		AstNodeFunction mainf_astf = 
-			cast(AstNodeFunction)nodes[0];
-        LLVMTypeRef* param_types = 
-		getLLVMArgs(mainf_astf.decl.signature.args);
+	void genFunc(AstNode node) {
+		AstNodeFunction astf = 
+			cast(AstNodeFunction)node;
+		LLVMTypeRef* param_types = 
+		getLLVMArgs(astf.decl.signature.args);
 
-		AstNodeBlock mainf_body = cast(AstNodeBlock)mainf_astf.body_;
+		AstNodeBlock f_body = cast(AstNodeBlock)astf.body_;
 		AstNodeReturn ret_ast = cast(AstNodeReturn)
-			mainf_body.nodes[0];
+			f_body.nodes[0];
 
-	    LLVMTypeRef ret_type = LLVMFunctionType(
+		LLVMTypeRef ret_type = LLVMFunctionType(
 		    LLVMInt32Type(),
 		    param_types,
-		    cast(uint)mainf_astf.decl.signature.args.length,
+		    cast(uint)astf.decl.signature.args.length,
 		    false
 	    );
 
-	    LLVMValueRef mainf = LLVMAddFunction(
+		LLVMValueRef func = LLVMAddFunction(
 		    this.mod,
-		    cast(const char*)"main",
+		    cast(const char*)"main\0",
 		    ret_type
 	    );
 
-	    LLVMBasicBlockRef entry = LLVMAppendBasicBlock(mainf, "entry");
+		LLVMBasicBlockRef entry = LLVMAppendBasicBlock(func,cast(const char*)"entry");
 	    LLVMPositionBuilderAtEnd(this.builder, entry);
-
 		AstNodeInt retint = cast(AstNodeInt)ret_ast.value;
 
 	    LLVMValueRef retval = LLVMConstInt(
@@ -86,14 +87,27 @@ class GenerationContext {
 	    	false
 	    );
 	    LLVMBuildRet(this.builder, retval);
-		genTarget();
 	}
 
-	void genTarget() {
+    void gen(AstNode[] nodes,string file,string debugMode) {
+		for(int i=0; i<nodes.length; i++) {
+			if(nodes[i].instanceof!(AstNodeFunction)) {
+				genFunc(nodes[i]);
+			}
+		}
+		genTarget(file,debugMode);
+	}
+
+	void genTarget(string file,string debugMode) {
+		
+		if(debugMode=="true"||debugMode=="1") 
+			LLVMWriteBitcodeToFile(this.mod,cast(const char*)(file~".debug.be"));
+
 		char* errors;
 
 		LLVMTargetRef target;
     	LLVMGetTargetFromTriple(LLVMGetDefaultTargetTriple(), &target, &errors);
+
     	LLVMTargetMachineRef machine = LLVMCreateTargetMachine(
 			target, 
 			LLVMGetDefaultTargetTriple(), 
@@ -111,6 +125,6 @@ class GenerationContext {
     	LLVMSetDataLayout(this.mod, datalayout_str);
     	LLVMDisposeMessage(datalayout_str);
 
-    	LLVMTargetMachineEmitToFile(machine, this.mod, cast(char*)"llvm.o", LLVMObjectFile, &errors);
+    	LLVMTargetMachineEmitToFile(machine, this.mod, cast(char*)file, LLVMObjectFile, &errors);
 	}
 }
