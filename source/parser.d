@@ -230,30 +230,30 @@ class Parser {
 					next();
 					isMethod = false;
 					value = parseExpr();
+					expectToken(TokType.tok_semicolon);
 				}
 				else if(peek().type == TokType.tok_2lbra) {
 					isMethod = true;
 					value = parseBlock();
 				}
-				// can't happen?
-				// else if(peek().type == TokType.tok_semicolon && type is null) {
-				// 	error("Cannot infer type for a field with a default value");
-				// 	next();
-				// }
+				else if(peek().type == TokType.tok_semicolon && type is null) {
+					error("Cannot infer type for a field with no default value!");
+					next();
+				}
 				else {
 					isMethod = false;
 					expectToken(TokType.tok_semicolon);
 				}
-
-				args = [];
-				value = null;
 			}
-			else {
+			else if(peek().type == TokType.tok_type) {
 				// function with void return type and no args.
 				isMethod = true;
 				type = new AtstNodeVoid();
 				args = [];
 				value = parseBlock();
+			}
+			else {
+				errorExpected("Expected either a method or a field.");
 			}
 
 			if(canFind!((decl, name) => decl.name == name)(st.fieldDecls, name)
@@ -282,6 +282,9 @@ class Parser {
 		if(peek().type == TokType.tok_cmd) {
 			if(peek().cmd == TokCmd.cmd_struct) {
 				return parseStructTypeDecl();
+			}
+			else if(peek().cmd == TokCmd.cmd_enum) {
+				return parseEnumTypeDecl();
 			}
 		}
 
@@ -350,10 +353,12 @@ class Parser {
 	private AstNode parseAtom() {
 		auto t = next();
 		if(t.type == TokType.tok_num) {
-			if(canFind(t.value, '.'))
-				return new AstNodeFloat(parse!float(t.value));
-			else
-				return new AstNodeInt(parse!ulong(t.value));
+			if(t.value.length == 0) {
+				error("WTF?? Token(TokType.tok_num).value.length -> 0");
+				return new AstNodeInt(0xDEADBEEF);
+			}
+			if(canFind(t.value, '.')) return new AstNodeFloat(parse!float(t.value));
+			else return new AstNodeInt(parse!ulong(t.value));
 		}
 		if(t.type == TokType.tok_string) return new AstNodeString(t.value[1..$]);
 		if(t.type == TokType.tok_char) return new AstNodeChar(t.value[1..$][0]);
@@ -577,7 +582,8 @@ class Parser {
 	}
 
 	private bool isTypeDecl() {
-		return peek().type == TokType.tok_cmd && peek().cmd == TokCmd.cmd_struct;
+		static immutable TokCmd[] CMDS = [TokCmd.cmd_struct, TokCmd.cmd_enum];
+		return peek().type == TokType.tok_cmd && canFind(CMDS, peek().cmd);
 	}
 
 	private AstNode parseTopLevel() {

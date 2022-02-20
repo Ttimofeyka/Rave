@@ -73,7 +73,8 @@ enum TokCmd {
     cmd_break = 15,
     cmd_continue = 16,
     cmd_sizeof = 17,
-    cmd_void = 19
+    cmd_void = 19,
+    cmd_enum = 20,
 }
 
 string tokTypeToStr(TokType type)
@@ -254,9 +255,19 @@ class Token {
                 case "sizeof": this.type=TokType.tok_cmd;
                            this.cmd=TokCmd.cmd_sizeof;
                            break;
+                case "enum": this.type=TokType.tok_cmd;
+                           this.cmd=TokCmd.cmd_enum;
+                           break;
                 default: this.type = TokType.tok_id; break;
             }
         }
+    }
+
+    this(SourceLocation loc, TokType type, TokCmd cmd, string value) {
+        this.loc = loc;
+        this.type = type;
+        this.cmd = cmd;
+        this.value = value;
     }
 }
 

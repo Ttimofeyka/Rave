@@ -37,9 +37,14 @@ class Preprocessor {
         return define_toks;
     }
 
+    private Token copyToken(Token source) {
+        alias v = source;
+        return new Token(v.loc, v.type, v.cmd, v.value.dup);
+    }
+
     private void insertDefine(TList t) {
         for(int j=0; j<t.length; j++) {
-            newtokens.insertBack(t[j]);
+            newtokens.insertBack(copyToken(t[j]));
         }
     }
 
@@ -51,7 +56,7 @@ class Preprocessor {
             auto l = new Lexer(readText(fname));
             auto preproc = new Preprocessor(l.getTokens());
             foreach(token; preproc.getTokens().tokens) {
-                newtokens.insertBack(token);
+                newtokens.insertBack(copyToken(token));
             }
         }
     }

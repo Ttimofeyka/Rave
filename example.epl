@@ -2,7 +2,7 @@ inc "std/*";
 def zero 0;
 
 struct Test {
-    val : uint = 0;
+    val: uint = 0;
     get: {
         ret zero + this->val;
     }

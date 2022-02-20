@@ -196,7 +196,7 @@ class TypeDeclarationEnum : TypeDeclaration {
 	EnumEntry[] entries;
 
 	override string toString() const {
-		string s = "enum " ~ name ~ "{";
+		string s = "enum " ~ name ~ " {";
 		if(entries.length > 0) {
 			s ~= '\n';
 		}
