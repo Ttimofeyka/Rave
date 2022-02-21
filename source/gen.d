@@ -26,6 +26,8 @@ class GenerationContext {
 
 		typecontext.types["int"] = new TypeBasic(BasicType.t_int);
 		typecontext.types["short"] = new TypeBasic(BasicType.t_short);
+		typecontext.types["char"] = new TypeBasic(BasicType.t_char);
+		typecontext.types["long"] = new TypeBasic(BasicType.t_long);
     }
 
 	LLVMTypeRef getLLVMType(AtstNode parse_type) {
@@ -87,17 +89,22 @@ class GenerationContext {
 	    LLVMBuildRet(builder, retval);
 	}
 
-	void genVar(AstNode node) {
+	void genGlobalVar(AstNode node) {
 		AstNodeDecl iden = cast(AstNodeDecl)node;
 		LLVMBuilderRef builder = LLVMCreateBuilder();
 
 		AtstNode type = iden.decl.type;
 		
+		AstNodeInt ani = cast(AstNodeInt)iden.value;
+		LLVMValueRef constval = LLVMConstInt(getLLVMType(type),ani.value,true);
+
 		LLVMValueRef var = LLVMAddGlobal(
 			this.mod,
 			getLLVMType(type),
 			toStringz(iden.decl.name)
 		);
+
+		LLVMSetInitializer(var,constval);
 
 		auto a = LLVMValueAsBasicBlock(var);
 		LLVMPositionBuilderAtEnd(builder, a);
@@ -105,14 +112,18 @@ class GenerationContext {
 		LLVMBuildAlloca(builder,getLLVMType(type),toStringz(iden.decl.name));
 	}
 
+	void genNode(AstNode node) {
+		if(node.instanceof!(AstNodeFunction)) {
+			genFunc(node);
+		}
+		else if(node.instanceof!(AstNodeDecl)) {
+			genGlobalVar(node);
+		}
+	}
+
     void gen(AstNode[] nodes,string file,bool debugMode) {
 		for(int i=0; i<nodes.length; i++) {
-			if(nodes[i].instanceof!(AstNodeFunction)) {
-				genFunc(nodes[i]);
-			}
-			else if(nodes[i].instanceof!(AstNodeDecl)) {
-				genVar(nodes[i]);
-			}
+			genNode(nodes[i]);
 		}
 		genTarget(file,debugMode);
 	}
