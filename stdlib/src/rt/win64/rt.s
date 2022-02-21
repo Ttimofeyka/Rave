@@ -4,6 +4,6 @@
 .global _start
 _start:
 	call main
-    xor %rcx, %rcx
+    movq %rax, %rcx
     call ExitProcess
     

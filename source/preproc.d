@@ -18,6 +18,8 @@ class Preprocessor {
     bool[] _ifStack;
     int i = 0; // Iterate by tokens
 
+    string stdlibIncPath;
+
     private bool canOutput() {
         // _ifStack: StdList<bool>;
         // canOutput => this->_ifStack.length == 0 || this->_ifStack->get(-1);
@@ -56,6 +58,9 @@ class Preprocessor {
     }
 
     private void insertFile(string pattern) {
+        if(pattern[0] == ':') {
+            pattern = stdlibIncPath ~ pattern[1..$];
+        }
         if(pattern.isDir) {
             foreach(fname; dirEntries(pattern, SpanMode.breadth)) {
                 // writeln("-> ", fname.name);
@@ -65,16 +70,18 @@ class Preprocessor {
         }
         else {
             auto l = new Lexer(pattern, readText(pattern));
-            auto preproc = new Preprocessor(l.getTokens());
+            auto preproc = new Preprocessor(l.getTokens(), stdlibIncPath, this.defines);
             foreach(token; preproc.getTokens().tokens) {
                 newtokens.insertBack(copyToken(token));
             }
         }
     }
 
-    this(TList tokens) {
+    this(TList tokens, string stdlibIncPath, TList[string] defines) {
         this.tokens = tokens;
+        this.defines = defines;
         this.newtokens = new TList();
+        this.stdlibIncPath = stdlibIncPath;
 
         while(i < tokens.length) {
             if(get().type == TokType.tok_hash) {
