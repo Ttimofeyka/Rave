@@ -88,9 +88,6 @@ class GenerationContext {
 	    	false
 	    );
 
-		LLVMTypeRef* asm_ptypes;
-		LLVMTypeRef functy = LLVMFunctionType(voidty,asm_ptypes,0,false);
-
 	    LLVMBuildRet(builder, retval);
 	}
 

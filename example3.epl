@@ -1,2 +1,0 @@
-main: int => 45;
-main2: int => 65;
