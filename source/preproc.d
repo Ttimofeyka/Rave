@@ -59,7 +59,7 @@ class Preprocessor {
 
     private void insertFile(string pattern) {
         if(pattern[0] == ':') {
-            pattern = stdlibIncPath ~ pattern[1..$];
+            pattern = buildPath(stdlibIncPath, pattern[1..$]);
         }
         if(pattern.isDir) {
             foreach(fname; dirEntries(pattern, SpanMode.breadth)) {

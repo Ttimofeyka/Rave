@@ -50,6 +50,10 @@ class GenerationContext {
 				}
 			}
 		}
+		else if(parse_type.instanceof!(AtstNodePointer)) {
+			AtstNodePointer p = cast(AtstNodePointer)parse_type;
+			return LLVMPointerType(getLLVMType(p.node), 0);
+		}
 		return LLVMInt8Type();
 	}
 
@@ -87,6 +91,8 @@ class GenerationContext {
 	    );
 
 	    LLVMBuildRet(builder, retval);
+
+		LLVMVerifyFunction(func, 0);
 	}
 
 	void genGlobalVar(AstNode node) {
@@ -96,7 +102,11 @@ class GenerationContext {
 		AtstNode type = iden.decl.type;
 		
 		AstNodeInt ani = cast(AstNodeInt)iden.value;
-		LLVMValueRef constval = LLVMConstInt(getLLVMType(type),ani.value,true);
+		LLVMValueRef constval = LLVMConstInt(
+			getLLVMType(type),
+			ani.value,
+			true
+		);
 
 		LLVMValueRef var = LLVMAddGlobal(
 			this.mod,
@@ -104,12 +114,12 @@ class GenerationContext {
 			toStringz(iden.decl.name)
 		);
 
-		LLVMSetInitializer(var,constval); // Error this!(Sygmentation)
+		LLVMSetInitializer(var, constval); // Check this for errors! (segfault)
 
 		auto a = LLVMValueAsBasicBlock(var);
 		LLVMPositionBuilderAtEnd(builder, a);
 
-		LLVMBuildAlloca(builder,getLLVMType(type),toStringz(iden.decl.name));
+		LLVMBuildAlloca(builder, getLLVMType(type), toStringz(iden.decl.name));
 	}
 
 	void genNode(AstNode node) {
@@ -155,6 +165,7 @@ class GenerationContext {
 		char* file_ptr = cast(char*)toStringz(file);
 		char* file_debug_ptr = cast(char*)toStringz("bin/"~file);
 
+		writeln("done");
     	if(!d) LLVMTargetMachineEmitToFile(machine,this.mod,file_ptr, LLVMObjectFile, &errors);
 		else LLVMTargetMachineEmitToFile(machine,this.mod,file_debug_ptr, LLVMObjectFile, &errors);
 	}
