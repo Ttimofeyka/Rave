@@ -1,3 +1,2 @@
-A: int = 0;
-main: int => 22;
-main2: int => 23;
+A: short = 47;
+main: int => 5;

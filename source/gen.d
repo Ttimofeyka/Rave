@@ -15,6 +15,7 @@ class GenerationContext {
 
     this() {
         mod = LLVMModuleCreateWithName(cast(const char*)"epl");
+		typecontext = new AtstTypeContext();
 
 		// Initialization
 		LLVMInitializeAllTargets();
@@ -22,51 +23,46 @@ class GenerationContext {
 		LLVMInitializeAllAsmPrinters();
 		LLVMInitializeAllTargetInfos();
 		LLVMInitializeAllTargetMCs();
+
+		typecontext.types["int"] = new TypeBasic(BasicType.t_int);
+		typecontext.types["short"] = new TypeBasic(BasicType.t_short);
     }
 
-	LLVMTypeRef getLLVMType(Type t) {
-		if(t.instanceof!(TypeBasic)) {
-			TypeBasic tb = cast(TypeBasic)t;
-			switch(tb.basic) {
-				case BasicType.t_int:
-				case BasicType.t_uint:
-					return LLVMInt32Type();
-				case BasicType.t_short:
-					return LLVMInt16Type();
-				case BasicType.t_uchar:
-				case BasicType.t_char:
-					return LLVMInt8Type();
-				case BasicType.t_long:
-				case BasicType.t_ulong:
-					return LLVMInt64Type();
-				default: return LLVMInt16Type();
+	LLVMTypeRef getLLVMType(AtstNode parse_type) {
+		if(parse_type.instanceof!(AtstNodeName)) {
+			Type ast_type = parse_type.get(typecontext);
+			if(ast_type.instanceof!(TypeBasic)) {
+				TypeBasic tb = cast(TypeBasic)ast_type;
+				switch(tb.basic) {
+					case BasicType.t_int:
+						return LLVMInt32Type();
+					case BasicType.t_short:
+						return LLVMInt16Type();
+					case BasicType.t_long:
+						return LLVMInt64Type();
+					case BasicType.t_char:
+						return LLVMInt8Type();
+					case BasicType.t_float:
+						return LLVMFloatType();
+					default: return LLVMInt8Type();
+				}
 			}
 		}
-		else return LLVMInt32Type();
-	}
-
-	LLVMTypeRef* getLLVMArgs(AtstNode[] argss) {
-		LLVMTypeRef* llvm_args =
-		 cast(LLVMTypeRef*)(LLVMTypeRef.sizeof*argss.length);
-		for(int i=0; i<argss.length; i++) {
-			llvm_args[i] = getLLVMType(argss[i].get(this.typecontext));
-		}
-		return llvm_args;
+		return LLVMInt8Type();
 	}
 
 	void genFunc(AstNode node) {
 		LLVMBuilderRef builder = LLVMCreateBuilder();
 		AstNodeFunction astf = 
 			cast(AstNodeFunction)node;
-		LLVMTypeRef* param_types = 
-		getLLVMArgs(astf.decl.signature.args);
+		LLVMTypeRef* param_types;
 
 		AstNodeBlock f_body = cast(AstNodeBlock)astf.body_;
 		AstNodeReturn ret_ast = cast(AstNodeReturn)
 			f_body.nodes[0];
 
 		LLVMTypeRef ret_type = LLVMFunctionType(
-		    LLVMInt32Type(),
+		    getLLVMType(astf.decl.signature.ret),
 		    param_types,
 		    cast(uint)astf.decl.signature.args.length,
 		    false
@@ -83,7 +79,7 @@ class GenerationContext {
 		AstNodeInt retint = cast(AstNodeInt)ret_ast.value;
 
 	    LLVMValueRef retval = LLVMConstInt(
-	    	LLVMInt32Type(),
+	    	getLLVMType(astf.decl.signature.ret),
 	    	retint.value,
 	    	false
 	    );
@@ -94,17 +90,19 @@ class GenerationContext {
 	void genVar(AstNode node) {
 		AstNodeDecl iden = cast(AstNodeDecl)node;
 		LLVMBuilderRef builder = LLVMCreateBuilder();
+
+		AtstNode type = iden.decl.type;
 		
 		LLVMValueRef var = LLVMAddGlobal(
 			this.mod,
-			LLVMInt32Type(),
+			getLLVMType(type),
 			toStringz(iden.decl.name)
 		);
 
 		auto a = LLVMValueAsBasicBlock(var);
 		LLVMPositionBuilderAtEnd(builder, a);
 
-		LLVMBuildAlloca(builder,LLVMInt32Type(),toStringz(iden.name));
+		LLVMBuildAlloca(builder,getLLVMType(type),toStringz(iden.decl.name));
 	}
 
     void gen(AstNode[] nodes,string file,bool debugMode) {
