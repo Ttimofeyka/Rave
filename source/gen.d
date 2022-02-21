@@ -104,7 +104,7 @@ class GenerationContext {
 			toStringz(iden.decl.name)
 		);
 
-		LLVMSetInitializer(var,constval);
+		LLVMSetInitializer(var,constval); // Error this!(Sygmentation)
 
 		auto a = LLVMValueAsBasicBlock(var);
 		LLVMPositionBuilderAtEnd(builder, a);
