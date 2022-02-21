@@ -54,7 +54,7 @@ class GenerationContext {
 		return llvm_args;
 	}
 
-	void genFunc(AstNode node,string entryf) {
+	void genFunc(AstNode node) {
 		LLVMBuilderRef builder = LLVMCreateBuilder();
 		AstNodeFunction astf = 
 			cast(AstNodeFunction)node;
@@ -91,10 +91,29 @@ class GenerationContext {
 	    LLVMBuildRet(builder, retval);
 	}
 
-    void gen(AstNode[] nodes,string file,bool debugMode,string entryf) {
+	void genVar(AstNode node) {
+		AstNodeDecl iden = cast(AstNodeDecl)node;
+		LLVMBuilderRef builder = LLVMCreateBuilder();
+		
+		LLVMValueRef var = LLVMAddGlobal(
+			this.mod,
+			LLVMInt32Type(),
+			toStringz(iden.decl.name)
+		);
+
+		auto a = LLVMValueAsBasicBlock(var);
+		LLVMPositionBuilderAtEnd(builder, a);
+
+		LLVMBuildAlloca(builder,LLVMInt32Type(),toStringz(iden.name));
+	}
+
+    void gen(AstNode[] nodes,string file,bool debugMode) {
 		for(int i=0; i<nodes.length; i++) {
 			if(nodes[i].instanceof!(AstNodeFunction)) {
-				genFunc(nodes[i],entryf);
+				genFunc(nodes[i]);
+			}
+			else if(nodes[i].instanceof!(AstNodeDecl)) {
+				genVar(nodes[i]);
 			}
 		}
 		genTarget(file,debugMode);
@@ -102,7 +121,7 @@ class GenerationContext {
 
 	void genTarget(string file,bool d) {
 		if(d) 
-			LLVMWriteBitcodeToFile(this.mod,cast(const char*)(file~".debug.be"));
+			LLVMWriteBitcodeToFile(this.mod,cast(const char*)("bin/"~file~".debug.be"));
 
 		char* errors;
 		LLVMTargetRef target;
@@ -125,7 +144,9 @@ class GenerationContext {
     	LLVMSetDataLayout(this.mod, datalayout_str);
     	LLVMDisposeMessage(datalayout_str);
 		char* file_ptr = cast(char*)toStringz(file);
+		char* file_debug_ptr = cast(char*)toStringz("bin/"~file);
 
-    	LLVMTargetMachineEmitToFile(machine,this.mod,file_ptr, LLVMObjectFile, &errors);
+    	if(!d) LLVMTargetMachineEmitToFile(machine,this.mod,file_ptr, LLVMObjectFile, &errors);
+		else LLVMTargetMachineEmitToFile(machine,this.mod,file_debug_ptr, LLVMObjectFile, &errors);
 	}
 }

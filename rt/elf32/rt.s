@@ -6,3 +6,4 @@ _start:
 	movd %eax, %ebx
 	movd %eax, $1
 	int $0x80
+	

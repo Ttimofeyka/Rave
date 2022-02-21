@@ -13,14 +13,11 @@ void main(string[] args)
 {
 	string outputFile = "a.o";
 	bool debugMode = false;
-	string entryFunc = "main";
 
 	auto helpInformation = getopt(
 		args,
 		"o", "Output file", &outputFile,
-		"outout", "Output file", &outputFile,
 		"debug", "Debug mode", &debugMode,
-		"e", "Entry function", &entryFunc
 	);
 	
 	if(helpInformation.helpWanted)
@@ -35,19 +32,17 @@ void main(string[] args)
   	LLVMInitializeNativeTarget();
 
 	auto lexer = new Lexer(sourceFile, readText(sourceFile));
-	writeln("Done lexing");
 	auto preproc = new Preprocessor(lexer.getTokens());
-	writeln("Done preprocessing");
 
 	// preproc.getTokens().debugPrint();
 
 	auto parser = new Parser(preproc.getTokens());
 	auto nodes = parser.parseProgram();
 	
-	writeln("-------------- Declarations --------------");
+	/*writeln("-------------- Declarations --------------");
 	foreach(decl; parser.getDecls()) {
 		writeln(decl.toString());
-	}
+	}*/
 
 	writeln("------------------ AST -------------------");
 	for(int i = 0; i < nodes.length; ++i) {
@@ -55,5 +50,5 @@ void main(string[] args)
 	}
 
 	auto ctx = new GenerationContext();
-	ctx.gen(nodes, outputFile, debugMode, entryFunc);
+	ctx.gen(nodes, outputFile, debugMode);
 }
