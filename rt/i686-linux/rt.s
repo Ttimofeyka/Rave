@@ -1,9 +1,13 @@
 .extern main
 
+.global exit
+exit:
+	movl $1, %eax
+	int $0x80
+
 .global _start
 _start:
 	call main
-	movd %eax, %ebx
-	movd %eax, $1
+   	movl %eax, %ebx
+	movl $1, %eax
 	int $0x80
-	
