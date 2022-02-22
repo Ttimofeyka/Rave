@@ -97,7 +97,7 @@ class GenerationContext {
 
 	void genGlobalVar(AstNode node) {
 		AstNodeDecl iden = cast(AstNodeDecl)node;
-		LLVMBuilderRef builder = LLVMCreateBuilder();
+		// LLVMBuilderRef builder = LLVMCreateBuilder();
 
 		AtstNode type = iden.decl.type;
 		
@@ -105,7 +105,7 @@ class GenerationContext {
 		LLVMValueRef constval = LLVMConstInt(
 			getLLVMType(type),
 			ani.value,
-			true
+			false
 		);
 
 		LLVMValueRef var = LLVMAddGlobal(
@@ -114,12 +114,14 @@ class GenerationContext {
 			toStringz(iden.decl.name)
 		);
 
+		// writeln("setting initializer...");
 		LLVMSetInitializer(var, constval); // Check this for errors! (segfault)
+		// writeln("done setting initializer");
 
-		auto a = LLVMValueAsBasicBlock(var);
-		LLVMPositionBuilderAtEnd(builder, a);
+		// auto a = LLVMValueAsBasicBlock(var);
+		// LLVMPositionBuilderAtEnd(builder, a);
 
-		LLVMBuildAlloca(builder, getLLVMType(type), toStringz(iden.decl.name));
+		// LLVMBuildAlloca(builder, getLLVMType(type), toStringz(iden.decl.name));
 	}
 
 	void genNode(AstNode node) {
@@ -164,6 +166,9 @@ class GenerationContext {
     	LLVMDisposeMessage(datalayout_str);
 		char* file_ptr = cast(char*)toStringz(file);
 		char* file_debug_ptr = cast(char*)toStringz("bin/"~file);
+
+		char* err;
+		LLVMPrintModuleToFile(this.mod, "tmp.ll", &err);
 
     	if(!d) LLVMTargetMachineEmitToFile(machine,this.mod,file_ptr, LLVMObjectFile, &errors);
 		else LLVMTargetMachineEmitToFile(machine,this.mod,file_debug_ptr, LLVMObjectFile, &errors);
