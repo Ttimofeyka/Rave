@@ -1,8 +1,0 @@
-// parser tests: arrow function sugar
-
-test1: int => 0;
-test2:     => 0;
-test3      => 0;
-
-test4: int => test1() + test2();
-test5: int => test3() + test4();
