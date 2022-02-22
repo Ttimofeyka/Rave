@@ -18,7 +18,7 @@ main: int {
 * `llvm` (+ dev libs)
 * `binutils`, `binutils-avr`(if you need avr support)
 * dub
-* D compiler
+* D compiler(dmd/ldc/gdc)
 
 ## Building/Running
 
