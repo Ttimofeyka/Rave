@@ -240,12 +240,8 @@ class Lexer {
                 case '6': case '7': case '8': case '9':
                     tokens.insertBack(new Token(loc, getTNum()));
                     break;
-                case '\'':
-                    tokens.insertBack(new Token(loc, "'"~getTChar()~"'"));
-                    break;
-                case '"':
-                    tokens.insertBack(new Token(loc, "\""~getTStr()~"\""));
-                    break;
+                case '\'': tokens.insertBack(new Token(loc, "'"~getTChar()~"'")); break;
+                case '"': tokens.insertBack(new Token(loc, "\""~getTStr()~"\"")); break;
                 case '(': tokens.insertBack(new Token(loc, "(")); next(1); break;
                 case ')': tokens.insertBack(new Token(loc, ")")); next(1); break;
                 case '{': tokens.insertBack(new Token(loc, "{")); next(1); break;
