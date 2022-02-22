@@ -165,7 +165,6 @@ class GenerationContext {
 		char* file_ptr = cast(char*)toStringz(file);
 		char* file_debug_ptr = cast(char*)toStringz("bin/"~file);
 
-		writeln("done");
     	if(!d) LLVMTargetMachineEmitToFile(machine,this.mod,file_ptr, LLVMObjectFile, &errors);
 		else LLVMTargetMachineEmitToFile(machine,this.mod,file_debug_ptr, LLVMObjectFile, &errors);
 	}
