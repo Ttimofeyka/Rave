@@ -12,6 +12,8 @@ class GenerationContext {
     LLVMExecutionEngineRef engine;
     LLVMModuleRef mod;
 	AtstTypeContext typecontext;
+	LLVMValueRef[string] global_vars;
+	LLVMBuilderRef currbuilder;
 
     this() {
         mod = LLVMModuleCreateWithName(cast(const char*)"epl");

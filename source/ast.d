@@ -315,14 +315,8 @@ class AstNodeFunction : AstNode {
 
 		LLVMBasicBlockRef entry = LLVMAppendBasicBlock(func,cast(const char*)"entry");
 		LLVMPositionBuilderAtEnd(builder, entry);
-		AstNodeInt retint = cast(AstNodeInt)ret_ast.value;
 
-	    LLVMValueRef retval = LLVMConstInt(
-	    	ctx.getLLVMType(decl.signature.ret),
-	    	retint.value,
-	    	false
-	    );
-
+	    LLVMValueRef retval = ret_ast.value.gen(ctx);
 	    LLVMBuildRet(builder, retval);
 
 		LLVMVerifyFunction(func, 0);
@@ -569,8 +563,10 @@ class AstNodeIden : AstNode {
 	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
-		LLVMValueRef a;
-		return a;
+		if(name in ctx.global_vars) {
+			return ctx.global_vars[name];
+		}
+		assert(0);
 	}
 
 	debug {
@@ -591,22 +587,22 @@ class AstNodeDecl : AstNode {
 	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
-		AtstNode type = decl.type;
+		if(decl.name in ctx.global_vars) {
+			writeln("The variable "~decl.name~" has been declared several times!");
+			exit(-1);
+		}
 		
-		AstNodeInt ani = cast(AstNodeInt)value;
-		LLVMValueRef constval = LLVMConstInt(
-			ctx.getLLVMType(type),
-			ani.value,
-			false
-		);
+		LLVMValueRef constval = value.gen(ctx);
 
 		LLVMValueRef var = LLVMAddGlobal(
 			ctx.mod,
-			ctx.getLLVMType(type),
+			ctx.getLLVMType(decl.type),
 			toStringz(decl.name)
 		);
 
 		LLVMSetInitializer(var, constval);
+
+		ctx.global_vars[decl.name] = var;
 
 		return var;
 	}
@@ -705,10 +701,6 @@ class AstNodeInt : AstNode {
 
 	this(ulong value) { this.value = value; }
 
-	override LLVMValueRef gen(GenerationContext ctx) {
-		return LLVMConstInt(LLVMInt32Type(),value,false);
-	}
-
 	private ulong pow2(char n) {
 		ulong l = 2;
 		while(n--) l *= 2;
@@ -731,6 +723,30 @@ class AstNodeInt : AstNode {
 		else {
 			// TODO implement something similar to above.
 			return new TypeBasic(BasicType.t_long);
+		}
+	}
+
+	override LLVMValueRef gen(GenerationContext ctx) {
+		TypeBasic type = cast(TypeBasic)getType(null);
+
+		switch(type.basic) {
+			case BasicType.t_char:
+				return LLVMConstInt(LLVMInt8Type(),value,true);
+			case BasicType.t_uchar:
+				return LLVMConstInt(LLVMInt8Type(),value,false);
+			case BasicType.t_short:
+				return LLVMConstInt(LLVMInt16Type(),value,true);
+			case BasicType.t_ushort:
+				return LLVMConstInt(LLVMInt16Type(),value,false);
+			case BasicType.t_int:
+				return LLVMConstInt(LLVMInt32Type(),value,true);
+			case BasicType.t_uint:
+				return LLVMConstInt(LLVMInt32Type(),value,false);
+			case BasicType.t_long:
+				return LLVMConstInt(LLVMInt64Type(),value,true);
+			case BasicType.t_ulong:
+				return LLVMConstInt(LLVMInt64Type(),value,false);
+			default: assert(0);
 		}
 	}
 
