@@ -57,79 +57,9 @@ class GenerationContext {
 		return LLVMInt8Type();
 	}
 
-	void genFunc(AstNode node) {
-		LLVMBuilderRef builder = LLVMCreateBuilder();
-		AstNodeFunction astf = 
-			cast(AstNodeFunction)node;
-		LLVMTypeRef* param_types;
-
-		AstNodeBlock f_body = cast(AstNodeBlock)astf.body_;
-		AstNodeReturn ret_ast = cast(AstNodeReturn)
-			f_body.nodes[0];
-
-		LLVMTypeRef ret_type = LLVMFunctionType(
-		    getLLVMType(astf.decl.signature.ret),
-		    param_types,
-		    cast(uint)astf.decl.signature.args.length,
-		    false
-	    );
-
-		LLVMValueRef func = LLVMAddFunction(
-		    this.mod,
-		    cast(const char*)(astf.decl.name~"\0"),
-		    ret_type
-	    );
-
-		LLVMBasicBlockRef entry = LLVMAppendBasicBlock(func,cast(const char*)"entry");
-		LLVMPositionBuilderAtEnd(builder, entry);
-		AstNodeInt retint = cast(AstNodeInt)ret_ast.value;
-
-	    LLVMValueRef retval = LLVMConstInt(
-	    	getLLVMType(astf.decl.signature.ret),
-	    	retint.value,
-	    	false
-	    );
-
-	    LLVMBuildRet(builder, retval);
-
-		LLVMVerifyFunction(func, 0);
-	}
-
-	void genGlobalVar(AstNode node) {
-		AstNodeDecl iden = cast(AstNodeDecl)node;
-		// LLVMBuilderRef builder = LLVMCreateBuilder();
-
-		AtstNode type = iden.decl.type;
-		
-		AstNodeInt ani = cast(AstNodeInt)iden.value;
-		LLVMValueRef constval = LLVMConstInt(
-			getLLVMType(type),
-			ani.value,
-			false
-		);
-
-		LLVMValueRef var = LLVMAddGlobal(
-			this.mod,
-			getLLVMType(type),
-			toStringz(iden.decl.name)
-		);
-
-		// writeln("setting initializer...");
-		LLVMSetInitializer(var, constval); // Check this for errors! (segfault)
-		// writeln("done setting initializer");
-
-		// auto a = LLVMValueAsBasicBlock(var);
-		// LLVMPositionBuilderAtEnd(builder, a);
-
-		// LLVMBuildAlloca(builder, getLLVMType(type), toStringz(iden.decl.name));
-	}
-
 	void genNode(AstNode node) {
-		if(node.instanceof!(AstNodeFunction)) {
-			genFunc(node);
-		}
-		else if(node.instanceof!(AstNodeDecl)) {
-			genGlobalVar(node);
+		if(node.instanceof!(AstNodeFunction) || node.instanceof!(AstNodeDecl)) {
+			node.gen(this);
 		}
 	}
 

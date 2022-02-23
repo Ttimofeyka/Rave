@@ -9,6 +9,7 @@ import core.stdc.stdlib : exit;
 import core.stdc.stdlib : malloc;
 import typesystem;
 import util;
+import std.string;
 
 /// We have two separate syntax trees: for types and for values.
 
@@ -292,9 +293,41 @@ class AstNodeFunction : AstNode {
 	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
+		LLVMBuilderRef builder = LLVMCreateBuilder();
+		LLVMTypeRef* param_types;
 
-		LLVMValueRef a;
-		return a;
+		AstNodeBlock f_body = cast(AstNodeBlock)body_;
+		AstNodeReturn ret_ast = cast(AstNodeReturn)
+			f_body.nodes[0];
+
+		LLVMTypeRef ret_type = LLVMFunctionType(
+		    ctx.getLLVMType(decl.signature.ret),
+		    param_types,
+		    cast(uint)decl.signature.args.length,
+		    false
+	    );
+
+		LLVMValueRef func = LLVMAddFunction(
+		    ctx.mod,
+		    cast(const char*)(decl.name~"\0"),
+		    ret_type
+	    );
+
+		LLVMBasicBlockRef entry = LLVMAppendBasicBlock(func,cast(const char*)"entry");
+		LLVMPositionBuilderAtEnd(builder, entry);
+		AstNodeInt retint = cast(AstNodeInt)ret_ast.value;
+
+	    LLVMValueRef retval = LLVMConstInt(
+	    	ctx.getLLVMType(decl.signature.ret),
+	    	retint.value,
+	    	false
+	    );
+
+	    LLVMBuildRet(builder, retval);
+
+		LLVMVerifyFunction(func, 0);
+
+		return func;
 	}
 
 	debug {
@@ -558,8 +591,24 @@ class AstNodeDecl : AstNode {
 	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
-		LLVMValueRef a;
-		return a;
+		AtstNode type = decl.type;
+		
+		AstNodeInt ani = cast(AstNodeInt)value;
+		LLVMValueRef constval = LLVMConstInt(
+			ctx.getLLVMType(type),
+			ani.value,
+			false
+		);
+
+		LLVMValueRef var = LLVMAddGlobal(
+			ctx.mod,
+			ctx.getLLVMType(type),
+			toStringz(decl.name)
+		);
+
+		LLVMSetInitializer(var, constval);
+
+		return var;
 	}
 
 	debug {

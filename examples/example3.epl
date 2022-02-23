@@ -1,2 +1,2 @@
-A: int = 47;
+A: short = 47;
 main: int => 5;
