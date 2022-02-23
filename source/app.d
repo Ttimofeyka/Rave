@@ -17,22 +17,20 @@ void main(string[] args)
 	bool debugMode = false;
 
 	auto helpInformation = getopt(
-		args,
-		"o", "Output file", &outputFile,
-		"debug", "Debug mode", &debugMode,
-		"stdinc", "Stdlib include path (':' in #inc)", &stdlibIncPath,
+	    args,
+	    "o", "Output file", &outputFile,
+	    "debug", "Debug mode", &debugMode,
+	    "stdinc", "Stdlib include path (':' in #inc)", &stdlibIncPath,
 	);
 	
-	if(helpInformation.helpWanted)
-	{
-		defaultGetoptPrinter("Some information about the program.", helpInformation.options);
-		return;
-	}
-	
+    if(helpInformation.helpWanted)
+    {
+	    defaultGetoptPrinter("Some information about the program.", helpInformation.options);
+	    return;
+    }
 
-
-	string[] sourceFiles = args[1..$].dup;
-	string sourceFile = sourceFiles[0];
+    string[] sourceFiles = args[1..$].dup;
+    string sourceFile = sourceFiles[0];
 
   	LLVMInitializeNativeTarget();
 	
@@ -49,15 +47,8 @@ void main(string[] args)
 	auto lexer = new Lexer(sourceFile, readText(sourceFile));
 	auto preproc = new Preprocessor(lexer.getTokens(), stdlibIncPath, defines);
 
-	// preproc.getTokens().debugPrint();
-
 	auto parser = new Parser(preproc.getTokens());
 	auto nodes = parser.parseProgram();
-	
-	/*writeln("-------------- Declarations --------------");
-	foreach(decl; parser.getDecls()) {
-		writeln(decl.toString());
-	}*/
 
 	writeln("------------------ AST -------------------");
 	for(int i = 0; i < nodes.length; ++i) {
