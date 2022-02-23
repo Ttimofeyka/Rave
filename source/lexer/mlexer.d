@@ -1,9 +1,9 @@
-module lexer;
+module lexer.mlexer;
 
 import std.string;
 import std.array;
-import tokens;
-import logger;
+import lexer.tokens;
+import lexer.logger;
 import std.conv : to;
 import std.stdio;
 import std.algorithm: canFind;

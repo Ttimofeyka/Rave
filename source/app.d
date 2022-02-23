@@ -1,19 +1,19 @@
 import std.stdio;
-import lexer;
-import tokens;
+import lexer.mlexer, lexer.tokens;
 import std.conv : to;
 import std.path : buildNormalizedPath, absolutePath;
 import core.stdc.stdlib : exit;
 import std.file : readText;
-import preproc;
-import parser;
-import gen, llvm;
+import lexer.preproc;
+import parser.mparser;
+import parser.gen, llvm;
 import std.getopt;
 
 void main(string[] args)
 {
 	string outputFile = "a.o";
 	string stdlibIncPath = buildNormalizedPath(absolutePath("./stdlib"));
+	string outputType = "i686-linux";
 	bool debugMode = false;
 
 	auto helpInformation = getopt(
@@ -21,6 +21,7 @@ void main(string[] args)
 	    "o", "Output file", &outputFile,
 	    "debug", "Debug mode", &debugMode,
 	    "stdinc", "Stdlib include path (':' in #inc)", &stdlibIncPath,
+		"type", "Output file type", &outputType
 	);
 	
     if(helpInformation.helpWanted)
@@ -39,6 +40,8 @@ void main(string[] args)
 	defines["_FILE"].insertBack(new Token(SourceLocation(0, 0, sourceFile), '"' ~ sourceFile ~ '"'));
 	defines["_OFILE"] = new TList();
 	defines["_OFILE"].insertBack(new Token(SourceLocation(0, 0, outputFile), '"' ~ outputFile ~ '"'));
+	defines["_PLATFORM"] = new TList();
+	defines["_PLATFORM"].insertBack(new Token(SourceLocation(0,0,""),"\""~outputType~"\""));
 
 	if(debugMode) defines["_DEBUG"] = new TList();
 	else defines["_NDEBUG"] = new TList();

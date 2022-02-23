@@ -1,8 +1,8 @@
-module util;
+module parser.util;
 
-import ast;
+import parser.ast;
 import std.conv : to;
-import std.string, typesystem;
+import std.string, parser.typesystem;
 import llvm;
 
 T instanceof(T)(Object o) if(is(T == class)) {

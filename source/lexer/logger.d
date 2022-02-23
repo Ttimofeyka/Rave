@@ -1,4 +1,4 @@
-module logger;
+module lexer.logger;
 
 import std.stdio;
 import core.stdc.stdlib : exit;
