@@ -85,62 +85,6 @@ enum TokCmd {
     cmd_endif = 25,
 }
 
-string tokTypeToStr(TokType type)
-{
-	switch(type)
-	{
-	case TokType.tok_num: return "num";
-	case TokType.tok_id: return "id";
-	case TokType.tok_equ: return "equ";
-	case TokType.tok_lbra: return "lbra";
-	case TokType.tok_rbra: return "rbra";
-	case TokType.tok_lpar: return "lpar";
-	case TokType.tok_rpar: return "rpar";
-	case TokType.tok_plus: return "plus";
-	case TokType.tok_minus: return "minus";
-	case TokType.tok_multiply: return "multiply";
-	case TokType.tok_divide: return "divide";
-	case TokType.tok_more: return "more";
-	case TokType.tok_less: return "less";
-	case TokType.tok_equal: return "equal";
-	case TokType.tok_nequal: return "nequal";
-	case TokType.tok_string: return "string";
-	case TokType.tok_char: return "char";
-	case TokType.tok_comma: return "comma";
-	case TokType.tok_cmd: return "cmd";
-	case TokType.tok_2rbra: return "2rbra";
-	case TokType.tok_2lbra: return "2lbra";
-	case TokType.tok_struct_get: return "struct_get";
-	case TokType.tok_semicolon: return "semicolon";
-	case TokType.tok_shortplu: return "shortplu";
-	case TokType.tok_shortmin: return "shortmin";
-	case TokType.tok_shortmul: return "shortmul";
-	case TokType.tok_shortdiv: return "shortdiv";
-	case TokType.tok_and: return "and";
-	case TokType.tok_or: return "or";
-	case TokType.tok_bit_and: return "bit_and";
-	case TokType.tok_bit_or: return "bit_or";
-	case TokType.tok_bit_ls: return "bit_ls";
-	case TokType.tok_bit_rs: return "bit_rs";
-	case TokType.tok_bit_xor: return "bit_xor";
-	case TokType.tok_bit_not: return "bit_not";
-	case TokType.tok_not: return "not";
-    case TokType.tok_type: return "type";
-    case TokType.tok_eof: return "eof";
-    case TokType.tok_dot: return "dot";
-    case TokType.tok_min_min: return "min_min";
-    case TokType.tok_plu_plu: return "plu_plu";
-    case TokType.tok_bit_and_eq: return "bit_and_eq";
-    case TokType.tok_bit_or_eq: return "bit_or_eq";
-    case TokType.tok_and_eq: return "and_eq";
-    case TokType.tok_or_eq: return "or_eq";
-    case TokType.tok_more_more_eq: return "more_more_eq";
-    case TokType.tok_less_less_eq: return "less_less_eq";
-    case TokType.tok_arrow: return "arrow";
-	default: return "?";
-	}
-}
-
 struct SourceLocation {
     uint line;
     uint col;
@@ -323,7 +267,7 @@ class TList {
                 writeln("Type: ", to!string(tok.cmd), " ", tok.value);
             }
             else {
-                writeln("Type: ", tokTypeToStr(tok.type), " ", tok.value);
+                writeln("Type: ", to!string(tok.type), " ", tok.value);
             }
         }
     }

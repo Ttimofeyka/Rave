@@ -6,7 +6,6 @@ import gen, tokens;
 import llvm;
 import std.conv : to;
 import core.stdc.stdlib : exit;
-import core.stdc.stdlib : malloc;
 import typesystem;
 import util;
 import std.string;
@@ -388,7 +387,7 @@ class AstNodeBinary : AstNode {
 	debug {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
-			writeln("Binary ", tokTypeToStr(type));
+			writeln("Binary ", to!string(type));
 			lhs.debugPrint(indent + 1);
 			rhs.debugPrint(indent + 1);
 		}
@@ -412,7 +411,7 @@ class AstNodeUnary : AstNode {
 	debug {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
-			writeln("Unary ", tokTypeToStr(type));
+			writeln("Unary ", to!string(type));
 			node.debugPrint(indent + 1);
 		}
 	}

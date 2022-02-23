@@ -52,7 +52,7 @@ class Parser {
 
 	private void errorExpected(string msg) {
 		auto t = next();
-		error(msg ~ " Got: " ~ tokTypeToStr(t.type) ~ "\nAt: " ~ t.loc.toString());
+		error(msg ~ " Got: " ~ to!string(t.type) ~ "\nAt: " ~ t.loc.toString());
 	}
 
 	private Token next() {
@@ -70,7 +70,7 @@ class Parser {
 	private Token expectToken(TokType type) {
 		auto t = peek();
 		if(t.type != type) {
-			errorExpected("Expected " ~ tokTypeToStr(type) ~ ".");
+			errorExpected("Expected " ~ to!string(type) ~ ".");
 			return null;
 		}
 		next();
@@ -439,7 +439,7 @@ class Parser {
 		
 		writeln(t.value);
 		error("Expected a variable, a number, a string, a char or an expression in parentheses. Got: "
-			~ tokTypeToStr(t.type));
+			~ to!string(t.type));
 		return null;
 	}
 
