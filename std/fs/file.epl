@@ -1,5 +1,7 @@
-struct File {
-    __data: void*;
+@inc "std/str"
+
+struct StdFile {
+    __fd: ulong;
 
     static extern open(path: const char*, mode: const char*): File*;
     extern close();
@@ -9,19 +11,23 @@ struct File {
 
     get(): char {
         c: char;
-        read(&c, 1);
+        this->read(&c, 1);
         ret c;
     }
 
     put(c: char) {
-        write(&c, 1);
+        this->write(&c, 1);
+    }
+
+    swrite(s: const char*) {
+        this->write(&s, StdString.lengthOf(s));
     }
 }
 
-#def  stdin_fd 0;
-#def stdout_fd 1;
-#def stderr_fd 2;
+@def  stdin_fd 0;
+@def stdout_fd 1;
+@def stderr_fd 2;
 
-extern stdin: File*;
-extern stdout: File*;
-extern stderr: File*;
+extern stdin: StdFile*;
+extern stdout: StdFile*;
+extern stderr: StdFile*;

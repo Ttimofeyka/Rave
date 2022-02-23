@@ -313,6 +313,7 @@ class Lexer {
                 case ':': tokens.insertBack(new Token(loc, ":")); next(1); break;
                 case '^': tokens.insertBack(new Token(loc, "^")); next(1); break;
                 case '~': tokens.insertBack(new Token(loc, "~")); next(1); break;
+                case '@': tokens.insertBack(new Token(loc, "@")); next(1); break;
                 case '!':
                     if(get(+1)=='=') {
                         tokens.insertBack(new Token(loc, "!="));

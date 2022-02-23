@@ -1,16 +1,16 @@
-#inc ":std"
-#def zero 0
+@inc ":std"
+@def zero 0;
 
-#ifdef zero
+@ifdef zero
 
 struct Test {
     val: uint = 0;
     get: => zero + this->val;
 }
 
-#endif
+@endif
 
-#ifdef abc
+@ifdef abc
 enum Values {
     GOOD,
     BAD,
@@ -20,7 +20,7 @@ enum Values {
     ACTUAL2 = 4,
     ACTUAL3,
 }
-#endif
+@endif
 
 main(argc: int, argv: char*[]): int {
     if(zero == 0) {

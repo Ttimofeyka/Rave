@@ -59,6 +59,7 @@ enum TokType {
     tok_r_plu_plu = 48, // ++ on the right (unused by lexer)
     tok_arrow = 49, // =>
     tok_hash = 50, // #
+    tok_at = 51, // @
 }
 
 enum TokCmd {
@@ -70,7 +71,6 @@ enum TokCmd {
     cmd_extern = 5,
     cmd_asm = 11,
     cmd_struct = 12,
-    cmd_define = 13,
     cmd_ret = 14,
     cmd_break = 15,
     cmd_continue = 16,
@@ -79,7 +79,8 @@ enum TokCmd {
     cmd_enum = 20,
     cmd_static = 21,
     cmd_const = 22,
-    // Preprocessor IF
+    // Preprocessor
+    cmd_define = 13,
     cmd_ifdef = 23,
     cmd_ifndef = 24,
     cmd_endif = 25,
@@ -128,7 +129,7 @@ class Token {
             this.type = TokType.tok_num;
         }
         else {
-            switch(s.toLower()) {
+            switch(s) {
                 // Operators
                 case "(": this.type = TokType.tok_lpar; break;
                 case ")": this.type = TokType.tok_rpar; break;
@@ -161,6 +162,7 @@ class Token {
                 case "/":  this.type = TokType.tok_divide; break;
                 case ":":  this.type = TokType.tok_type; break;
                 case ".": this.type = TokType.tok_dot; break;
+                case "@": this.type = TokType.tok_at; break;
                 case "&=": this.type = TokType.tok_bit_and_eq; break;
                 case "&&=": this.type = TokType.tok_and_eq; break;
                 case "|=": this.type = TokType.tok_bit_or_eq; break;

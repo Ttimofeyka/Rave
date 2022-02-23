@@ -38,7 +38,7 @@ class Preprocessor {
     private TList getDefine() {
         TList define_toks = new TList();
 
-        while(get().type != TokType.tok_hash) {
+        while(get().type != TokType.tok_semicolon) {
             define_toks.insertBack(get()); 
             i+=1;
         }
@@ -84,10 +84,10 @@ class Preprocessor {
         this.stdlibIncPath = stdlibIncPath;
 
         while(i < tokens.length) {
-            if(get().type == TokType.tok_hash) {
+            if(get().type == TokType.tok_at) {
                 i += 1;
                 if(get().type != TokType.tok_cmd) {
-                    error("Expected a command after '#'! Got: " ~ get().value ~ "\nAt: " ~ get().loc.toString());
+                    error("Expected a command after '@'! Got: " ~ get().value ~ "\nAt: " ~ get().loc.toString());
                 }
                 if(get().cmd == TokCmd.cmd_define) {
                     i += 1;
@@ -108,11 +108,6 @@ class Preprocessor {
                     }
                     string name = get().value.replace("\"", "");
                     i += 1;
-                    if(get().type != TokType.tok_hash) {
-                        error("Expected a newline at the end of an \"inc\" statement!");
-                        continue;
-                    }
-                    i += 1;
                     // name = absolutePath(name);
                     // if(exists(name) && isDir(name)) insertFile(buildPath(name, "*"));
                     if(canOutput()) insertFile(name);
@@ -125,11 +120,6 @@ class Preprocessor {
                     }
                     auto name = get().value;
                     i += 1;
-                    if(get().type != TokType.tok_hash) {
-                        error("Expected a newline at the end of an \"inc\" statement!");
-                        continue;
-                    }
-                    i += 1;
                     // writeln("#ifdef " ~ name ~ " -> " ~ (name !in defines ? "not defined" : "defined"));
                     if(canOutput()) _ifStack ~= !(name !in defines);
                 }
@@ -141,24 +131,14 @@ class Preprocessor {
                     }
                     auto name = get().value;
                     i += 1;
-                    if(get().type != TokType.tok_hash) {
-                        error("Expected a newline at the end of an \"inc\" statement!");
-                        continue;
-                    }
-                    i += 1;
                     if(canOutput()) _ifStack ~= name !in defines;
                 }
                 else if(get().cmd == TokCmd.cmd_endif) {
                     i += 1;
-                    if(get().type != TokType.tok_hash) {
-                        error("Expected a newline at the end of an \"inc\" statement!");
-                        continue;
-                    }
-                    i += 1;
 
                     if(canOutput()) {
                         if(_ifStack.length == 0) {
-                            error("Unmatched '#endif'!");
+                            error("Unmatched '@endif'!");
                         }
                         else {
                             remove(_ifStack, cast(size_t)(_ifStack.length) - 1);

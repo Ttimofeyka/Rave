@@ -6,9 +6,10 @@ EPL - is a compiled, procedural and statically typed high-level systems programm
 ## "Hello, world!" Example
 
 ```nasm
-inc "std";
+@inc "std"
+
 main: int {
-  print("Hello, world!");
+  stdout.swrite("Hello, world!\n");
   ret 0;
 }
 ```
