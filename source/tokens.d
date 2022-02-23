@@ -124,7 +124,7 @@ class Token {
             }
             else lexer_error("Undefined token <"~s~">!");
         }
-        else if(isNumber(cast(dchar)s[0])) {
+        else if(isNumber(s[0])) {
             this.type = TokType.tok_num;
         }
         else if(s[0]=='(') this.type = TokType.tok_lpar;
