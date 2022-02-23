@@ -1,2 +1,1 @@
-
 extern exit(errCode: int);
