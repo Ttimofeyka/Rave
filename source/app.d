@@ -1,13 +1,12 @@
 import std.stdio;
-import lexer;
-import tokens;
+import lexer.mlexer, lexer.tokens;
 import std.conv : to;
 import std.path : buildNormalizedPath, absolutePath;
 import core.stdc.stdlib : exit;
 import std.file : readText;
-import preproc;
-import parser;
-import gen, llvm;
+import lexer.preproc;
+import parser.mparser;
+import parser.gen, llvm;
 import std.getopt;
 
 void main(string[] args)

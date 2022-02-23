@@ -1,10 +1,10 @@
-module gen;
+module parser.gen;
 
 import llvm;
 import std.stdio : writeln;
 import core.stdc.stdlib : exit;
-import typesystem, util;
-import ast;
+import parser.typesystem, parser.util;
+import parser.ast;
 import std.conv : to;
 import std.string;
 

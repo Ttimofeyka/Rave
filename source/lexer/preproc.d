@@ -1,6 +1,6 @@
-module preproc;
+module lexer.preproc;
 
-import tokens;
+import lexer.tokens;
 import std.string;
 import std.stdio;
 import std.array;
@@ -8,7 +8,7 @@ import std.path;
 import std.conv;
 import std.algorithm : remove;
 import std.file : readText, isDir, exists, dirEntries, SpanMode;
-import lexer;
+import lexer.mlexer;
 
 class Preprocessor {
     TList tokens;

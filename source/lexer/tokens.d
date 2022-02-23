@@ -1,9 +1,11 @@
+module lexer.tokens;
+
 import std.string;
 import std.container : Array;
 import std.array;
 import std.stdio;
 import std.conv;
-import logger;
+import lexer.logger;
 import std.uni : isNumber;
 
 enum TokType {
@@ -105,24 +107,15 @@ class Token {
         this.loc = loc;
         this.value = s;
         if(s.length == 0) {
-            // debug {
-            //     writeln("Error: Token(\"\") called!");
-            // }
             this.type = TokType.tok_eof;
             return;
         }
 
         if(s[0]=='"') {
-            if(s[$-1]=='"') {
-                this.type = TokType.tok_string;
-            }
-            else lexer_error("Undefined token <"~s~">!");
+            this.type = TokType.tok_string;
         }
         else if(s[0]=='\'') {
-            if(s[$-1]=='\'') {
-                this.type = TokType.tok_char;
-            }
-            else lexer_error("Undefined token <"~s~">!");
+            this.type = TokType.tok_char;
         }
         else if(isNumber(s[0])) {
             this.type = TokType.tok_num;

@@ -1,5 +1,5 @@
-module typesystem;
-import util;
+module parser.typesystem;
+import parser.util;
 
 class Type {
     bool assignable(Type other) { return false; }

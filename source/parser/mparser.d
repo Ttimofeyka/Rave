@@ -1,11 +1,11 @@
-module parser;
+module parser.mparser;
 
 import std.string;
 import std.array;
 import std.container : SList;
 import std.stdio, std.conv;
-import ast;
-import tokens;
+import parser.ast;
+import lexer.tokens;
 import std.algorithm.iteration : map;
 import std.algorithm : canFind;
 

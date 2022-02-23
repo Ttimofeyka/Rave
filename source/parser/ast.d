@@ -1,13 +1,14 @@
-module ast;
+module parser.ast;
+
 import std.stdio, std.conv;
 import std.array : join;
 import std.algorithm.iteration : map;
-import gen, tokens;
+import parser.gen, lexer.tokens;
 import llvm;
 import std.conv : to;
 import core.stdc.stdlib : exit;
-import typesystem;
-import util;
+import parser.typesystem;
+import parser.util;
 import std.string;
 
 /// We have two separate syntax trees: for types and for values.
