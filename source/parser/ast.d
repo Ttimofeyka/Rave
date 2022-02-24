@@ -522,8 +522,7 @@ class AstNodeReturn : AstNode {
 	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
-		LLVMValueRef a;
-		return a;
+		return value.gen(ctx);
 	}
 
 	debug {
@@ -704,11 +703,9 @@ class AstNodeFuncCall : AstNode {
 
 class AstNodeInt : AstNode {
 	ulong value;
-	Type preparse_type;
 
-	this(ulong value, Type preparse_type) { 
+	this(ulong value) { 
 		this.value = value;
-		this.preparse_type = preparse_type;
 	}
 
 	private ulong pow2(char n) {
@@ -737,11 +734,7 @@ class AstNodeInt : AstNode {
 	  }
 
 	override LLVMValueRef gen(GenerationContext ctx) {
-		TypeBasic type;
-		if(preparse_type != null) {
-			type = cast(TypeBasic)preparse_type;
-		}
-		else type = cast(TypeBasic)getType(null);
+		TypeBasic type = cast(TypeBasic)getType(null);
 
 		switch(type.basic) {
 			case BasicType.t_char:

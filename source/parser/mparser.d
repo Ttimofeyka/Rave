@@ -209,7 +209,7 @@ class Parser {
 			next();
 			d.isMethod = true;
 			d.value = new AstNodeBlock([
-				new AstNodeReturn(parseExpr())
+				new AstNodeReturn(parseExpr(),currfunc)
 			]);
 			expectToken(TokType.tok_semicolon);
 		}
@@ -254,7 +254,7 @@ class Parser {
 				next();
 				d.isMethod = true;
 				d.value = new AstNodeBlock([
-					new AstNodeReturn(parseExpr())
+					new AstNodeReturn(parseExpr(),currfunc)
 				]);
 				expectToken(TokType.tok_semicolon);
 			}

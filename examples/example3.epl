@@ -1,2 +1,2 @@
-A: int = 99;
-main: int => 2;
+A: char = 1;
+main: char => 127;
