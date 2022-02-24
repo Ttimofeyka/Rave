@@ -6,9 +6,11 @@ rjmp _start
 .global exit
 .type	exit, @function
 exit:
+    rjmp exit
     ret
 
-.global _starts
+.global _start
+.type	_start, @function
 _start:
     rcall main
     ret

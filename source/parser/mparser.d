@@ -16,6 +16,7 @@ struct Decl {
 	AstNode value;
 	bool isMethod;
 	TokCmd[] mods = [];
+	bool isGlobal;
 }
 
 VariableDeclaration declToVarDecl(Decl d) {
@@ -36,6 +37,7 @@ class Parser {
 	private TList _toks;
 	private uint _idx = 0;
 	private TypeDeclaration[] _decls;
+	private AstNodeFunction currfunc;
 
 	public this(TList toks) {
 		this._toks = toks;
@@ -208,7 +210,7 @@ class Parser {
 			next();
 			d.isMethod = true;
 			d.value = new AstNodeBlock([
-				new AstNodeReturn(parseExpr())
+				new AstNodeReturn(parseExpr(),currfunc)
 			]);
 			expectToken(TokType.tok_semicolon);
 		}
@@ -252,8 +254,9 @@ class Parser {
 			else if(peek().type == TokType.tok_arrow) {
 				next();
 				d.isMethod = true;
+
 				d.value = new AstNodeBlock([
-					new AstNodeReturn(parseExpr())
+					new AstNodeReturn(parseExpr(),currfunc)
 				]);
 				expectToken(TokType.tok_semicolon);
 			}
@@ -591,7 +594,7 @@ class Parser {
 				next();
 				auto e = parseExpr();
 				expectToken(TokType.tok_semicolon);
-				return new AstNodeReturn(e);
+				return new AstNodeReturn(e,currfunc);
 			}
 		}
 		else if(peek().type == TokType.tok_id) {
@@ -640,7 +643,8 @@ class Parser {
 
 	private AstNode parseFunc() {
 		auto decl = parseFuncDecl(function(Token tok) { return tok.type == TokType.tok_2lbra; }, true);
-		return new AstNodeFunction(decl, parseBlock());
+		currfunc = new AstNodeFunction(decl, parseBlock());
+		return currfunc;
 	}
 
 	// private AstNode parseExtern() {
@@ -680,7 +684,8 @@ class Parser {
 		}
 		else {
 			auto decl = declToFuncDecl(d);
-			return new AstNodeFunction(decl, d.value);
+			currfunc = new AstNodeFunction(decl, d.value);
+			return currfunc;
 		}
 	}
 
@@ -690,6 +695,7 @@ class Parser {
 			auto n = parseTopLevel();
 			if(n is null) break;
 			nodes ~= n;
+			currfunc = null;
 		}
 
 		return nodes;

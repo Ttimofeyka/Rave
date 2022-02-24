@@ -150,6 +150,8 @@ class TypecheckContext {
 
 // Abstract syntax tree Node.
 class AstNode {
+	string temp;
+
 	LLVMValueRef gen(GenerationContext ctx) {
 		LLVMValueRef a;
 		return a;
@@ -316,7 +318,7 @@ class AstNodeFunction : AstNode {
 		LLVMBasicBlockRef entry = LLVMAppendBasicBlock(func,cast(const char*)"entry");
 		LLVMPositionBuilderAtEnd(builder, entry);
 
-	    LLVMValueRef retval = ret_ast.value.gen(ctx);
+	    LLVMValueRef retval = ret_ast.gen(ctx);
 	    LLVMBuildRet(builder, retval);
 
 		LLVMVerifyFunction(func, 0);
@@ -511,13 +513,16 @@ class AstNodeBlock : AstNode {
 }
 
 class AstNodeReturn : AstNode {
+	AstNodeFunction parent;
 	AstNode value;
 
-	this(AstNode value) { this.value = value; }
+	this(AstNode value, AstNodeFunction parent) { 
+		this.value = value;
+		this.parent = parent;
+	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
-		LLVMValueRef a;
-		return a;
+		return value.gen(ctx);
 	}
 
 	debug {
@@ -699,7 +704,9 @@ class AstNodeFuncCall : AstNode {
 class AstNodeInt : AstNode {
 	ulong value;
 
-	this(ulong value) { this.value = value; }
+	this(ulong value) { 
+		this.value = value;
+	}
 
 	private ulong pow2(char n) {
 		ulong l = 2;
@@ -724,7 +731,7 @@ class AstNodeInt : AstNode {
 			// TODO implement something similar to above.
 			return new TypeBasic(BasicType.t_long);
 		}
-	}
+	  }
 
 	override LLVMValueRef gen(GenerationContext ctx) {
 		TypeBasic type = cast(TypeBasic)getType(null);

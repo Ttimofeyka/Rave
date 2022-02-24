@@ -1,4 +1,3 @@
-
 extern malloc(size: usize): void*;
 extern realloc(ptr: void*, size: usize): void*;
 extern free(ptr: void*);
