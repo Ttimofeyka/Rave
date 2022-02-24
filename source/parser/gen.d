@@ -9,8 +9,8 @@ import std.conv : to;
 import std.string;
 
 class GStack {
-    LLVMValueRef[string] globals; // Global variables
-    LLVMValueRef[string] locals; // Local variables
+    private LLVMValueRef[string] globals; // Global variables
+    private LLVMValueRef[string] locals; // Local variables
 
     this() {}
 
@@ -26,6 +26,9 @@ class GStack {
 	void removeGlobal(string n) {globals.remove(n);}
 
 	void clean() {locals.clear();}
+
+	LLVMValueRef getGlobal(string n) {return globals[n];}
+	LLVMValueRef getLocal(string n) {return locals[n];}
 }
 
 class GenerationContext {
