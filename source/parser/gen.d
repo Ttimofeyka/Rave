@@ -9,7 +9,6 @@ import std.conv : to;
 import std.string;
 
 class GenerationContext {
-    LLVMExecutionEngineRef engine;
     LLVMModuleRef mod;
 	AtstTypeContext typecontext;
 	LLVMValueRef[string] global_vars;

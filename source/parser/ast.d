@@ -150,6 +150,8 @@ class TypecheckContext {
 
 // Abstract syntax tree Node.
 class AstNode {
+	string temp;
+
 	LLVMValueRef gen(GenerationContext ctx) {
 		LLVMValueRef a;
 		return a;
@@ -511,9 +513,13 @@ class AstNodeBlock : AstNode {
 }
 
 class AstNodeReturn : AstNode {
+	AstNodeFunction parent;
 	AstNode value;
 
-	this(AstNode value) { this.value = value; }
+	this(AstNode value, AstNodeFunction parent) { 
+		this.value = value;
+		this.parent = parent;
+	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
 		LLVMValueRef a;
@@ -698,8 +704,12 @@ class AstNodeFuncCall : AstNode {
 
 class AstNodeInt : AstNode {
 	ulong value;
+	Type preparse_type;
 
-	this(ulong value) { this.value = value; }
+	this(ulong value, Type preparse_type) { 
+		this.value = value;
+		this.preparse_type = preparse_type;
+	}
 
 	private ulong pow2(char n) {
 		ulong l = 2;
@@ -724,10 +734,14 @@ class AstNodeInt : AstNode {
 			// TODO implement something similar to above.
 			return new TypeBasic(BasicType.t_long);
 		}
-	}
+	  }
 
 	override LLVMValueRef gen(GenerationContext ctx) {
-		TypeBasic type = cast(TypeBasic)getType(null);
+		TypeBasic type;
+		if(preparse_type != null) {
+			type = cast(TypeBasic)preparse_type;
+		}
+		else type = cast(TypeBasic)getType(null);
 
 		switch(type.basic) {
 			case BasicType.t_char:

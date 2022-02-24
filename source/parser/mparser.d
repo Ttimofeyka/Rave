@@ -36,6 +36,7 @@ class Parser {
 	private TList _toks;
 	private uint _idx = 0;
 	private TypeDeclaration[] _decls;
+	private AstNodeFunction currfunc;
 
 	public this(TList toks) {
 		this._toks = toks;
@@ -591,7 +592,7 @@ class Parser {
 				next();
 				auto e = parseExpr();
 				expectToken(TokType.tok_semicolon);
-				return new AstNodeReturn(e);
+				return new AstNodeReturn(e,currfunc);
 			}
 		}
 		else if(peek().type == TokType.tok_id) {
@@ -640,7 +641,8 @@ class Parser {
 
 	private AstNode parseFunc() {
 		auto decl = parseFuncDecl(function(Token tok) { return tok.type == TokType.tok_2lbra; }, true);
-		return new AstNodeFunction(decl, parseBlock());
+		currfunc = new AstNodeFunction(decl, parseBlock());
+		return currfunc;
 	}
 
 	// private AstNode parseExtern() {
