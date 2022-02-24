@@ -8,15 +8,37 @@ import parser.ast;
 import std.conv : to;
 import std.string;
 
+class GStack {
+    LLVMValueRef[string] globals; // Global variables
+    LLVMValueRef[string] locals; // Local variables
+
+    this() {}
+
+    void addGlobal(LLVMValueRef v, string n) {
+        globals[n] = v;
+    }
+    
+    void addLocal(LLVMValueRef v, string n) {
+		locals[n] = v;
+	}
+
+	void removeLocal(string n) {locals.remove(n);}
+	void removeGlobal(string n) {globals.remove(n);}
+
+	void clean() {locals.clear();}
+}
+
 class GenerationContext {
     LLVMModuleRef mod;
 	AtstTypeContext typecontext;
 	LLVMValueRef[string] global_vars;
 	LLVMBuilderRef currbuilder;
+	GStack gstack;
 
     this() {
         mod = LLVMModuleCreateWithName(cast(const char*)"epl");
 		typecontext = new AtstTypeContext();
+		gstack = new GStack();
 
 		// Initialization
 		LLVMInitializeAllTargets();

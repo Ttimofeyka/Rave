@@ -318,7 +318,7 @@ class AstNodeFunction : AstNode {
 		LLVMBasicBlockRef entry = LLVMAppendBasicBlock(func,cast(const char*)"entry");
 		LLVMPositionBuilderAtEnd(builder, entry);
 
-	    LLVMValueRef retval = ret_ast.value.gen(ctx);
+	    LLVMValueRef retval = ret_ast.gen(ctx);
 	    LLVMBuildRet(builder, retval);
 
 		LLVMVerifyFunction(func, 0);

@@ -16,6 +16,7 @@ struct Decl {
 	AstNode value;
 	bool isMethod;
 	TokCmd[] mods = [];
+	bool isGlobal;
 }
 
 VariableDeclaration declToVarDecl(Decl d) {
@@ -253,6 +254,7 @@ class Parser {
 			else if(peek().type == TokType.tok_arrow) {
 				next();
 				d.isMethod = true;
+
 				d.value = new AstNodeBlock([
 					new AstNodeReturn(parseExpr(),currfunc)
 				]);
@@ -682,7 +684,8 @@ class Parser {
 		}
 		else {
 			auto decl = declToFuncDecl(d);
-			return new AstNodeFunction(decl, d.value);
+			currfunc = new AstNodeFunction(decl, d.value);
+			return currfunc;
 		}
 	}
 
@@ -692,6 +695,7 @@ class Parser {
 			auto n = parseTopLevel();
 			if(n is null) break;
 			nodes ~= n;
+			currfunc = null;
 		}
 
 		return nodes;
