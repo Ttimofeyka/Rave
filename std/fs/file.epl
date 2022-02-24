@@ -6,8 +6,8 @@ struct StdFile {
     static extern open(path: const char*, mode: const char*): File*;
     extern close();
 
-    extern read(to: char*, count: usize);
-    extern write(from: const char*, count: usize);
+    extern read(to: char*, count: ulong);
+    extern write(from: const char*, count: ulong);
 
     get(): char {
         c: char;
