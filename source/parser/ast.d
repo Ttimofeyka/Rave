@@ -148,9 +148,12 @@ class TypecheckContext {
 	// TODO? see AstNode.typechecK
 }
 
+class SemanticAnalyzerContext {
+
+}
+
 // Abstract syntax tree Node.
 class AstNode {
-	string temp;
 
 	LLVMValueRef gen(GenerationContext ctx) {
 		LLVMValueRef a;
@@ -165,6 +168,8 @@ class AstNode {
 	Type getType(TypecheckContext ctx) {
 		return new TypeUnknown();
 	}
+
+	void analyze(SemanticAnalyzerContext ctx, Type type) {}
 
 	debug {
 		void writeTabs(int indent) {
@@ -387,6 +392,17 @@ class AstNodeBinary : AstNode {
 		return a;
 	}
 
+	private void checkTypes(SemanticAnalyzerContext ctx, Type neededType) {
+		
+	}
+
+	override void analyze(SemanticAnalyzerContext ctx, Type neededType) {
+  		this.checkTypes(ctx),
+  		this.type = neededType;
+  		//if not neededType.canAssign?(this.type): Error
+  		//else: NoError
+	}
+
 	debug {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
@@ -522,6 +538,7 @@ class AstNodeReturn : AstNode {
 	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
+		writeln(parent.decl.name);
 		return value.gen(ctx);
 	}
 
