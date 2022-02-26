@@ -393,14 +393,26 @@ class AstNodeBinary : AstNode {
 	}
 
 	private void checkTypes(SemanticAnalyzerContext ctx, Type neededType) {
-		
+		if(lhs.getType(null).instanceof!(TypeUnknown)) {
+			lhs.analyze(ctx,neededType);
+		}
+		if(rhs.getType(null).instanceof!(TypeUnknown)) {
+			rhs.analyze(ctx,neededType);
+		}
+
+		if(lhs.getType(null) == neededType
+		 &&rhs.getType(null) == neededType) {
+
+		}
+		else {
+			writeln("Error!");
+			exit(-1);
+		}
 	}
 
 	override void analyze(SemanticAnalyzerContext ctx, Type neededType) {
-  		this.checkTypes(ctx),
+  		checkTypes(ctx,neededType),
   		this.type = neededType;
-  		//if not neededType.canAssign?(this.type): Error
-  		//else: NoError
 	}
 
 	debug {
@@ -810,7 +822,7 @@ class AstNodeString : AstNode {
 	this(string value) { this.value = value; }
 
 	override Type getType(TypecheckContext _ctx) {
-		return new TypeConst(new TypeBasic(BasicType.t_char));
+		return new TypePointer(new TypeBasic(BasicType.t_char));
 	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
