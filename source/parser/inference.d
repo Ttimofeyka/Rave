@@ -6,8 +6,4 @@ import parser.util;
 
 class Inference {
     AstNodeFunction currfunc;
-
-    AstNode walk(AstNode node) {
-        
-    }
 }
