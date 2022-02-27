@@ -429,12 +429,15 @@ class AstNodeBinary : AstNode {
 			rhs.analyze(s, neededType);
 		}
 
-		if(lhs.getType(s) == neededType
-		&& rhs.getType(s) == neededType) {
+		if(neededType.assignable(lhs.getType(s))
+		&& neededType.assignable(rhs.getType(s))) {
   			this.valueType = neededType;
 		}
 		else {
-			writeln("Error!");
+			writeln("Bad binary operator types: expected '"
+				~ neededType.toString() ~ "' but got '"
+				~ lhs.getType(s).toString() ~ "' and '"
+				~ rhs.getType(s).toString() ~ "'.");
 			exit(-1);
 		}
 	}
