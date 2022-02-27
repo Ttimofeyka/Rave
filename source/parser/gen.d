@@ -8,6 +8,7 @@ import parser.ast;
 import std.conv : to;
 import std.range;
 import std.string;
+import std.algorithm : canFind;
 
 class GStack {
     private LLVMValueRef[string] globals; // Global variables
@@ -23,9 +24,15 @@ class GStack {
 		locals[n] = v;
 	}
 
-	bool isVariable(string var){return var in globals || var in locals;}
-	bool isGlobal(string var) {return var in globals;}
-	bool isLocal(string var) {return var in locals;}
+	bool isGlobal(string var) {
+		return globals.keys.canFind(var);
+	}
+	bool isLocal(string var) {
+		return locals.keys.canFind(var);
+	}
+	bool isVariable(string var) {
+		return isGlobal(var) || isLocal(var);
+	}
 
 	void remove(string n) {
 		if(n in locals) locals.remove(n);

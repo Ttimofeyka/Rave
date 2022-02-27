@@ -740,7 +740,7 @@ class AstNodeDecl : AstNode {
 		}
 		else {
 			// Local var
-			ctx.gstack.addLocal(LLVMBuildAlloca(
+			/*ctx.gstack.addLocal(LLVMBuildAlloca(
 				ctx.currbuilder,
 				ctx.getLLVMType(decl.type.get(ctx.typecontext)),
 				toStringz(decl.name)
@@ -752,7 +752,8 @@ class AstNodeDecl : AstNode {
 					constval,
 					toStringz(decl.name)
 				);
-			}
+			}*/
+			assert(0);
 		}
 	}
 
