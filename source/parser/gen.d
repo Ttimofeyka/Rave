@@ -87,15 +87,9 @@ class GenerationContext {
 		return LLVMInt32Type();
 	}
 
-	void genNode(AstNode node) {
-		if(node.instanceof!(AstNodeFunction) || node.instanceof!(AstNodeDecl)) {
-			node.gen(this);
-		}
-	}
-
     void gen(AstNode[] nodes, string file, bool debugMode) {
 		for(int i=0; i<nodes.length; i++) {
-			genNode(nodes[i]);
+			nodes[i].gen(this);
 		}
 		genTarget(file, debugMode);
 	}

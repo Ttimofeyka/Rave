@@ -1,2 +1,3 @@
-a := 1;
-main => a;
+a: char* = "Hello, world!\n";
+
+main => 0;
