@@ -303,6 +303,7 @@ class AstNodeFunction : AstNode {
 	FunctionDeclaration decl;
 	FunctionSignatureTypes actualDecl;
 	AstNode body_;
+	LLVMBuilderRef builder;
 
 	this(FunctionDeclaration decl, AstNode body_) {
 		this.decl = decl;
@@ -320,7 +321,7 @@ class AstNodeFunction : AstNode {
 	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
-		LLVMBuilderRef builder = LLVMCreateBuilder();
+		builder = LLVMCreateBuilder();
 		LLVMTypeRef* param_types;
 
 		AstNodeBlock f_body = cast(AstNodeBlock)body_;
