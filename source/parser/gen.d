@@ -23,13 +23,24 @@ class GStack {
 		locals[n] = v;
 	}
 
-	void removeLocal(string n) {locals.remove(n);}
-	void removeGlobal(string n) {globals.remove(n);}
+	bool isVariable(string var){return var in globals || var in locals;}
+	bool isGlobal(string var) {return var in globals;}
+	bool isLocal(string var) {return var in locals;}
+
+	void remove(string n) {
+		if(n in locals) locals.remove(n);
+		else if(n in globals) globals.remove(n);
+		else {}
+	}
 
 	void clean() {locals.clear();}
 
-	LLVMValueRef getGlobal(string n) {return globals[n];}
-	LLVMValueRef getLocal(string n) {return locals[n];}
+	LLVMValueRef opIndex(string n)
+	{
+		if(n in locals) return locals[n];
+		else if(n in globals) return globals[n];
+		else return null;
+	}
 }
 
 class GenerationContext {
@@ -87,15 +98,9 @@ class GenerationContext {
 		return LLVMInt32Type();
 	}
 
-	void genNode(AstNode node) {
-		if(node.instanceof!(AstNodeFunction) || node.instanceof!(AstNodeDecl)) {
-			node.gen(this);
-		}
-	}
-
     void gen(AstNode[] nodes, string file, bool debugMode) {
 		for(int i=0; i<nodes.length; i++) {
-			genNode(nodes[i]);
+			nodes[i].gen(this);
 		}
 		genTarget(file, debugMode);
 	}

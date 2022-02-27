@@ -1,2 +1,3 @@
-a := 1.4;
-main { ret 127; }
+a: char* = "Hello, world!\n";
+
+main => 0;

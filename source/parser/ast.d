@@ -303,6 +303,7 @@ class AstNodeFunction : AstNode {
 	FunctionDeclaration decl;
 	FunctionSignatureTypes actualDecl;
 	AstNode body_;
+	LLVMBuilderRef builder;
 
 	this(FunctionDeclaration decl, AstNode body_) {
 		this.decl = decl;
@@ -320,7 +321,7 @@ class AstNodeFunction : AstNode {
 	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
-		LLVMBuilderRef builder = LLVMCreateBuilder();
+		builder = LLVMCreateBuilder();
 		LLVMTypeRef* param_types;
 
 		AstNodeBlock f_body = cast(AstNodeBlock)body_;
@@ -345,6 +346,8 @@ class AstNodeFunction : AstNode {
 
 	    LLVMValueRef retval = ret_ast.gen(ctx);
 	    LLVMBuildRet(builder, retval);
+
+		//ctx.currbuilder = builder;
 
 		LLVMVerifyFunction(func, 0);
 
@@ -927,8 +930,7 @@ class AstNodeFloat : AstNode {
 	override void analyze(AnalyzerScope s, Type neededType) {}
 	
 	override LLVMValueRef gen(GenerationContext ctx) {
-		LLVMValueRef a;
-		return a;
+		return LLVMConstReal(LLVMFloatType(),cast(double)value);
 	}
 
 	debug {
@@ -948,9 +950,14 @@ class AstNodeString : AstNode {
 		return new TypePointer(new TypeBasic(BasicType.t_char));
 	}
 
+	override void analyze(AnalyzerScope s, Type neededType) {}
+
 	override LLVMValueRef gen(GenerationContext ctx) {
-		LLVMValueRef a;
-		return a;
+		return LLVMConstString(
+			cast(const char*)toStringz(value[0..$-1]),
+			cast(uint)value.length-1,
+			0
+		);
 	}
 
 	debug {
