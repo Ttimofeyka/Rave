@@ -42,14 +42,14 @@ class Lexer {
         }
     }
 
-    private string getTNum() {
+    private string getTInt() {
         string temp = "";
         if(get() == '0' && get(+1) == 'x') {
             temp ~= "0x";
             next(2);
             while((get() >= '0' && get() <= '9')
                || (get() >= 'a' && get() <= 'f')
-               || (get() >= 'A' && get() <= 'F')) {
+               || (get() >= 'A' && get() <= 'F') || get() == '_') {
                 temp ~= get();
                 next(1);
             }
@@ -57,7 +57,7 @@ class Lexer {
         else if(get() == '0' && get(+1) == 'o') {
             temp ~= "0o";
             next(2);
-            while((get() >= '0' && get() <= '7')) {
+            while((get() >= '0' && get() <= '7') || get() == '_') {
                 temp ~= get();
                 next(1);
             }
@@ -65,7 +65,7 @@ class Lexer {
         else if(get() == '0' && get(+1) == 'b') {
             temp ~= "0b";
             next(2);
-            while((get() >= '0' && get() <= '1')) {
+            while((get() >= '0' && get() <= '1') || get() == '_') {
                 temp ~= get();
                 next(1);
             }
@@ -73,18 +73,27 @@ class Lexer {
         else if(get() == '0' && get(+1) == 'd') {
             temp ~= "0d";
             next(2);
-            while((get() >= '0' && get() <= '9')) {
+            while((get() >= '0' && get() <= '9') || get() == '_') {
                 temp ~= get();
                 next(1);
             }
         }
         else {
-            while((get() >= '0' && get() <= '9')) {
+            while((get() >= '0' && get() <= '9') || get() == '_') {
                 temp ~= get();
                 next(1);
             }
         }
         return temp;
+    }
+
+    private string getTNum() {
+        auto t = getTInt();
+        if(get() == '.') {
+            next(1);
+            t ~= "." ~ getTInt();
+        }
+        return t;
     }
 
     private char parseOctalEscape(string s)

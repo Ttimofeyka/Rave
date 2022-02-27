@@ -848,10 +848,20 @@ class AstNodeInt : AstNode {
 			this.valueType = _getMinType();
 		}
 		else {
+			if(!_isArithmetic(neededType)) {
+				s.ctx.addError("Expected " ~ neededType.toString() ~ ", got an integer");
+			}
 			this.valueType = neededType;
 		}
 
-		writeln("int type ", this.valueType.toString());
+		// writeln("int type ", this.valueType.toString());
+	}
+
+	private bool _isArithmetic(Type t) {
+		if(auto b = t.instanceof!TypeBasic) {
+			return true;
+		}
+		return false;
 	}
 
 	private Type _getMinType() {
@@ -913,7 +923,9 @@ class AstNodeFloat : AstNode {
 	override Type getType(AnalyzerScope s) {
 		return new TypeBasic(BasicType.t_float);
 	}
-		
+
+	override void analyze(AnalyzerScope s, Type neededType) {}
+	
 	override LLVMValueRef gen(GenerationContext ctx) {
 		LLVMValueRef a;
 		return a;

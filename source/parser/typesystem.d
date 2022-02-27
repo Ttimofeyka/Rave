@@ -11,7 +11,9 @@ class Type {
 }
 
 class TypeVoid : Type {
-    override bool assignable(Type other) { return false; }
+    override bool assignable(Type other) {
+        return other.instanceof!TypeVoid() !is null;
+    }
 
     override string toString() const {
         return "void";

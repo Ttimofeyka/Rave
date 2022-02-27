@@ -64,6 +64,7 @@ void main(string[] args)
 	else defines["_NDEBUG"] = new TList();
 	
 
+	writeln("------------------ Lexer -------------------");
 	auto lexer = new Lexer(sourceFile, readText(sourceFile));
 	auto preproc = new Preprocessor(lexer.getTokens(), stdlibIncPath, defines);
 

@@ -202,9 +202,21 @@ class Parser {
 				next();
 				d.value = null;
 			}
-			else {
+			else if(peek().type == TokType.tok_2lbra) {
 				d.value = parseBlock();
 			}
+			else if(peek().type == TokType.tok_arrow) {
+				next();
+				d.value = parseExpr();
+				expectToken(TokType.tok_semicolon);
+			}
+		}
+		if(peek().type == TokType.tok_2lbra) {
+			// function with args.
+			d.isMethod = true;
+			d.type = new AtstNodeVoid();
+			d.args = [];
+			d.value = parseBlock();
 		}
 		else if(peek().type == TokType.tok_arrow) {
 			next();
