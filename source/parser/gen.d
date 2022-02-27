@@ -23,8 +23,15 @@ class GStack {
 		locals[n] = v;
 	}
 
-	void removeLocal(string n) {locals.remove(n);}
-	void removeGlobal(string n) {globals.remove(n);}
+	bool isVariable(string var){return var in globals || var in locals;}
+	bool isGlobal(string var) {return var in globals;}
+	bool isLocal(string var) {return var in locals;}
+
+	void remove(string n) {
+		if(n in locals) locals.remove(n);
+		else if(n in globals) globals.remove(n);
+		else {}
+	}
 
 	void clean() {locals.clear();}
 
