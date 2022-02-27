@@ -3,12 +3,14 @@ module parser.ast;
 import std.stdio, std.conv;
 import std.array : join;
 import std.algorithm.iteration : map;
+import std.algorithm : canFind;
 import parser.gen, lexer.tokens;
 import llvm;
 import std.conv : to;
 import core.stdc.stdlib : exit;
 import parser.typesystem;
 import parser.util;
+import parser.analyzer;
 import std.string;
 
 /// We have two separate syntax trees: for types and for values.
@@ -16,14 +18,26 @@ import std.string;
 class AtstTypeContext {
 	Type[string] types;
 
+	void setType(string name, Type type) {
+		if(name in types) {
+			writeln("Type already exists: ", name);
+			return;
+		}
+		types[name] = type;
+	}
+
 	Type getType(string name) {
+		if(name !in types) {
+			writeln("No such type: ", name);
+			return new TypeUnknown();
+		}
 		return types[name];
 	}
 }
 
 // Abstract type syntax tree node.
 class AtstNode {
-	Type get(AtstTypeContext ctx) { return new Type(); }
+	Type get(AtstTypeContext _ctx) { return new Type(); }
 
 	debug {
 		override string toString() const {
@@ -42,7 +56,7 @@ class AtstNodeVoid : AtstNode {
 	}
 }
 
-// For inferenceS
+// For inference
 class AtstNodeUnknown : AtstNode {
 	override Type get(AtstTypeContext ctx) { return new TypeUnknown(); }
 	
@@ -143,15 +157,6 @@ struct TypecheckResult {
 	bool success;
 	// TODO? see AstNode.typechecK
 }
-
-class TypecheckContext {
-	// TODO? see AstNode.typechecK
-}
-
-class SemanticAnalyzerContext {
-
-}
-
 // Abstract syntax tree Node.
 class AstNode {
 
@@ -161,15 +166,19 @@ class AstNode {
 	}
 
 	// TODO: Propagate to child classes.
-	TypecheckResult typecheck(TypecheckContext ctx) {
-		return TypecheckResult(false);
-	}
+	// TypecheckResult typecheck(SemanticAnalyzerContext ctx) {
+	// 	return TypecheckResult(false);
+	// }
 
-	Type getType(TypecheckContext ctx) {
+	Type getType(AnalyzerScope s) {
 		return new TypeUnknown();
 	}
 
-	void analyze(SemanticAnalyzerContext ctx, Type type) {}
+	void analyze(AnalyzerScope s, Type neededType) {
+		writeln("Abstract AstNode.analyze called! this: ",
+			this.classinfo.name);
+		assert(0);
+	}
 
 	debug {
 		void writeTabs(int indent) {
@@ -207,7 +216,7 @@ struct FunctionDeclaration {
 					s ~= ", " ~ argNames[i] ~ ": " ~ signature.args[i].toString();
 				}
 			}
-			s ~= "): " ~ signature.ret.toString();
+			s ~= "): "; // ~ signature.ret.toString();
 			return s;
 		}
 	}
@@ -229,7 +238,7 @@ struct VariableDeclaration {
 			string s = "";
 			if(isStatic) s ~= "static ";
 			if(isExtern) s ~= "extern ";
-			return s ~ name ~ ": " ~ type.toString();
+			return s ~ name ~ ": ";
 		}
 	}
 }
@@ -292,11 +301,22 @@ class TypeDeclarationStruct : TypeDeclaration {
 
 class AstNodeFunction : AstNode {
 	FunctionDeclaration decl;
+	FunctionSignatureTypes actualDecl;
 	AstNode body_;
 
 	this(FunctionDeclaration decl, AstNode body_) {
 		this.decl = decl;
 		this.body_ = body_;
+	}
+
+	override void analyze(AnalyzerScope s, Type) {
+		auto lastCurrentFunc = s.ctx.currentFunc;
+		s.ctx.currentFunc = this;
+
+		this.body_.analyze(s, this.decl.signature.ret.get(s.ctx.typeContext));
+		actualDecl = new FunctionSignatureTypes(s.returnType, []);
+
+		s.ctx.currentFunc = lastCurrentFunc;
 	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
@@ -308,7 +328,7 @@ class AstNodeFunction : AstNode {
 			f_body.nodes[0];
 
 		LLVMTypeRef ret_type = LLVMFunctionType(
-		    ctx.getLLVMType(decl.signature.ret),
+		    ctx.getLLVMType(actualDecl.ret),
 		    param_types,
 		    cast(uint)decl.signature.args.length,
 		    false
@@ -316,7 +336,7 @@ class AstNodeFunction : AstNode {
 
 		LLVMValueRef func = LLVMAddFunction(
 		    ctx.mod,
-		    cast(const char*)(decl.name~"\0"),
+		    cast(const char*)(toStringz(ctx.mangleQualifiedName([decl.name], true))),
 		    ret_type
 	    );
 
@@ -334,7 +354,7 @@ class AstNodeFunction : AstNode {
 	debug {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
-			writeln("Function decl: ", decl.toString());
+			writeln("Function decl: ", decl.toString(), actualDecl.ret.toString());
 			if(body_ !is null) body_.debugPrint(indent + 1);
 		}
 	}
@@ -380,6 +400,7 @@ class AstNodeGet : AstNode {
 class AstNodeBinary : AstNode {
 	AstNode lhs, rhs;
 	TokType type;
+	Type valueType;
 
 	this(AstNode lhs, AstNode rhs, TokType type) {
 		this.lhs = lhs;
@@ -387,22 +408,27 @@ class AstNodeBinary : AstNode {
 		this.type = type;
 	}
 
+	override Type getType(AnalyzerScope s) {
+		return valueType;
+	}
+
 	override LLVMValueRef gen(GenerationContext ctx) {
 		LLVMValueRef a;
 		return a;
 	}
 
-	private void checkTypes(SemanticAnalyzerContext ctx, Type neededType) {
-		if(lhs.getType(null).instanceof!(TypeUnknown)) {
-			lhs.analyze(ctx,neededType);
-		}
-		if(rhs.getType(null).instanceof!(TypeUnknown)) {
-			rhs.analyze(ctx,neededType);
+	private void checkTypes(AnalyzerScope s, Type neededType) {
+		if(lhs.getType(s).instanceof!(TypeUnknown)) {
+			lhs.analyze(s, neededType);
 		}
 
-		if(lhs.getType(null) == neededType
-		 &&rhs.getType(null) == neededType) {
+		if(rhs.getType(s).instanceof!(TypeUnknown)) {
+			rhs.analyze(s, neededType);
+		}
 
+		if(lhs.getType(s) == neededType
+		&& rhs.getType(s) == neededType) {
+  			this.valueType = neededType;
 		}
 		else {
 			writeln("Error!");
@@ -410,9 +436,22 @@ class AstNodeBinary : AstNode {
 		}
 	}
 
-	override void analyze(SemanticAnalyzerContext ctx, Type neededType) {
-  		checkTypes(ctx,neededType),
-  		this.type = neededType;
+	override void analyze(AnalyzerScope s, Type neededType) {
+		if(_isArithmetic()) {
+			if(!instanceof!TypeBasic(neededType)) {
+				s.ctx.addError("Non-basic type required for an arithmetic binary operation");
+			}
+		}
+  		checkTypes(s, neededType);
+	}
+
+	private bool _isArithmetic() {
+		return canFind([
+			TokType.tok_plus,
+			TokType.tok_minus,
+			TokType.tok_multiply,
+			TokType.tok_divide,
+		], type);
 	}
 
 	debug {
@@ -524,6 +563,21 @@ class AstNodeBlock : AstNode {
 		this.nodes = nodes;
 	}
 
+	override void analyze(AnalyzerScope s, Type neededType) {
+		auto newScope = new AnalyzerScope(s.ctx, s);
+		foreach(node; this.nodes) {
+			node.analyze(newScope, neededType);
+			if(newScope.hadReturn && !neededType.instanceof!TypeUnknown) {
+				if(!neededType.assignable(newScope.returnType)) {
+					s.ctx.addError("Wrong return type: expected '" ~ neededType.toString()
+						~ "', got: '" ~ newScope.returnType.toString() ~ '\'');
+				}
+				break;
+			}
+		}
+		s.returnType = newScope.returnType;
+	}
+
 	override LLVMValueRef gen(GenerationContext ctx) {
 		LLVMValueRef a;
 		return a;
@@ -547,6 +601,13 @@ class AstNodeReturn : AstNode {
 	this(AstNode value, AstNodeFunction parent) { 
 		this.value = value;
 		this.parent = parent;
+	}
+
+	override void analyze(AnalyzerScope s, Type neededType) {
+		this.parent = s.ctx.currentFunc;
+		this.value.analyze(s, neededType);
+		s.hadReturn = true;
+		s.returnType = this.value.getType(s);
 	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
@@ -597,10 +658,31 @@ class AstNodeIden : AstNode {
 	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
+		// _EPLf4exit, not exit! ctx.mangleQualifiedName([name], true) -> string
+		// TODO: Check if the global variable is referring to a function
 		if(name in ctx.global_vars) {
 			return ctx.global_vars[name];
 		}
 		assert(0);
+	}
+
+	override Type getType(AnalyzerScope s) {
+		auto t = s.get(name);
+		if(auto v = t.instanceof!VariableSignatureTypes)
+			return v.type;
+		
+		assert(0);
+	}
+
+	override void analyze(AnalyzerScope s, Type neededType) {
+		auto t = s.get(name);
+
+		if(auto v = t.instanceof!VariableSignatureTypes) {
+			if(!neededType.assignable(v.type) && !neededType.instanceof!TypeUnknown) {
+				s.ctx.addError("Type mismatch: variable '" ~ name ~ "' is of type "
+					~ v.toString() ~ ", but " ~ neededType.toString() ~ " was expected.");
+			}
+		}
 	}
 
 	debug {
@@ -613,6 +695,7 @@ class AstNodeIden : AstNode {
 
 class AstNodeDecl : AstNode {
 	VariableDeclaration decl;
+	Type actualType;
 	AstNode value; // can be null!
 
 	this(VariableDeclaration decl, AstNode value) {
@@ -620,9 +703,19 @@ class AstNodeDecl : AstNode {
 		this.value = value;
 	}
 
+	override void analyze(AnalyzerScope s, Type neededType) {
+		actualType = this.decl.type.get(s.ctx.typeContext);
+		if(this.value !is null) {
+			this.value.analyze(s, actualType);
+			if(instanceof!TypeUnknown(actualType))
+				actualType = this.value.getType(s);
+		}
+		s.vars[decl.name] = new VariableSignatureTypes(actualType);
+	}
+
 	override LLVMValueRef gen(GenerationContext ctx) {
 		if(decl.name in ctx.global_vars) {
-			writeln("The variable "~decl.name~" has been declared several times!");
+			writeln("The variable " ~ decl.name ~ " has been declared multiple times!");
 			exit(-1);
 		}
 		
@@ -630,7 +723,7 @@ class AstNodeDecl : AstNode {
 
 		LLVMValueRef var = LLVMAddGlobal(
 			ctx.mod,
-			ctx.getLLVMType(decl.type),
+			ctx.getLLVMType(decl.type.get(ctx.typecontext)),
 			toStringz(decl.name)
 		);
 
@@ -644,7 +737,7 @@ class AstNodeDecl : AstNode {
 	debug {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
-			writeln("Variable Declaration: ", decl.toString());
+			writeln("Variable Declaration: ", decl.toString(), actualType);
 			if(value !is null) {
 				writeTabs(indent);
 				writeln("^Default Value:");
@@ -665,7 +758,7 @@ class AstNodeLabel : AstNode {
 	debug {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
-			writeln("?");
+			writeln("Label: ", name);
 		}
 	}
 }
@@ -681,7 +774,7 @@ class AstNodeBreak : AstNode {
 	debug {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
-			writeln("?");
+			writeln("Break");
 		}
 	}
 }
@@ -697,7 +790,7 @@ class AstNodeContinue : AstNode {
 	debug {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
-			writeln("?");
+			writeln("Continue");
 		}
 	}
 }
@@ -713,6 +806,7 @@ class AstNodeFuncCall : AstNode {
 
 	override LLVMValueRef gen(GenerationContext ctx) {
 		LLVMValueRef a;
+		// _EPLf4exit, not exit! ctx.mangleQualifiedName([name], true) -> string
 		return a;
 	}
 
@@ -732,9 +826,15 @@ class AstNodeFuncCall : AstNode {
 
 class AstNodeInt : AstNode {
 	ulong value;
+	Type valueType;
 
 	this(ulong value) { 
 		this.value = value;
+		this.valueType = null;
+	}
+
+	override Type getType(AnalyzerScope s) {
+		return valueType;
 	}
 
 	private ulong pow2(char n) {
@@ -743,13 +843,24 @@ class AstNodeInt : AstNode {
 		return l;
 	}
 
-	override Type getType(TypecheckContext _ctx) {
+	override void analyze(AnalyzerScope s, Type neededType) {
+		if(instanceof!TypeUnknown(neededType)) {
+			this.valueType = _getMinType();
+		}
+		else {
+			this.valueType = neededType;
+		}
+
+		writeln("int type ", this.valueType.toString());
+	}
+
+	private Type _getMinType() {
 		if(this.value > 0) {
 			// might and might not work for pow2(N)/2
-			if(this.value < pow2(8)/2)  return new TypeBasic(BasicType.t_char);
-			if(this.value < pow2(8))    return new TypeBasic(BasicType.t_uchar);
-			if(this.value < pow2(16)/2) return new TypeBasic(BasicType.t_short);
-			if(this.value < pow2(16))   return new TypeBasic(BasicType.t_ushort);
+			// if(this.value < pow2(8)/2)  return new TypeBasic(BasicType.t_char);
+			// if(this.value < pow2(8))    return new TypeBasic(BasicType.t_uchar);
+			// if(this.value < pow2(16)/2) return new TypeBasic(BasicType.t_short);
+			// if(this.value < pow2(16))   return new TypeBasic(BasicType.t_ushort);
 			if(this.value < pow2(32)/2) return new TypeBasic(BasicType.t_int);
 			if(this.value < pow2(32))   return new TypeBasic(BasicType.t_uint);
 			if(this.value < pow2(64)/2) return new TypeBasic(BasicType.t_long);
@@ -760,7 +871,7 @@ class AstNodeInt : AstNode {
 			// TODO implement something similar to above.
 			return new TypeBasic(BasicType.t_long);
 		}
-	  }
+	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
 		TypeBasic type = cast(TypeBasic)getType(null);
@@ -799,7 +910,7 @@ class AstNodeFloat : AstNode {
 
 	this(float value) { this.value = value; }
 	
-	override Type getType(TypecheckContext _ctx) {
+	override Type getType(AnalyzerScope s) {
 		return new TypeBasic(BasicType.t_float);
 	}
 		
@@ -821,7 +932,7 @@ class AstNodeString : AstNode {
 
 	this(string value) { this.value = value; }
 
-	override Type getType(TypecheckContext _ctx) {
+	override Type getType(AnalyzerScope s) {
 		return new TypePointer(new TypeBasic(BasicType.t_char));
 	}
 
@@ -843,7 +954,7 @@ class AstNodeChar : AstNode {
 
 	this(char value) { this.value = value; }
 
-	override Type getType(TypecheckContext _ctx) {
+	override Type getType(AnalyzerScope s) {
 		return new TypeBasic(BasicType.t_char);
 	}
 

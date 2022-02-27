@@ -1,2 +1,2 @@
-a: int = 1;
-main: int => 127;
+a := 1;
+main => a;

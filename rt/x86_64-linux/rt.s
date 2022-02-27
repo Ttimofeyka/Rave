@@ -1,7 +1,8 @@
 .extern main
 
-.global exit
-exit:
+.global _EPLf4exit
+.type   _EPLf4exit, @function
+_EPLf4exit:
  	movq $60, %rax
   	syscall
 
@@ -15,6 +16,7 @@ write:
 	ret
 
 .global _start
+.type   _start, @function
 _start:
 	call main
 	movq %rax, %rdi

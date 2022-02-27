@@ -1,16 +1,29 @@
 module parser.typesystem;
 import parser.util;
+import std.conv;
 
 class Type {
     bool assignable(Type other) { return false; }
+
+    override string toString() const {
+        return "?";
+    }
 }
 
 class TypeVoid : Type {
     override bool assignable(Type other) { return false; }
+
+    override string toString() const {
+        return "void";
+    }
 }
 
 class TypeUnknown : Type {
     override bool assignable(Type other) { return false; }
+
+    override string toString() const {
+        return "?unknown";
+    }
 }
 
 class TypeConst : Type {
@@ -21,6 +34,10 @@ class TypeConst : Type {
     }
 
     override bool assignable(Type other) { return false; }
+
+    override string toString() const {
+        return "const " ~ base.toString();
+    }
 }
 
 enum BasicType {
@@ -62,6 +79,10 @@ class TypeBasic : Type {
         this.basic = basic;
     }
 
+    override string toString() const {
+        return to!string(basic)[2..$];
+    }
+
     override bool assignable(Type other) {
         if(auto other2 = other.instanceof!(TypeBasic)) {
             return basicTypeSizeOf(basic) >= basicTypeSizeOf(other2.basic);
@@ -80,4 +101,27 @@ class TypePointer : Type {
         if(other.instanceof!(TypePointer)) return true;
         return false;
     }
+
+    override string toString() const {
+        return to.toString() ~ "*";
+    }
+}
+
+class SignatureTypes {
+    bool isStatic, isExtern;
+}
+
+class FunctionSignatureTypes : SignatureTypes {
+	Type ret;
+    Type[] args;
+    this(Type ret, Type[] args) {
+        this.ret = ret;
+        this.args = args;
+    }
+}
+
+class VariableSignatureTypes : SignatureTypes {
+	Type type;
+
+    this(Type type) { this.type = type; }
 }

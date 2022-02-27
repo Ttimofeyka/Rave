@@ -3,10 +3,10 @@
 .org 0
 rjmp _start
 
-.global exit
-.type	exit, @function
-exit:
-    rjmp exit
+.global _EPLf4exit
+.type	_EPLf4exit, @function
+_EPLf4exit:
+    rjmp _EPLf4exit
     ret
 
 .global _start

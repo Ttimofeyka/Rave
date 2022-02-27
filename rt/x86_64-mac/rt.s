@@ -6,6 +6,7 @@ exit:
 	syscall
 
 .global _start
+.type   _start, @function
 _start:
 	call main
 	movq %rax, %rdi

@@ -6,6 +6,7 @@ import core.stdc.stdlib : exit;
 import parser.typesystem, parser.util;
 import parser.ast;
 import std.conv : to;
+import std.range;
 import std.string;
 
 class GStack {
@@ -56,31 +57,34 @@ class GenerationContext {
 		typecontext.types["long"] = new TypeBasic(BasicType.t_long);
     }
 
-	LLVMTypeRef getLLVMType(AtstNode parse_type) {
-		if(parse_type.instanceof!(AtstNodeName)) {
-			Type ast_type = parse_type.get(typecontext);
-			if(ast_type.instanceof!(TypeBasic)) {
-				TypeBasic tb = cast(TypeBasic)ast_type;
-				switch(tb.basic) {
-					case BasicType.t_int:
-						return LLVMInt32Type();
-					case BasicType.t_short:
-						return LLVMInt16Type();
-					case BasicType.t_long:
-						return LLVMInt64Type();
-					case BasicType.t_char:
-						return LLVMInt8Type();
-					case BasicType.t_float:
-						return LLVMFloatType();
-					default: return LLVMInt8Type();
-				}
+	string mangleQualifiedName(string[] parts, bool isFunction) {
+		string o = "_EPL" ~ (isFunction ? "f" : "g");
+		foreach(part; parts) {
+			o ~= to!string(part.length) ~ part;
+		}
+		return o;
+	}
+
+	LLVMTypeRef getLLVMType(Type t) {
+		if(auto tb = t.instanceof!TypeBasic) {
+			switch(tb.basic) {
+				case BasicType.t_int:
+					return LLVMInt32Type();
+				case BasicType.t_short:
+					return LLVMInt16Type();
+				case BasicType.t_long:
+					return LLVMInt64Type();
+				case BasicType.t_char:
+					return LLVMInt8Type();
+				case BasicType.t_float:
+					return LLVMFloatType();
+				default: return LLVMInt8Type();
 			}
 		}
-		else if(parse_type.instanceof!(AtstNodePointer)) {
-			AtstNodePointer p = cast(AtstNodePointer)parse_type;
-			return LLVMPointerType(getLLVMType(p.node), 0);
+		else if(auto p = t.instanceof!TypePointer) {
+			return LLVMPointerType(getLLVMType(p.to), 0);
 		}
-		return LLVMInt8Type();
+		return LLVMInt32Type();
 	}
 
 	void genNode(AstNode node) {
@@ -89,11 +93,11 @@ class GenerationContext {
 		}
 	}
 
-    void gen(AstNode[] nodes,string file,bool debugMode) {
+    void gen(AstNode[] nodes, string file, bool debugMode) {
 		for(int i=0; i<nodes.length; i++) {
 			genNode(nodes[i]);
 		}
-		genTarget(file,debugMode);
+		genTarget(file, debugMode);
 	}
 
 	void genTarget(string file,bool d) {

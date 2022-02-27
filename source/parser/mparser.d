@@ -209,6 +209,8 @@ class Parser {
 		else if(peek().type == TokType.tok_arrow) {
 			next();
 			d.isMethod = true;
+			d.type = new AtstNodeUnknown();
+			d.args = [];
 			d.value = new AstNodeBlock([
 				new AstNodeReturn(parseExpr(),currfunc)
 			]);
