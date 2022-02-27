@@ -347,7 +347,7 @@ class AstNodeFunction : AstNode {
 	    LLVMValueRef retval = ret_ast.gen(ctx);
 	    LLVMBuildRet(builder, retval);
 
-		ctx.currbuilder = builder;
+		//ctx.currbuilder = builder;
 
 		LLVMVerifyFunction(func, 0);
 
