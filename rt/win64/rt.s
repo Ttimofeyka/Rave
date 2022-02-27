@@ -1,4 +1,4 @@
-.extern main
+.extern _EPLf4main
 .extern ExitProcess
 
 .global _EPLf4exit
@@ -9,7 +9,7 @@ _EPLf4exit:
 .global _start
 .type   _start, @function
 _start:
-	call main
+	call _EPLf4main
     movq %rax, %rcx
     call ExitProcess
     

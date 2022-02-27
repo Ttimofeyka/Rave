@@ -1,4 +1,4 @@
-.extern main
+.extern _EPLf4main
 
 .org 0
 rjmp _start
@@ -12,5 +12,5 @@ _EPLf4exit:
 .global _start
 .type	_start, @function
 _start:
-    rcall main
+    rcall _EPLf4main
     ret
