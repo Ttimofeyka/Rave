@@ -35,8 +35,12 @@ class GStack {
 
 	void clean() {locals.clear();}
 
-	LLVMValueRef getGlobal(string n) {return globals[n];}
-	LLVMValueRef getLocal(string n) {return locals[n];}
+	LLVMValueRef opIndex(string n)
+	{
+		if(n in locals) return locals[n];
+		else if(n in globals) return globals[n];
+		else return null;
+	}
 }
 
 class GenerationContext {
