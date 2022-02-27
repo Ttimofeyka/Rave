@@ -1,3 +1,7 @@
-a: char* = "Hello, world!\n";
+main: int {
+    toret := 0;
 
-main => 0;
+    toret += 1;
+    
+    ret toret;
+}

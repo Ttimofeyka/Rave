@@ -325,8 +325,6 @@ class AstNodeFunction : AstNode {
 		LLVMTypeRef* param_types;
 
 		AstNodeBlock f_body = cast(AstNodeBlock)body_;
-		AstNodeReturn ret_ast = cast(AstNodeReturn)
-			f_body.nodes[0];
 
 		LLVMTypeRef ret_type = LLVMFunctionType(
 		    ctx.getLLVMType(actualDecl.ret),
@@ -344,10 +342,11 @@ class AstNodeFunction : AstNode {
 		LLVMBasicBlockRef entry = LLVMAppendBasicBlock(func,cast(const char*)"entry");
 		LLVMPositionBuilderAtEnd(builder, entry);
 
-	    LLVMValueRef retval = ret_ast.gen(ctx);
-	    LLVMBuildRet(builder, retval);
-
-		//ctx.currbuilder = builder;
+		ctx.currbuilder = builder;
+		for(int i=0; i<f_body.nodes.length; i++) {
+			f_body.nodes[i].gen(ctx);
+		}
+		ctx.currbuilder = null;
 
 		LLVMVerifyFunction(func, 0);
 
@@ -434,7 +433,7 @@ class AstNodeBinary : AstNode {
   			this.valueType = neededType;
 		}
 		else {
-			writeln("Error!");
+			writeln("Error in checktypes!");
 			exit(-1);
 		}
 	}
@@ -614,8 +613,9 @@ class AstNodeReturn : AstNode {
 	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
-		writeln(parent.decl.name);
-		return value.gen(ctx);
+		LLVMValueRef retval = value.gen(ctx);
+	    LLVMBuildRet(ctx.currbuilder, retval);
+		return null;
 	}
 
 	debug {
@@ -663,8 +663,25 @@ class AstNodeIden : AstNode {
 	override LLVMValueRef gen(GenerationContext ctx) {
 		// _EPLf4exit, not exit! ctx.mangleQualifiedName([name], true) -> string
 		// TODO: Check if the global variable is referring to a function
-		if(name in ctx.global_vars) {
-			return ctx.global_vars[name];
+		if(ctx.gstack.isGlobal(name)) {
+			if(ctx.currbuilder != null) {
+				ctx.gstack.set(LLVMBuildLoad(
+					ctx.currbuilder,
+					ctx.gstack[name],
+					cast(const char*)toStringz(name)
+				),name~"_l");
+				return ctx.gstack[name~"_l"];
+			}
+			else return ctx.gstack[name];
+		}
+		else {
+			// Local var
+			ctx.gstack.set(LLVMBuildLoad(
+				ctx.currbuilder,
+				ctx.gstack[name],
+				cast(const char*)toStringz(name)
+			),name~"_l");
+			return ctx.gstack[name~"_l"];
 		}
 		assert(0);
 	}
@@ -717,7 +734,7 @@ class AstNodeDecl : AstNode {
 	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
-		if(decl.name in ctx.global_vars) {
+		if(ctx.gstack.isVariable(decl.name)) {
 			writeln("The variable " ~ decl.name ~ " has been declared multiple times!");
 			exit(-1);
 		}
@@ -734,13 +751,13 @@ class AstNodeDecl : AstNode {
 
 			LLVMSetInitializer(var, constval);
 
-			ctx.global_vars[decl.name] = var;
+			ctx.gstack.addGlobal(var,decl.name);
 
-			return var;
+			return ctx.gstack[decl.name];
 		}
 		else {
 			// Local var
-			/*ctx.gstack.addLocal(LLVMBuildAlloca(
+			ctx.gstack.addLocal(LLVMBuildAlloca(
 				ctx.currbuilder,
 				ctx.getLLVMType(decl.type.get(ctx.typecontext)),
 				toStringz(decl.name)
@@ -750,10 +767,10 @@ class AstNodeDecl : AstNode {
 				LLVMBuildStore(
 					ctx.currbuilder,
 					constval,
-					toStringz(decl.name)
+					ctx.gstack[decl.name]
 				);
-			}*/
-			assert(0);
+			}
+			return ctx.gstack[decl.name];
 		}
 	}
 
@@ -902,7 +919,7 @@ class AstNodeInt : AstNode {
 		}
 		else {
 			// TODO implement something similar to above.
-			return new TypeBasic(BasicType.t_long);
+			return new TypeBasic(BasicType.t_int);
 		}
 	}
 

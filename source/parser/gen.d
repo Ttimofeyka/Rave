@@ -34,6 +34,11 @@ class GStack {
 		return isGlobal(var) || isLocal(var);
 	}
 
+	void set(LLVMValueRef newval, string n) {
+		if(isGlobal(n)) globals[n] = newval;
+		else locals[n] = newval;
+	}
+
 	void remove(string n) {
 		if(n in locals) locals.remove(n);
 		else if(n in globals) globals.remove(n);
@@ -53,7 +58,6 @@ class GStack {
 class GenerationContext {
     LLVMModuleRef mod;
 	AtstTypeContext typecontext;
-	LLVMValueRef[string] global_vars;
 	LLVMBuilderRef currbuilder;
 	GStack gstack;
 

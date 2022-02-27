@@ -1,4 +1,4 @@
-.extern main
+.extern _EPLf4main
 
 .global _EPLf4exit
 .type   _EPLf4exit, @function
@@ -19,7 +19,7 @@ write:
 .global _start
 .type   _start, @function
 _start:
-    call main
+    call _EPLf4main
     movl %eax, %ebx
     movl $1, %eax
     int $0x80
