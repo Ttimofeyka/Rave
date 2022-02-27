@@ -721,20 +721,39 @@ class AstNodeDecl : AstNode {
 			writeln("The variable " ~ decl.name ~ " has been declared multiple times!");
 			exit(-1);
 		}
-		
+
 		LLVMValueRef constval = value.gen(ctx);
 
-		LLVMValueRef var = LLVMAddGlobal(
-			ctx.mod,
-			ctx.getLLVMType(decl.type.get(ctx.typecontext)),
-			toStringz(decl.name)
-		);
+		if(ctx.currbuilder == null) {
+			// Global var
+			LLVMValueRef var = LLVMAddGlobal(
+				ctx.mod,
+				ctx.getLLVMType(decl.type.get(ctx.typecontext)),
+				toStringz(decl.name)
+			);
 
-		LLVMSetInitializer(var, constval);
+			LLVMSetInitializer(var, constval);
 
-		ctx.global_vars[decl.name] = var;
+			ctx.global_vars[decl.name] = var;
 
-		return var;
+			return var;
+		}
+		else {
+			// Local var
+			ctx.gstack.addLocal(LLVMBuildAlloca(
+				ctx.currbuilder,
+				ctx.getLLVMType(decl.type.get(ctx.typecontext)),
+				toStringz(decl.name)
+			),decl.name);
+			if(value !is null) {
+				// Set value to local var
+				LLVMBuildStore(
+					ctx.currbuilder,
+					constval,
+					toStringz(decl.name)
+				);
+			}
+		}
 	}
 
 	debug {
