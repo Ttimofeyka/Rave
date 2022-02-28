@@ -1,16 +1,7 @@
 main: int {
     toret := 0;
-<<<<<<< HEAD
 
-    toret += 1;
+    toret = 4;
     
     ret toret;
 }
-
-=======
-
-    toret += 1;
-    
-    ret toret;
-}
->>>>>>> ef2573f60a1e51860a3ea0739b1934de1fb49c41

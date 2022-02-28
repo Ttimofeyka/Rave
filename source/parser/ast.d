@@ -666,8 +666,24 @@ class AstNodeIden : AstNode {
 	override LLVMValueRef gen(GenerationContext ctx) {
 		// _EPLf4exit, not exit! ctx.mangleQualifiedName([name], true) -> string
 		// TODO: Check if the global variable is referring to a function
-		if(ctx.gstack.isGlobal(name)) {
-			if(ctx.currbuilder != null) {
+		if(ctx.gstack.setVar) {
+			ctx.gstack.setVar = false;
+			return ctx.gstack[name];
+		}
+		else {
+			if(ctx.gstack.isGlobal(name)) {
+				if(ctx.currbuilder != null) {
+					ctx.gstack.set(LLVMBuildLoad(
+						ctx.currbuilder,
+						ctx.gstack[name],
+						cast(const char*)toStringz(name)
+					),name~"_l");
+					return ctx.gstack[name~"_l"];
+				}
+				else return ctx.gstack[name];
+			}
+			else {
+				// Local var
 				ctx.gstack.set(LLVMBuildLoad(
 					ctx.currbuilder,
 					ctx.gstack[name],
@@ -675,16 +691,6 @@ class AstNodeIden : AstNode {
 				),name~"_l");
 				return ctx.gstack[name~"_l"];
 			}
-			else return ctx.gstack[name];
-		}
-		else {
-			// Local var
-			ctx.gstack.set(LLVMBuildLoad(
-				ctx.currbuilder,
-				ctx.gstack[name],
-				cast(const char*)toStringz(name)
-			),name~"_l");
-			return ctx.gstack[name~"_l"];
 		}
 		assert(0);
 	}

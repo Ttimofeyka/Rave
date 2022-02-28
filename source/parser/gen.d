@@ -13,6 +13,7 @@ import std.algorithm : canFind;
 class GStack {
     private LLVMValueRef[string] globals; // Global variables
     private LLVMValueRef[string] locals; // Local variables
+	bool setVar = false;
 
     this() {}
 
@@ -118,7 +119,7 @@ class GenerationContext {
 
 	void genTarget(string file,bool d) {
 		if(d) 
-			LLVMWriteBitcodeToFile(this.mod,cast(const char*)("bin/"~file~".debug.be"));
+			LLVMWriteBitcodeToFile(this.mod,cast(const char*)(file~".be"));
 
 		char* errors;
 		LLVMTargetRef target;
@@ -141,12 +142,10 @@ class GenerationContext {
     	LLVMSetDataLayout(this.mod, datalayout_str);
     	LLVMDisposeMessage(datalayout_str);
 		char* file_ptr = cast(char*)toStringz(file);
-		char* file_debug_ptr = cast(char*)toStringz("bin/"~file);
 
 		char* err;
 		LLVMPrintModuleToFile(this.mod, "tmp.ll", &err);
 
-    	if(!d) LLVMTargetMachineEmitToFile(machine,this.mod,file_ptr, LLVMObjectFile, &errors);
-		else LLVMTargetMachineEmitToFile(machine,this.mod,file_debug_ptr, LLVMObjectFile, &errors);
+    	LLVMTargetMachineEmitToFile(machine,this.mod,file_ptr, LLVMObjectFile, &errors);
 	}
 }

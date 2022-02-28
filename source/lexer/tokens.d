@@ -85,7 +85,7 @@ enum TokCmd {
     cmd_define = 13,
     cmd_ifdef = 23,
     cmd_ifndef = 24,
-    cmd_endif = 25,
+    cmd_endif = 25
 }
 
 struct SourceLocation {
