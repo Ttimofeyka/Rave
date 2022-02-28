@@ -347,6 +347,7 @@ class AstNodeFunction : AstNode {
 			f_body.nodes[i].gen(ctx);
 		}
 		ctx.currbuilder = null;
+		ctx.gstack.clean();
 
 		LLVMVerifyFunction(func, 0);
 
@@ -517,6 +518,51 @@ class AstNodeBinary : AstNode {
 					);
 					return ctx.gstack[iden.name];
 				}
+				assert(0);
+			case TokType.tok_plus:
+			case TokType.tok_minus:
+			case TokType.tok_multiply:
+				auto result = LLVMBuildAlloca(
+					ctx.currbuilder,
+					LLVMInt32Type(),
+					toStringz("result")
+				);
+				LLVMValueRef operation;
+				if(type == TokType.tok_plus) {
+					operation = LLVMBuildAdd(
+						ctx.currbuilder,
+						lhs.gen(ctx),
+						rhs.gen(ctx),
+						toStringz("operation")
+					);
+				}
+				else if(type == TokType.tok_minus) {
+					operation = LLVMBuildSub(
+						ctx.currbuilder,
+						lhs.gen(ctx),
+						rhs.gen(ctx),
+						toStringz("operation")
+					);
+				}
+				else if(type == TokType.tok_multiply) {
+					operation = LLVMBuildMul(
+						ctx.currbuilder,
+						lhs.gen(ctx),
+						rhs.gen(ctx),
+						toStringz("operation")
+					);
+				}
+				LLVMBuildStore(
+					ctx.currbuilder,
+					operation,
+					result
+				);
+				auto loaded_result = LLVMBuildLoad(
+					ctx.currbuilder,
+					result,
+					toStringz("r_loaded")
+				);
+				return loaded_result;
 			default:
 				break;
 		}
@@ -786,7 +832,7 @@ class AstNodeIden : AstNode {
 				ctx.gstack.set(LLVMBuildLoad(
 					ctx.currbuilder,
 					ctx.gstack[name],
-					cast(const char*)toStringz(name)
+					toStringz(name~"_l")
 				),name~"_l");
 				return ctx.gstack[name~"_l"];
 			}

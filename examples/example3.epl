@@ -1,6 +1,11 @@
-main: float {
-    a: float = 0.5;
-    a *= 2;
+b: int = 10;
+
+main: int {
+    a := 0;
+
+    a += 2;
+    a += 2;
+    a += 2;
 
     ret a;
 }
