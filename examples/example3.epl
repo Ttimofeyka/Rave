@@ -1,7 +1,6 @@
 main: int {
-    toret := 0;
+    a := 12;
+    a += 1;
 
-    toret = 4;
-    
-    ret toret;
+    ret a;
 }

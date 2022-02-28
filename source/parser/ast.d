@@ -415,18 +415,76 @@ class AstNodeBinary : AstNode {
 	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
-		LLVMValueRef a;
-		return a;
+		switch(type) {
+			case TokType.tok_equ:
+				AstNodeIden iden = cast(AstNodeIden)lhs;
+				if(ctx.gstack.isLocal(iden.name)) {
+					ctx.gstack.set(LLVMBuildAlloca(
+						ctx.currbuilder,
+						LLVMGetAllocatedType(ctx.gstack[iden.name]),
+						toStringz(iden.name)
+					),iden.name);
+					return LLVMBuildStore(
+						ctx.currbuilder,
+						rhs.gen(ctx),
+						ctx.gstack[iden.name]
+					);
+				}
+				else {
+					return LLVMBuildStore(
+						ctx.currbuilder,
+						rhs.gen(ctx),
+						ctx.gstack[iden.name]
+					);
+				}
+			case TokType.tok_shortplu:
+				AstNodeIden iden = cast(AstNodeIden)lhs;
+				if(ctx.gstack.isLocal(iden.name)) {
+					auto tmpval = LLVMBuildAlloca(
+						ctx.currbuilder,
+						LLVMGetAllocatedType(ctx.gstack[iden.name]),
+						toStringz(iden.name)
+					);
+
+					LLVMValueRef tmp = LLVMBuildAdd(
+						ctx.currbuilder,
+						lhs.gen(ctx),
+						rhs.gen(ctx),
+						toStringz("tmp")
+					);
+					
+					LLVMBuildStore(
+						ctx.currbuilder,
+						tmp,
+						tmpval
+					);
+
+					ctx.gstack.set(tmpval,iden.name);
+					return ctx.gstack[iden.name];
+				}
+				else {
+					auto tmp = LLVMBuildAdd(
+						ctx.currbuilder,
+						ctx.gstack[iden.name],
+						rhs.gen(ctx),
+						toStringz("tmp")
+					);
+					LLVMBuildStore(
+						ctx.currbuilder,
+						tmp,
+						ctx.gstack[iden.name]
+					);
+					return ctx.gstack[iden.name];
+				}
+			default:
+				break;
+		}
+		assert(0);
 	}
 
 	private void checkTypes(AnalyzerScope s, Type neededType) {
-		if(lhs.getType(s).instanceof!(TypeUnknown)) {
-			lhs.analyze(s, neededType);
-		}
-
-		if(rhs.getType(s).instanceof!(TypeUnknown)) {
-			rhs.analyze(s, neededType);
-		}
+		lhs.analyze(s, neededType);
+		rhs.analyze(s, neededType);
 
 		if(neededType.assignable(lhs.getType(s))
 		&& neededType.assignable(rhs.getType(s))) {
