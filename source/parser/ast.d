@@ -420,16 +420,8 @@ class AstNodeBinary : AstNode {
 			case TokType.tok_equ:
 				AstNodeIden iden = cast(AstNodeIden)lhs;
 				if(ctx.gstack.isLocal(iden.name)) {
-					ctx.gstack.set(LLVMBuildAlloca(
-						ctx.currbuilder,
-						LLVMGetAllocatedType(ctx.gstack[iden.name]),
-						toStringz(iden.name)
-					),iden.name);
-					return LLVMBuildStore(
-						ctx.currbuilder,
-						rhs.gen(ctx),
-						ctx.gstack[iden.name]
-					);
+					ctx.setLocal(rhs.gen(ctx),iden.name);
+					return ctx.getVarPtr(iden.name);
 				}
 				else {
 					return LLVMBuildStore(
@@ -817,24 +809,15 @@ class AstNodeIden : AstNode {
 		}
 		else {
 			if(ctx.gstack.isGlobal(name)) {
+				// Global var
 				if(ctx.currbuilder != null) {
-					ctx.gstack.set(LLVMBuildLoad(
-						ctx.currbuilder,
-						ctx.gstack[name],
-						cast(const char*)toStringz(name)
-					),name~"_l");
-					return ctx.gstack[name~"_l"];
+					return ctx.getValueByPtr(name);
 				}
 				else return ctx.gstack[name];
 			}
 			else {
 				// Local var
-				ctx.gstack.set(LLVMBuildLoad(
-					ctx.currbuilder,
-					ctx.gstack[name],
-					toStringz(name~"_l")
-				),name~"_l");
-				return ctx.gstack[name~"_l"];
+				return ctx.getValueByPtr(name);
 			}
 		}
 		assert(0);
@@ -897,34 +880,19 @@ class AstNodeDecl : AstNode {
 
 		if(ctx.currbuilder == null) {
 			// Global var
-			LLVMValueRef var = LLVMAddGlobal(
-				ctx.mod,
+			return ctx.createGlobal(
 				ctx.getLLVMType(decl.type.get(ctx.typecontext)),
-				toStringz(decl.name)
+				constval,
+				decl.name
 			);
-
-			LLVMSetInitializer(var, constval);
-
-			ctx.gstack.addGlobal(var,decl.name);
-
-			return ctx.gstack[decl.name];
 		}
 		else {
 			// Local var
-			ctx.gstack.addLocal(LLVMBuildAlloca(
-				ctx.currbuilder,
+			return ctx.createLocal(
 				ctx.getLLVMType(decl.type.get(ctx.typecontext)),
-				toStringz(decl.name)
-			),decl.name);
-			if(value !is null) {
-				// Set value to local var
-				LLVMBuildStore(
-					ctx.currbuilder,
-					constval,
-					ctx.gstack[decl.name]
-				);
-			}
-			return ctx.gstack[decl.name];
+				constval,
+				decl.name
+			);
 		}
 	}
 

@@ -9,6 +9,8 @@ import std.conv : to;
 import std.range;
 import std.string;
 import std.algorithm : canFind;
+import std.ascii;
+import std.uni;
 
 class GStack {
     private LLVMValueRef[string] globals; // Global variables
@@ -115,6 +117,72 @@ class GenerationContext {
 			nodes[i].gen(this);
 		}
 		genTarget(file, debugMode);
+	}
+
+	LLVMValueRef createLocal(LLVMTypeRef type, LLVMValueRef val, string name) {
+		LLVMValueRef local = LLVMBuildAlloca(
+			currbuilder,
+			type,
+			toStringz(name)
+		);
+
+		if(val !is null) {
+			LLVMBuildStore(
+				currbuilder,
+				val,
+				local
+			);
+		}
+
+		gstack.addLocal(local,name);
+		return local;
+	}
+
+	LLVMValueRef createGlobal(LLVMTypeRef type, LLVMValueRef val, string name) {
+		LLVMValueRef global = LLVMAddGlobal(
+			mod,
+			type,
+			toStringz(name)
+		);
+		if(val !is null) LLVMSetInitializer(global,val);
+		gstack.addGlobal(global,name);
+		return global;
+	}
+
+	void setGlobal(LLVMValueRef value, string name) {
+		LLVMBuildStore(
+			currbuilder,
+			value,
+			gstack[name]
+		);
+	}
+
+	void setLocal(LLVMValueRef value, string name) {
+		auto tmp = LLVMBuildAlloca(
+			currbuilder,
+			LLVMGetAllocatedType(gstack[name]),
+			toStringz(name~"_setloc")
+		);
+
+		if(value !is null) LLVMBuildStore(
+			currbuilder,
+			value,
+			tmp
+		);
+
+		gstack.set(tmp,name);
+	}
+
+	LLVMValueRef getValueByPtr(string name) {
+		return LLVMBuildLoad(
+			currbuilder,
+			gstack[name],
+			toStringz(name~"_valbyptr")
+		);
+	}
+
+	LLVMValueRef getVarPtr(string name) {
+		return gstack[name];
 	}
 
 	void genTarget(string file,bool d) {
