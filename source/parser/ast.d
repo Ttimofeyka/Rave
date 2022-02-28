@@ -438,6 +438,8 @@ class AstNodeBinary : AstNode {
 					);
 				}
 			case TokType.tok_shortplu:
+			case TokType.tok_shortmin:
+			case TokType.tok_shortmul:
 				AstNodeIden iden = cast(AstNodeIden)lhs;
 				if(ctx.gstack.isLocal(iden.name)) {
 					auto tmpval = LLVMBuildAlloca(
@@ -446,12 +448,31 @@ class AstNodeBinary : AstNode {
 						toStringz(iden.name)
 					);
 
-					LLVMValueRef tmp = LLVMBuildAdd(
-						ctx.currbuilder,
-						lhs.gen(ctx),
-						rhs.gen(ctx),
-						toStringz("tmp")
-					);
+					LLVMValueRef tmp;
+					if(type == TokType.tok_shortplu) {
+						tmp = LLVMBuildAdd(
+							ctx.currbuilder,
+							lhs.gen(ctx),
+							rhs.gen(ctx),
+							toStringz("tmp")
+						);
+					}
+					else if (type == TokType.tok_shortmin) {
+						tmp = LLVMBuildSub(
+							ctx.currbuilder,
+							lhs.gen(ctx),
+							rhs.gen(ctx),
+							toStringz("tmp")
+						);
+					}
+					else if (type == TokType.tok_shortmul) {
+						tmp = LLVMBuildMul(
+							ctx.currbuilder,
+							lhs.gen(ctx),
+							rhs.gen(ctx),
+							toStringz("tmp")
+						);
+					}
 					
 					LLVMBuildStore(
 						ctx.currbuilder,
@@ -463,12 +484,32 @@ class AstNodeBinary : AstNode {
 					return ctx.gstack[iden.name];
 				}
 				else {
-					auto tmp = LLVMBuildAdd(
-						ctx.currbuilder,
-						ctx.gstack[iden.name],
-						rhs.gen(ctx),
-						toStringz("tmp")
-					);
+					LLVMValueRef tmp;
+					if(type == TokType.tok_shortplu) {
+						tmp = LLVMBuildAdd(
+							ctx.currbuilder,
+							ctx.gstack[iden.name],
+							rhs.gen(ctx),
+							toStringz("tmp")
+						);
+					}
+					else if(type == TokType.tok_shortmin) {
+						tmp = LLVMBuildSub(
+							ctx.currbuilder,
+							ctx.gstack[iden.name],
+							rhs.gen(ctx),
+							toStringz("tmp")
+						);
+					}
+					else if(type == TokType.tok_shortmul) {
+						tmp = LLVMBuildMul(
+							ctx.currbuilder,
+							ctx.gstack[iden.name],
+							rhs.gen(ctx),
+							toStringz("tmp")
+						);
+					}
+
 					LLVMBuildStore(
 						ctx.currbuilder,
 						tmp,
@@ -1010,6 +1051,8 @@ class AstNodeInt : AstNode {
 				return LLVMConstInt(LLVMInt64Type(),value,true);
 			case BasicType.t_ulong:
 				return LLVMConstInt(LLVMInt64Type(),value,false);
+			case BasicType.t_float:
+				return LLVMConstReal(LLVMFloatType(),cast(double)value);
 			default: assert(0);
 		}
 	}

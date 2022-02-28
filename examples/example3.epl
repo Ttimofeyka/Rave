@@ -1,6 +1,6 @@
-main: int {
-    a := 12;
-    a += 1;
+main: float {
+    a: float = 0.5;
+    a *= 2;
 
     ret a;
 }
