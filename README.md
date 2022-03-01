@@ -9,7 +9,7 @@ EPL - is a compiled, procedural and statically typed high-level systems programm
 @inc "std";
 
 main: int {
-  write("Hello, world!\n");
+  writeln("Hello, world!");
   ret 0;
 }
 ```
