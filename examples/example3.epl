@@ -1,9 +1,13 @@
 b: int = 10;
 
-main: int {
-    a := 1;
+func(arg1: int): int {
+    ret arg1;
+}
 
-    a = (a + 1) + (a + 1);
+main: int {
+    a := 10;
+
+    a = b + 40;
 
     ret a;
 }

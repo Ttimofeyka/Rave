@@ -58,16 +58,33 @@ class GStack {
 	}
 }
 
+class GArgs {
+	private LLVMTypeRef[string] fargs_types;
+	private int[string] fargs_numbers;
+
+	void set(int v, LLVMTypeRef type, string name) {
+		fargs_numbers[name] = v;
+		fargs_types[name] = type;
+	}
+
+	int getNum(string s) {return fargs_numbers[s];}
+	LLVMTypeRef getType(string s) {return fargs_types[s];}
+
+	this() {}
+}
+
 class GenerationContext {
     LLVMModuleRef mod;
 	AtstTypeContext typecontext;
 	LLVMBuilderRef currbuilder;
 	GStack gstack;
+	GArgs gargs;
 
     this() {
         mod = LLVMModuleCreateWithName(cast(const char*)"epl");
 		typecontext = new AtstTypeContext();
 		gstack = new GStack();
+		gargs = new GArgs();
 
 		// Initialization
 		LLVMInitializeAllTargets();

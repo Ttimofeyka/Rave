@@ -707,6 +707,7 @@ class Parser {
 		AstNode[] nodes;
 		while(peek().type != TokType.tok_eof) {
 			auto n = parseTopLevel();
+			n.debugPrint(0);
 			if(n is null) break;
 			nodes ~= n;
 			currfunc = null;

@@ -12,6 +12,7 @@ import parser.typesystem;
 import parser.util;
 import parser.analyzer;
 import std.string;
+import core.stdc.stdlib : malloc;
 
 /// We have two separate syntax trees: for types and for values.
 
@@ -320,22 +321,40 @@ class AstNodeFunction : AstNode {
 		s.ctx.currentFunc = lastCurrentFunc;
 	}
 
+	private LLVMTypeRef* getParamsTypes(GenerationContext ctx) {
+		LLVMTypeRef* param_types = cast(LLVMTypeRef*)malloc(
+			LLVMTypeRef.sizeof * decl.signature.args.length
+		);
+		for(int i=0; i<decl.signature.args.length; i++) {
+			param_types[i] = ctx.getLLVMType(decl.signature.args[i].get(ctx.typecontext));
+		}
+		return param_types;
+	}
+
+	private void setParams(GenerationContext ctx) {
+		LLVMTypeRef* param_types = getParamsTypes(ctx);
+		for(int i=0; i<decl.argNames.length; i++) {
+			ctx.gargs.set(i,param_types[i],decl.argNames[i]);
+		}
+	}
+
 	override LLVMValueRef gen(GenerationContext ctx) {
 		builder = LLVMCreateBuilder();
-		LLVMTypeRef* param_types;
 
 		AstNodeBlock f_body = cast(AstNodeBlock)body_;
 
+		setParams(ctx);
+
 		LLVMTypeRef ret_type = LLVMFunctionType(
 		    ctx.getLLVMType(actualDecl.ret),
-		    param_types,
+		    getParamsTypes(ctx),
 		    cast(uint)decl.signature.args.length,
 		    false
 	    );
 
 		LLVMValueRef func = LLVMAddFunction(
 		    ctx.mod,
-		    cast(const char*)(toStringz(ctx.mangleQualifiedName([decl.name], true))),
+		   toStringz(ctx.mangleQualifiedName([decl.name], true)),
 		    ret_type
 	    );
 
