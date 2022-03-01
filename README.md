@@ -23,7 +23,7 @@ main: int {
 
 ## Building/Running
 
-Copy `base.dub.json` to `dub.json` and change the flags. Then run `dub run -- <filename>`
+Copy `base.dub.json` to `dub.json` and change the flags. Then run `dub build`
 
 ## Goals
 
