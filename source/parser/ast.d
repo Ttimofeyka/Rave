@@ -326,24 +326,16 @@ class AstNodeFunction : AstNode {
 			LLVMTypeRef.sizeof * decl.signature.args.length
 		);
 		for(int i=0; i<decl.signature.args.length; i++) {
-			param_types[i] = ctx.getLLVMType(decl.signature.args[i].get(ctx.typecontext));
+			
+			param_types[i] = ctx.getLLVMType(actualDecl.args[i]);
 		}
 		return param_types;
-	}
-
-	private void setParams(GenerationContext ctx) {
-		LLVMTypeRef* param_types = getParamsTypes(ctx);
-		for(int i=0; i<decl.argNames.length; i++) {
-			ctx.gargs.set(i,param_types[i],decl.argNames[i]);
-		}
 	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
 		builder = LLVMCreateBuilder();
 
 		AstNodeBlock f_body = cast(AstNodeBlock)body_;
-
-		setParams(ctx);
 
 		LLVMTypeRef ret_type = LLVMFunctionType(
 		    ctx.getLLVMType(actualDecl.ret),
@@ -376,7 +368,7 @@ class AstNodeFunction : AstNode {
 	debug {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
-			writeln("Function decl: ", decl.toString(), actualDecl.ret.toString());
+			writeln("Function decl: ", decl.toString(), actualDecl is null ? decl.signature.ret.toString() : actualDecl.ret.toString());
 			if(body_ !is null) body_.debugPrint(indent + 1);
 		}
 	}
@@ -514,11 +506,16 @@ class AstNodeBinary : AstNode {
 						);
 					}
 					else if(type == TokType.tok_shortmul) {
-						tmp = LLVMBuildMul(
+						/*tmp = LLVMBuildMul(
 							ctx.currbuilder,
 							ctx.gstack[iden.name],
 							rhs.gen(ctx),
 							toStringz("tmp")
+						);*/
+						tmp = ctx.operMul(
+							ctx.gstack[iden.name],
+							rhs.gen(ctx),
+							false 
 						);
 					}
 
@@ -574,6 +571,53 @@ class AstNodeBinary : AstNode {
 					toStringz("r_loaded")
 				);
 				return loaded_result;
+			case TokType.tok_bit_ls:
+			case TokType.tok_bit_rs:
+			case TokType.tok_bit_and:
+			case TokType.tok_bit_or:
+			case TokType.tok_bit_xor:
+				LLVMValueRef bit_result;
+				if(type == TokType.tok_bit_ls) {
+					bit_result = LLVMBuildShl(
+						ctx.currbuilder,
+						lhs.gen(ctx),
+						rhs.gen(ctx),
+						toStringz("bit_ls")
+					);
+				}
+				else if(type == TokType.tok_bit_rs)  {
+					bit_result = LLVMBuildAShr(
+						ctx.currbuilder,
+						lhs.gen(ctx),
+						rhs.gen(ctx),
+						toStringz("bit_rs")
+					);
+				}
+				else if(type == TokType.tok_bit_and) {
+					bit_result = LLVMBuildAnd(
+						ctx.currbuilder,
+						lhs.gen(ctx),
+						rhs.gen(ctx),
+						toStringz("bit_and")
+					);
+				}
+				else if(type == TokType.tok_bit_or) {
+					bit_result = LLVMBuildOr(
+						ctx.currbuilder,
+						lhs.gen(ctx),
+						rhs.gen(ctx),
+						toStringz("bit_or")
+					);
+				}
+				else if(type == TokType.tok_bit_xor) {
+					bit_result = LLVMBuildXor(
+						ctx.currbuilder,
+						lhs.gen(ctx),
+						rhs.gen(ctx),
+						toStringz("bit_xor")
+					);
+				}
+				return bit_result;
 			default:
 				break;
 		}
@@ -985,10 +1029,19 @@ class AstNodeFuncCall : AstNode {
 		this.args = args;
 	}
 
+	override void analyze(AnalyzerScope s, Type neededType) {
+		
+	}
+
 	override LLVMValueRef gen(GenerationContext ctx) {
-		LLVMValueRef a;
 		// _EPLf4exit, not exit! ctx.mangleQualifiedName([name], true) -> string
-		return a;
+		return LLVMBuildCall(
+			ctx.currbuilder,
+			func.gen(ctx),
+			null,
+			0,
+			toStringz("call")
+		);
 	}
 
 	debug {

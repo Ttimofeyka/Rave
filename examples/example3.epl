@@ -1,13 +1,7 @@
-b: int = 10;
-
-func(arg1: int): int {
-    ret arg1;
-}
-
 main: int {
-    a := 10;
-
-    a = b + 40;
+    a := 15;
+    b := 11;
+    c: int = a | b;
 
     ret a;
 }

@@ -202,6 +202,98 @@ class GenerationContext {
 		return gstack[name];
 	}
 
+	LLVMValueRef operAdd(LLVMValueRef one, LLVMValueRef two, bool isreal) {
+		if(!isreal) return LLVMBuildAdd(
+			currbuilder,
+			one,
+			two,
+			toStringz("operaddi_result")
+		);
+
+		return LLVMBuildFAdd(
+			currbuilder,
+			one,
+			two,
+			toStringz("operaddf_result")
+		);
+	}
+
+	LLVMValueRef operSub(LLVMValueRef one, LLVMValueRef two, bool isreal) {
+		if(!isreal) return LLVMBuildSub(
+			currbuilder,
+			one,
+			two,
+			toStringz("opersubi_result")
+		);
+
+		return LLVMBuildFSub(
+			currbuilder,
+			one,
+			two,
+			toStringz("opersubf_result")
+		);
+	}
+
+	LLVMValueRef operMul(LLVMValueRef one, LLVMValueRef two, bool isreal) {
+		if(!isreal) return LLVMBuildMul(
+			currbuilder,
+			one,
+			two,
+			toStringz("opermuli_result")
+		);
+
+		return LLVMBuildFSub(
+			currbuilder,
+			one,
+			two,
+			toStringz("opermulf_result")
+		);
+	}
+
+	LLVMValueRef operDiv(LLVMValueRef one, LLVMValueRef two) {
+		// TODO: Add a LLVMCast
+		return LLVMBuildFDiv(
+			currbuilder,
+			one,
+			two,
+			toStringz("operdivf_result")
+		);
+	}
+
+	LLVMValueRef castNum(LLVMValueRef tocast, LLVMTypeRef type, bool isreal) {
+		if(!isreal) return LLVMBuildZExt(
+			currbuilder,
+			tocast,
+			type,
+			toStringz("castNumI")
+		);
+
+		return LLVMBuildSExt(
+			currbuilder,
+			tocast,
+			type,
+			toStringz("castNumF")
+		);
+	}
+
+	LLVMValueRef ptrToInt(LLVMValueRef ptr, LLVMTypeRef type) {
+		return LLVMBuildPtrToInt(
+			currbuilder,
+			ptr,
+			type,
+			toStringz("ptrToint")
+		);
+	}
+
+	LLVMValueRef intToPtr(LLVMValueRef num, LLVMTypeRef type) {
+		return LLVMBuildIntToPtr(
+			currbuilder,
+			num,
+			type,
+			toStringz("intToptr")
+		);
+	}
+
 	void genTarget(string file,bool d) {
 		if(d) 
 			LLVMWriteBitcodeToFile(this.mod,cast(const char*)(file~".be"));
