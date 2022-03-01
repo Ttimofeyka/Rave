@@ -294,6 +294,10 @@ class GenerationContext {
 		);
 	}
 
+	LLVMTypeRef getAType(LLVMValueRef v) {
+		return LLVMGetAllocatedType(v);
+	}
+
 	void genTarget(string file,bool d) {
 		if(d) 
 			LLVMWriteBitcodeToFile(this.mod,cast(const char*)(file~".be"));
