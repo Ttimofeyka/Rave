@@ -1243,3 +1243,4 @@ class AstNodeChar : AstNode {
 		}
 	}
 }
+
