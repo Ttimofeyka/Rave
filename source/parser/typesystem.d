@@ -1,6 +1,7 @@
 module parser.typesystem;
 import parser.util;
 import std.conv;
+import std.stdio;
 
 class Type {
     bool assignable(Type other) { return false; }
@@ -122,10 +123,54 @@ class FunctionSignatureTypes : SignatureTypes {
         this.ret = ret;
         this.args = args;
     }
+
+    override string toString() const {
+        string s = "";
+
+        s ~= "(";
+
+        if(args.length > 0) {
+            s ~= args[0].toString();
+            for(int i = 1; i < args.length; ++i) {
+                s ~= ", " ~ args[i].toString();
+            }
+        }
+        s ~= "): " ~ ret.toString();
+        return s;
+    }
+
+    string toString(string name, string[] argNames) const {
+        string s = "";
+
+        s ~= name ~ "(";
+
+        if(args.length > 0) {
+            s ~= argNames[0] ~ ": " ~ args[0].toString();
+            for(int i = 1; i < args.length; ++i) {
+                s ~= ", " ~ argNames[i] ~ ": " ~ args[i].toString();
+            }
+        }
+        s ~= "): " ~ ret.toString();
+        return s;
+    }
 }
 
 class VariableSignatureTypes : SignatureTypes {
 	Type type;
 
     this(Type type) { this.type = type; }
+
+    override string toString() const {
+        string s = "";
+
+        s ~= "{}: " ~ type.toString();
+        return s;
+    }
+
+    string toString(string name) const {
+        string s = "";
+
+        s ~= name ~ ": " ~ type.toString();
+        return s;
+    }
 }

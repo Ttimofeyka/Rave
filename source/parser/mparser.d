@@ -192,7 +192,10 @@ class Parser {
 			d.args = parseFuncArgumentDecls();
 			if(peek().type == TokType.tok_type) {
 				next();
-				d.type = parseType();
+				if(peek().type != TokType.tok_2lbra && peek().type != TokType.tok_arrow)
+					d.type = parseType();
+				else
+					d.type = new AtstNodeUnknown();
 			}
 			else {
 				d.type = new AtstNodeVoid();
@@ -211,7 +214,7 @@ class Parser {
 				expectToken(TokType.tok_semicolon);
 			}
 		}
-		if(peek().type == TokType.tok_2lbra) {
+		else if(peek().type == TokType.tok_2lbra) {
 			// function with args.
 			d.isMethod = true;
 			d.type = new AtstNodeVoid();
@@ -677,17 +680,18 @@ class Parser {
 		//             | extern <func-decl> ';'
 		//             | <var-decl>
 		//             | <type-decl>
-		//             | ';'
+		//             | ';' <top-level>
 
-		if(peek().type == TokType.tok_semicolon) {
-			next(); // Ignore the semicolon, try again
-			return parseTopLevel();
+		while(peek().type == TokType.tok_semicolon) {
+			next(); // Ignore the semicolon
 		}
-		else if(isTypeDecl()) {
+		
+		if(isTypeDecl()) {
 			_decls ~= parseTypeDecl();
 			return parseTopLevel(); // we ignore type declarations.
 		}
-		else if(peek().type == TokType.tok_eof) {
+		
+		if(peek().type == TokType.tok_eof) {
 			return null;
 		}
 		
@@ -698,8 +702,7 @@ class Parser {
 		}
 		else {
 			auto decl = declToFuncDecl(d);
-			currfunc = new AstNodeFunction(decl, d.value);
-			return currfunc;
+			return new AstNodeFunction(decl, d.value);
 		}
 	}
 

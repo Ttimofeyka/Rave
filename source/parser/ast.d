@@ -12,6 +12,7 @@ import parser.typesystem;
 import parser.util;
 import parser.analyzer;
 import std.string;
+import std.array;
 import core.stdc.stdlib : malloc;
 import parser.generator.llvm_abs;
 
@@ -222,7 +223,7 @@ struct FunctionDeclaration {
 					s ~= ", " ~ argNames[i] ~ ": " ~ signature.args[i].toString();
 				}
 			}
-			s ~= "): "; // ~ signature.ret.toString();
+			s ~= "): " ~ signature.ret.toString();
 			return s;
 		}
 	}
@@ -319,9 +320,11 @@ class AstNodeFunction : AstNode {
 	override void analyze(AnalyzerScope s, Type) {
 		auto lastCurrentFunc = s.ctx.currentFunc;
 		s.ctx.currentFunc = this;
+		s.returnType = this.decl.signature.ret.get(s.ctx.typeContext);
 
 		this.body_.analyze(s, this.decl.signature.ret.get(s.ctx.typeContext));
-		actualDecl = new FunctionSignatureTypes(s.returnType, []);
+		Type[] argTypes = array(map!((a) => a.get(s.ctx.typeContext))(this.decl.signature.args));
+		actualDecl = new FunctionSignatureTypes(s.returnType, argTypes);
 
 		s.ctx.currentFunc = lastCurrentFunc;
 	}
@@ -380,7 +383,9 @@ class AstNodeFunction : AstNode {
 	debug {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
-			writeln("Function decl: ", decl.toString(), actualDecl is null ? decl.signature.ret.toString() : actualDecl.ret.toString());
+			writeln("Function decl: ",
+				actualDecl is null ? decl.toString() : actualDecl.toString(decl.name, decl.argNames)
+			);
 			if(body_ !is null) body_.debugPrint(indent + 1);
 		}
 	}
@@ -670,31 +675,39 @@ class AstNodeBinary : AstNode {
 		lhs.analyze(s, neededType);
 		rhs.analyze(s, neededType);
 
-		if(neededType.assignable(lhs.getType(s))
-		&& neededType.assignable(rhs.getType(s))) {
-  			this.valueType = neededType;
-		}
-		else {
-			if(rhs.classinfo.name == "parser.ast.AstNodeFuncCall") {
+		if(!neededType.instanceof!TypeUnknown) {
+			if(neededType.assignable(lhs.getType(s))
+			&& neededType.assignable(rhs.getType(s))) {
 				this.valueType = neededType;
 			}
 			else {
-				writeln("Bad binary operator types: expected '"
-					~ neededType.toString() ~ "' but got '"
-					~ lhs.getType(s).toString() ~ "' and '"
-					~ rhs.getType(s).toString() ~ "'.");
-				exit(-1);
+				if(rhs.instanceof!AstNodeFuncCall) {
+					this.valueType = neededType;
+				}
+				else {
+					s.ctx.addError("Bad binary operator types: expected '"
+						~ neededType.toString() ~ "' but got '"
+						~ lhs.getType(s).toString() ~ "' and '"
+						~ rhs.getType(s).toString() ~ "'.");
+				}
 			}
+		}
+		else { // neededType --> unknown.
+			// TODO: Find best suitable type!
+			this.valueType = lhs.getType(s);
 		}
 	}
 
 	override void analyze(AnalyzerScope s, Type neededType) {
+		if(neededType.instanceof!TypeUnknown)
+			neededType = lhs.getType(s); // TODO: Find best suitable type!
+			
 		if(_isArithmetic()) {
 			if(!instanceof!TypeBasic(neededType)) {
-				s.ctx.addError("Non-basic type required for an arithmetic binary operation");
+				s.ctx.addError("Non-basic type required for an arithmetic binary operation, got " ~ neededType.toString());
 			}
 		}
-  		checkTypes(s, neededType);
+		checkTypes(s, neededType);
 	}
 
 	private bool _isArithmetic() {
@@ -857,6 +870,8 @@ class AstNodeBlock : AstNode {
 
 	override void analyze(AnalyzerScope s, Type neededType) {
 		auto newScope = new AnalyzerScope(s.ctx, s);
+		newScope.returnType = s.returnType;
+
 		foreach(node; this.nodes) {
 			node.analyze(newScope, neededType);
 			if(newScope.hadReturn && !neededType.instanceof!TypeUnknown) {

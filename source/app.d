@@ -68,7 +68,7 @@ void main(string[] args)
 	else defines["_NDEBUG"] = new TList();
 	
 
-	writeln("------------------ Lexer -------------------");
+	// writeln("------------------ Lexer -------------------");
 	auto lexer = new Lexer(sourceFile, readText(sourceFile));
 	auto preproc = new Preprocessor(lexer.getTokens(), stdlibIncPath, defines);
 
@@ -83,6 +83,7 @@ void main(string[] args)
 
 	writeln("------------------ AST -------------------");
 	for(int i = 0; i < nodes.length; ++i) {
+		// writeln("Analyzing... #", i);
 		nodes[i].analyze(semaScope, null);
 		if(semaAn.errs.length > 0) {
 			semaAn.flushErrors();
