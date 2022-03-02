@@ -1,4 +1,4 @@
-module parser.gen;
+module parser.generator.gen;
 
 import llvm;
 import std.stdio : writeln;
@@ -73,18 +73,34 @@ class GArgs {
 	this() {}
 }
 
+class GFuncs {
+	private LLVMValueRef[string] funcs;
+
+	this() {}
+
+	void set(LLVMValueRef v, string n) {
+		funcs[n] = v;
+	}
+
+	LLVMValueRef opIndex(string index) {
+		return funcs[index];
+	}
+}
+
 class GenerationContext {
     LLVMModuleRef mod;
 	AtstTypeContext typecontext;
 	LLVMBuilderRef currbuilder;
 	GStack gstack;
 	GArgs gargs;
+	GFuncs gfuncs;
 
     this() {
-        mod = LLVMModuleCreateWithName(cast(const char*)"epl");
+        mod = LLVMModuleCreateWithName(toStringz("epl"));
 		typecontext = new AtstTypeContext();
 		gstack = new GStack();
 		gargs = new GArgs();
+		gfuncs = new GFuncs();
 
 		// Initialization
 		LLVMInitializeAllTargets();
@@ -93,10 +109,10 @@ class GenerationContext {
 		LLVMInitializeAllTargetInfos();
 		LLVMInitializeAllTargetMCs();
 
-		typecontext.types["int"] = new TypeBasic(BasicType.t_int);
-		typecontext.types["short"] = new TypeBasic(BasicType.t_short);
-		typecontext.types["char"] = new TypeBasic(BasicType.t_char);
-		typecontext.types["long"] = new TypeBasic(BasicType.t_long);
+		typecontext.setType("int",new TypeBasic(BasicType.t_int));
+		typecontext.setType("short",new TypeBasic(BasicType.t_short));
+		typecontext.setType("char",new TypeBasic(BasicType.t_char));
+		typecontext.setType("long",new TypeBasic(BasicType.t_long));
     }
 
 	string mangleQualifiedName(string[] parts, bool isFunction) {
@@ -120,6 +136,8 @@ class GenerationContext {
 					return LLVMInt8Type();
 				case BasicType.t_float:
 					return LLVMFloatType();
+				case BasicType.t_bool:
+					return LLVMInt1Type(); // Bool
 				default: return LLVMInt8Type();
 			}
 		}
@@ -134,168 +152,6 @@ class GenerationContext {
 			nodes[i].gen(this);
 		}
 		genTarget(file, debugMode);
-	}
-
-	LLVMValueRef createLocal(LLVMTypeRef type, LLVMValueRef val, string name) {
-		LLVMValueRef local = LLVMBuildAlloca(
-			currbuilder,
-			type,
-			toStringz(name)
-		);
-
-		if(val !is null) {
-			LLVMBuildStore(
-				currbuilder,
-				val,
-				local
-			);
-		}
-
-		gstack.addLocal(local,name);
-		return local;
-	}
-
-	LLVMValueRef createGlobal(LLVMTypeRef type, LLVMValueRef val, string name) {
-		LLVMValueRef global = LLVMAddGlobal(
-			mod,
-			type,
-			toStringz(name)
-		);
-		if(val !is null) LLVMSetInitializer(global,val);
-		gstack.addGlobal(global,name);
-		return global;
-	}
-
-	void setGlobal(LLVMValueRef value, string name) {
-		LLVMBuildStore(
-			currbuilder,
-			value,
-			gstack[name]
-		);
-	}
-
-	void setLocal(LLVMValueRef value, string name) {
-		auto tmp = LLVMBuildAlloca(
-			currbuilder,
-			LLVMGetAllocatedType(gstack[name]),
-			toStringz(name~"_setloc")
-		);
-
-		if(value !is null) LLVMBuildStore(
-			currbuilder,
-			value,
-			tmp
-		);
-
-		gstack.set(tmp,name);
-	}
-
-	LLVMValueRef getValueByPtr(string name) {
-		return LLVMBuildLoad(
-			currbuilder,
-			gstack[name],
-			toStringz(name~"_valbyptr")
-		);
-	}
-
-	LLVMValueRef getVarPtr(string name) {
-		return gstack[name];
-	}
-
-	LLVMValueRef operAdd(LLVMValueRef one, LLVMValueRef two, bool isreal) {
-		if(!isreal) return LLVMBuildAdd(
-			currbuilder,
-			one,
-			two,
-			toStringz("operaddi_result")
-		);
-
-		return LLVMBuildFAdd(
-			currbuilder,
-			one,
-			two,
-			toStringz("operaddf_result")
-		);
-	}
-
-	LLVMValueRef operSub(LLVMValueRef one, LLVMValueRef two, bool isreal) {
-		if(!isreal) return LLVMBuildSub(
-			currbuilder,
-			one,
-			two,
-			toStringz("opersubi_result")
-		);
-
-		return LLVMBuildFSub(
-			currbuilder,
-			one,
-			two,
-			toStringz("opersubf_result")
-		);
-	}
-
-	LLVMValueRef operMul(LLVMValueRef one, LLVMValueRef two, bool isreal) {
-		if(!isreal) return LLVMBuildMul(
-			currbuilder,
-			one,
-			two,
-			toStringz("opermuli_result")
-		);
-
-		return LLVMBuildFSub(
-			currbuilder,
-			one,
-			two,
-			toStringz("opermulf_result")
-		);
-	}
-
-	LLVMValueRef operDiv(LLVMValueRef one, LLVMValueRef two) {
-		// TODO: Add a LLVMCast
-		return LLVMBuildFDiv(
-			currbuilder,
-			one,
-			two,
-			toStringz("operdivf_result")
-		);
-	}
-
-	LLVMValueRef castNum(LLVMValueRef tocast, LLVMTypeRef type, bool isreal) {
-		if(!isreal) return LLVMBuildZExt(
-			currbuilder,
-			tocast,
-			type,
-			toStringz("castNumI")
-		);
-
-		return LLVMBuildSExt(
-			currbuilder,
-			tocast,
-			type,
-			toStringz("castNumF")
-		);
-	}
-
-	LLVMValueRef ptrToInt(LLVMValueRef ptr, LLVMTypeRef type) {
-		return LLVMBuildPtrToInt(
-			currbuilder,
-			ptr,
-			type,
-			toStringz("ptrToint")
-		);
-	}
-
-	LLVMValueRef intToPtr(LLVMValueRef num, LLVMTypeRef type) {
-		return LLVMBuildIntToPtr(
-			currbuilder,
-			num,
-			type,
-			toStringz("intToptr")
-		);
-	}
-
-	LLVMTypeRef getAType(LLVMValueRef v) {
-		return LLVMGetAllocatedType(v);
 	}
 
 	void genTarget(string file,bool d) {

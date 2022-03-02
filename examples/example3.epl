@@ -1,7 +1,10 @@
-main: int {
-    a := 15;
-    b := 11;
-    c: int = a | b;
+a := 0;
 
+func: void {
+    a = a + 2;
+}
+
+main: int {
+    func();
     ret a;
 }

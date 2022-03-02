@@ -9,7 +9,7 @@ import parser.analyzer;
 import parser.mparser;
 import parser.ast;
 import parser.typesystem;
-import parser.gen, llvm;
+import parser.generator.gen, llvm;
 import std.getopt;
 
 void implementDefaultTypeContext(AtstTypeContext ctx) {
@@ -59,6 +59,10 @@ void main(string[] args)
 	defines["_OFILE"].insertBack(new Token(SourceLocation(0, 0, outputFile), '"' ~ outputFile ~ '"'));
 	defines["_PLATFORM"] = new TList();
 	defines["_PLATFORM"].insertBack(new Token(SourceLocation(0,0,""),"\""~outputType~"\""));
+	defines["true"] = new TList();
+	defines["true"].insertBack(new Token(SourceLocation(0,0,""),"1"));
+	defines["false"] = new TList();
+	defines["false"].insertBack(new Token(SourceLocation(0,0,""),"0"));
 
 	if(debugMode) defines["_DEBUG"] = new TList();
 	else defines["_NDEBUG"] = new TList();

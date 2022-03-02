@@ -54,6 +54,7 @@ enum BasicType {
     t_usize,
     t_uchar,
     t_float,
+    t_bool
 }
 
 size_t basicTypeSizeOf(BasicType t) {
@@ -70,6 +71,7 @@ size_t basicTypeSizeOf(BasicType t) {
     case BasicType.t_usize  : return 64 / 8;
     case BasicType.t_uchar  : return 8 / 8;
     case BasicType.t_float  : return 32 / 8;
+    case BasicType.t_bool   : return 1;
     default: return 0;
     }
 }

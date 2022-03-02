@@ -4,7 +4,7 @@ import std.stdio, std.conv;
 import std.array : join;
 import std.algorithm.iteration : map;
 import std.algorithm : canFind;
-import parser.gen, lexer.tokens;
+import parser.generator.gen, lexer.tokens;
 import llvm;
 import std.conv : to;
 import core.stdc.stdlib : exit;
@@ -13,11 +13,16 @@ import parser.util;
 import parser.analyzer;
 import std.string;
 import core.stdc.stdlib : malloc;
+import parser.generator.llvm_abs;
 
 /// We have two separate syntax trees: for types and for values.
 
 class AtstTypeContext {
 	Type[string] types;
+
+	this() {
+		types["bool"] = new TypeBasic(BasicType.t_bool);
+	}
 
 	void setType(string name, Type type) {
 		if(name in types) {
@@ -350,18 +355,25 @@ class AstNodeFunction : AstNode {
 		    ret_type
 	    );
 
-		LLVMBasicBlockRef entry = LLVMAppendBasicBlock(func,cast(const char*)"entry");
-		LLVMPositionBuilderAtEnd(builder, entry);
+		ctx.gfuncs.set(func,decl.name);
 
-		ctx.currbuilder = builder;
-		for(int i=0; i<f_body.nodes.length; i++) {
-			f_body.nodes[i].gen(ctx);
+		if(!decl.isExtern) {
+			LLVMBasicBlockRef entry = LLVMAppendBasicBlock(func,cast(const char*)"entry");
+			LLVMPositionBuilderAtEnd(builder, entry);
+
+			ctx.currbuilder = builder;
+			for(int i=0; i<f_body.nodes.length; i++) {
+				f_body.nodes[i].gen(ctx);
+			}
+			ctx.currbuilder = null;
+			ctx.gstack.clean();
 		}
-		ctx.currbuilder = null;
-		ctx.gstack.clean();
+		else {
+			LLVMSetLinkage(func, LLVMExternalLinkage);
+		}
 
 		LLVMVerifyFunction(func, 0);
-
+		
 		return func;
 	}
 
@@ -633,11 +645,16 @@ class AstNodeBinary : AstNode {
   			this.valueType = neededType;
 		}
 		else {
-			writeln("Bad binary operator types: expected '"
-				~ neededType.toString() ~ "' but got '"
-				~ lhs.getType(s).toString() ~ "' and '"
-				~ rhs.getType(s).toString() ~ "'.");
-			exit(-1);
+			if(rhs.classinfo.name == "parser.ast.AstNodeFuncCall") {
+				this.valueType = neededType;
+			}
+			else {
+				writeln("Bad binary operator types: expected '"
+					~ neededType.toString() ~ "' but got '"
+					~ lhs.getType(s).toString() ~ "' and '"
+					~ rhs.getType(s).toString() ~ "'.");
+				exit(-1);
+			}
 		}
 	}
 
@@ -774,8 +791,10 @@ class AstNodeBlock : AstNode {
 			node.analyze(newScope, neededType);
 			if(newScope.hadReturn && !neededType.instanceof!TypeUnknown) {
 				if(!neededType.assignable(newScope.returnType)) {
-					s.ctx.addError("Wrong return type: expected '" ~ neededType.toString()
+					if(newScope.returnType.toString() != "?unknown") {
+						s.ctx.addError("Wrong return type: expected '" ~ neededType.toString()
 						~ "', got: '" ~ newScope.returnType.toString() ~ '\'');
+					}
 				}
 				break;
 			}
@@ -1035,9 +1054,10 @@ class AstNodeFuncCall : AstNode {
 
 	override LLVMValueRef gen(GenerationContext ctx) {
 		// _EPLf4exit, not exit! ctx.mangleQualifiedName([name], true) -> string
+		AstNodeIden n = cast(AstNodeIden)func;
 		return LLVMBuildCall(
 			ctx.currbuilder,
-			func.gen(ctx),
+			ctx.gfuncs[n.name],
 			null,
 			0,
 			toStringz("call")
@@ -1121,6 +1141,8 @@ class AstNodeInt : AstNode {
 		TypeBasic type = cast(TypeBasic)getType(null);
 
 		switch(type.basic) {
+			case BasicType.t_bool:
+				return LLVMConstInt(LLVMInt1Type(),value,false);
 			case BasicType.t_char:
 				return LLVMConstInt(LLVMInt8Type(),value,true);
 			case BasicType.t_uchar:
