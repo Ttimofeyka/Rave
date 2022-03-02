@@ -9,7 +9,7 @@ EPL - is a compiled, procedural and statically typed high-level systems programm
 @inc "std";
 
 main: int {
-  write("Hello, world!\n");
+  writeln("Hello, world!");
   ret 0;
 }
 ```
@@ -23,7 +23,7 @@ main: int {
 
 ## Building/Running
 
-Copy `base.dub.json` to `dub.json` and change the flags. Then run `dub run -- <filename>`
+Copy `base.dub.json` to `dub.json` and change the flags. Then run `dub build`
 
 ## Goals
 
