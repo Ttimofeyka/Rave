@@ -1,5 +1,13 @@
 @inc "std/str"
 
+@def  stdin_fd 0;
+@def stdout_fd 1;
+@def stderr_fd 2;
+
+extern stdin: StdFile*;
+extern stdout: StdFile*;
+extern stderr: StdFile*;
+
 struct StdFile {
     __fd: ulong;
 
@@ -23,11 +31,3 @@ struct StdFile {
         this->write(&s, StdString.lengthOf(s));
     }
 }
-
-@def  stdin_fd 0;
-@def stdout_fd 1;
-@def stderr_fd 2;
-
-extern stdin: StdFile*;
-extern stdout: StdFile*;
-extern stderr: StdFile*;
