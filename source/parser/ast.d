@@ -761,11 +761,9 @@ class AstNodeIf : AstNode {
 		LLVMBasicBlockRef _else;
 		LLVMBasicBlockRef _next;
 
-		LLVMValueRef fn = ctx.gfuncs[parent.decl.name];
-
-		_then = LLVMAppendBasicBlock(fn,toStringz("then"));
-		_else = LLVMAppendBasicBlock(fn,toStringz("else"));
-		_next = LLVMAppendBasicBlock(fn,toStringz("next"));
+		_then = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name],toStringz("then"));
+		_else = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name],toStringz("else"));
+		_next = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name],toStringz("next"));
 
 		LLVMBuildCondBr(
 			ctx.currbuilder,
