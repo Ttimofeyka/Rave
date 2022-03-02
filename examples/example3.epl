@@ -3,5 +3,6 @@ a := 0;
 func: int => a+2;
 
 main: int {
+    if(a == a) {ret 0;}
     ret func();
 }

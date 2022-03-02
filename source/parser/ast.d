@@ -630,6 +630,36 @@ class AstNodeBinary : AstNode {
 					);
 				}
 				return bit_result;
+			case TokType.tok_equal:
+				LLVMTypeRef equal_type;
+				LLVMValueRef lhsgen;
+				if(lhs.instanceof!(AstNodeIden)) {
+					lhsgen = lhs.gen(ctx);
+					AstNodeIden iden = cast(AstNodeIden)lhs;
+					if(ctx.gstack.isGlobal(iden.name)) {
+						equal_type = getVarType(ctx,iden.name);
+					}
+					else equal_type = getAType(lhsgen);
+				}
+				else if(lhs.instanceof!(AstNodeInt)) {
+					lhsgen = lhs.gen(ctx);
+					AstNodeInt nint = cast(AstNodeInt)lhs;
+					equal_type = ctx.getLLVMType(nint.valueType);
+				}
+				else {
+					lhsgen = lhs.gen(ctx);
+					equal_type = getAType(lhsgen);
+				}
+				
+				//if(ctx.isIntType(equal_type)) {
+					return LLVMBuildICmp(
+						ctx.currbuilder,
+						LLVMIntNE,
+						lhsgen,
+						rhs.gen(ctx),
+						toStringz("icmp")
+					);
+				//}
 			default:
 				break;
 		}
@@ -714,6 +744,7 @@ class AstNodeIf : AstNode {
 	AstNode cond;
 	AstNode body_;
 	AstNode else_;
+	AstNodeFunction parent;
 
 	this(AstNode cond, AstNode body_, AstNode else_) {
 		this.cond = cond;
@@ -721,9 +752,50 @@ class AstNodeIf : AstNode {
 		this.else_ = else_;
 	}
 
+	override void analyze(AnalyzerScope s, Type neededType) {
+		this.parent = s.ctx.currentFunc;
+	}
+
 	override LLVMValueRef gen(GenerationContext ctx) {
-		LLVMValueRef a;
-		return a;
+		LLVMBasicBlockRef _then;
+		LLVMBasicBlockRef _else;
+		LLVMBasicBlockRef _next;
+
+		LLVMValueRef fn = ctx.gfuncs[parent.decl.name];
+
+		_then = LLVMAppendBasicBlock(fn,toStringz("then"));
+		_else = LLVMAppendBasicBlock(fn,toStringz("else"));
+		_next = LLVMAppendBasicBlock(fn,toStringz("next"));
+
+		LLVMBuildCondBr(
+			ctx.currbuilder,
+			cond.gen(ctx),
+			_then,
+			_else
+		);
+
+		LLVMPositionBuilderAtEnd(ctx.currbuilder,_then);
+
+		if(body_.instanceof!(AstNodeBlock)) {
+			AstNodeBlock block = cast(AstNodeBlock)body_;
+			for(int i=0; i<block.nodes.length; i++) {
+				block.nodes[i].gen(ctx);
+			}
+		}
+		LLVMBuildBr(ctx.currbuilder,_next);
+
+		LLVMPositionBuilderAtEnd(ctx.currbuilder,_else);
+		if(else_.instanceof!(AstNodeBlock)) {
+			AstNodeBlock block = cast(AstNodeBlock)else_;
+			for(int i=0; i<block.nodes.length; i++) {
+				block.nodes[i].gen(ctx);
+			}
+		}
+		LLVMBuildBr(ctx.currbuilder,_next);
+
+		LLVMPositionBuilderAtEnd(ctx.currbuilder,_next);
+
+		return null;
 	}
 	
 	debug {
@@ -1138,7 +1210,9 @@ class AstNodeInt : AstNode {
 	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
-		TypeBasic type = cast(TypeBasic)getType(null);
+		TypeBasic type = cast(TypeBasic)valueType;
+
+		if(type is null) type = new TypeBasic(BasicType.t_int);
 
 		switch(type.basic) {
 			case BasicType.t_bool:

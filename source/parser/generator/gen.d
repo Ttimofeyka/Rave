@@ -147,6 +147,11 @@ class GenerationContext {
 		return LLVMInt32Type();
 	}
 
+	bool isIntType(LLVMTypeRef t) {
+		return (t==LLVMInt1Type())||(t==LLVMInt8Type())
+			 ||(t==LLVMInt16Type())||(t==LLVMInt32Type());
+	}
+
     void gen(AstNode[] nodes, string file, bool debugMode) {
 		for(int i=0; i<nodes.length; i++) {
 			nodes[i].gen(this);
@@ -155,8 +160,7 @@ class GenerationContext {
 	}
 
 	void genTarget(string file,bool d) {
-		if(d) 
-			LLVMWriteBitcodeToFile(this.mod,cast(const char*)(file~".be"));
+		if(d) LLVMWriteBitcodeToFile(this.mod,cast(const char*)(file~".be"));
 
 		char* errors;
 		LLVMTargetRef target;
