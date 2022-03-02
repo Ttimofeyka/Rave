@@ -672,8 +672,6 @@ class AstNodeBinary : AstNode {
 	}
 
 	private void checkTypes(AnalyzerScope s, Type neededType) {
-		lhs.analyze(s, neededType);
-		rhs.analyze(s, neededType);
 
 		if(!neededType.instanceof!TypeUnknown) {
 			if(neededType.assignable(lhs.getType(s))
@@ -699,12 +697,18 @@ class AstNodeBinary : AstNode {
 	}
 
 	override void analyze(AnalyzerScope s, Type neededType) {
+		lhs.analyze(s, neededType);
+		rhs.analyze(s, neededType);
+		
 		if(neededType.instanceof!TypeUnknown)
 			neededType = lhs.getType(s); // TODO: Find best suitable type!
+		// if(neededType.instanceof!TypeUnknown)
+		// 	neededType = rhs.getType(s); // TODO: Find best suitable type!
 			
 		if(_isArithmetic()) {
 			if(!instanceof!TypeBasic(neededType)) {
-				s.ctx.addError("Non-basic type required for an arithmetic binary operation, got " ~ neededType.toString());
+				s.ctx.addError("Non-basic type " ~ neededType.toString() ~
+					" was required for an arithmetic binary operation by the outer scope.");
 			}
 		}
 		checkTypes(s, neededType);
@@ -992,9 +996,17 @@ class AstNodeIden : AstNode {
 
 	override Type getType(AnalyzerScope s) {
 		auto t = s.get(name);
+		if(t is null) {
+			s.ctx.addError("No such variable or function binding: '" ~ name ~ "'");
+			return new TypeBasic(BasicType.t_int);
+		}
+
 		if(auto v = t.instanceof!VariableSignatureTypes)
 			return v.type;
 		
+		if(auto v = t.instanceof!FunctionSignatureTypes)
+			return v.ret;
+
 		assert(0);
 	}
 

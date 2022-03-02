@@ -92,9 +92,15 @@ void main(string[] args)
 		nodes[i].debugPrint(0);
 	}
 
-	writeln("------------------ Generating -------------------");
+	if(semaAn.errs.length == 0) {
+		writeln("------------------ Generating -------------------");
 
-	auto ctx = new GenerationContext();
-    ctx.typecontext = typeContext;
-	ctx.gen(nodes, outputFile, debugMode);
+		auto ctx = new GenerationContext();
+		ctx.typecontext = typeContext;
+		ctx.gen(nodes, outputFile, debugMode);
+	}
+	else {
+		writeln("Failed with ", semaAn.errs.length, " error(s).");
+		exit(1);
+	}
 }
