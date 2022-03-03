@@ -1,0 +1,20 @@
+
+no_args0 { }
+no_args1: { }
+no_args2: int { }
+
+empty_args0() { }
+empty_args1(): { }
+empty_args2(): int { }
+
+a1_args0(a: int) { }
+a1_args1(a: int): { }
+a1_args2(a: int): int { }
+
+a2_args0(a: int, b: int) { }
+a2_args1(a: int, b: int): { }
+a2_args2(a: int, b: int): int { }
+
+a3_args0(a: int, b: int, c: int) { }
+a3_args1(a: int, b: int, c: int): { }
+a3_args2(a: int, b: int, c: int): int { }

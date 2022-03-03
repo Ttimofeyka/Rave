@@ -44,7 +44,7 @@ class AtstTypeContext {
 
 // Abstract type syntax tree node.
 class AtstNode {
-	Type get(AtstTypeContext _ctx) { return new Type(); }
+	Type get(AnalyzerScope _ctx) { return new Type(); }
 
 	debug {
 		override string toString() const {
@@ -54,7 +54,7 @@ class AtstNode {
 }
 
 class AtstNodeVoid : AtstNode {
-	override Type get(AtstTypeContext ctx) { return new TypeVoid(); }
+	override Type get(AnalyzerScope ctx) { return new TypeVoid(); }
 
 	debug {
 		override string toString() const {
@@ -65,7 +65,7 @@ class AtstNodeVoid : AtstNode {
 
 // For inference
 class AtstNodeUnknown : AtstNode {
-	override Type get(AtstTypeContext ctx) { return new TypeUnknown(); }
+	override Type get(AnalyzerScope ctx) { return new TypeUnknown(); }
 	
 	debug {
 		override string toString() const {
@@ -80,7 +80,7 @@ class AtstNodeName : AtstNode {
 		this.name = name;
 	}
 
-	override Type get(AtstTypeContext ctx) { return ctx.getType(name); }
+	override Type get(AnalyzerScope ctx) { return ctx.getType(name); }
 
 	debug {
 		override string toString() const {
@@ -96,7 +96,7 @@ class AtstNodePointer : AtstNode {
 		this.node = node;
 	}
 
-	override Type get(AtstTypeContext ctx) { return new TypePointer(node.get(ctx)); }
+	override Type get(AnalyzerScope ctx) { return new TypePointer(node.get(ctx)); }
 
 	debug {
 		override string toString() const {
@@ -112,7 +112,7 @@ class AtstNodeConst : AtstNode {
 		this.node = node;
 	}
 
-	override Type get(AtstTypeContext ctx) { return new TypeConst(node.get(ctx)); }
+	override Type get(AnalyzerScope ctx) { return new TypeConst(node.get(ctx)); }
 
 	debug {
 		override string toString() const {
@@ -130,7 +130,7 @@ class AtstNodeArray : AtstNode {
 		this.count = count;
 	}
 
-	override Type get(AtstTypeContext ctx) { /* TODO */ return null; }
+	override Type get(AnalyzerScope ctx) { /* TODO */ return null; }
 
 	debug {
 		override string toString() const {
@@ -320,10 +320,10 @@ class AstNodeFunction : AstNode {
 	override void analyze(AnalyzerScope s, Type) {
 		auto lastCurrentFunc = s.ctx.currentFunc;
 		s.ctx.currentFunc = this;
-		s.returnType = this.decl.signature.ret.get(s.ctx.typeContext);
+		s.returnType = this.decl.signature.ret.get(s);
 
-		this.body_.analyze(s, this.decl.signature.ret.get(s.ctx.typeContext));
-		Type[] argTypes = array(map!((a) => a.get(s.ctx.typeContext))(this.decl.signature.args));
+		this.body_.analyze(s, this.decl.signature.ret.get(s));
+		Type[] argTypes = array(map!((a) => a.get(s))(this.decl.signature.args));
 		actualDecl = new FunctionSignatureTypes(s.returnType, argTypes);
 
 		s.ctx.currentFunc = lastCurrentFunc;
@@ -340,7 +340,8 @@ class AstNodeFunction : AstNode {
 		return param_types;
 	}
 
-	override LLVMValueRef gen(GenerationContext ctx) {
+	override LLVMValueRef gen(AnalyzerScope s) {
+		auto ctx = s.genctx;
 		builder = LLVMCreateBuilder();
 
 		AstNodeBlock f_body = cast(AstNodeBlock)body_;
@@ -369,7 +370,7 @@ class AstNodeFunction : AstNode {
 				f_body.nodes[i].gen(ctx);
 			}
 
-			if(decl.signature.ret.get(ctx.typecontext).instanceof!(TypeVoid)) {
+			if(decl.signature.ret.get(ctx).instanceof!(TypeVoid)) {
 				LLVMBuildRetVoid(ctx.currbuilder);
 			}
 

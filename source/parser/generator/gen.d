@@ -4,6 +4,7 @@ import llvm;
 import std.stdio : writeln;
 import core.stdc.stdlib : exit;
 import parser.typesystem, parser.util;
+import parser.analyzer;
 import parser.ast;
 import std.conv : to;
 import std.range;
@@ -89,7 +90,7 @@ class GFuncs {
 
 class GenerationContext {
     LLVMModuleRef mod;
-	AtstTypeContext typecontext;
+	SemanticAnalyzerContext sema;
 	LLVMBuilderRef currbuilder;
 	GStack gstack;
 	GArgs gargs;
@@ -97,7 +98,7 @@ class GenerationContext {
 
     this() {
         mod = LLVMModuleCreateWithName(toStringz("epl"));
-		typecontext = new AtstTypeContext();
+		sema = new SemanticAnalyzerContext(new AtstTypeContext());
 		gstack = new GStack();
 		gargs = new GArgs();
 		gfuncs = new GFuncs();
@@ -108,12 +109,6 @@ class GenerationContext {
 		LLVMInitializeAllAsmPrinters();
 		LLVMInitializeAllTargetInfos();
 		LLVMInitializeAllTargetMCs();
-
-		typecontext.setType("int",new TypeBasic(BasicType.t_int));
-		typecontext.setType("short",new TypeBasic(BasicType.t_short));
-		typecontext.setType("char",new TypeBasic(BasicType.t_char));
-		typecontext.setType("long",new TypeBasic(BasicType.t_long));
-		typecontext.setType("void",new TypeVoid());
     }
 
 	string mangleQualifiedName(string[] parts, bool isFunction) {
