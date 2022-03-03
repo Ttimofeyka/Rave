@@ -1,15 +1,11 @@
 // extern a(): int;
 // extern b: int;
 
-g(arg: int): int { ret 4 + 3; }
-f(arg: int): void {}
+z: int = 0;
+
+f: void {z = 5;}
 
 main(arg: int): int {
-	a := 2;
-	b := 3;
-	a = a + b;
-	c := g(a) + f(b);
-	f(a);
-
-	ret a;
+	f();
+	ret z;
 }

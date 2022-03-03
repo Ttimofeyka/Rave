@@ -361,13 +361,18 @@ class AstNodeFunction : AstNode {
 		ctx.gfuncs.set(func,decl.name);
 
 		if(!decl.isExtern) {
-			LLVMBasicBlockRef entry = LLVMAppendBasicBlock(func,cast(const char*)"entry");
+			LLVMBasicBlockRef entry = LLVMAppendBasicBlock(func,toStringz("entry"));
 			LLVMPositionBuilderAtEnd(builder, entry);
 
 			ctx.currbuilder = builder;
 			for(int i=0; i<f_body.nodes.length; i++) {
 				f_body.nodes[i].gen(ctx);
 			}
+
+			if(decl.signature.ret.get(ctx.typecontext).instanceof!(TypeVoid)) {
+				LLVMBuildRetVoid(ctx.currbuilder);
+			}
+
 			ctx.currbuilder = null;
 			ctx.gstack.clean();
 		}

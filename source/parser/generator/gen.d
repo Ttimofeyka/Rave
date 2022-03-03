@@ -113,6 +113,7 @@ class GenerationContext {
 		typecontext.setType("short",new TypeBasic(BasicType.t_short));
 		typecontext.setType("char",new TypeBasic(BasicType.t_char));
 		typecontext.setType("long",new TypeBasic(BasicType.t_long));
+		typecontext.setType("void",new TypeVoid());
     }
 
 	string mangleQualifiedName(string[] parts, bool isFunction) {
