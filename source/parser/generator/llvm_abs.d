@@ -176,3 +176,7 @@ LLVMTypeRef getVarType(GenerationContext ctx, string n) {
     }
     return getAType(ctx.gstack[n]);
 }
+
+LLVMValueRef retNull(GenerationContext ctx, LLVMTypeRef type) {
+	return LLVMBuildRet(ctx.currbuilder,LLVMConstNull(type));
+}

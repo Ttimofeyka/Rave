@@ -779,41 +779,40 @@ class AstNodeIf : AstNode {
 	}
 
 	override LLVMValueRef gen(GenerationContext ctx) {
-		LLVMBasicBlockRef _then;
-		LLVMBasicBlockRef _else;
-		LLVMBasicBlockRef _next;
+		LLVMBasicBlockRef thenbb;
+		LLVMBasicBlockRef elsebb;
+		LLVMBasicBlockRef endbb;
 
-		_then = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name],toStringz("then"));
-		_else = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name],toStringz("else"));
-		_next = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name],toStringz("next"));
+		thenbb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name],toStringz("then"));
+		elsebb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name],toStringz("else"));
+		endbb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name],toStringz("end"));
 
 		LLVMBuildCondBr(
 			ctx.currbuilder,
 			cond.gen(ctx),
-			_then,
-			_else
+			thenbb,
+			elsebb
 		);
+		
+		LLVMPositionBuilderAtEnd(ctx.currbuilder,thenbb);
 
-		LLVMPositionBuilderAtEnd(ctx.currbuilder,_then);
-
-		if(body_.instanceof!(AstNodeBlock)) {
-			AstNodeBlock block = cast(AstNodeBlock)body_;
-			for(int i=0; i<block.nodes.length; i++) {
-				block.nodes[i].gen(ctx);
+		if(body_ is null) retNull(ctx, LLVMInt32Type());
+		else {
+			if(body_.instanceof!(AstNodeBlock)) {
+				AstNodeBlock b = cast(AstNodeBlock)body_;
+				for(int i=0; i<b.nodes.length; i++) {
+					b.nodes[i].gen(ctx);
+				}
 			}
+			else body_.gen(ctx);
 		}
-		LLVMBuildBr(ctx.currbuilder,_next);
 
-		LLVMPositionBuilderAtEnd(ctx.currbuilder,_else);
-		if(else_.instanceof!(AstNodeBlock)) {
-			AstNodeBlock block = cast(AstNodeBlock)else_;
-			for(int i=0; i<block.nodes.length; i++) {
-				block.nodes[i].gen(ctx);
-			}
-		}
-		LLVMBuildBr(ctx.currbuilder,_next);
+		LLVMBuildBr(ctx.currbuilder,endbb);
 
-		LLVMPositionBuilderAtEnd(ctx.currbuilder,_next);
+		LLVMPositionBuilderAtEnd(ctx.currbuilder,elsebb);
+		LLVMBuildBr(ctx.currbuilder,endbb);
+
+		LLVMPositionBuilderAtEnd(ctx.currbuilder,endbb);
 
 		return null;
 	}
