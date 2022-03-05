@@ -340,8 +340,7 @@ class AstNodeFunction : AstNode {
 		return param_types;
 	}
 
-	override LLVMValueRef gen(AnalyzerScope s) {
-		auto ctx = s.genctx;
+	override LLVMValueRef gen(GenerationContext ctx) {
 		builder = LLVMCreateBuilder();
 
 		AstNodeBlock f_body = cast(AstNodeBlock)body_;
@@ -354,10 +353,10 @@ class AstNodeFunction : AstNode {
 	    );
 
 		LLVMValueRef func = LLVMAddFunction(
-		    ctx.mod,
-		   toStringz(ctx.mangleQualifiedName([decl.name], true)),
-		    ret_type
-	    );
+			ctx.mod,
+			toStringz(ctx.mangleQualifiedName([decl.name], true)),
+			ret_type
+		);
 
 		ctx.gfuncs.set(func,decl.name);
 

@@ -91,7 +91,7 @@ void main(string[] args)
 		nodes[i].debugPrint(0);
 	}
 
-	if(semaAn.errs.length == 0) {
+	if(genctx.sema.errs.length == 0) {
 		writeln("------------------ Generating -------------------");
 		genctx.gen(nodes, outputFile, debugMode);
 	}
