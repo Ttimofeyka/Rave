@@ -180,3 +180,21 @@ LLVMTypeRef getVarType(GenerationContext ctx, string n) {
 LLVMValueRef retNull(GenerationContext ctx, LLVMTypeRef type) {
 	return LLVMBuildRet(ctx.currbuilder,LLVMConstNull(type));
 }
+
+LLVMValueRef cmpNum(GenerationContext ctx, LLVMValueRef one, LLVMValueRef two, bool isreal) {
+	if(!isreal) return LLVMBuildICmp(
+		ctx.currbuilder,
+		LLVMIntEQ,
+		one,
+		two,
+		toStringz("cmpnum_i")
+	);
+
+	else return LLVMBuildFCmp(
+		ctx.currbuilder,
+		LLVMIntEQ,
+		one,
+		two,
+		toStringz("cmpnum_f")
+	);
+}
