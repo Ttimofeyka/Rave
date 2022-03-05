@@ -1,10 +1,4 @@
-a := 0;
-
-func: int => a+2;
-
-main: int {
-    if(a == 0) {
-        ret 0;
-    }
-    ret 5;
+main: bool {
+    a: bool = (5 == 5);
+    ret a;
 }
