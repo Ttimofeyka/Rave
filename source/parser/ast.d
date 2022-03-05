@@ -641,6 +641,7 @@ class AstNodeBinary : AstNode {
 				}
 				return bit_result;
 			case TokType.tok_equal:
+			case TokType.tok_nequal:
 				LLVMTypeRef equal_type;
 				LLVMValueRef lhsgen;
 				if(lhs.instanceof!(AstNodeIden)) {
@@ -662,12 +663,19 @@ class AstNodeBinary : AstNode {
 				}
 				
 				//if(ctx.isIntType(equal_type)) {
+					if(type == TokType.tok_equal) return LLVMBuildICmp(
+						ctx.currbuilder,
+						LLVMIntEQ,
+						lhsgen,
+						rhs.gen(ctx),
+						toStringz("icmp_eq")
+					);
 					return LLVMBuildICmp(
 						ctx.currbuilder,
 						LLVMIntNE,
 						lhsgen,
 						rhs.gen(ctx),
-						toStringz("icmp")
+						toStringz("icmp_ne")
 					);
 				//}
 			default:
@@ -837,15 +845,42 @@ class AstNodeIf : AstNode {
 class AstNodeWhile : AstNode {
 	AstNode cond;
 	AstNode body_;
+	AstNodeFunction parent;
 
 	this(AstNode cond, AstNode body_) {
 		this.cond = cond;
 		this.body_ = body_;
 	}
 
+	override void analyze(AnalyzerScope s, Type neededType) {
+		this.parent = s.ctx.currentFunc;
+	}
+
 	override LLVMValueRef gen(GenerationContext ctx) {
-		LLVMValueRef a;
-		return a;
+		LLVMBasicBlockRef _while;
+		LLVMBasicBlockRef _after;
+
+		_while = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name],toStringz("_while"));
+		_after = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name],toStringz("_after"));
+
+		LLVMValueRef cond_as_cmp = cond.gen(ctx);
+		LLVMBuildCondBr(ctx.currbuilder,cond_as_cmp,_while,_after);
+		
+		LLVMPositionBuilderAtEnd(ctx.currbuilder,_while);
+
+		if(body_.instanceof!(AstNodeBlock)) {
+			AstNodeBlock block = cast(AstNodeBlock)body_;
+			for(int i=0; i<block.nodes.length; i++) {
+				block.nodes[i].gen(ctx);
+			}
+		}
+		else body_.gen(ctx);
+
+		LLVMBuildCondBr(ctx.currbuilder,cond.gen(ctx),_while,_after);
+
+		LLVMPositionBuilderAtEnd(ctx.currbuilder,_after);
+
+		return null;
 	}
 
 	debug {
