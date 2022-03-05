@@ -2,6 +2,7 @@ module parser.analyzer;
 import std.stdio;
 import parser.ast;
 import parser.typesystem;
+import parser.generator.gen;
 import lexer.tokens : SourceLocation;
 
 struct AnalyzerError {
@@ -12,16 +13,18 @@ struct AnalyzerError {
 // class SemanticAnalyzerContext;
 
 class AnalyzerScope {
-	bool hadReturn = false;
+	bool hadReturn = false; 
 	Type returnType = null;
 
 	SignatureTypes[string] vars;
 	AnalyzerScope parent;
 
 	SemanticAnalyzerContext ctx;
+	GenerationContext genctx;
 
-	this(SemanticAnalyzerContext ctx, AnalyzerScope parent = null) {
+	this(SemanticAnalyzerContext ctx, GenerationContext genctx, AnalyzerScope parent = null) {
 		this.ctx = ctx;
+		this.genctx = genctx;
 		this.parent = parent;
 	}
 

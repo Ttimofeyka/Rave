@@ -340,7 +340,8 @@ class AstNodeFunction : AstNode {
 		return param_types;
 	}
 
-	override LLVMValueRef gen(GenerationContext ctx) {
+	override LLVMValueRef gen(AnalyzerScope s) {
+		auto ctx = s.genctx;
 		builder = LLVMCreateBuilder();
 
 		AstNodeBlock f_body = cast(AstNodeBlock)body_;
@@ -448,7 +449,7 @@ class AstNodeBinary : AstNode {
 		return valueType;
 	}
 
-	override LLVMValueRef gen(GenerationContext ctx) {
+	override LLVMValueRef gen(AnalyzerScope s) {
 		switch(type) {
 			case TokType.tok_equ:
 				AstNodeIden iden = cast(AstNodeIden)lhs;
@@ -755,7 +756,7 @@ class AstNodeUnary : AstNode {
 		this.type = type;
 	}
 
-	override LLVMValueRef gen(GenerationContext ctx) {
+	override LLVMValueRef gen(AnalyzerScope s) {
 		LLVMValueRef a;
 		return a;
 	}
@@ -786,7 +787,7 @@ class AstNodeIf : AstNode {
 		this.parent = s.ctx.currentFunc;
 	}
 
-	override LLVMValueRef gen(GenerationContext ctx) {
+	override LLVMValueRef gen(AnalyzerScope s) {
 		LLVMBasicBlockRef thenbb;
 		LLVMBasicBlockRef elsebb;
 		LLVMBasicBlockRef endbb;
@@ -856,7 +857,7 @@ class AstNodeWhile : AstNode {
 		this.parent = s.ctx.currentFunc;
 	}
 
-	override LLVMValueRef gen(GenerationContext ctx) {
+	override LLVMValueRef gen(AnalyzerScope s) {
 		LLVMBasicBlockRef _while;
 		LLVMBasicBlockRef _after;
 
@@ -898,7 +899,7 @@ class AstNodeWhile : AstNode {
 class AstNodeAsm : AstNode {
 	string value; // TODO
 
-	override LLVMValueRef gen(GenerationContext ctx) {
+	override LLVMValueRef gen(AnalyzerScope s) {
 		LLVMValueRef a;
 		return a;
 	}
@@ -930,7 +931,7 @@ class AstNodeBlock : AstNode {
 		s.returnType = newScope.returnType;
 	}
 
-	override LLVMValueRef gen(GenerationContext ctx) {
+	override LLVMValueRef gen(AnalyzerScope s) {
 		LLVMValueRef a;
 		return a;
 	}
@@ -962,7 +963,7 @@ class AstNodeReturn : AstNode {
 		s.returnType = this.value.getType(s);
 	}
 
-	override LLVMValueRef gen(GenerationContext ctx) {
+	override LLVMValueRef gen(AnalyzerScope s) {
 		LLVMValueRef retval = value.gen(ctx);
 	    LLVMBuildRet(ctx.currbuilder, retval);
 		return null;
@@ -986,7 +987,7 @@ class AstNodeIndex : AstNode {
 		this.index = index;
 	}
 
-	override LLVMValueRef gen(GenerationContext ctx) {
+	override LLVMValueRef gen(AnalyzerScope s) {
 		LLVMValueRef a;
 		return a;
 	}
@@ -1010,7 +1011,7 @@ class AstNodeIden : AstNode {
 		this.name = name;
 	}
 
-	override LLVMValueRef gen(GenerationContext ctx) {
+	override LLVMValueRef gen(AnalyzerScope s) {
 		// _EPLf4exit, not exit! ctx.mangleQualifiedName([name], true) -> string
 		// TODO: Check if the global variable is referring to a function
 		if(ctx.gstack.setVar) {
@@ -1088,7 +1089,7 @@ class AstNodeDecl : AstNode {
 		s.vars[decl.name] = new VariableSignatureTypes(actualType);
 	}
 
-	override LLVMValueRef gen(GenerationContext ctx) {
+	override LLVMValueRef gen(AnalyzerScope s) {
 		if(ctx.gstack.isVariable(decl.name)) {
 			writeln("The variable " ~ decl.name ~ " has been declared multiple times!");
 			exit(-1);
@@ -1130,7 +1131,7 @@ class AstNodeDecl : AstNode {
 class AstNodeLabel : AstNode {
 	string name;
 
-	override LLVMValueRef gen(GenerationContext ctx) {
+	override LLVMValueRef gen(AnalyzerScope s) {
 		LLVMValueRef a;
 		return a;
 	}
@@ -1146,7 +1147,7 @@ class AstNodeLabel : AstNode {
 class AstNodeBreak : AstNode {
 	string label; /* optional */
 
-	override LLVMValueRef gen(GenerationContext ctx) {
+	override LLVMValueRef gen(AnalyzerScope s) {
 		LLVMValueRef a;
 		return a;
 	}
@@ -1162,7 +1163,7 @@ class AstNodeBreak : AstNode {
 class AstNodeContinue : AstNode {
 	string label; /* optional */
 
-	override LLVMValueRef gen(GenerationContext ctx) {
+	override LLVMValueRef gen(AnalyzerScope s) {
 		LLVMValueRef a;
 		return a;
 	}
@@ -1188,7 +1189,7 @@ class AstNodeFuncCall : AstNode {
 		
 	}
 
-	override LLVMValueRef gen(GenerationContext ctx) {
+	override LLVMValueRef gen(AnalyzerScope s) {
 		// _EPLf4exit, not exit! ctx.mangleQualifiedName([name], true) -> string
 		AstNodeIden n = cast(AstNodeIden)func;
 		return LLVMBuildCall(
@@ -1273,7 +1274,7 @@ class AstNodeInt : AstNode {
 		}
 	}
 
-	override LLVMValueRef gen(GenerationContext ctx) {
+	override LLVMValueRef gen(AnalyzerScope s) {
 		TypeBasic type = cast(TypeBasic)valueType;
 
 		if(type is null) type = new TypeBasic(BasicType.t_int);
@@ -1322,7 +1323,7 @@ class AstNodeFloat : AstNode {
 
 	override void analyze(AnalyzerScope s, Type neededType) {}
 	
-	override LLVMValueRef gen(GenerationContext ctx) {
+	override LLVMValueRef gen(AnalyzerScope s) {
 		return LLVMConstReal(LLVMFloatType(),cast(double)value);
 	}
 
@@ -1345,7 +1346,7 @@ class AstNodeString : AstNode {
 
 	override void analyze(AnalyzerScope s, Type neededType) {}
 
-	override LLVMValueRef gen(GenerationContext ctx) {
+	override LLVMValueRef gen(AnalyzerScope s) {
 		return LLVMConstString(
 			cast(const char*)toStringz(value[0..$-1]),
 			cast(uint)value.length-1,
@@ -1370,7 +1371,7 @@ class AstNodeChar : AstNode {
 		return new TypeBasic(BasicType.t_char);
 	}
 
-	override LLVMValueRef gen(GenerationContext ctx) {
+	override LLVMValueRef gen(AnalyzerScope s) {
 		return LLVMConstInt(LLVMInt8Type(),value,false);
 	}
 
