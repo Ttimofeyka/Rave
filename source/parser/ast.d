@@ -167,7 +167,7 @@ struct TypecheckResult {
 // Abstract syntax tree Node.
 class AstNode {
 
-	LLVMValueRef gen(GenerationContext ctx) {
+	LLVMValueRef gen(AnalyzerScope s) {
 		LLVMValueRef a;
 		return a;
 	}
@@ -453,78 +453,78 @@ class AstNodeBinary : AstNode {
 		switch(type) {
 			case TokType.tok_equ:
 				AstNodeIden iden = cast(AstNodeIden)lhs;
-				if(ctx.gstack.isLocal(iden.name)) {
-					ctx.setLocal(rhs.gen(ctx),iden.name);
-					return ctx.getVarPtr(iden.name);
+				if(s.genctx.gstack.isLocal(iden.name)) {
+					s.genctx.setLocal(rhs.gen(s),iden.name);
+					return s.genctx.getVarPtr(iden.name);
 				}
 				else {
 					return LLVMBuildStore(
-						ctx.currbuilder,
-						rhs.gen(ctx),
-						ctx.gstack[iden.name]
+						s.genctx.currbuilder,
+						rhs.gen(s),
+						s.genctx.gstack[iden.name]
 					);
 				}
 			case TokType.tok_shortplu:
 			case TokType.tok_shortmin:
 			case TokType.tok_shortmul:
 				AstNodeIden iden = cast(AstNodeIden)lhs;
-				if(ctx.gstack.isLocal(iden.name)) {
+				if(s.genctx.gstack.isLocal(iden.name)) {
 					auto tmpval = LLVMBuildAlloca(
-						ctx.currbuilder,
-						LLVMGetAllocatedType(ctx.gstack[iden.name]),
+						s.genctx.currbuilder,
+						LLVMGetAllocatedType(s.genctx.gstack[iden.name]),
 						toStringz(iden.name)
 					);
 
 					LLVMValueRef tmp;
 					if(type == TokType.tok_shortplu) {
 						tmp = LLVMBuildAdd(
-							ctx.currbuilder,
-							lhs.gen(ctx),
-							rhs.gen(ctx),
+							s.genctx.currbuilder,
+							lhs.gen(s),
+							rhs.gen(s),
 							toStringz("tmp")
 						);
 					}
 					else if (type == TokType.tok_shortmin) {
 						tmp = LLVMBuildSub(
-							ctx.currbuilder,
-							lhs.gen(ctx),
-							rhs.gen(ctx),
+							s.genctx.currbuilder,
+							lhs.gen(s),
+							rhs.gen(s),
 							toStringz("tmp")
 						);
 					}
 					else if (type == TokType.tok_shortmul) {
 						tmp = LLVMBuildMul(
-							ctx.currbuilder,
-							lhs.gen(ctx),
-							rhs.gen(ctx),
+							s.genctx.currbuilder,
+							lhs.gen(s),
+							rhs.gen(s),
 							toStringz("tmp")
 						);
 					}
 					
 					LLVMBuildStore(
-						ctx.currbuilder,
+						s.genctx.currbuilder,
 						tmp,
 						tmpval
 					);
 
-					ctx.gstack.set(tmpval,iden.name);
-					return ctx.gstack[iden.name];
+					s.genctx.gstack.set(tmpval,iden.name);
+					return s.genctx.gstack[iden.name];
 				}
 				else {
 					LLVMValueRef tmp;
 					if(type == TokType.tok_shortplu) {
 						tmp = LLVMBuildAdd(
-							ctx.currbuilder,
-							ctx.gstack[iden.name],
-							rhs.gen(ctx),
+							s.genctx.currbuilder,
+							s.genctx.gstack[iden.name],
+							rhs.gen(s),
 							toStringz("tmp")
 						);
 					}
 					else if(type == TokType.tok_shortmin) {
 						tmp = LLVMBuildSub(
-							ctx.currbuilder,
-							ctx.gstack[iden.name],
-							rhs.gen(ctx),
+							s.genctx.currbuilder,
+							s.genctx.gstack[iden.name],
+							rhs.gen(s),
 							toStringz("tmp")
 						);
 					}
@@ -535,61 +535,61 @@ class AstNodeBinary : AstNode {
 							rhs.gen(ctx),
 							toStringz("tmp")
 						);*/
-						tmp = ctx.operMul(
-							ctx.gstack[iden.name],
-							rhs.gen(ctx),
+						tmp = s.genctx.operMul(
+							s.genctx.gstack[iden.name],
+							rhs.gen(s),
 							false 
 						);
 					}
 
 					LLVMBuildStore(
-						ctx.currbuilder,
+						s.genctx.currbuilder,
 						tmp,
-						ctx.gstack[iden.name]
+						s.genctx.gstack[iden.name]
 					);
-					return ctx.gstack[iden.name];
+					return s.genctx.gstack[iden.name];
 				}
 				assert(0);
 			case TokType.tok_plus:
 			case TokType.tok_minus:
 			case TokType.tok_multiply:
 				auto result = LLVMBuildAlloca(
-					ctx.currbuilder,
+					s.genctx.currbuilder,
 					LLVMInt32Type(),
 					toStringz("result")
 				);
 				LLVMValueRef operation;
 				if(type == TokType.tok_plus) {
 					operation = LLVMBuildAdd(
-						ctx.currbuilder,
-						lhs.gen(ctx),
-						rhs.gen(ctx),
+						s.genctx.currbuilder,
+						lhs.gen(s),
+						rhs.gen(s),
 						toStringz("operation")
 					);
 				}
 				else if(type == TokType.tok_minus) {
 					operation = LLVMBuildSub(
-						ctx.currbuilder,
-						lhs.gen(ctx),
-						rhs.gen(ctx),
+						s.genctx.currbuilder,
+						lhs.gen(s),
+						rhs.gen(s),
 						toStringz("operation")
 					);
 				}
 				else if(type == TokType.tok_multiply) {
 					operation = LLVMBuildMul(
-						ctx.currbuilder,
-						lhs.gen(ctx),
-						rhs.gen(ctx),
+						s.genctx.currbuilder,
+						lhs.gen(s),
+						rhs.gen(s),
 						toStringz("operation")
 					);
 				}
 				LLVMBuildStore(
-					ctx.currbuilder,
+					s.genctx.currbuilder,
 					operation,
 					result
 				);
 				auto loaded_result = LLVMBuildLoad(
-					ctx.currbuilder,
+					s.genctx.currbuilder,
 					result,
 					toStringz("r_loaded")
 				);
@@ -602,41 +602,41 @@ class AstNodeBinary : AstNode {
 				LLVMValueRef bit_result;
 				if(type == TokType.tok_bit_ls) {
 					bit_result = LLVMBuildShl(
-						ctx.currbuilder,
-						lhs.gen(ctx),
-						rhs.gen(ctx),
+						s.genctx.currbuilder,
+						lhs.gen(s),
+						rhs.gen(s),
 						toStringz("bit_ls")
 					);
 				}
 				else if(type == TokType.tok_bit_rs)  {
 					bit_result = LLVMBuildAShr(
-						ctx.currbuilder,
-						lhs.gen(ctx),
-						rhs.gen(ctx),
+						s.genctx.currbuilder,
+						lhs.gen(s),
+						rhs.gen(s),
 						toStringz("bit_rs")
 					);
 				}
 				else if(type == TokType.tok_bit_and) {
 					bit_result = LLVMBuildAnd(
-						ctx.currbuilder,
-						lhs.gen(ctx),
-						rhs.gen(ctx),
+						s.genctx.currbuilder,
+						lhs.gen(s),
+						rhs.gen(s),
 						toStringz("bit_and")
 					);
 				}
 				else if(type == TokType.tok_bit_or) {
 					bit_result = LLVMBuildOr(
-						ctx.currbuilder,
-						lhs.gen(ctx),
-						rhs.gen(ctx),
+						s.genctx.currbuilder,
+						lhs.gen(s),
+						rhs.gen(s),
 						toStringz("bit_or")
 					);
 				}
 				else if(type == TokType.tok_bit_xor) {
 					bit_result = LLVMBuildXor(
-						ctx.currbuilder,
-						lhs.gen(ctx),
-						rhs.gen(ctx),
+						s.genctx.currbuilder,
+						lhs.gen(s),
+						rhs.gen(s),
 						toStringz("bit_xor")
 					);
 				}
@@ -646,36 +646,36 @@ class AstNodeBinary : AstNode {
 				LLVMTypeRef equal_type;
 				LLVMValueRef lhsgen;
 				if(lhs.instanceof!(AstNodeIden)) {
-					lhsgen = lhs.gen(ctx);
+					lhsgen = lhs.gen(s);
 					AstNodeIden iden = cast(AstNodeIden)lhs;
-					if(ctx.gstack.isGlobal(iden.name)) {
-						equal_type = getVarType(ctx,iden.name);
+					if(s.genctx.gstack.isGlobal(iden.name)) {
+						equal_type = getVarType(s.genctx,iden.name);
 					}
 					else equal_type = getAType(lhsgen);
 				}
 				else if(lhs.instanceof!(AstNodeInt)) {
-					lhsgen = lhs.gen(ctx);
+					lhsgen = lhs.gen(s);
 					AstNodeInt nint = cast(AstNodeInt)lhs;
-					equal_type = ctx.getLLVMType(nint.valueType);
+					equal_type = s.genctx.getLLVMType(nint.valueType);
 				}
 				else {
-					lhsgen = lhs.gen(ctx);
+					lhsgen = lhs.gen(s);
 					equal_type = getAType(lhsgen);
 				}
 				
 				//if(ctx.isIntType(equal_type)) {
 					if(type == TokType.tok_equal) return LLVMBuildICmp(
-						ctx.currbuilder,
+						s.genctx.currbuilder,
 						LLVMIntEQ,
 						lhsgen,
-						rhs.gen(ctx),
+						rhs.gen(s),
 						toStringz("icmp_eq")
 					);
 					return LLVMBuildICmp(
-						ctx.currbuilder,
+						s.genctx.currbuilder,
 						LLVMIntNE,
 						lhsgen,
-						rhs.gen(ctx),
+						rhs.gen(s),
 						toStringz("icmp_ne")
 					);
 				//}
@@ -792,36 +792,36 @@ class AstNodeIf : AstNode {
 		LLVMBasicBlockRef elsebb;
 		LLVMBasicBlockRef endbb;
 
-		thenbb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name],toStringz("then"));
-		elsebb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name],toStringz("else"));
-		endbb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name],toStringz("end"));
+		thenbb = LLVMAppendBasicBlock(s.genctx.gfuncs[parent.decl.name],toStringz("then"));
+		elsebb = LLVMAppendBasicBlock(s.genctx.gfuncs[parent.decl.name],toStringz("else"));
+		endbb = LLVMAppendBasicBlock(s.genctx.gfuncs[parent.decl.name],toStringz("end"));
 
 		LLVMBuildCondBr(
-			ctx.currbuilder,
-			cond.gen(ctx),
+			s.genctx.currbuilder,
+			cond.gen(s),
 			thenbb,
 			elsebb
 		);
 		
-		LLVMPositionBuilderAtEnd(ctx.currbuilder,thenbb);
+		LLVMPositionBuilderAtEnd(s.genctx.currbuilder,thenbb);
 
-		if(body_ is null) retNull(ctx, LLVMInt32Type());
+		if(body_ is null) retNull(s.genctx, LLVMInt32Type());
 		else {
 			if(body_.instanceof!(AstNodeBlock)) {
 				AstNodeBlock b = cast(AstNodeBlock)body_;
 				for(int i=0; i<b.nodes.length; i++) {
-					b.nodes[i].gen(ctx);
+					b.nodes[i].gen(s);
 				}
 			}
-			else body_.gen(ctx);
+			else body_.gen(s);
 		}
 
-		LLVMBuildBr(ctx.currbuilder,endbb);
+		LLVMBuildBr(s.genctx.currbuilder,endbb);
 
-		LLVMPositionBuilderAtEnd(ctx.currbuilder,elsebb);
-		LLVMBuildBr(ctx.currbuilder,endbb);
+		LLVMPositionBuilderAtEnd(s.genctx.currbuilder,elsebb);
+		LLVMBuildBr(s.genctx.currbuilder,endbb);
 
-		LLVMPositionBuilderAtEnd(ctx.currbuilder,endbb);
+		LLVMPositionBuilderAtEnd(s.genctx.currbuilder,endbb);
 
 		return null;
 	}
@@ -861,25 +861,25 @@ class AstNodeWhile : AstNode {
 		LLVMBasicBlockRef _while;
 		LLVMBasicBlockRef _after;
 
-		_while = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name],toStringz("_while"));
-		_after = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name],toStringz("_after"));
+		_while = LLVMAppendBasicBlock(s.genctx.gfuncs[parent.decl.name],toStringz("_while"));
+		_after = LLVMAppendBasicBlock(s.genctx.gfuncs[parent.decl.name],toStringz("_after"));
 
-		LLVMValueRef cond_as_cmp = cond.gen(ctx);
-		LLVMBuildCondBr(ctx.currbuilder,cond_as_cmp,_while,_after);
+		LLVMValueRef cond_as_cmp = cond.gen(s);
+		LLVMBuildCondBr(s.genctx.currbuilder,cond_as_cmp,_while,_after);
 		
-		LLVMPositionBuilderAtEnd(ctx.currbuilder,_while);
+		LLVMPositionBuilderAtEnd(s.genctx.currbuilder,_while);
 
 		if(body_.instanceof!(AstNodeBlock)) {
 			AstNodeBlock block = cast(AstNodeBlock)body_;
 			for(int i=0; i<block.nodes.length; i++) {
-				block.nodes[i].gen(ctx);
+				block.nodes[i].gen(s);
 			}
 		}
-		else body_.gen(ctx);
+		else body_.gen(s);
 
-		LLVMBuildCondBr(ctx.currbuilder,cond.gen(ctx),_while,_after);
+		LLVMBuildCondBr(s.genctx.currbuilder,cond.gen(s),_while,_after);
 
-		LLVMPositionBuilderAtEnd(ctx.currbuilder,_after);
+		LLVMPositionBuilderAtEnd(s.genctx.currbuilder,_after);
 
 		return null;
 	}
@@ -964,8 +964,8 @@ class AstNodeReturn : AstNode {
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
-		LLVMValueRef retval = value.gen(ctx);
-	    LLVMBuildRet(ctx.currbuilder, retval);
+		LLVMValueRef retval = value.gen(s);
+	    LLVMBuildRet(s.genctx.currbuilder, retval);
 		return null;
 	}
 
@@ -1014,21 +1014,21 @@ class AstNodeIden : AstNode {
 	override LLVMValueRef gen(AnalyzerScope s) {
 		// _EPLf4exit, not exit! ctx.mangleQualifiedName([name], true) -> string
 		// TODO: Check if the global variable is referring to a function
-		if(ctx.gstack.setVar) {
-			ctx.gstack.setVar = false;
+		if(s.genctx.gstack.setVar) {
+			s.genctx.gstack.setVar = false;
 			return ctx.gstack[name];
 		}
 		else {
-			if(ctx.gstack.isGlobal(name)) {
+			if(s.genctx.gstack.isGlobal(name)) {
 				// Global var
-				if(ctx.currbuilder != null) {
-					return ctx.getValueByPtr(name);
+				if(s.genctx.currbuilder != null) {
+					return s.genctx.getValueByPtr(name);
 				}
-				else return ctx.gstack[name];
+				else return s.genctx.gstack[name];
 			}
 			else {
 				// Local var
-				return ctx.getValueByPtr(name);
+				return s.genctx.getValueByPtr(name);
 			}
 		}
 		assert(0);
@@ -1090,25 +1090,25 @@ class AstNodeDecl : AstNode {
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
-		if(ctx.gstack.isVariable(decl.name)) {
+		if(s.genctx.gstack.isVariable(decl.name)) {
 			writeln("The variable " ~ decl.name ~ " has been declared multiple times!");
 			exit(-1);
 		}
 
-		LLVMValueRef constval = value.gen(ctx);
+		LLVMValueRef constval = value.gen(s.genctx);
 
-		if(ctx.currbuilder == null) {
+		if(s.genctx.currbuilder == null) {
 			// Global var
 			return ctx.createGlobal(
-				ctx.getLLVMType(decl.type.get(ctx.typecontext)),
+				ctx.getLLVMType(decl.type.get(s.genctx.typecontext)),
 				constval,
 				decl.name
 			);
 		}
 		else {
 			// Local var
-			return ctx.createLocal(
-				ctx.getLLVMType(decl.type.get(ctx.typecontext)),
+			return s.genctx.createLocal(
+				s.genctx.getLLVMType(decl.type.get(s.genctx.typecontext)),
 				constval,
 				decl.name
 			);
