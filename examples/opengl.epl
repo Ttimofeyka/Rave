@@ -1,3 +1,26 @@
+@def GLAPI extern(C, lib:"gl3w");
+@def GLenum     int;
+@def GLfloat    float;
+@def GLdouble   double;
+@def GLint      int;
+@def GLuint     uint;
+@def GLboolean  char;
+@def GLbitfield int;
+@def GLsizei    long;
+@def GLbyte     char;
+@def GLubyte    uchar;
+@def GLsizeiptr ulong;
+@def GLintptr   ulong;
+@def GLsync     ulong;
+@def GLchar     char;
+@def GLuchar    uchar;
+@def GLshort    short;
+@def GLushort   ushort;
+@def GLint64    long;
+@def GLuint64   ulong;
+@def GLint32    int;
+@def GLuint32   uint;
+
 GLAPI glTexParameterfv(target: GLenum, pname: GLenum, params: const GLfloat*): void
 GLAPI glCullFace(mode: GLenum): void
 GLAPI glFrontFace(mode: GLenum): void
