@@ -1,12 +1,16 @@
-a: void {
-    
+s => 5;
+
+a := s();
+
+as: void {
+    if(1 == 1) {
+        ret;
+    }
+    else a += 1;
 }
 
 main: int {
+    as();
     b := 1;
-    if(0 == 0) {
-        if(b != 2) b = 4;
-        else b = 2;
-    }
     ret b;
 }

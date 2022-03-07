@@ -455,22 +455,24 @@ class AstNodeFunction : AstNode {
 			ret_type
 		);
 
-		ctx.gfuncs[decl.name] = func;
+		ctx.gfuncs.add(decl.name,func,ctx.getLLVMType(actualDecl.ret));
 		ctx.currfunc = func;
 
 		if(!decl.isExtern) {
 			LLVMBasicBlockRef entry = LLVMAppendBasicBlock(func,toStringz("entry"));
 			LLVMPositionBuilderAtEnd(builder, entry);
+			ctx.currbb = entry;
 
 			ctx.currbuilder = builder;
 			if(decl.name == ctx.entryFunction) {
+				LLVMValueRef* args;
 				for(int i=0; i<ctx.presets.length; i++) {
 					LLVMBuildCall(
 						ctx.currbuilder,
 						ctx.presets[i],
-						null,
+						args,
 						0,
-						toStringz("call")
+						toStringz("")
 					);
 				}
 			}
@@ -928,8 +930,9 @@ class AstNodeIf : AstNode {
 		);
 		
 		LLVMPositionBuilderAtEnd(s.genctx.currbuilder,thenbb);
-
-		if(body_ is null) retNull(s.genctx, LLVMInt32Type());
+		
+		ctx.currbb = thenbb;
+		if(body_ is null) {}
 		else {
 			if(body_.instanceof!(AstNodeBlock)) {
 				AstNodeBlock b = cast(AstNodeBlock)body_;
@@ -943,6 +946,7 @@ class AstNodeIf : AstNode {
 		LLVMBuildBr(s.genctx.currbuilder,endbb);
 
 		LLVMPositionBuilderAtEnd(s.genctx.currbuilder,elsebb);
+		ctx.currbb = elsebb;
 		if(else_ !is null) {
 			if(else_.instanceof!(AstNodeBlock)) {
 				AstNodeBlock b = cast(AstNodeBlock)else_;
@@ -955,6 +959,7 @@ class AstNodeIf : AstNode {
 		LLVMBuildBr(s.genctx.currbuilder,endbb);
 
 		LLVMPositionBuilderAtEnd(s.genctx.currbuilder,endbb);
+		ctx.currbb = endbb;
 
 		return null;
 	}
@@ -1005,6 +1010,7 @@ class AstNodeWhile : AstNode {
 		LLVMBuildCondBr(ctx.currbuilder,cond_as_cmp,_while,_after);
 		
 		LLVMPositionBuilderAtEnd(s.genctx.currbuilder,_while);
+		ctx.currbb = _while;
 
 		if(body_.instanceof!(AstNodeBlock)) {
 			AstNodeBlock block = cast(AstNodeBlock)body_;
@@ -1015,8 +1021,9 @@ class AstNodeWhile : AstNode {
 		else body_.gen(s);
 
 		LLVMBuildCondBr(ctx.currbuilder,cond.gen(s), _while, _after);
-
 		LLVMPositionBuilderAtEnd(ctx.currbuilder, _after);
+
+		ctx.currbb = _after;
 
 		return null;
 	}
@@ -1084,6 +1091,7 @@ class AstNodeBlock : AstNode {
 class AstNodeReturn : AstNode {
 	AstNodeFunction parent;
 	AstNode value;
+	LLVMBasicBlockRef retbb;
 
 	this(SourceLocation where, AstNode value, AstNodeFunction parent) { 
 		this.value = value;
@@ -1121,6 +1129,8 @@ class AstNodeReturn : AstNode {
 
 	override LLVMValueRef gen(AnalyzerScope s) {
 		auto ctx = s.genctx;
+		this.retbb = ctx.currb;
+
 		if(value !is null) {
 			LLVMValueRef retval = value.gen(s);
 			LLVMBuildRet(ctx.currbuilder, retval);
@@ -1293,6 +1303,7 @@ class AstNodeDecl : AstNode {
 				value.gen(s),
 				global
 			);
+			LLVMBuildRetVoid(ctx.currbuilder);
 
 			ctx.presets.add(func);
 
@@ -1428,6 +1439,15 @@ class AstNodeFuncCall : AstNode {
 			llvm_args[i] = args[i].gen(s);
 		}
 
+		if(ctx.gfuncs.getType(n.name) == LLVMVoidType()) {
+			return LLVMBuildCall(
+				ctx.currbuilder,
+				ctx.gfuncs[n.name],
+				llvm_args,
+				cast(uint)args.length,
+				toStringz("")
+			);
+		}
 		return LLVMBuildCall(
 			ctx.currbuilder,
 			ctx.gfuncs[n.name],

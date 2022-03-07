@@ -101,17 +101,35 @@ class GPresets {
     LLVMValueRef opIndex(int index) {return presets[index];}
 }
 
+class GFuncs {
+    private LLVMValueRef[string] funcs;
+    private LLVMTypeRef[string] types;
+
+    void add(string n, LLVMValueRef f, LLVMTypeRef t) {
+        funcs[n] = f;
+        types[n] = t;
+    }
+
+    LLVMTypeRef getType(string n) {return types[n];}
+
+    LLVMValueRef opIndex(string n)
+    {
+       return funcs[n]; 
+    }
+}
+
 class GenerationContext {
     LLVMModuleRef mod;
 	SemanticAnalyzerContext sema;
 	LLVMBuilderRef currbuilder;
 	GStack gstack;
 	GArgs gargs;
-	LLVMValueRef[string] gfuncs;
+	GFuncs gfuncs;
     GPresets presets;
 	LLVMValueRef currfunc;
 	int basicblocks_count = 0;
     string entryFunction = "main";
+    LLVMBasicBlockRef currbb;
 
     this() {
         mod = LLVMModuleCreateWithName(toStringz("epl"));
@@ -119,6 +137,7 @@ class GenerationContext {
 		gstack = new GStack();
 		gargs = new GArgs();
         presets = new GPresets();
+        gfuncs = new GFuncs();
 
 		// Initialization
 		LLVMInitializeAllTargets();
@@ -157,6 +176,9 @@ class GenerationContext {
 		else if(auto p = t.instanceof!TypePointer) {
 			return LLVMPointerType(getLLVMType(p.to), 0);
 		}
+        else if(auto v = t.instanceof!TypeVoid) {
+            return LLVMVoidType();
+        }
 		return LLVMInt32Type();
 	}
 
