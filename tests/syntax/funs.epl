@@ -1,7 +1,7 @@
 
-no_args0 { }
+no_args0: void { }
 no_args1: { }
-no_args2: int { }
+no_args2: int => 0;
 
 empty_args0() { }
 empty_args1(): { }

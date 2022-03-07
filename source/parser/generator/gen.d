@@ -61,21 +61,38 @@ class GStack {
 
 class GArgs {
 	private LLVMTypeRef[string] fargs_types;
-	private int[string] fargs_numbers;
+	private int[string] fargs_values;
 
 	void set(int v, LLVMTypeRef type, string name) {
-		fargs_numbers[name] = v;
+		fargs_values[name] = v;
 		fargs_types[name] = type;
 	}
 
-	int getNum(string s) {return fargs_numbers[s];}
+	void setType(LLVMTypeRef type, string name) {
+		fargs_types[name] = type;
+	}
+
 	LLVMTypeRef getType(string s) {return fargs_types[s];}
 
+	void clean() {
+		fargs_types.clear();
+		fargs_values.clear();
+	}
+
+	bool isArg(string s) {
+		return (s in fargs_types) != null;
+	}
+
 	this() {}
+
+	int opIndex(string index)
+	{	
+		return fargs_values[index];
+	}
 }
 
 class GFuncs {
-	private LLVMValueRef[string] funcs;
+	LLVMValueRef[string] funcs;
 
 	this() {}
 
@@ -95,6 +112,8 @@ class GenerationContext {
 	GStack gstack;
 	GArgs gargs;
 	GFuncs gfuncs;
+	LLVMValueRef currfunc;
+	int basicblocks_count = 0;
 
     this() {
         mod = LLVMModuleCreateWithName(toStringz("epl"));

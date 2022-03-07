@@ -413,6 +413,7 @@ class AstNodeFunction : AstNode {
 		for(int i=0; i<decl.signature.args.length; i++) {
 			
 			param_types[i] = ctx.getLLVMType(actualDecl.args[i]);
+			ctx.gargs.set(i,param_types[i],decl.argNames[i]);
 		}
 		return param_types;
 	}
@@ -455,6 +456,7 @@ class AstNodeFunction : AstNode {
 		);
 
 		ctx.gfuncs.set(func,decl.name);
+		ctx.currfunc = func;
 
 		if(!decl.isExtern) {
 			LLVMBasicBlockRef entry = LLVMAppendBasicBlock(func,toStringz("entry"));
@@ -471,10 +473,13 @@ class AstNodeFunction : AstNode {
 
 			ctx.currbuilder = null;
 			ctx.gstack.clean();
+			ctx.gargs.clean();
 		}
 		else {
 			LLVMSetLinkage(func, LLVMExternalLinkage);
 		}
+
+		ctx.currfunc = null;
 
 		LLVMVerifyFunction(func, 0);
 		
@@ -547,28 +552,16 @@ class AstNodeBinary : AstNode {
 		switch(type) {
 			case TokType.tok_equ:
 				AstNodeIden iden = cast(AstNodeIden)lhs;
-				if(ctx.gstack.isLocal(iden.name)) {
-					ctx.setLocal(rhs.gen(s),iden.name);
-					return ctx.getVarPtr(iden.name);
-				}
-				else {
-					return LLVMBuildStore(
+				return LLVMBuildStore(
 						ctx.currbuilder,
 						rhs.gen(s),
 						ctx.gstack[iden.name]
 					);
-				}
 			case TokType.tok_shortplu:
 			case TokType.tok_shortmin:
 			case TokType.tok_shortmul:
 				AstNodeIden iden = cast(AstNodeIden)lhs;
 				if(s.genctx.gstack.isLocal(iden.name)) {
-					auto tmpval = LLVMBuildAlloca(
-						s.genctx.currbuilder,
-						LLVMGetAllocatedType(s.genctx.gstack[iden.name]),
-						toStringz(iden.name)
-					);
-
 					LLVMValueRef tmp;
 					if(type == TokType.tok_shortplu) {
 						tmp = LLVMBuildAdd(
@@ -598,18 +591,22 @@ class AstNodeBinary : AstNode {
 					LLVMBuildStore(
 						s.genctx.currbuilder,
 						tmp,
-						tmpval
+						s.genctx.gstack[iden.name]
 					);
 
-					s.genctx.gstack.set(tmpval,iden.name);
 					return s.genctx.gstack[iden.name];
 				}
 				else {
 					LLVMValueRef tmp;
+					LLVMValueRef loaded = LLVMBuildLoad(
+						ctx.currbuilder,
+						ctx.gstack[iden.name],
+						toStringz("load_global")
+					);
 					if(type == TokType.tok_shortplu) {
 						tmp = LLVMBuildAdd(
 							ctx.currbuilder,
-							ctx.gstack[iden.name],
+							loaded,
 							rhs.gen(s),
 							toStringz("tmp")
 						);
@@ -617,20 +614,14 @@ class AstNodeBinary : AstNode {
 					else if(type == TokType.tok_shortmin) {
 						tmp = LLVMBuildSub(
 							ctx.currbuilder,
-							ctx.gstack[iden.name],
+							loaded,
 							rhs.gen(s),
 							toStringz("tmp")
 						);
 					}
 					else if(type == TokType.tok_shortmul) {
-						/*tmp = LLVMBuildMul(
-							ctx.currbuilder,
-							ctx.gstack[iden.name],
-							rhs.gen(ctx),
-							toStringz("tmp")
-						);*/
 						tmp = ctx.operMul(
-							ctx.gstack[iden.name],
+							loaded,
 							rhs.gen(s),
 							false 
 						);
@@ -737,42 +728,20 @@ class AstNodeBinary : AstNode {
 				return bit_result;
 			case TokType.tok_equal:
 			case TokType.tok_nequal:
-				LLVMTypeRef equal_type;
-				LLVMValueRef lhsgen;
-				if(lhs.instanceof!(AstNodeIden)) {
-					lhsgen = lhs.gen(s);
-					AstNodeIden iden = cast(AstNodeIden)lhs;
-					if(ctx.gstack.isGlobal(iden.name)) {
-						equal_type = getVarType(ctx, iden.name);
-					}
-					else equal_type = getAType(lhsgen);
-				}
-				else if(lhs.instanceof!(AstNodeInt)) {
-					lhsgen = lhs.gen(s);
-					AstNodeInt nint = cast(AstNodeInt)lhs;
-					equal_type = s.genctx.getLLVMType(nint.valueType);
-				}
-				else {
-					lhsgen = lhs.gen(s);
-					equal_type = getAType(lhsgen);
-				}
-				
-				//if(ctx.isIntType(equal_type)) {
-					if(type == TokType.tok_equal) return LLVMBuildICmp(
-						s.genctx.currbuilder,
-						LLVMIntEQ,
-						lhsgen,
-						rhs.gen(s),
-						toStringz("icmp_eq")
-					);
-					return LLVMBuildICmp(
-						s.genctx.currbuilder,
-						LLVMIntNE,
-						lhsgen,
-						rhs.gen(s),
-						toStringz("icmp_ne")
-					);
-				//}
+				if(type == TokType.tok_equal) return LLVMBuildICmp(
+					s.genctx.currbuilder,
+					LLVMIntEQ,
+					lhs.gen(s),
+					rhs.gen(s),
+					toStringz("icmp_eq")
+				);
+				return LLVMBuildICmp(
+					s.genctx.currbuilder,
+					LLVMIntNE,
+					lhs.gen(s),
+					rhs.gen(s),
+					toStringz("icmp_ne")
+				);
 			default:
 				break;
 		}
@@ -911,9 +880,12 @@ class AstNodeIf : AstNode {
 		LLVMBasicBlockRef elsebb;
 		LLVMBasicBlockRef endbb;
 
-		thenbb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name], toStringz("then"));
-		elsebb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name], toStringz("else"));
-		endbb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name], toStringz("end"));
+		ctx.basicblocks_count += 1;
+		thenbb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name], toStringz("then"~to!string(ctx.basicblocks_count)));
+		ctx.basicblocks_count += 1;
+		elsebb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name], toStringz("else"~to!string(ctx.basicblocks_count)));
+		ctx.basicblocks_count += 1;
+		endbb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name], toStringz("end"~to!string(ctx.basicblocks_count)));
 
 		LLVMBuildCondBr(
 			ctx.currbuilder,
@@ -938,6 +910,15 @@ class AstNodeIf : AstNode {
 		LLVMBuildBr(s.genctx.currbuilder,endbb);
 
 		LLVMPositionBuilderAtEnd(s.genctx.currbuilder,elsebb);
+		if(else_ !is null) {
+			if(else_.instanceof!(AstNodeBlock)) {
+				AstNodeBlock b = cast(AstNodeBlock)else_;
+				for(int i = 0; i < b.nodes.length; i++) {
+					b.nodes[i].gen(s);
+				}
+			}
+			else else_.gen(s);
+		}
 		LLVMBuildBr(s.genctx.currbuilder,endbb);
 
 		LLVMPositionBuilderAtEnd(s.genctx.currbuilder,endbb);
@@ -981,8 +962,10 @@ class AstNodeWhile : AstNode {
 		LLVMBasicBlockRef _while;
 		LLVMBasicBlockRef _after;
 
-		_while = LLVMAppendBasicBlock(s.genctx.gfuncs[parent.decl.name],toStringz("_while"));
-		_after = LLVMAppendBasicBlock(s.genctx.gfuncs[parent.decl.name],toStringz("_after"));
+		ctx.basicblocks_count += 1;
+		_while = LLVMAppendBasicBlock(s.genctx.gfuncs[parent.decl.name],toStringz("_while"~to!string(ctx.basicblocks_count)));
+		ctx.basicblocks_count += 1;
+		_after = LLVMAppendBasicBlock(s.genctx.gfuncs[parent.decl.name],toStringz("_after"~to!string(ctx.basicblocks_count)));
 
 		LLVMValueRef cond_as_cmp = cond.gen(s);
 		LLVMBuildCondBr(ctx.currbuilder,cond_as_cmp,_while,_after);
@@ -1171,7 +1154,10 @@ class AstNodeIden : AstNode {
 				if(s.genctx.currbuilder != null) {
 					return s.genctx.getValueByPtr(name);
 				}
-				else return s.genctx.gstack[name];
+				else if(s.genctx.gstack.isLocal(name)) return s.genctx.gstack[name];
+			}
+			else if(s.genctx.gargs.isArg(name)) {
+				return LLVMGetParam(s.genctx.currfunc, cast(uint)s.genctx.gargs[name]);
 			}
 			else {
 				// Local var
@@ -1378,11 +1364,17 @@ class AstNodeFuncCall : AstNode {
 		auto ctx = s.genctx;
 		// _EPLf4exit, not exit! ctx.mangleQualifiedName([name], true) -> string
 		AstNodeIden n = cast(AstNodeIden)func;
+
+		LLVMValueRef* llvm_args = cast(LLVMValueRef*)malloc(LLVMValueRef.sizeof*args.length);
+		for(int i=0; i<args.length; i++) {
+			llvm_args[i] = args[i].gen(s);
+		}
+
 		return LLVMBuildCall(
 			ctx.currbuilder,
 			ctx.gfuncs[n.name],
-			null,
-			0,
+			llvm_args,
+			cast(uint)args.length,
 			toStringz("call")
 		);
 	}
