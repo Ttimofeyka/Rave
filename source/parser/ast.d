@@ -552,28 +552,16 @@ class AstNodeBinary : AstNode {
 		switch(type) {
 			case TokType.tok_equ:
 				AstNodeIden iden = cast(AstNodeIden)lhs;
-				if(ctx.gstack.isLocal(iden.name)) {
-					ctx.setLocal(rhs.gen(s),iden.name);
-					return ctx.getVarPtr(iden.name);
-				}
-				else {
-					return LLVMBuildStore(
+				return LLVMBuildStore(
 						ctx.currbuilder,
 						rhs.gen(s),
 						ctx.gstack[iden.name]
 					);
-				}
 			case TokType.tok_shortplu:
 			case TokType.tok_shortmin:
 			case TokType.tok_shortmul:
 				AstNodeIden iden = cast(AstNodeIden)lhs;
 				if(s.genctx.gstack.isLocal(iden.name)) {
-					auto tmpval = LLVMBuildAlloca(
-						s.genctx.currbuilder,
-						LLVMGetAllocatedType(s.genctx.gstack[iden.name]),
-						toStringz(iden.name)
-					);
-
 					LLVMValueRef tmp;
 					if(type == TokType.tok_shortplu) {
 						tmp = LLVMBuildAdd(
@@ -603,10 +591,9 @@ class AstNodeBinary : AstNode {
 					LLVMBuildStore(
 						s.genctx.currbuilder,
 						tmp,
-						tmpval
+						s.genctx.gstack[iden.name]
 					);
 
-					s.genctx.gstack.set(tmpval,iden.name);
 					return s.genctx.gstack[iden.name];
 				}
 				else {
@@ -741,42 +728,20 @@ class AstNodeBinary : AstNode {
 				return bit_result;
 			case TokType.tok_equal:
 			case TokType.tok_nequal:
-				LLVMTypeRef equal_type;
-				LLVMValueRef lhsgen;
-				if(lhs.instanceof!(AstNodeIden)) {
-					lhsgen = lhs.gen(s);
-					AstNodeIden iden = cast(AstNodeIden)lhs;
-					if(ctx.gstack.isGlobal(iden.name)) {
-						equal_type = getVarType(ctx, iden.name);
-					}
-					else equal_type = getAType(lhsgen);
-				}
-				else if(lhs.instanceof!(AstNodeInt)) {
-					lhsgen = lhs.gen(s);
-					AstNodeInt nint = cast(AstNodeInt)lhs;
-					equal_type = s.genctx.getLLVMType(nint.valueType);
-				}
-				else {
-					lhsgen = lhs.gen(s);
-					equal_type = getAType(lhsgen);
-				}
-				
-				//if(ctx.isIntType(equal_type)) {
-					if(type == TokType.tok_equal) return LLVMBuildICmp(
-						s.genctx.currbuilder,
-						LLVMIntEQ,
-						lhsgen,
-						rhs.gen(s),
-						toStringz("icmp_eq")
-					);
-					return LLVMBuildICmp(
-						s.genctx.currbuilder,
-						LLVMIntNE,
-						lhsgen,
-						rhs.gen(s),
-						toStringz("icmp_ne")
-					);
-				//}
+				if(type == TokType.tok_equal) return LLVMBuildICmp(
+					s.genctx.currbuilder,
+					LLVMIntEQ,
+					lhs.gen(s),
+					rhs.gen(s),
+					toStringz("icmp_eq")
+				);
+				return LLVMBuildICmp(
+					s.genctx.currbuilder,
+					LLVMIntNE,
+					lhs.gen(s),
+					rhs.gen(s),
+					toStringz("icmp_ne")
+				);
 			default:
 				break;
 		}
