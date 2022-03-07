@@ -1,7 +1,12 @@
+gl := 0;
+
+assign(a: int, b: int): int {
+    ret a*b;
+}
+
 main: int {
-    a := 0;
-    while(a != 5) {
-        a += 1;
+    while(gl != 5) {
+        gl += 1;
     }
-    ret a;
+    ret gl;
 }

@@ -355,6 +355,7 @@ class AstNodeFunction : AstNode {
 		for(int i=0; i<decl.signature.args.length; i++) {
 			
 			param_types[i] = ctx.getLLVMType(actualDecl.args[i]);
+			ctx.gargs.set(i,param_types[i],decl.argNames[i]);
 		}
 		return param_types;
 	}
@@ -379,6 +380,7 @@ class AstNodeFunction : AstNode {
 		);
 
 		ctx.gfuncs.set(func,decl.name);
+		ctx.currfunc = func;
 
 		if(!decl.isExtern) {
 			LLVMBasicBlockRef entry = LLVMAppendBasicBlock(func,toStringz("entry"));
@@ -395,10 +397,13 @@ class AstNodeFunction : AstNode {
 
 			ctx.currbuilder = null;
 			ctx.gstack.clean();
+			ctx.gargs.clean();
 		}
 		else {
 			LLVMSetLinkage(func, LLVMExternalLinkage);
 		}
+
+		ctx.currfunc = null;
 
 		LLVMVerifyFunction(func, 0);
 		
@@ -530,10 +535,15 @@ class AstNodeBinary : AstNode {
 				}
 				else {
 					LLVMValueRef tmp;
+					LLVMValueRef loaded = LLVMBuildLoad(
+						ctx.currbuilder,
+						ctx.gstack[iden.name],
+						toStringz("load_global")
+					);
 					if(type == TokType.tok_shortplu) {
 						tmp = LLVMBuildAdd(
 							ctx.currbuilder,
-							ctx.gstack[iden.name],
+							loaded,
 							rhs.gen(s),
 							toStringz("tmp")
 						);
@@ -541,20 +551,14 @@ class AstNodeBinary : AstNode {
 					else if(type == TokType.tok_shortmin) {
 						tmp = LLVMBuildSub(
 							ctx.currbuilder,
-							ctx.gstack[iden.name],
+							loaded,
 							rhs.gen(s),
 							toStringz("tmp")
 						);
 					}
 					else if(type == TokType.tok_shortmul) {
-						/*tmp = LLVMBuildMul(
-							ctx.currbuilder,
-							ctx.gstack[iden.name],
-							rhs.gen(ctx),
-							toStringz("tmp")
-						);*/
 						tmp = ctx.operMul(
-							ctx.gstack[iden.name],
+							loaded,
 							rhs.gen(s),
 							false 
 						);
@@ -1081,7 +1085,10 @@ class AstNodeIden : AstNode {
 				if(s.genctx.currbuilder != null) {
 					return s.genctx.getValueByPtr(name);
 				}
-				else return s.genctx.gstack[name];
+				else if(s.genctx.gstack.isLocal(name)) return s.genctx.gstack[name];
+			}
+			else if(s.genctx.gargs.isArg(name)) {
+				return LLVMGetParam(s.genctx.currfunc, cast(uint)s.genctx.gargs[name]);
 			}
 			else {
 				// Local var
@@ -1255,11 +1262,17 @@ class AstNodeFuncCall : AstNode {
 		auto ctx = s.genctx;
 		// _EPLf4exit, not exit! ctx.mangleQualifiedName([name], true) -> string
 		AstNodeIden n = cast(AstNodeIden)func;
+
+		LLVMValueRef* llvm_args = cast(LLVMValueRef*)malloc(LLVMValueRef.sizeof*args.length);
+		for(int i=0; i<args.length; i++) {
+			llvm_args[i] = args[i].gen(s);
+		}
+
 		return LLVMBuildCall(
 			ctx.currbuilder,
 			ctx.gfuncs[n.name],
-			null,
-			0,
+			llvm_args,
+			cast(uint)args.length,
 			toStringz("call")
 		);
 	}
