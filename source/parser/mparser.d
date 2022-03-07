@@ -18,18 +18,19 @@ struct Decl {
 	TokCmd[] mods = [];
 	bool isGlobal;
 	SourceLocation nameLoc;
+	DeclMod[] decl_mods;
 }
 
 VariableDeclaration declToVarDecl(Decl d) {
 	return VariableDeclaration(d.type, d.name,
-		canFind(d.mods, TokCmd.cmd_static), canFind(d.mods, TokCmd.cmd_extern));
+		canFind(d.mods, TokCmd.cmd_static), canFind(d.mods, TokCmd.cmd_extern), d.decl_mods);
 }
 
 FunctionDeclaration declToFuncDecl(Decl d) {
 	AtstNode[] argTypes = array(map!(a => a.type)(d.args));
 	string[] argNames = array(map!(a => a.name)(d.args));
 	return FunctionDeclaration(FuncSignature(d.type, argTypes), d.name, argNames,
-		canFind(d.mods, TokCmd.cmd_static), canFind(d.mods, TokCmd.cmd_extern));
+		canFind(d.mods, TokCmd.cmd_static), canFind(d.mods, TokCmd.cmd_extern), d.decl_mods);
 }
 
 // TODO: Add `cast(type) value` create AstNodeCast.
@@ -185,6 +186,23 @@ class Parser {
 			else error("Function modifier already in use!");
 		}
 
+		if(peek().type == TokType.tok_lpar) {
+			// modifier
+			next();
+			while(peek().type != TokType.tok_rpar && peek().type != TokType.tok_eof) {
+				auto name = expectToken(TokType.tok_id).value;
+				string[] args;
+				while(peek().type == TokType.tok_type) {
+					next();
+					args ~= expectToken(TokType.tok_string).value[1..$-1];
+				}
+				d.decl_mods ~= DeclMod(name, args);
+				if(peek().type == TokType.tok_comma) next();
+				else break; // TODO: trailing comma
+			}
+			expectToken(TokType.tok_rpar);
+		}
+
 		auto nameTok = expectToken(TokType.tok_id);
 		d.name = nameTok.value;
 		d.nameLoc = nameTok.loc;
@@ -200,6 +218,9 @@ class Parser {
 				else
 					d.type = new AtstNodeUnknown();
 			}
+			else if(peek().type == TokType.tok_arrow) {
+				d.type = new AtstNodeUnknown();
+			}
 			else {
 				d.type = new AtstNodeVoid();
 			}
@@ -213,7 +234,8 @@ class Parser {
 			}
 			else if(peek().type == TokType.tok_arrow) {
 				next();
-				d.value = parseExpr();
+				auto expr = parseExpr();
+				d.value = new AstNodeBlock([new AstNodeReturn(expr.where, expr, currfunc)]);
 				expectToken(TokType.tok_semicolon);
 			}
 		}
@@ -229,9 +251,8 @@ class Parser {
 			d.isMethod = true;
 			d.type = new AtstNodeUnknown();
 			d.args = [];
-			d.value = new AstNodeBlock([
-				new AstNodeReturn(parseExpr(), currfunc)
-			]);
+			auto expr = parseExpr();
+			d.value = new AstNodeBlock([new AstNodeReturn(expr.where, expr, currfunc)]);
 			expectToken(TokType.tok_semicolon);
 		}
 		else if(peek().type == TokType.tok_equ) {
@@ -275,9 +296,8 @@ class Parser {
 				next();
 				d.isMethod = true;
 
-				d.value = new AstNodeBlock([
-					new AstNodeReturn(parseExpr(),currfunc)
-				]);
+				auto expr = parseExpr();
+				d.value = new AstNodeBlock([new AstNodeReturn(expr.where, expr, currfunc)]);
 				expectToken(TokType.tok_semicolon);
 			}
 			else if(peek().type == TokType.tok_2lbra) {
@@ -614,15 +634,15 @@ class Parser {
 				return parseWhile();
 			}
 			else if(peek().cmd == TokCmd.cmd_ret) {
-				next();
+				auto tok = next();
 				if(peek().type != TokType.tok_semicolon) {
 					auto e = parseExpr();
 					expectToken(TokType.tok_semicolon);
-					return new AstNodeReturn(e, currfunc);
+					return new AstNodeReturn(tok.loc, e, currfunc);
 				}
 				else {
 					next();
-					return new AstNodeReturn(null, currfunc);
+					return new AstNodeReturn(tok.loc, null, currfunc);
 				}
 			}
 		}
@@ -722,7 +742,7 @@ class Parser {
 		AstNode[] nodes;
 		while(peek().type != TokType.tok_eof) {
 			auto n = parseTopLevel();
-			n.debugPrint(0);
+			// n.debugPrint(0);
 			if(n is null) break;
 			nodes ~= n;
 			currfunc = null;

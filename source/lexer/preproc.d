@@ -145,11 +145,17 @@ class Preprocessor {
                         }
                     }
                 }
-                else {
-                    if(canOutput()) {
-                        newtokens.insertBack(get());
-                        i += 1;
+                else if(get().cmd == TokCmd.cmd_else) {
+                    i += 1;
+
+                    if(_ifStack.length == 0) {
+                        error("Unmatched '@else'!");
                     }
+
+                    _ifStack[$-1] = !_ifStack[$-1];
+                }
+                else {
+                    error("Unknown command: '@" ~ to!string(get().cmd)[4..$] ~ "'!");
                 }
             }
             else if(get().type == TokType.tok_id) {

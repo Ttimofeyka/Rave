@@ -1,14 +1,29 @@
-// extern a(): int;
-// extern b: int;
+extern(C) a(): int;
+extern(C) b: int;
+
+@ifdef WINDOWS extern(C, dll:"opengl32.dll")
+@else          extern(C, lib:"gl3w") @endif
+glGenBuffers(count: int, bufs: uint*);
+
+f2: void {
+	ret;
+}
+
+mul1(a: int, b: int) => a * b;
+mul2(a: int, b: int): => a * b;
+mul3(a: int, b: int): int => a * b;
 
 z: int = 0;
+y: long = 0;
 
 f: void {
 	z = 5;
 }
 
 main(arg: int): {
-	ret;
-	f();
-	ret z + arg;
+	if(arg) {
+		f();
+		ret z + arg;
+	}
+	ret 0;
 }
