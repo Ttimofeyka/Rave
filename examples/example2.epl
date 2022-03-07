@@ -13,7 +13,7 @@ extern(C) complex_calculation(a: int, b: int): int;
 }
 
 @ifdef WINDOWS extern(C, dll:"opengl32.dll")
-@else          extern(C, lib:"gl3w") @endif
+@else          extern(C, lib:"gl3w") @end
 glGenBuffers(count: int, bufs: uint*);
 
 f2: void {

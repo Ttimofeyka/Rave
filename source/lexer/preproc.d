@@ -14,6 +14,7 @@ class Preprocessor {
     TList tokens;
     TList[string] defines;
     TList newtokens;
+    bool hadErrors = false;
 
     bool[] _ifStack;
     int i = 0; // Iterate by tokens
@@ -23,25 +24,29 @@ class Preprocessor {
     private bool canOutput() {
         // _ifStack: StdList<bool>;
         // canOutput => this->_ifStack.length == 0 || this->_ifStack->get(-1);
-        return _ifStack.length == 0 || _ifStack[$ - 1];
+        if(_ifStack.length == 0) return true;
+        foreach(c; _ifStack) if(!c) return false;
+        return true;
     }
 
     private void error(string msg) {
         writeln("\033[0;31mError: ", msg, "\033[0;0m");
+        hadErrors = true;
     }
 
-    private Token get() {
-        if(i < tokens.length()) return tokens[i];
+    private Token get(int n = 0) {
+        if(i < tokens.length()) return tokens[i + n];
         return new Token(SourceLocation(-1, -1, ""), "");
     }
 
     private TList getDefine() {
         TList define_toks = new TList();
 
-        while(get().type != TokType.tok_semicolon) {
+        while(get().type != TokType.tok_at && get(1).cmd != TokCmd.cmd_end) {
             define_toks.insertBack(get()); 
             i+=1;
         }
+        i += 1;
 
         return define_toks;
     }
@@ -121,7 +126,7 @@ class Preprocessor {
                     auto name = get().value;
                     i += 1;
                     // writeln("#ifdef " ~ name ~ " -> " ~ (name !in defines ? "not defined" : "defined"));
-                    if(canOutput()) _ifStack ~= !(name !in defines);
+                    _ifStack ~= !(name !in defines);
                 }
                 else if(get().cmd == TokCmd.cmd_ifndef) {
                     i += 1;
@@ -131,18 +136,16 @@ class Preprocessor {
                     }
                     auto name = get().value;
                     i += 1;
-                    if(canOutput()) _ifStack ~= name !in defines;
+                    _ifStack ~= name !in defines;
                 }
-                else if(get().cmd == TokCmd.cmd_endif) {
+                else if(get().cmd == TokCmd.cmd_end) {
                     i += 1;
 
-                    if(canOutput()) {
-                        if(_ifStack.length == 0) {
-                            error("Unmatched '@endif'!");
-                        }
-                        else {
-                            remove(_ifStack, cast(size_t)(_ifStack.length) - 1);
-                        }
+                    if(_ifStack.length == 0) {
+                        error("Unmatched '@end'!");
+                    }
+                    else {
+                        remove(_ifStack, cast(size_t)(_ifStack.length) - 1);
                     }
                 }
                 else if(get().cmd == TokCmd.cmd_else) {
@@ -153,6 +156,7 @@ class Preprocessor {
                     }
 
                     _ifStack[$-1] = !_ifStack[$-1];
+                    writeln("_ifStack[$-1] ", _ifStack[$-1]);
                 }
                 else {
                     error("Unknown command: '@" ~ to!string(get().cmd)[4..$] ~ "'!");

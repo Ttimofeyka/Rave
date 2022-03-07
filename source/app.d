@@ -72,6 +72,11 @@ void main(string[] args)
 	auto lexer = new Lexer(sourceFile, readText(sourceFile));
 	auto preproc = new Preprocessor(lexer.getTokens(), stdlibIncPath, defines);
 
+	if(preproc.hadErrors) {
+		writeln("Failed with 1 or more errors.");
+		exit(1);
+	}
+
 	auto parser = new Parser(preproc.getTokens());
 	auto nodes = parser.parseProgram();
 

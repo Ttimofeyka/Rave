@@ -85,7 +85,7 @@ enum TokCmd {
     cmd_define = 13,
     cmd_ifdef = 23,
     cmd_ifndef = 24,
-    cmd_endif = 25
+    cmd_end = 25
 }
 
 struct SourceLocation {
@@ -181,10 +181,11 @@ class Token {
                 case "static": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_static; break;
                 case "const": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_const; break;
                 // Preprocessor commands
-                case "inc": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_include; break;
-                case "def": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_define; break;
-                case "ifdef": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_ifdef; break;
-                case "endif": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_endif; break;
+                case "@else": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_else; break;
+                case "@inc": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_include; break;
+                case "@def": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_define; break;
+                case "@ifdef": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_ifdef; break;
+                case "@end": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_end; break;
                 // Identifier
                 default: this.type = TokType.tok_id; break;
             }

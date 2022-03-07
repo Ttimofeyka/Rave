@@ -31,7 +31,7 @@ class Lexer {
     int i;
     SourceLocation loc;
 
-    bool _hadHash = false;
+    bool _hadAt = false;
 
     private char get(uint x = 0) {
         if(i < lex.length) {
@@ -224,15 +224,11 @@ class Lexer {
         this.loc.fname = fname;
         this.tokens = new TList();
         this.i = 0;
-        this._hadHash = false;
+        this._hadAt = false;
 
         while(i<lex.length) {
             if(isWhite(cast(dchar)get())) {
                 if(get() == '\n') {
-                    if(_hadHash) {
-                        _hadHash = false;
-                        tokens.insertBack(new Token(loc, "#"));
-                    }
                     loc.line += 1;
                     loc.col = 0;
                 }
@@ -240,7 +236,6 @@ class Lexer {
             }
             else switch(get()) {
                 case '#':
-                    _hadHash = true;
                     tokens.insertBack(new Token(loc, "#"));
                     next(1);
                     break;
@@ -321,7 +316,7 @@ class Lexer {
                 case ';': tokens.insertBack(new Token(loc, ";")); next(1); break;
                 case ':': tokens.insertBack(new Token(loc, ":")); next(1); break;
                 case '^': tokens.insertBack(new Token(loc, "^")); next(1); break;
-                case '@': tokens.insertBack(new Token(loc, "@")); next(1); break;
+                case '@': _hadAt = true; tokens.insertBack(new Token(loc, "@")); next(1); break;
                 case '~': tokens.insertBack(new Token(loc, "~")); next(1); break;
                 case '!':
                     if(get(+1)=='=') {
@@ -408,8 +403,11 @@ class Lexer {
                     }
                     break;
                 default:
-                    tokens.insertBack(new Token(loc, getTID()));
-                    break;
+                {
+                    auto t = getTID();
+                    tokens.insertBack(new Token(loc, (_hadAt ? "@" : "") ~ t));
+                    _hadAt = false;
+                } break;
             }
         }
     }

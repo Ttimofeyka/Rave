@@ -1,25 +1,25 @@
-@def GLAPI extern(C, lib:"gl3w");
-@def GLenum     int;
-@def GLfloat    float;
-@def GLdouble   double;
-@def GLint      int;
-@def GLuint     uint;
-@def GLboolean  char;
-@def GLbitfield int;
-@def GLsizei    long;
-@def GLbyte     char;
-@def GLubyte    uchar;
-@def GLsizeiptr ulong;
-@def GLintptr   ulong;
-@def GLsync     ulong;
-@def GLchar     char;
-@def GLuchar    uchar;
-@def GLshort    short;
-@def GLushort   ushort;
-@def GLint64    long;
-@def GLuint64   ulong;
-@def GLint32    int;
-@def GLuint32   uint;
+@def GLAPI extern(C, lib:"gl3w") @end
+@def GLenum     int     @end
+@def GLfloat    float   @end
+@def GLdouble   double  @end
+@def GLint      int     @end
+@def GLuint     uint    @end
+@def GLboolean  char    @end
+@def GLbitfield int     @end
+@def GLsizei    long    @end
+@def GLbyte     char    @end
+@def GLubyte    uchar   @end
+@def GLsizeiptr ulong   @end
+@def GLintptr   ulong   @end
+@def GLsync     ulong   @end
+@def GLchar     char    @end
+@def GLuchar    uchar   @end
+@def GLshort    short   @end
+@def GLushort   ushort  @end
+@def GLint64    long    @end
+@def GLuint64   ulong   @end
+@def GLint32    int     @end
+@def GLuint32   uint    @end
 
 GLAPI glTexParameterfv(target: GLenum, pname: GLenum, params: const GLfloat*): void
 GLAPI glCullFace(mode: GLenum): void

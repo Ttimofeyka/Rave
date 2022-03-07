@@ -538,6 +538,7 @@ class Parser {
 		SList!Token operatorStack;
 		SList!AstNode nodeStack;
 		uint nodeStackSize = 0;
+		uint operatorStackSize = 0;
 
 		nodeStack.insertFront(parseBasic());
 		nodeStackSize += 1;
@@ -546,12 +547,13 @@ class Parser {
 		{
 			if(operatorStack.empty) {
 				operatorStack.insertFront(next());
+				operatorStackSize += 1;
 			}
 			else {
 				auto tok = next();
 				auto t = tok.type;
 				int prec = OPERATORS[t];
-				while(prec <= OPERATORS[operatorStack.front.type]) {
+				while(operatorStackSize > 0 && prec <= OPERATORS[operatorStack.front.type]) {
 					// push the operator onto the nodeStack
 					assert(nodeStackSize >= 2);
 
@@ -562,9 +564,11 @@ class Parser {
 					nodeStackSize -= 1;
 
 					operatorStack.removeFront();
+					operatorStackSize -= 1;
 				}
 
 				operatorStack.insertFront(tok);
+				operatorStackSize += 1;
 			}
 
 			nodeStack.insertFront(parseBasic());
@@ -572,7 +576,7 @@ class Parser {
 		}
 
 		// push the remaining operator onto the nodeStack
-		foreach(op; operatorStack) {
+		while(!operatorStack.empty()) {
 			assert(nodeStackSize >= 2);
 
 			auto rhs = nodeStack.front(); nodeStack.removeFront();
@@ -584,6 +588,7 @@ class Parser {
 			nodeStackSize -= 1;
 
 			operatorStack.removeFront();
+			operatorStackSize -= 1;
 		}
 		
 		return nodeStack.front();
