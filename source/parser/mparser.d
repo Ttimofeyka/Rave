@@ -421,7 +421,7 @@ class Parser {
 	}
 
 	private AstNode parseFuncCall(AstNode func) {
-		return new AstNodeFuncCall(func, parseFuncArguments());
+		return new AstNodeFuncCall(peek().loc, func, parseFuncArguments());
 	}
 
 	private AstNode parseSuffix(AstNode base) {

@@ -1,6 +1,17 @@
 extern(C) a(): int;
 extern(C) b: int;
 
+extern(C) complex_calculation(a: int, b: int): int;
+
+(inline) function(a: int, b: int, c: uint): int {
+	a = c & b + complex_calculation(c, b);
+	ret complex_calculation(a, b);
+}
+
+(C) function2() {
+	function(1, 2, 3);
+}
+
 @ifdef WINDOWS extern(C, dll:"opengl32.dll")
 @else          extern(C, lib:"gl3w") @endif
 glGenBuffers(count: int, bufs: uint*);

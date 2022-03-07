@@ -336,24 +336,26 @@ class AstNodeFunction : AstNode {
 
 		auto retType = this.decl.signature.ret.get(s);
 		Type[] argTypes = array(map!((a) => a.get(s))(this.decl.signature.args));
+		actualDecl = new FunctionSignatureTypes(retType, argTypes);
 
 		if(this.body_ is null) {
 			if(retType.instanceof!TypeUnknown) {
-				s.ctx.addError("Cannot infer return type of a function with no body.",
+				s.ctx.addError("Cannot infer the return type of a function with no body.",
 					this.where);
 				return;
 			}
 
-			if(this.decl.isExtern) {
-				actualDecl = new FunctionSignatureTypes(retType, argTypes);
-				return;
-			}
-			else {
-				s.ctx.addError("Forward declarations are not yet implemented.",
-					this.where);
+			// if(this.decl.isExtern) {
+			// 	s.vars[this.decl.name] = actualDecl;
+			// 	return;
+			// }
+			// else {
+				// s.ctx.addError("Forward declarations are not yet implemented.",
+				// 	this.where);
 				// Forward declaration... TODO
-				return;
-			}
+			s.vars[this.decl.name] = actualDecl;
+			return;
+			// }
 		}
 
 		auto ss = new AnalyzerScope(s.ctx, s.genctx, s);
@@ -401,6 +403,7 @@ class AstNodeFunction : AstNode {
 
 		// TODO: Check if types are not inferred!
 		actualDecl = new FunctionSignatureTypes(retType, argTypes);
+		s.vars[this.decl.name] = actualDecl;
 	}
 
 	private LLVMTypeRef* getParamsTypes(GenerationContext ctx) {
@@ -1196,7 +1199,7 @@ class AstNodeIden : AstNode {
 			return v.type;
 		
 		if(auto v = t.instanceof!FunctionSignatureTypes)
-			return v.ret;
+			return new TypeFunction(v);
 
 		assert(0);
 	}
@@ -1334,15 +1337,48 @@ class AstNodeContinue : AstNode {
 
 class AstNodeFuncCall : AstNode {
 	AstNode func;
+	TypeFunction funcType;
 	AstNode[] args;
 
-	this(AstNode func, AstNode[] args) {
+	this(SourceLocation where, AstNode func, AstNode[] args) {
+		this.where = where;
 		this.func = func;
 		this.args = args;
 	}
 
+	override Type getType(AnalyzerScope s) {
+		return this.funcType ? this.funcType.signature.ret : new TypeUnknown();
+	}
+
 	override void analyze(AnalyzerScope s, Type neededType) {
-		
+		this.func.analyze(s, new TypeUnknown());
+		auto funcType = this.func.getType(s);
+
+		if(!funcType.instanceof!TypeFunction) {
+			s.ctx.addError("Cannot call a non-function value!", this.where);
+			return;
+		}
+
+		this.funcType = cast(TypeFunction)funcType;
+
+		if(this.args.length != this.funcType.signature.args.length) {
+			s.ctx.addError("Invalid call to function, "
+				~ to!string(this.funcType.signature.args.length)
+				~ " arguments are required, but got "
+				~ to!string(this.args.length), this.where);
+			return;
+		}
+
+		for(int i = 0; i < this.args.length; ++i) {
+			this.args[i].analyze(s, this.funcType.signature.args[i]);
+		}
+
+		if(!neededType.instanceof!TypeUnknown && !neededType.assignable(getType(s))) {
+			s.ctx.addError("Type mismatch: the outer scope requires type '"
+				~ neededType.toString()
+				~ "', but function call returns type '"
+				~ getType(s).toString() ~ "'.", this.where);
+		}
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {

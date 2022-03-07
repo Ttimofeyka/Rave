@@ -113,6 +113,22 @@ class TypePointer : Type {
     }
 }
 
+class TypeFunction : Type {
+    FunctionSignatureTypes signature;
+    this(FunctionSignatureTypes signature) {
+        this.signature = signature;
+    }
+
+    override bool assignable(Type other) {
+        // if(other.instanceof!(TypeFunction)) return true;
+        return false;
+    }
+
+    override string toString() const {
+        return signature.toString();
+    }
+}
+
 class SignatureTypes {
     bool isStatic, isExtern;
 }

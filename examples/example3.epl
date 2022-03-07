@@ -5,8 +5,17 @@ assign(a: int, b: int): int {
 }
 
 main: int {
+<<<<<<< HEAD
     while(gl != 5) {
         gl += 1;
     }
     ret gl;
 }
+=======
+    a := 0;
+    if(a == 1) {
+        a = 1;
+    }
+    ret a;
+}
+>>>>>>> e158cb148e8fae9a9114bcf14977cf265b829999
