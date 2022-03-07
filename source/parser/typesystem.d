@@ -90,7 +90,8 @@ class TypeBasic : Type {
 
     override bool assignable(Type other) {
         if(auto other2 = other.instanceof!(TypeBasic)) {
-            return basicTypeSizeOf(basic) >= basicTypeSizeOf(other2.basic);
+            if(basic == BasicType.t_bool) return true;
+            else return basicTypeSizeOf(basic) >= basicTypeSizeOf(other2.basic);
         }
         return false;
     }

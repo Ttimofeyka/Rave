@@ -81,22 +81,29 @@ void main(string[] args)
 	auto semaScope = new AnalyzerScope(genctx.sema, genctx);
 
 	writeln("------------------ AST -------------------");
+	bool hadErrors = false;
+	int errorCount = 0;
 	for(int i = 0; i < nodes.length; ++i) {
 		// writeln("Analyzing... #", i);
 		nodes[i].analyze(semaScope, null);
 		if(genctx.sema.errorCount > 0) {
+			hadErrors = true;
+			errorCount += genctx.sema.errorCount;
 			genctx.sema.flushErrors();
 			break;
 		}
 		nodes[i].debugPrint(0);
 	}
 
-	if(genctx.sema.errorCount == 0) {
+	if(!hadErrors) {
 		writeln("------------------ Generating -------------------");
 		genctx.gen(semaScope, nodes, outputFile, debugMode);
+		if(genctx.sema.errorCount > 0) {
+			genctx.sema.flushErrors();
+		}
 	}
 	else {
-		writeln("Failed with ", genctx.sema.errorCount, " error(s).");
+		writeln("Failed with ", errorCount, " error(s).");
 		exit(1);
 	}
 }

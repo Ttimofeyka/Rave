@@ -200,6 +200,10 @@ class AstNode {
 	}
 }
 
+struct DeclMod {
+	string name;
+	string[] args;
+}
 
 struct FunctionDeclaration {
 	FuncSignature signature;
@@ -207,6 +211,7 @@ struct FunctionDeclaration {
 	string[] argNames;
 	bool isStatic;
 	bool isExtern;
+	DeclMod[] decl_mods;
 
 	debug {
 		string toString() const {
@@ -239,6 +244,7 @@ struct VariableDeclaration {
 	string name;
 	bool isStatic;
 	bool isExtern;
+	DeclMod[] decl_mods;
 
 	debug {
 		string toString() const {
@@ -306,11 +312,19 @@ class TypeDeclarationStruct : TypeDeclaration {
 	}
 }
 
+struct ReturnStmt {
+	AstNodeReturn node;
+	LLVMValueRef value;
+	AnalyzerScope scope_;
+}
+
 class AstNodeFunction : AstNode {
 	FunctionDeclaration decl;
 	FunctionSignatureTypes actualDecl;
 	AstNode body_;
+	
 	LLVMBuilderRef builder;
+	ReturnStmt[] returns;
 
 	this(SourceLocation loc, FunctionDeclaration decl, AstNode body_) {
 		this.where = loc;
@@ -319,8 +333,28 @@ class AstNodeFunction : AstNode {
 	}
 
 	override void analyze(AnalyzerScope s, Type) {
+
 		auto retType = this.decl.signature.ret.get(s);
 		Type[] argTypes = array(map!((a) => a.get(s))(this.decl.signature.args));
+
+		if(this.body_ is null) {
+			if(retType.instanceof!TypeUnknown) {
+				s.ctx.addError("Cannot infer return type of a function with no body.",
+					this.where);
+				return;
+			}
+
+			if(this.decl.isExtern) {
+				actualDecl = new FunctionSignatureTypes(retType, argTypes);
+				return;
+			}
+			else {
+				s.ctx.addError("Forward declarations are not yet implemented.",
+					this.where);
+				// Forward declaration... TODO
+				return;
+			}
+		}
 
 		auto ss = new AnalyzerScope(s.ctx, s.genctx, s);
 		ss.ctx.currentFunc = this;
@@ -331,6 +365,26 @@ class AstNodeFunction : AstNode {
 
 		ss.neededReturnType = retType;
 		this.body_.analyze(ss, new TypeUnknown());
+
+		if(this.returns.length == 0 && retType.instanceof!TypeUnknown)
+			retType = new TypeVoid();
+
+		foreach(ret; this.returns) {
+			Type type = new TypeVoid();
+			if(ret.node.value !is null)
+				type = ret.node.value.getType(ret.scope_);
+			
+			if(retType.instanceof!TypeUnknown)
+				retType = type;
+			else if(!retType.assignable(type))
+			{
+				s.ctx.addError("First mismatching return is of type '" ~ type.toString()
+					~ "', while all previous returns are of type '" ~ retType.toString() ~ "'",
+					ret.node.where);
+				s.ctx.addError("Return types don't match in function '" ~ decl.name ~ "'.", this.where);
+				break;
+			}
+		}
 
 		if(!ss.hadReturn) {
 			if(retType.instanceof!TypeUnknown)
@@ -345,6 +399,7 @@ class AstNodeFunction : AstNode {
 			retType = ss.returnType;
 		}
 
+		// TODO: Check if types are not inferred!
 		actualDecl = new FunctionSignatureTypes(retType, argTypes);
 	}
 
@@ -371,6 +426,24 @@ class AstNodeFunction : AstNode {
 		    cast(uint)decl.signature.args.length,
 		    false
 	    );
+
+		bool should_mangle = true;
+		foreach(mod; decl.decl_mods) {
+			if(mod.name == "C") should_mangle = false;
+			else if(mod.name == "dll") {
+				if(mod.args.length != 1) 
+					s.ctx.addError("Function modifier 'dll' needs exactly 1 parameter.",
+						this.where);
+			}
+			else if(mod.name == "lib") {
+				if(mod.args.length != 1) 
+					s.ctx.addError("Function modifier 'lib' needs exactly 1 parameter.",
+						this.where);
+			}
+			else {
+				s.ctx.addError("Unknown modifier: '" ~ mod.name ~ "'", this.where);
+			}
+		}
 
 		LLVMValueRef func = LLVMAddFunction(
 			ctx.mod,
@@ -408,7 +481,7 @@ class AstNodeFunction : AstNode {
 	debug {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
-			writeln("Function decl: ",
+			writeln("Function Declaration: ",
 				actualDecl is null ? decl.toString() : actualDecl.toString(decl.name, decl.argNames)
 			);
 			if(body_ !is null) body_.debugPrint(indent + 1);
@@ -816,6 +889,17 @@ class AstNodeIf : AstNode {
 
 	override void analyze(AnalyzerScope s, Type neededType) {
 		this.parent = s.ctx.currentFunc;
+		auto boolType = new TypeBasic(BasicType.t_bool);
+		this.cond.analyze(s, boolType);
+
+		this.body_.analyze(s, new TypeUnknown());
+
+		if(this.else_ !is null) {
+			auto prevHadReturn = s.hadReturn;
+			this.else_.analyze(s, new TypeUnknown());
+			s.hadReturn = prevHadReturn && s.hadReturn;
+		}
+		else s.hadReturn = false;
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
@@ -981,9 +1065,10 @@ class AstNodeReturn : AstNode {
 	AstNodeFunction parent;
 	AstNode value;
 
-	this(AstNode value, AstNodeFunction parent) { 
+	this(SourceLocation where, AstNode value, AstNodeFunction parent) { 
 		this.value = value;
 		this.parent = parent;
+		this.where = where;
 	}
 
 	override void analyze(AnalyzerScope s, Type neededType) {
@@ -1010,6 +1095,8 @@ class AstNodeReturn : AstNode {
 			s.hadReturn = true;
 			s.returnType = t;
 		}
+
+		parent.returns ~= ReturnStmt(this, null, s);
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
