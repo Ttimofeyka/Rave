@@ -455,7 +455,7 @@ class AstNodeFunction : AstNode {
 			ret_type
 		);
 
-		ctx.gfuncs.set(func,decl.name);
+		ctx.gfuncs[decl.name] = func;
 		ctx.currfunc = func;
 
 		if(!decl.isExtern) {
@@ -463,6 +463,18 @@ class AstNodeFunction : AstNode {
 			LLVMPositionBuilderAtEnd(builder, entry);
 
 			ctx.currbuilder = builder;
+			if(decl.name == ctx.entryFunction) {
+				for(int i=0; i<ctx.presets.length; i++) {
+					LLVMBuildCall(
+						ctx.currbuilder,
+						ctx.presets[i],
+						null,
+						0,
+						toStringz("call")
+					);
+				}
+			}
+
 			for(int i=0; i<f_body.nodes.length; i++) {
 				f_body.nodes[i].gen(s);
 			}
@@ -1251,22 +1263,46 @@ class AstNodeDecl : AstNode {
 			writeln("The variable " ~ decl.name ~ " has been declared multiple times!");
 			exit(-1);
 		}
-
-		LLVMValueRef constval = value.gen(s);
-
 		if(s.genctx.currbuilder == null) {
 			// Global var
-			return ctx.createGlobal(
+			auto global = ctx.createGlobal(
 				ctx.getLLVMType(decl.type.get(s)),
-				constval,
+				null,
 				decl.name
 			);
+
+			LLVMTypeRef ret_type = LLVMFunctionType(
+		    	LLVMVoidType(),
+		    	null,
+		    	0,
+		    	false
+	    	);
+
+			LLVMValueRef func = LLVMAddFunction(
+				ctx.mod,
+				toStringz(decl.name~"_init"),
+				ret_type
+			);
+
+			auto entry = LLVMAppendBasicBlock(func,toStringz("entry"));
+			ctx.currbuilder = LLVMCreateBuilder();
+			LLVMPositionBuilderAtEnd(ctx.currbuilder, entry);
+
+			LLVMBuildStore(
+				ctx.currbuilder,
+				value.gen(s),
+				global
+			);
+
+			ctx.presets.add(func);
+
+			return global;
 		}
 		else {
 			// Local var
 			return ctx.createLocal(
 				ctx.getLLVMType(decl.type.get(s)),
-				constval,
+				value.gen(s),
 				decl.name
 			);
 		}

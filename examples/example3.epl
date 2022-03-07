@@ -1,5 +1,12 @@
+a: void {
+    
+}
+
 main: int {
     b := 1;
-    if(0 == 0 && 1 != 2) b = 5;
+    if(0 == 0) {
+        if(b != 2) b = 4;
+        else b = 2;
+    }
     ret b;
 }

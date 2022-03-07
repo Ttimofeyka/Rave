@@ -91,18 +91,14 @@ class GArgs {
 	}
 }
 
-class GFuncs {
-	LLVMValueRef[string] funcs;
+class GPresets {
+    private LLVMValueRef[int] presets;
+    int i = 0;
 
-	this() {}
+    void add(LLVMValueRef f) {presets[i] = f;}
+    long length() {return presets.length;}
 
-	void set(LLVMValueRef v, string n) {
-		funcs[n] = v;
-	}
-
-	LLVMValueRef opIndex(string index) {
-		return funcs[index];
-	}
+    LLVMValueRef opIndex(int index) {return presets[index];}
 }
 
 class GenerationContext {
@@ -111,16 +107,18 @@ class GenerationContext {
 	LLVMBuilderRef currbuilder;
 	GStack gstack;
 	GArgs gargs;
-	GFuncs gfuncs;
+	LLVMValueRef[string] gfuncs;
+    GPresets presets;
 	LLVMValueRef currfunc;
 	int basicblocks_count = 0;
+    string entryFunction = "main";
 
     this() {
         mod = LLVMModuleCreateWithName(toStringz("epl"));
 		sema = new SemanticAnalyzerContext(new AtstTypeContext());
 		gstack = new GStack();
 		gargs = new GArgs();
-		gfuncs = new GFuncs();
+        presets = new GPresets();
 
 		// Initialization
 		LLVMInitializeAllTargets();
