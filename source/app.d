@@ -78,25 +78,25 @@ void main(string[] args)
 	auto genctx = new GenerationContext();
 	implementDefaultTypeContext(genctx.sema.typeContext);
 
-	auto semaScope = new AnalyzerScope(genctx.sema);
+	auto semaScope = new AnalyzerScope(genctx.sema, genctx);
 
 	writeln("------------------ AST -------------------");
 	for(int i = 0; i < nodes.length; ++i) {
 		// writeln("Analyzing... #", i);
 		nodes[i].analyze(semaScope, null);
-		if(genctx.sema.errs.length > 0) {
+		if(genctx.sema.errorCount > 0) {
 			genctx.sema.flushErrors();
 			break;
 		}
 		nodes[i].debugPrint(0);
 	}
 
-	if(genctx.sema.errs.length == 0) {
+	if(genctx.sema.errorCount == 0) {
 		writeln("------------------ Generating -------------------");
-		genctx.gen(nodes, outputFile, debugMode);
+		genctx.gen(semaScope, nodes, outputFile, debugMode);
 	}
 	else {
-		writeln("Failed with ", genctx.sema.errs.length, " error(s).");
+		writeln("Failed with ", genctx.sema.errorCount, " error(s).");
 		exit(1);
 	}
 }

@@ -148,9 +148,9 @@ class GenerationContext {
 			 ||(t==LLVMInt16Type())||(t==LLVMInt32Type());
 	}
 
-    void gen(AstNode[] nodes, string file, bool debugMode) {
+    void gen(AnalyzerScope s, AstNode[] nodes, string file, bool debugMode) {
 		for(int i=0; i<nodes.length; i++) {
-			nodes[i].gen(this);
+			nodes[i].gen(s);
 		}
 		genTarget(file, debugMode);
 	}

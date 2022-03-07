@@ -1,7 +1,6 @@
 module parser.ast;
 
 import std.stdio, std.conv;
-import std.array : join;
 import std.algorithm.iteration : map;
 import std.algorithm : canFind;
 import parser.generator.gen, lexer.tokens;
@@ -80,7 +79,7 @@ class AtstNodeName : AtstNode {
 		this.name = name;
 	}
 
-	override Type get(AnalyzerScope ctx) { return ctx.getType(name); }
+	override Type get(AnalyzerScope s) { return s.ctx.typeContext.getType(name); }
 
 	debug {
 		override string toString() const {
@@ -166,8 +165,9 @@ struct TypecheckResult {
 }
 // Abstract syntax tree Node.
 class AstNode {
+	SourceLocation where;
 
-	LLVMValueRef gen(GenerationContext ctx) {
+	LLVMValueRef gen(AnalyzerScope s) {
 		LLVMValueRef a;
 		return a;
 	}
@@ -312,21 +312,40 @@ class AstNodeFunction : AstNode {
 	AstNode body_;
 	LLVMBuilderRef builder;
 
-	this(FunctionDeclaration decl, AstNode body_) {
+	this(SourceLocation loc, FunctionDeclaration decl, AstNode body_) {
+		this.where = loc;
 		this.decl = decl;
 		this.body_ = body_;
 	}
 
 	override void analyze(AnalyzerScope s, Type) {
-		auto lastCurrentFunc = s.ctx.currentFunc;
-		s.ctx.currentFunc = this;
-		s.returnType = this.decl.signature.ret.get(s);
-
-		this.body_.analyze(s, this.decl.signature.ret.get(s));
+		auto retType = this.decl.signature.ret.get(s);
 		Type[] argTypes = array(map!((a) => a.get(s))(this.decl.signature.args));
-		actualDecl = new FunctionSignatureTypes(s.returnType, argTypes);
 
-		s.ctx.currentFunc = lastCurrentFunc;
+		auto ss = new AnalyzerScope(s.ctx, s.genctx, s);
+		ss.ctx.currentFunc = this;
+
+		for(int i = 0; i < this.decl.argNames.length; ++i) {
+			ss.vars[this.decl.argNames[i]] = new VariableSignatureTypes(argTypes[i]);
+		}
+
+		ss.neededReturnType = retType;
+		this.body_.analyze(ss, new TypeUnknown());
+
+		if(!ss.hadReturn) {
+			if(retType.instanceof!TypeUnknown)
+				retType = new TypeVoid();
+
+			if(!retType.instanceof!TypeVoid) {
+				s.ctx.addError("In function '" ~ this.decl.name ~
+					"': not all code paths return a value!", this.where);
+			}
+		}
+		else if(retType.instanceof!TypeUnknown) {
+			retType = ss.returnType;
+		}
+
+		actualDecl = new FunctionSignatureTypes(retType, argTypes);
 	}
 
 	private LLVMTypeRef* getParamsTypes(GenerationContext ctx) {
@@ -367,10 +386,10 @@ class AstNodeFunction : AstNode {
 
 			ctx.currbuilder = builder;
 			for(int i=0; i<f_body.nodes.length; i++) {
-				f_body.nodes[i].gen(ctx);
+				f_body.nodes[i].gen(s);
 			}
 
-			if(decl.signature.ret.get(ctx).instanceof!(TypeVoid)) {
+			if(decl.signature.ret.get(s).instanceof!(TypeVoid)) {
 				LLVMBuildRetVoid(ctx.currbuilder);
 			}
 
@@ -419,7 +438,8 @@ class AstNodeGet : AstNode {
 	string field;
 	bool isSugar; // true if -> false if .
 	
-	this(AstNode value, string field, bool isSugar) {
+	this(SourceLocation where, AstNode value, string field, bool isSugar) {
+		this.where = where;
 		this.value = value;
 		this.field = field;
 		this.isSugar = isSugar;
@@ -439,28 +459,26 @@ class AstNodeBinary : AstNode {
 	TokType type;
 	Type valueType;
 
-	this(AstNode lhs, AstNode rhs, TokType type) {
+	this(SourceLocation where, AstNode lhs, AstNode rhs, TokType type) {
+		this.where = where; 
 		this.lhs = lhs;
 		this.rhs = rhs;
 		this.type = type;
 	}
 
-	override Type getType(AnalyzerScope s) {
-		return valueType;
-	}
-
 	override LLVMValueRef gen(AnalyzerScope s) {
+		auto ctx = s.genctx;
 		switch(type) {
 			case TokType.tok_equ:
 				AstNodeIden iden = cast(AstNodeIden)lhs;
 				if(ctx.gstack.isLocal(iden.name)) {
-					ctx.setLocal(rhs.gen(ctx),iden.name);
+					ctx.setLocal(rhs.gen(s),iden.name);
 					return ctx.getVarPtr(iden.name);
 				}
 				else {
 					return LLVMBuildStore(
 						ctx.currbuilder,
-						rhs.gen(ctx),
+						rhs.gen(s),
 						ctx.gstack[iden.name]
 					);
 				}
@@ -479,24 +497,24 @@ class AstNodeBinary : AstNode {
 					if(type == TokType.tok_shortplu) {
 						tmp = LLVMBuildAdd(
 							ctx.currbuilder,
-							lhs.gen(ctx),
-							rhs.gen(ctx),
+							lhs.gen(s),
+							rhs.gen(s),
 							toStringz("tmp")
 						);
 					}
 					else if (type == TokType.tok_shortmin) {
 						tmp = LLVMBuildSub(
 							ctx.currbuilder,
-							lhs.gen(ctx),
-							rhs.gen(ctx),
+							lhs.gen(s),
+							rhs.gen(s),
 							toStringz("tmp")
 						);
 					}
 					else if (type == TokType.tok_shortmul) {
 						tmp = LLVMBuildMul(
 							ctx.currbuilder,
-							lhs.gen(ctx),
-							rhs.gen(ctx),
+							lhs.gen(s),
+							rhs.gen(s),
 							toStringz("tmp")
 						);
 					}
@@ -516,7 +534,7 @@ class AstNodeBinary : AstNode {
 						tmp = LLVMBuildAdd(
 							ctx.currbuilder,
 							ctx.gstack[iden.name],
-							rhs.gen(ctx),
+							rhs.gen(s),
 							toStringz("tmp")
 						);
 					}
@@ -524,7 +542,7 @@ class AstNodeBinary : AstNode {
 						tmp = LLVMBuildSub(
 							ctx.currbuilder,
 							ctx.gstack[iden.name],
-							rhs.gen(ctx),
+							rhs.gen(s),
 							toStringz("tmp")
 						);
 					}
@@ -537,7 +555,7 @@ class AstNodeBinary : AstNode {
 						);*/
 						tmp = ctx.operMul(
 							ctx.gstack[iden.name],
-							rhs.gen(ctx),
+							rhs.gen(s),
 							false 
 						);
 					}
@@ -562,24 +580,24 @@ class AstNodeBinary : AstNode {
 				if(type == TokType.tok_plus) {
 					operation = LLVMBuildAdd(
 						ctx.currbuilder,
-						lhs.gen(ctx),
-						rhs.gen(ctx),
+						lhs.gen(s),
+						rhs.gen(s),
 						toStringz("operation")
 					);
 				}
 				else if(type == TokType.tok_minus) {
 					operation = LLVMBuildSub(
 						ctx.currbuilder,
-						lhs.gen(ctx),
-						rhs.gen(ctx),
+						lhs.gen(s),
+						rhs.gen(s),
 						toStringz("operation")
 					);
 				}
 				else if(type == TokType.tok_multiply) {
 					operation = LLVMBuildMul(
 						ctx.currbuilder,
-						lhs.gen(ctx),
-						rhs.gen(ctx),
+						lhs.gen(s),
+						rhs.gen(s),
 						toStringz("operation")
 					);
 				}
@@ -603,40 +621,40 @@ class AstNodeBinary : AstNode {
 				if(type == TokType.tok_bit_ls) {
 					bit_result = LLVMBuildShl(
 						ctx.currbuilder,
-						lhs.gen(ctx),
-						rhs.gen(ctx),
+						lhs.gen(s),
+						rhs.gen(s),
 						toStringz("bit_ls")
 					);
 				}
 				else if(type == TokType.tok_bit_rs)  {
 					bit_result = LLVMBuildAShr(
 						ctx.currbuilder,
-						lhs.gen(ctx),
-						rhs.gen(ctx),
+						lhs.gen(s),
+						rhs.gen(s),
 						toStringz("bit_rs")
 					);
 				}
 				else if(type == TokType.tok_bit_and) {
 					bit_result = LLVMBuildAnd(
 						ctx.currbuilder,
-						lhs.gen(ctx),
-						rhs.gen(ctx),
+						lhs.gen(s),
+						rhs.gen(s),
 						toStringz("bit_and")
 					);
 				}
 				else if(type == TokType.tok_bit_or) {
 					bit_result = LLVMBuildOr(
 						ctx.currbuilder,
-						lhs.gen(ctx),
-						rhs.gen(ctx),
+						lhs.gen(s),
+						rhs.gen(s),
 						toStringz("bit_or")
 					);
 				}
 				else if(type == TokType.tok_bit_xor) {
 					bit_result = LLVMBuildXor(
 						ctx.currbuilder,
-						lhs.gen(ctx),
-						rhs.gen(ctx),
+						lhs.gen(s),
+						rhs.gen(s),
 						toStringz("bit_xor")
 					);
 				}
@@ -646,20 +664,20 @@ class AstNodeBinary : AstNode {
 				LLVMTypeRef equal_type;
 				LLVMValueRef lhsgen;
 				if(lhs.instanceof!(AstNodeIden)) {
-					lhsgen = lhs.gen(ctx);
+					lhsgen = lhs.gen(s);
 					AstNodeIden iden = cast(AstNodeIden)lhs;
 					if(ctx.gstack.isGlobal(iden.name)) {
-						equal_type = getVarType(ctx,iden.name);
+						equal_type = getVarType(ctx, iden.name);
 					}
 					else equal_type = getAType(lhsgen);
 				}
 				else if(lhs.instanceof!(AstNodeInt)) {
-					lhsgen = lhs.gen(ctx);
+					lhsgen = lhs.gen(s);
 					AstNodeInt nint = cast(AstNodeInt)lhs;
 					equal_type = ctx.getLLVMType(nint.valueType);
 				}
 				else {
-					lhsgen = lhs.gen(ctx);
+					lhsgen = lhs.gen(s);
 					equal_type = getAType(lhsgen);
 				}
 				
@@ -668,14 +686,14 @@ class AstNodeBinary : AstNode {
 						ctx.currbuilder,
 						LLVMIntEQ,
 						lhsgen,
-						rhs.gen(ctx),
+						rhs.gen(s),
 						toStringz("icmp_eq")
 					);
 					return LLVMBuildICmp(
 						ctx.currbuilder,
 						LLVMIntNE,
 						lhsgen,
-						rhs.gen(ctx),
+						rhs.gen(s),
 						toStringz("icmp_ne")
 					);
 				//}
@@ -683,6 +701,10 @@ class AstNodeBinary : AstNode {
 				break;
 		}
 		assert(0);
+	}
+
+	override Type getType(AnalyzerScope s) {
+		return valueType;
 	}
 
 	private void checkTypes(AnalyzerScope s, Type neededType) {
@@ -693,15 +715,12 @@ class AstNodeBinary : AstNode {
 				this.valueType = neededType;
 			}
 			else {
-				if(rhs.instanceof!AstNodeFuncCall) {
-					this.valueType = neededType;
-				}
-				else {
-					s.ctx.addError("Bad binary operator types: expected '"
-						~ neededType.toString() ~ "' but got '"
-						~ lhs.getType(s).toString() ~ "' and '"
-						~ rhs.getType(s).toString() ~ "'.");
-				}
+				s.ctx.addError("Bad binary operator types: expected '"
+					~ neededType.toString() ~ "' but got '"
+					~ lhs.getType(s).toString() ~ "' and '"
+					~ rhs.getType(s).toString() ~ "'.", where);
+
+				this.valueType = neededType;
 			}
 		}
 		else { // neededType --> unknown.
@@ -711,21 +730,31 @@ class AstNodeBinary : AstNode {
 	}
 
 	override void analyze(AnalyzerScope s, Type neededType) {
+		if(this.type == TokType.tok_equ) {
+			lhs.analyze(s, new TypeUnknown()); // TODO: Check if it's assignable
+			rhs.analyze(s, lhs.getType(s));
+			return;
+		}
+
+		// if(_isArithmetic()) {
+		// 	if(!instanceof!TypeBasic(neededType)) {
+		// 		s.ctx.addError("Non-basic type " ~ neededType.toString() ~
+		// 			" was required for an arithmetic binary operation by the outer scope.");
+		// 	}
+		// 	this.valueType = neededType;
+		// 	return;
+		// }
+		
 		lhs.analyze(s, neededType);
 		rhs.analyze(s, neededType);
 		
 		if(neededType.instanceof!TypeUnknown)
 			neededType = lhs.getType(s); // TODO: Find best suitable type!
-		// if(neededType.instanceof!TypeUnknown)
-		// 	neededType = rhs.getType(s); // TODO: Find best suitable type!
 			
-		if(_isArithmetic()) {
-			if(!instanceof!TypeBasic(neededType)) {
-				s.ctx.addError("Non-basic type " ~ neededType.toString() ~
-					" was required for an arithmetic binary operation by the outer scope.");
-			}
-		}
+		
+		// writeln("Checking types...");
 		checkTypes(s, neededType);
+		// writeln("this.getType() -> ", this.getType(s));
 	}
 
 	private bool _isArithmetic() {
@@ -751,12 +780,14 @@ class AstNodeUnary : AstNode {
 	AstNode node;
 	TokType type;
 
-	this(AstNode node, TokType type) {
+	this(SourceLocation where, AstNode node, TokType type) {
+		this.where = where;
 		this.node = node;
 		this.type = type;
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
+		auto ctx = s.genctx;
 		LLVMValueRef a;
 		return a;
 	}
@@ -788,17 +819,18 @@ class AstNodeIf : AstNode {
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
+		auto ctx = s.genctx;
 		LLVMBasicBlockRef thenbb;
 		LLVMBasicBlockRef elsebb;
 		LLVMBasicBlockRef endbb;
 
-		thenbb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name],toStringz("then"));
-		elsebb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name],toStringz("else"));
-		endbb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name],toStringz("end"));
+		thenbb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name], toStringz("then"));
+		elsebb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name], toStringz("else"));
+		endbb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name], toStringz("end"));
 
 		LLVMBuildCondBr(
 			ctx.currbuilder,
-			cond.gen(ctx),
+			cond.gen(s),
 			thenbb,
 			elsebb
 		);
@@ -809,11 +841,11 @@ class AstNodeIf : AstNode {
 		else {
 			if(body_.instanceof!(AstNodeBlock)) {
 				AstNodeBlock b = cast(AstNodeBlock)body_;
-				for(int i=0; i<b.nodes.length; i++) {
-					b.nodes[i].gen(ctx);
+				for(int i = 0; i < b.nodes.length; i++) {
+					b.nodes[i].gen(s);
 				}
 			}
-			else body_.gen(ctx);
+			else body_.gen(s);
 		}
 
 		LLVMBuildBr(ctx.currbuilder,endbb);
@@ -858,13 +890,14 @@ class AstNodeWhile : AstNode {
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
+		auto ctx = s.genctx;
 		LLVMBasicBlockRef _while;
 		LLVMBasicBlockRef _after;
 
 		_while = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name],toStringz("_while"));
 		_after = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name],toStringz("_after"));
 
-		LLVMValueRef cond_as_cmp = cond.gen(ctx);
+		LLVMValueRef cond_as_cmp = cond.gen(s);
 		LLVMBuildCondBr(ctx.currbuilder,cond_as_cmp,_while,_after);
 		
 		LLVMPositionBuilderAtEnd(ctx.currbuilder,_while);
@@ -872,14 +905,14 @@ class AstNodeWhile : AstNode {
 		if(body_.instanceof!(AstNodeBlock)) {
 			AstNodeBlock block = cast(AstNodeBlock)body_;
 			for(int i=0; i<block.nodes.length; i++) {
-				block.nodes[i].gen(ctx);
+				block.nodes[i].gen(s);
 			}
 		}
-		else body_.gen(ctx);
+		else body_.gen(s);
 
-		LLVMBuildCondBr(ctx.currbuilder,cond.gen(ctx),_while,_after);
+		LLVMBuildCondBr(ctx.currbuilder,cond.gen(s), _while, _after);
 
-		LLVMPositionBuilderAtEnd(ctx.currbuilder,_after);
+		LLVMPositionBuilderAtEnd(ctx.currbuilder, _after);
 
 		return null;
 	}
@@ -900,6 +933,7 @@ class AstNodeAsm : AstNode {
 	string value; // TODO
 
 	override LLVMValueRef gen(AnalyzerScope s) {
+		auto ctx = s.genctx;
 		LLVMValueRef a;
 		return a;
 	}
@@ -913,25 +947,21 @@ class AstNodeBlock : AstNode {
 	}
 
 	override void analyze(AnalyzerScope s, Type neededType) {
-		auto newScope = new AnalyzerScope(s.ctx, s);
+		auto newScope = new AnalyzerScope(s.ctx, s.genctx, s);
 		newScope.returnType = s.returnType;
+		newScope.neededReturnType = s.neededReturnType;
 
 		foreach(node; this.nodes) {
 			node.analyze(newScope, neededType);
-			if(newScope.hadReturn && !neededType.instanceof!TypeUnknown) {
-				if(!neededType.assignable(newScope.returnType)) {
-					if(newScope.returnType.toString() != "?unknown") {
-						s.ctx.addError("Wrong return type: expected '" ~ neededType.toString()
-						~ "', got: '" ~ newScope.returnType.toString() ~ '\'');
-					}
-				}
-				break;
-			}
+			if(newScope.hadReturn) break;
 		}
+
 		s.returnType = newScope.returnType;
+		s.hadReturn = s.hadReturn || newScope.hadReturn;
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
+		auto ctx = s.genctx;
 		LLVMValueRef a;
 		return a;
 	}
@@ -958,22 +988,46 @@ class AstNodeReturn : AstNode {
 
 	override void analyze(AnalyzerScope s, Type neededType) {
 		this.parent = s.ctx.currentFunc;
-		this.value.analyze(s, neededType);
-		s.hadReturn = true;
-		s.returnType = this.value.getType(s);
+		
+		Type t = new TypeVoid();
+
+		if(this.value !is null) {
+			this.value.analyze(s, s.neededReturnType);
+			t = this.value.getType(s);
+		}
+
+		// writeln(t);
+		if(s.neededReturnType.instanceof!TypeUnknown) {
+			s.hadReturn = true;
+			s.returnType = t;
+		}
+		else if(!s.neededReturnType.assignable(t)) {
+			s.ctx.addError("Wrong return type: expected '" ~ s.neededReturnType.toString()
+				~ "', got: '" ~ t.toString() ~ '\'', this.where);
+			s.hadReturn = true;
+		}
+		else {
+			s.hadReturn = true;
+			s.returnType = t;
+		}
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
-		LLVMValueRef retval = value.gen(ctx);
-	    LLVMBuildRet(ctx.currbuilder, retval);
+		auto ctx = s.genctx;
+		if(value !is null) {
+			LLVMValueRef retval = value.gen(s);
+			LLVMBuildRet(ctx.currbuilder, retval);
+		}
 		return null;
 	}
 
 	debug {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
-			writeln("Return:");
-			value.debugPrint(indent  + 1);
+			writeln("Return: ", value is null ? "void" : "");
+			if(value !is null) {
+				value.debugPrint(indent  + 1);
+			}
 		}
 	}
 }
@@ -988,6 +1042,7 @@ class AstNodeIndex : AstNode {
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
+		auto ctx = s.genctx;
 		LLVMValueRef a;
 		return a;
 	}
@@ -1007,11 +1062,13 @@ class AstNodeIndex : AstNode {
 class AstNodeIden : AstNode {
 	string name;
 
-	this(string name) {
+	this(SourceLocation where, string name) {
+		this.where = where;
 		this.name = name;
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
+		auto ctx = s.genctx;
 		// _EPLf4exit, not exit! ctx.mangleQualifiedName([name], true) -> string
 		// TODO: Check if the global variable is referring to a function
 		if(ctx.gstack.setVar) {
@@ -1037,7 +1094,7 @@ class AstNodeIden : AstNode {
 	override Type getType(AnalyzerScope s) {
 		auto t = s.get(name);
 		if(t is null) {
-			s.ctx.addError("No such variable or function binding: '" ~ name ~ "'");
+			s.ctx.addError("No such variable or function binding: '" ~ name ~ "'", this.where);
 			return new TypeBasic(BasicType.t_int);
 		}
 
@@ -1056,7 +1113,8 @@ class AstNodeIden : AstNode {
 		if(auto v = t.instanceof!VariableSignatureTypes) {
 			if(!neededType.assignable(v.type) && !neededType.instanceof!TypeUnknown) {
 				s.ctx.addError("Type mismatch: variable '" ~ name ~ "' is of type "
-					~ v.toString() ~ ", but " ~ neededType.toString() ~ " was expected.");
+					~ v.type.toString() ~ ", but " ~ neededType.toString() ~ " was expected.",
+					this.where);
 			}
 		}
 	}
@@ -1080,7 +1138,7 @@ class AstNodeDecl : AstNode {
 	}
 
 	override void analyze(AnalyzerScope s, Type neededType) {
-		actualType = this.decl.type.get(s.ctx.typeContext);
+		actualType = this.decl.type.get(s);
 		if(this.value !is null) {
 			this.value.analyze(s, actualType);
 			if(instanceof!TypeUnknown(actualType))
@@ -1090,17 +1148,18 @@ class AstNodeDecl : AstNode {
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
+		auto ctx = s.genctx;
 		if(ctx.gstack.isVariable(decl.name)) {
 			writeln("The variable " ~ decl.name ~ " has been declared multiple times!");
 			exit(-1);
 		}
 
-		LLVMValueRef constval = value.gen(ctx);
+		LLVMValueRef constval = value.gen(s);
 
 		if(ctx.currbuilder == null) {
 			// Global var
 			return ctx.createGlobal(
-				ctx.getLLVMType(decl.type.get(ctx.typecontext)),
+				ctx.getLLVMType(decl.type.get(s)),
 				constval,
 				decl.name
 			);
@@ -1108,7 +1167,7 @@ class AstNodeDecl : AstNode {
 		else {
 			// Local var
 			return ctx.createLocal(
-				ctx.getLLVMType(decl.type.get(ctx.typecontext)),
+				ctx.getLLVMType(decl.type.get(s)),
 				constval,
 				decl.name
 			);
@@ -1132,6 +1191,7 @@ class AstNodeLabel : AstNode {
 	string name;
 
 	override LLVMValueRef gen(AnalyzerScope s) {
+		auto ctx = s.genctx;
 		LLVMValueRef a;
 		return a;
 	}
@@ -1148,6 +1208,7 @@ class AstNodeBreak : AstNode {
 	string label; /* optional */
 
 	override LLVMValueRef gen(AnalyzerScope s) {
+		auto ctx = s.genctx;
 		LLVMValueRef a;
 		return a;
 	}
@@ -1164,6 +1225,7 @@ class AstNodeContinue : AstNode {
 	string label; /* optional */
 
 	override LLVMValueRef gen(AnalyzerScope s) {
+		auto ctx = s.genctx;
 		LLVMValueRef a;
 		return a;
 	}
@@ -1190,6 +1252,7 @@ class AstNodeFuncCall : AstNode {
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
+		auto ctx = s.genctx;
 		// _EPLf4exit, not exit! ctx.mangleQualifiedName([name], true) -> string
 		AstNodeIden n = cast(AstNodeIden)func;
 		return LLVMBuildCall(
@@ -1219,7 +1282,8 @@ class AstNodeInt : AstNode {
 	ulong value;
 	Type valueType;
 
-	this(ulong value) { 
+	this(SourceLocation where, ulong value) {
+		this.where = where;
 		this.value = value;
 		this.valueType = null;
 	}
@@ -1240,7 +1304,7 @@ class AstNodeInt : AstNode {
 		}
 		else {
 			if(!_isArithmetic(neededType)) {
-				s.ctx.addError("Expected " ~ neededType.toString() ~ ", got an integer");
+				s.ctx.addError("Expected " ~ neededType.toString() ~ ", got an integer", this.where);
 			}
 			this.valueType = neededType;
 		}
@@ -1275,6 +1339,7 @@ class AstNodeInt : AstNode {
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
+		auto ctx = s.genctx;
 		TypeBasic type = cast(TypeBasic)valueType;
 
 		if(type is null) type = new TypeBasic(BasicType.t_int);
@@ -1315,7 +1380,7 @@ class AstNodeInt : AstNode {
 class AstNodeFloat : AstNode {
 	float value;
 
-	this(float value) { this.value = value; }
+	this(SourceLocation where, float value) { this.where = where; this.value = value; }
 	
 	override Type getType(AnalyzerScope s) {
 		return new TypeBasic(BasicType.t_float);
@@ -1324,6 +1389,7 @@ class AstNodeFloat : AstNode {
 	override void analyze(AnalyzerScope s, Type neededType) {}
 	
 	override LLVMValueRef gen(AnalyzerScope s) {
+		auto ctx = s.genctx;
 		return LLVMConstReal(LLVMFloatType(),cast(double)value);
 	}
 
@@ -1338,7 +1404,7 @@ class AstNodeFloat : AstNode {
 class AstNodeString : AstNode {
 	string value;
 
-	this(string value) { this.value = value; }
+	this(SourceLocation where, string value) { this.where = where; this.value = value; }
 
 	override Type getType(AnalyzerScope s) {
 		return new TypePointer(new TypeBasic(BasicType.t_char));
@@ -1347,6 +1413,7 @@ class AstNodeString : AstNode {
 	override void analyze(AnalyzerScope s, Type neededType) {}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
+		auto ctx = s.genctx;
 		return LLVMConstString(
 			cast(const char*)toStringz(value[0..$-1]),
 			cast(uint)value.length-1,
@@ -1365,13 +1432,14 @@ class AstNodeString : AstNode {
 class AstNodeChar : AstNode {
 	char value;
 
-	this(char value) { this.value = value; }
+	this(SourceLocation where, char value) { this.where = where; this.value = value; }
 
 	override Type getType(AnalyzerScope s) {
 		return new TypeBasic(BasicType.t_char);
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
+		auto ctx = s.genctx;
 		return LLVMConstInt(LLVMInt8Type(),value,false);
 	}
 

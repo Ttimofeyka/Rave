@@ -17,6 +17,7 @@ struct Decl {
 	bool isMethod;
 	TokCmd[] mods = [];
 	bool isGlobal;
+	SourceLocation nameLoc;
 }
 
 VariableDeclaration declToVarDecl(Decl d) {
@@ -184,7 +185,9 @@ class Parser {
 			else error("Function modifier already in use!");
 		}
 
-		d.name = expectToken(TokType.tok_id).value;
+		auto nameTok = expectToken(TokType.tok_id);
+		d.name = nameTok.value;
+		d.nameLoc = nameTok.loc;
 
 		if(peek().type == TokType.tok_lpar) {
 			// function with args.
@@ -227,7 +230,7 @@ class Parser {
 			d.type = new AtstNodeUnknown();
 			d.args = [];
 			d.value = new AstNodeBlock([
-				new AstNodeReturn(parseExpr(),currfunc)
+				new AstNodeReturn(parseExpr(), currfunc)
 			]);
 			expectToken(TokType.tok_semicolon);
 		}
@@ -421,17 +424,18 @@ class Parser {
 			else if(peek().type == TokType.tok_struct_get
 			     || peek().type == TokType.tok_dot)
 			{
-				auto t = next().type;
+				auto tok = next();
+				auto t = tok.type;
 				string field = expectToken(TokType.tok_id).value;
-				base = new AstNodeGet(base, field, t == TokType.tok_struct_get);
+				base = new AstNodeGet(tok.loc, base, field, t == TokType.tok_struct_get);
 			}
 			else if(peek().type == TokType.tok_plu_plu) {
-				next();
-				base = new AstNodeUnary(base, TokType.tok_r_plu_plu);
+				auto tok = next();
+				base = new AstNodeUnary(tok.loc, base, TokType.tok_r_plu_plu);
 			}
 			else if(peek().type == TokType.tok_min_min) {
-				next();
-				base = new AstNodeUnary(base, TokType.tok_r_min_min);
+				auto tok = next();
+				base = new AstNodeUnary(tok.loc, base, TokType.tok_r_min_min);
 			}
 		}
 
@@ -443,21 +447,20 @@ class Parser {
 		if(t.type == TokType.tok_num) {
 			if(t.value.length == 0) {
 				error("WTF?? Token(TokType.tok_num).value.length -> 0");
-				return new AstNodeInt(0xDEADBEEF);
+				return new AstNodeInt(t.loc, 0xDEADBEEF);
 			}
-			if(canFind(t.value, '.')) return new AstNodeFloat(parse!float(t.value));
-			else return new AstNodeInt(parse!ulong(t.value));
+			if(canFind(t.value, '.')) return new AstNodeFloat(t.loc, parse!float(t.value));
+			else return new AstNodeInt(t.loc, parse!ulong(t.value));
 		}
-		if(t.type == TokType.tok_string) return new AstNodeString(t.value[1..$]);
-		if(t.type == TokType.tok_char) return new AstNodeChar(t.value[1..$][0]);
-		if(t.type == TokType.tok_id) return new AstNodeIden(t.value);
+		if(t.type == TokType.tok_string) return new AstNodeString(t.loc, t.value[1..$]);
+		if(t.type == TokType.tok_char) return new AstNodeChar(t.loc, t.value[1..$][0]);
+		if(t.type == TokType.tok_id) return new AstNodeIden(t.loc, t.value);
 		if(t.type == TokType.tok_lpar) {
 			auto e = parseExpr();
 			expectToken(TokType.tok_rpar);
 			return e;
 		}
 		
-		writeln(t.value);
 		error("Expected a variable, a number, a string, a char or an expression in parentheses. Got: "
 			~ to!string(t.type));
 		return null;
@@ -472,8 +475,8 @@ class Parser {
 		];
 
 		if(OPERATORS.canFind(peek().type)) {
-			auto tok = next().type;
-			return new AstNodeUnary(parsePrefix(), tok);
+			auto tok = next();
+			return new AstNodeUnary(tok.loc, parsePrefix(), tok.type);
 		}
 		return parseAtom();
 	}
@@ -512,7 +515,7 @@ class Parser {
 			TokType.tok_bit_xor: -30,
 		];
 
-		SList!TokType operatorStack;
+		SList!Token operatorStack;
 		SList!AstNode nodeStack;
 		uint nodeStackSize = 0;
 
@@ -522,25 +525,26 @@ class Parser {
 		while(peek().type in OPERATORS)
 		{
 			if(operatorStack.empty) {
-				operatorStack.insertFront(next().type);
+				operatorStack.insertFront(next());
 			}
 			else {
-				auto t = next().type;
+				auto tok = next();
+				auto t = tok.type;
 				int prec = OPERATORS[t];
-				while(prec <= OPERATORS[operatorStack.front()]) {
+				while(prec <= OPERATORS[operatorStack.front.type]) {
 					// push the operator onto the nodeStack
 					assert(nodeStackSize >= 2);
 
 					auto lhs = nodeStack.front(); nodeStack.removeFront();
 					auto rhs = nodeStack.front(); nodeStack.removeFront();
 
-					nodeStack.insertFront(new AstNodeBinary(lhs, rhs, operatorStack.front()));
+					nodeStack.insertFront(new AstNodeBinary(tok.loc, lhs, rhs, operatorStack.front.type));
 					nodeStackSize -= 1;
 
 					operatorStack.removeFront();
 				}
 
-				operatorStack.insertFront(t);
+				operatorStack.insertFront(tok);
 			}
 
 			nodeStack.insertFront(parseBasic());
@@ -554,7 +558,9 @@ class Parser {
 			auto rhs = nodeStack.front(); nodeStack.removeFront();
 			auto lhs = nodeStack.front(); nodeStack.removeFront();
 
-			nodeStack.insertFront(new AstNodeBinary(lhs, rhs, operatorStack.front()));
+			nodeStack.insertFront(new AstNodeBinary(
+				operatorStack.front.loc, lhs, rhs,
+				operatorStack.front.type));
 			nodeStackSize -= 1;
 
 			operatorStack.removeFront();
@@ -609,9 +615,15 @@ class Parser {
 			}
 			else if(peek().cmd == TokCmd.cmd_ret) {
 				next();
-				auto e = parseExpr();
-				expectToken(TokType.tok_semicolon);
-				return new AstNodeReturn(e,currfunc);
+				if(peek().type != TokType.tok_semicolon) {
+					auto e = parseExpr();
+					expectToken(TokType.tok_semicolon);
+					return new AstNodeReturn(e, currfunc);
+				}
+				else {
+					next();
+					return new AstNodeReturn(null, currfunc);
+				}
 			}
 		}
 		else if(peek().type == TokType.tok_id) {
@@ -660,7 +672,7 @@ class Parser {
 
 	private AstNode parseFunc() {
 		auto decl = parseFuncDecl(function(Token tok) { return tok.type == TokType.tok_2lbra; }, true);
-		currfunc = new AstNodeFunction(decl, parseBlock());
+		currfunc = new AstNodeFunction(SourceLocation(0, 0, "<parseFunc.is.deprecated>"), decl, parseBlock());
 		return currfunc;
 	}
 
@@ -702,7 +714,7 @@ class Parser {
 		}
 		else {
 			auto decl = declToFuncDecl(d);
-			return new AstNodeFunction(decl, d.value);
+			return new AstNodeFunction(d.nameLoc, decl, d.value);
 		}
 	}
 

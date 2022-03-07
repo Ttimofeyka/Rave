@@ -3,9 +3,12 @@
 
 z: int = 0;
 
-f: void {z = 5;}
+f: void {
+	z = 5;
+}
 
-main(arg: int): int {
+main(arg: int): {
+	ret;
 	f();
-	ret z;
+	ret z + arg;
 }
