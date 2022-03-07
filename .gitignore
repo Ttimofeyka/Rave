@@ -33,3 +33,5 @@ source/old.ast.d
 *.ll
 *.be
 bin
+
+examples/opengl_api.h
