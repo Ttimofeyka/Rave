@@ -1,0 +1,656 @@
+GLAPI glTexParameterfv(target: GLenum, pname: GLenum, params: const GLfloat*): void
+GLAPI glCullFace(mode: GLenum): void
+GLAPI glFrontFace(mode: GLenum): void
+GLAPI glHint(target: GLenum, mode: GLenum): void
+GLAPI glLineWidth(width: GLfloat): void
+GLAPI glPointSize(size: GLfloat): void
+GLAPI glPolygonMode(face: GLenum, mode: GLenum): void
+GLAPI glScissor(x: GLint, y: GLint, width: GLsizei, height: GLsizei): void
+GLAPI glTexParameterf(target: GLenum, pname: GLenum, param: GLfloat): void
+GLAPI glTexParameteri(target: GLenum, pname: GLenum, param: GLint): void
+GLAPI glTexParameteriv(target: GLenum, pname: GLenum, params: const GLint*): void
+GLAPI glTexImage1D(target: GLenum, level: GLint, internalformat: GLint, width: GLsizei, border: GLint, format: GLenum, type: GLenum, pixels: const void*): void
+GLAPI glTexImage2D(target: GLenum, level: GLint, internalformat: GLint, width: GLsizei, height: GLsizei, border: GLint, format: GLenum, type: GLenum, pixels: const void*): void
+GLAPI glDrawBuffer(buf: GLenum): void
+GLAPI glClear(mask: GLbitfield): void
+GLAPI glClearColor(red: GLfloat, green: GLfloat, blue: GLfloat, alpha: GLfloat): void
+GLAPI glClearStencil(s: GLint): void
+GLAPI glClearDepth(depth: GLdouble): void
+GLAPI glStencilMask(mask: GLuint): void
+GLAPI glColorMask(red: GLboolean, green: GLboolean, blue: GLboolean, alpha: GLboolean): void
+GLAPI glDepthMask(flag: GLboolean): void
+GLAPI glDisable(cap: GLenum): void
+GLAPI glEnable(cap: GLenum): void
+GLAPI glFinish(): void
+GLAPI glFlush(): void
+GLAPI glBlendFunc(sfactor: GLenum, dfactor: GLenum): void
+GLAPI glLogicOp(opcode: GLenum): void
+GLAPI glStencilFunc(func: GLenum, ref: GLint, mask: GLuint): void
+GLAPI glStencilOp(fail: GLenum, zfail: GLenum, zpass: GLenum): void
+GLAPI glDepthFunc(func: GLenum): void
+GLAPI glPixelStoref(pname: GLenum, param: GLfloat): void
+GLAPI glPixelStorei(pname: GLenum, param: GLint): void
+GLAPI glReadBuffer(src: GLenum): void
+GLAPI glReadPixels(x: GLint, y: GLint, width: GLsizei, height: GLsizei, format: GLenum, type: GLenum, pixels: void*): void
+GLAPI glGetBooleanv(pname: GLenum, data: GLboolean*): void
+GLAPI glGetDoublev(pname: GLenum, data: GLdouble*): void
+GLAPI glGetError(): GLenum
+GLAPI glGetFloatv(pname: GLenum, data: GLfloat*): void
+GLAPI glGetIntegerv(pname: GLenum, data: GLint*): void
+GLAPI glGetString(name: GLenum): const GLubyte*
+GLAPI glGetTexImage(target: GLenum, level: GLint, format: GLenum, type: GLenum, pixels: void*): void
+GLAPI glGetTexParameterfv(target: GLenum, pname: GLenum, params: GLfloat*): void
+GLAPI glGetTexParameteriv(target: GLenum, pname: GLenum, params: GLint*): void
+GLAPI glGetTexLevelParameterfv(target: GLenum, level: GLint, pname: GLenum, params: GLfloat*): void
+GLAPI glGetTexLevelParameteriv(target: GLenum, level: GLint, pname: GLenum, params: GLint*): void
+GLAPI glIsEnabled(cap: GLenum): GLboolean
+GLAPI glDepthRange(n: GLdouble, f: GLdouble): void
+GLAPI glViewport(x: GLint, y: GLint, width: GLsizei, height: GLsizei): void
+GLAPI glDrawArrays(mode: GLenum, first: GLint, count: GLsizei): void
+GLAPI glDrawElements(mode: GLenum, count: GLsizei, type: GLenum, indices: const void*): void
+GLAPI glGetPointerv(pname: GLenum, params: void**): void
+GLAPI glPolygonOffset(factor: GLfloat, units: GLfloat): void
+GLAPI glCopyTexImage1D(target: GLenum, level: GLint, internalformat: GLenum, x: GLint, y: GLint, width: GLsizei, border: GLint): void
+GLAPI glCopyTexImage2D(target: GLenum, level: GLint, internalformat: GLenum, x: GLint, y: GLint, width: GLsizei, height: GLsizei, border: GLint): void
+GLAPI glCopyTexSubImage1D(target: GLenum, level: GLint, xoffset: GLint, x: GLint, y: GLint, width: GLsizei): void
+GLAPI glCopyTexSubImage2D(target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, x: GLint, y: GLint, width: GLsizei, height: GLsizei): void
+GLAPI glTexSubImage1D(target: GLenum, level: GLint, xoffset: GLint, width: GLsizei, format: GLenum, type: GLenum, pixels: const void*): void
+GLAPI glTexSubImage2D(target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, width: GLsizei, height: GLsizei, format: GLenum, type: GLenum, pixels: const void*): void
+GLAPI glBindTexture(target: GLenum, texture: GLuint): void
+GLAPI glDeleteTextures(n: GLsizei, textures: const GLuint*): void
+GLAPI glGenTextures(n: GLsizei, textures: GLuint*): void
+GLAPI glIsTexture(texture: GLuint): GLboolean
+GLAPI glDrawRangeElements(mode: GLenum, start: GLuint, end: GLuint, count: GLsizei, type: GLenum, indices: const void*): void
+GLAPI glTexImage3D(target: GLenum, level: GLint, internalformat: GLint, width: GLsizei, height: GLsizei, depth: GLsizei, border: GLint, format: GLenum, type: GLenum, pixels: const void*): void
+GLAPI glTexSubImage3D(target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, zoffset: GLint, width: GLsizei, height: GLsizei, depth: GLsizei, format: GLenum, type: GLenum, pixels: const void*): void
+GLAPI glCopyTexSubImage3D(target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, zoffset: GLint, x: GLint, y: GLint, width: GLsizei, height: GLsizei): void
+GLAPI glActiveTexture(texture: GLenum): void
+GLAPI glSampleCoverage(value: GLfloat, invert: GLboolean): void
+GLAPI glCompressedTexImage3D(target: GLenum, level: GLint, internalformat: GLenum, width: GLsizei, height: GLsizei, depth: GLsizei, border: GLint, imageSize: GLsizei, data: const void*): void
+GLAPI glCompressedTexImage2D(target: GLenum, level: GLint, internalformat: GLenum, width: GLsizei, height: GLsizei, border: GLint, imageSize: GLsizei, data: const void*): void
+GLAPI glCompressedTexImage1D(target: GLenum, level: GLint, internalformat: GLenum, width: GLsizei, border: GLint, imageSize: GLsizei, data: const void*): void
+GLAPI glCompressedTexSubImage3D(target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, zoffset: GLint, width: GLsizei, height: GLsizei, depth: GLsizei, format: GLenum, imageSize: GLsizei, data: const void*): void
+GLAPI glCompressedTexSubImage2D(target: GLenum, level: GLint, xoffset: GLint, yoffset: GLint, width: GLsizei, height: GLsizei, format: GLenum, imageSize: GLsizei, data: const void*): void
+GLAPI glCompressedTexSubImage1D(target: GLenum, level: GLint, xoffset: GLint, width: GLsizei, format: GLenum, imageSize: GLsizei, data: const void*): void
+GLAPI glGetCompressedTexImage(target: GLenum, level: GLint, img: void*): void
+GLAPI glBlendFuncSeparate(sfactorRGB: GLenum, dfactorRGB: GLenum, sfactorAlpha: GLenum, dfactorAlpha: GLenum): void
+GLAPI glMultiDrawArrays(mode: GLenum, first: const GLint*, count: const GLsizei*, drawcount: GLsizei): void
+GLAPI glMultiDrawElements(mode: GLenum, count: const GLsizei*, type: GLenum, indices: const void**, drawcount: GLsizei): void
+GLAPI glPointParameterf(pname: GLenum, param: GLfloat): void
+GLAPI glPointParameterfv(pname: GLenum, params: const GLfloat*): void
+GLAPI glPointParameteri(pname: GLenum, param: GLint): void
+GLAPI glPointParameteriv(pname: GLenum, params: const GLint*): void
+GLAPI glBlendColor(red: GLfloat, green: GLfloat, blue: GLfloat, alpha: GLfloat): void
+GLAPI glBlendEquation(mode: GLenum): void
+GLAPI glGenQueries(n: GLsizei, ids: GLuint*): void
+GLAPI glDeleteQueries(n: GLsizei, ids: const GLuint*): void
+GLAPI glIsQuery(id: GLuint): GLboolean
+GLAPI glBeginQuery(target: GLenum, id: GLuint): void
+GLAPI glEndQuery(target: GLenum): void
+GLAPI glGetQueryiv(target: GLenum, pname: GLenum, params: GLint*): void
+GLAPI glGetQueryObjectiv(id: GLuint, pname: GLenum, params: GLint*): void
+GLAPI glGetQueryObjectuiv(id: GLuint, pname: GLenum, params: GLuint*): void
+GLAPI glBindBuffer(target: GLenum, buffer: GLuint): void
+GLAPI glDeleteBuffers(n: GLsizei, buffers: const GLuint*): void
+GLAPI glGenBuffers(n: GLsizei, buffers: GLuint*): void
+GLAPI glIsBuffer(buffer: GLuint): GLboolean
+GLAPI glBufferData(target: GLenum, size: GLsizeiptr, data: const void*, usage: GLenum): void
+GLAPI glBufferSubData(target: GLenum, offset: GLintptr, size: GLsizeiptr, data: const void*): void
+GLAPI glGetBufferSubData(target: GLenum, offset: GLintptr, size: GLsizeiptr, data: void*): void
+GLAPI glMapBuffer(target: GLenum, access: GLenum): void*
+GLAPI glUnmapBuffer(target: GLenum): GLboolean
+GLAPI glGetBufferParameteriv(target: GLenum, pname: GLenum, params: GLint*): void
+GLAPI glGetBufferPointerv(target: GLenum, pname: GLenum, params: void**): void
+GLAPI glBlendEquationSeparate(modeRGB: GLenum, modeAlpha: GLenum): void
+GLAPI glDrawBuffers(n: GLsizei, bufs: const GLenum*): void
+GLAPI glStencilOpSeparate(face: GLenum, sfail: GLenum, dpfail: GLenum, dppass: GLenum): void
+GLAPI glStencilFuncSeparate(face: GLenum, func: GLenum, ref: GLint, mask: GLuint): void
+GLAPI glStencilMaskSeparate(face: GLenum, mask: GLuint): void
+GLAPI glAttachShader(program: GLuint, shader: GLuint): void
+GLAPI glBindAttribLocation(program: GLuint, index: GLuint, name: const GLchar*): void
+GLAPI glCompileShader(shader: GLuint): void
+GLAPI glCreateProgram(): GLuint
+GLAPI glCreateShader(type: GLenum): GLuint
+GLAPI glDeleteProgram(program: GLuint): void
+GLAPI glDeleteShader(shader: GLuint): void
+GLAPI glDetachShader(program: GLuint, shader: GLuint): void
+GLAPI glDisableVertexAttribArray(index: GLuint): void
+GLAPI glEnableVertexAttribArray(index: GLuint): void
+GLAPI glGetActiveAttrib(program: GLuint, index: GLuint, bufSize: GLsizei, length: GLsizei*, size: GLint*, type: GLenum*, name: GLchar*): void
+GLAPI glGetActiveUniform(program: GLuint, index: GLuint, bufSize: GLsizei, length: GLsizei*, size: GLint*, type: GLenum*, name: GLchar*): void
+GLAPI glGetAttachedShaders(program: GLuint, maxCount: GLsizei, count: GLsizei*, shaders: GLuint*): void
+GLAPI glGetAttribLocation(program: GLuint, name: const GLchar*): GLint
+GLAPI glGetProgramiv(program: GLuint, pname: GLenum, params: GLint*): void
+GLAPI glGetProgramInfoLog(program: GLuint, bufSize: GLsizei, length: GLsizei*, infoLog: GLchar*): void
+GLAPI glGetShaderiv(shader: GLuint, pname: GLenum, params: GLint*): void
+GLAPI glGetShaderInfoLog(shader: GLuint, bufSize: GLsizei, length: GLsizei*, infoLog: GLchar*): void
+GLAPI glGetShaderSource(shader: GLuint, bufSize: GLsizei, length: GLsizei*, source: GLchar*): void
+GLAPI glGetUniformLocation(program: GLuint, name: const GLchar*): GLint
+GLAPI glGetUniformfv(program: GLuint, location: GLint, params: GLfloat*): void
+GLAPI glGetUniformiv(program: GLuint, location: GLint, params: GLint*): void
+GLAPI glGetVertexAttribdv(index: GLuint, pname: GLenum, params: GLdouble*): void
+GLAPI glGetVertexAttribfv(index: GLuint, pname: GLenum, params: GLfloat*): void
+GLAPI glGetVertexAttribiv(index: GLuint, pname: GLenum, params: GLint*): void
+GLAPI glGetVertexAttribPointerv(index: GLuint, pname: GLenum, pointer: void**): void
+GLAPI glIsProgram(program: GLuint): GLboolean
+GLAPI glIsShader(shader: GLuint): GLboolean
+GLAPI glLinkProgram(program: GLuint): void
+GLAPI glShaderSource(shader: GLuint, count: GLsizei, string: const GLchar**, length: const GLint*): void
+GLAPI glUseProgram(program: GLuint): void
+GLAPI glUniform1f(location: GLint, v0: GLfloat): void
+GLAPI glUniform2f(location: GLint, v0: GLfloat, v1: GLfloat): void
+GLAPI glUniform3f(location: GLint, v0: GLfloat, v1: GLfloat, v2: GLfloat): void
+GLAPI glUniform4f(location: GLint, v0: GLfloat, v1: GLfloat, v2: GLfloat, v3: GLfloat): void
+GLAPI glUniform1i(location: GLint, v0: GLint): void
+GLAPI glUniform2i(location: GLint, v0: GLint, v1: GLint): void
+GLAPI glUniform3i(location: GLint, v0: GLint, v1: GLint, v2: GLint): void
+GLAPI glUniform4i(location: GLint, v0: GLint, v1: GLint, v2: GLint, v3: GLint): void
+GLAPI glUniform1fv(location: GLint, count: GLsizei, value: const GLfloat*): void
+GLAPI glUniform2fv(location: GLint, count: GLsizei, value: const GLfloat*): void
+GLAPI glUniform3fv(location: GLint, count: GLsizei, value: const GLfloat*): void
+GLAPI glUniform4fv(location: GLint, count: GLsizei, value: const GLfloat*): void
+GLAPI glUniform1iv(location: GLint, count: GLsizei, value: const GLint*): void
+GLAPI glUniform2iv(location: GLint, count: GLsizei, value: const GLint*): void
+GLAPI glUniform3iv(location: GLint, count: GLsizei, value: const GLint*): void
+GLAPI glUniform4iv(location: GLint, count: GLsizei, value: const GLint*): void
+GLAPI glUniformMatrix2fv(location: GLint, count: GLsizei, transpose: GLboolean, value: const GLfloat*): void
+GLAPI glUniformMatrix3fv(location: GLint, count: GLsizei, transpose: GLboolean, value: const GLfloat*): void
+GLAPI glUniformMatrix4fv(location: GLint, count: GLsizei, transpose: GLboolean, value: const GLfloat*): void
+GLAPI glValidateProgram(program: GLuint): void
+GLAPI glVertexAttrib1d(index: GLuint, x: GLdouble): void
+GLAPI glVertexAttrib1dv(index: GLuint, v: const GLdouble*): void
+GLAPI glVertexAttrib1f(index: GLuint, x: GLfloat): void
+GLAPI glVertexAttrib1fv(index: GLuint, v: const GLfloat*): void
+GLAPI glVertexAttrib1s(index: GLuint, x: GLshort): void
+GLAPI glVertexAttrib1sv(index: GLuint, v: const GLshort*): void
+GLAPI glVertexAttrib2d(index: GLuint, x: GLdouble, y: GLdouble): void
+GLAPI glVertexAttrib2dv(index: GLuint, v: const GLdouble*): void
+GLAPI glVertexAttrib2f(index: GLuint, x: GLfloat, y: GLfloat): void
+GLAPI glVertexAttrib2fv(index: GLuint, v: const GLfloat*): void
+GLAPI glVertexAttrib2s(index: GLuint, x: GLshort, y: GLshort): void
+GLAPI glVertexAttrib2sv(index: GLuint, v: const GLshort*): void
+GLAPI glVertexAttrib3d(index: GLuint, x: GLdouble, y: GLdouble, z: GLdouble): void
+GLAPI glVertexAttrib3dv(index: GLuint, v: const GLdouble*): void
+GLAPI glVertexAttrib3f(index: GLuint, x: GLfloat, y: GLfloat, z: GLfloat): void
+GLAPI glVertexAttrib3fv(index: GLuint, v: const GLfloat*): void
+GLAPI glVertexAttrib3s(index: GLuint, x: GLshort, y: GLshort, z: GLshort): void
+GLAPI glVertexAttrib3sv(index: GLuint, v: const GLshort*): void
+GLAPI glVertexAttrib4Nbv(index: GLuint, v: const GLbyte*): void
+GLAPI glVertexAttrib4Niv(index: GLuint, v: const GLint*): void
+GLAPI glVertexAttrib4Nsv(index: GLuint, v: const GLshort*): void
+GLAPI glVertexAttrib4Nub(index: GLuint, x: GLubyte, y: GLubyte, z: GLubyte, w: GLubyte): void
+GLAPI glVertexAttrib4Nubv(index: GLuint, v: const GLubyte*): void
+GLAPI glVertexAttrib4Nuiv(index: GLuint, v: const GLuint*): void
+GLAPI glVertexAttrib4Nusv(index: GLuint, v: const GLushort*): void
+GLAPI glVertexAttrib4bv(index: GLuint, v: const GLbyte*): void
+GLAPI glVertexAttrib4d(index: GLuint, x: GLdouble, y: GLdouble, z: GLdouble, w: GLdouble): void
+GLAPI glVertexAttrib4dv(index: GLuint, v: const GLdouble*): void
+GLAPI glVertexAttrib4f(index: GLuint, x: GLfloat, y: GLfloat, z: GLfloat, w: GLfloat): void
+GLAPI glVertexAttrib4fv(index: GLuint, v: const GLfloat*): void
+GLAPI glVertexAttrib4iv(index: GLuint, v: const GLint*): void
+GLAPI glVertexAttrib4s(index: GLuint, x: GLshort, y: GLshort, z: GLshort, w: GLshort): void
+GLAPI glVertexAttrib4sv(index: GLuint, v: const GLshort*): void
+GLAPI glVertexAttrib4ubv(index: GLuint, v: const GLubyte*): void
+GLAPI glVertexAttrib4uiv(index: GLuint, v: const GLuint*): void
+GLAPI glVertexAttrib4usv(index: GLuint, v: const GLushort*): void
+GLAPI glVertexAttribPointer(index: GLuint, size: GLint, type: GLenum, normalized: GLboolean, stride: GLsizei, pointer: const void*): void
+GLAPI glUniformMatrix2x3fv(location: GLint, count: GLsizei, transpose: GLboolean, value: const GLfloat*): void
+GLAPI glUniformMatrix3x2fv(location: GLint, count: GLsizei, transpose: GLboolean, value: const GLfloat*): void
+GLAPI glUniformMatrix2x4fv(location: GLint, count: GLsizei, transpose: GLboolean, value: const GLfloat*): void
+GLAPI glUniformMatrix4x2fv(location: GLint, count: GLsizei, transpose: GLboolean, value: const GLfloat*): void
+GLAPI glUniformMatrix3x4fv(location: GLint, count: GLsizei, transpose: GLboolean, value: const GLfloat*): void
+GLAPI glUniformMatrix4x3fv(location: GLint, count: GLsizei, transpose: GLboolean, value: const GLfloat*): void
+GLAPI glColorMaski(index: GLuint, r: GLboolean, g: GLboolean, b: GLboolean, a: GLboolean): void
+GLAPI glGetBooleani_v(target: GLenum, index: GLuint, data: GLboolean*): void
+GLAPI glGetIntegeri_v(target: GLenum, index: GLuint, data: GLint*): void
+GLAPI glEnablei(target: GLenum, index: GLuint): void
+GLAPI glDisablei(target: GLenum, index: GLuint): void
+GLAPI glIsEnabledi(target: GLenum, index: GLuint): GLboolean
+GLAPI glBeginTransformFeedback(primitiveMode: GLenum): void
+GLAPI glEndTransformFeedback(): void
+GLAPI glBindBufferRange(target: GLenum, index: GLuint, buffer: GLuint, offset: GLintptr, size: GLsizeiptr): void
+GLAPI glBindBufferBase(target: GLenum, index: GLuint, buffer: GLuint): void
+GLAPI glTransformFeedbackVaryings(program: GLuint, count: GLsizei, varyings: const GLchar**, bufferMode: GLenum): void
+GLAPI glGetTransformFeedbackVarying(program: GLuint, index: GLuint, bufSize: GLsizei, length: GLsizei*, size: GLsizei*, type: GLenum*, name: GLchar*): void
+GLAPI glClampColor(target: GLenum, clamp: GLenum): void
+GLAPI glBeginConditionalRender(id: GLuint, mode: GLenum): void
+GLAPI glEndConditionalRender(): void
+GLAPI glVertexAttribIPointer(index: GLuint, size: GLint, type: GLenum, stride: GLsizei, pointer: const void*): void
+GLAPI glGetVertexAttribIiv(index: GLuint, pname: GLenum, params: GLint*): void
+GLAPI glGetVertexAttribIuiv(index: GLuint, pname: GLenum, params: GLuint*): void
+GLAPI glVertexAttribI1i(index: GLuint, x: GLint): void
+GLAPI glVertexAttribI2i(index: GLuint, x: GLint, y: GLint): void
+GLAPI glVertexAttribI3i(index: GLuint, x: GLint, y: GLint, z: GLint): void
+GLAPI glVertexAttribI4i(index: GLuint, x: GLint, y: GLint, z: GLint, w: GLint): void
+GLAPI glVertexAttribI1ui(index: GLuint, x: GLuint): void
+GLAPI glVertexAttribI2ui(index: GLuint, x: GLuint, y: GLuint): void
+GLAPI glVertexAttribI3ui(index: GLuint, x: GLuint, y: GLuint, z: GLuint): void
+GLAPI glVertexAttribI4ui(index: GLuint, x: GLuint, y: GLuint, z: GLuint, w: GLuint): void
+GLAPI glVertexAttribI1iv(index: GLuint, v: const GLint*): void
+GLAPI glVertexAttribI2iv(index: GLuint, v: const GLint*): void
+GLAPI glVertexAttribI3iv(index: GLuint, v: const GLint*): void
+GLAPI glVertexAttribI4iv(index: GLuint, v: const GLint*): void
+GLAPI glVertexAttribI1uiv(index: GLuint, v: const GLuint*): void
+GLAPI glVertexAttribI2uiv(index: GLuint, v: const GLuint*): void
+GLAPI glVertexAttribI3uiv(index: GLuint, v: const GLuint*): void
+GLAPI glVertexAttribI4uiv(index: GLuint, v: const GLuint*): void
+GLAPI glVertexAttribI4bv(index: GLuint, v: const GLbyte*): void
+GLAPI glVertexAttribI4sv(index: GLuint, v: const GLshort*): void
+GLAPI glVertexAttribI4ubv(index: GLuint, v: const GLubyte*): void
+GLAPI glVertexAttribI4usv(index: GLuint, v: const GLushort*): void
+GLAPI glGetUniformuiv(program: GLuint, location: GLint, params: GLuint*): void
+GLAPI glBindFragDataLocation(program: GLuint, color: GLuint, name: const GLchar*): void
+GLAPI glGetFragDataLocation(program: GLuint, name: const GLchar*): GLint
+GLAPI glUniform1ui(location: GLint, v0: GLuint): void
+GLAPI glUniform2ui(location: GLint, v0: GLuint, v1: GLuint): void
+GLAPI glUniform3ui(location: GLint, v0: GLuint, v1: GLuint, v2: GLuint): void
+GLAPI glUniform4ui(location: GLint, v0: GLuint, v1: GLuint, v2: GLuint, v3: GLuint): void
+GLAPI glUniform1uiv(location: GLint, count: GLsizei, value: const GLuint*): void
+GLAPI glUniform2uiv(location: GLint, count: GLsizei, value: const GLuint*): void
+GLAPI glUniform3uiv(location: GLint, count: GLsizei, value: const GLuint*): void
+GLAPI glUniform4uiv(location: GLint, count: GLsizei, value: const GLuint*): void
+GLAPI glTexParameterIiv(target: GLenum, pname: GLenum, params: const GLint*): void
+GLAPI glTexParameterIuiv(target: GLenum, pname: GLenum, params: const GLuint*): void
+GLAPI glGetTexParameterIiv(target: GLenum, pname: GLenum, params: GLint*): void
+GLAPI glGetTexParameterIuiv(target: GLenum, pname: GLenum, params: GLuint*): void
+GLAPI glClearBufferiv(buffer: GLenum, drawbuffer: GLint, value: const GLint*): void
+GLAPI glClearBufferuiv(buffer: GLenum, drawbuffer: GLint, value: const GLuint*): void
+GLAPI glClearBufferfv(buffer: GLenum, drawbuffer: GLint, value: const GLfloat*): void
+GLAPI glClearBufferfi(buffer: GLenum, drawbuffer: GLint, depth: GLfloat, stencil: GLint): void
+GLAPI glGetStringi(name: GLenum, index: GLuint): const GLubyte*
+GLAPI glIsRenderbuffer(renderbuffer: GLuint): GLboolean
+GLAPI glBindRenderbuffer(target: GLenum, renderbuffer: GLuint): void
+GLAPI glDeleteRenderbuffers(n: GLsizei, renderbuffers: const GLuint*): void
+GLAPI glGenRenderbuffers(n: GLsizei, renderbuffers: GLuint*): void
+GLAPI glRenderbufferStorage(target: GLenum, internalformat: GLenum, width: GLsizei, height: GLsizei): void
+GLAPI glGetRenderbufferParameteriv(target: GLenum, pname: GLenum, params: GLint*): void
+GLAPI glIsFramebuffer(framebuffer: GLuint): GLboolean
+GLAPI glBindFramebuffer(target: GLenum, framebuffer: GLuint): void
+GLAPI glDeleteFramebuffers(n: GLsizei, framebuffers: const GLuint*): void
+GLAPI glGenFramebuffers(n: GLsizei, framebuffers: GLuint*): void
+GLAPI glCheckFramebufferStatus(target: GLenum): GLenum
+GLAPI glFramebufferTexture1D(target: GLenum, attachment: GLenum, textarget: GLenum, texture: GLuint, level: GLint): void
+GLAPI glFramebufferTexture2D(target: GLenum, attachment: GLenum, textarget: GLenum, texture: GLuint, level: GLint): void
+GLAPI glFramebufferTexture3D(target: GLenum, attachment: GLenum, textarget: GLenum, texture: GLuint, level: GLint, zoffset: GLint): void
+GLAPI glFramebufferRenderbuffer(target: GLenum, attachment: GLenum, renderbuffertarget: GLenum, renderbuffer: GLuint): void
+GLAPI glGetFramebufferAttachmentParameteriv(target: GLenum, attachment: GLenum, pname: GLenum, params: GLint*): void
+GLAPI glGenerateMipmap(target: GLenum): void
+GLAPI glBlitFramebuffer(srcX0: GLint, srcY0: GLint, srcX1: GLint, srcY1: GLint, dstX0: GLint, dstY0: GLint, dstX1: GLint, dstY1: GLint, mask: GLbitfield, filter: GLenum): void
+GLAPI glRenderbufferStorageMultisample(target: GLenum, samples: GLsizei, internalformat: GLenum, width: GLsizei, height: GLsizei): void
+GLAPI glFramebufferTextureLayer(target: GLenum, attachment: GLenum, texture: GLuint, level: GLint, layer: GLint): void
+GLAPI glMapBufferRange(target: GLenum, offset: GLintptr, length: GLsizeiptr, access: GLbitfield): void*
+GLAPI glFlushMappedBufferRange(target: GLenum, offset: GLintptr, length: GLsizeiptr): void
+GLAPI glBindVertexArray(array: GLuint): void
+GLAPI glDeleteVertexArrays(n: GLsizei, arrays: const GLuint*): void
+GLAPI glGenVertexArrays(n: GLsizei, arrays: GLuint*): void
+GLAPI glIsVertexArray(array: GLuint): GLboolean
+GLAPI glDrawArraysInstanced(mode: GLenum, first: GLint, count: GLsizei, instancecount: GLsizei): void
+GLAPI glDrawElementsInstanced(mode: GLenum, count: GLsizei, type: GLenum, indices: const void*, instancecount: GLsizei): void
+GLAPI glTexBuffer(target: GLenum, internalformat: GLenum, buffer: GLuint): void
+GLAPI glPrimitiveRestartIndex(index: GLuint): void
+GLAPI glCopyBufferSubData(readTarget: GLenum, writeTarget: GLenum, readOffset: GLintptr, writeOffset: GLintptr, size: GLsizeiptr): void
+GLAPI glGetUniformIndices(program: GLuint, uniformCount: GLsizei, uniformNames: const GLchar**, uniformIndices: GLuint*): void
+GLAPI glGetActiveUniformsiv(program: GLuint, uniformCount: GLsizei, uniformIndices: const GLuint*, pname: GLenum, params: GLint*): void
+GLAPI glGetActiveUniformName(program: GLuint, uniformIndex: GLuint, bufSize: GLsizei, length: GLsizei*, uniformName: GLchar*): void
+GLAPI glGetUniformBlockIndex(program: GLuint, uniformBlockName: const GLchar*): GLuint
+GLAPI glGetActiveUniformBlockiv(program: GLuint, uniformBlockIndex: GLuint, pname: GLenum, params: GLint*): void
+GLAPI glGetActiveUniformBlockName(program: GLuint, uniformBlockIndex: GLuint, bufSize: GLsizei, length: GLsizei*, uniformBlockName: GLchar*): void
+GLAPI glUniformBlockBinding(program: GLuint, uniformBlockIndex: GLuint, uniformBlockBinding: GLuint): void
+GLAPI glDrawElementsBaseVertex(mode: GLenum, count: GLsizei, type: GLenum, indices: const void*, basevertex: GLint): void
+GLAPI glDrawRangeElementsBaseVertex(mode: GLenum, start: GLuint, end: GLuint, count: GLsizei, type: GLenum, indices: const void*, basevertex: GLint): void
+GLAPI glDrawElementsInstancedBaseVertex(mode: GLenum, count: GLsizei, type: GLenum, indices: const void*, instancecount: GLsizei, basevertex: GLint): void
+GLAPI glMultiDrawElementsBaseVertex(mode: GLenum, count: const GLsizei*, type: GLenum, indices: const void**, drawcount: GLsizei, basevertex: const GLint*): void
+GLAPI glProvokingVertex(mode: GLenum): void
+GLAPI glFenceSync(condition: GLenum, flags: GLbitfield): GLsync
+GLAPI glIsSync(sync: GLsync): GLboolean
+GLAPI glDeleteSync(sync: GLsync): void
+GLAPI glClientWaitSync(sync: GLsync, flags: GLbitfield, timeout: GLuint64): GLenum
+GLAPI glWaitSync(sync: GLsync, flags: GLbitfield, timeout: GLuint64): void
+GLAPI glGetInteger64v(pname: GLenum, data: GLint64*): void
+GLAPI glGetSynciv(sync: GLsync, pname: GLenum, count: GLsizei, length: GLsizei*, values: GLint*): void
+GLAPI glGetInteger64i_v(target: GLenum, index: GLuint, data: GLint64*): void
+GLAPI glGetBufferParameteri64v(target: GLenum, pname: GLenum, params: GLint64*): void
+GLAPI glFramebufferTexture(target: GLenum, attachment: GLenum, texture: GLuint, level: GLint): void
+GLAPI glTexImage2DMultisample(target: GLenum, samples: GLsizei, internalformat: GLenum, width: GLsizei, height: GLsizei, fixedsamplelocations: GLboolean): void
+GLAPI glTexImage3DMultisample(target: GLenum, samples: GLsizei, internalformat: GLenum, width: GLsizei, height: GLsizei, depth: GLsizei, fixedsamplelocations: GLboolean): void
+GLAPI glGetMultisamplefv(pname: GLenum, index: GLuint, val: GLfloat*): void
+GLAPI glSampleMaski(maskNumber: GLuint, mask: GLbitfield): void
+GLAPI glBindFragDataLocationIndexed(program: GLuint, colorNumber: GLuint, index: GLuint, name: const GLchar*): void
+GLAPI glGetFragDataIndex(program: GLuint, name: const GLchar*): GLint
+GLAPI glGenSamplers(count: GLsizei, samplers: GLuint*): void
+GLAPI glDeleteSamplers(count: GLsizei, samplers: const GLuint*): void
+GLAPI glIsSampler(sampler: GLuint): GLboolean
+GLAPI glBindSampler(unit: GLuint, sampler: GLuint): void
+GLAPI glSamplerParameteri(sampler: GLuint, pname: GLenum, param: GLint): void
+GLAPI glSamplerParameteriv(sampler: GLuint, pname: GLenum, param: const GLint*): void
+GLAPI glSamplerParameterf(sampler: GLuint, pname: GLenum, param: GLfloat): void
+GLAPI glSamplerParameterfv(sampler: GLuint, pname: GLenum, param: const GLfloat*): void
+GLAPI glSamplerParameterIiv(sampler: GLuint, pname: GLenum, param: const GLint*): void
+GLAPI glSamplerParameterIuiv(sampler: GLuint, pname: GLenum, param: const GLuint*): void
+GLAPI glGetSamplerParameteriv(sampler: GLuint, pname: GLenum, params: GLint*): void
+GLAPI glGetSamplerParameterIiv(sampler: GLuint, pname: GLenum, params: GLint*): void
+GLAPI glGetSamplerParameterfv(sampler: GLuint, pname: GLenum, params: GLfloat*): void
+GLAPI glGetSamplerParameterIuiv(sampler: GLuint, pname: GLenum, params: GLuint*): void
+GLAPI glQueryCounter(id: GLuint, target: GLenum): void
+GLAPI glGetQueryObjecti64v(id: GLuint, pname: GLenum, params: GLint64*): void
+GLAPI glGetQueryObjectui64v(id: GLuint, pname: GLenum, params: GLuint64*): void
+GLAPI glVertexAttribDivisor(index: GLuint, divisor: GLuint): void
+GLAPI glVertexAttribP1ui(index: GLuint, type: GLenum, normalized: GLboolean, value: GLuint): void
+GLAPI glVertexAttribP1uiv(index: GLuint, type: GLenum, normalized: GLboolean, value: const GLuint*): void
+GLAPI glVertexAttribP2ui(index: GLuint, type: GLenum, normalized: GLboolean, value: GLuint): void
+GLAPI glVertexAttribP2uiv(index: GLuint, type: GLenum, normalized: GLboolean, value: const GLuint*): void
+GLAPI glVertexAttribP3ui(index: GLuint, type: GLenum, normalized: GLboolean, value: GLuint): void
+GLAPI glVertexAttribP3uiv(index: GLuint, type: GLenum, normalized: GLboolean, value: const GLuint*): void
+GLAPI glVertexAttribP4ui(index: GLuint, type: GLenum, normalized: GLboolean, value: GLuint): void
+GLAPI glVertexAttribP4uiv(index: GLuint, type: GLenum, normalized: GLboolean, value: const GLuint*): void
+GLAPI glMinSampleShading(value: GLfloat): void
+GLAPI glBlendEquationi(buf: GLuint, mode: GLenum): void
+GLAPI glBlendEquationSeparatei(buf: GLuint, modeRGB: GLenum, modeAlpha: GLenum): void
+GLAPI glBlendFunci(buf: GLuint, src: GLenum, dst: GLenum): void
+GLAPI glBlendFuncSeparatei(buf: GLuint, srcRGB: GLenum, dstRGB: GLenum, srcAlpha: GLenum, dstAlpha: GLenum): void
+GLAPI glDrawArraysIndirect(mode: GLenum, indirect: const void*): void
+GLAPI glDrawElementsIndirect(mode: GLenum, type: GLenum, indirect: const void*): void
+GLAPI glUniform1d(location: GLint, x: GLdouble): void
+GLAPI glUniform2d(location: GLint, x: GLdouble, y: GLdouble): void
+GLAPI glUniform3d(location: GLint, x: GLdouble, y: GLdouble, z: GLdouble): void
+GLAPI glUniform4d(location: GLint, x: GLdouble, y: GLdouble, z: GLdouble, w: GLdouble): void
+GLAPI glUniform1dv(location: GLint, count: GLsizei, value: const GLdouble*): void
+GLAPI glUniform2dv(location: GLint, count: GLsizei, value: const GLdouble*): void
+GLAPI glUniform3dv(location: GLint, count: GLsizei, value: const GLdouble*): void
+GLAPI glUniform4dv(location: GLint, count: GLsizei, value: const GLdouble*): void
+GLAPI glUniformMatrix2dv(location: GLint, count: GLsizei, transpose: GLboolean, value: const GLdouble*): void
+GLAPI glUniformMatrix3dv(location: GLint, count: GLsizei, transpose: GLboolean, value: const GLdouble*): void
+GLAPI glUniformMatrix4dv(location: GLint, count: GLsizei, transpose: GLboolean, value: const GLdouble*): void
+GLAPI glUniformMatrix2x3dv(location: GLint, count: GLsizei, transpose: GLboolean, value: const GLdouble*): void
+GLAPI glUniformMatrix2x4dv(location: GLint, count: GLsizei, transpose: GLboolean, value: const GLdouble*): void
+GLAPI glUniformMatrix3x2dv(location: GLint, count: GLsizei, transpose: GLboolean, value: const GLdouble*): void
+GLAPI glUniformMatrix3x4dv(location: GLint, count: GLsizei, transpose: GLboolean, value: const GLdouble*): void
+GLAPI glUniformMatrix4x2dv(location: GLint, count: GLsizei, transpose: GLboolean, value: const GLdouble*): void
+GLAPI glUniformMatrix4x3dv(location: GLint, count: GLsizei, transpose: GLboolean, value: const GLdouble*): void
+GLAPI glGetUniformdv(program: GLuint, location: GLint, params: GLdouble*): void
+GLAPI glGetSubroutineUniformLocation(program: GLuint, shadertype: GLenum, name: const GLchar*): GLint
+GLAPI glGetSubroutineIndex(program: GLuint, shadertype: GLenum, name: const GLchar*): GLuint
+GLAPI glGetActiveSubroutineUniformiv(program: GLuint, shadertype: GLenum, index: GLuint, pname: GLenum, values: GLint*): void
+GLAPI glGetActiveSubroutineUniformName(program: GLuint, shadertype: GLenum, index: GLuint, bufSize: GLsizei, length: GLsizei*, name: GLchar*): void
+GLAPI glGetActiveSubroutineName(program: GLuint, shadertype: GLenum, index: GLuint, bufSize: GLsizei, length: GLsizei*, name: GLchar*): void
+GLAPI glUniformSubroutinesuiv(shadertype: GLenum, count: GLsizei, indices: const GLuint*): void
+GLAPI glGetUniformSubroutineuiv(shadertype: GLenum, location: GLint, params: GLuint*): void
+GLAPI glGetProgramStageiv(program: GLuint, shadertype: GLenum, pname: GLenum, values: GLint*): void
+GLAPI glPatchParameteri(pname: GLenum, value: GLint): void
+GLAPI glPatchParameterfv(pname: GLenum, values: const GLfloat*): void
+GLAPI glBindTransformFeedback(target: GLenum, id: GLuint): void
+GLAPI glDeleteTransformFeedbacks(n: GLsizei, ids: const GLuint*): void
+GLAPI glGenTransformFeedbacks(n: GLsizei, ids: GLuint*): void
+GLAPI glIsTransformFeedback(id: GLuint): GLboolean
+GLAPI glPauseTransformFeedback(): void
+GLAPI glResumeTransformFeedback(): void
+GLAPI glDrawTransformFeedback(mode: GLenum, id: GLuint): void
+GLAPI glDrawTransformFeedbackStream(mode: GLenum, id: GLuint, stream: GLuint): void
+GLAPI glBeginQueryIndexed(target: GLenum, index: GLuint, id: GLuint): void
+GLAPI glEndQueryIndexed(target: GLenum, index: GLuint): void
+GLAPI glGetQueryIndexediv(target: GLenum, index: GLuint, pname: GLenum, params: GLint*): void
+GLAPI glReleaseShaderCompiler(): void
+GLAPI glShaderBinary(count: GLsizei, shaders: const GLuint*, binaryFormat: GLenum, binary: const void*, length: GLsizei): void
+GLAPI glGetShaderPrecisionFormat(shadertype: GLenum, precisiontype: GLenum, range: GLint*, precision: GLint*): void
+GLAPI glDepthRangef(n: GLfloat, f: GLfloat): void
+GLAPI glClearDepthf(d: GLfloat): void
+GLAPI glGetProgramBinary(program: GLuint, bufSize: GLsizei, length: GLsizei*, binaryFormat: GLenum*, binary: void*): void
+GLAPI glProgramBinary(program: GLuint, binaryFormat: GLenum, binary: const void*, length: GLsizei): void
+GLAPI glProgramParameteri(program: GLuint, pname: GLenum, value: GLint): void
+GLAPI glUseProgramStages(pipeline: GLuint, stages: GLbitfield, program: GLuint): void
+GLAPI glActiveShaderProgram(pipeline: GLuint, program: GLuint): void
+GLAPI glCreateShaderProgramv(type: GLenum, count: GLsizei, strings: const GLchar**): GLuint
+GLAPI glBindProgramPipeline(pipeline: GLuint): void
+GLAPI glDeleteProgramPipelines(n: GLsizei, pipelines: const GLuint*): void
+GLAPI glGenProgramPipelines(n: GLsizei, pipelines: GLuint*): void
+GLAPI glIsProgramPipeline(pipeline: GLuint): GLboolean
+GLAPI glGetProgramPipelineiv(pipeline: GLuint, pname: GLenum, params: GLint*): void
+GLAPI glProgramUniform1i(program: GLuint, location: GLint, v0: GLint): void
+GLAPI glProgramUniform1iv(program: GLuint, location: GLint, count: GLsizei, value: const GLint*): void
+GLAPI glProgramUniform1f(program: GLuint, location: GLint, v0: GLfloat): void
+GLAPI glProgramUniform1fv(program: GLuint, location: GLint, count: GLsizei, value: const GLfloat*): void
+GLAPI glProgramUniform1d(program: GLuint, location: GLint, v0: GLdouble): void
+GLAPI glProgramUniform1dv(program: GLuint, location: GLint, count: GLsizei, value: const GLdouble*): void
+GLAPI glProgramUniform1ui(program: GLuint, location: GLint, v0: GLuint): void
+GLAPI glProgramUniform1uiv(program: GLuint, location: GLint, count: GLsizei, value: const GLuint*): void
+GLAPI glProgramUniform2i(program: GLuint, location: GLint, v0: GLint, v1: GLint): void
+GLAPI glProgramUniform2iv(program: GLuint, location: GLint, count: GLsizei, value: const GLint*): void
+GLAPI glProgramUniform2f(program: GLuint, location: GLint, v0: GLfloat, v1: GLfloat): void
+GLAPI glProgramUniform2fv(program: GLuint, location: GLint, count: GLsizei, value: const GLfloat*): void
+GLAPI glProgramUniform2d(program: GLuint, location: GLint, v0: GLdouble, v1: GLdouble): void
+GLAPI glProgramUniform2dv(program: GLuint, location: GLint, count: GLsizei, value: const GLdouble*): void
+GLAPI glProgramUniform2ui(program: GLuint, location: GLint, v0: GLuint, v1: GLuint): void
+GLAPI glProgramUniform2uiv(program: GLuint, location: GLint, count: GLsizei, value: const GLuint*): void
+GLAPI glProgramUniform3i(program: GLuint, location: GLint, v0: GLint, v1: GLint, v2: GLint): void
+GLAPI glProgramUniform3iv(program: GLuint, location: GLint, count: GLsizei, value: const GLint*): void
+GLAPI glProgramUniform3f(program: GLuint, location: GLint, v0: GLfloat, v1: GLfloat, v2: GLfloat): void
+GLAPI glProgramUniform3fv(program: GLuint, location: GLint, count: GLsizei, value: const GLfloat*): void
+GLAPI glProgramUniform3d(program: GLuint, location: GLint, v0: GLdouble, v1: GLdouble, v2: GLdouble): void
+GLAPI glProgramUniform3dv(program: GLuint, location: GLint, count: GLsizei, value: const GLdouble*): void
+GLAPI glProgramUniform3ui(program: GLuint, location: GLint, v0: GLuint, v1: GLuint, v2: GLuint): void
+GLAPI glProgramUniform3uiv(program: GLuint, location: GLint, count: GLsizei, value: const GLuint*): void
+GLAPI glProgramUniform4i(program: GLuint, location: GLint, v0: GLint, v1: GLint, v2: GLint, v3: GLint): void
+GLAPI glProgramUniform4iv(program: GLuint, location: GLint, count: GLsizei, value: const GLint*): void
+GLAPI glProgramUniform4f(program: GLuint, location: GLint, v0: GLfloat, v1: GLfloat, v2: GLfloat, v3: GLfloat): void
+GLAPI glProgramUniform4fv(program: GLuint, location: GLint, count: GLsizei, value: const GLfloat*): void
+GLAPI glProgramUniform4d(program: GLuint, location: GLint, v0: GLdouble, v1: GLdouble, v2: GLdouble, v3: GLdouble): void
+GLAPI glProgramUniform4dv(program: GLuint, location: GLint, count: GLsizei, value: const GLdouble*): void
+GLAPI glProgramUniform4ui(program: GLuint, location: GLint, v0: GLuint, v1: GLuint, v2: GLuint, v3: GLuint): void
+GLAPI glProgramUniform4uiv(program: GLuint, location: GLint, count: GLsizei, value: const GLuint*): void
+GLAPI glProgramUniformMatrix2fv(program: GLuint, location: GLint, count: GLsizei, transpose: GLboolean, value: const GLfloat*): void
+GLAPI glProgramUniformMatrix3fv(program: GLuint, location: GLint, count: GLsizei, transpose: GLboolean, value: const GLfloat*): void
+GLAPI glProgramUniformMatrix4fv(program: GLuint, location: GLint, count: GLsizei, transpose: GLboolean, value: const GLfloat*): void
+GLAPI glProgramUniformMatrix2dv(program: GLuint, location: GLint, count: GLsizei, transpose: GLboolean, value: const GLdouble*): void
+GLAPI glProgramUniformMatrix3dv(program: GLuint, location: GLint, count: GLsizei, transpose: GLboolean, value: const GLdouble*): void
+GLAPI glProgramUniformMatrix4dv(program: GLuint, location: GLint, count: GLsizei, transpose: GLboolean, value: const GLdouble*): void
+GLAPI glProgramUniformMatrix2x3fv(program: GLuint, location: GLint, count: GLsizei, transpose: GLboolean, value: const GLfloat*): void
+GLAPI glProgramUniformMatrix3x2fv(program: GLuint, location: GLint, count: GLsizei, transpose: GLboolean, value: const GLfloat*): void
+GLAPI glProgramUniformMatrix2x4fv(program: GLuint, location: GLint, count: GLsizei, transpose: GLboolean, value: const GLfloat*): void
+GLAPI glProgramUniformMatrix4x2fv(program: GLuint, location: GLint, count: GLsizei, transpose: GLboolean, value: const GLfloat*): void
+GLAPI glProgramUniformMatrix3x4fv(program: GLuint, location: GLint, count: GLsizei, transpose: GLboolean, value: const GLfloat*): void
+GLAPI glProgramUniformMatrix4x3fv(program: GLuint, location: GLint, count: GLsizei, transpose: GLboolean, value: const GLfloat*): void
+GLAPI glProgramUniformMatrix2x3dv(program: GLuint, location: GLint, count: GLsizei, transpose: GLboolean, value: const GLdouble*): void
+GLAPI glProgramUniformMatrix3x2dv(program: GLuint, location: GLint, count: GLsizei, transpose: GLboolean, value: const GLdouble*): void
+GLAPI glProgramUniformMatrix2x4dv(program: GLuint, location: GLint, count: GLsizei, transpose: GLboolean, value: const GLdouble*): void
+GLAPI glProgramUniformMatrix4x2dv(program: GLuint, location: GLint, count: GLsizei, transpose: GLboolean, value: const GLdouble*): void
+GLAPI glProgramUniformMatrix3x4dv(program: GLuint, location: GLint, count: GLsizei, transpose: GLboolean, value: const GLdouble*): void
+GLAPI glProgramUniformMatrix4x3dv(program: GLuint, location: GLint, count: GLsizei, transpose: GLboolean, value: const GLdouble*): void
+GLAPI glValidateProgramPipeline(pipeline: GLuint): void
+GLAPI glGetProgramPipelineInfoLog(pipeline: GLuint, bufSize: GLsizei, length: GLsizei*, infoLog: GLchar*): void
+GLAPI glVertexAttribL1d(index: GLuint, x: GLdouble): void
+GLAPI glVertexAttribL2d(index: GLuint, x: GLdouble, y: GLdouble): void
+GLAPI glVertexAttribL3d(index: GLuint, x: GLdouble, y: GLdouble, z: GLdouble): void
+GLAPI glVertexAttribL4d(index: GLuint, x: GLdouble, y: GLdouble, z: GLdouble, w: GLdouble): void
+GLAPI glVertexAttribL1dv(index: GLuint, v: const GLdouble*): void
+GLAPI glVertexAttribL2dv(index: GLuint, v: const GLdouble*): void
+GLAPI glVertexAttribL3dv(index: GLuint, v: const GLdouble*): void
+GLAPI glVertexAttribL4dv(index: GLuint, v: const GLdouble*): void
+GLAPI glVertexAttribLPointer(index: GLuint, size: GLint, type: GLenum, stride: GLsizei, pointer: const void*): void
+GLAPI glGetVertexAttribLdv(index: GLuint, pname: GLenum, params: GLdouble*): void
+GLAPI glViewportArrayv(first: GLuint, count: GLsizei, v: const GLfloat*): void
+GLAPI glViewportIndexedf(index: GLuint, x: GLfloat, y: GLfloat, w: GLfloat, h: GLfloat): void
+GLAPI glViewportIndexedfv(index: GLuint, v: const GLfloat*): void
+GLAPI glScissorArrayv(first: GLuint, count: GLsizei, v: const GLint*): void
+GLAPI glScissorIndexed(index: GLuint, left: GLint, bottom: GLint, width: GLsizei, height: GLsizei): void
+GLAPI glScissorIndexedv(index: GLuint, v: const GLint*): void
+GLAPI glDepthRangeArrayv(first: GLuint, count: GLsizei, v: const GLdouble*): void
+GLAPI glDepthRangeIndexed(index: GLuint, n: GLdouble, f: GLdouble): void
+GLAPI glGetFloati_v(target: GLenum, index: GLuint, data: GLfloat*): void
+GLAPI glGetDoublei_v(target: GLenum, index: GLuint, data: GLdouble*): void
+GLAPI glDrawArraysInstancedBaseInstance(mode: GLenum, first: GLint, count: GLsizei, instancecount: GLsizei, baseinstance: GLuint): void
+GLAPI glDrawElementsInstancedBaseInstance(mode: GLenum, count: GLsizei, type: GLenum, indices: const void*, instancecount: GLsizei, baseinstance: GLuint): void
+GLAPI glDrawElementsInstancedBaseVertexBaseInstance(mode: GLenum, count: GLsizei, type: GLenum, indices: const void*, instancecount: GLsizei, basevertex: GLint, baseinstance: GLuint): void
+GLAPI glGetInternalformativ(target: GLenum, internalformat: GLenum, pname: GLenum, count: GLsizei, params: GLint*): void
+GLAPI glGetActiveAtomicCounterBufferiv(program: GLuint, bufferIndex: GLuint, pname: GLenum, params: GLint*): void
+GLAPI glBindImageTexture(unit: GLuint, texture: GLuint, level: GLint, layered: GLboolean, layer: GLint, access: GLenum, format: GLenum): void
+GLAPI glMemoryBarrier(barriers: GLbitfield): void
+GLAPI glTexStorage1D(target: GLenum, levels: GLsizei, internalformat: GLenum, width: GLsizei): void
+GLAPI glTexStorage2D(target: GLenum, levels: GLsizei, internalformat: GLenum, width: GLsizei, height: GLsizei): void
+GLAPI glTexStorage3D(target: GLenum, levels: GLsizei, internalformat: GLenum, width: GLsizei, height: GLsizei, depth: GLsizei): void
+GLAPI glDrawTransformFeedbackInstanced(mode: GLenum, id: GLuint, instancecount: GLsizei): void
+GLAPI glDrawTransformFeedbackStreamInstanced(mode: GLenum, id: GLuint, stream: GLuint, instancecount: GLsizei): void
+GLAPI glClearBufferData(target: GLenum, internalformat: GLenum, format: GLenum, type: GLenum, data: const void*): void
+GLAPI glClearBufferSubData(target: GLenum, internalformat: GLenum, offset: GLintptr, size: GLsizeiptr, format: GLenum, type: GLenum, data: const void*): void
+GLAPI glDispatchCompute(num_groups_x: GLuint, num_groups_y: GLuint, num_groups_z: GLuint): void
+GLAPI glDispatchComputeIndirect(indirect: GLintptr): void
+GLAPI glCopyImageSubData(srcName: GLuint, srcTarget: GLenum, srcLevel: GLint, srcX: GLint, srcY: GLint, srcZ: GLint, dstName: GLuint, dstTarget: GLenum, dstLevel: GLint, dstX: GLint, dstY: GLint, dstZ: GLint, srcWidth: GLsizei, srcHeight: GLsizei, srcDepth: GLsizei): void
+GLAPI glFramebufferParameteri(target: GLenum, pname: GLenum, param: GLint): void
+GLAPI glGetFramebufferParameteriv(target: GLenum, pname: GLenum, params: GLint*): void
+GLAPI glGetInternalformati64v(target: GLenum, internalformat: GLenum, pname: GLenum, count: GLsizei, params: GLint64*): void
+GLAPI glInvalidateTexSubImage(texture: GLuint, level: GLint, xoffset: GLint, yoffset: GLint, zoffset: GLint, width: GLsizei, height: GLsizei, depth: GLsizei): void
+GLAPI glInvalidateTexImage(texture: GLuint, level: GLint): void
+GLAPI glInvalidateBufferSubData(buffer: GLuint, offset: GLintptr, length: GLsizeiptr): void
+GLAPI glInvalidateBufferData(buffer: GLuint): void
+GLAPI glInvalidateFramebuffer(target: GLenum, numAttachments: GLsizei, attachments: const GLenum*): void
+GLAPI glInvalidateSubFramebuffer(target: GLenum, numAttachments: GLsizei, attachments: const GLenum*, x: GLint, y: GLint, width: GLsizei, height: GLsizei): void
+GLAPI glMultiDrawArraysIndirect(mode: GLenum, indirect: const void*, drawcount: GLsizei, stride: GLsizei): void
+GLAPI glMultiDrawElementsIndirect(mode: GLenum, type: GLenum, indirect: const void*, drawcount: GLsizei, stride: GLsizei): void
+GLAPI glGetProgramInterfaceiv(program: GLuint, programInterface: GLenum, pname: GLenum, params: GLint*): void
+GLAPI glGetProgramResourceIndex(program: GLuint, programInterface: GLenum, name: const GLchar*): GLuint
+GLAPI glGetProgramResourceName(program: GLuint, programInterface: GLenum, index: GLuint, bufSize: GLsizei, length: GLsizei*, name: GLchar*): void
+GLAPI glGetProgramResourceiv(program: GLuint, programInterface: GLenum, index: GLuint, propCount: GLsizei, props: const GLenum*, count: GLsizei, length: GLsizei*, params: GLint*): void
+GLAPI glGetProgramResourceLocation(program: GLuint, programInterface: GLenum, name: const GLchar*): GLint
+GLAPI glGetProgramResourceLocationIndex(program: GLuint, programInterface: GLenum, name: const GLchar*): GLint
+GLAPI glShaderStorageBlockBinding(program: GLuint, storageBlockIndex: GLuint, storageBlockBinding: GLuint): void
+GLAPI glTexBufferRange(target: GLenum, internalformat: GLenum, buffer: GLuint, offset: GLintptr, size: GLsizeiptr): void
+GLAPI glTexStorage2DMultisample(target: GLenum, samples: GLsizei, internalformat: GLenum, width: GLsizei, height: GLsizei, fixedsamplelocations: GLboolean): void
+GLAPI glTexStorage3DMultisample(target: GLenum, samples: GLsizei, internalformat: GLenum, width: GLsizei, height: GLsizei, depth: GLsizei, fixedsamplelocations: GLboolean): void
+GLAPI glTextureView(texture: GLuint, target: GLenum, origtexture: GLuint, internalformat: GLenum, minlevel: GLuint, numlevels: GLuint, minlayer: GLuint, numlayers: GLuint): void
+GLAPI glBindVertexBuffer(bindingindex: GLuint, buffer: GLuint, offset: GLintptr, stride: GLsizei): void
+GLAPI glVertexAttribFormat(attribindex: GLuint, size: GLint, type: GLenum, normalized: GLboolean, relativeoffset: GLuint): void
+GLAPI glVertexAttribIFormat(attribindex: GLuint, size: GLint, type: GLenum, relativeoffset: GLuint): void
+GLAPI glVertexAttribLFormat(attribindex: GLuint, size: GLint, type: GLenum, relativeoffset: GLuint): void
+GLAPI glVertexAttribBinding(attribindex: GLuint, bindingindex: GLuint): void
+GLAPI glVertexBindingDivisor(bindingindex: GLuint, divisor: GLuint): void
+GLAPI glDebugMessageControl(source: GLenum, type: GLenum, severity: GLenum, count: GLsizei, ids: const GLuint*, enabled: GLboolean): void
+GLAPI glDebugMessageInsert(source: GLenum, type: GLenum, id: GLuint, severity: GLenum, length: GLsizei, buf: const GLchar*): void
+GLAPI glGetDebugMessageLog(count: GLuint, bufSize: GLsizei, sources: GLenum*, types: GLenum*, ids: GLuint*, severities: GLenum*, lengths: GLsizei*, messageLog: GLchar*): GLuint
+GLAPI glPushDebugGroup(source: GLenum, id: GLuint, length: GLsizei, message: const GLchar*): void
+GLAPI glPopDebugGroup(): void
+GLAPI glObjectLabel(identifier: GLenum, name: GLuint, length: GLsizei, label: const GLchar*): void
+GLAPI glGetObjectLabel(identifier: GLenum, name: GLuint, bufSize: GLsizei, length: GLsizei*, label: GLchar*): void
+GLAPI glObjectPtrLabel(ptr: const void*, length: GLsizei, label: const GLchar*): void
+GLAPI glGetObjectPtrLabel(ptr: const void*, bufSize: GLsizei, length: GLsizei*, label: GLchar*): void
+GLAPI glBufferStorage(target: GLenum, size: GLsizeiptr, data: const void*, flags: GLbitfield): void
+GLAPI glClearTexImage(texture: GLuint, level: GLint, format: GLenum, type: GLenum, data: const void*): void
+GLAPI glClearTexSubImage(texture: GLuint, level: GLint, xoffset: GLint, yoffset: GLint, zoffset: GLint, width: GLsizei, height: GLsizei, depth: GLsizei, format: GLenum, type: GLenum, data: const void*): void
+GLAPI glBindBuffersBase(target: GLenum, first: GLuint, count: GLsizei, buffers: const GLuint*): void
+GLAPI glBindBuffersRange(target: GLenum, first: GLuint, count: GLsizei, buffers: const GLuint*, offsets: const GLintptr*, sizes: const GLsizeiptr*): void
+GLAPI glBindTextures(first: GLuint, count: GLsizei, textures: const GLuint*): void
+GLAPI glBindSamplers(first: GLuint, count: GLsizei, samplers: const GLuint*): void
+GLAPI glBindImageTextures(first: GLuint, count: GLsizei, textures: const GLuint*): void
+GLAPI glBindVertexBuffers(first: GLuint, count: GLsizei, buffers: const GLuint*, offsets: const GLintptr*, strides: const GLsizei*): void
+GLAPI glClipControl(origin: GLenum, depth: GLenum): void
+GLAPI glCreateTransformFeedbacks(n: GLsizei, ids: GLuint*): void
+GLAPI glTransformFeedbackBufferBase(xfb: GLuint, index: GLuint, buffer: GLuint): void
+GLAPI glTransformFeedbackBufferRange(xfb: GLuint, index: GLuint, buffer: GLuint, offset: GLintptr, size: GLsizeiptr): void
+GLAPI glGetTransformFeedbackiv(xfb: GLuint, pname: GLenum, param: GLint*): void
+GLAPI glGetTransformFeedbacki_v(xfb: GLuint, pname: GLenum, index: GLuint, param: GLint*): void
+GLAPI glGetTransformFeedbacki64_v(xfb: GLuint, pname: GLenum, index: GLuint, param: GLint64*): void
+GLAPI glCreateBuffers(n: GLsizei, buffers: GLuint*): void
+GLAPI glNamedBufferStorage(buffer: GLuint, size: GLsizeiptr, data: const void*, flags: GLbitfield): void
+GLAPI glNamedBufferData(buffer: GLuint, size: GLsizeiptr, data: const void*, usage: GLenum): void
+GLAPI glNamedBufferSubData(buffer: GLuint, offset: GLintptr, size: GLsizeiptr, data: const void*): void
+GLAPI glCopyNamedBufferSubData(readBuffer: GLuint, writeBuffer: GLuint, readOffset: GLintptr, writeOffset: GLintptr, size: GLsizeiptr): void
+GLAPI glClearNamedBufferData(buffer: GLuint, internalformat: GLenum, format: GLenum, type: GLenum, data: const void*): void
+GLAPI glClearNamedBufferSubData(buffer: GLuint, internalformat: GLenum, offset: GLintptr, size: GLsizeiptr, format: GLenum, type: GLenum, data: const void*): void
+GLAPI glMapNamedBuffer(buffer: GLuint, access: GLenum): void*
+GLAPI glMapNamedBufferRange(buffer: GLuint, offset: GLintptr, length: GLsizeiptr, access: GLbitfield): void*
+GLAPI glUnmapNamedBuffer(buffer: GLuint): GLboolean
+GLAPI glFlushMappedNamedBufferRange(buffer: GLuint, offset: GLintptr, length: GLsizeiptr): void
+GLAPI glGetNamedBufferParameteriv(buffer: GLuint, pname: GLenum, params: GLint*): void
+GLAPI glGetNamedBufferParameteri64v(buffer: GLuint, pname: GLenum, params: GLint64*): void
+GLAPI glGetNamedBufferPointerv(buffer: GLuint, pname: GLenum, params: void**): void
+GLAPI glGetNamedBufferSubData(buffer: GLuint, offset: GLintptr, size: GLsizeiptr, data: void*): void
+GLAPI glCreateFramebuffers(n: GLsizei, framebuffers: GLuint*): void
+GLAPI glNamedFramebufferRenderbuffer(framebuffer: GLuint, attachment: GLenum, renderbuffertarget: GLenum, renderbuffer: GLuint): void
+GLAPI glNamedFramebufferParameteri(framebuffer: GLuint, pname: GLenum, param: GLint): void
+GLAPI glNamedFramebufferTexture(framebuffer: GLuint, attachment: GLenum, texture: GLuint, level: GLint): void
+GLAPI glNamedFramebufferTextureLayer(framebuffer: GLuint, attachment: GLenum, texture: GLuint, level: GLint, layer: GLint): void
+GLAPI glNamedFramebufferDrawBuffer(framebuffer: GLuint, buf: GLenum): void
+GLAPI glNamedFramebufferDrawBuffers(framebuffer: GLuint, n: GLsizei, bufs: const GLenum*): void
+GLAPI glNamedFramebufferReadBuffer(framebuffer: GLuint, src: GLenum): void
+GLAPI glInvalidateNamedFramebufferData(framebuffer: GLuint, numAttachments: GLsizei, attachments: const GLenum*): void
+GLAPI glInvalidateNamedFramebufferSubData(framebuffer: GLuint, numAttachments: GLsizei, attachments: const GLenum*, x: GLint, y: GLint, width: GLsizei, height: GLsizei): void
+GLAPI glClearNamedFramebufferiv(framebuffer: GLuint, buffer: GLenum, drawbuffer: GLint, value: const GLint*): void
+GLAPI glClearNamedFramebufferuiv(framebuffer: GLuint, buffer: GLenum, drawbuffer: GLint, value: const GLuint*): void
+GLAPI glClearNamedFramebufferfv(framebuffer: GLuint, buffer: GLenum, drawbuffer: GLint, value: const GLfloat*): void
+GLAPI glClearNamedFramebufferfi(framebuffer: GLuint, buffer: GLenum, drawbuffer: GLint, depth: GLfloat, stencil: GLint): void
+GLAPI glBlitNamedFramebuffer(readFramebuffer: GLuint, drawFramebuffer: GLuint, srcX0: GLint, srcY0: GLint, srcX1: GLint, srcY1: GLint, dstX0: GLint, dstY0: GLint, dstX1: GLint, dstY1: GLint, mask: GLbitfield, filter: GLenum): void
+GLAPI glCheckNamedFramebufferStatus(framebuffer: GLuint, target: GLenum): GLenum
+GLAPI glGetNamedFramebufferParameteriv(framebuffer: GLuint, pname: GLenum, param: GLint*): void
+GLAPI glGetNamedFramebufferAttachmentParameteriv(framebuffer: GLuint, attachment: GLenum, pname: GLenum, params: GLint*): void
+GLAPI glCreateRenderbuffers(n: GLsizei, renderbuffers: GLuint*): void
+GLAPI glNamedRenderbufferStorage(renderbuffer: GLuint, internalformat: GLenum, width: GLsizei, height: GLsizei): void
+GLAPI glNamedRenderbufferStorageMultisample(renderbuffer: GLuint, samples: GLsizei, internalformat: GLenum, width: GLsizei, height: GLsizei): void
+GLAPI glGetNamedRenderbufferParameteriv(renderbuffer: GLuint, pname: GLenum, params: GLint*): void
+GLAPI glCreateTextures(target: GLenum, n: GLsizei, textures: GLuint*): void
+GLAPI glTextureBuffer(texture: GLuint, internalformat: GLenum, buffer: GLuint): void
+GLAPI glTextureBufferRange(texture: GLuint, internalformat: GLenum, buffer: GLuint, offset: GLintptr, size: GLsizeiptr): void
+GLAPI glTextureStorage1D(texture: GLuint, levels: GLsizei, internalformat: GLenum, width: GLsizei): void
+GLAPI glTextureStorage2D(texture: GLuint, levels: GLsizei, internalformat: GLenum, width: GLsizei, height: GLsizei): void
+GLAPI glTextureStorage3D(texture: GLuint, levels: GLsizei, internalformat: GLenum, width: GLsizei, height: GLsizei, depth: GLsizei): void
+GLAPI glTextureStorage2DMultisample(texture: GLuint, samples: GLsizei, internalformat: GLenum, width: GLsizei, height: GLsizei, fixedsamplelocations: GLboolean): void
+GLAPI glTextureStorage3DMultisample(texture: GLuint, samples: GLsizei, internalformat: GLenum, width: GLsizei, height: GLsizei, depth: GLsizei, fixedsamplelocations: GLboolean): void
+GLAPI glTextureSubImage1D(texture: GLuint, level: GLint, xoffset: GLint, width: GLsizei, format: GLenum, type: GLenum, pixels: const void*): void
+GLAPI glTextureSubImage2D(texture: GLuint, level: GLint, xoffset: GLint, yoffset: GLint, width: GLsizei, height: GLsizei, format: GLenum, type: GLenum, pixels: const void*): void
+GLAPI glTextureSubImage3D(texture: GLuint, level: GLint, xoffset: GLint, yoffset: GLint, zoffset: GLint, width: GLsizei, height: GLsizei, depth: GLsizei, format: GLenum, type: GLenum, pixels: const void*): void
+GLAPI glCompressedTextureSubImage1D(texture: GLuint, level: GLint, xoffset: GLint, width: GLsizei, format: GLenum, imageSize: GLsizei, data: const void*): void
+GLAPI glCompressedTextureSubImage2D(texture: GLuint, level: GLint, xoffset: GLint, yoffset: GLint, width: GLsizei, height: GLsizei, format: GLenum, imageSize: GLsizei, data: const void*): void
+GLAPI glCompressedTextureSubImage3D(texture: GLuint, level: GLint, xoffset: GLint, yoffset: GLint, zoffset: GLint, width: GLsizei, height: GLsizei, depth: GLsizei, format: GLenum, imageSize: GLsizei, data: const void*): void
+GLAPI glCopyTextureSubImage1D(texture: GLuint, level: GLint, xoffset: GLint, x: GLint, y: GLint, width: GLsizei): void
+GLAPI glCopyTextureSubImage2D(texture: GLuint, level: GLint, xoffset: GLint, yoffset: GLint, x: GLint, y: GLint, width: GLsizei, height: GLsizei): void
+GLAPI glCopyTextureSubImage3D(texture: GLuint, level: GLint, xoffset: GLint, yoffset: GLint, zoffset: GLint, x: GLint, y: GLint, width: GLsizei, height: GLsizei): void
+GLAPI glTextureParameterf(texture: GLuint, pname: GLenum, param: GLfloat): void
+GLAPI glTextureParameterfv(texture: GLuint, pname: GLenum, param: const GLfloat*): void
+GLAPI glTextureParameteri(texture: GLuint, pname: GLenum, param: GLint): void
+GLAPI glTextureParameterIiv(texture: GLuint, pname: GLenum, params: const GLint*): void
+GLAPI glTextureParameterIuiv(texture: GLuint, pname: GLenum, params: const GLuint*): void
+GLAPI glTextureParameteriv(texture: GLuint, pname: GLenum, param: const GLint*): void
+GLAPI glGenerateTextureMipmap(texture: GLuint): void
+GLAPI glBindTextureUnit(unit: GLuint, texture: GLuint): void
+GLAPI glGetTextureImage(texture: GLuint, level: GLint, format: GLenum, type: GLenum, bufSize: GLsizei, pixels: void*): void
+GLAPI glGetCompressedTextureImage(texture: GLuint, level: GLint, bufSize: GLsizei, pixels: void*): void
+GLAPI glGetTextureLevelParameterfv(texture: GLuint, level: GLint, pname: GLenum, params: GLfloat*): void
+GLAPI glGetTextureLevelParameteriv(texture: GLuint, level: GLint, pname: GLenum, params: GLint*): void
+GLAPI glGetTextureParameterfv(texture: GLuint, pname: GLenum, params: GLfloat*): void
+GLAPI glGetTextureParameterIiv(texture: GLuint, pname: GLenum, params: GLint*): void
+GLAPI glGetTextureParameterIuiv(texture: GLuint, pname: GLenum, params: GLuint*): void
+GLAPI glGetTextureParameteriv(texture: GLuint, pname: GLenum, params: GLint*): void
+GLAPI glCreateVertexArrays(n: GLsizei, arrays: GLuint*): void
+GLAPI glDisableVertexArrayAttrib(vaobj: GLuint, index: GLuint): void
+GLAPI glEnableVertexArrayAttrib(vaobj: GLuint, index: GLuint): void
+GLAPI glVertexArrayElementBuffer(vaobj: GLuint, buffer: GLuint): void
+GLAPI glVertexArrayVertexBuffer(vaobj: GLuint, bindingindex: GLuint, buffer: GLuint, offset: GLintptr, stride: GLsizei): void
+GLAPI glVertexArrayVertexBuffers(vaobj: GLuint, first: GLuint, count: GLsizei, buffers: const GLuint*, offsets: const GLintptr*, strides: const GLsizei*): void
+GLAPI glVertexArrayAttribBinding(vaobj: GLuint, attribindex: GLuint, bindingindex: GLuint): void
+GLAPI glVertexArrayAttribFormat(vaobj: GLuint, attribindex: GLuint, size: GLint, type: GLenum, normalized: GLboolean, relativeoffset: GLuint): void
+GLAPI glVertexArrayAttribIFormat(vaobj: GLuint, attribindex: GLuint, size: GLint, type: GLenum, relativeoffset: GLuint): void
+GLAPI glVertexArrayAttribLFormat(vaobj: GLuint, attribindex: GLuint, size: GLint, type: GLenum, relativeoffset: GLuint): void
+GLAPI glVertexArrayBindingDivisor(vaobj: GLuint, bindingindex: GLuint, divisor: GLuint): void
+GLAPI glGetVertexArrayiv(vaobj: GLuint, pname: GLenum, param: GLint*): void
+GLAPI glGetVertexArrayIndexediv(vaobj: GLuint, index: GLuint, pname: GLenum, param: GLint*): void
+GLAPI glGetVertexArrayIndexed64iv(vaobj: GLuint, index: GLuint, pname: GLenum, param: GLint64*): void
+GLAPI glCreateSamplers(n: GLsizei, samplers: GLuint*): void
+GLAPI glCreateProgramPipelines(n: GLsizei, pipelines: GLuint*): void
+GLAPI glCreateQueries(target: GLenum, n: GLsizei, ids: GLuint*): void
+GLAPI glGetQueryBufferObjecti64v(id: GLuint, buffer: GLuint, pname: GLenum, offset: GLintptr): void
+GLAPI glGetQueryBufferObjectiv(id: GLuint, buffer: GLuint, pname: GLenum, offset: GLintptr): void
+GLAPI glGetQueryBufferObjectui64v(id: GLuint, buffer: GLuint, pname: GLenum, offset: GLintptr): void
+GLAPI glGetQueryBufferObjectuiv(id: GLuint, buffer: GLuint, pname: GLenum, offset: GLintptr): void
+GLAPI glMemoryBarrierByRegion(barriers: GLbitfield): void
+GLAPI glGetTextureSubImage(texture: GLuint, level: GLint, xoffset: GLint, yoffset: GLint, zoffset: GLint, width: GLsizei, height: GLsizei, depth: GLsizei, format: GLenum, type: GLenum, bufSize: GLsizei, pixels: void*): void
+GLAPI glGetCompressedTextureSubImage(texture: GLuint, level: GLint, xoffset: GLint, yoffset: GLint, zoffset: GLint, width: GLsizei, height: GLsizei, depth: GLsizei, bufSize: GLsizei, pixels: void*): void
+GLAPI glGetGraphicsResetStatus(): GLenum
+GLAPI glGetnCompressedTexImage(target: GLenum, lod: GLint, bufSize: GLsizei, pixels: void*): void
+GLAPI glGetnTexImage(target: GLenum, level: GLint, format: GLenum, type: GLenum, bufSize: GLsizei, pixels: void*): void
+GLAPI glGetnUniformdv(program: GLuint, location: GLint, bufSize: GLsizei, params: GLdouble*): void
+GLAPI glGetnUniformfv(program: GLuint, location: GLint, bufSize: GLsizei, params: GLfloat*): void
+GLAPI glGetnUniformiv(program: GLuint, location: GLint, bufSize: GLsizei, params: GLint*): void
+GLAPI glGetnUniformuiv(program: GLuint, location: GLint, bufSize: GLsizei, params: GLuint*): void
+GLAPI glReadnPixels(x: GLint, y: GLint, width: GLsizei, height: GLsizei, format: GLenum, type: GLenum, bufSize: GLsizei, data: void*): void
+GLAPI glTextureBarrier(): void
+GLAPI glSpecializeShader(shader: GLuint, pEntryPoint: const GLchar*, numSpecializationConstants: GLuint, pConstantIndex: const GLuint*, pConstantValue: const GLuint*): void
+GLAPI glMultiDrawArraysIndirectCount(mode: GLenum, indirect: const void*, drawcount: GLintptr, maxdrawcount: GLsizei, stride: GLsizei): void
+GLAPI glMultiDrawElementsIndirectCount(mode: GLenum, type: GLenum, indirect: const void*, drawcount: GLintptr, maxdrawcount: GLsizei, stride: GLsizei): void
+GLAPI glPolygonOffsetClamp(factor: GLfloat, units: GLfloat, clamp: GLfloat): void
