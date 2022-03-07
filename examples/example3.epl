@@ -2,8 +2,13 @@ gl := 0;
 
 main: int {
     a := 0;
-    if(a == 2) {
+    b: bool = false;
+    if(b == true) {
         a = 1;
     }
+    else {
+        a = 2;
+    }
+
     ret a;
 }
