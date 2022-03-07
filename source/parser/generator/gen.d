@@ -92,7 +92,7 @@ class GArgs {
 }
 
 class GFuncs {
-	private LLVMValueRef[string] funcs;
+	LLVMValueRef[string] funcs;
 
 	this() {}
 
@@ -113,6 +113,7 @@ class GenerationContext {
 	GArgs gargs;
 	GFuncs gfuncs;
 	LLVMValueRef currfunc;
+	int basicblocks_count = 0;
 
     this() {
         mod = LLVMModuleCreateWithName(toStringz("epl"));

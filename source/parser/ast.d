@@ -880,9 +880,12 @@ class AstNodeIf : AstNode {
 		LLVMBasicBlockRef elsebb;
 		LLVMBasicBlockRef endbb;
 
-		thenbb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name], toStringz("then"));
-		elsebb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name], toStringz("else"));
-		endbb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name], toStringz("end"));
+		ctx.basicblocks_count += 1;
+		thenbb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name], toStringz("then"~to!string(ctx.basicblocks_count)));
+		ctx.basicblocks_count += 1;
+		elsebb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name], toStringz("else"~to!string(ctx.basicblocks_count)));
+		ctx.basicblocks_count += 1;
+		endbb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name], toStringz("end"~to!string(ctx.basicblocks_count)));
 
 		LLVMBuildCondBr(
 			ctx.currbuilder,
@@ -907,6 +910,15 @@ class AstNodeIf : AstNode {
 		LLVMBuildBr(s.genctx.currbuilder,endbb);
 
 		LLVMPositionBuilderAtEnd(s.genctx.currbuilder,elsebb);
+		if(else_ !is null) {
+			if(else_.instanceof!(AstNodeBlock)) {
+				AstNodeBlock b = cast(AstNodeBlock)else_;
+				for(int i = 0; i < b.nodes.length; i++) {
+					b.nodes[i].gen(s);
+				}
+			}
+			else else_.gen(s);
+		}
 		LLVMBuildBr(s.genctx.currbuilder,endbb);
 
 		LLVMPositionBuilderAtEnd(s.genctx.currbuilder,endbb);
@@ -950,8 +962,10 @@ class AstNodeWhile : AstNode {
 		LLVMBasicBlockRef _while;
 		LLVMBasicBlockRef _after;
 
-		_while = LLVMAppendBasicBlock(s.genctx.gfuncs[parent.decl.name],toStringz("_while"));
-		_after = LLVMAppendBasicBlock(s.genctx.gfuncs[parent.decl.name],toStringz("_after"));
+		ctx.basicblocks_count += 1;
+		_while = LLVMAppendBasicBlock(s.genctx.gfuncs[parent.decl.name],toStringz("_while"~to!string(ctx.basicblocks_count)));
+		ctx.basicblocks_count += 1;
+		_after = LLVMAppendBasicBlock(s.genctx.gfuncs[parent.decl.name],toStringz("_after"~to!string(ctx.basicblocks_count)));
 
 		LLVMValueRef cond_as_cmp = cond.gen(s);
 		LLVMBuildCondBr(ctx.currbuilder,cond_as_cmp,_while,_after);

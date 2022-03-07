@@ -1,14 +1,11 @@
-gl := 0;
-
 main: int {
     a := 0;
-    b: bool = false;
-    if(b == true) {
-        a = 1;
-    }
-    else {
-        a = 2;
+    b := 2;
+
+    while(a != 5) {
+        if(b != 6) b += 2;
+        a += 1;
     }
 
-    ret a;
+    ret b;
 }
