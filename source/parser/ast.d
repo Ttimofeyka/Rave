@@ -742,6 +742,22 @@ class AstNodeBinary : AstNode {
 					rhs.gen(s),
 					toStringz("icmp_ne")
 				);
+			case TokType.tok_and:
+			case TokType.tok_or:
+				if(type == TokType.tok_and) {
+					return LLVMBuildAnd(
+						s.genctx.currbuilder,
+						lhs.gen(s),
+						rhs.gen(s),
+						toStringz("and_2cmp")
+					);
+				}
+				return LLVMBuildOr(
+					s.genctx.currbuilder,
+					lhs.gen(s),
+					rhs.gen(s),
+					toStringz("or_2cmp")
+				);
 			default:
 				break;
 		}
