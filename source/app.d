@@ -75,32 +75,28 @@ void main(string[] args)
 	auto parser = new Parser(preproc.getTokens());
 	auto nodes = parser.parseProgram();
 
-	auto typeContext = new AtstTypeContext();
-	implementDefaultTypeContext(typeContext);
+	auto genctx = new GenerationContext();
+	implementDefaultTypeContext(genctx.sema.typeContext);
 
-	auto semaAn = new SemanticAnalyzerContext(typeContext);
-	auto semaScope = new AnalyzerScope(semaAn);
+	auto semaScope = new AnalyzerScope(genctx.sema, genctx);
 
 	writeln("------------------ AST -------------------");
 	for(int i = 0; i < nodes.length; ++i) {
 		// writeln("Analyzing... #", i);
 		nodes[i].analyze(semaScope, null);
-		if(semaAn.errs.length > 0) {
-			semaAn.flushErrors();
+		if(genctx.sema.errorCount > 0) {
+			genctx.sema.flushErrors();
 			break;
 		}
 		nodes[i].debugPrint(0);
 	}
 
-	if(semaAn.errs.length == 0) {
+	if(genctx.sema.errorCount == 0) {
 		writeln("------------------ Generating -------------------");
-
-		auto ctx = new GenerationContext();
-		ctx.typecontext = typeContext;
-		ctx.gen(nodes, outputFile, debugMode);
+		genctx.gen(semaScope, nodes, outputFile, debugMode);
 	}
 	else {
-		writeln("Failed with ", semaAn.errs.length, " error(s).");
+		writeln("Failed with ", genctx.sema.errorCount, " error(s).");
 		exit(1);
 	}
 }

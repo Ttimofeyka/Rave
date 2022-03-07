@@ -208,7 +208,7 @@ class Lexer {
         while(get() != '\n' && get() != '\0') {
             next(1);
         }
-        loc.line += 1;
+        // loc.line += 1;
     }
 
     private void skipMultiLineCom() {
