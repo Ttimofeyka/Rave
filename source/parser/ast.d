@@ -861,8 +861,13 @@ class AstNodeIf : AstNode {
 
 	override void analyze(AnalyzerScope s, Type neededType) {
 		this.parent = s.ctx.currentFunc;
-		auto boolType = new TypeBasic(BasicType.t_bool);
-		this.cond.analyze(s, boolType);
+		// auto boolType = new TypeBasic(BasicType.t_bool);
+		this.cond.analyze(s, new TypeUnknown());
+		if(!new TypeBasic(BasicType.t_bool).assignable(this.cond.getType(s))) {
+			s.ctx.addError("If requires a boolean for it's condition, but '"
+				~ this.cond.getType(s).toString() ~ "' is not convertible to bool.",
+				this.where);
+		}
 
 		this.body_.analyze(s, new TypeUnknown());
 
