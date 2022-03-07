@@ -955,6 +955,7 @@ class AstNodeWhile : AstNode {
 
 	override void analyze(AnalyzerScope s, Type neededType) {
 		this.parent = s.ctx.currentFunc;
+		this.body_.analyze(s, neededType);
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
