@@ -33,3 +33,7 @@ Copy `base.dub.json` to `dub.json` and change the flags. Then run `dub build`
 * Make a code generator (35%)
 
 Discord server - https://discord.gg/AfEtyArvsM
+
+## TODO
+
+- AST/Analyzer: Add return handling for if/while
