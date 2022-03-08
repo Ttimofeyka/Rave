@@ -34,7 +34,7 @@ Copy `base.dub.json` to `dub.json` and change the flags. Then run `dub build`
 * ~~Make a preprocessor~~ (100%)
 * ~~Make a parser~~ (100%
 * Make a semantic analyzer (57%)
-* Make a code generator (35%)
+* Make a code generator (65%)
 
 Discord server - https://discord.gg/AfEtyArvsM
 
