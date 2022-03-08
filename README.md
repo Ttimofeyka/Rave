@@ -22,7 +22,7 @@ main: int {
 * `binutils`, `binutils-avr` (if you need avr support)
 * dub
 * D compiler (dmd/ldc/gdc)
-* [docsify.js](https://docsify.js.org/) (for documentation)
+* [node.js](https://nodejs.org/) (for documentation)
 
 ## Building/Running
 

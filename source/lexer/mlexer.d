@@ -8,6 +8,7 @@ import std.conv : to;
 import std.stdio;
 import std.algorithm: canFind;
 import std.ascii : isWhite;
+import std.string : strip;
 
 const string[] operators = [
     "=", "==", "!=", "+=",
@@ -216,11 +217,14 @@ class Lexer {
         next(1);
         // writeln("get, get+1 = '", get(), "', '", get(+1), "'");
         while((get() != '*' || get(+1) != '/') && get() != '\0') {
-            if(get() == '\n') loc.line += 1;
+            if(get() == '\n') {
+                s = s.strip().dup;
+                loc.line += 1;
+            }
             s ~= get();
             next(1);
         }
-        // writeln("s-", s, "-s");
+        writeln("s-", s, "-s");
         if(get() == '*') {next(2);}
         return s;
     }

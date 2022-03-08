@@ -11,7 +11,24 @@ extern stderr: StdFile*;
 struct StdFile {
     __fd: ulong;
 
+    /** Opens a file based on a filename.
+
+        * `name`- the name of the file to open.
+        * `mode` - open mode, can be one of the following:
+            * `b` can also be appended to the mode for reading/writing in binary mode instead of text mode.
+        * `File*` - a pointer to a- created file stream.
+
+        | Mode | Description
+        |------|-------------
+        | `r`  | opens the file for reading, returns `nullptr` if the file doesn't exist.
+        | `r+` | opens the file for reading and writing, returns `nullptr` if the file doesn't exist.
+        | `w`  | opens the file for writing, creating if it doesn't exist.
+        | `w+` | opens the file for reading and writing, creating if it doesn't exist.
+        | `a`  | opens the file for appending, creating if it doesn't exist.
+    */
     static extern open(path: const char*, mode: const char*): File*;
+
+    /** Closes the file stream */
     extern close();
 
     extern read(to: char*, count: ulong);

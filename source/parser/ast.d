@@ -358,6 +358,8 @@ class AstNodeFunction : AstNode {
 	FunctionDeclaration decl;
 	FunctionSignatureTypes actualDecl;
 	AstNode body_;
+	LLVMBasicBlockRef exitbb;
+	LLVMValueRef exitv;
 	
 	LLVMBuilderRef builder;
 	ReturnStmt[] returns;
@@ -496,8 +498,26 @@ class AstNodeFunction : AstNode {
 
 		if(!decl.isExtern) {
 			LLVMBasicBlockRef entry = LLVMAppendBasicBlock(func,toStringz("entry"));
+			exitbb = LLVMAppendBasicBlock(func,toStringz("exit"));
+
 			LLVMPositionBuilderAtEnd(builder, entry);
-			ctx.currbb = entry;
+			if(!actualDecl.ret.instanceof!TypeVoid) exitv = LLVMBuildAlloca(
+				builder,
+				ctx.getLLVMType(actualDecl.ret),
+				toStringz("exitv")
+			);
+
+			LLVMPositionBuilderAtEnd(builder, exitbb);
+				if(!actualDecl.ret.instanceof!TypeVoid) {
+					auto loaded_exitv = LLVMBuildLoad(
+						builder,
+						exitv,
+						toStringz("loaded_exitval")
+					);
+					LLVMBuildRet(builder, loaded_exitv);
+				}
+				else LLVMBuildRetVoid(builder);
+			LLVMPositionBuilderAtEnd(builder, entry);
 
 			ctx.currbuilder = builder;
 			if(decl.name == ctx.entryFunction) {
@@ -524,9 +544,6 @@ class AstNodeFunction : AstNode {
 			ctx.currbuilder = null;
 			ctx.gstack.clean();
 			ctx.gargs.clean();
-		}
-		else {
-			LLVMSetLinkage(func, LLVMExternalLinkage);
 		}
 
 		ctx.currfunc = null;
@@ -1165,13 +1182,16 @@ class AstNodeReturn : AstNode {
 
 	override LLVMValueRef gen(AnalyzerScope s) {
 		auto ctx = s.genctx;
-		// this.retbb = ctx.currb;
 
 		if(value !is null) {
-			LLVMValueRef retval = value.gen(s);
-			LLVMBuildRet(ctx.currbuilder, retval);
+			LLVMBuildStore(
+				ctx.currbuilder,
+				value.gen(s),
+				parent.exitv
+			);
+			return LLVMBuildBr(ctx.currbuilder, parent.exitbb);
 		}
-		return null;
+		return LLVMBuildBr(ctx.currbuilder, parent.exitbb);
 	}
 
 	debug {
@@ -1313,7 +1333,7 @@ class AstNodeDecl : AstNode {
 			// Global var
 			auto global = ctx.createGlobal(
 				ctx.getLLVMType(decl.type.get(s)),
-				null,
+				LLVMConstNull(ctx.getLLVMType(decl.type.get(s))),
 				decl.name
 			);
 
@@ -1326,7 +1346,7 @@ class AstNodeDecl : AstNode {
 
 			LLVMValueRef func = LLVMAddFunction(
 				ctx.mod,
-				toStringz(decl.name~"_init"),
+				toStringz("_EPLf"~to!string((decl.name~"_init").length)~decl.name~"_init"),
 				ret_type
 			);
 

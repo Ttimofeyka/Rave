@@ -2,6 +2,7 @@
 .extern ExitProcess
 
 .global _EPLf4exit
+.type   _EPLf4exit, @function
 _EPLf4exit:
     movq %rax, %rcx
     call ExitProcess
