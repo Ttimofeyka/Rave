@@ -6,6 +6,7 @@ import std.string;
 import std.array;
 import std.uni;
 import std.ascii;
+import std.conv : to;
 
 LLVMValueRef createLocal(GenerationContext ctx, LLVMTypeRef type, LLVMValueRef val, string name) {
 		LLVMValueRef local = LLVMBuildAlloca(
@@ -30,7 +31,7 @@ LLVMValueRef createGlobal(GenerationContext ctx, LLVMTypeRef type, LLVMValueRef 
 		LLVMValueRef global = LLVMAddGlobal(
 			ctx.mod,
 			type,
-			toStringz(name)
+			toStringz("_EPLg"~to!string(name.length)~name)
 		);
 		if(val !is null) LLVMSetInitializer(global,val);
 		ctx.gstack.addGlobal(global,name);
