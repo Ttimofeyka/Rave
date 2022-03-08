@@ -498,7 +498,6 @@ class AstNodeFunction : AstNode {
 
 		if(!decl.isExtern) {
 			LLVMBasicBlockRef entry = LLVMAppendBasicBlock(func,toStringz("entry"));
-			exitbb = LLVMAppendBasicBlock(func,toStringz("exit"));
 
 			LLVMPositionBuilderAtEnd(builder, entry);
 			if(!actualDecl.ret.instanceof!TypeVoid) exitv = LLVMBuildAlloca(
@@ -507,6 +506,7 @@ class AstNodeFunction : AstNode {
 				toStringz("exitv")
 			);
 
+			exitbb = LLVMAppendBasicBlock(func,toStringz("exit"));
 			LLVMPositionBuilderAtEnd(builder, exitbb);
 				if(!actualDecl.ret.instanceof!TypeVoid) {
 					auto loaded_exitv = LLVMBuildLoad(
