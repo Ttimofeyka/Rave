@@ -8,7 +8,7 @@
 		"d-glob": "~>0.4.0",
 		"llvm-d": "~>3.0.0"
 	},
-	"description": "EPL programming language",
+	"description": "Rave Programming Language",
 	"lflags": [
 		"-L/usr/lib/llvm-10/lib",
 		"-R/usr/lib/llvm-10/lib"
@@ -17,6 +17,6 @@
 		"LLVM",
 		"LTO"
 	],
-	"license": "proprietary",
-	"name": "epl"
+	"license": "MPLv3",
+	"name": "rave"
 }

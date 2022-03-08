@@ -39,7 +39,7 @@ FunctionDeclaration declToFuncDecl(Decl d) {
 class Parser {
 	private TList _toks;
 	private uint _idx = 0;
-	private TypeDeclaration[] _decls;
+	private Declaration[] _decls;
 	private AstNodeFunction currfunc;
 
 	bool hadErrors = false;
@@ -48,7 +48,7 @@ class Parser {
 		this._toks = toks;
 	}
 
-	public TypeDeclaration[] getDecls() {
+	public Declaration[] getDecls() {
 		return _decls;
 	}
 
@@ -335,8 +335,8 @@ class Parser {
 		return d;
 	}
 
-	private TypeDeclarationEnum parseEnumTypeDecl() {
-		auto en = new TypeDeclarationEnum();
+	private DeclarationEnum parseEnumTypeDecl() {
+		auto en = new DeclarationEnum();
 		next(); // skip the 'enum' token
 
 		en.name = expectToken(TokType.tok_id).value;
@@ -360,8 +360,8 @@ class Parser {
 		return en;
 	}
 
-	private TypeDeclarationStruct parseStructTypeDecl() {
-		auto st = new TypeDeclarationStruct();
+	private DeclarationStruct parseStructTypeDecl() {
+		auto st = new DeclarationStruct();
 		next(); // skip the 'struct' token
 
 		st.name = expectToken(TokType.tok_id).value;
@@ -402,7 +402,7 @@ class Parser {
 		return st;
 	}
 
-	private TypeDeclaration parseTypeDecl() {
+	private Declaration parseTypeDecl() {
 		if(peek().type == TokType.tok_cmd) {
 			if(peek().cmd == TokCmd.cmd_struct) {
 				return parseStructTypeDecl();

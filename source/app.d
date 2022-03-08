@@ -1,32 +1,16 @@
 import std.stdio;
-import lexer.mlexer, lexer.tokens;
 import std.conv : to;
 import std.path : buildNormalizedPath, absolutePath;
 import core.stdc.stdlib : exit;
 import std.file : readText;
+// import parser.analyzer, parser.mparser, parser.ast, parser.typesystem, parser.generator.gen, llvm;
+import lexer.mlexer;
+import lexer.tokens;
 import lexer.preproc;
-import parser.analyzer;
-import parser.mparser;
-import parser.ast;
-import parser.typesystem;
-import parser.generator.gen, llvm;
 import parser.util;
+import compiler.compiler;
 import user.jsondoc;
 import std.getopt;
-
-void implementDefaultTypeContext(AtstTypeContext ctx) {
-	ctx.setType("int",    new TypeBasic(BasicType.t_int));
-	ctx.setType("short",  new TypeBasic(BasicType.t_short));
-	ctx.setType("long",   new TypeBasic(BasicType.t_long));
-	ctx.setType("size",   new TypeBasic(BasicType.t_size));
-	ctx.setType("char",   new TypeBasic(BasicType.t_char));
-	ctx.setType("uint",   new TypeBasic(BasicType.t_uint));
-	ctx.setType("ushort", new TypeBasic(BasicType.t_ushort));
-	ctx.setType("ulong",  new TypeBasic(BasicType.t_ulong));
-	ctx.setType("usize",  new TypeBasic(BasicType.t_usize));
-	ctx.setType("uchar",  new TypeBasic(BasicType.t_uchar));
-	ctx.setType("float",  new TypeBasic(BasicType.t_float));
-}
 
 void main(string[] args)
 {
@@ -43,7 +27,7 @@ void main(string[] args)
 	    args,
 	    "o", "Output file", &outputFile,
 	    "debug", "Debug mode", &debugMode,
-	    "stdinc", "Stdlib include path (':' in #inc)", &stdlibIncPath,
+	    "stdinc", "Stdlib include path (':' in @inc)", &stdlibIncPath,
 		"type", "Output file type", &outputType,
 		"doc-json", "Generate JSON documentation file", &generateDocJson,
 		"doc-json-file", "JSON documentation file name", &docJsonFile,
@@ -97,32 +81,17 @@ void main(string[] args)
 		exit(1);
 	}
 
-	auto genctx = new GenerationContext();
-	implementDefaultTypeContext(genctx.sema.typeContext);
+	
 
-	auto semaScope = new AnalyzerScope(genctx.sema, genctx);
+	if(generateDocJson) {
+		auto jsonDocGen = new JSONDocGenerator();
 
-	auto jsonDocGen = new JSONDocGenerator();
-
-	writeln("------------------ AST -------------------");
-	bool hadErrors = false;
-	int errorCount = 0;
-	for(int i = 0; i < nodes.length; ++i) {
-		// writeln("Analyzing... #", i);
-		nodes[i].analyze(semaScope, null);
-		if(genctx.sema.errorCount > 0) {
-			hadErrors = true;
-			errorCount += genctx.sema.errorCount;
-			genctx.sema.flushErrors();
-			break;
+		foreach(node; nodes) {
+			jsonDocGen.generate(nodes[i]);
 		}
-		
-		nodes[i].debugPrint(0);
 
-		if(generateDocJson) jsonDocGen.generate(nodes[i]);
+		jsonDocGen.output(docJsonFile);
 	}
-
-	if(generateDocJson) jsonDocGen.output(docJsonFile);
 
 	if(!hadErrors) {
 		writeln("------------------ Generating -------------------");

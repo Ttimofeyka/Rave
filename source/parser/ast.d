@@ -292,8 +292,16 @@ class VariableDeclaration {
 	}
 }
 
-class TypeDeclaration {
+class Declaration {
 	string name;
+
+	/** 
+	 * Analyzes and generates AST from a declaration node.
+	 * Params:
+	 *   s = the analyzer scope.
+	 * Returns: a list of nodes that replace the declaration, empty if none.
+	 */
+	abstract AstNode[] analyze(AnalyzerScope s);
 }
 
 struct EnumEntry {
@@ -301,22 +309,30 @@ struct EnumEntry {
 	ulong value;
 }
 
-class TypeDeclarationEnum : TypeDeclaration {
+class DeclarationEnum : Declaration {
 	EnumEntry[] entries;
 
 	override string toString() const {
 		string s = "enum " ~ name ~ " {";
-		if(entries.length > 0) {
-			s ~= '\n';
-		}
+		if(entries.length > 0) s ~= '\n';
 		foreach(entry; entries) {
 			s ~= "    " ~ entry.name ~ " = " ~ to!string(entry.value) ~ "\n";
 		}
 		return s ~ "}";
 	}
+
+	override AstNode[] analyze(AnalyzerScope s) {
+		foreach(EnumEntry entry; entries) {
+			s.vars[entry.name] = new ScopeVarIntConstant(
+				TypeBasic(BasicType.t_int),
+				entry.value
+			);
+		}
+		return [];
+	}
 }
 
-class TypeDeclarationStruct : TypeDeclaration {
+class DeclarationStruct : Declaration {
 	VariableDeclaration[] fieldDecls;
 	FunctionDeclaration[] methodDecls;
 
@@ -360,7 +376,7 @@ struct ReturnGenStmt {
 
 class AstNodeFunction : AstNode {
 	FunctionDeclaration decl;
-	FunctionSignatureTypes actualDecl;
+	TypeFunction type;
 	AstNode body_;
 	ReturnStmt[] returns;
 
@@ -377,10 +393,9 @@ class AstNodeFunction : AstNode {
 	}
 
 	override void analyze(AnalyzerScope s, Type) {
-
 		auto retType = this.decl.signature.ret.get(s);
 		Type[] argTypes = array(map!((a) => a.get(s))(this.decl.signature.args));
-		actualDecl = new FunctionSignatureTypes(retType, argTypes);
+		type = new TypeFunction(retType, argTypes);
 
 		if(this.body_ is null) {
 			if(retType.instanceof!TypeUnknown) {

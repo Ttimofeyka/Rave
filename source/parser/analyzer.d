@@ -13,12 +13,32 @@ struct AnalyzerError {
 
 // class SemanticAnalyzerContext;
 
+class ScopeVar {
+    Type type;
+    bool isStatic, isExtern;
+
+	this(Type type, bool isStatic = false, bool isExtern = false) {
+		this.type = type;
+		this.isStatic = isStatic;
+		this.isExtern = isExtern;
+	}
+}
+
+class ScopeVarIntConstant : ScopeVar {
+	ulong value;
+
+	this(Type type, ulong value, bool isStatic = false) {
+		super(type, isStatic, false);
+		this.value = value;
+	}
+}
+
 class AnalyzerScope {
 	bool hadReturn = false; 
 	Type returnType = null;
 	Type neededReturnType = null;
 
-	SignatureTypes[string] vars;
+	ScopeVar[string] vars;
 	AnalyzerScope parent;
 
 	SemanticAnalyzerContext ctx;
@@ -30,7 +50,7 @@ class AnalyzerScope {
 		this.parent = parent;
 	}
 
-	SignatureTypes get(string name) {
+	ScopeVar get(string name) {
 		if(name in vars) return vars[name];
 		else if(parent !is null) return parent.get(name);
 		// ctx.addError("No such binding: '" ~ name ~ "'.");

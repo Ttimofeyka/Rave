@@ -114,31 +114,17 @@ class TypePointer : Type {
 }
 
 class TypeFunction : Type {
-    FunctionSignatureTypes signature;
-    this(FunctionSignatureTypes signature) {
-        this.signature = signature;
+	Type ret;
+    Type[] args;
+
+    this(Type ret, Type[] args) {
+        this.ret = ret;
+        this.args = args;
     }
 
     override bool assignable(Type other) {
         // if(other.instanceof!(TypeFunction)) return true;
         return false;
-    }
-
-    override string toString() const {
-        return signature.toString();
-    }
-}
-
-class SignatureTypes {
-    bool isStatic, isExtern;
-}
-
-class FunctionSignatureTypes : SignatureTypes {
-	Type ret;
-    Type[] args;
-    this(Type ret, Type[] args) {
-        this.ret = ret;
-        this.args = args;
     }
 
     override string toString() const {
@@ -168,26 +154,6 @@ class FunctionSignatureTypes : SignatureTypes {
             }
         }
         s ~= "): " ~ ret.toString();
-        return s;
-    }
-}
-
-class VariableSignatureTypes : SignatureTypes {
-	Type type;
-
-    this(Type type) { this.type = type; }
-
-    override string toString() const {
-        string s = "";
-
-        s ~= "{}: " ~ type.toString();
-        return s;
-    }
-
-    string toString(string name) const {
-        string s = "";
-
-        s ~= name ~ ": " ~ type.toString();
         return s;
     }
 }
