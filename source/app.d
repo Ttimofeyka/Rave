@@ -10,6 +10,7 @@ import parser.mparser;
 import parser.ast;
 import parser.typesystem;
 import parser.generator.gen, llvm;
+import parser.util;
 import user.jsondoc;
 import std.getopt;
 
@@ -29,6 +30,8 @@ void implementDefaultTypeContext(AtstTypeContext ctx) {
 
 void main(string[] args)
 {
+	stackMemory = new StackMemoryManager();
+
 	string outputFile = "a.o";
 	string stdlibIncPath = buildNormalizedPath(absolutePath("./stdlib"));
 	string outputType = "i686-linux";
@@ -81,6 +84,7 @@ void main(string[] args)
 
 	if(preproc.hadErrors) {
 		writeln("Failed with 1 or more errors.");
+		stackMemory.cleanup();
 		exit(1);
 	}
 
@@ -89,6 +93,7 @@ void main(string[] args)
 
 	if(parser.hadErrors) {
 		writeln("Failed with 1 or more errors.");
+		stackMemory.cleanup();
 		exit(1);
 	}
 
@@ -128,6 +133,9 @@ void main(string[] args)
 	}
 	else {
 		writeln("Failed with ", errorCount, " error(s).");
+		stackMemory.cleanup();
 		exit(1);
 	}
+
+	stackMemory.cleanup();
 }

@@ -12,8 +12,8 @@ import parser.util;
 import parser.analyzer;
 import std.string;
 import std.array;
-import core.stdc.stdlib : malloc;
 import parser.generator.llvm_abs;
+import parser.util;
 
 /// We have two separate syntax trees: for types and for values.
 
@@ -350,19 +350,25 @@ class TypeDeclarationStruct : TypeDeclaration {
 
 struct ReturnStmt {
 	AstNodeReturn node;
-	LLVMValueRef value;
 	AnalyzerScope scope_;
+}
+
+struct ReturnGenStmt {
+	LLVMBasicBlockRef where;
+	LLVMValueRef value;
 }
 
 class AstNodeFunction : AstNode {
 	FunctionDeclaration decl;
 	FunctionSignatureTypes actualDecl;
 	AstNode body_;
-	LLVMBasicBlockRef exitbb;
-	LLVMValueRef exitv;
-	
-	LLVMBuilderRef builder;
 	ReturnStmt[] returns;
+
+	LLVMBasicBlockRef exitBlock;
+	LLVMBuilderRef builder;
+	ReturnGenStmt[] genReturns;
+
+	LLVMTypeRef* paramTypes = null;
 
 	this(SourceLocation loc, FunctionDeclaration decl, AstNode body_) {
 		this.where = loc;
@@ -445,33 +451,39 @@ class AstNodeFunction : AstNode {
 	}
 
 	private LLVMTypeRef* getParamsTypes(GenerationContext ctx) {
-		LLVMTypeRef* param_types = cast(LLVMTypeRef*)malloc(
-			LLVMTypeRef.sizeof * decl.signature.args.length
-		);
-		for(int i=0; i<decl.signature.args.length; i++) {
-			
-			param_types[i] = ctx.getLLVMType(actualDecl.args[i]);
-			ctx.gargs.set(i,param_types[i],decl.argNames[i]);
+		if(paramTypes is null) {
+			paramTypes = stackMemory.createBuffer!LLVMTypeRef(
+				decl.signature.args.length
+			);
+
+			for(int i = 0; i < decl.signature.args.length; i++) {
+				
+				paramTypes[i] = ctx.getLLVMType(actualDecl.args[i]);
+				ctx.gargs.set(i, paramTypes[i], decl.argNames[i]);
+			}
 		}
-		return param_types;
+
+		return paramTypes;
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
-		auto ctx = s.genctx;
+		GenerationContext ctx = s.genctx;
 		builder = LLVMCreateBuilder();
 
-		AstNodeBlock f_body = cast(AstNodeBlock)body_;
+		AstNodeBlock funcBody = cast(AstNodeBlock)body_;
 
-		LLVMTypeRef ret_type = LLVMFunctionType(
-		    ctx.getLLVMType(actualDecl.ret),
-		    getParamsTypes(ctx),
+		LLVMTypeRef retType = ctx.getLLVMType(actualDecl.ret);
+
+		LLVMTypeRef funcType = LLVMFunctionType(
+		    retType,
+			getParamsTypes(ctx),
 		    cast(uint)decl.signature.args.length,
 		    false
 	    );
 
-		bool should_mangle = true;
+		bool shouldMangle = true;
 		foreach(mod; decl.decl_mods) {
-			if(mod.name == "C") should_mangle = false;
+			if(mod.name == "C") shouldMangle = false;
 			else if(mod.name == "dll") {
 				if(mod.args.length != 1) 
 					s.ctx.addError("Function modifier 'dll' needs exactly 1 parameter.",
@@ -487,42 +499,33 @@ class AstNodeFunction : AstNode {
 			}
 		}
 
+		writeln("Creating function:");
 		LLVMValueRef func = LLVMAddFunction(
 			ctx.mod,
-			toStringz(ctx.mangleQualifiedName([decl.name], true)),
-			ret_type
+			toStringz(
+				shouldMangle
+				? ctx.mangleQualifiedName([decl.name], true)
+				: decl.name),
+			funcType
 		);
 
-		ctx.gfuncs.add(decl.name,func,ctx.getLLVMType(actualDecl.ret));
+		writeln("Done creating function");
+		cast(void)paramTypes;
+
+		// TODO: Remove gfuncs?
+		ctx.gfuncs.add(decl.name, func, retType);
 		ctx.currfunc = func;
 
 		if(!decl.isExtern) {
-			LLVMBasicBlockRef entry = LLVMAppendBasicBlock(func,toStringz("entry"));
-			exitbb = LLVMAppendBasicBlock(func,toStringz("exit"));
-
-			LLVMPositionBuilderAtEnd(builder, entry);
-			if(!actualDecl.ret.instanceof!TypeVoid) exitv = LLVMBuildAlloca(
-				builder,
-				ctx.getLLVMType(actualDecl.ret),
-				toStringz("exitv")
-			);
-
-			LLVMPositionBuilderAtEnd(builder, exitbb);
-				if(!actualDecl.ret.instanceof!TypeVoid) {
-					auto loaded_exitv = LLVMBuildLoad(
-						builder,
-						exitv,
-						toStringz("loaded_exitval")
-					);
-					LLVMBuildRet(builder, loaded_exitv);
-				}
-				else LLVMBuildRetVoid(builder);
-			LLVMPositionBuilderAtEnd(builder, entry);
-
+			LLVMBasicBlockRef entryBlock = LLVMAppendBasicBlock(func, toStringz("entry"));
+			exitBlock = LLVMAppendBasicBlock(func, toStringz("exit"));
+			
+			LLVMPositionBuilderAtEnd(builder, entryBlock);
 			ctx.currbuilder = builder;
+
 			if(decl.name == ctx.entryFunction) {
 				LLVMValueRef* args;
-				for(int i=0; i<ctx.presets.length; i++) {
+				for(int i = 0; i < ctx.presets.length; i++) {
 					LLVMBuildCall(
 						ctx.currbuilder,
 						ctx.presets[i],
@@ -533,14 +536,27 @@ class AstNodeFunction : AstNode {
 				}
 			}
 
-			for(int i=0; i<f_body.nodes.length; i++) {
-				f_body.nodes[i].gen(s);
-			}
+			funcBody.gen(s);
 
-			if(decl.signature.ret.get(s).instanceof!(TypeVoid)) {
-				LLVMBuildRetVoid(ctx.currbuilder);
-			}
+			LLVMMoveBasicBlockAfter(exitBlock, LLVMGetLastBasicBlock(func));
+			LLVMPositionBuilderAtEnd(builder, exitBlock);
+			if(!actualDecl.ret.instanceof!TypeVoid) {
+				auto phi = LLVMBuildPhi(builder, retType, "retval");
 
+				LLVMValueRef[] retValues = array(map!(x => x.value)(genReturns));
+				LLVMBasicBlockRef[] retBlocks = array(map!(x => x.where)(genReturns));
+
+				LLVMAddIncoming(
+					phi,
+					retValues.ptr,
+					retBlocks.ptr,
+					cast(uint)genReturns.length
+				);
+
+				LLVMBuildRet(builder, phi);
+			}
+			else LLVMBuildRetVoid(builder);
+			
 			ctx.currbuilder = null;
 			ctx.gstack.clean();
 			ctx.gargs.clean();
@@ -548,6 +564,8 @@ class AstNodeFunction : AstNode {
 
 		ctx.currfunc = null;
 
+		char* modString = LLVMPrintModuleToString(ctx.mod);
+		writeln("Module Code: ", fromStringz(modString));
 		LLVMVerifyFunction(func, 0);
 		
 		return func;
@@ -963,56 +981,51 @@ class AstNodeIf : AstNode {
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
-		auto ctx = s.genctx;
-		LLVMBasicBlockRef thenbb;
-		LLVMBasicBlockRef elsebb;
-		LLVMBasicBlockRef endbb;
+		GenerationContext ctx = s.genctx;
 
-		ctx.basicblocks_count += 1;
-		thenbb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name], toStringz("then"~to!string(ctx.basicblocks_count)));
-		ctx.basicblocks_count += 1;
-		elsebb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name], toStringz("else"~to!string(ctx.basicblocks_count)));
-		ctx.basicblocks_count += 1;
-		endbb = LLVMAppendBasicBlock(ctx.gfuncs[parent.decl.name], toStringz("end"~to!string(ctx.basicblocks_count)));
+		LLVMBasicBlockRef thenBlock =
+			LLVMAppendBasicBlock(
+				ctx.currfunc,
+				toStringz("then"));
+				
+		LLVMBasicBlockRef elseBlock =
+			LLVMAppendBasicBlock(
+				ctx.currfunc,
+				toStringz("else"));
+
+		LLVMBasicBlockRef endBlock =
+			LLVMAppendBasicBlock(
+				ctx.currfunc,
+				toStringz("end"));
 
 		LLVMBuildCondBr(
 			ctx.currbuilder,
 			cond.gen(s),
-			thenbb,
-			elsebb
+			thenBlock,
+			elseBlock
 		);
 		
-		LLVMPositionBuilderAtEnd(s.genctx.currbuilder,thenbb);
-		
-		ctx.currbb = thenbb;
-		if(body_ is null) {}
-		else {
-			if(body_.instanceof!(AstNodeBlock)) {
-				AstNodeBlock b = cast(AstNodeBlock)body_;
-				for(int i = 0; i < b.nodes.length; i++) {
-					b.nodes[i].gen(s);
-				}
-			}
-			else body_.gen(s);
+		{
+			LLVMPositionBuilderAtEnd(s.genctx.currbuilder, thenBlock);
+			ctx.currbb = thenBlock;
+
+			AnalyzerScope ss = new AnalyzerScope(s.ctx, s.genctx, s);
+			if(body_ !is null) body_.gen(ss);
+
+			if(!ss.hadReturn) LLVMBuildBr(ss.genctx.currbuilder, endBlock);
+		}
+		{
+			LLVMPositionBuilderAtEnd(s.genctx.currbuilder, elseBlock);
+			ctx.currbb = elseBlock;
+
+			AnalyzerScope ss = new AnalyzerScope(s.ctx, s.genctx, s);
+			if(else_ !is null) else_.gen(ss);
+
+			if(!ss.hadReturn) LLVMBuildBr(ss.genctx.currbuilder, endBlock);
 		}
 
-		LLVMBuildBr(s.genctx.currbuilder,endbb);
-
-		LLVMPositionBuilderAtEnd(s.genctx.currbuilder,elsebb);
-		ctx.currbb = elsebb;
-		if(else_ !is null) {
-			if(else_.instanceof!(AstNodeBlock)) {
-				AstNodeBlock b = cast(AstNodeBlock)else_;
-				for(int i = 0; i < b.nodes.length; i++) {
-					b.nodes[i].gen(s);
-				}
-			}
-			else else_.gen(s);
-		}
-		LLVMBuildBr(s.genctx.currbuilder,endbb);
-
-		LLVMPositionBuilderAtEnd(s.genctx.currbuilder,endbb);
-		ctx.currbb = endbb;
+		LLVMPositionBuilderAtEnd(s.genctx.currbuilder, endBlock);
+		ctx.currbb = endBlock;
 
 		return null;
 	}
@@ -1125,9 +1138,13 @@ class AstNodeBlock : AstNode {
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
-		auto ctx = s.genctx;
-		LLVMValueRef a;
-		return a;
+		auto newScope = new AnalyzerScope(s.ctx, s.genctx, s);
+		foreach(node; nodes) {
+			node.gen(newScope);
+			if(newScope.hadReturn) break;
+		}
+		s.hadReturn = s.hadReturn || newScope.hadReturn;
+		return cast(LLVMValueRef)0;
 	}
 
 	debug {
@@ -1177,21 +1194,23 @@ class AstNodeReturn : AstNode {
 			s.returnType = t;
 		}
 
-		parent.returns ~= ReturnStmt(this, null, s);
+		parent.returns ~= ReturnStmt(this, s);
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
-		auto ctx = s.genctx;
+		GenerationContext ctx = s.genctx;
+		LLVMValueRef v;
 
 		if(value !is null) {
-			LLVMBuildStore(
-				ctx.currbuilder,
-				value.gen(s),
-				parent.exitv
-			);
-			return LLVMBuildBr(ctx.currbuilder, parent.exitbb);
+			parent.genReturns ~= ReturnGenStmt(ctx.currbb, value.gen(s));
+			v = LLVMBuildBr(ctx.currbuilder, parent.exitBlock);
 		}
-		return LLVMBuildBr(ctx.currbuilder, parent.exitbb);
+		else {
+			v = LLVMBuildBr(ctx.currbuilder, parent.exitBlock);
+		}
+
+		s.hadReturn = true;
+		return v;
 	}
 
 	debug {
@@ -1490,8 +1509,8 @@ class AstNodeFuncCall : AstNode {
 		// _EPLf4exit, not exit! ctx.mangleQualifiedName([name], true) -> string
 		AstNodeIden n = cast(AstNodeIden)func;
 
-		LLVMValueRef* llvm_args = cast(LLVMValueRef*)malloc(LLVMValueRef.sizeof*args.length);
-		for(int i=0; i<args.length; i++) {
+		LLVMValueRef* llvm_args = stackMemory.createBuffer!LLVMValueRef(args.length);
+		for(int i = 0; i < args.length; i++) {
 			llvm_args[i] = args[i].gen(s);
 		}
 
