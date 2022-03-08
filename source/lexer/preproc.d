@@ -156,7 +156,6 @@ class Preprocessor {
                     }
 
                     _ifStack[$-1] = !_ifStack[$-1];
-                    writeln("_ifStack[$-1] ", _ifStack[$-1]);
                 }
                 else {
                     error("Unknown command: '@" ~ to!string(get().cmd)[4..$] ~ "'!");

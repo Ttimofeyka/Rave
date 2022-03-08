@@ -1,4 +1,4 @@
-@inc "std/str"
+@inc ":std/str"
 
 @def  stdin_fd 0;
 @def stdout_fd 1;

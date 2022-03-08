@@ -211,8 +211,22 @@ class Lexer {
         // loc.line += 1;
     }
 
+    private string getMultiLineCom() {
+        string s = "/*";
+        next(1);
+        // writeln("get, get+1 = '", get(), "', '", get(+1), "'");
+        while((get() != '*' || get(+1) != '/') && get() != '\0') {
+            if(get() == '\n') loc.line += 1;
+            s ~= get();
+            next(1);
+        }
+        // writeln("s-", s, "-s");
+        if(get() == '*') {next(2);}
+        return s;
+    }
+
     private void skipMultiLineCom() {
-        while((get() != '*' && get(+1) != '/') && get() != '\0') {
+        while((get() != '*' || get(+1) != '/') && get() != '\0') {
             if(get() == '\n') loc.line += 1;
             next(1);
         }
@@ -285,9 +299,15 @@ class Lexer {
                         next(2);
                         skipLineCom();
                     }
-                    else if(get(+1)=='*') {
+                    else if(get(+1) == '*') {
                         next(2);
-                        skipMultiLineCom();
+                        if(get() == '!') { // documentation comment
+                            // writeln("doc comment");
+                            auto str = getMultiLineCom();
+                            // writeln(str);
+                            tokens.insertBack(new Token(loc, str));
+                        }
+                        else skipMultiLineCom();
                     }
                     else {
                         tokens.insertBack(new Token(loc, "/"));

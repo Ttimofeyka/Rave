@@ -62,6 +62,7 @@ enum TokType {
     tok_arrow = 49, // =>
     tok_hash = 50, // #
     tok_at = 51, // @
+    tok_doc = 52, // documentation comment
 }
 
 enum TokCmd {
@@ -117,6 +118,9 @@ class Token {
         }
         else if(s[0]=='\'') {
             this.type = TokType.tok_char;
+        }
+        else if(s.length >= 2 && s[0..2] == "/*") {
+            this.type = TokType.tok_doc;
         }
         else if(isNumber(s[0])) {
             this.type = TokType.tok_num;

@@ -205,16 +205,35 @@ struct DeclMod {
 	string[] args;
 }
 
-struct FunctionDeclaration {
+class FunctionDeclaration {
 	FuncSignature signature;
 	string name;
 	string[] argNames;
 	bool isStatic;
 	bool isExtern;
 	DeclMod[] decl_mods;
+	string doc;
+
+	this(
+		FuncSignature signature,
+		string name,
+		string[] argNames,
+		bool isStatic,
+		bool isExtern,
+		DeclMod[] decl_mods,
+		string doc,
+	) {
+		this.signature = signature;
+		this.name = name;
+		this.argNames = argNames;
+		this.isStatic = isStatic;
+		this.isExtern = isExtern;
+		this.decl_mods = decl_mods;
+		this.doc = doc;
+	}
 
 	debug {
-		string toString() const {
+		override string toString() const {
 			string s = "";
 			
 			if(isStatic) s ~= "static ";
@@ -239,15 +258,32 @@ struct FunctionArgument {
 	AtstNode type;
 }
 
-struct VariableDeclaration {
+class VariableDeclaration {
 	AtstNode type;
 	string name;
 	bool isStatic;
 	bool isExtern;
 	DeclMod[] decl_mods;
+	string doc;
+	
+	this(
+		AtstNode type,
+		string name,
+		bool isStatic,
+		bool isExtern,
+		DeclMod[] decl_mods,
+		string doc,
+	) {
+		this.type = type;
+		this.name = name;
+		this.isStatic = isStatic;
+		this.isExtern = isExtern;
+		this.decl_mods = decl_mods;
+		this.doc = doc;
+	}
 
 	debug {
-		string toString() const {
+		override string toString() const {
 			string s = "";
 			if(isStatic) s ~= "static ";
 			if(isExtern) s ~= "extern ";
@@ -1129,7 +1165,7 @@ class AstNodeReturn : AstNode {
 
 	override LLVMValueRef gen(AnalyzerScope s) {
 		auto ctx = s.genctx;
-		this.retbb = ctx.currb;
+		// this.retbb = ctx.currb;
 
 		if(value !is null) {
 			LLVMValueRef retval = value.gen(s);

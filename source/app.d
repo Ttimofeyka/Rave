@@ -10,6 +10,7 @@ import parser.mparser;
 import parser.ast;
 import parser.typesystem;
 import parser.generator.gen, llvm;
+import user.jsondoc;
 import std.getopt;
 
 void implementDefaultTypeContext(AtstTypeContext ctx) {
@@ -32,18 +33,22 @@ void main(string[] args)
 	string stdlibIncPath = buildNormalizedPath(absolutePath("./stdlib"));
 	string outputType = "i686-linux";
 	bool debugMode = false;
+	bool generateDocJson = false;
+	string docJsonFile = "docs.json";
 
 	auto helpInformation = getopt(
 	    args,
 	    "o", "Output file", &outputFile,
 	    "debug", "Debug mode", &debugMode,
 	    "stdinc", "Stdlib include path (':' in #inc)", &stdlibIncPath,
-		"type", "Output file type", &outputType
+		"type", "Output file type", &outputType,
+		"doc-json", "Generate JSON documentation file", &generateDocJson,
+		"doc-json-file", "JSON documentation file name", &docJsonFile,
 	);
 	
     if(helpInformation.helpWanted)
     {
-	    defaultGetoptPrinter("Some information about the program.", helpInformation.options);
+	    defaultGetoptPrinter("Help", helpInformation.options);
 	    return;
     }
 
@@ -72,6 +77,8 @@ void main(string[] args)
 	auto lexer = new Lexer(sourceFile, readText(sourceFile));
 	auto preproc = new Preprocessor(lexer.getTokens(), stdlibIncPath, defines);
 
+	preproc.getTokens().debugPrint();
+
 	if(preproc.hadErrors) {
 		writeln("Failed with 1 or more errors.");
 		exit(1);
@@ -80,10 +87,17 @@ void main(string[] args)
 	auto parser = new Parser(preproc.getTokens());
 	auto nodes = parser.parseProgram();
 
+	if(parser.hadErrors) {
+		writeln("Failed with 1 or more errors.");
+		exit(1);
+	}
+
 	auto genctx = new GenerationContext();
 	implementDefaultTypeContext(genctx.sema.typeContext);
 
 	auto semaScope = new AnalyzerScope(genctx.sema, genctx);
+
+	auto jsonDocGen = new JSONDocGenerator();
 
 	writeln("------------------ AST -------------------");
 	bool hadErrors = false;
@@ -97,8 +111,13 @@ void main(string[] args)
 			genctx.sema.flushErrors();
 			break;
 		}
+		
 		nodes[i].debugPrint(0);
+
+		if(generateDocJson) jsonDocGen.generate(nodes[i]);
 	}
+
+	if(generateDocJson) jsonDocGen.output(docJsonFile);
 
 	if(!hadErrors) {
 		writeln("------------------ Generating -------------------");

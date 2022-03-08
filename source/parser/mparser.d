@@ -9,7 +9,7 @@ import lexer.tokens;
 import std.algorithm.iteration : map;
 import std.algorithm : canFind;
 
-struct Decl {
+class Decl {
 	string name;
 	AtstNode type;
 	FunctionArgument[] args;
@@ -19,18 +19,19 @@ struct Decl {
 	bool isGlobal;
 	SourceLocation nameLoc;
 	DeclMod[] decl_mods;
+	string doc;
 }
 
 VariableDeclaration declToVarDecl(Decl d) {
-	return VariableDeclaration(d.type, d.name,
-		canFind(d.mods, TokCmd.cmd_static), canFind(d.mods, TokCmd.cmd_extern), d.decl_mods);
+	return new VariableDeclaration(d.type, d.name,
+		canFind(d.mods, TokCmd.cmd_static), canFind(d.mods, TokCmd.cmd_extern), d.decl_mods, d.doc);
 }
 
 FunctionDeclaration declToFuncDecl(Decl d) {
 	AtstNode[] argTypes = array(map!(a => a.type)(d.args));
 	string[] argNames = array(map!(a => a.name)(d.args));
-	return FunctionDeclaration(FuncSignature(d.type, argTypes), d.name, argNames,
-		canFind(d.mods, TokCmd.cmd_static), canFind(d.mods, TokCmd.cmd_extern), d.decl_mods);
+	return new FunctionDeclaration(FuncSignature(d.type, argTypes), d.name, argNames,
+		canFind(d.mods, TokCmd.cmd_static), canFind(d.mods, TokCmd.cmd_extern), d.decl_mods, d.doc);
 }
 
 // TODO: Add `cast(type) value` create AstNodeCast.
@@ -40,6 +41,8 @@ class Parser {
 	private uint _idx = 0;
 	private TypeDeclaration[] _decls;
 	private AstNodeFunction currfunc;
+
+	bool hadErrors = false;
 
 	public this(TList toks) {
 		this._toks = toks;
@@ -52,6 +55,7 @@ class Parser {
 	// TODO: Source location data.
 	private void error(string msg) {
 		writeln("\033[0;31mError: " ~ msg ~ "\033[0;0m");
+		hadErrors = true;
 	}
 
 	private void errorExpected(string msg) {
@@ -150,34 +154,38 @@ class Parser {
 	 *   isEnd = Returns whether the passed token is the end of the declaration,
 	 * Returns: Function declaration with all of the necessary information in it.
 	 */
-	private FunctionDeclaration parseFuncDecl(bool function(Token) isEnd, bool allowRetTypeInference) {
-		// <id:fun-name> ['(' <args> ')'] [':' [<type:rettype>]] end
+	// private FunctionDeclaration parseFuncDecl(bool function(Token) isEnd, bool allowRetTypeInference) {
+	// 	// <id:fun-name> ['(' <args> ')'] [':' [<type:rettype>]] end
 
-		auto name = expectToken(TokType.tok_id);
+	// 	auto name = expectToken(TokType.tok_id);
 
-		if(isEnd(peek())) { // the decl has ended, the return type is void and there are no args.
-			return FunctionDeclaration(FuncSignature(new AtstNodeVoid(), []), name.value, []);
-		}
+	// 	if(isEnd(peek())) { // the decl has ended, the return type is void and there are no args.
+	// 		return new FunctionDeclaration(FuncSignature(new AtstNodeVoid(), []), name.value, []);
+	// 	}
 
-		AtstNode retType = new AtstNodeVoid();
-		FunctionArgument[] args = [];
+	// 	AtstNode retType = new AtstNodeVoid();
+	// 	FunctionArgument[] args = [];
 		
-		if(peek().type == TokType.tok_lpar) args = parseFuncArgumentDecls();
+	// 	if(peek().type == TokType.tok_lpar) args = parseFuncArgumentDecls();
 
-		if(peek().type == TokType.tok_type) {
-			next();
-			if(isEnd(peek()) && allowRetTypeInference) retType = new AtstNodeUnknown();
-			else retType = parseType();
-		}
+	// 	if(peek().type == TokType.tok_type) {
+	// 		next();
+	// 		if(isEnd(peek()) && allowRetTypeInference) retType = new AtstNodeUnknown();
+	// 		else retType = parseType();
+	// 	}
 
-		AtstNode[] argTypes = array(map!(a => a.type)(args));
-		string[] argNames = array(map!(a => a.name)(args));
+	// 	AtstNode[] argTypes = array(map!(a => a.type)(args));
+	// 	string[] argNames = array(map!(a => a.name)(args));
 
-		return FunctionDeclaration(FuncSignature(retType, argTypes), name.value, argNames);
-	}
+	// 	return new FunctionDeclaration(FuncSignature(retType, argTypes), name.value, argNames);
+	// }
 
 	private Decl parseDecl(TokCmd[] allowedMods = [TokCmd.cmd_extern, TokCmd.cmd_static], bool allowNoBody = true) {
-		Decl d;
+		Decl d = new Decl();
+
+		if(peek().type == TokType.tok_doc) {
+			d.doc = next().value[2..$];
+		}
 
 		while(peek().type == TokType.tok_cmd && canFind(allowedMods, peek().cmd)) {
 			auto cmd = next().cmd;
@@ -361,28 +369,33 @@ class Parser {
 		if(peek().type == TokType.tok_type) {
 			next();
 			auto base = parseType();
-			st.fieldDecls ~= VariableDeclaration(base, "#base");
+			st.fieldDecls ~= new VariableDeclaration(base, "#base", false, false, [], "Base");
 		}
 
 		expectToken(TokType.tok_2lbra);
 
 		while(peek().type != TokType.tok_2rbra) {
 			Decl d = parseDecl();
-
-			if(canFind!((decl, name) => decl.name == name)(st.fieldDecls, d.name)
-			|| canFind!((decl, name) => decl.name == name)(st.methodDecls, d.name)) {
-				error("Field or function with the same name already exists: " ~ d.name);
+			if(d.isMethod) {
+				st.fieldDecls ~= declToVarDecl(d);
+				if(d.value !is null) st.fieldValues[d.name] = d.value;
 			}
 			else {
-				if(!d.isMethod) {
-					st.fieldDecls ~= VariableDeclaration(d.type, d.name);
-					if(d.value !is null) st.fieldValues[d.name] = d.value;
-				}
-				else {
-					st.methodDecls ~= declToFuncDecl(d);
-					if(d.value !is null) st.methodValues[d.name] = d.value;
-				}
+				st.methodDecls ~= declToFuncDecl(d);
+				if(d.value !is null) st.methodValues[d.name] = d.value;
 			}
+
+			// if(canFind!((decl, name) => decl.name == name)(st.fieldDecls, d.name)
+			// || canFind!((decl, name) => decl.name == name)(st.methodDecls, d.name)) {
+			// 	error("Field or function with the same name already exists: " ~ d.name);
+			// }
+			// else {
+			// 	if(!d.isMethod) {
+			// 	}
+			// 	else {
+			// 		st.methodDecls ~= declToFuncDecl(d);
+			// 	}
+			// }
 		}
 
 		expectToken(TokType.tok_2rbra);
@@ -671,7 +684,7 @@ class Parser {
 				type = parseType();
 			}
 			
-			auto decl = new AstNodeDecl(VariableDeclaration(type, name, false, false), null);
+			auto decl = new AstNodeDecl(new VariableDeclaration(type, name, false, false, [], ""), null);
 			if(peek().type == TokType.tok_equ) {
 				next();
 				decl.value = parseExpr();
@@ -695,11 +708,11 @@ class Parser {
 		return new AstNodeBlock(nodes);
 	}
 
-	private AstNode parseFunc() {
-		auto decl = parseFuncDecl(function(Token tok) { return tok.type == TokType.tok_2lbra; }, true);
-		currfunc = new AstNodeFunction(SourceLocation(0, 0, "<parseFunc.is.deprecated>"), decl, parseBlock());
-		return currfunc;
-	}
+	// private AstNode parseFunc() {
+	// 	auto decl = parseFuncDecl(function(Token tok) { return tok.type == TokType.tok_2lbra; }, true);
+	// 	currfunc = new AstNodeFunction(SourceLocation(0, 0, "<parseFunc.is.deprecated>"), decl, parseBlock());
+	// 	return currfunc;
+	// }
 
 	// private AstNode parseExtern() {
 	// 	assert(next().cmd == TokCmd.cmd_extern);
