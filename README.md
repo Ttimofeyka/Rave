@@ -1,6 +1,6 @@
-# EPL
+# Do
 
-EPL - is a statically typed, compiled, procedural systems programming language. We (core contributors) took
+Do - is a statically typed, compiled, procedural systems programming language. We (core contributors) took
 inspiration from C, C++, Rust and Assembly making an easy-to-use but lower-level language.
 
 
