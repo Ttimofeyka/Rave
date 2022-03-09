@@ -1,7 +1,7 @@
 module compiler.compiler;
 
 import parser.typesystem;
-import parser.generator;
+import parser.generator.gen;
 import parser.analyzer;
 import parser.ast;
 import std.format;
