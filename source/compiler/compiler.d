@@ -45,6 +45,7 @@ class Compiler {
         ctx.setType("usize",  new TypeBasic(BasicType.t_usize));
         ctx.setType("uchar",  new TypeBasic(BasicType.t_uchar));
         ctx.setType("float",  new TypeBasic(BasicType.t_float));
+        ctx.setType("void",   new TypeVoid());
     }
 
     public CompilerError generate() {
