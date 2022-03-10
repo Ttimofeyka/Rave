@@ -14,6 +14,7 @@ import std.string;
 import std.array;
 import parser.generator.llvm_abs;
 import parser.util;
+import std.typecons;
 
 /// We have two separate syntax trees: for types and for values.
 
@@ -34,8 +35,8 @@ class AtstTypeContext {
 
 	Type getType(string name) {
 		if(name !in types) {
-			writeln("No such type: ", name);
-			return new TypeUnknown();
+			// writeln("No such type: ", name);
+			return null;
 		}
 		return types[name];
 	}
@@ -232,6 +233,10 @@ class FunctionDeclaration {
 		this.doc = doc;
 	}
 
+	TypeFunction get(AnalyzerScope ctx) {
+		return new TypeFunction(signature.ret.get(ctx), signature.args.map!(a => a.get(ctx)).array);
+	}
+
 	debug {
 		override string toString() const {
 			string s = "";
@@ -324,7 +329,7 @@ class DeclarationEnum : Declaration {
 	override AstNode[] analyze(AnalyzerScope s) {
 		foreach(EnumEntry entry; entries) {
 			s.vars[entry.name] = new ScopeVarIntConstant(
-				TypeBasic(BasicType.t_int),
+				new TypeBasic(BasicType.t_int),
 				entry.value
 			);
 		}
@@ -333,11 +338,40 @@ class DeclarationEnum : Declaration {
 }
 
 class DeclarationStruct : Declaration {
+	string name;
+
 	VariableDeclaration[] fieldDecls;
 	FunctionDeclaration[] methodDecls;
 
 	AstNode[string] fieldValues;
 	AstNode[string] methodValues;
+
+	override AstNode[] analyze(AnalyzerScope s) {
+		auto fieldTypes = assocArray(fieldDecls.map!(d => tuple(d.name, d.type.get(s))));
+		auto methodTypes = assocArray(methodDecls.map!(d => tuple(d.name, d.get(s))));
+
+		auto structType = new TypeStruct(fieldTypes, methodTypes);
+
+		foreach(TypeFunction ft; structType.methods) {
+			ft.args = structType ~ ft.args;
+		}
+
+		s.ctx.typeContext.setType(name, structType);
+
+		AstNode[] funcList;
+		foreach(FunctionDeclaration method; methodDecls)
+		{
+			method.signature.args = new AtstNodeName(name) ~ method.signature.args;
+			method.argNames = "this" ~ method.argNames;
+
+			funcList ~= new AstNodeFunction(
+				SourceLocation(0, 0, ""),
+				method,
+				method.name !in methodValues ? null : methodValues[method.name]
+			);
+		}
+		return funcList;
+	}
 
 	override string toString() const {
 		string s = "struct " ~ name ~ " {";
@@ -403,6 +437,7 @@ class AstNodeFunction : AstNode {
 					this.where);
 				return;
 			}
+			
 
 			// if(this.decl.isExtern) {
 			// 	s.vars[this.decl.name] = actualDecl;
@@ -412,7 +447,7 @@ class AstNodeFunction : AstNode {
 				// s.ctx.addError("Forward declarations are not yet implemented.",
 				// 	this.where);
 				// Forward declaration... TODO
-			s.vars[this.decl.name] = actualDecl;
+			s.vars[this.decl.name] = new ScopeVar(type, decl.isStatic, decl.isExtern);
 			return;
 			// }
 		}
@@ -421,7 +456,7 @@ class AstNodeFunction : AstNode {
 		ss.ctx.currentFunc = this;
 
 		for(int i = 0; i < this.decl.argNames.length; ++i) {
-			ss.vars[this.decl.argNames[i]] = new VariableSignatureTypes(argTypes[i]);
+			ss.vars[this.decl.argNames[i]] = new ScopeVar(argTypes[i]);
 		}
 
 		ss.neededReturnType = retType;
@@ -431,13 +466,13 @@ class AstNodeFunction : AstNode {
 			retType = new TypeVoid();
 
 		foreach(ret; this.returns) {
-			Type type = new TypeVoid();
+			Type t = new TypeVoid();
 			if(ret.node.value !is null)
-				type = ret.node.value.getType(ret.scope_);
+				t = ret.node.value.getType(ret.scope_);
 			
 			if(retType.instanceof!TypeUnknown)
-				retType = type;
-			else if(!retType.assignable(type))
+				retType = t;
+			else if(!retType.assignable(t))
 			{
 				s.ctx.addError("First mismatching return is of type '" ~ type.toString()
 					~ "', while all previous returns are of type '" ~ retType.toString() ~ "'",
@@ -461,8 +496,8 @@ class AstNodeFunction : AstNode {
 		}
 
 		// TODO: Check if types are not inferred!
-		actualDecl = new FunctionSignatureTypes(retType, argTypes);
-		s.vars[this.decl.name] = actualDecl;
+		type = new TypeFunction(retType, argTypes);
+		s.vars[this.decl.name] = new ScopeVar(type, decl.isStatic, decl.isExtern);
 	}
 
 	private LLVMTypeRef* getParamsTypes(GenerationContext ctx) {
@@ -473,7 +508,7 @@ class AstNodeFunction : AstNode {
 
 			for(int i = 0; i < decl.signature.args.length; i++) {
 				
-				paramTypes[i] = ctx.getLLVMType(actualDecl.args[i]);
+				paramTypes[i] = ctx.getLLVMType(type.args[i]);
 				ctx.gargs.set(i, paramTypes[i], decl.argNames[i]);
 			}
 		}
@@ -487,7 +522,7 @@ class AstNodeFunction : AstNode {
 
 		AstNodeBlock funcBody = cast(AstNodeBlock)body_;
 
-		LLVMTypeRef retType = ctx.getLLVMType(actualDecl.ret);
+		LLVMTypeRef retType = ctx.getLLVMType(type.ret);
 
 		LLVMTypeRef funcType = LLVMFunctionType(
 		    retType,
@@ -514,7 +549,6 @@ class AstNodeFunction : AstNode {
 			}
 		}
 
-		writeln("Creating function:");
 		LLVMValueRef func = LLVMAddFunction(
 			ctx.mod,
 			toStringz(
@@ -523,9 +557,6 @@ class AstNodeFunction : AstNode {
 				: decl.name),
 			funcType
 		);
-
-		writeln("Done creating function");
-		cast(void)paramTypes;
 
 		// TODO: Remove gfuncs?
 		ctx.gfuncs.add(decl.name, func, retType);
@@ -555,7 +586,7 @@ class AstNodeFunction : AstNode {
 
 			LLVMMoveBasicBlockAfter(exitBlock, LLVMGetLastBasicBlock(func));
 			LLVMPositionBuilderAtEnd(builder, exitBlock);
-			if(!actualDecl.ret.instanceof!TypeVoid) {
+			if(!type.ret.instanceof!TypeVoid) {
 				auto phi = LLVMBuildPhi(builder, retType, "retval");
 
 				LLVMValueRef[] retValues = array(map!(x => x.value)(genReturns));
@@ -579,8 +610,8 @@ class AstNodeFunction : AstNode {
 
 		ctx.currfunc = null;
 
-		char* modString = LLVMPrintModuleToString(ctx.mod);
-		writeln("Module Code: ", fromStringz(modString));
+		// char* modString = LLVMPrintModuleToString(ctx.mod);
+		// writeln("Module Code: ", fromStringz(modString));
 		LLVMVerifyFunction(func, 0);
 		
 		return func;
@@ -590,7 +621,7 @@ class AstNodeFunction : AstNode {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
 			writeln("Function Declaration: ",
-				actualDecl is null ? decl.toString() : actualDecl.toString(decl.name, decl.argNames)
+				type is null ? decl.toString() : type.toString(decl.name, decl.argNames)
 			);
 			if(body_ !is null) body_.debugPrint(indent + 1);
 		}
@@ -617,13 +648,102 @@ class AstNodeFunction : AstNode {
 class AstNodeGet : AstNode {
 	AstNode value;
 	string field;
-	bool isSugar; // true if -> false if .
+	bool isSugar; // true if '->' false if '.'
+	
+	// (after analysis) true if the get is for
+	// accessing things from a namespace
+	bool isNamespace;
+
+	Type type;
 	
 	this(SourceLocation where, AstNode value, string field, bool isSugar) {
 		this.where = where;
 		this.value = value;
 		this.field = field;
 		this.isSugar = isSugar;
+	}
+
+	override Type getType(AnalyzerScope s) {
+		return type;
+	}
+
+	override void analyze(AnalyzerScope s, Type neededType) {
+		this.value.analyze(s, new TypeUnknown());
+		
+		Type t = this.value.getType(s);
+		if(isSugar) {
+			if(!t.instanceof!TypePointer) {
+				s.ctx.addError("Operator '->' expects a pointer type on the left hand side. "
+					~ "Got '" ~ t.toString() ~ "' instead.", this.where);
+				return;
+			}
+			t = (cast(TypePointer)t).to;
+		}
+
+		if(t.instanceof!TypeType && !isSugar) {
+			TypeType tt = cast(TypeType)t;
+			isNamespace = true;
+			if(!tt.type.instanceof!TypeStruct) {
+				s.ctx.addError("Operator '.' expects a structure type on the left hand side. "
+					~ "Got '" ~ t.toString() ~ "' instead.", this.where);
+				return;
+			}
+
+			TypeStruct st = cast(TypeStruct)tt.type;
+
+			if(field !in st.fields && field !in st.methods) {
+				s.ctx.addError("No field or method named '" ~ field
+					~ "' on type '" ~ st.toString() ~ "'.", this.where);
+				return;
+			}
+
+			// TODO: static fields
+			// if(Type v = field in st.fields) {
+			// 	v.;
+			// }
+
+			if(field in st.fields) type = st.fields[field];
+			else type = st.methods[field];
+			return;
+		}
+
+		if(t.instanceof!TypeStruct) {
+			TypeStruct st = cast(TypeStruct)t;
+
+			if(field !in st.fields && field !in st.methods) {
+				if(ScopeVar v = s.get(field)) {
+					if(neededType.assignable(v.type)) {
+						type = v.type;
+						return;
+					}
+				}
+				s.ctx.addError("No such function in scope: '" ~ field ~ "'.", this.where);
+				return;
+			}
+
+			if(field in st.fields) type = st.fields[field];
+			else type = st.methods[field];
+
+			return;
+		}
+		else if(neededType.instanceof!TypeFunctionLike) {
+			// Search for global functions with field name only if
+			// the outer scope requests a function-like value.
+			if(ScopeVar v = s.get(field)) {
+				if(neededType.assignable(v.type)) {
+					type = v.type;
+					return;
+				}
+			}
+			s.ctx.addError("No such function in scope: '" ~ field ~ "'.", this.where);
+		}
+
+		if(isSugar)
+			s.ctx.addError("Operator '->' expects a pointer to a structure on the left hand side. "
+				~ "Got '" ~ t.toString() ~ "' instead.", this.where);
+		else
+			s.ctx.addError("Operator '.' expects a structure on the left hand side. "
+				~ "Got '" ~ t.toString() ~ "' instead.", this.where);
 	}
 
 	debug {
@@ -1269,6 +1389,8 @@ class AstNodeIndex : AstNode {
 class AstNodeIden : AstNode {
 	string name;
 
+	Type type;
+
 	this(SourceLocation where, string name) {
 		this.where = where;
 		this.name = name;
@@ -1302,29 +1424,24 @@ class AstNodeIden : AstNode {
 	}
 
 	override Type getType(AnalyzerScope s) {
-		auto t = s.get(name);
-		if(t is null) {
-			s.ctx.addError("No such variable or function binding: '" ~ name ~ "'", this.where);
-			return new TypeBasic(BasicType.t_int);
-		}
-
-		if(auto v = t.instanceof!VariableSignatureTypes)
-			return v.type;
-		
-		if(auto v = t.instanceof!FunctionSignatureTypes)
-			return new TypeFunction(v);
-
-		assert(0);
+		return type;
 	}
 
 	override void analyze(AnalyzerScope s, Type neededType) {
-		auto t = s.get(name);
-
-		if(auto v = t.instanceof!VariableSignatureTypes) {
+		auto v = s.get(name);
+		if(v !is null) {
 			if(!neededType.assignable(v.type) && !neededType.instanceof!TypeUnknown) {
 				s.ctx.addError("Type mismatch: variable '" ~ name ~ "' is of type "
 					~ v.type.toString() ~ ", but " ~ neededType.toString() ~ " was expected.",
 					this.where);
+			}
+			type = v.type;
+		}
+		else {
+			auto t = s.ctx.typeContext.getType(name);
+			if(t !is null) type = new TypeType(t);
+			else {
+				s.ctx.addError("Unknown binding: '" ~ name ~ "'.", this.where);
 			}
 		}
 	}
@@ -1354,7 +1471,7 @@ class AstNodeDecl : AstNode {
 			if(instanceof!TypeUnknown(actualType))
 				actualType = this.value.getType(s);
 		}
-		s.vars[decl.name] = new VariableSignatureTypes(actualType);
+		s.vars[decl.name] = new ScopeVar(actualType);
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
@@ -1485,11 +1602,11 @@ class AstNodeFuncCall : AstNode {
 	}
 
 	override Type getType(AnalyzerScope s) {
-		return this.funcType ? this.funcType.signature.ret : new TypeUnknown();
+		return this.funcType ? this.funcType.ret : new TypeUnknown();
 	}
 
 	override void analyze(AnalyzerScope s, Type neededType) {
-		this.func.analyze(s, new TypeUnknown());
+		this.func.analyze(s, new TypeFunctionLike());
 		auto funcType = this.func.getType(s);
 
 		if(!funcType.instanceof!TypeFunction) {
@@ -1497,18 +1614,31 @@ class AstNodeFuncCall : AstNode {
 			return;
 		}
 
+		if(this.func.instanceof!AstNodeGet) {
+			AstNodeGet g = cast(AstNodeGet)this.func;
+			if(!g.isNamespace) {
+				// The get node is getting a field from a value,
+				// so we add that to the first argument.
+				this.args = g.value ~ this.args;
+			}
+			else {
+				// The get node is resolving a name in a namespace,
+				// do nothing.
+			}
+		}
+
 		this.funcType = cast(TypeFunction)funcType;
 
-		if(this.args.length != this.funcType.signature.args.length) {
+		if(this.args.length != this.funcType.args.length) {
 			s.ctx.addError("Invalid call to function, "
-				~ to!string(this.funcType.signature.args.length)
+				~ to!string(this.funcType.args.length)
 				~ " arguments are required, but got "
 				~ to!string(this.args.length), this.where);
 			return;
 		}
 
 		for(int i = 0; i < this.args.length; ++i) {
-			this.args[i].analyze(s, this.funcType.signature.args[i]);
+			this.args[i].analyze(s, this.funcType.args[i]);
 		}
 
 		if(!neededType.instanceof!TypeUnknown && !neededType.assignable(getType(s))) {

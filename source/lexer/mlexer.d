@@ -224,7 +224,6 @@ class Lexer {
             s ~= get();
             next(1);
         }
-        writeln("s-", s, "-s");
         if(get() == '*') {next(2);}
         return s;
     }
@@ -336,7 +335,8 @@ class Lexer {
                         next(1);
                     }
                     break;
-                case ',': tokens.insertBack(new Token(loc, ",")); next(1);break;
+                case ',': tokens.insertBack(new Token(loc, ",")); next(1); break;
+                case '.': tokens.insertBack(new Token(loc, ".")); next(1); break;
                 case ';': tokens.insertBack(new Token(loc, ";")); next(1); break;
                 case ':': tokens.insertBack(new Token(loc, ":")); next(1); break;
                 case '^': tokens.insertBack(new Token(loc, "^")); next(1); break;

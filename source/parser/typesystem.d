@@ -1,7 +1,10 @@
 module parser.typesystem;
+
 import parser.util;
+
 import std.conv;
 import std.stdio;
+import std.array;
 
 class Type {
     bool assignable(Type other) { return false; }
@@ -110,6 +113,55 @@ class TypePointer : Type {
 
     override string toString() const {
         return to.toString() ~ "*";
+    }
+}
+
+class TypeStruct : Type {
+    Type[string] fields;
+    TypeFunction[string] methods;
+
+    this(Type[string] fields, TypeFunction[string] methods) {
+        this.fields = fields;
+        this.methods = methods;
+    }
+
+    override bool assignable(Type other) {
+        // if(other.instanceof!(TypeStruct)) return true;
+        return this == other;
+    }
+
+    override string toString() const {
+        string s = "struct {";
+
+        if(fields.length > 0) {
+            auto vals = array(fields.byKeyValue);
+            s ~= " " ~ vals[0].key ~ ": " ~ vals[0].value.toString();
+            for(int i = 1; i < vals.length; ++i) {
+                s ~= ", " ~ vals[i].key ~ ": " ~ vals[i].value.toString();
+            }
+        }
+        s ~= " }";
+        return s;
+    }
+}
+
+class TypeType : Type {
+    Type type;
+
+    this(Type type) { this.type = type; }
+
+    override string toString() const {
+        return "type " ~ type.toString();
+    }
+}
+
+class TypeFunctionLike : Type {
+    override bool assignable(Type other) {
+        return other.instanceof!TypeFunction !is null;
+    }
+
+    override string toString() const {
+        return "a callable";
     }
 }
 

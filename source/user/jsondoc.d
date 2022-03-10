@@ -26,9 +26,9 @@ class JSONDocGenerator : DocGenerator {
         if(ast.instanceof!AstNodeFunction) {
             AstNodeFunction func = cast(AstNodeFunction)ast;
             JSONValue v = [
-                "loc": func.where.toString(),
-                "str": func.actualDecl.toString(func.decl.name, func.decl.argNames),
-                "doc": func.decl.doc,
+                "where": func.where.toString(),
+                "declaration": func.type.toString(func.decl.name, func.decl.argNames),
+                "doccomment": func.decl.doc,
             ];
             json.object[func.decl.name] = v;
         }

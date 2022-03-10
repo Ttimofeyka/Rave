@@ -1,0 +1,21 @@
+
+struct A {
+    f(a: int) => a;
+}
+
+f(a: int) => a;
+g(t: A, a: int) => a;
+
+main {
+    a: A;
+
+    A.f(a, 3); // same
+    a.f(3);    // same
+
+    f(3);    // same
+    (3).f(); // same
+
+    a.g(3);  // same
+    g(a, 3); // same
+}
+

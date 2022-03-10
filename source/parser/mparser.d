@@ -8,6 +8,7 @@ import parser.ast;
 import lexer.tokens;
 import std.algorithm.iteration : map;
 import std.algorithm : canFind;
+import core.stdc.stdlib : exit;
 
 class Decl {
 	string name;
@@ -56,6 +57,7 @@ class Parser {
 	private void error(string msg) {
 		writeln("\033[0;31mError: " ~ msg ~ "\033[0;0m");
 		hadErrors = true;
+		exit(1);
 	}
 
 	private void errorExpected(string msg) {
@@ -376,7 +378,7 @@ class Parser {
 
 		while(peek().type != TokType.tok_2rbra) {
 			Decl d = parseDecl();
-			if(d.isMethod) {
+			if(!d.isMethod) {
 				st.fieldDecls ~= declToVarDecl(d);
 				if(d.value !is null) st.fieldValues[d.name] = d.value;
 			}
@@ -413,7 +415,7 @@ class Parser {
 		}
 
 		errorExpected("Expected a type declaration");
-		return new TypeDeclaration();
+		return null;
 	}
 
 	private AstNode[] parseFuncArguments() {

@@ -1,13 +1,16 @@
 module compiler.compiler;
 
 import parser.typesystem;
-import parser.generator;
+import parser.generator.gen;
 import parser.analyzer;
 import parser.ast;
-import std.format;
 
-class CompilerDebugInfo {
+import std.format;
+import std.stdio;
+
+struct CompilerDebugInfo {
     bool printAst;
+    bool debugMode;
 }
 
 struct CompilerError {
@@ -27,7 +30,7 @@ class Compiler {
 
     CompilerProgram getProgram() { return _program; }
 
-    this(Declarationp[] decls, AstNode[] nodes, CompilerDebugInfo debugInfo = CompilerDebugInfo(false)) {
+    this(Declaration[] decls, AstNode[] nodes, CompilerDebugInfo debugInfo = CompilerDebugInfo(false)) {
         this._program = new CompilerProgram();
         this._program.decls = decls;
         this._program.nodes = nodes;
@@ -47,7 +50,7 @@ class Compiler {
         ctx.setType("float",  new TypeBasic(BasicType.t_float));
     }
 
-    public CompilerError generate() {
+    public CompilerError generate(string outputFile) {
         if(debugInfo.printAst) writeln("------------------ AST -------------------");
 
         bool hadErrors = false;
@@ -59,7 +62,10 @@ class Compiler {
         implementDefaultTypeContext(genctx.sema.typeContext);
 
         foreach(decl; _program.decls) {
+            writeln("Decl: ", decl.name);
             foreach(node; decl.analyze(semaScope)) {
+                writeln("DeclFunc:");
+                node.debugPrint(0);
                 _program.nodes ~= node;
             }
         }
@@ -70,12 +76,21 @@ class Compiler {
                 hadErrors = true;
                 errorCount += genctx.sema.errorCount;
                 genctx.sema.flushErrors();
+                if(debugInfo.printAst) node.debugPrint(0);
                 break;
             }
             
             if(debugInfo.printAst) node.debugPrint(0);
         }
 
-        if(hadErrors) return new CompilerError(true, format("Semantic analisys failed with %d errors.", errorCount));
+        if(hadErrors) return CompilerError(true, format("Semantic analisys failed with %d errors.", errorCount));
+
+        if(debugInfo.printAst) writeln("------------------ Generating -------------------");
+        genctx.gen(semaScope, _program.nodes, outputFile, debugInfo.debugMode);
+        if(genctx.sema.errorCount > 0) {
+            genctx.sema.flushErrors();
+            return CompilerError(true, format("Code generation failed with %d errors.", errorCount));
+        }
+        return CompilerError(false, "Compiled sucessfully");
     }
 }

@@ -3,7 +3,7 @@ import std.conv : to;
 import std.path : buildNormalizedPath, absolutePath;
 import core.stdc.stdlib : exit;
 import std.file : readText;
-// import parser.analyzer, parser.mparser, parser.ast, parser.typesystem, parser.generator.gen, llvm;
+import parser.analyzer, parser.mparser, parser.ast, parser.typesystem, parser.generator.gen, llvm;
 import lexer.mlexer;
 import lexer.tokens;
 import lexer.preproc;
@@ -20,6 +20,7 @@ void main(string[] args)
 	string stdlibIncPath = buildNormalizedPath(absolutePath("./stdlib"));
 	string outputType = "i686-linux";
 	bool debugMode = false;
+	bool debugModeFull = false;
 	bool generateDocJson = false;
 	string docJsonFile = "docs.json";
 
@@ -27,6 +28,7 @@ void main(string[] args)
 	    args,
 	    "o", "Output file", &outputFile,
 	    "debug", "Debug mode", &debugMode,
+	    "debug-full", "Full debug mode", &debugModeFull,
 	    "stdinc", "Stdlib include path (':' in @inc)", &stdlibIncPath,
 		"type", "Output file type", &outputType,
 		"doc-json", "Generate JSON documentation file", &generateDocJson,
@@ -81,29 +83,20 @@ void main(string[] args)
 		exit(1);
 	}
 
-	
+	Compiler comp = new Compiler(parser.getDecls(), nodes);
+	comp.debugInfo.debugMode = debugMode;
+	comp.debugInfo.printAst = debugModeFull;
+	CompilerError err = comp.generate(outputFile);
+
+	if(err.hadError) {
+		stackMemory.cleanup();
+		exit(1);
+	}
 
 	if(generateDocJson) {
 		auto jsonDocGen = new JSONDocGenerator();
-
-		foreach(node; nodes) {
-			jsonDocGen.generate(nodes[i]);
-		}
-
+		foreach(node; nodes) jsonDocGen.generate(node);
 		jsonDocGen.output(docJsonFile);
-	}
-
-	if(!hadErrors) {
-		writeln("------------------ Generating -------------------");
-		genctx.gen(semaScope, nodes, outputFile, debugMode);
-		if(genctx.sema.errorCount > 0) {
-			genctx.sema.flushErrors();
-		}
-	}
-	else {
-		writeln("Failed with ", errorCount, " error(s).");
-		stackMemory.cleanup();
-		exit(1);
 	}
 
 	stackMemory.cleanup();
