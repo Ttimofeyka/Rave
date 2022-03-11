@@ -24,7 +24,7 @@ __dummy.html
 # Code coverage
 *.lst
 
-epl
+rave
 dub.json
 llvm.bc
 source/old.ast.d
