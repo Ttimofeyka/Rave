@@ -132,7 +132,7 @@ class GenerationContext {
     LLVMBasicBlockRef currbb;
 
     this() {
-        mod = LLVMModuleCreateWithName(toStringz("epl"));
+        mod = LLVMModuleCreateWithName(toStringz("rave"));
 		sema = new SemanticAnalyzerContext(new AtstTypeContext());
 		gstack = new GStack();
 		gargs = new GArgs();
@@ -148,7 +148,7 @@ class GenerationContext {
     }
 
 	string mangleQualifiedName(string[] parts, bool isFunction) {
-		string o = "_EPL" ~ (isFunction ? "f" : "g");
+		string o = "_Rave" ~ (isFunction ? "f" : "g");
 		foreach(part; parts) {
 			o ~= to!string(part.length) ~ part;
 		}

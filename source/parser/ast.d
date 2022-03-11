@@ -307,6 +307,7 @@ class Declaration {
 	 * Returns: a list of nodes that replace the declaration, empty if none.
 	 */
 	abstract AstNode[] analyze(AnalyzerScope s);
+	abstract LLVMValueRef gen(AnalyzerScope s);
 }
 
 struct EnumEntry {
@@ -334,6 +335,10 @@ class DeclarationEnum : Declaration {
 			);
 		}
 		return [];
+	}
+
+	override LLVMValueRef gen(AnalyzerScope s) {
+		return null;
 	}
 }
 
@@ -395,6 +400,10 @@ class DeclarationStruct : Declaration {
 			}
 		}
 		return s ~ "}";
+	}
+
+	override LLVMValueRef gen(AnalyzerScope s) {
+		return null;
 	}
 }
 
@@ -587,19 +596,23 @@ class AstNodeFunction : AstNode {
 			LLVMMoveBasicBlockAfter(exitBlock, LLVMGetLastBasicBlock(func));
 			LLVMPositionBuilderAtEnd(builder, exitBlock);
 			if(!type.ret.instanceof!TypeVoid) {
-				auto phi = LLVMBuildPhi(builder, retType, "retval");
-
 				LLVMValueRef[] retValues = array(map!(x => x.value)(genReturns));
 				LLVMBasicBlockRef[] retBlocks = array(map!(x => x.where)(genReturns));
 
-				LLVMAddIncoming(
-					phi,
-					retValues.ptr,
-					retBlocks.ptr,
-					cast(uint)genReturns.length
-				);
+				if(retBlocks[0] == null) {
+					LLVMBuildRet(builder, retValues[0]);
+				}
+				else {
+					auto phi = LLVMBuildPhi(builder, retType, "retval");
+					LLVMAddIncoming(
+						phi,
+						retValues.ptr,
+						retBlocks.ptr,
+						cast(uint)genReturns.length
+					);
 
-				LLVMBuildRet(builder, phi);
+					LLVMBuildRet(builder, phi);
+				}
 			}
 			else LLVMBuildRetVoid(builder);
 			
@@ -1398,7 +1411,7 @@ class AstNodeIden : AstNode {
 
 	override LLVMValueRef gen(AnalyzerScope s) {
 		auto ctx = s.genctx;
-		// _EPLf4exit, not exit! ctx.mangleQualifiedName([name], true) -> string
+		// _Ravef4exit, not exit! ctx.mangleQualifiedName([name], true) -> string
 		// TODO: Check if the global variable is referring to a function
 		if(s.genctx.gstack.setVar) {
 			s.genctx.gstack.setVar = false;
@@ -1497,7 +1510,7 @@ class AstNodeDecl : AstNode {
 
 			LLVMValueRef func = LLVMAddFunction(
 				ctx.mod,
-				toStringz("_EPLf"~to!string((decl.name~"_init").length)~decl.name~"_init"),
+				toStringz("_Ravef"~to!string((decl.name~"_init").length)~decl.name~"_init"),
 				ret_type
 			);
 
@@ -1651,7 +1664,7 @@ class AstNodeFuncCall : AstNode {
 
 	override LLVMValueRef gen(AnalyzerScope s) {
 		auto ctx = s.genctx;
-		// _EPLf4exit, not exit! ctx.mangleQualifiedName([name], true) -> string
+		// _Ravef4exit, not exit! ctx.mangleQualifiedName([name], true) -> string
 		AstNodeIden n = cast(AstNodeIden)func;
 
 		LLVMValueRef* llvm_args = stackMemory.createBuffer!LLVMValueRef(args.length);

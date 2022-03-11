@@ -1,16 +1,16 @@
-.extern _EPLf4main
+.extern _Ravef4main
 
 .org 0
 rjmp _start
 
-.global _EPLf4exit
-.type	_EPLf4exit, @function
-_EPLf4exit:
-    rjmp _EPLf4exit
+.global _Ravef4exit
+.type	_Ravef4exit, @function
+_Ravef4exit:
+    rjmp _Ravef4exit
     ret
 
 .global _start
 .type	_start, @function
 _start:
-    rcall _EPLf4main
+    rcall _Ravef4main
     ret

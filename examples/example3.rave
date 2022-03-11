@@ -1,16 +1,9 @@
 // @inc ":std/base"
 
-struct A {
-    x: int;
-
-    this() {
-        this->x = 3;
-    }
+enum a {
+    b = 10
 }
 
 main: int {
-    a: A;
-    a->x = 3;
-    if(1 == 1) ret 5;
-    ret 2;
+    ret 0;
 }
