@@ -31,7 +31,7 @@ LLVMValueRef createGlobal(GenerationContext ctx, LLVMTypeRef type, LLVMValueRef 
 		LLVMValueRef global = LLVMAddGlobal(
 			ctx.mod,
 			type,
-			toStringz("_EPLg"~to!string(name.length)~name)
+			toStringz("_Raveg"~to!string(name.length)~name)
 		);
 		if(val !is null) LLVMSetInitializer(global,val);
 		ctx.gstack.addGlobal(global,name);

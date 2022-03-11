@@ -1,9 +1,8 @@
-// @inc ":std/base"
+extern write(str: char*, length: int): void;
 
-enum a {
-    b = 10
-}
+a: char* = "Hello, world!";
 
 main: int {
+    write(a, 14);
     ret 0;
 }

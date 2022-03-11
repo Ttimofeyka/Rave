@@ -1384,7 +1384,7 @@ class AstNodeIndex : AstNode {
 	override LLVMValueRef gen(AnalyzerScope s) {
 		auto ctx = s.genctx;
 
-		return LLVMBuildExtractValue(
+		return LLVMBuildExtractElement(
 			ctx.currbuilder,
 			base.gen(s),
 			index.gen(s),
