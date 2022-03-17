@@ -66,8 +66,6 @@ void main(string[] args)
 	auto lexer = new Lexer(sourceFile, readText(sourceFile));
 	auto preproc = new Preprocessor(lexer.getTokens(), stdlibIncPath, defines);
 
-	preproc.getTokens().debugPrint();
-
 	if(preproc.hadErrors) {
 		writeln("Failed with 1 or more errors.");
 		stackMemory.cleanup();

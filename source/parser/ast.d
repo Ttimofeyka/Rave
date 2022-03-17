@@ -805,17 +805,10 @@ class AstNodeBinary : AstNode {
 						);
 					}
 					else { // Pointer
-						LLVMValueRef[1] inds = [iindex];
 						return LLVMBuildStore(
 							ctx.currbuilder,
 							rhs.gen(s),
-							LLVMBuildGEP(
-								ctx.currbuilder,
-								iiden,
-								inds.ptr,
-								1,
-								toStringz("set_ptr_el")
-							)
+							index.gen(s)
 						);
 					}
 				}
@@ -1429,9 +1422,17 @@ class AstNodeIndex : AstNode {
 	override LLVMValueRef gen(AnalyzerScope s) {
 		auto ctx = s.genctx;
 
+		auto baseg = base.gen(s);
+		if(LLVMGetTypeKind(LLVMTypeOf(baseg)) == LLVMPointerTypeKind) return LLVMBuildGEP(
+			ctx.currbuilder,
+			baseg,
+			[index.gen(s)].ptr,
+			1,
+			toStringz("get_el_by_index")
+		);
 		return LLVMBuildExtractElement(
 			ctx.currbuilder,
-			base.gen(s),
+			baseg,
 			index.gen(s),
 			toStringz("get_el_by_index")
 		);

@@ -1,4 +1,4 @@
-b: int[10];
+b: int*;
 
 main: int {
     b[0] = 5;
