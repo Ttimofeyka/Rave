@@ -115,7 +115,7 @@ class Preprocessor {
                     i += 1;
                     // name = absolutePath(name);
                     // if(exists(name) && isDir(name)) insertFile(buildPath(name, "*"));
-                    if(canOutput()) insertFile(name);
+                    if(canOutput()) insertFile(name~".rave");
                 }
                 else if(get().cmd == TokCmd.cmd_ifdef) {
                     i += 1;

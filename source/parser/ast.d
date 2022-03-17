@@ -15,6 +15,7 @@ import std.array;
 import parser.generator.llvm_abs;
 import parser.util;
 import std.typecons;
+import core.stdc.stdlib : malloc;
 
 /// We have two separate syntax trees: for types and for values.
 
@@ -509,7 +510,8 @@ class AstNodeFunction : AstNode {
 		s.vars[this.decl.name] = new ScopeVar(type, decl.isStatic, decl.isExtern);
 	}
 
-	private LLVMTypeRef* getParamsTypes(GenerationContext ctx) {
+	private LLVMTypeRef* getParamsTypes(AnalyzerScope s) {
+		GenerationContext ctx = s.genctx;
 		if(paramTypes is null) {
 			paramTypes = stackMemory.createBuffer!LLVMTypeRef(
 				decl.signature.args.length
@@ -517,7 +519,7 @@ class AstNodeFunction : AstNode {
 
 			for(int i = 0; i < decl.signature.args.length; i++) {
 				
-				paramTypes[i] = ctx.getLLVMType(type.args[i]);
+				paramTypes[i] = ctx.getLLVMType(type.args[i],s);
 				ctx.gargs.set(i, paramTypes[i], decl.argNames[i]);
 			}
 		}
@@ -531,11 +533,11 @@ class AstNodeFunction : AstNode {
 
 		AstNodeBlock funcBody = cast(AstNodeBlock)body_;
 
-		LLVMTypeRef retType = ctx.getLLVMType(type.ret);
+		LLVMTypeRef retType = ctx.getLLVMType(type.ret,s);
 
 		LLVMTypeRef funcType = LLVMFunctionType(
 		    retType,
-			getParamsTypes(ctx),
+			getParamsTypes(s),
 		    cast(uint)decl.signature.args.length,
 		    false
 	    );
@@ -784,12 +786,40 @@ class AstNodeBinary : AstNode {
 		auto ctx = s.genctx;
 		switch(type) {
 			case TokType.tok_equ:
-				AstNodeIden iden = cast(AstNodeIden)lhs;
-				return LLVMBuildStore(
+				if(auto iden = lhs.instanceof!AstNodeIden) return LLVMBuildStore(
 						ctx.currbuilder,
 						rhs.gen(s),
 						ctx.gstack[iden.name]
-					);
+				);
+				else if(auto index = lhs.instanceof!AstNodeIndex) {
+					auto iindex = index.index.gen(s);
+					auto iiden = index.base.gen(s);
+					if(LLVMGetTypeKind(LLVMTypeOf(iiden)) == LLVMVectorTypeKind) {
+						// Array
+						return LLVMBuildInsertElement(
+							ctx.currbuilder,
+							iiden,
+							rhs.gen(s),
+							iindex,
+							toStringz("set_arr_el")
+						);
+					}
+					else { // Pointer
+						LLVMValueRef[1] inds = [iindex];
+						return LLVMBuildStore(
+							ctx.currbuilder,
+							rhs.gen(s),
+							LLVMBuildGEP(
+								ctx.currbuilder,
+								iiden,
+								inds.ptr,
+								1,
+								toStringz("set_ptr_el")
+							)
+						);
+					}
+				}
+				return null;
 			case TokType.tok_shortplu:
 			case TokType.tok_shortmin:
 			case TokType.tok_shortmul:
@@ -1082,8 +1112,21 @@ class AstNodeUnary : AstNode {
 
 	override LLVMValueRef gen(AnalyzerScope s) {
 		auto ctx = s.genctx;
-		LLVMValueRef a;
-		return a;
+		if(type == TokType.tok_multiply) {
+			auto val = node.gen(s);
+			auto a = LLVMBuildAlloca(
+				ctx.currbuilder,
+				getAType(val),
+				toStringz("unary")
+			);
+			LLVMBuildStore(
+				ctx.currbuilder,
+				val,
+				a
+			);
+			return a;
+		}
+		return null;
 	}
 
 	debug {
@@ -1381,6 +1424,8 @@ class AstNodeIndex : AstNode {
 		this.index = index;
 	}
 
+	override void analyze(AnalyzerScope s, Type neededType) {}
+
 	override LLVMValueRef gen(AnalyzerScope s) {
 		auto ctx = s.genctx;
 
@@ -1501,8 +1546,8 @@ class AstNodeDecl : AstNode {
 		if(s.genctx.currbuilder == null) {
 			// Global var
 			auto global = ctx.createGlobal(
-				ctx.getLLVMType(decl.type.get(s)),
-				LLVMConstNull(ctx.getLLVMType(decl.type.get(s))),
+				ctx.getLLVMType(decl.type,s),
+				LLVMConstNull(ctx.getLLVMType(decl.type,s)),
 				decl.name
 			);
 
@@ -1523,11 +1568,18 @@ class AstNodeDecl : AstNode {
 			ctx.currbuilder = LLVMCreateBuilder();
 			LLVMPositionBuilderAtEnd(ctx.currbuilder, entry);
 
-			LLVMBuildStore(
+			if(value !is null) LLVMBuildStore(
 				ctx.currbuilder,
 				value.gen(s),
 				global
 			);
+			else {
+				LLVMBuildStore(
+					ctx.currbuilder,
+					LLVMConstNull(LLVMGlobalGetValueType(global)),
+					global
+				);
+			}
 			LLVMBuildRetVoid(ctx.currbuilder);
 
 			ctx.presets.add(func);
@@ -1537,7 +1589,7 @@ class AstNodeDecl : AstNode {
 		else {
 			// Local var
 			return ctx.createLocal(
-				ctx.getLLVMType(decl.type.get(s)),
+				ctx.getLLVMType(decl.type, s),
 				value.gen(s),
 				decl.name
 			);

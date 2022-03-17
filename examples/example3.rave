@@ -1,8 +1,6 @@
-extern write(str: char*, length: int): void;
-
-a: char* = "Hello, world!";
+b: int[10];
 
 main: int {
-    write(a, 14);
+    b[0] = 5;
     ret 0;
 }

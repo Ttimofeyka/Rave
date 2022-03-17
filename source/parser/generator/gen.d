@@ -155,31 +155,43 @@ class GenerationContext {
 		return o;
 	}
 
-	LLVMTypeRef getLLVMType(Type t) {
-		if(auto tb = t.instanceof!TypeBasic) {
-			switch(tb.basic) {
-				case BasicType.t_int:
-					return LLVMInt32Type();
-				case BasicType.t_short:
-					return LLVMInt16Type();
-				case BasicType.t_long:
-					return LLVMInt64Type();
-				case BasicType.t_char:
-					return LLVMInt8Type();
-				case BasicType.t_float:
-					return LLVMFloatType();
-				case BasicType.t_bool:
-					return LLVMInt1Type(); // Bool
-				default: return LLVMInt8Type();
+	LLVMTypeRef getLLVMType(T)(T t, AnalyzerScope s) {
+		static if(is(typeof(t) == Type)) {
+			if(auto tb = t.instanceof!TypeBasic) {
+				switch(tb.basic) {
+					case BasicType.t_int:
+						return LLVMInt32Type();
+					case BasicType.t_short:
+						return LLVMInt16Type();
+					case BasicType.t_long:
+						return LLVMInt64Type();
+					case BasicType.t_char:
+						return LLVMInt8Type();
+					case BasicType.t_float:
+						return LLVMFloatType();
+					case BasicType.t_bool:
+						return LLVMInt1Type(); // Bool
+					default: return LLVMInt8Type();
+				}
 			}
+			else if(auto p = t.instanceof!TypePointer) {
+				return LLVMPointerType(getLLVMType(p.to,s), 0);
+			}
+        	else if(auto v = t.instanceof!TypeVoid) {
+            	return LLVMVoidType();
+        	}
+			return LLVMInt32Type();
 		}
-		else if(auto p = t.instanceof!TypePointer) {
-			return LLVMPointerType(getLLVMType(p.to), 0);
+		else {
+			// Array, or...?
+			if(AtstNodeArray a = t.instanceof!AtstNodeArray) {
+				// If array then
+				auto array_type = getLLVMType(a.node,s);
+				return LLVMVectorType(array_type, cast(uint)a.count);
+			}
+			// Else get Type and return getLLVMType(Type)
+			return getLLVMType(t.get(s),s);
 		}
-        else if(auto v = t.instanceof!TypeVoid) {
-            return LLVMVoidType();
-        }
-		return LLVMInt32Type();
 	}
 
 	bool isIntType(LLVMTypeRef t) {
@@ -189,6 +201,7 @@ class GenerationContext {
 
     void gen(AnalyzerScope s, AstNode[] nodes, string file, bool debugMode) {
 		for(int i=0; i<nodes.length; i++) {
+			//nodes[i].debugPrint(0);
 			nodes[i].gen(s);
 		}
 		genTarget(file, debugMode);
