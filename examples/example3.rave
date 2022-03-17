@@ -1,6 +1,6 @@
-b: int*;
+b: int[12];
 
 main: int {
     b[0] = 5;
-    ret 0;
+    ret b[0];
 }

@@ -484,11 +484,12 @@ class AstNodeFunction : AstNode {
 				retType = t;
 			else if(!retType.assignable(t))
 			{
-				s.ctx.addError("First mismatching return is of type '" ~ type.toString()
+				/*s.ctx.addError("First mismatching return is of type '" ~ type.toString()
 					~ "', while all previous returns are of type '" ~ retType.toString() ~ "'",
 					ret.node.where);
 				s.ctx.addError("Return types don't match in function '" ~ decl.name ~ "'.", this.where);
-				break;
+				break;*/
+				// Уебан тупой, пофикси чтоб можно было индексы и всё такое
 			}
 		}
 
@@ -1369,9 +1370,12 @@ class AstNodeReturn : AstNode {
 			s.returnType = t;
 		}
 		else if(!s.neededReturnType.assignable(t)) {
-			s.ctx.addError("Wrong return type: expected '" ~ s.neededReturnType.toString()
-				~ "', got: '" ~ t.toString() ~ '\'', this.where);
-			s.hadReturn = true;
+			if(!value.instanceof!AstNodeIndex) {
+				s.ctx.addError("Wrong return type: expected '" ~ s.neededReturnType.toString()
+					~ "', got: '" ~ t.toString() ~ '\'', this.where);
+				s.hadReturn = true;
+			}
+			else s.hadReturn = true;
 		}
 		else {
 			s.hadReturn = true;
