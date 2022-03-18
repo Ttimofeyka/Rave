@@ -130,6 +130,8 @@ class GenerationContext {
 	int basicblocks_count = 0;
     string entryFunction = "main";
     LLVMBasicBlockRef currbb;
+	LLVMBasicBlockRef exitbb; // if CYCLE or IF
+	LLVMBasicBlockRef thenbb; // if CYCLE or IF
 
     this() {
         mod = LLVMModuleCreateWithName(toStringz("rave"));

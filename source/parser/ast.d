@@ -1183,6 +1183,9 @@ class AstNodeIf : AstNode {
 				ctx.currfunc,
 				toStringz("end"));
 
+		ctx.thenbb = thenBlock;
+		ctx.exitbb = endBlock;
+
 		LLVMBuildCondBr(
 			ctx.currbuilder,
 			cond.gen(s),
@@ -1256,6 +1259,9 @@ class AstNodeWhile : AstNode {
 		_while = LLVMAppendBasicBlock(s.genctx.gfuncs[parent.decl.name],toStringz("_while"~to!string(ctx.basicblocks_count)));
 		ctx.basicblocks_count += 1;
 		_after = LLVMAppendBasicBlock(s.genctx.gfuncs[parent.decl.name],toStringz("_after"~to!string(ctx.basicblocks_count)));
+
+		ctx.exitbb = _after;
+		ctx.thenbb = _while;
 
 		LLVMValueRef cond_as_cmp = cond.gen(s);
 		LLVMBuildCondBr(ctx.currbuilder,cond_as_cmp,_while,_after);
@@ -1636,8 +1642,7 @@ class AstNodeBreak : AstNode {
 
 	override LLVMValueRef gen(AnalyzerScope s) {
 		auto ctx = s.genctx;
-		LLVMValueRef a;
-		return a;
+		return LLVMBuildBr(ctx.currbuilder, ctx.exitbb);
 	}
 
 	debug {
@@ -1653,8 +1658,10 @@ class AstNodeContinue : AstNode {
 
 	override LLVMValueRef gen(AnalyzerScope s) {
 		auto ctx = s.genctx;
-		LLVMValueRef a;
-		return a;
+		return LLVMBuildBr(
+			ctx.currbuilder,
+			ctx.thenbb
+		);
 	}
 
 	debug {

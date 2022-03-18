@@ -1,6 +1,8 @@
-b: int[12];
-
 main: int {
-    b[0] = 5;
-    ret b[0];
+    i: int = 0;
+    while(i < 0) {
+        i += 1;
+        break;
+    }
+    ret 0;
 }

@@ -149,6 +149,15 @@ LLVMValueRef castNum(GenerationContext ctx, LLVMValueRef tocast, LLVMTypeRef typ
 		);
 }
 
+LLVMValueRef castPtr(GenerationContext ctx, LLVMValueRef tocast, LLVMTypeRef type) {
+	return LLVMBuildPointerCast(
+		ctx.currbuilder,
+		tocast,
+		type,
+		toStringz("castPtr")
+	);
+}
+
 LLVMValueRef ptrToInt(GenerationContext ctx, LLVMValueRef ptr, LLVMTypeRef type) {
 		return LLVMBuildPtrToInt(
 			ctx.currbuilder,
