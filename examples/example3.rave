@@ -1,8 +1,4 @@
 main: int {
-    i: int = 0;
-    while(i < 0) {
-        i += 1;
-        break;
-    }
+    a: int**;
     ret 0;
 }

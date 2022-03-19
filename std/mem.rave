@@ -13,7 +13,7 @@ struct mem_control_block {
 };
 
 free(firstbyte: void*): void {
-  mem_control_block* mcb;
+  mcb: mem_control_block*;
   mcb = firstbyte - sizeof(mem_control_block);
   mcb->is_available = 1;
   ret;
@@ -21,7 +21,7 @@ free(firstbyte: void*): void {
 
 malloc(numbytes: long): void* {
   current_location: void*;
-  mem_control_block* current_location_mcb;
+  current_location_mcb: mem_control_block*;
   memory_location: void*;
   if (!has_initialized) {
     malloc_init();
@@ -30,7 +30,7 @@ malloc(numbytes: long): void* {
   memory_location = 0;
   current_location = managed_memory_start;
   while (current_location != last_valid_address) {
-    current_location_mcb = (mem_control_block*)current_location;
+    current_location_mcb = cast(mem_control_block*)current_location;
     if (current_location_mcb->is_available) {
       if (current_location_mcb->size >= numbytes) {
         current_location_mcb->is_available = 0;
