@@ -33,12 +33,41 @@ class ScopeVarIntConstant : ScopeVar {
 	}
 }
 
+/** 
+ * Generic namespace (a struct, an enum, a function, namespaces)
+ */
+class Namespace {
+	private Namespace parent;
+	private ScopeVar[string] vars;
+
+	public this(Namespace parent = null) {
+		this.parent = parent;
+		this.vars = null;
+	}
+
+	public ScopeVar get(string name) {
+		if(name in vars) return vars[name];
+		else if(parent !is null) return parent.get(name);
+		return null;
+	}
+
+	public bool has(string name) {
+		if(name in vars) return true;
+		else if(parent !is null) return parent.has(name);
+		return false;
+	}
+
+	public void setHere(string name, ScopeVar v) {
+		this.vars[name] = v;
+	}
+}
+
 class AnalyzerScope {
 	bool hadReturn = false; 
 	Type returnType = null;
 	Type neededReturnType = null;
 
-	ScopeVar[string] vars;
+	Namespace ns;
 	AnalyzerScope parent;
 
 	SemanticAnalyzerContext ctx;
@@ -48,13 +77,7 @@ class AnalyzerScope {
 		this.ctx = ctx;
 		this.genctx = genctx;
 		this.parent = parent;
-	}
-
-	ScopeVar get(string name) {
-		if(name in vars) return vars[name];
-		else if(parent !is null) return parent.get(name);
-		// ctx.addError("No such binding: '" ~ name ~ "'.");
-		return null;
+		this.ns = this.parent is null ? new Namespace() : new Namespace(this.parent.ns);
 	}
 }
 
@@ -72,6 +95,9 @@ class SemanticAnalyzerContext {
 		this.typeContext = typeContext;
 	}
 
+	/** 
+	 * Write all errors to stdout.
+	 */
 	void flushErrors() {
 		foreach(err; errs) {
 			writeln(err.where, ": \033[0;31mError:\033[0;0m ", err.msg);
@@ -79,7 +105,14 @@ class SemanticAnalyzerContext {
 		errorCount = 0;
 	}
 
+	/** 
+	 * Add an error to the front of the error list. Won't do anything if writeErrors is false.
+	 * Params:
+	 *   msg = The error message.
+	 *   where = The error location.
+	 */
 	void addError(string msg, SourceLocation where = SourceLocation(0, 0, "")) {
+		if(!writeErrors) return;
 		errs.insertFront(AnalyzerError(msg, where));
 		++errorCount;
 	}

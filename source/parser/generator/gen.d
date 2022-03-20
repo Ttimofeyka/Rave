@@ -177,7 +177,7 @@ class GenerationContext {
 				}
 			}
 			else if(auto p = t.instanceof!TypePointer) {
-				return LLVMPointerType(getLLVMType(p.to,s), 0);
+				return LLVMPointerType(getLLVMType(p.to, s), 1);
 			}
         	else if(auto v = t.instanceof!TypeVoid) {
             	return LLVMVoidType();

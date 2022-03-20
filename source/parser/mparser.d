@@ -10,6 +10,11 @@ import std.algorithm.iteration : map;
 import std.algorithm : canFind;
 import core.stdc.stdlib : exit;
 
+struct FunctionArgument {
+	string name;
+	AtstNode type;
+}
+
 class Decl {
 	string name;
 	AtstNode type;
@@ -24,6 +29,7 @@ class Decl {
 }
 
 VariableDeclaration declToVarDecl(Decl d) {
+	
 	return new VariableDeclaration(d.type, d.name,
 		canFind(d.mods, TokCmd.cmd_static), canFind(d.mods, TokCmd.cmd_extern), d.decl_mods, d.doc);
 }
@@ -122,7 +128,7 @@ class Parser {
 					num = to!ulong(next().value);
 				}
 				expectToken(TokType.tok_rbra);
-				t = new AtstNodeArray(t, num); 
+				t = new AtstNodeArray(t, num);
 			}
 		}
 
@@ -131,7 +137,7 @@ class Parser {
 
 	private FunctionArgument[] parseFuncArgumentDecls() {
 		FunctionArgument[] args;
-		
+
 		auto lpar = expectToken(TokType.tok_lpar);
 		if(lpar is null) return [];
 
@@ -150,7 +156,7 @@ class Parser {
 		return args;
 	}
 
-	/** 
+	/**
 	 * Parse a generic function declaration with any end token
 	 * Params:
 	 *   isEnd = Returns whether the passed token is the end of the declaration,
@@ -167,7 +173,7 @@ class Parser {
 
 	// 	AtstNode retType = new AtstNodeVoid();
 	// 	FunctionArgument[] args = [];
-		
+
 	// 	if(peek().type == TokType.tok_lpar) args = parseFuncArgumentDecls();
 
 	// 	if(peek().type == TokType.tok_type) {
@@ -343,7 +349,7 @@ class Parser {
 
 		en.name = expectToken(TokType.tok_id).value;
 		expectToken(TokType.tok_2lbra);
-		
+
 		ulong counter = 0;
 		while(peek().type != TokType.tok_2rbra) {
 			auto name = expectToken(TokType.tok_id).value;
@@ -353,12 +359,12 @@ class Parser {
 			}
 			en.entries ~= EnumEntry(name, counter);
 			++counter;
-			
+
 			if(peek().type == TokType.tok_2rbra) break;
 			expectToken(TokType.tok_comma);
 		}
 		expectToken(TokType.tok_2rbra);
-		
+
 		return en;
 	}
 
@@ -420,7 +426,7 @@ class Parser {
 
 	private AstNode[] parseFuncArguments() {
 		AstNode[] args;
-		
+
 		auto lpar = expectToken(TokType.tok_lpar);
 		if(lpar is null) return [];
 
@@ -451,10 +457,10 @@ class Parser {
 				base = parseFuncCall(base);
 			}
 			else if(peek().type == TokType.tok_lbra) {
-				next();
+				Token t = next();
 				auto idx = parseExpr();
 				expectToken(TokType.tok_rbra);
-				base = new AstNodeIndex(base, idx);
+				base = new AstNodeIndex(t.loc, base, idx);
 			}
 			else if(peek().type == TokType.tok_struct_get
 			     || peek().type == TokType.tok_dot)
@@ -495,7 +501,7 @@ class Parser {
 			expectToken(TokType.tok_rpar);
 			return e;
 		}
-		
+
 		error("Expected a variable, a number, a string, a char or an expression in parentheses. Got: "
 			~ to!string(t.type));
 		return null;
@@ -605,7 +611,7 @@ class Parser {
 			operatorStack.removeFront();
 			operatorStackSize -= 1;
 		}
-		
+
 		return nodeStack.front();
 	}
 
@@ -685,7 +691,7 @@ class Parser {
 			else {
 				type = parseType();
 			}
-			
+
 			auto decl = new AstNodeDecl(new VariableDeclaration(type, name, false, false, [], ""), null);
 			if(peek().type == TokType.tok_equ) {
 				next();
@@ -694,7 +700,7 @@ class Parser {
 			expectToken(TokType.tok_semicolon);
 			return decl;
 		}
-		
+
 		auto e = parseExpr();
 		expectToken(TokType.tok_semicolon);
 		return e;
@@ -737,23 +743,25 @@ class Parser {
 		while(peek().type == TokType.tok_semicolon) {
 			next(); // Ignore the semicolon
 		}
-		
+
 		if(isTypeDecl()) {
 			_decls ~= parseTypeDecl();
 			return parseTopLevel(); // we ignore type declarations.
 		}
-		
+
 		if(peek().type == TokType.tok_eof) {
 			return null;
 		}
-		
+
 		Decl d = parseDecl();
 		if(!d.isMethod) {
 			auto decl = declToVarDecl(d);
+			_decls ~= decl;
 			return new AstNodeDecl(decl, d.value);
 		}
 		else {
 			auto decl = declToFuncDecl(d);
+			_decls ~= decl;
 			return new AstNodeFunction(d.nameLoc, decl, d.value);
 		}
 	}

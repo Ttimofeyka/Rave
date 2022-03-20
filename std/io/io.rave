@@ -1,0 +1,8 @@
+@inc ":std/io/file"
+
+write(msg: const char*) => stdout->swrite(msg);
+writeln(msg: const char*) {
+    write(msg);
+    stdout->putc(10); // newline
+}
+

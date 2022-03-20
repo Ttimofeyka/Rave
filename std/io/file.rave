@@ -44,7 +44,7 @@ struct StdFile {
         this->write(&c, 1);
     }
 
-    swrite(s: const char*) {
+    puts(s: const char*) {
         this->write(&s, StdString.lengthOf(s));
     }
 }

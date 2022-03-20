@@ -169,25 +169,15 @@ struct TypecheckResult {
 class AstNode {
 	SourceLocation where;
 
-	LLVMValueRef gen(AnalyzerScope s) {
-		LLVMValueRef a;
-		return a;
-	}
+	abstract LLVMValueRef gen(AnalyzerScope s);
 
 	// TODO: Propagate to child classes.
 	// TypecheckResult typecheck(SemanticAnalyzerContext ctx) {
-	// 	return TypecheckResult(false);
+	//.	return TypecheckResult(false);
 	// }
 
-	Type getType(AnalyzerScope s) {
-		return new TypeUnknown();
-	}
-
-	void analyze(AnalyzerScope s, Type neededType) {
-		writeln("Abstract AstNode.analyze called! this: ",
-			this.classinfo.name);
-		assert(0);
-	}
+	abstract Type getType(AnalyzerScope s);
+	abstract void analyze(AnalyzerScope s, Type neededType);
 
 	debug {
 		void writeTabs(int indent) {
@@ -207,14 +197,26 @@ struct DeclMod {
 	string[] args;
 }
 
-class FunctionDeclaration {
+class Declaration {
+	string name; // The name of the declaration.
+	DeclMod[] mods; // Modifiers
+	string doc; // Documentation comment, if present.
+
+	/** 
+	 * Analyzes and generates AST from a declaration node.
+	 * Params:
+	 *   s = the analyzer scope.
+	 * Returns: a list of nodes that replace the declaration, empty if none.
+	 */
+	abstract AstNode[] analyze(AnalyzerScope s);
+	abstract LLVMValueRef gen(AnalyzerScope s);
+}
+
+class FunctionDeclaration : Declaration {
 	FuncSignature signature;
-	string name;
 	string[] argNames;
 	bool isStatic;
 	bool isExtern;
-	DeclMod[] decl_mods;
-	string doc;
 
 	this(
 		FuncSignature signature,
@@ -222,7 +224,7 @@ class FunctionDeclaration {
 		string[] argNames,
 		bool isStatic,
 		bool isExtern,
-		DeclMod[] decl_mods,
+		DeclMod[] mods,
 		string doc,
 	) {
 		this.signature = signature;
@@ -230,7 +232,7 @@ class FunctionDeclaration {
 		this.argNames = argNames;
 		this.isStatic = isStatic;
 		this.isExtern = isExtern;
-		this.decl_mods = decl_mods;
+		this.mods = mods;
 		this.doc = doc;
 	}
 
@@ -257,34 +259,29 @@ class FunctionDeclaration {
 			return s;
 		}
 	}
+
+	override AstNode[] analyze(AnalyzerScope s) { return []; }
+	override LLVMValueRef gen(AnalyzerScope s) { return null; }
 }
 
-struct FunctionArgument {
-	string name;
+class VariableDeclaration : Declaration {
 	AtstNode type;
-}
-
-class VariableDeclaration {
-	AtstNode type;
-	string name;
 	bool isStatic;
 	bool isExtern;
-	DeclMod[] decl_mods;
-	string doc;
 	
 	this(
 		AtstNode type,
 		string name,
 		bool isStatic,
 		bool isExtern,
-		DeclMod[] decl_mods,
+		DeclMod[] mods,
 		string doc,
 	) {
 		this.type = type;
 		this.name = name;
 		this.isStatic = isStatic;
 		this.isExtern = isExtern;
-		this.decl_mods = decl_mods;
+		this.mods = mods;
 		this.doc = doc;
 	}
 
@@ -296,19 +293,9 @@ class VariableDeclaration {
 			return s ~ name ~ ": ";
 		}
 	}
-}
 
-class Declaration {
-	string name;
-
-	/** 
-	 * Analyzes and generates AST from a declaration node.
-	 * Params:
-	 *   s = the analyzer scope.
-	 * Returns: a list of nodes that replace the declaration, empty if none.
-	 */
-	abstract AstNode[] analyze(AnalyzerScope s);
-	abstract LLVMValueRef gen(AnalyzerScope s);
+	override AstNode[] analyze(AnalyzerScope s) { return []; }
+	override LLVMValueRef gen(AnalyzerScope s) { return null; }
 }
 
 struct EnumEntry {
@@ -330,10 +317,10 @@ class DeclarationEnum : Declaration {
 
 	override AstNode[] analyze(AnalyzerScope s) {
 		foreach(EnumEntry entry; entries) {
-			s.vars[entry.name] = new ScopeVarIntConstant(
+			s.ns.setHere(entry.name, new ScopeVarIntConstant(
 				new TypeBasic(BasicType.t_int),
 				entry.value
-			);
+			));
 		}
 		return [];
 	}
@@ -436,6 +423,8 @@ class AstNodeFunction : AstNode {
 		this.body_ = body_;
 	}
 
+	override Type getType(AnalyzerScope s) { throw new Error("AstNodeFunction.getType"); }
+
 	override void analyze(AnalyzerScope s, Type) {
 		auto retType = this.decl.signature.ret.get(s);
 		Type[] argTypes = array(map!((a) => a.get(s))(this.decl.signature.args));
@@ -450,14 +439,14 @@ class AstNodeFunction : AstNode {
 			
 
 			// if(this.decl.isExtern) {
-			// 	s.vars[this.decl.name] = actualDecl;
+			// 	s.ns[this.decl.name] = actualDecl;
 			// 	return;
 			// }
 			// else {
 				// s.ctx.addError("Forward declarations are not yet implemented.",
 				// 	this.where);
 				// Forward declaration... TODO
-			s.vars[this.decl.name] = new ScopeVar(type, decl.isStatic, decl.isExtern);
+			s.ns.setHere(this.decl.name, new ScopeVar(type, decl.isStatic, decl.isExtern));
 			return;
 			// }
 		}
@@ -466,7 +455,7 @@ class AstNodeFunction : AstNode {
 		ss.ctx.currentFunc = this;
 
 		for(int i = 0; i < this.decl.argNames.length; ++i) {
-			ss.vars[this.decl.argNames[i]] = new ScopeVar(argTypes[i]);
+			ss.ns.setHere(this.decl.argNames[i], new ScopeVar(argTypes[i]));
 		}
 
 		ss.neededReturnType = retType;
@@ -508,7 +497,7 @@ class AstNodeFunction : AstNode {
 
 		// TODO: Check if types are not inferred!
 		type = new TypeFunction(retType, argTypes);
-		s.vars[this.decl.name] = new ScopeVar(type, decl.isStatic, decl.isExtern);
+		s.ns.setHere(this.decl.name, new ScopeVar(type, decl.isStatic, decl.isExtern));
 	}
 
 	private LLVMTypeRef* getParamsTypes(AnalyzerScope s) {
@@ -544,7 +533,7 @@ class AstNodeFunction : AstNode {
 	    );
 
 		bool shouldMangle = true;
-		foreach(mod; decl.decl_mods) {
+		foreach(mod; decl.mods) {
 			if(mod.name == "C") shouldMangle = false;
 			else if(mod.name == "dll") {
 				if(mod.args.length != 1) 
@@ -727,7 +716,7 @@ class AstNodeGet : AstNode {
 			TypeStruct st = cast(TypeStruct)t;
 
 			if(field !in st.fields && field !in st.methods) {
-				if(ScopeVar v = s.get(field)) {
+				if(ScopeVar v = s.ns.get(field)) {
 					if(neededType.assignable(v.type)) {
 						type = v.type;
 						return;
@@ -745,7 +734,7 @@ class AstNodeGet : AstNode {
 		else if(neededType.instanceof!TypeFunctionLike) {
 			// Search for global functions with field name only if
 			// the outer scope requests a function-like value.
-			if(ScopeVar v = s.get(field)) {
+			if(ScopeVar v = s.ns.get(field)) {
 				if(neededType.assignable(v.type)) {
 					type = v.type;
 					return;
@@ -761,6 +750,8 @@ class AstNodeGet : AstNode {
 			s.ctx.addError("Operator '.' expects a structure on the left hand side. "
 				~ "Got '" ~ t.toString() ~ "' instead.", this.where);
 	}
+
+	override LLVMOpaqueValue* gen(AnalyzerScope s) { throw new Error("AstNodeGet.gen TODO"); }
 
 	debug {
 		override void debugPrint(int indent) {
@@ -1104,6 +1095,9 @@ class AstNodeUnary : AstNode {
 		this.type = type;
 	}
 
+	override Type getType(AnalyzerScope s) { throw new Error("AstNodeIndex.getType"); }
+	override void analyze(AnalyzerScope s, Type neededType) { throw new Error("AstNodeIndex.analyze TODO"); }
+
 	override LLVMValueRef gen(AnalyzerScope s) {
 		auto ctx = s.genctx;
 		if(type == TokType.tok_multiply) {
@@ -1145,6 +1139,7 @@ class AstNodeIf : AstNode {
 		this.else_ = else_;
 	}
 
+	override Type getType(AnalyzerScope s) { throw new Error("AstNodeIf.getType"); }
 	override void analyze(AnalyzerScope s, Type neededType) {
 		this.parent = s.ctx.currentFunc;
 		// auto boolType = new TypeBasic(BasicType.t_bool);
@@ -1245,6 +1240,7 @@ class AstNodeWhile : AstNode {
 		this.body_ = body_;
 	}
 
+	override Type getType(AnalyzerScope s) { throw new Error("AstNodeWhile.getType"); }
 	override void analyze(AnalyzerScope s, Type neededType) {
 		this.parent = s.ctx.currentFunc;
 		this.body_.analyze(s, neededType);
@@ -1314,6 +1310,7 @@ class AstNodeBlock : AstNode {
 		this.nodes = nodes;
 	}
 
+	override Type getType(AnalyzerScope s) { throw new Error("AstNodeBlock.getType"); }
 	override void analyze(AnalyzerScope s, Type neededType) {
 		auto newScope = new AnalyzerScope(s.ctx, s.genctx, s);
 		newScope.returnType = s.returnType;
@@ -1359,6 +1356,8 @@ class AstNodeReturn : AstNode {
 		this.parent = parent;
 		this.where = where;
 	}
+
+	override Type getType(AnalyzerScope s) { throw new Error("AstNodeReturn.getType"); }
 
 	override void analyze(AnalyzerScope s, Type neededType) {
 		this.parent = s.ctx.currentFunc;
@@ -1422,12 +1421,25 @@ class AstNodeIndex : AstNode {
 	AstNode base;
 	AstNode index;
 
-	this(AstNode base, AstNode index) {
+	Type type;
+
+	this(SourceLocation where, AstNode base, AstNode index) {
 		this.base = base;
 		this.index = index;
+		this.where = where;
 	}
 
-	override void analyze(AnalyzerScope s, Type neededType) {}
+	override Type getType(AnalyzerScope s) { return type; }
+
+	override void analyze(AnalyzerScope s, Type neededType) {
+		base.analyze(s, new TypeUnknown()); // TODO: TypeIndexable
+		if(!base.getType(s).instanceof!TypePointer) {
+			s.ctx.addError("Cannot index a non-pointer type '"
+				~ base.getType(s).toString() ~ "'!", where);
+		}
+
+		type = (cast(TypePointer)base.getType(s)).to;
+	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
 		auto ctx = s.genctx;
@@ -1498,24 +1510,26 @@ class AstNodeIden : AstNode {
 	}
 
 	override Type getType(AnalyzerScope s) {
-		return type;
+		return type !is null ? type : new TypeUnknown();
 	}
 
 	override void analyze(AnalyzerScope s, Type neededType) {
-		auto v = s.get(name);
+		auto v = s.ns.get(name);
 		if(v !is null) {
 			if(!neededType.assignable(v.type) && !neededType.instanceof!TypeUnknown) {
 				s.ctx.addError("Type mismatch: variable '" ~ name ~ "' is of type "
 					~ v.type.toString() ~ ", but " ~ neededType.toString() ~ " was expected.",
 					this.where);
+				type = new TypeUnknown();
 			}
-			type = v.type;
+			else type = v.type;
 		}
 		else {
 			auto t = s.ctx.typeContext.getType(name);
 			if(t !is null) type = new TypeType(t);
 			else {
 				s.ctx.addError("Unknown binding: '" ~ name ~ "'.", this.where);
+				type = new TypeUnknown();
 			}
 		}
 	}
@@ -1538,6 +1552,7 @@ class AstNodeDecl : AstNode {
 		this.value = value;
 	}
 
+	override Type getType(AnalyzerScope s) { throw new Error("AstNodeDecl.getType"); }
 	override void analyze(AnalyzerScope s, Type neededType) {
 		actualType = this.decl.type.get(s);
 		if(this.value !is null) {
@@ -1545,7 +1560,7 @@ class AstNodeDecl : AstNode {
 			if(instanceof!TypeUnknown(actualType))
 				actualType = this.value.getType(s);
 		}
-		s.vars[decl.name] = new ScopeVar(actualType);
+		s.ns.setHere(decl.name, new ScopeVar(actualType));
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
@@ -1598,6 +1613,11 @@ class AstNodeDecl : AstNode {
 			return global;
 		}
 		else {
+			if(value is null) {
+				ctx.sema.addError("[TODO] Declaring a variable with " ~
+				                  "no default value is not currently supported!", this.where);
+				return LLVMConstInt(LLVMIntType(32), 0, false);
+			}
 			// Local var
 			return ctx.createLocal(
 				ctx.getLLVMType(decl.type, s),
@@ -1931,6 +1951,15 @@ class AstNodeChar : AstNode {
 
 	override Type getType(AnalyzerScope s) {
 		return new TypeBasic(BasicType.t_char);
+	}
+
+	override void analyze(AnalyzerScope s, Type neededType) {
+		// We actually don't need to do type conversion like AstNodeInt
+		// does because char is the smallest type and can always be converted
+		// to another integer type.
+		if(!neededType.assignable(getType(s))) {
+			s.ctx.addError("Type char is not compatible to '" ~ neededType.toString() ~ "'!");
+		}
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
