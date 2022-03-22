@@ -16,7 +16,7 @@ main: int {
 
 ## Prerequisites
 
-* `llvm` (including dev libs)
+* `llvm-10` (including dev libs)
 * `binutils`, `binutils-avr` (if you need avr support)
 * dub
 * D compiler (dmd/ldc/gdc)
