@@ -6,14 +6,17 @@ _Ravef4exit:
 	movl $1, %eax
 	int $0x80
 
+.global _Ravef5write
+.type    _Ravef5write, @function
+_Ravef5write:
+	movl $1, %eax
+	int $0x80
+	ret
+
 .global _start
 .type	_start, @function
 _start:
 	call _Ravef4main
-	
-	push $1
-	push $0x21
-	call write
 
    	movl %eax, %ebx
-	call exit
+	call _Ravef4exit

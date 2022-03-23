@@ -1,4 +1,7 @@
+@inc "std/io";
+
 main: int {
-    a: int**;
+    a: char* = "Hello, world!";
+    write(1,a,strlen(a));
     ret 0;
 }

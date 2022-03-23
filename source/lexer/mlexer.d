@@ -124,6 +124,7 @@ class Lexer {
                 return to!char(
                     temp.replace("\\n","\n").replace("\\t","\t")
                     .replace("\\r","\r").replace("\\b","\b")
+                    .replace("\\0","\0")
                 );
             }
             else if(get(+4)=='\''){
