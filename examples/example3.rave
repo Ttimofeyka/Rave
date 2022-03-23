@@ -2,6 +2,12 @@
 
 main: int {
     a: char* = "Hello, world!";
-    write(1,a,strlen(a));
+    // Код с ошибкой
+    // puts(a);
+    // Этот тоже
+    // write(1,a,strlen(a));
+    // Но этот - без
+    b: int = strlen(a);
+    write(1,a,b);
     ret 0;
 }
