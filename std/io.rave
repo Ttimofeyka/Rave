@@ -1,0 +1,8 @@
+@inc "std/str";
+
+extern write(fd: int, buff: char*, size: int): void;
+
+/*puts(str: char*): void {
+    write(1,str,strlen(str));
+}*/
+// Выше ошибка, разберись

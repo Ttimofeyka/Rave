@@ -1,9 +1,14 @@
 <h1 align="center">Rave Language</h1>
 
+<<<<<<< HEAD
 Rave is a statically typed, compiled, procedural systems programming language. Taken
 inspiration from a lot of programming languages it is an easy-to-use but lower-level language.
 Current goals include compiling to arduino and other other similar platforms, all while the
 standard library is almost the same.
+=======
+Rave is a statically typed, compiled, procedural, general-purposeprogramming language. We (core contributors) took
+inspiration from C, C++, Rust and Assembly making an easy-to-use but lower-level language.
+>>>>>>> 2b1ce5aee9c2603bc8a472bf692515fc893e1d2d
 
 ## "Hello, World!" Example
 
@@ -18,7 +23,11 @@ main: int {
 
 ## Prerequisites
 
+<<<<<<< HEAD
 * `llvm` (including development libraries)
+=======
+* `llvm-10` (including dev libs)
+>>>>>>> 2b1ce5aee9c2603bc8a472bf692515fc893e1d2d
 * `binutils`, `binutils-avr` (if you need avr support)
 * dub
 * D compiler (dmd/ldc/gdc)

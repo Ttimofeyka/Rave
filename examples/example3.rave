@@ -1,39 +1,14 @@
-extern (C) malloc(size: ulong): void*;
-extern (C) free(ptr: void*): void;
-extern (C) memcpy(dst: void*, src: void*, size: ulong): void;
-extern (C) strlen(cstr: const char*): ulong;
-extern (C) fputs(file: void*, str: const char*): ulong;
-extern (C) stdout: void*;
-
-struct String {
-    this(len: ulong, data: const char*) {
-        this->length = len;
-        this->data = malloc(len + 1);
-        memcpy(this->data, data, len);
-        this->data[len] = 0;
-    }
-
-    static fromCStr(cstr: const char*) => String(strlen(cstr), cstr);
-}
-
-struct Person {
-    name: String;
-    age: uint;
-
-    this(name: String, age: uint) {
-        this->name = name;
-        this->age = age;
-    }
-
-    greet() {
-        fputs("Hello, ");
-        fputs(this->name.data);
-        fputs("!\n");
-    }
-}
+@inc "std/io";
 
 main: int {
-    p: Person = Person(String.fromCStr("World"), 999);
-    p.greet();
+    a: char* = "Hello, world!";
+    // Код с ошибкой
+    // puts(a);
+    // Этот тоже
+    // write(1,a,strlen(a));
+    // Но этот - без
+    b: int = strlen(a);
+    write(1, a, b);
+    write(1, a, strlen(a))
     ret 0;
 }

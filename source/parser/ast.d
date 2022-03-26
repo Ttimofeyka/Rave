@@ -510,6 +510,8 @@ class AstNodeFunction : AstNode {
 			for(int i = 0; i < decl.signature.args.length; i++) {
 				
 				paramTypes[i] = ctx.getLLVMType(type.args[i],s);
+				//char* ptype = LLVMPrintTypeToString(paramTypes[i]);
+				//writeln(fromStringz(ptype));
 				ctx.gargs.set(i, paramTypes[i], decl.argNames[i]);
 			}
 		}
@@ -559,8 +561,7 @@ class AstNodeFunction : AstNode {
 			funcType
 		);
 
-		// TODO: Remove gfuncs?
-		ctx.gfuncs.add(decl.name, func, retType);
+		ctx.gfuncs.add(decl.name, func, retType, type);
 		ctx.currfunc = func;
 
 		if(!decl.isExtern) {
@@ -591,7 +592,7 @@ class AstNodeFunction : AstNode {
 				LLVMValueRef[] retValues = array(map!(x => x.value)(genReturns));
 				LLVMBasicBlockRef[] retBlocks = array(map!(x => x.where)(genReturns));
 
-				if(retBlocks[0] == null) {
+				if(retBlocks.length == 1 || retBlocks[0] == null) {
 					LLVMBuildRet(builder, retValues[0]);
 				}
 				else {
@@ -615,8 +616,8 @@ class AstNodeFunction : AstNode {
 
 		ctx.currfunc = null;
 
-		// char* modString = LLVMPrintModuleToString(ctx.mod);
-		// writeln("Module Code: ", fromStringz(modString));
+		 char* modString = LLVMPrintModuleToString(ctx.mod);
+		 writeln("Module Code: ", fromStringz(modString));
 		LLVMVerifyFunction(func, 0);
 		
 		return func;
@@ -783,7 +784,7 @@ class AstNodeBinary : AstNode {
 						rhs.gen(s),
 						ctx.gstack[iden.name]
 				);
-				else if(auto index = lhs.instanceof!AstNodeIndex) {
+				else if(AstNodeIndex index = lhs.instanceof!AstNodeIndex) {
 					auto iindex = index.index.gen(s);
 					auto iiden = index.base.gen(s);
 					if(LLVMGetTypeKind(LLVMTypeOf(iiden)) == LLVMVectorTypeKind) {
@@ -800,7 +801,7 @@ class AstNodeBinary : AstNode {
 						return LLVMBuildStore(
 							ctx.currbuilder,
 							rhs.gen(s),
-							index.gen(s)
+							index.genForSet(s)
 						);
 					}
 				}
@@ -976,18 +977,23 @@ class AstNodeBinary : AstNode {
 				return bit_result;
 			case TokType.tok_equal:
 			case TokType.tok_nequal:
+				auto lhs_g = lhs.gen(s);
+				auto rhs_g = rhs.gen(s);
+				if(LLVMTypeOf(lhs_g) != LLVMTypeOf(rhs_g)) {
+					rhs_g = castNum(ctx, rhs_g, LLVMTypeOf(lhs_g), false);
+				}
 				if(type == TokType.tok_equal) return LLVMBuildICmp(
 					s.genctx.currbuilder,
 					LLVMIntEQ,
-					lhs.gen(s),
-					rhs.gen(s),
+					lhs_g,
+					rhs_g,
 					toStringz("icmp_eq")
 				);
 				return LLVMBuildICmp(
 					s.genctx.currbuilder,
 					LLVMIntNE,
-					lhs.gen(s),
-					rhs.gen(s),
+					lhs_g,
+					rhs_g,
 					toStringz("icmp_ne")
 				);
 			case TokType.tok_and:
@@ -1441,17 +1447,40 @@ class AstNodeIndex : AstNode {
 		type = (cast(TypePointer)base.getType(s)).to;
 	}
 
+	LLVMValueRef genForSet(AnalyzerScope s) {
+		auto ctx = s.genctx;
+
+		auto baseg = base.gen(s);
+		if(LLVMGetTypeKind(LLVMTypeOf(baseg)) == LLVMPointerTypeKind) {
+			return LLVMBuildGEP(
+				ctx.currbuilder,
+				baseg,
+				[index.gen(s)].ptr,
+				1,
+				toStringz("get_el_by_index")
+			);
+		}
+		return LLVMBuildExtractElement(
+			ctx.currbuilder,
+			baseg,
+			index.gen(s),
+			toStringz("get_el_by_index")
+		);
+	}
+
 	override LLVMValueRef gen(AnalyzerScope s) {
 		auto ctx = s.genctx;
 
 		auto baseg = base.gen(s);
-		if(LLVMGetTypeKind(LLVMTypeOf(baseg)) == LLVMPointerTypeKind) return LLVMBuildGEP(
-			ctx.currbuilder,
-			baseg,
-			[index.gen(s)].ptr,
-			1,
-			toStringz("get_el_by_index")
-		);
+		if(LLVMGetTypeKind(LLVMTypeOf(baseg)) == LLVMPointerTypeKind) {
+			return LLVMBuildLoad(ctx.currbuilder, LLVMBuildGEP(
+				ctx.currbuilder,
+				baseg,
+				[index.gen(s)].ptr,
+				1,
+				toStringz("get_el_by_index")
+			), toStringz("temp"));
+		}
 		return LLVMBuildExtractElement(
 			ctx.currbuilder,
 			baseg,
@@ -1752,16 +1781,17 @@ class AstNodeFuncCall : AstNode {
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
-		auto ctx = s.genctx;
+		GenerationContext ctx = s.genctx;
 		// _Ravef4exit, not exit! ctx.mangleQualifiedName([name], true) -> string
 		AstNodeIden n = cast(AstNodeIden)func;
 
 		LLVMValueRef* llvm_args = stackMemory.createBuffer!LLVMValueRef(args.length);
 		for(int i = 0; i < args.length; i++) {
+			writeln(args[i]);
 			llvm_args[i] = args[i].gen(s);
 		}
 
-		if(ctx.gfuncs.getType(n.name) == LLVMVoidType()) {
+		if(ctx.gfuncs.getFType(n.name).ret.toString() == "void") {
 			return LLVMBuildCall(
 				ctx.currbuilder,
 				ctx.gfuncs[n.name],
@@ -1854,7 +1884,7 @@ class AstNodeInt : AstNode {
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
-		auto ctx = s.genctx;
+		GenerationContext ctx = s.genctx;
 		TypeBasic type = cast(TypeBasic)valueType;
 
 		if(type is null) type = new TypeBasic(BasicType.t_int);
@@ -1929,10 +1959,10 @@ class AstNodeString : AstNode {
 
 	override LLVMValueRef gen(AnalyzerScope s) {
 		auto ctx = s.genctx;
-		return LLVMConstString(
-			cast(const char*)toStringz(value[0..$-1]),
-			cast(uint)value.length-1,
-			0
+		return LLVMBuildGlobalStringPtr(
+			ctx.currbuilder,
+			toStringz(value[0..$-1]),
+			toStringz("str")
 		);
 	}
 

@@ -189,6 +189,7 @@ class Token {
                 case "@inc": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_include; break;
                 case "@def": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_define; break;
                 case "@ifdef": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_ifdef; break;
+                case "@ifndef": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_ifndef; break;
                 case "@end": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_end; break;
                 // Identifier
                 default: this.type = TokType.tok_id; break;

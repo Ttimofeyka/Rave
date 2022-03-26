@@ -1,3 +1,20 @@
+sbrk(increment: int): void*
+{
+    global_mem[MEMORY_CAPACITY]: char = {0};
+    p_break: string := global_mem;
+
+    limit := global_mem + MEMORY_CAPACITY;
+    original := p_break;
+
+    if (increment < global_mem - p_break  ||  increment >= limit - p_break)
+    {
+        ret cast(void*)-1;
+    }
+    p_break += increment;
+
+    ret original;
+}
+
 initialized: bool = false;
 managed_memory_start: void*;
 last_valid_address: void*;
@@ -10,13 +27,12 @@ malloc_init: void {
 struct mem_control_block {
   is_available: int;
   size: int;
-};
+}
 
 free(firstbyte: void*): void {
   mcb: mem_control_block*;
   mcb = firstbyte - sizeof(mem_control_block);
   mcb->is_available = 1;
-  ret;
 }
 
 malloc(numbytes: long): void* {

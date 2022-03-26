@@ -104,13 +104,16 @@ class GPresets {
 class GFuncs {
     private LLVMValueRef[string] funcs;
     private LLVMTypeRef[string] types;
+	private TypeFunction[string] typesf;
 
-    void add(string n, LLVMValueRef f, LLVMTypeRef t) {
+    void add(string n, LLVMValueRef f, LLVMTypeRef t, TypeFunction tf) {
         funcs[n] = f;
         types[n] = t;
+		typesf[n] = tf;
     }
 
     LLVMTypeRef getType(string n) {return types[n];}
+	TypeFunction getFType(string n) {return typesf[n];}
 
     LLVMValueRef opIndex(string n)
     {
@@ -162,10 +165,14 @@ class GenerationContext {
 			if(auto tb = t.instanceof!TypeBasic) {
 				switch(tb.basic) {
 					case BasicType.t_int:
+					case BasicType.t_ushort:
 						return LLVMInt32Type();
 					case BasicType.t_short:
+					case BasicType.t_uchar:
 						return LLVMInt16Type();
 					case BasicType.t_long:
+					case BasicType.t_uint:
+					case BasicType.t_usize:
 						return LLVMInt64Type();
 					case BasicType.t_char:
 						return LLVMInt8Type();

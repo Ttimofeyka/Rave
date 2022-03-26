@@ -1,0 +1,10 @@
+@inc ":std/tiny/sys"
+
+write(msg: const char*) {
+
+}
+
+writeln(msg: const char*) {
+    write(msg);
+    writec(10);
+}

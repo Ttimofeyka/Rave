@@ -1,0 +1,4 @@
+
+syscall0(n: int);
+syscall1(n: int, a: void*);
+syscall2(n: int, a: void*, b: void*);

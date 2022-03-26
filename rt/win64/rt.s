@@ -11,6 +11,5 @@ _Ravef4exit:
 .type   _start, @function
 _start:
 	call _Ravef4main
-    movq %rax, %rcx
-    call ExitProcess
+    call _Ravef4exit
     
