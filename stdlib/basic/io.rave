@@ -1,0 +1,4 @@
+@inc ":std/string";
+
+extern write(fd: int, buff: char*, size: int): void;
+puts(str: char*) => write(1, str, StdString.lengthOf(str));

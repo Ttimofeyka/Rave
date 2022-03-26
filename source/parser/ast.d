@@ -1095,20 +1095,46 @@ class AstNodeUnary : AstNode {
 	AstNode node;
 	TokType type;
 
+	Type vType;
+
 	this(SourceLocation where, AstNode node, TokType type) {
 		this.where = where;
 		this.node = node;
 		this.type = type;
 	}
 
-	override Type getType(AnalyzerScope s) { throw new Error("AstNodeIndex.getType"); }
-	override void analyze(AnalyzerScope s, Type neededType) { throw new Error("AstNodeIndex.analyze TODO"); }
+	override Type getType(AnalyzerScope s) { return vType; }
+	override void analyze(AnalyzerScope s, Type neededType) {
+		if(type == TokType.tok_minus) {
+			this.node.analyze(s, new TypeBasic(BasicType.t_int));
+			vType = new TypeBasic(BasicType.t_int);
+			return;
+		}
+		if(type == TokType.tok_multiply) {
+			this.node.analyze(s, new TypeUnknown());
+			auto t = this.node.getType(s);
+			if(!t.instanceof!TypePointer) {
+				s.ctx.addError("Pointer type expected for dereference"
+					~ " operator, but got '" ~ t.toString() ~ "' instead.", where);
+				vType = new TypeBasic(BasicType.t_int);
+			}
+			vType = (cast(TypePointer)t).to;
+			return;
+		}
+		if(type == TokType.tok_r_plu_plu || type == TokType.tok_plu_plu
+		|| type == TokType.tok_r_min_min || type == TokType.tok_min_min) {
+			this.node.analyze(s, new TypeBasic(BasicType.t_int));
+			vType = new TypeBasic(BasicType.t_int);
+			return;
+		}
+		throw new Error("AstNodeUnary TODO " ~ to!string(this.type));
+	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
 		auto ctx = s.genctx;
 		if(type == TokType.tok_multiply) {
 			auto val = node.gen(s);
-			auto a = LLVMBuildAlloca(
+			auto a = LLVMBuildAlloca( // WTF??
 				ctx.currbuilder,
 				getAType(val),
 				toStringz("unary")

@@ -1,0 +1,7 @@
+struct StdString {
+    static lengthOf(s: const char*): ulong {
+        c: ulong = 0;
+        while(*s++) c++;
+        ret c;
+    }
+}

@@ -1,14 +1,10 @@
-@inc "std/io";
+@inc ":basic/io";
 
 main: int {
     a: char* = "Hello, world!";
-    // Код с ошибкой
-    // puts(a);
-    // Этот тоже
-    // write(1,a,strlen(a));
-    // Но этот - без
+    puts(a);
     b: int = strlen(a);
     write(1, a, b);
-    write(1, a, strlen(a))
+    write(1, a, strlen(a));
     ret 0;
 }
