@@ -12,6 +12,13 @@ _Ravef5write:
 	movq $1, %rax
 	syscall
 	ret
+	
+.global _Ravef4read
+.type   _Ravef4read, @function
+_Ravef4read:
+	movq $0, %rax
+	syscall
+	ret
 
 .global _start
 .type   _start, @function
