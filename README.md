@@ -1,6 +1,6 @@
 <h1 align="center">Rave Language</h1>
 
-Rave is a statically typed, compiled, procedural, general-purposeprogramming language. We (core contributors) took
+Rave is a statically typed, compiled, procedural, general-purpose programming language. We (core contributors) took
 inspiration from C, C++, Rust, Assembly and we are making an easy-to-use but low-level language.
 
 ## "Hello, world!" Example
