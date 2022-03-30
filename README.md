@@ -6,7 +6,7 @@ inspiration from C, C++, Rust, Assembly and we are making an easy-to-use but low
 ## "Hello, world!" Example
 
 ```nasm
-@inc "std";
+@inc "std/io";
 
 main: int {
   writeln("Hello, world!");
