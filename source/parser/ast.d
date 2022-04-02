@@ -408,6 +408,37 @@ class DeclarationStruct : Declaration {
 	}
 }
 
+class AstNodeStruct : AstNode {
+	AstNodeDecl[] variables;
+	AstNodeFunction[] methods;
+	string name;
+
+	this(string name, AstNodeDecl[] v, AstNodeFunction[] m) {
+		this.variables = v.dup;
+		this.methods = m.dup;
+		this.name = name;
+	}
+
+	override void analyze(AnalyzerScope s, Type neededType) {
+		
+	}
+
+	override LLVMValueRef gen(AnalyzerScope s) {
+		GenerationContext ctx = s.genctx;
+		LLVMTypeRef* vtypes = cast(LLVMTypeRef*)malloc(LLVMValueRef.sizeof*variables.length);
+		for(int i=0; i<variables.length; i++) {
+			vtypes[i] = ctx.getLLVMType(variables[i].decl.type,s);	
+			ctx.gstructs_vars[cast(immutable)[name,variables[i].decl.name]] = i;		
+		}
+		ctx.gstructs[name] = LLVMStructType(vtypes, cast(uint)variables.length, false);
+		return null;
+	}
+
+	override string toString() const {
+		return "AstNodeStruct";
+	}
+}
+
 struct ReturnStmt {
 	AstNodeReturn node;
 	AnalyzerScope scope_;
@@ -489,7 +520,6 @@ class AstNodeFunction : AstNode {
 					ret.node.where);
 				s.ctx.addError("Return types don't match in function '" ~ decl.name ~ "'.", this.where);
 				break;*/
-				// Уебан тупой, пофикси чтоб можно было индексы и всё такое
 			}
 		}
 
@@ -509,7 +539,7 @@ class AstNodeFunction : AstNode {
 		// TODO: Check if types are not inferred!
 		type = new TypeFunction(retType, argTypes);
 		s.vars[this.decl.name] = new ScopeVar(type, decl.isStatic, decl.isExtern);
-	}
+		}
 
 	private LLVMTypeRef* getParamsTypes(AnalyzerScope s) {
 		GenerationContext ctx = s.genctx;
@@ -597,6 +627,14 @@ class AstNodeFunction : AstNode {
 
 			funcBody.gen(s);
 
+			//writeln(decl.signature.ret.toString());
+			if(decl.signature.ret.instanceof!AtstNodeVoid) {
+				LLVMBuildBr(
+					ctx.currbuilder,
+					exitBlock
+				);
+			}
+
 			LLVMMoveBasicBlockAfter(exitBlock, LLVMGetLastBasicBlock(func));
 			LLVMPositionBuilderAtEnd(builder, exitBlock);
 			if(!type.ret.instanceof!TypeVoid) {
@@ -627,8 +665,8 @@ class AstNodeFunction : AstNode {
 
 		ctx.currfunc = null;
 
-		 char* modString = LLVMPrintModuleToString(ctx.mod);
-		 writeln("Module Code: ", fromStringz(modString));
+		//char* modString = LLVMPrintModuleToString(ctx.mod);
+		//writeln("Module Code: ", fromStringz(modString));
 		LLVMVerifyFunction(func, 0);
 		
 		return func;
@@ -755,12 +793,18 @@ class AstNodeGet : AstNode {
 			s.ctx.addError("No such function in scope: '" ~ field ~ "'.", this.where);
 		}
 
-		if(isSugar)
+		/*if(isSugar)
 			s.ctx.addError("Operator '->' expects a pointer to a structure on the left hand side. "
 				~ "Got '" ~ t.toString() ~ "' instead.", this.where);
 		else
 			s.ctx.addError("Operator '.' expects a structure on the left hand side. "
-				~ "Got '" ~ t.toString() ~ "' instead.", this.where);
+				~ "Got '" ~ t.toString() ~ "' instead.", this.where);*/
+	}
+
+	override LLVMValueRef gen(AnalyzerScope s) {
+		GenerationContext ctx = s.genctx;
+		writeln("A");
+		return null;
 	}
 
 	debug {
@@ -1021,6 +1065,9 @@ class AstNodeBinary : AstNode {
 					rhs.gen(s),
 					toStringz("or_2cmp")
 				);
+			case TokType.tok_struct_get:
+				writeln("A");
+				return null;
 			default:
 				break;
 		}
@@ -1032,7 +1079,6 @@ class AstNodeBinary : AstNode {
 	}
 
 	private void checkTypes(AnalyzerScope s, Type neededType) {
-
 		if(!neededType.instanceof!TypeUnknown) {
 			if(neededType.assignable(lhs.getType(s))
 			&& neededType.assignable(rhs.getType(s))) {
@@ -1110,6 +1156,10 @@ class AstNodeUnary : AstNode {
 		this.type = type;
 	}
 
+	override void analyze(AnalyzerScope s, Type neededType) {
+
+	}
+
 	override LLVMValueRef gen(AnalyzerScope s) {
 		auto ctx = s.genctx;
 		if(type == TokType.tok_multiply) {
@@ -1125,6 +1175,13 @@ class AstNodeUnary : AstNode {
 				a
 			);
 			return a;
+		}
+		else if(type == TokType.tok_minus) {
+			return LLVMBuildNeg(
+				ctx.currbuilder,
+				node.gen(s),
+				toStringz("unary")
+			);
 		}
 		return null;
 	}
@@ -1382,7 +1439,7 @@ class AstNodeReturn : AstNode {
 			s.returnType = t;
 		}
 		else if(!s.neededReturnType.assignable(t)) {
-			if(!value.instanceof!AstNodeIndex) {
+			if(!value.instanceof!AstNodeIndex && !value.instanceof!AstNodeUnary) {
 				s.ctx.addError("Wrong return type: expected '" ~ s.neededReturnType.toString()
 					~ "', got: '" ~ t.toString() ~ '\'', this.where);
 				s.hadReturn = true;
@@ -1578,7 +1635,7 @@ class AstNodeDecl : AstNode {
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
-		auto ctx = s.genctx;
+		GenerationContext ctx = s.genctx;
 		if(ctx.gstack.isVariable(decl.name)) {
 			writeln("The variable " ~ decl.name ~ " has been declared multiple times!");
 			exit(-1);
@@ -1628,6 +1685,15 @@ class AstNodeDecl : AstNode {
 		}
 		else {
 			// Local var
+			if(AtstNodePointer p = decl.type.instanceof!AtstNodePointer) {
+				// Struct is type
+				AtstNodeName sname = cast(AtstNodeName)p.node;
+				return LLVMBuildAlloca(
+					ctx.currbuilder,
+					ctx.gstructs[sname.name],
+					toStringz("local")
+				);
+			}
 			return ctx.createLocal(
 				ctx.getLLVMType(decl.type, s),
 				value.gen(s),
@@ -1765,10 +1831,10 @@ class AstNodeFuncCall : AstNode {
 		// _Ravef4exit, not exit! ctx.mangleQualifiedName([name], true) -> string
 		AstNodeIden n = cast(AstNodeIden)func;
 
-		LLVMValueRef* llvm_args = stackMemory.createBuffer!LLVMValueRef(args.length);
+		LLVMValueRef* llvm_args = cast(LLVMValueRef*)malloc(LLVMValueRef.sizeof * args.length);
 		for(int i = 0; i < args.length; i++) {
-			writeln(args[i]);
-			llvm_args[i] = args[i].gen(s);
+			auto genv = args[i].gen(s);
+			llvm_args[i] = genv;
 		}
 
 		if(ctx.gfuncs.getFType(n.name).ret.toString() == "void") {
@@ -1829,7 +1895,7 @@ class AstNodeInt : AstNode {
 		}
 		else {
 			if(!_isArithmetic(neededType)) {
-				s.ctx.addError("Expected " ~ neededType.toString() ~ ", got an integer", this.where);
+				//s.ctx.addError("Expected " ~ neededType.toString() ~ ", got an integer", this.where);
 			}
 			this.valueType = neededType;
 		}

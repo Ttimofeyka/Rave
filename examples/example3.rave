@@ -1,13 +1,11 @@
 @inc "std/io";
 
 main: int {
-    a: char* = "Hello, world!";
-    // Код с ошибкой
-    // puts(a);
-    // Этот тоже
-    // write(1,a,strlen(a));
-    // Но этот - без
-    b: int = strlen(a);
-    write(1,a,b);
+    puts("Hello, world!\n");
+
+    fd: int = fopen("test.txt", 65, 2);
+    fwrite(fd, "Hi!");
+    fclose(fd);
+
     ret 0;
 }

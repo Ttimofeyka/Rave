@@ -128,6 +128,8 @@ class GenerationContext {
 	GStack gstack;
 	GArgs gargs;
 	GFuncs gfuncs;
+	LLVMTypeRef[string] gstructs;
+	int[string[]] gstructs_vars;
     GPresets presets;
 	LLVMValueRef currfunc;
 	int basicblocks_count = 0;
@@ -135,6 +137,7 @@ class GenerationContext {
     LLVMBasicBlockRef currbb;
 	LLVMBasicBlockRef exitbb; // if CYCLE or IF
 	LLVMBasicBlockRef thenbb; // if CYCLE or IF
+	string target_platform;
 
     this() {
         mod = LLVMModuleCreateWithName(toStringz("rave"));
@@ -208,11 +211,12 @@ class GenerationContext {
 			 ||(t==LLVMInt16Type())||(t==LLVMInt32Type());
 	}
 
-    void gen(AnalyzerScope s, AstNode[] nodes, string file, bool debugMode) {
+    void gen(string t, AnalyzerScope s, AstNode[] nodes, string file, bool debugMode) {
 		for(int i=0; i<nodes.length; i++) {
 			//nodes[i].debugPrint(0);
 			nodes[i].gen(s);
 		}
+		this.target_platform = t;
 		genTarget(file, debugMode);
 	}
 
@@ -221,11 +225,10 @@ class GenerationContext {
 
 		char* errors;
 		LLVMTargetRef target;
-    	LLVMGetTargetFromTriple(LLVMGetDefaultTargetTriple(), &target, &errors);
-
+    	LLVMGetTargetFromTriple(toStringz(target_platform), &target, &errors);
     	LLVMTargetMachineRef machine = LLVMCreateTargetMachine(
 			target, 
-			LLVMGetDefaultTargetTriple(), 
+			toStringz(target_platform), 
 			"generic", 
 			LLVMGetHostCPUFeatures(),
 			 LLVMCodeGenLevelDefault, 
@@ -234,15 +237,15 @@ class GenerationContext {
 
 		LLVMDisposeMessage(errors);
 
-    	LLVMSetTarget(this.mod, LLVMGetDefaultTargetTriple());
+    	LLVMSetTarget(this.mod, toStringz(target_platform));
     	LLVMTargetDataRef datalayout = LLVMCreateTargetDataLayout(machine);
     	char* datalayout_str = LLVMCopyStringRepOfTargetData(datalayout);
     	LLVMSetDataLayout(this.mod, datalayout_str);
     	LLVMDisposeMessage(datalayout_str);
 		char* file_ptr = cast(char*)toStringz(file);
 
-		char* err;
-		LLVMPrintModuleToFile(this.mod, "tmp.ll", &err);
+		//char* err;
+		//LLVMPrintModuleToFile(this.mod, "tmp.ll", &err);
 
     	LLVMTargetMachineEmitToFile(machine,this.mod,file_ptr, LLVMObjectFile, &errors);
 	}

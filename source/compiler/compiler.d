@@ -51,7 +51,7 @@ class Compiler {
         ctx.setType("void",   new TypeVoid());
     }
 
-    public CompilerError generate(string outputFile) {
+    public CompilerError generate(string t, string outputFile) {
         if(debugInfo.printAst) writeln("------------------ AST -------------------");
 
         bool hadErrors = false;
@@ -87,7 +87,7 @@ class Compiler {
         if(hadErrors) return CompilerError(true, format("Semantic analisys failed with %d errors.", errorCount));
 
         if(debugInfo.printAst) writeln("------------------ Generating -------------------");
-        genctx.gen(semaScope, _program.nodes, outputFile, debugInfo.debugMode);
+        genctx.gen(t, semaScope, _program.nodes, outputFile, debugInfo.debugMode);
         if(genctx.sema.errorCount > 0) {
             genctx.sema.flushErrors();
             return CompilerError(true, format("Code generation failed with %d errors.", errorCount));

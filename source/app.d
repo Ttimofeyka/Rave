@@ -11,6 +11,12 @@ import parser.util;
 import compiler.compiler;
 import user.jsondoc;
 import std.getopt;
+import std.process;
+import std.file : thisExePath;
+import std.array;
+import std.string;
+import std.file : remove;
+import std.conv : to;
 
 void main(string[] args)
 {
@@ -18,11 +24,13 @@ void main(string[] args)
 
 	string outputFile = "a.o";
 	string stdlibIncPath = buildNormalizedPath(absolutePath("./stdlib"));
-	string outputType = "i686-linux";
+	string outputType = "";
 	bool debugMode = false;
 	bool debugModeFull = false;
 	bool generateDocJson = false;
 	string docJsonFile = "docs.json";
+	bool nolink = false;
+	bool not_delete_o = false;
 
 	auto helpInformation = getopt(
 	    args,
@@ -30,9 +38,11 @@ void main(string[] args)
 	    "debug", "Debug mode", &debugMode,
 	    "debug-full", "Full debug mode", &debugModeFull,
 	    "stdinc", "Stdlib include path (':' in @inc)", &stdlibIncPath,
-		"type", "Output file type", &outputType,
+		"type", "Output file(platform) type", &outputType,
 		"doc-json", "Generate JSON documentation file", &generateDocJson,
 		"doc-json-file", "JSON documentation file name", &docJsonFile,
+		"nolink", "Disable auto-link", &nolink,
+		"no-rm-obj", "Don't remove object file", &not_delete_o
 	);
 	
     if(helpInformation.helpWanted)
@@ -40,6 +50,10 @@ void main(string[] args)
 	    defaultGetoptPrinter("Help", helpInformation.options);
 	    return;
     }
+
+	if(outputType == "") {
+		outputType = to!string(fromStringz(LLVMGetDefaultTargetTriple()));
+	}
 
     string[] sourceFiles = args[1..$].dup;
     string sourceFile = sourceFiles[0];
@@ -60,7 +74,6 @@ void main(string[] args)
 
 	if(debugMode) defines["_DEBUG"] = new TList();
 	else defines["_NDEBUG"] = new TList();
-	
 
 	// writeln("------------------ Lexer -------------------");
 	auto lexer = new Lexer(sourceFile, readText(sourceFile));
@@ -84,7 +97,7 @@ void main(string[] args)
 	Compiler comp = new Compiler(parser.getDecls(), nodes);
 	comp.debugInfo.debugMode = debugMode;
 	comp.debugInfo.printAst = debugModeFull;
-	CompilerError err = comp.generate(outputFile);
+	CompilerError err = comp.generate(outputType, outputFile~".o");
 
 	if(err.hadError) {
 		stackMemory.cleanup();
@@ -98,4 +111,15 @@ void main(string[] args)
 	}
 
 	stackMemory.cleanup();
+
+	// Linking with runtime
+	if(!nolink){
+		string platformFileType;
+		if(outputType.indexOf("linux") >= 0) platformFileType = ".o";
+		string path_to_rt = thisExePath()
+			.replace("/rave.exe","/")
+			.replace("/rave","/")~"rt/"~outputType~"/rt"~platformFileType;
+		executeShell("ld.lld "~outputFile~".o "~path_to_rt~" -o "~outputFile);
+		if(!not_delete_o) remove(outputFile~".o");
+	}
 }

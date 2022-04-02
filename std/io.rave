@@ -1,8 +1,18 @@
+@ifndef RAVE_STD_IO
+@def RAVE_STD_IO @end
+
 @inc "std/str";
 
-extern write(fd: int, buff: char*, size: int): void;
+extern fopen(filename: char*, flags: int, mode: int): int;
+extern fclose(fd: int);
+extern _fwrite(fd: int, buff: char*, size: int);
 
-/*puts(str: char*): void {
-    write(1,str,strlen(str));
-}*/
-// Выше ошибка, разберись
+fwrite(fd: int, buff: char*): void {
+    _fwrite(fd, buff, strlen(buff));
+}
+
+puts(str: char*): void {
+    fwrite(1,str);
+}
+
+@end

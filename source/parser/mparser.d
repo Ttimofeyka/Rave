@@ -506,7 +506,8 @@ class Parser {
 			TokType.tok_multiply,
 			TokType.tok_bit_and,
 			TokType.tok_plu_plu,
-			TokType.tok_min_min
+			TokType.tok_min_min,
+			TokType.tok_minus
 		];
 
 		if(OPERATORS.canFind(peek().type)) {
@@ -727,6 +728,43 @@ class Parser {
 		return peek().type == TokType.tok_cmd && canFind(CMDS, peek().cmd);
 	}
 
+	private AstNode parseStruct() {
+		AstNodeDecl[] variables;
+		AstNodeFunction[] methods;
+		next(); // Ignore "struct"
+
+		string sname = expectToken(TokType.tok_id).value;
+
+		expectToken(TokType.tok_2lbra);
+
+		while(peek().type != TokType.tok_2rbra) {
+			Decl d = parseDecl();
+			if(!d.isMethod) {
+				auto vard = declToVarDecl(d);
+				variables ~= new AstNodeDecl(vard, d.value);
+			}
+			else {
+				auto funcd = declToFuncDecl(d);
+				methods ~= new AstNodeFunction(d.nameLoc, funcd, d.value);
+			}
+
+			// if(canFind!((decl, name) => decl.name == name)(st.fieldDecls, d.name)
+			// || canFind!((decl, name) => decl.name == name)(st.methodDecls, d.name)) {
+			// 	error("Field or function with the same name already exists: " ~ d.name);
+			// }
+			// else {
+			// 	if(!d.isMethod) {
+			// 	}
+			// 	else {
+			// 		st.methodDecls ~= declToFuncDecl(d);
+			// 	}
+			// }
+		}
+
+		expectToken(TokType.tok_2rbra);
+		return new AstNodeStruct(sname, variables, methods);
+	}
+
 	private AstNode parseTopLevel() {
 		// top-level ::= <func-decl> (';' | <block>)
 		//             | extern <func-decl> ';'
@@ -739,8 +777,7 @@ class Parser {
 		}
 		
 		if(isTypeDecl()) {
-			_decls ~= parseTypeDecl();
-			return parseTopLevel(); // we ignore type declarations.
+			return parseStruct();
 		}
 		
 		if(peek().type == TokType.tok_eof) {
