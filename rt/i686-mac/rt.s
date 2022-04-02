@@ -9,7 +9,14 @@ _Ravef4exit:
 .global _Ravef5write
 .type    _Ravef5write, @function
 _Ravef5write:
-	movl $1, %eax
+	movl $4, %eax
+	int $0x80
+	ret
+	
+.global _Ravef4read
+.type   _Ravef4read, @function
+_Ravef4read:
+	movl $3, %eax
 	int $0x80
 	ret
 
