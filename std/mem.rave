@@ -1,14 +1,17 @@
 sbrk(increment: int): void*
 {
-    global_mem[MEMORY_CAPACITY]: char = {0};
-    p_break: string := global_mem;
+    global_mem: char[50000];
+    p_break: char* = global_mem;
 
-    limit := global_mem + MEMORY_CAPACITY;
+    limit := global_mem + 50000;
     original := p_break;
 
-    if (increment < global_mem - p_break  ||  increment >= limit - p_break)
+    if (increment < (global_mem - p_break))
     {
         ret cast(void*)-1;
+    }
+    if (increment >= limit - p_break) {
+      ret cast(void*)-1;
     }
     p_break += increment;
 

@@ -180,7 +180,6 @@ class Token {
                 case "ret": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_ret; break;
                 case "break": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_break; break;
                 case "continue": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_continue; break;
-                case "sizeof": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_sizeof; break;
                 case "enum": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_enum; break;
                 case "static": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_static; break;
                 case "const": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_const; break;

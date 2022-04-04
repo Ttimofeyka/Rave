@@ -13,9 +13,9 @@ _Ravef7_fwrite:
 	syscall
 	ret
 	
-.global _Ravef4read
-.type   _Ravef4read, @function
-_Ravef4read:
+.global _Ravef5fread
+.type   _Ravef5fread, @function
+_Ravef5fread:
 	movq $0, %rax
 	syscall
 	ret
@@ -31,6 +31,41 @@ _Ravef5fopen:
 .type   _Ravef6fclose, @function
 _Ravef6fclose:
 	movq $3, %rax
+	syscall
+	ret
+
+.global _Ravef5mkdir
+.type   _Ravef5mkdir, @function
+_Ravef5mkdir:
+	movq $83, %rax
+	syscall
+	ret
+
+.global _Ravef5rmdir
+.type   _Ravef5rmdir, @function
+_Ravef5rmdir:
+	movq $84, %rax
+	syscall
+	ret
+
+.global _Ravef5chmod
+.type   _Ravef5chmod, @function
+_Ravef5chmod:
+	movq $90, %rax
+	syscall
+	ret
+
+.global _Ravef6uselib
+.type   _Ravef6uselib, @function
+_Ravef6uselib:
+	movq $134, %rax
+	syscall
+	ret
+
+.global _Ravef6fchmod
+.type   _Ravef6fchmod, @function
+_Ravef6fchmod:
+	movq $91, %rax
 	syscall
 	ret
 

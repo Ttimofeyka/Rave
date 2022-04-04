@@ -460,9 +460,11 @@ class Parser {
 			     || peek().type == TokType.tok_dot)
 			{
 				auto tok = next();
+				auto b = _toks[_idx-2];
+				writeln(b.value);
 				auto t = tok.type;
 				string field = expectToken(TokType.tok_id).value;
-				base = new AstNodeGet(tok.loc, base, field, t == TokType.tok_struct_get);
+				base = new AstNodeGet(b.value, tok.loc, base, field, t == TokType.tok_struct_get);
 			}
 			else if(peek().type == TokType.tok_plu_plu) {
 				auto tok = next();
@@ -637,6 +639,15 @@ class Parser {
 		expectToken(TokType.tok_rpar);
 		auto body_ = parseStmt();
 		return new AstNodeWhile(cond, body_);
+	}
+
+	private AstNode parseSizeof() {
+		assert(peek().cmd == TokCmd.cmd_sizeof);
+		next();
+		expectToken(TokType.tok_lpar);
+		auto type = parseExpr();
+		expectToken(TokType.tok_rpar);
+		return new AstNodeSizeof(type);
 	}
 
 	private AstNode parseStmt() {

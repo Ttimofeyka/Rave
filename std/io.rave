@@ -6,6 +6,12 @@
 extern fopen(filename: char*, flags: int, mode: int): int;
 extern fclose(fd: int);
 extern _fwrite(fd: int, buff: char*, size: int);
+extern fread(fd: int, buff: char*, size: int);
+extern mkdir(pathname: char*, mode: int);
+extern rmdir(pathname: char*);
+extern chmod(file: char*, mode: int);
+extern uselib(file: char*);
+extern fchmod(fd: int, mode: int);
 
 fwrite(fd: int, buff: char*): void {
     _fwrite(fd, buff, strlen(buff));

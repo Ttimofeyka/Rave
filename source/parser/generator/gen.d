@@ -16,6 +16,7 @@ import std.uni;
 class GStack {
     private LLVMValueRef[string] globals; // Global variables
     private LLVMValueRef[string] locals; // Local variables
+	string[string] structures;
 	bool setVar = false;
 
     this() {}
@@ -121,6 +122,26 @@ class GFuncs {
     }
 }
 
+
+class GStructs {
+	LLVMTypeRef[string] ss;
+	private uint[string[]] vs;
+	string[string] structs;
+
+	this() {}
+
+	void addS(LLVMTypeRef s, string n) {
+		this.ss[n] = s;
+	}
+
+	void addV(uint index, string name, string sname) {
+		this.vs[cast(immutable)[sname,name]] = index;
+	}
+
+	LLVMTypeRef getS(string n) {return ss[n];}
+	uint getV(string vname, string sname) {return vs[cast(immutable)[sname,vname]];}
+}
+
 class GenerationContext {
     LLVMModuleRef mod;
 	SemanticAnalyzerContext sema;
@@ -128,8 +149,7 @@ class GenerationContext {
 	GStack gstack;
 	GArgs gargs;
 	GFuncs gfuncs;
-	LLVMTypeRef[string] gstructs;
-	int[string[]] gstructs_vars;
+	GStructs gstructs;
     GPresets presets;
 	LLVMValueRef currfunc;
 	int basicblocks_count = 0;
@@ -146,6 +166,7 @@ class GenerationContext {
 		gargs = new GArgs();
         presets = new GPresets();
         gfuncs = new GFuncs();
+		gstructs = new GStructs();
 
 		// Initialization
 		LLVMInitializeAllTargets();
@@ -201,6 +222,12 @@ class GenerationContext {
 				auto array_type = getLLVMType(a.node,s);
 				return LLVMVectorType(array_type, cast(uint)a.count);
 			}
+			else if(AtstNodeName struc = t.instanceof!AtstNodeName) {
+				// If struct then
+				if(struc.name in s.genctx.gstructs.ss) {
+					return s.genctx.gstructs.getS(struc.name);
+				}
+			}
 			// Else get Type and return getLLVMType(Type)
 			return getLLVMType(t.get(s),s);
 		}
@@ -244,8 +271,10 @@ class GenerationContext {
     	LLVMDisposeMessage(datalayout_str);
 		char* file_ptr = cast(char*)toStringz(file);
 
-		//char* err;
-		//LLVMPrintModuleToFile(this.mod, "tmp.ll", &err);
+		if(d) {
+			char* err;
+			LLVMPrintModuleToFile(this.mod, "tmp.ll", &err);
+		}
 
     	LLVMTargetMachineEmitToFile(machine,this.mod,file_ptr, LLVMObjectFile, &errors);
 	}

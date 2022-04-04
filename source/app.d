@@ -113,6 +113,10 @@ void main(string[] args)
 	stackMemory.cleanup();
 
 	// Linking with runtime
+	if(outputType.indexOf("x86_64") >=0 && outputType.indexOf("linux") >=0) outputType = "x86_64-linux";
+	else if(outputType.indexOf("i386") >=0 || outputType.indexOf("i686") >=0) {
+		outputType = "i686-linux";
+	}
 	if(!nolink){
 		string platformFileType;
 		if(outputType.indexOf("linux") >= 0) platformFileType = ".o";

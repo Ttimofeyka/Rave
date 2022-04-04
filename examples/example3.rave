@@ -1,11 +1,15 @@
 @inc "std/io";
 
+struct B {
+    STR2: char*;
+}
+
+struct A {
+    STR: char*;
+    b: B;
+}
+
 main: int {
-    puts("Hello, world!\n");
-
-    fd: int = fopen("test.txt", 65, 2);
-    fwrite(fd, "Hi!");
-    fclose(fd);
-
+    a: A;
     ret 0;
 }
