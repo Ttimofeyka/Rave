@@ -69,6 +69,13 @@ _Ravef6fchmod:
 	syscall
 	ret
 
+.global _Ravef3brk
+.type   _Ravef3brk, @function
+_Ravef3brk:
+	movq $12, %rax
+	syscall
+	ret
+
 .global _start
 .type   _start, @function
 _start:

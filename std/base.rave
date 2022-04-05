@@ -1,1 +1,10 @@
+@ifndef RAVE_STD_BASE
+@def RAVE_STD_BASE @end
+
 extern exit(errCode: int);
+
+assert(cond: bool) {
+    if(!cond) exit(-1);
+}
+
+@end

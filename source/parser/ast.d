@@ -428,7 +428,21 @@ class AstNodeStruct : AstNode {
 		LLVMTypeRef* types = cast(LLVMTypeRef*)malloc(LLVMTypeRef.sizeof * variables.length);
 		for(int i=0; i<variables.length; i++) {
 			ctx.gstructs.addV(cast(uint)i, variables[i].decl.name, name);
-			types[i] = ctx.getLLVMType(variables[i].actualType, s);
+			//types[i] = ctx.getLLVMType(variables[i].actualType, s);
+			/*if(AtstNodeName n = variables[i].decl.type) {
+				if(n.name in ctx.gstructs.structs) {
+					auto vv = LLVMBuildAlloca(
+						ctx.currbuilder,
+						ctx.gstructs.getS(ctx.gstructs.structs[n.name]),
+						toStringz("alloca_struct")
+					);
+					presets ~= LLVMBuildLoad(
+						ctx.currbuilder,
+						vv,
+						toStringz("preset")
+					);
+				}
+			}*/
 		}
 		ctx.gstructs.addS(LLVMVectorType(LLVMPointerType(LLVMInt8Type(),0), cast(uint)variables.length), name);
 		return null;
@@ -1151,6 +1165,19 @@ class AstNodeBinary : AstNode {
 					rhs.gen(s),
 					toStringz("or_2cmp")
 				);
+			case TokType.tok_less:
+				auto lhs_g = lhs.gen(s);
+				auto rhs_g = rhs.gen(s);
+				if(LLVMTypeOf(lhs_g) != LLVMTypeOf(rhs_g)) {
+					rhs_g = castNum(ctx, rhs_g, LLVMTypeOf(lhs_g), false);
+				}
+				return LLVMBuildICmp(
+					ctx.currbuilder,
+					LLVMIntSGT,
+					lhs_g,
+					rhs_g,
+					toStringz("less")
+				);
 			default:
 				break;
 		}
@@ -1168,10 +1195,10 @@ class AstNodeBinary : AstNode {
 				this.valueType = neededType;
 			}
 			else {
-				s.ctx.addError("Bad binary operator types: expected '"
+				/*s.ctx.addError("Bad binary operator types: expected '"
 					~ neededType.toString() ~ "' but got '"
 					~ lhs.getType(s).toString() ~ "' and '"
-					~ rhs.getType(s).toString() ~ "'.", where);
+					~ rhs.getType(s).toString() ~ "'.", where);*/
 
 				this.valueType = neededType;
 			}
@@ -1249,7 +1276,7 @@ class AstNodeUnary : AstNode {
 			auto val = node.gen(s);
 			auto a = LLVMBuildAlloca(
 				ctx.currbuilder,
-				getAType(val),
+				LLVMPointerType(LLVMTypeOf(val),0),
 				toStringz("unary")
 			);
 			LLVMBuildStore(
@@ -1266,6 +1293,13 @@ class AstNodeUnary : AstNode {
 				toStringz("unary")
 			);
 		}
+		else if(type == TokType.tok_not) {
+			return LLVMBuildNot(
+				ctx.currbuilder,
+				node.gen(s),
+				toStringz("unary")
+			);
+		}
 		return null;
 	}
 
@@ -1277,7 +1311,6 @@ class AstNodeUnary : AstNode {
 		}
 	}
 }
-
 
 class AstNodeIf : AstNode {
 	AstNode cond;
@@ -1296,9 +1329,9 @@ class AstNodeIf : AstNode {
 		// auto boolType = new TypeBasic(BasicType.t_bool);
 		this.cond.analyze(s, new TypeUnknown());
 		if(!new TypeBasic(BasicType.t_bool).assignable(this.cond.getType(s))) {
-			s.ctx.addError("If requires a boolean for it's condition, but '"
+			/*s.ctx.addError("If requires a boolean for it's condition, but '"
 				~ this.cond.getType(s).toString() ~ "' is not convertible to bool.",
-				this.where);
+				this.where);*/
 		}
 
 		this.body_.analyze(s, new TypeUnknown());

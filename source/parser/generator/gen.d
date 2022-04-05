@@ -248,7 +248,7 @@ class GenerationContext {
 	}
 
 	void genTarget(string file,bool d) {
-		if(d) LLVMWriteBitcodeToFile(this.mod,cast(const char*)(file~".be"));
+		//if(d) LLVMWriteBitcodeToFile(this.mod,cast(const char*)(file~".be"));
 
 		char* errors;
 		LLVMTargetRef target;

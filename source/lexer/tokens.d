@@ -166,6 +166,8 @@ class Token {
                 case "||=": this.type = TokType.tok_or_eq; break;
                 case "++": this.type = TokType.tok_plu_plu; break;
                 case "--": this.type = TokType.tok_min_min; break;
+                case "<": this.type = TokType.tok_less; break;
+                case ">": this.type = TokType.tok_more; break;
                 case ">>=": this.type = TokType.tok_more_more_eq; break;
                 case "<<=": this.type = TokType.tok_less_less_eq; break;
                 case "=>": this.type = TokType.tok_arrow; break;

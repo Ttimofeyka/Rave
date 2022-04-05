@@ -62,6 +62,13 @@ _Ravef6fchmod:
 	int $0x80
 	ret
 
+.global _Ravef3brk
+.type   _Ravef3brk, @function
+_Ravef3brk:
+	movl $45, %eax
+	int $0x80
+	ret
+
 .global _start
 .type	_start, @function
 _start:

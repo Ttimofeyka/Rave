@@ -1,15 +1,9 @@
+@inc "std/base";
 @inc "std/io";
-
-struct B {
-    STR2: char*;
-}
-
-struct A {
-    STR: char*;
-    b: B;
-}
+@inc "std/math";
 
 main: int {
-    a: A;
+    i: int = -5;
+    b: int = -i;
     ret 0;
 }

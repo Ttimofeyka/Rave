@@ -506,6 +506,7 @@ class Parser {
 	private AstNode parsePrefix() {
 		const TokType[] OPERATORS = [
 			TokType.tok_multiply,
+			TokType.tok_not,
 			TokType.tok_bit_and,
 			TokType.tok_plu_plu,
 			TokType.tok_min_min,

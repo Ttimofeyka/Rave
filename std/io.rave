@@ -10,7 +10,7 @@ extern fread(fd: int, buff: char*, size: int);
 extern mkdir(pathname: char*, mode: int);
 extern rmdir(pathname: char*);
 extern chmod(file: char*, mode: int);
-extern uselib(file: char*);
+extern uselib(file: char*): int;
 extern fchmod(fd: int, mode: int);
 
 fwrite(fd: int, buff: char*): void {
@@ -19,6 +19,12 @@ fwrite(fd: int, buff: char*): void {
 
 puts(str: char*): void {
     fwrite(1,str);
+}
+
+fgetc(fd: int): char {
+    ch: char*;
+    fread(fd, ch, 1);
+    ret ch[0];
 }
 
 @end
