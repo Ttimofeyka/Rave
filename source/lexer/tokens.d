@@ -63,6 +63,7 @@ enum TokType {
     tok_hash = 50, // #
     tok_at = 51, // @
     tok_doc = 52, // documentation comment
+    tok_question = 53, // ?
 }
 
 enum TokCmd {
@@ -172,6 +173,7 @@ class Token {
                 case "<<=": this.type = TokType.tok_less_less_eq; break;
                 case "=>": this.type = TokType.tok_arrow; break;
                 case "#": this.type = TokType.tok_hash; break;
+                case "?": this.type = TokType.tok_question; break;
                 case "if": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_if; break;
                 case "else": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_else; break;
                 case "while": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_while; break;

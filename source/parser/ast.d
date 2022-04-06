@@ -1166,16 +1166,19 @@ class AstNodeBinary : AstNode {
 					toStringz("or_2cmp")
 				);
 			case TokType.tok_less:
-				auto lhs_g = lhs.gen(s);
-				auto rhs_g = rhs.gen(s);
-				if(LLVMTypeOf(lhs_g) != LLVMTypeOf(rhs_g)) {
-					rhs_g = castNum(ctx, rhs_g, LLVMTypeOf(lhs_g), false);
-				}
 				return LLVMBuildICmp(
 					ctx.currbuilder,
 					LLVMIntSGT,
-					lhs_g,
-					rhs_g,
+					lhs.gen(s),
+					rhs.gen(s),
+					toStringz("less")
+				);
+			case TokType.tok_more:
+				return LLVMBuildICmp(
+					ctx.currbuilder,
+					LLVMIntSLT,
+					lhs.gen(s),
+					rhs.gen(s),
 					toStringz("less")
 				);
 			default:
@@ -1287,9 +1290,25 @@ class AstNodeUnary : AstNode {
 			return a;
 		}
 		else if(type == TokType.tok_minus) {
-			return LLVMBuildNeg(
+			auto nodegen = node.gen(s);
+			if(LLVMTypeOf(nodegen) == LLVMFloatType()) return LLVMBuildFAdd(
 				ctx.currbuilder,
-				node.gen(s),
+				LLVMBuildNot(
+					ctx.currbuilder,
+					nodegen,
+					toStringz("not")
+				),
+				LLVMConstReal(LLVMFloatType(),cast(double)1),
+				toStringz("unary")
+			);
+			return LLVMBuildAdd(
+				ctx.currbuilder,
+				LLVMBuildNot(
+					ctx.currbuilder,
+					nodegen,
+					toStringz("not")
+				),
+				LLVMConstInt(LLVMTypeOf(nodegen), cast(ulong)1, false),
 				toStringz("unary")
 			);
 		}

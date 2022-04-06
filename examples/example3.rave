@@ -3,7 +3,5 @@
 @inc "std/math";
 
 main: int {
-    i: int = -5;
-    b: int = -i;
     ret 0;
 }
