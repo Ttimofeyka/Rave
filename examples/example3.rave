@@ -1,7 +1,10 @@
 @inc "std/base";
 @inc "std/io";
-@inc "std/math";
 
 main: int {
+    a: int[4];
+    a[0] = 8;
+    b: int* = *a;
+    puts("Hello, world!\n");
     ret 0;
 }

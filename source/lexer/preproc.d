@@ -9,6 +9,7 @@ import std.conv;
 import std.algorithm : remove;
 import std.file : readText, isDir, exists, dirEntries, SpanMode;
 import lexer.mlexer;
+import core.stdc.stdlib : exit;
 
 class Preprocessor {
     TList tokens;
@@ -32,6 +33,15 @@ class Preprocessor {
     private void error(string msg) {
         writeln("\033[0;31mError: ", msg, "\033[0;0m");
         hadErrors = true;
+    }
+
+    private void user_error(string msg) {
+        writeln("\033[0;31mError: ", msg, "\033[0;0m");
+        exit(1);
+    }
+
+    private void user_warn(string msg) {
+        writeln("\033[0;33mWarning: ", msg, "\033[0;0m");
     }
 
     private Token get(int n = 0) {
@@ -60,6 +70,21 @@ class Preprocessor {
         for(int j=0; j<t.length; j++) {
             newtokens.insertBack(copyToken(t[j]));
         }
+    }
+
+    private void analyze_outcmd(int t) {
+        string output = "";
+
+        i += 1;
+
+        for(int y=i; y<this.tokens.length; i++) {
+            if(this.tokens[i].cmd == TokCmd.cmd_end) break;
+            output ~= this.tokens[i].value;
+        }
+
+        if(t == 0) user_error(output[0..$-1]); // Error
+        else if(t == 1) user_warn(output[0..$-1]); // Warning
+        else if(t == 2) writeln(output[0..$-1]); // Just output
     }
 
     private void insertFile(string pattern) {
@@ -120,18 +145,18 @@ class Preprocessor {
                 else if(get().cmd == TokCmd.cmd_ifdef) {
                     i += 1;
                     if(get().type != TokType.tok_id) {
-                        error("Expected an identifier after \"ifdef\"!");
+                        error("Expected an identifier after \"@ifdef\"!");
                         continue;
                     }
                     auto name = get().value;
                     i += 1;
                     // writeln("#ifdef " ~ name ~ " -> " ~ (name !in defines ? "not defined" : "defined"));
-                    _ifStack ~= !(name !in defines);
+                    _ifStack ~= !(name in defines);
                 }
                 else if(get().cmd == TokCmd.cmd_ifndef) {
                     i += 1;
                     if(get().type != TokType.tok_id) {
-                        error("Expected an identifier after \"ifndef\"!");
+                        error("Expected an identifier after \"@ifndef\"!");
                         continue;
                     }
                     auto name = get().value;
@@ -156,6 +181,32 @@ class Preprocessor {
                     }
 
                     _ifStack[$-1] = !_ifStack[$-1];
+                }
+                else if(get().cmd == TokCmd.cmd_protected) {
+                    i += 1; // TODO: Implement this
+                }
+                else if(get().cmd == TokCmd.cmd_undefine) {
+                    i += 1;
+                    if(get().type != TokType.tok_id) {
+                        error("Expected an identifier after \"@undef\"!");
+                        continue;
+                    }
+                    string name = get().value;
+                    i += 1;
+
+                    this.defines.remove(name);
+                }
+                else if(get().cmd == TokCmd.cmd_error) {
+                    analyze_outcmd(0);
+                    i += 1;
+                }
+                else if(get().cmd == TokCmd.cmd_warn) {
+                    analyze_outcmd(1);
+                    i += 1;
+                }
+                else if(get().cmd == TokCmd.cmd_out) {
+                    analyze_outcmd(2);
+                    i += 1;
                 }
                 else {
                     error("Unknown command: '@" ~ to!string(get().cmd)[4..$] ~ "'!");

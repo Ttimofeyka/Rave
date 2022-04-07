@@ -503,9 +503,32 @@ class Parser {
 		return null;
 	}
 
+	// TODO: Add this to parse expression
+	private AstNodeIf parseShortIf() {
+		// Current token - start of value
+		AstNode val = parseExpr();
+
+		expectToken(TokType.tok_type);
+		AstNode _then = parseExpr();
+		if(peek().value != ":") {
+			return new AstNodeIf(
+				val,
+				_then,
+				null
+			);
+		}
+		next();
+		return new AstNodeIf(
+			val,
+			_then,
+			parseExpr()
+		);
+	}
+
 	private AstNode parsePrefix() {
 		const TokType[] OPERATORS = [
 			TokType.tok_multiply,
+			TokType.tok_bit_not,
 			TokType.tok_not,
 			TokType.tok_bit_and,
 			TokType.tok_plu_plu,

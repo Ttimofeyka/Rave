@@ -932,13 +932,21 @@ class AstNodeBinary : AstNode {
 								);
 							}
 						}
-						return LLVMBuildInsertElement(
+						auto ins = LLVMBuildInsertElement(
 							ctx.currbuilder,
 							iiden,
 							rhs.gen(s),
-							iindex,
+							index.index.gen(s),
 							toStringz("set_arr_el")
 						);
+						if(AstNodeIden id = index.base.instanceof!AstNodeIden) {
+							return LLVMBuildStore(
+								ctx.currbuilder,
+								ins,
+								ctx.gstack[id.name]
+							);
+						}
+						return ins;
 					}
 					else { // Pointer
 						return LLVMBuildStore(
@@ -1277,17 +1285,38 @@ class AstNodeUnary : AstNode {
 		auto ctx = s.genctx;
 		if(type == TokType.tok_multiply) {
 			auto val = node.gen(s);
-			auto a = LLVMBuildAlloca(
-				ctx.currbuilder,
-				LLVMPointerType(LLVMTypeOf(val),0),
-				toStringz("unary")
-			);
-			LLVMBuildStore(
-				ctx.currbuilder,
-				val,
-				a
-			);
-			return a;
+			
+			if(LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMVectorTypeKind) {
+				// vector[0] -> void* -> typeof(vector[0])*
+				auto extval = LLVMBuildExtractElement(
+					ctx.currbuilder,
+					val,
+					LLVMConstInt(LLVMInt32Type(),0,false),
+					toStringz("extval")
+				);
+
+				auto ptr = LLVMBuildBitCast(
+					ctx.currbuilder,
+					extval,
+					LLVMPointerType(LLVMInt8Type(),0),
+					toStringz("ptr")
+				);
+
+				auto intptr = LLVMBuildPtrToInt(
+					ctx.currbuilder,
+					ptr,
+					LLVMInt32Type(),
+					toStringz("intptr")
+				);
+
+				return LLVMBuildIntToPtr(
+					ctx.currbuilder,
+					intptr,
+					LLVMTypeOf(extval),
+					toStringz("inttoptr")
+				);
+			}
+			return null;
 		}
 		else if(type == TokType.tok_minus) {
 			auto nodegen = node.gen(s);
