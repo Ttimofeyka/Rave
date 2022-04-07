@@ -445,6 +445,50 @@ class AstNodeStruct : AstNode {
 			}*/
 		}
 		ctx.gstructs.addS(LLVMVectorType(LLVMPointerType(LLVMInt8Type(),0), cast(uint)variables.length), name);
+			LLVMTypeRef ret_type = LLVMFunctionType(
+		    	LLVMVectorType(LLVMPointerType(LLVMInt8Type(),0),cast(uint)this.variables.length),
+		    	null,
+		    	0,
+		    	false
+	    	);
+
+			LLVMValueRef func = LLVMAddFunction(
+				ctx.mod,
+				toStringz("_Ravet"~to!string((name~"_init").length)~name~"_init"),
+				ret_type
+			);
+
+			auto entry = LLVMAppendBasicBlock(func,toStringz("entry"));
+			ctx.currbuilder = LLVMCreateBuilder();
+			LLVMPositionBuilderAtEnd(ctx.currbuilder, entry);
+
+			LLVMValueRef struc = LLVMBuildAlloca(
+				ctx.currbuilder,
+				LLVMVectorType(LLVMPointerType(LLVMInt8Type(),0), cast(uint)variables.length),
+				toStringz("struct")
+			);
+
+			for(int i=0; i<this.variables.length; i++) {
+				if(this.variables[i].value !is null) {
+					LLVMBuildInsertElement(
+						ctx.currbuilder,
+						struc,
+						this.variables[i].value.gen(s),
+						LLVMConstInt(LLVMInt32Type(),cast(ulong)ctx.gstructs.getV(variables[i].decl.name, name), false),
+						toStringz("insert")
+					);
+				}
+			}
+
+			LLVMBuildRet(ctx.currbuilder, struc);
+
+			ctx.gfuncs.add(
+				"_S"~name~"_init", 
+				func, 
+				LLVMVectorType(LLVMPointerType(LLVMInt8Type(),0), cast(uint)variables.length),
+				new TypeFunction(new TypeVoid(), null)
+			);
+
 		return null;
 	}
 
@@ -1340,6 +1384,7 @@ class AstNodeUnary : AstNode {
 				LLVMConstInt(LLVMTypeOf(nodegen), cast(ulong)1, false),
 				toStringz("unary")
 			);
+			
 		}
 		else if(type == TokType.tok_not) {
 			return LLVMBuildNot(
@@ -1873,7 +1918,13 @@ class AstNodeDecl : AstNode {
 					ctx.gstructs.structs[decl.name] = n.name;
 					return ctx.createLocal(
 						ctx.getLLVMType(decl.type, s),
-						null,
+						LLVMBuildCall(
+							ctx.currbuilder,
+							ctx.gfuncs["_S"~n.name~"_init"],
+							null,
+							0,
+							toStringz("call")
+						),
 						decl.name
 					);
 				}
