@@ -1,5 +1,4 @@
-@ifndef RAVE_STD_MATH
-@def RAVE_STD_MATH @end
+@protected
 
 @def M_PI 3.14159265358979323846 @end
 
@@ -7,5 +6,3 @@ abs(i: int): int {
     if(i<0) ret -i;
     ret i;
 }
-
-@end

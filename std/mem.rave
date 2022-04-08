@@ -1,6 +1,3 @@
-@ifndef RAVE_STD_MEM
-@def RAVE_STD_MEM @end
+@protected
 
 brk(long: b);
-
-@end

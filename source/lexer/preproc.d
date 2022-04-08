@@ -112,6 +112,8 @@ class Preprocessor {
         this.defines = defines;
         this.newtokens = new TList();
         this.stdlibIncPath = stdlibIncPath;
+        
+        bool insert_end = false;
 
         while(i < tokens.length) {
             if(get().type == TokType.tok_at) {
@@ -140,7 +142,10 @@ class Preprocessor {
                     i += 1;
                     // name = absolutePath(name);
                     // if(exists(name) && isDir(name)) insertFile(buildPath(name, "*"));
-                    if(canOutput()) insertFile(name~".rave");
+                   defines["_FILE"] = new TList();
+                   defines["_FILE"].insertBack(new Token(SourceLocation(0,0,""), name~".rave"));
+                   if(canOutput()) insertFile(name~".rave");
+                   defines["_FILE"].tokens = defines["_MFILE"].tokens.dup;
                 }
                 else if(get().cmd == TokCmd.cmd_ifdef) {
                     i += 1;
@@ -183,7 +188,10 @@ class Preprocessor {
                     _ifStack[$-1] = !_ifStack[$-1];
                 }
                 else if(get().cmd == TokCmd.cmd_protected) {
-                    i += 1; // TODO: Implement this
+                    _ifStack ~= defines["_FILE"][0].value !in defines;
+                    defines[defines["_FILE"][0].value] = new TList();
+                    insert_end = true;
+                    i += 1;
                 }
                 else if(get().cmd == TokCmd.cmd_undefine) {
                     i += 1;
@@ -227,6 +235,7 @@ class Preprocessor {
                 i += 1;
             }
         }
+        if(insert_end) remove(_ifStack, cast(size_t)(_ifStack.length) - 1);
     }
 
     TList getTokens() {

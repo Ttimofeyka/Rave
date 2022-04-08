@@ -1,5 +1,4 @@
-@ifndef RAVE_STD_IO
-@def RAVE_STD_IO @end
+@protected
 
 @inc "std/str";
 
@@ -26,5 +25,3 @@ fgetc(fd: int): char {
     fread(fd, ch, 1);
     ret ch[0];
 }
-
-@end

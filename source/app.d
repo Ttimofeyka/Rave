@@ -61,10 +61,12 @@ void main(string[] args)
   	LLVMInitializeNativeTarget();
 	
 	TList[string] defines;
+	defines["_MFILE"] = new TList();
+	defines["_MFILE"].insertBack(new Token(SourceLocation(0,0,""), sourceFile));
 	defines["_FILE"] = new TList();
-	defines["_FILE"].insertBack(new Token(SourceLocation(0, 0, sourceFile), '"' ~ sourceFile ~ '"'));
+	defines["_FILE"].insertBack(new Token(SourceLocation(0, 0, sourceFile), sourceFile));
 	defines["_OFILE"] = new TList();
-	defines["_OFILE"].insertBack(new Token(SourceLocation(0, 0, outputFile), '"' ~ outputFile ~ '"'));
+	defines["_OFILE"].insertBack(new Token(SourceLocation(0, 0, outputFile), outputFile));
 	defines["_PLATFORM"] = new TList();
 	defines["_PLATFORM"].insertBack(new Token(SourceLocation(0,0,""),"\""~outputType~"\""));
 	defines["true"] = new TList();

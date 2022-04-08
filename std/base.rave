@@ -1,10 +1,7 @@
-@ifndef RAVE_STD_BASE
-@def RAVE_STD_BASE @end
+@protected
 
 extern exit(errCode: int);
 
 assert(cond: bool) {
     if(!cond) exit(-1);
 }
-
-@end
