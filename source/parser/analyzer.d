@@ -5,6 +5,7 @@ import parser.ast;
 import parser.typesystem;
 import parser.generator.gen;
 import lexer.tokens : SourceLocation;
+import parser.atst;
 
 struct AnalyzerError {
 	string msg;

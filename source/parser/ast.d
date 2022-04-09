@@ -16,134 +16,8 @@ import parser.generator.llvm_abs;
 import parser.util;
 import std.typecons;
 import core.stdc.stdlib : malloc;
-
-/// We have two separate syntax trees: for types and for values.
-
-class AtstTypeContext {
-	Type[string] types;
-
-	this() {
-		types["bool"] = new TypeBasic(BasicType.t_bool);
-	}
-
-	void setType(string name, Type type) {
-		if(name in types) {
-			writeln("Type already exists: ", name);
-			return;
-		}
-		types[name] = type;
-	}
-
-	Type getType(string name) {
-		if(name !in types) {
-			// writeln("No such type: ", name);
-			return null;
-		}
-		return types[name];
-	}
-}
-
-// Abstract type syntax tree node.
-class AtstNode {
-	Type get(AnalyzerScope _ctx) { return new Type(); }
-
-	debug {
-		override string toString() const {
-			return "?";
-		}
-	}
-}
-
-class AtstNodeVoid : AtstNode {
-	override Type get(AnalyzerScope ctx) { return new TypeVoid(); }
-
-	debug {
-		override string toString() const {
-			return "void";
-		}
-	}
-}
-
-// For inference
-class AtstNodeUnknown : AtstNode {
-	override Type get(AnalyzerScope ctx) { return new TypeUnknown(); }
-	
-	debug {
-		override string toString() const {
-			return "unknown";
-		}
-	}
-}
-
-class AtstNodeName : AtstNode {
-	string name;
-	this(string name) {
-		this.name = name;
-	}
-
-	override Type get(AnalyzerScope s) { return s.ctx.typeContext.getType(name); }
-
-	debug {
-		override string toString() const {
-			return name;
-		}
-	}
-}
-
-class AtstNodePointer : AtstNode {
-	AtstNode node;
-
-	this(AtstNode node) {
-		this.node = node;
-	}
-
-	override Type get(AnalyzerScope ctx) { return new TypePointer(node.get(ctx)); }
-
-	debug {
-		override string toString() const {
-			return node.toString() ~ "*";
-		}
-	}
-}
-
-class AtstNodeConst : AtstNode {
-	AtstNode node;
-
-	this(AtstNode node) {
-		this.node = node;
-	}
-
-	override Type get(AnalyzerScope ctx) { return new TypeConst(node.get(ctx)); }
-
-	debug {
-		override string toString() const {
-			return "const " ~ node.toString();
-		}
-	}
-}
-
-class AtstNodeArray : AtstNode {
-	AtstNode node;
-	ulong count;
-
-	this(AtstNode node, ulong count) {
-		this.node = node;
-		this.count = count;
-	}
-
-	override Type get(AnalyzerScope ctx) { /* TODO */ return null; }
-
-	debug {
-		override string toString() const {
-			if(count == 0) {
-				return node.toString() ~ "[]";
-			}
-			else {
-				return node.toString() ~ "[" ~ to!string(count)  ~ "]";
-			}
-		}
-	}
-}
+import parser.mparser;
+import parser.atst;
 
 struct FuncSignature {
 	AtstNode ret;
@@ -967,27 +841,24 @@ class AstNodeBinary : AstNode {
 				if(s.genctx.gstack.isLocal(iden.name)) {
 					LLVMValueRef tmp;
 					if(type == TokType.tok_shortplu) {
-						tmp = LLVMBuildAdd(
-							ctx.currbuilder,
+						tmp = operAdd(
+							ctx,
 							lhs.gen(s),
-							rhs.gen(s),
-							toStringz("tmp")
+							rhs.gen(s)
 						);
 					}
 					else if (type == TokType.tok_shortmin) {
-						tmp = LLVMBuildSub(
-							ctx.currbuilder,
+						tmp = operSub(
+							ctx,
 							lhs.gen(s),
-							rhs.gen(s),
-							toStringz("tmp")
+							rhs.gen(s)
 						);
 					}
 					else if (type == TokType.tok_shortmul) {
-						tmp = LLVMBuildMul(
-							ctx.currbuilder,
+						tmp = operMul(
+							ctx,
 							lhs.gen(s),
-							rhs.gen(s),
-							toStringz("tmp")
+							rhs.gen(s)
 						);
 					}
 					
@@ -1025,8 +896,7 @@ class AstNodeBinary : AstNode {
 					else if(type == TokType.tok_shortmul) {
 						tmp = ctx.operMul(
 							loaded,
-							rhs.gen(s),
-							false 
+							rhs.gen(s)
 						);
 					}
 
@@ -1134,7 +1004,7 @@ class AstNodeBinary : AstNode {
 				auto lhs_g = lhs.gen(s);
 				auto rhs_g = rhs.gen(s);
 				if(LLVMTypeOf(lhs_g) != LLVMTypeOf(rhs_g)) {
-					rhs_g = castNum(ctx, rhs_g, LLVMTypeOf(lhs_g), false);
+					rhs_g = castNum(ctx, rhs_g, LLVMTypeOf(lhs_g));
 				}
 				if(type == TokType.tok_equal) return LLVMBuildICmp(
 					s.genctx.currbuilder,
@@ -1306,6 +1176,14 @@ class AstNodeUnary : AstNode {
 					ctx.currbuilder,
 					intptr,
 					LLVMTypeOf(extval),
+					toStringz("inttoptr")
+				);
+			}
+			else if(LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMIntegerTypeKind) {
+				return LLVMBuildIntToPtr(
+					ctx.currbuilder,
+					val,
+					LLVMPointerType(LLVMTypeOf(val),0),
 					toStringz("inttoptr")
 				);
 			}
@@ -1808,7 +1686,7 @@ class AstNodeIden : AstNode {
 			auto t = s.ctx.typeContext.getType(name);
 			if(t !is null) type = new TypeType(t);
 			else {
-				if(name != "sizeof") s.ctx.addError("Unknown binding: '" ~ name ~ "'.", this.where);
+				if(name != "sizeof" && name != "typeof" && name != "cast") s.ctx.addError("Unknown binding: '" ~ name ~ "'.", this.where);
 			}
 		}
 	}
@@ -2000,7 +1878,7 @@ class AstNodeFuncCall : AstNode {
 	AstNode func;
 	TypeFunction funcType;
 	AstNode[] args;
-	bool issizeof = false;
+	string cmd = "";
 
 	this(SourceLocation where, AstNode func, AstNode[] args) {
 		this.where = where;
@@ -2019,7 +1897,15 @@ class AstNodeFuncCall : AstNode {
 		if(!funcType.instanceof!TypeFunction) {
 			if(AstNodeIden _sizeof = func.instanceof!AstNodeIden) {
 				if(_sizeof.name == "sizeof") {
-					issizeof = true;
+					cmd = "sizeof";
+					return;
+				}
+				else if(_sizeof.name == "typeof") {
+					cmd = "typeof";
+					return;
+				}
+				else if(_sizeof.name == "cast") {
+					cmd = "cast";
 					return;
 				}
 			}
@@ -2067,7 +1953,7 @@ class AstNodeFuncCall : AstNode {
 		// _Ravef4exit, not exit! ctx.mangleQualifiedName([name], true) -> string
 		AstNodeIden n = cast(AstNodeIden)func;
 
-		if(!issizeof) {LLVMValueRef* llvm_args = cast(LLVMValueRef*)malloc(LLVMValueRef.sizeof * args.length);
+		if(cmd == "") {LLVMValueRef* llvm_args = cast(LLVMValueRef*)malloc(LLVMValueRef.sizeof * args.length);
 		for(int i = 0; i < args.length; i++) {
 			auto genv = args[i].gen(s);
 			llvm_args[i] = genv;
@@ -2089,24 +1975,84 @@ class AstNodeFuncCall : AstNode {
 			cast(uint)args.length,
 			toStringz("call")
 		);}
-		if(AstNodeIden id = args[0].instanceof!AstNodeIden) {
-			switch(id.name) {
-				case "bool":
+		if(cmd == "sizeof") {
+			if(AstNodeIden id = args[0].instanceof!AstNodeIden) {
+				switch(id.name) {
+					case "bool":
 					return LLVMSizeOf(LLVMInt1Type());
-				case "char":
+					case "char":
 					return LLVMSizeOf(LLVMInt8Type());
-				case "short":
+					case "short":
 					return LLVMSizeOf(LLVMInt16Type());
-				case "int":
+					case "int":
 					return LLVMSizeOf(LLVMInt32Type());
-				case "long":
+					case "long":
 					return LLVMSizeOf(LLVMInt64Type());
-				default:
-					// What it's?
-					// Oof... generate?
-					return LLVMSizeOf(LLVMTypeOf(id.gen(s)));
+					default:
+						// What it's?
+						// Oof... generate?
+						return LLVMSizeOf(LLVMTypeOf(id.gen(s)));
+				}
 			}
 		}
+		else if(cmd == "typeof") {
+			auto type = LLVMTypeOf(args[0].gen(s));
+			return LLVMBuildGlobalStringPtr(ctx.currbuilder, toStringz(ctx.llvmTypeToString(type)), toStringz("t"));
+		}
+		else if(cmd == "cast") {
+			// First argument = type(string)
+			string name = "";
+			if(AstNodeString ss = args[0].instanceof!AstNodeString) name = ss.value;
+			if(AstNodeIden id = args[0].instanceof!AstNodeIden) name = id.name;
+				// Second argument = value
+				LLVMValueRef valgen = args[1].gen(s);
+				AtstNode t = strToType(name);
+
+				if(AtstNodePointer p = t.instanceof!AtstNodePointer) {
+					LLVMTypeKind k = LLVMGetTypeKind(LLVMTypeOf(valgen));
+					if(k == LLVMPointerTypeKind) {
+						// Hah. Bitcast
+						auto ptrtoi = LLVMBuildPtrToInt(
+							ctx.currbuilder,
+							valgen,
+							LLVMInt32Type(),
+							toStringz("ptoi")
+						);
+						return LLVMBuildIntToPtr(
+							ctx.currbuilder,
+							ptrtoi,
+							ctx.getLLVMType(t, s),
+							toStringz("itop")
+						);
+					}
+					else if(k == LLVMVectorTypeKind) {
+						writeln("It is impossible to use cast with arrays!");
+						exit(-1);
+					}
+				}
+				else if(AtstNodeName nn = t.instanceof!AtstNodeName) {
+					LLVMTypeKind k = LLVMGetTypeKind(LLVMTypeOf(valgen));
+					AtstNode tt = strToType(nn.name);
+					if(k == LLVMPointerTypeKind) {
+						// Integer to ptr
+						return LLVMBuildIntToPtr(
+							ctx.currbuilder,
+							valgen,
+							ctx.getLLVMType(tt, s),
+							toStringz("itop")
+						);
+					}
+					else {
+						// ... to ...
+						return castNum(
+							ctx,
+							valgen,
+							ctx.getLLVMType(tt ,s)
+						);
+					}
+				}
+			}
+			else exit(255);
 		assert(0);
 	}
 

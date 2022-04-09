@@ -12,6 +12,7 @@ import std.string;
 import std.algorithm : canFind;
 import std.ascii;
 import std.uni;
+import parser.atst;
 
 class GStack {
     private LLVMValueRef[string] globals; // Global variables
@@ -122,7 +123,6 @@ class GFuncs {
     }
 }
 
-
 class GStructs {
 	LLVMTypeRef[string] ss;
 	private uint[string[]] vs;
@@ -145,6 +145,30 @@ class GStructs {
 
 	LLVMTypeRef getS(string n) {return ss[n];}
 	uint getV(string vname, string sname) {return vs[cast(immutable)[sname,vname]];}
+}
+
+bool isSimpleType(string t) {
+	return (t.indexOf("[") == -1) && (t.indexOf("*") == -1);
+}
+
+AtstNode strToType(string s) {
+	s = s.replace("\"","");
+	if(isSimpleType(s)) {
+		if(s == "void") return new AtstNodeVoid();
+		return new AtstNodeName(s);
+	}
+	// Array or pointer
+	int i = 0;
+	while(s[i] != '*' && s[i] != '[') i += 1;
+	if(s[i] == '*') {
+		return new AtstNodePointer(strToType(s[0..i]~s[i+1..$]));
+	}
+	// Array
+	int array_founded = i;
+	i += 1;
+	string temp = "";
+	while(s[i] != ']') {temp ~= s[i]; i+=1;}
+	return new AtstNodeArray(strToType(s[0..array_founded]~s[i+1..$]), to!ulong(temp));
 }
 
 class GenerationContext {
@@ -239,6 +263,22 @@ class GenerationContext {
 			// Else get Type and return getLLVMType(Type)
 			return getLLVMType(t.get(s),s);
 		}
+	}
+
+	string llvmTypeToString(LLVMTypeRef type) {
+		auto i1 = LLVMInt1Type();
+		auto i8 = LLVMInt8Type();
+		auto i16 = LLVMInt16Type();
+		auto i32 = LLVMInt32Type();
+		auto i64 = LLVMInt64Type();
+		auto name = "";
+		if(type == i1) name = "bool";
+		else if(type == i8) name = "char";
+		else if(type == i16) name = "short";
+		else if(type == i32) name = "int";
+		else if(type == i64) name = "long";
+		else name = "nobasic";
+		return name;
 	}
 
 	bool isIntType(LLVMTypeRef t) {

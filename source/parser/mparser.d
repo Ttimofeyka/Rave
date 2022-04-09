@@ -9,6 +9,7 @@ import lexer.tokens;
 import std.algorithm.iteration : map;
 import std.algorithm : canFind;
 import core.stdc.stdlib : exit;
+import parser.atst;
 
 class Decl {
 	string name;
@@ -108,7 +109,7 @@ class Parser {
 		return parseTypeAtom();
 	}
 
-	private AtstNode parseType() {
+	AtstNode parseType() {
 		auto t = parseTypePrefix();
 		while(peek().type == TokType.tok_multiply || peek().type == TokType.tok_lbra) {
 			/**/ if(peek().type == TokType.tok_multiply) {

@@ -10,6 +10,10 @@ import std.algorithm : remove;
 import std.file : readText, isDir, exists, dirEntries, SpanMode;
 import lexer.mlexer;
 import core.stdc.stdlib : exit;
+import std.datetime;
+import std.conv : to;
+import std.system;
+import std.random : uniform;
 
 class Preprocessor {
     TList tokens;
@@ -188,9 +192,20 @@ class Preprocessor {
                     _ifStack[$-1] = !_ifStack[$-1];
                 }
                 else if(get().cmd == TokCmd.cmd_protected) {
-                    _ifStack ~= defines["_FILE"][0].value !in defines;
-                    defines[defines["_FILE"][0].value] = new TList();
+                    SysTime st = Clock.currTime();
+                    string randomname = defines["_FILE"][0].value;
+
+                    randomname ~= to!string(st.day) ~ to!string(st.hour);
+                    randomname ~= to!string(os);
+                    randomname ~= to!string(st.year) ~ to!string(st.month);
+
+                    // Finally randomize
+                    randomname ~= to!string(uniform!"[]"(0,555));
+
+                    _ifStack ~= randomname !in defines;
+                    defines[randomname] = new TList();
                     insert_end = true;
+
                     i += 1;
                 }
                 else if(get().cmd == TokCmd.cmd_undefine) {

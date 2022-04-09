@@ -70,12 +70,16 @@ LLVMValueRef getValueByPtr(GenerationContext ctx, string name) {
 		);
 }
 
+bool isReal(LLVMValueRef v) {
+	return LLVMGetTypeKind(LLVMTypeOf(v)) == LLVMFloatTypeKind;
+}
+
 LLVMValueRef getVarPtr(GenerationContext ctx, string name) {
 		return ctx.gstack[name];
 }
 
-LLVMValueRef operAdd(GenerationContext ctx, LLVMValueRef one, LLVMValueRef two, bool isreal) {
-        if(!isreal) return LLVMBuildAdd(
+LLVMValueRef operAdd(GenerationContext ctx, LLVMValueRef one, LLVMValueRef two) {
+        if(!isReal(one) && !isReal(two)) return LLVMBuildAdd(
 			ctx.currbuilder,
 			one,
 			two,
@@ -90,8 +94,8 @@ LLVMValueRef operAdd(GenerationContext ctx, LLVMValueRef one, LLVMValueRef two, 
 		);
 }
 
-LLVMValueRef operSub(GenerationContext ctx, LLVMValueRef one, LLVMValueRef two, bool isreal) {
-		if(!isreal) return LLVMBuildSub(
+LLVMValueRef operSub(GenerationContext ctx, LLVMValueRef one, LLVMValueRef two) {
+		if(!isReal(one) && !isReal(two)) return LLVMBuildSub(
 			ctx.currbuilder,
 			one,
 			two,
@@ -106,15 +110,15 @@ LLVMValueRef operSub(GenerationContext ctx, LLVMValueRef one, LLVMValueRef two, 
 		);
 }
 
-LLVMValueRef operMul(GenerationContext ctx, LLVMValueRef one, LLVMValueRef two, bool isreal) {
-		if(!isreal) return LLVMBuildMul(
+LLVMValueRef operMul(GenerationContext ctx, LLVMValueRef one, LLVMValueRef two) {
+		if(!isReal(one) && !isReal(two)) return LLVMBuildMul(
 			ctx.currbuilder,
 			one,
 			two,
 			toStringz("opermuli_result")
 		);
 
-		return LLVMBuildFSub(
+		return LLVMBuildFMul(
 			ctx.currbuilder,
 			one,
 			two,
@@ -133,19 +137,30 @@ LLVMValueRef operDiv(GenerationContext ctx, LLVMValueRef one, LLVMValueRef two, 
         assert(0); // TODO: Integer support
 }
 
-LLVMValueRef castNum(GenerationContext ctx, LLVMValueRef tocast, LLVMTypeRef type, bool isreal) {
-        if(!isreal) return LLVMBuildZExt(
+LLVMValueRef castNum(GenerationContext ctx, LLVMValueRef tocast, LLVMTypeRef type) {
+		if(isReal(tocast)) {
+			// real to ...?
+			if(LLVMGetTypeKind(type) == LLVMIntegerTypeKind) return LLVMBuildFPToSI(
+				ctx.currbuilder,
+				tocast,
+				type,
+				toStringz("castNumFtI")
+			);
+			return null;
+		}
+		
+		// int to ...?
+		if(LLVMGetTypeKind(type) == LLVMFloatTypeKind) return LLVMBuildSIToFP(
 			ctx.currbuilder,
 			tocast,
 			type,
-			toStringz("castNumI")
+			toStringz("castNumItF")
 		);
-
 		return LLVMBuildSExt(
 			ctx.currbuilder,
 			tocast,
 			type,
-			toStringz("castNumF")
+			toStringz("castNumItI")
 		);
 }
 

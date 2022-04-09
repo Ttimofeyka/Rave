@@ -5,3 +5,12 @@ strlen(str: char*): int {
     while(str[i] != '\0') i += 1;
     ret i;
 }
+
+indexOf(str: char*, s: char): int {
+    i: int = 0;
+    while(str[i] != '\0') {
+        if(str[i] == s) ret i;
+        i += 1;
+    }
+    ret -1;
+}

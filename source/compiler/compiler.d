@@ -4,6 +4,7 @@ import parser.typesystem;
 import parser.generator.gen;
 import parser.analyzer;
 import parser.ast;
+import parser.atst;
 
 import std.format;
 import std.stdio;

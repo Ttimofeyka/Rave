@@ -1,17 +1,7 @@
 @inc "std/base";
 @inc "std/io";
-
-struct B {
-    f: int;
-}
-
-struct A {
-    b: int;
-    struc: B;
-}
+@inc "std/math";
 
 main: int {
-    a: A;
-    a->struc->f = 5;
     ret 0;
 }

@@ -6,3 +6,19 @@ abs(i: int): int {
     if(i<0) ret -i;
     ret i;
 }
+
+pow(n: float, e: int): float {
+    r: float = 1;
+
+    i: int = 0;
+    while(i<e) {
+        r *= n;
+        i += 1;
+    }
+    ret r;
+}
+
+ipow(n: int, e: int): int {
+    r: float = pow(cast(float,n),e);
+    ret cast(int,r);
+}

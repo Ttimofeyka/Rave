@@ -2,7 +2,6 @@ import std.stdio;
 import std.conv : to;
 import std.path : buildNormalizedPath, absolutePath;
 import core.stdc.stdlib : exit;
-import std.file : readText;
 import parser.analyzer, parser.mparser, parser.ast, parser.typesystem, parser.generator.gen, llvm;
 import lexer.mlexer;
 import lexer.tokens;
@@ -12,11 +11,11 @@ import compiler.compiler;
 import user.jsondoc;
 import std.getopt;
 import std.process;
-import std.file : thisExePath;
 import std.array;
 import std.string;
 import std.file : remove;
 import std.conv : to;
+import std.file;
 
 void main(string[] args)
 {
