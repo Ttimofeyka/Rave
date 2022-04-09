@@ -239,6 +239,9 @@ class GenerationContext {
 				}
 			}
 			else if(auto p = t.instanceof!TypePointer) {
+				if(getLLVMType(p.to,s) == LLVMVoidType()) {
+					return LLVMPointerType(LLVMInt8Type(),0);
+				}
 				return LLVMPointerType(getLLVMType(p.to,s), 0);
 			}
         	else if(auto v = t.instanceof!TypeVoid) {
