@@ -428,67 +428,11 @@ class AstNodeStruct : AstNode {
 		LLVMTypeRef* types = cast(LLVMTypeRef*)malloc(LLVMTypeRef.sizeof * variables.length);
 		for(int i=0; i<variables.length; i++) {
 			ctx.gstructs.addV(cast(uint)i, variables[i].decl.name, name);
-			//types[i] = ctx.getLLVMType(variables[i].actualType, s);
-			/*if(AtstNodeName n = variables[i].decl.type) {
-				if(n.name in ctx.gstructs.structs) {
-					auto vv = LLVMBuildAlloca(
-						ctx.currbuilder,
-						ctx.gstructs.getS(ctx.gstructs.structs[n.name]),
-						toStringz("alloca_struct")
-					);
-					presets ~= LLVMBuildLoad(
-						ctx.currbuilder,
-						vv,
-						toStringz("preset")
-					);
-				}
-			}*/
+			ctx.gstructs.addVar(variables[i],name);
+			types[i] = ctx.getLLVMType(variables[i].decl.type, s);
 		}
-		ctx.gstructs.addS(LLVMVectorType(LLVMPointerType(LLVMInt8Type(),0), cast(uint)variables.length), name);
-			LLVMTypeRef ret_type = LLVMFunctionType(
-		    	LLVMVectorType(LLVMPointerType(LLVMInt8Type(),0),cast(uint)this.variables.length),
-		    	null,
-		    	0,
-		    	false
-	    	);
-
-			LLVMValueRef func = LLVMAddFunction(
-				ctx.mod,
-				toStringz("_Ravet"~to!string((name~"_init").length)~name~"_init"),
-				ret_type
-			);
-
-			auto entry = LLVMAppendBasicBlock(func,toStringz("entry"));
-			ctx.currbuilder = LLVMCreateBuilder();
-			LLVMPositionBuilderAtEnd(ctx.currbuilder, entry);
-
-			LLVMValueRef struc = LLVMBuildAlloca(
-				ctx.currbuilder,
-				LLVMVectorType(LLVMPointerType(LLVMInt8Type(),0), cast(uint)variables.length),
-				toStringz("struct")
-			);
-
-			for(int i=0; i<this.variables.length; i++) {
-				if(this.variables[i].value !is null) {
-					LLVMBuildInsertElement(
-						ctx.currbuilder,
-						struc,
-						this.variables[i].value.gen(s),
-						LLVMConstInt(LLVMInt32Type(),cast(ulong)ctx.gstructs.getV(variables[i].decl.name, name), false),
-						toStringz("insert")
-					);
-				}
-			}
-
-			LLVMBuildRet(ctx.currbuilder, struc);
-
-			ctx.gfuncs.add(
-				"_S"~name~"_init", 
-				func, 
-				LLVMVectorType(LLVMPointerType(LLVMInt8Type(),0), cast(uint)variables.length),
-				new TypeFunction(new TypeVoid(), null)
-			);
-
+		//ctx.gstructs.addS(LLVMVectorType(LLVMPointerType(LLVMInt8Type(),0), cast(uint)variables.length), name);
+		ctx.gstructs.addS(LLVMStructType(types, cast(uint)variables.length, false), name);
 		return null;
 	}
 
@@ -865,6 +809,11 @@ class AstNodeGet : AstNode {
 	override LLVMValueRef gen(AnalyzerScope s) {
 		GenerationContext ctx = s.genctx;
 		if(base !in ctx.gstructs.structs) {
+			// Its var-struct or error?
+			if(AstNodeGet v = value.instanceof!AstNodeGet) {
+				writeln("It didn't implement!");
+				exit(-1);
+			}
 			writeln("Didn't find structure '",base,"'!");
 			exit(-1);
 		}
@@ -1649,8 +1598,8 @@ class AstNodeReturn : AstNode {
 		}
 		else if(!s.neededReturnType.assignable(t)) {
 			if(!value.instanceof!AstNodeIndex && !value.instanceof!AstNodeUnary) {
-				s.ctx.addError("Wrong return type: expected '" ~ s.neededReturnType.toString()
-					~ "', got: '" ~ t.toString() ~ '\'', this.where);
+				/*s.ctx.addError("Wrong return type: expected '" ~ s.neededReturnType.toString()
+					~ "', got: '" ~ t.toString() ~ '\'', this.where);*/
 				s.hadReturn = true;
 			}
 			else s.hadReturn = true;
@@ -1668,7 +1617,17 @@ class AstNodeReturn : AstNode {
 		LLVMValueRef v;
 
 		if(value !is null) {
-			parent.genReturns ~= ReturnGenStmt(ctx.currbb, value.gen(s));
+			LLVMValueRef val;
+			if(AstNodeIndex ind = value.instanceof!AstNodeIndex) {
+				val = LLVMBuildPtrToInt(
+					ctx.currbuilder,
+					value.gen(s),
+					ctx.getLLVMType(parent.type.ret, s),
+					toStringz("ptrtoint")
+				);
+			}
+			else val = value.gen(s);
+			parent.genReturns ~= ReturnGenStmt(ctx.currbb, val);
 			v = LLVMBuildBr(ctx.currbuilder, parent.exitBlock);
 		}
 		else {
@@ -1714,14 +1673,28 @@ class AstNodeIndex : AstNode {
 				baseg,
 				[index.gen(s)].ptr,
 				1,
-				toStringz("get_el_by_index")
+				toStringz("get_el_by_index_genforset")
+			);
+		}
+		else if(LLVMGetTypeKind(LLVMTypeOf(baseg)) == LLVMStructTypeKind) {
+			AstNodeString ind = index.instanceof!AstNodeString;
+			string v = ind.value[0..$-1];
+			AstNodeIden id = base.instanceof!AstNodeIden;
+			return LLVMBuildStructGEP(
+				ctx.currbuilder,
+				baseg,
+				cast(uint)ctx.gstructs.getV(
+					v, 
+					ctx.gstructs.structs[id.name]
+				),
+				toStringz("sgep")
 			);
 		}
 		return LLVMBuildExtractElement(
 			ctx.currbuilder,
 			baseg,
 			index.gen(s),
-			toStringz("get_el_by_index")
+			toStringz("get_el_by_index_genforset2")
 		);
 	}
 
@@ -1735,7 +1708,7 @@ class AstNodeIndex : AstNode {
 				baseg,
 				[index.gen(s)].ptr,
 				1,
-				toStringz("get_el_by_index")
+				toStringz("get_el_by_index_astnodeindex")
 			), toStringz("temp"));
 		}
 		if(AstNodeString ss = index.instanceof!AstNodeString) {
@@ -1748,7 +1721,14 @@ class AstNodeIndex : AstNode {
 				return LLVMBuildExtractElement(
 					ctx.currbuilder,
 					loaded,
-					LLVMConstInt(LLVMInt32Type(), cast(ulong)ctx.gstructs.getV(ss.value[0..$-1], ctx.gstructs.structs[id.name]), false),
+					LLVMConstInt(
+						LLVMInt32Type(), 
+						cast(ulong)ctx.gstructs.getV(
+							ss.value[0..$-1], 
+							ctx.gstructs.structs[id.name]
+						), 
+						false
+					),
 					toStringz("get_el_by_index_struct")
 				);
 			}
@@ -1757,7 +1737,7 @@ class AstNodeIndex : AstNode {
 			ctx.currbuilder,
 			baseg,
 			index.gen(s),
-			toStringz("get_el_by_index")
+			toStringz("get_el_by_index_astnodeindex2")
 		);
 	}
 
@@ -1916,17 +1896,12 @@ class AstNodeDecl : AstNode {
 				if(n.name in ctx.gstructs.ss) {
 					// Structure
 					ctx.gstructs.structs[decl.name] = n.name;
-					return ctx.createLocal(
+					auto cl = ctx.createLocal(
 						ctx.getLLVMType(decl.type, s),
-						LLVMBuildCall(
-							ctx.currbuilder,
-							ctx.gfuncs["_S"~n.name~"_init"],
-							null,
-							0,
-							toStringz("call")
-						),
+						null,
 						decl.name
 					);
+					return cl;
 				}
 			}
 			if(value is null) return ctx.createLocal(

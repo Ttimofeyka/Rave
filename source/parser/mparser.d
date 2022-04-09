@@ -461,7 +461,6 @@ class Parser {
 			{
 				auto tok = next();
 				auto b = _toks[_idx-2];
-				writeln(b.value);
 				auto t = tok.type;
 				string field = expectToken(TokType.tok_id).value;
 				base = new AstNodeGet(b.value, tok.loc, base, field, t == TokType.tok_struct_get);

@@ -1,13 +1,17 @@
 @inc "std/base";
 @inc "std/io";
 
+struct B {
+    f: int;
+}
+
 struct A {
-    a: char*;
+    b: int;
+    struc: B;
 }
 
 main: int {
-    struc: A;
-    struc["a"] = "Hello, world!\n";
-    puts(struc["a"]);
+    a: A;
+    a->struc->f = 5;
     ret 0;
 }

@@ -127,6 +127,7 @@ class GStructs {
 	LLVMTypeRef[string] ss;
 	private uint[string[]] vs;
 	string[string] structs;
+	AstNodeDecl[][string] variables;
 
 	this() {}
 
@@ -136,6 +137,10 @@ class GStructs {
 
 	void addV(uint index, string name, string sname) {
 		this.vs[cast(immutable)[sname,name]] = index;
+	}
+
+	void addVar(AstNodeDecl d, string name) {
+		variables[name] ~= d;
 	}
 
 	LLVMTypeRef getS(string n) {return ss[n];}
@@ -158,9 +163,11 @@ class GenerationContext {
 	LLVMBasicBlockRef exitbb; // if CYCLE or IF
 	LLVMBasicBlockRef thenbb; // if CYCLE or IF
 	string target_platform;
+	LLVMContextRef context;
 
     this() {
         mod = LLVMModuleCreateWithName(toStringz("rave"));
+		context = LLVMContextCreate();
 		sema = new SemanticAnalyzerContext(new AtstTypeContext());
 		gstack = new GStack();
 		gargs = new GArgs();
