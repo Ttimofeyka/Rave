@@ -1,3 +1,5 @@
 @protected
 
 extern brk(long: b);
+
+@end

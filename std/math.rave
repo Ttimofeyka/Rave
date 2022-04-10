@@ -22,3 +22,5 @@ ipow(n: int, e: int): int {
     r: float = pow(cast(float,n),e);
     ret cast(int,r);
 }
+
+@end

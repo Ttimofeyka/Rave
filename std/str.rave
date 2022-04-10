@@ -14,3 +14,5 @@ indexOf(str: char*, s: char): int {
     }
     ret -1;
 }
+
+@end

@@ -116,8 +116,6 @@ class Preprocessor {
         this.defines = defines;
         this.newtokens = new TList();
         this.stdlibIncPath = stdlibIncPath;
-        
-        bool insert_end = false;
 
         while(i < tokens.length) {
             if(get().type == TokType.tok_at) {
@@ -205,7 +203,6 @@ class Preprocessor {
 
                     _ifStack ~= randomname !in defines;
                     defines[randomname] = new TList();
-                    insert_end = true;
 
                     i += 1;
                 }
@@ -251,7 +248,6 @@ class Preprocessor {
                 i += 1;
             }
         }
-        if(insert_end) remove(_ifStack, cast(size_t)(_ifStack.length) - 1);
     }
 
     TList getTokens() {

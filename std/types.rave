@@ -7,3 +7,5 @@
 @def i64 long @end
 @def f32 float @end
 @def NULL 0 @end
+
+@end
