@@ -19,9 +19,3 @@ fwrite(fd: int, buff: char*): void {
 puts(str: char*): void {
     fwrite(1,str);
 }
-
-fgetc(fd: int): char {
-    ch: char*;
-    fread(fd, ch, 1);
-    ret ch[0];
-}

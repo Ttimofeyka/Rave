@@ -2,7 +2,7 @@
 
 @def M_PI 3.14159265358979323846 @end
 
-abs(i: int): int {
+abs(i: long): long {
     if(i<0) ret -i;
     ret i;
 }
