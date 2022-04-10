@@ -198,6 +198,7 @@ class Preprocessor {
                     randomname ~= to!string(st.day) ~ to!string(st.hour);
                     randomname ~= to!string(os);
                     randomname ~= to!string(st.year) ~ to!string(st.month);
+                    randomname ~= to!string(st.second);
 
                     // Finally randomize
                     randomname ~= to!string(uniform!"[]"(0,555));
