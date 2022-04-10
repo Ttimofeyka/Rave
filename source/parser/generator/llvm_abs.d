@@ -223,3 +223,13 @@ LLVMValueRef cmpNum(GenerationContext ctx, LLVMValueRef one, LLVMValueRef two, b
 		toStringz("cmpnum_f")
 	);
 }
+
+bool isTypeEqual(LLVMValueRef one, LLVMValueRef two) {
+	return LLVMTypeOf(one) == LLVMTypeOf(two);
+}
+
+LLVMValueRef[] trueNums(GenerationContext ctx, LLVMValueRef one, LLVMValueRef two) {
+	if(isTypeEqual(one,two)) return [one,two];
+	LLVMValueRef two_to_one = castNum(ctx, two, LLVMTypeOf(one));
+	return [one, two_to_one];
+}

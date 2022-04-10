@@ -1037,20 +1037,22 @@ class AstNodeBinary : AstNode {
 					toStringz("or_2cmp")
 				);
 			case TokType.tok_less:
+				LLVMValueRef[] trn = trueNums(ctx,lhs.gen(s),rhs.gen(s));
 				return LLVMBuildICmp(
 					ctx.currbuilder,
 					LLVMIntSGT,
-					lhs.gen(s),
-					rhs.gen(s),
+					trn[0],
+					trn[1],
 					toStringz("less")
 				);
 			case TokType.tok_more:
+				LLVMValueRef[] trn = trueNums(ctx,lhs.gen(s),rhs.gen(s));
 				return LLVMBuildICmp(
 					ctx.currbuilder,
 					LLVMIntSLT,
-					lhs.gen(s),
-					rhs.gen(s),
-					toStringz("less")
+					trn[0],
+					trn[1],
+					toStringz("more")
 				);
 			default:
 				break;
@@ -1145,7 +1147,7 @@ class AstNodeUnary : AstNode {
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
-		auto ctx = s.genctx;
+		GenerationContext ctx = s.genctx;
 		if(type == TokType.tok_multiply) {
 			auto val = node.gen(s);
 			
@@ -1158,25 +1160,22 @@ class AstNodeUnary : AstNode {
 					toStringz("extval")
 				);
 
-				auto ptr = LLVMBuildBitCast(
-					ctx.currbuilder,
-					extval,
-					LLVMPointerType(LLVMInt8Type(),0),
-					toStringz("ptr")
-				);
-
-				auto intptr = LLVMBuildPtrToInt(
-					ctx.currbuilder,
-					ptr,
-					LLVMInt32Type(),
-					toStringz("intptr")
-				);
-
 				return LLVMBuildIntToPtr(
 					ctx.currbuilder,
-					intptr,
-					LLVMTypeOf(extval),
-					toStringz("inttoptr")
+					extval,
+					LLVMPointerType(LLVMTypeOf(extval),0),
+					toStringz("itop")
+				);
+			}
+			else if(LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMArrayTypeKind) {
+				AstNodeIden id = node.instanceof!AstNodeIden;
+				val = ctx.gstack[id.name];
+				return LLVMBuildInBoundsGEP(
+					ctx.currbuilder,
+					val,
+					[LLVMConstInt(LLVMInt32Type(),0,false),LLVMConstInt(LLVMInt32Type(),0,false)].ptr,
+					2,
+					toStringz("getel")
 				);
 			}
 			else if(LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMIntegerTypeKind) {
@@ -1568,11 +1567,22 @@ class AstNodeIndex : AstNode {
 				toStringz("sgep")
 			);
 		}
-		return LLVMBuildExtractElement(
+
+		/*return LLVMBuildExtractElement(
 			ctx.currbuilder,
 			baseg,
 			index.gen(s),
 			toStringz("get_el_by_index_genforset2")
+		);*/
+		if(AstNodeIden id = base.instanceof!AstNodeIden) {
+			baseg = ctx.gstack[id.name];
+		}
+		return LLVMBuildInBoundsGEP(
+			ctx.currbuilder,
+			baseg,
+			[LLVMConstInt(LLVMInt32Type(),0,false),index.gen(s)].ptr,
+			2,
+			toStringz("getel")
 		);
 	}
 
@@ -1611,12 +1621,22 @@ class AstNodeIndex : AstNode {
 				);
 			}
 		}
-		return LLVMBuildExtractElement(
+		/*return LLVMBuildExtractElement(
 			ctx.currbuilder,
 			baseg,
 			index.gen(s),
 			toStringz("get_el_by_index_astnodeindex2")
-		);
+		);*/
+		if(AstNodeIden id = base.instanceof!AstNodeIden) {
+			baseg = ctx.gstack[id.name];
+		}
+		return LLVMBuildLoad(ctx.currbuilder, LLVMBuildInBoundsGEP(
+				ctx.currbuilder,
+				baseg,
+				[LLVMConstInt(LLVMInt32Type(),0,false),index.gen(s)].ptr,
+				2,
+				toStringz("getel")
+		), toStringz("load"));
 	}
 
 	debug {
@@ -2004,6 +2024,7 @@ class AstNodeFuncCall : AstNode {
 			string name = "";
 			if(AstNodeString ss = args[0].instanceof!AstNodeString) name = ss.value;
 			if(AstNodeIden id = args[0].instanceof!AstNodeIden) name = id.name;
+			name = name.replace("\"","");
 				// Second argument = value
 				LLVMValueRef valgen = args[1].gen(s);
 				AtstNode t = strToType(name);
@@ -2011,7 +2032,7 @@ class AstNodeFuncCall : AstNode {
 				if(AtstNodePointer p = t.instanceof!AtstNodePointer) {
 					LLVMTypeKind k = LLVMGetTypeKind(LLVMTypeOf(valgen));
 					if(k == LLVMPointerTypeKind) {
-						// Hah. Bitcast
+						// Hah.
 						auto ptrtoi = LLVMBuildPtrToInt(
 							ctx.currbuilder,
 							valgen,
@@ -2028,6 +2049,14 @@ class AstNodeFuncCall : AstNode {
 					else if(k == LLVMVectorTypeKind) {
 						writeln("It is impossible to use cast with arrays!");
 						exit(-1);
+					}
+					else {
+						return LLVMBuildIntToPtr(
+							ctx.currbuilder,
+							valgen,
+							LLVMPointerType(LLVMInt8Type(),0),
+							toStringz("inttoptr")
+						);
 					}
 				}
 				else if(AtstNodeName nn = t.instanceof!AtstNodeName) {

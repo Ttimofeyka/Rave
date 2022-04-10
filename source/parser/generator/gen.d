@@ -254,8 +254,8 @@ class GenerationContext {
 			if(AtstNodeArray a = t.instanceof!AtstNodeArray) {
 				// If array then
 				auto array_type = getLLVMType(a.node,s);
-				return LLVMVectorType(array_type, cast(uint)a.count);
-				//return LLVMArrayType(array_type, cast(uint)a.count);
+				//return LLVMVectorType(array_type, cast(uint)a.count);
+				return LLVMArrayType(array_type, cast(uint)a.count);
 			}
 			else if(AtstNodeName struc = t.instanceof!AtstNodeName) {
 				// If struct then
