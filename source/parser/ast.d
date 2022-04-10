@@ -1799,6 +1799,20 @@ class AstNodeDecl : AstNode {
 						null,
 						decl.name
 					);
+
+					for(int i=0; i<ctx.gstructs.variables[n.name].length; i++) {
+						if(ctx.gstructs.variables[n.name][i].value !is null) LLVMBuildStore(
+							ctx.currbuilder,
+							ctx.gstructs.variables[n.name][i].value.gen(s),
+							LLVMBuildStructGEP(
+								ctx.currbuilder,
+								cl,
+								ctx.gstructs.getV(ctx.gstructs.variables[n.name][i].decl.name, n.name),
+								toStringz("struct_gep")
+							)
+						);
+					}
+
 					return cl;
 				}
 			}

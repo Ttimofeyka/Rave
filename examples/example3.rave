@@ -4,10 +4,8 @@
 
 struct A {
     a: int;
-    b: A;
 }
 
 main: int {
-    A1: A;
     ret 0;
 }
