@@ -23,4 +23,16 @@ ipow(n: int, e: int): int {
     ret cast(int,r);
 }
 
+sqrt(n: float): float {
+    sqrt: float = n/2;
+    temp: float = 0;
+
+    while(sqrt != temp) {
+        temp = sqrt;
+        sqrt = (n / sqrt + sqrt) / 2;
+    }
+
+    ret sqrt;
+}
+
 @end

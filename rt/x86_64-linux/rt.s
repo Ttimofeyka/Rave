@@ -1,5 +1,3 @@
-.extern _Ravef4main
-
 .global _Ravef4exit
 .type   _Ravef4exit, @function
 _Ravef4exit:
@@ -75,11 +73,3 @@ _Ravef3brk:
 	movq $12, %rax
 	syscall
 	ret
-
-.global _start
-.type   _start, @function
-_start:
-	call _Ravef4main
-
-	movq %rax, %rdi
-	call _Ravef4exit

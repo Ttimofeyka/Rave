@@ -1,11 +1,17 @@
 @protected
 
 @inc "std/str";
+@inc "std/defs";
+
+@def stdin 0 @end
+@def stdout 1 @end
+@def stderr 2 @end
+@def errno -1 @end
 
 extern fopen(filename: char*, flags: int, mode: int): int;
 extern fclose(fd: int);
 extern _fwrite(fd: int, buff: char*, size: int);
-extern fread(fd: int, buff: char*, size: int);
+extern fread(fd: int, buff: char*, size: int): int;
 extern mkdir(pathname: char*, mode: int);
 extern rmdir(pathname: char*);
 extern chmod(file: char*, mode: int);
@@ -16,8 +22,12 @@ fwrite(fd: int, buff: char*): void {
     _fwrite(fd, buff, strlen(buff));
 }
 
-puts(str: char*): void {
-    fwrite(1,str);
+puts(s: char*) {
+    fwrite(stdout, s);
+}
+
+putc(c: char) {
+    _fwrite(stdout, &c, 1);
 }
 
 @end

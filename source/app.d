@@ -17,48 +17,21 @@ import std.file : remove;
 import std.conv : to;
 import std.file;
 
-void main(string[] args)
-{
-	stackMemory = new StackMemoryManager();
+string stdlibIncPath = "";
+string outputSimpleType = "";
+bool debugMode = false;
+bool debugModeFull = false;
+bool generateDocJson = false;
+string docJsonFile = "docs.json";
+bool not_delete_o = false;
 
-	string outputFile = "a.o";
-	string stdlibIncPath = buildNormalizedPath(absolutePath("./stdlib"));
-	string outputType = "";
-	bool debugMode = false;
-	bool debugModeFull = false;
-	bool generateDocJson = false;
-	string docJsonFile = "docs.json";
-	bool nolink = false;
-	bool not_delete_o = false;
+string linker;
 
-	auto helpInformation = getopt(
-	    args,
-	    "o", "Output file", &outputFile,
-	    "debug", "Debug mode", &debugMode,
-	    "debug-full", "Full debug mode", &debugModeFull,
-	    "stdinc", "Stdlib include path (':' in @inc)", &stdlibIncPath,
-		"type", "Output file(platform) type", &outputType,
-		"doc-json", "Generate JSON documentation file", &generateDocJson,
-		"doc-json-file", "JSON documentation file name", &docJsonFile,
-		"nolink", "Disable auto-link", &nolink,
-		"no-rm-obj", "Don't remove object file", &not_delete_o
-	);
-	
-    if(helpInformation.helpWanted)
-    {
-	    defaultGetoptPrinter("Help", helpInformation.options);
-	    return;
-    }
+string platformFileType = "";
 
-	if(outputType == "") {
-		outputType = to!string(fromStringz(LLVMGetDefaultTargetTriple()));
-	}
+void compile(string linkFiles, bool nolink, string sourceFile, string outputType, string outputFile) {
+	stdlibIncPath = buildNormalizedPath(absolutePath("./stdlib"));
 
-    string[] sourceFiles = args[1..$].dup;
-    string sourceFile = sourceFiles[0];
-
-  	LLVMInitializeNativeTarget();
-	
 	TList[string] defines;
 	defines["_MFILE"] = new TList();
 	defines["_MFILE"].insertBack(new Token(SourceLocation(0,0,""), sourceFile));
@@ -72,6 +45,15 @@ void main(string[] args)
 	defines["true"].insertBack(new Token(SourceLocation(0,0,""),"1"));
 	defines["false"] = new TList();
 	defines["false"].insertBack(new Token(SourceLocation(0,0,""),"0"));
+
+	if(outputType.indexOf("linux") != -1) {
+		defines["_LINUX"] = new TList();
+		defines["_LINUX"].insertBack(new Token(SourceLocation(0,0,""),""));
+	}
+	else if(outputType.indexOf("windows") != -1) {
+		defines["_WINDOWS"] = new TList();
+		defines["_WINDOWS"].insertBack(new Token(SourceLocation(0,0,""),""));
+	}
 
 	if(debugMode) defines["_DEBUG"] = new TList();
 	else defines["_NDEBUG"] = new TList();
@@ -114,17 +96,113 @@ void main(string[] args)
 	stackMemory.cleanup();
 
 	// Linking with runtime
-	if(outputType.indexOf("x86_64") >=0 && outputType.indexOf("linux") >=0) outputType = "x86_64-linux";
-	else if(outputType.indexOf("i386") >=0 || outputType.indexOf("i686") >=0) {
-		outputType = "i686-linux";
-	}
+	
 	if(!nolink){
-		string platformFileType;
-		if(outputType.indexOf("linux") >= 0) platformFileType = ".o";
-		string path_to_rt = thisExePath()
-			.replace("/rave.exe","/")
-			.replace("/rave","/")~"rt/"~outputType~"/rt"~platformFileType;
-		executeShell("ld.lld "~outputFile~".o "~path_to_rt~" -o "~outputFile);
-		if(!not_delete_o) remove(outputFile~".o");
+		auto cmd = executeShell(linker~" "~outputFile~platformFileType~" "~linkFiles~" -o "~outputFile);
+		if(cmd.status != 0) writeln(cmd.output);
+		if(!not_delete_o) remove(outputFile~platformFileType);
 	}
 }
+
+void main(string[] args)
+{
+	string outputType = "";
+	string outputFile = "a.o";
+	bool nolink = false;
+	string linkFiles = "";
+	bool isshared = false;
+	bool noentry = false;
+	stackMemory = new StackMemoryManager();
+
+	auto helpInformation = getopt(
+	    args,
+	    "o", "Output file", &outputFile,
+	    "debug", "Debug mode", &debugMode,
+	    "debug-full", "Full debug mode", &debugModeFull,
+	    "stdinc", "Stdlib include path (':' in @inc)", &stdlibIncPath,
+		"type", "Output file(platform) type", &outputType,
+		"doc-json", "Generate JSON documentation file", &generateDocJson,
+		"doc-json-file", "JSON documentation file name", &docJsonFile,
+		"nolink", "Disable auto-link with runtime", &nolink,
+		"no-rm-obj", "Don't remove object file", &not_delete_o,
+		"shared", "Linking files as shared library", &isshared,
+		"noentry", "Linking without begin.o", &noentry
+	);
+	
+    if(helpInformation.helpWanted)
+    {
+	    defaultGetoptPrinter("Help", helpInformation.options);
+	    return;
+    }
+
+	version(linux) { linker = "ld.lld";}
+	version(Windows) { linker = "lld-link";}
+	version(OSX) { linker = "ld64.lld";}
+
+	if(outputType == "") {
+		outputType = to!string(fromStringz(LLVMGetDefaultTargetTriple()));
+	}
+
+	if(outputType.indexOf("linux") != -1) {
+		if(outputType.indexOf("x86_64") != -1) {
+			outputSimpleType = "x86_64-linux";
+		}
+		else outputSimpleType = "i686-linux";
+		platformFileType = ".o";
+	}
+	else if(outputType.indexOf("win") != -1) {
+		if(outputType.indexOf("x86_64") != -1) {
+			outputSimpleType = "win64";
+		}
+		else outputSimpleType = "win32";
+		platformFileType = ".obj";
+	}
+
+    string[] sourceFiles = args[1..$].dup;
+    string sourceFile = sourceFiles[0];
+
+	string path_to_rt = thisExePath()
+		.replace("/rave.exe","/")
+		.replace("/rave","/")~"rt/"~outputSimpleType~"/";
+
+	string linkF = path_to_rt~"rt"~platformFileType~" ";
+	if(!noentry) linkF ~= path_to_rt~"begin"~platformFileType~" ";
+	if(isshared) linkF ~= "-shared ";
+
+  	LLVMInitializeNativeTarget();
+	if(sourceFiles.length > 1) {
+		string[] to_remove;
+		for(int i=1; i<sourceFiles.length; i++) {
+			string currF = sourceFiles[i];
+			if(
+				currF[$-1..$] == "o"
+				||
+				currF[$-1..$] == "a"
+				||
+				(currF.length > 2 
+				&& 
+				(currF[$-3..$] == "dll" 
+			|| currF[$-3..$] == "lib"))) linkF ~= sourceFiles[i] ~ " ";
+			else {
+				compile("",true,sourceFiles[i],outputType,sourceFiles[i]);
+				linkF ~= sourceFiles[i]~platformFileType ~ " ";
+				to_remove ~= sourceFiles[i]~platformFileType;
+			}
+		}
+		compile(linkF, false, sourceFile, outputType, outputFile);
+
+		if(!not_delete_o) {
+			for(int i=0; i<to_remove.length; i++) {
+				remove(to_remove[i]);
+			}
+		}
+	}
+	else compile(linkF, nolink, sourceFile, outputType, outputFile);
+}
+
+/*
+"lflags": [
+		"-L/usr/lib/llvm-10/lib",
+		"-R/usr/lib/llvm-10/lib"
+],
+*/

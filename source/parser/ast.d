@@ -911,47 +911,36 @@ class AstNodeBinary : AstNode {
 			case TokType.tok_plus:
 			case TokType.tok_minus:
 			case TokType.tok_multiply:
-				auto result = LLVMBuildAlloca(
-					s.genctx.currbuilder,
-					LLVMInt32Type(),
-					toStringz("result")
-				);
-				LLVMValueRef operation;
-				if(type == TokType.tok_plus) {
-					operation = LLVMBuildAdd(
-						ctx.currbuilder,
-						lhs.gen(s),
-						rhs.gen(s),
-						toStringz("operation")
-					);
+			case TokType.tok_divide:
+				LLVMValueRef result;
+				switch(type) {
+					case TokType.tok_plus:
+						result = operAdd(
+							ctx,
+							lhs.gen(s),
+							rhs.gen(s)
+						); break;
+					case TokType.tok_minus:
+						result = operSub(
+							ctx,
+							lhs.gen(s),
+							rhs.gen(s)
+						); break;
+					case TokType.tok_multiply:
+						result = operMul(
+							ctx,
+							lhs.gen(s),
+							rhs.gen(s)
+						); break;
+					case TokType.tok_divide:
+						result = operDiv(
+							ctx,
+							lhs.gen(s),
+							rhs.gen(s)
+						); break;
+					default: break;
 				}
-				else if(type == TokType.tok_minus) {
-					operation = LLVMBuildSub(
-						ctx.currbuilder,
-						lhs.gen(s),
-						rhs.gen(s),
-						toStringz("operation")
-					);
-				}
-				else if(type == TokType.tok_multiply) {
-					operation = LLVMBuildMul(
-						ctx.currbuilder,
-						lhs.gen(s),
-						rhs.gen(s),
-						toStringz("operation")
-					);
-				}
-				LLVMBuildStore(
-					s.genctx.currbuilder,
-					operation,
-					result
-				);
-				auto loaded_result = LLVMBuildLoad(
-					s.genctx.currbuilder,
-					result,
-					toStringz("r_loaded")
-				);
-				return loaded_result;
+				return result;
 			case TokType.tok_bit_ls:
 			case TokType.tok_bit_rs:
 			case TokType.tok_bit_and:
@@ -1006,19 +995,15 @@ class AstNodeBinary : AstNode {
 				if(LLVMTypeOf(lhs_g) != LLVMTypeOf(rhs_g)) {
 					rhs_g = castNum(ctx, rhs_g, LLVMTypeOf(lhs_g));
 				}
-				if(type == TokType.tok_equal) return LLVMBuildICmp(
-					s.genctx.currbuilder,
-					LLVMIntEQ,
+				if(type == TokType.tok_equal) return cmpNum(
+					ctx,
 					lhs_g,
-					rhs_g,
-					toStringz("icmp_eq")
+					rhs_g
 				);
-				return LLVMBuildICmp(
-					s.genctx.currbuilder,
-					LLVMIntNE,
+				return ncmpNum(
+					ctx,
 					lhs_g,
-					rhs_g,
-					toStringz("icmp_ne")
+					rhs_g
 				);
 			case TokType.tok_and:
 			case TokType.tok_or:
@@ -1148,11 +1133,10 @@ class AstNodeUnary : AstNode {
 
 	override LLVMValueRef gen(AnalyzerScope s) {
 		GenerationContext ctx = s.genctx;
-		if(type == TokType.tok_multiply) {
+		if(type == TokType.tok_bit_and) {
 			auto val = node.gen(s);
 			
 			if(LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMVectorTypeKind) {
-				// vector[0] -> void* -> typeof(vector[0])*
 				auto extval = LLVMBuildExtractElement(
 					ctx.currbuilder,
 					val,

@@ -1,0 +1,50 @@
+@protected
+
+@inc "std/defs";
+
+@ifdef WINDOWS
+
+@def STD_INPUT_HANDLE -10 @end
+@def STD_OUTPUT_HANDLE -11 @end
+@def STD_ERROR_HANDLE -12 @end
+
+// Types
+@def BYTE short @end
+@def DWORD long @end
+@def COLORREF DWORD @end
+@def DWORD32 DWORD @end
+@def DWORD64 DWORD @end
+@def PVOID void* @end
+@def BOOL bool @end
+@def BOOLEAN BYTE @end
+@def CCHAR char @end
+@def CHAR char @end
+@def COLORREF DWORD @end
+@def DWORDLONG long @end
+@def PVOID void* @end
+@def HANDLE PVOID @end
+@def HBITMAP HANDLE @end
+@def HBRUSH HANDLE @end
+@def HCOLORSPACE HANDLE @end
+@def HCONV HANDLE @end
+@def HCONVLIST HANDLE @end
+@def HDC HANDLE @end
+@def HFILE int @end
+@def HGLOBAL HANDLE @end
+@def HINSTANCE HANDLE @end
+@def HLOCAL HANDLE @end
+@def INT int @end
+@def INT8 char @end
+@def INT16 short @end
+@def INT32 int @end
+@def INT64 long @end
+@def LONG long @end
+
+@end
+@else
+
+@err "Using std/windows without Windows!" @end
+
+@end
+
+@end

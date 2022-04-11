@@ -93,6 +93,8 @@ enum TokCmd {
     cmd_error = 28,
     cmd_warn = 29,
     cmd_out = 30,
+    cmd_ifequ = 31,
+    cmd_exit = 32
 }
 
 struct SourceLocation {
@@ -204,6 +206,7 @@ class Token {
                 case "@err": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_error; break;
                 case "@warn": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_warn; break;
                 case "@out": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_out; break;
+                case "@exit": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_ifequ; break;
                 // Identifier
                 default: this.type = TokType.tok_id; break;
             }

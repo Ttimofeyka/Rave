@@ -30,7 +30,7 @@ class Preprocessor {
         // _ifStack: StdList<bool>;
         // canOutput => this->_ifStack.length == 0 || this->_ifStack->get(-1);
         if(_ifStack.length == 0) return true;
-        foreach(c; _ifStack) if(!c) return false;
+        foreach(c; _ifStack) { if(!c) return false; }
         return true;
     }
 
@@ -39,13 +39,12 @@ class Preprocessor {
         hadErrors = true;
     }
 
-    private void user_error(string msg) {
-        writeln("\033[0;31mError: ", msg, "\033[0;0m");
-        exit(1);
+    private string user_error(string msg) {
+        return "\033[0;31m"~msg~"\033[0;0m";
     }
 
-    private void user_warn(string msg) {
-        writeln("\033[0;33mWarning: ", msg, "\033[0;0m");
+    private string user_warn(string msg) {
+        return "\033[0;33m"~msg~"\033[0;0m";
     }
 
     private Token get(int n = 0) {
@@ -76,19 +75,48 @@ class Preprocessor {
         }
     }
 
-    private void analyze_outcmd(int t) {
+    private TList getBeforeOper() {
+        TList define_toks = new TList();
+
+        while(get().type != TokType.tok_equal && get().type != TokType.tok_nequal) {
+            Token currToken = get();
+            if(currToken.value in defines) {
+                int z = 0;
+                while(defines[currToken.value].length < z) {
+                    define_toks.insertBack(defines[currToken.value][z]);
+                    z += 1;
+                }
+                i += 1;
+                continue;
+            }
+            define_toks.insertBack(currToken);
+            i += 1;
+        }
+
+        return define_toks;
+    }
+
+    private string analyze_outcmd(int t) {
         string output = "";
 
         i += 1;
 
         for(int y=i; y<this.tokens.length; i++) {
             if(this.tokens[i].cmd == TokCmd.cmd_end) break;
-            output ~= this.tokens[i].value;
+            if(this.tokens[i].value in defines) {
+                int z = 0;
+                while(z<defines[tokens[i].value].length) {
+                    output ~= defines[tokens[i].value][z].value~"\"";
+                    z += 1;
+                }
+                i += 1;
+            }
+            else output ~= this.tokens[i].value;
         }
 
-        if(t == 0) user_error(output[0..$-1]); // Error
-        else if(t == 1) user_warn(output[0..$-1]); // Warning
-        else if(t == 2) writeln(output[0..$-1]); // Just output
+        if(t == 0) return user_error(output[0..$-1]); // Error
+        else if(t == 1) return user_warn(output[0..$-1]); // Warning
+        else  return output[0..$-1]; // Just output
     }
 
     private void insertFile(string pattern) {
@@ -158,7 +186,7 @@ class Preprocessor {
                     auto name = get().value;
                     i += 1;
                     // writeln("#ifdef " ~ name ~ " -> " ~ (name !in defines ? "not defined" : "defined"));
-                    _ifStack ~= !(name in defines);
+                    _ifStack ~= !(name !in defines);
                 }
                 else if(get().cmd == TokCmd.cmd_ifndef) {
                     i += 1;
@@ -201,8 +229,10 @@ class Preprocessor {
                     // Finally randomize
                     randomname ~= to!string(uniform!"[]"(0,555));
 
-                    _ifStack ~= randomname !in defines;
-                    defines[randomname] = new TList();
+                    if(canOutput()) {
+                         _ifStack ~= randomname !in defines;
+                         defines[randomname] = new TList();
+                    }
 
                     i += 1;
                 }
@@ -218,15 +248,32 @@ class Preprocessor {
                     this.defines.remove(name);
                 }
                 else if(get().cmd == TokCmd.cmd_error) {
-                    analyze_outcmd(0);
+                    string to_out = analyze_outcmd(0);
+                    if(canOutput()) writeln(to_out);
                     i += 1;
                 }
                 else if(get().cmd == TokCmd.cmd_warn) {
-                    analyze_outcmd(1);
+                    string to_out = analyze_outcmd(1);
+                    if(canOutput()) writeln(to_out);
                     i += 1;
                 }
                 else if(get().cmd == TokCmd.cmd_out) {
-                    analyze_outcmd(2);
+                    string to_out = analyze_outcmd(2);
+                    if(canOutput()) writeln(to_out);
+                    i += 1;
+                }
+                else if(get().cmd == TokCmd.cmd_ifequ) {
+                    i += 1;
+                    string v = get().value;
+                    if(v in defines) v = defines[v][0].value;
+                    i += 1;
+                    string v2 = get().value;
+                    if(v2 in defines) v = defines[v2][0].value;
+                    i += 1;
+                    if(canOutput()) _ifStack ~= (v == v2);
+                }
+                else if(get().cmd == TokCmd.cmd_exit) {
+                    if(canOutput()) exit(0);
                     i += 1;
                 }
                 else {

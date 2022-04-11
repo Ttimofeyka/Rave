@@ -1,11 +1,7 @@
 @inc "std/base";
 @inc "std/io";
-@inc "std/math";
+@inc "std/conv";
 
-struct A {
-    a: int;
-}
-
-main: int {
+main(argc: int, argv: char**): int {
     ret 0;
 }

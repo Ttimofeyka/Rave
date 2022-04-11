@@ -126,15 +126,19 @@ LLVMValueRef operMul(GenerationContext ctx, LLVMValueRef one, LLVMValueRef two) 
 		);
 }
 
-LLVMValueRef operDiv(GenerationContext ctx, LLVMValueRef one, LLVMValueRef two, bool isreal) {
-		// TODO: Add a LLVMCast
-		if(isreal) return LLVMBuildFDiv(
+LLVMValueRef operDiv(GenerationContext ctx, LLVMValueRef one, LLVMValueRef two) {
+		if(LLVMTypeOf(one) == LLVMFloatType()) return LLVMBuildFDiv(
 			ctx.currbuilder,
 			one,
 			two,
 			toStringz("operdivf_result")
 		);
-        assert(0); // TODO: Integer support
+        return LLVMBuildSDiv(
+			ctx.currbuilder,
+			one,
+			two,
+			toStringz("operdivi_result")
+		);
 }
 
 LLVMValueRef castNum(GenerationContext ctx, LLVMValueRef tocast, LLVMTypeRef type) {
@@ -206,8 +210,8 @@ LLVMValueRef retNull(GenerationContext ctx, LLVMTypeRef type) {
 	return LLVMBuildRet(ctx.currbuilder,LLVMConstNull(type));
 }
 
-LLVMValueRef cmpNum(GenerationContext ctx, LLVMValueRef one, LLVMValueRef two, bool isreal) {
-	if(!isreal) return LLVMBuildICmp(
+LLVMValueRef cmpNum(GenerationContext ctx, LLVMValueRef one, LLVMValueRef two) {
+	if(!isReal(one)) return LLVMBuildICmp(
 		ctx.currbuilder,
 		LLVMIntEQ,
 		one,
@@ -217,7 +221,25 @@ LLVMValueRef cmpNum(GenerationContext ctx, LLVMValueRef one, LLVMValueRef two, b
 
 	else return LLVMBuildFCmp(
 		ctx.currbuilder,
-		LLVMIntEQ,
+		LLVMRealOEQ,
+		one,
+		two,
+		toStringz("cmpnum_f")
+	);
+}
+
+LLVMValueRef ncmpNum(GenerationContext ctx, LLVMValueRef one, LLVMValueRef two) {
+	if(!isReal(one)) return LLVMBuildICmp(
+		ctx.currbuilder,
+		LLVMIntNE,
+		one,
+		two,
+		toStringz("cmpnum_i")
+	);
+
+	else return LLVMBuildFCmp(
+		ctx.currbuilder,
+		LLVMRealONE,
 		one,
 		two,
 		toStringz("cmpnum_f")

@@ -12,7 +12,7 @@ Here are functions and preprocessor definitions that will help you work with the
 ### str.rave
 Here are the functions for working with strings.
 
-### types.rave
+### defs.rave
 Here are preprocessor definitions that will make working with types a little more convenient (and possibly shorter).
 
 ### mem.rave
