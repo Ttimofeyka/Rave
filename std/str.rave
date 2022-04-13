@@ -1,49 +1,9 @@
 @protected
 
-strlen(str: char*): int {
-    i: int = 0;
-    while(str[i] != '\0') i += 1;
-    ret i;
-}
-
-indexOf(str: char*, s: char): int {
-    i: int = 0;
-    while(str[i] != '\0') {
-        if(str[i] == s) ret i;
-        i += 1;
-    }
-    ret -1;
-}
-
-indexOfs(str: char*, ss: char*): int {
-    len := strlen(ss);
-
-    i := 0;
-    while(i<len) {
-        index := indexOf(str,ss[i]);
-        if(index != -1) ret index;
-        i += 1;
-    }
-    ret -1;
-}
-
-strcpy(dest: char*, src: char*): void {
-    i := 0;
-    while(src[i] != '\0') {
-        dest[i] = src[i];
-        i += 1;
-    }
-    dest[i] = '\0';
-}
-
-strcmp(one: char*, two: char*): bool {
-    i := 0;
-    if(strlen(one) != strlen(two)) ret false;
-    while(one[i] != '\0') {
-        if(one[i] != two[i]) ret false;
-        i += 1;
-    }
-    ret true;
-}
+@inc "std/str/strlen";
+@inc "std/str/indexOf";
+@inc "std/str/indexOfs";
+@inc "std/str/strcpy";
+@inc "std/str/strcmp";
 
 @end

@@ -6,10 +6,17 @@ _Ravef4exit:
 	movq $0x2000001, %rax
 	syscall
 
-.global _Ravef5write
-.type _Ravef5write, @function
-_Ravef5write:
+.global _Ravef7_fwrite
+.type _Ravef7_fwrite, @function
+_Ravef7_fwrite:
 	movq $0x20000004, %rax
+	syscall
+	ret
+
+.global _Ravef5fread
+.type   _Ravef5fread, @function
+_Ravef5fread:
+	movq $0x20000003, %rax
 	syscall
 	ret
 

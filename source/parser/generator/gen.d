@@ -188,6 +188,7 @@ class GenerationContext {
 	LLVMBasicBlockRef thenbb; // if CYCLE or IF
 	string target_platform;
 	LLVMContextRef context;
+	int optLevel;
 
     this() {
         mod = LLVMModuleCreateWithName(toStringz("rave"));
@@ -215,9 +216,10 @@ class GenerationContext {
 		return o;
 	}
 
+	// Get LLVM type from Type or Atst
 	LLVMTypeRef getLLVMType(T)(T t, AnalyzerScope s) {
 		static if(is(typeof(t) == Type)) {
-			if(auto tb = t.instanceof!TypeBasic) {
+			if(auto tb = t.instanceof!TypeBasic) { // If basic type
 				switch(tb.basic) {
 					case BasicType.t_int:
 					case BasicType.t_ushort:
@@ -238,27 +240,26 @@ class GenerationContext {
 					default: return LLVMInt8Type();
 				}
 			}
-			else if(auto p = t.instanceof!TypePointer) {
+			else if(auto p = t.instanceof!TypePointer) { // If pointer
 				if(getLLVMType(p.to,s) == LLVMVoidType()) {
 					return LLVMPointerType(LLVMInt8Type(),0);
 				}
 				return LLVMPointerType(getLLVMType(p.to,s), 0);
 			}
-        	else if(auto v = t.instanceof!TypeVoid) {
+        	else if(auto v = t.instanceof!TypeVoid) { // If void
             	return LLVMVoidType();
         	}
-			return LLVMInt32Type();
+			return LLVMInt32Type(); // If unknown - return int
 		}
 		else {
 			// Array, or...?
-			if(AtstNodeArray a = t.instanceof!AtstNodeArray) {
-				// If array then
+			if(AtstNodeArray a = t.instanceof!AtstNodeArray) { // If array
 				auto array_type = getLLVMType(a.node,s);
 				//return LLVMVectorType(array_type, cast(uint)a.count);
 				return LLVMArrayType(array_type, cast(uint)a.count);
 			}
 			else if(AtstNodeName struc = t.instanceof!AtstNodeName) {
-				// If struct then
+				// If struct
 				if(struc.name in s.genctx.gstructs.ss) {
 					return s.genctx.gstructs.getS(struc.name);
 				}
@@ -299,8 +300,15 @@ class GenerationContext {
 	}
 
 	void genTarget(string file,bool d) {
-		//if(d) LLVMWriteBitcodeToFile(this.mod,cast(const char*)(file~".be"));
+		// Optimization
+		// optLevel - level of optimization(0, 1(default), 2 or 3)
+		LLVMPassManagerBuilderRef p = LLVMPassManagerBuilderCreate();
+		LLVMPassManagerBuilderSetOptLevel(p, cast(uint)optLevel);
+		LLVMPassManagerRef pm = LLVMCreatePassManager();
+		LLVMPassManagerBuilderPopulateModulePassManager(p, pm);
+		LLVMRunPassManager(pm, mod);
 
+		// Setting target triple
 		char* errors;
 		LLVMTargetRef target;
     	LLVMGetTargetFromTriple(toStringz(target_platform), &target, &errors);
@@ -324,7 +332,7 @@ class GenerationContext {
 
 		if(d) {
 			char* err;
-			LLVMPrintModuleToFile(this.mod, "tmp.ll", &err);
+			LLVMPrintModuleToFile(this.mod, "debug.ll", &err);
 		}
 
     	LLVMTargetMachineEmitToFile(machine,this.mod,file_ptr, LLVMObjectFile, &errors);

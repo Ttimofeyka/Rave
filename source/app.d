@@ -2,7 +2,7 @@ import std.stdio;
 import std.conv : to;
 import std.path : buildNormalizedPath, absolutePath;
 import core.stdc.stdlib : exit;
-import parser.analyzer, parser.mparser, parser.ast, parser.typesystem, parser.generator.gen, llvm;
+import parser.analyzer, parser.mparser, parser.ast, parser.typesystem, parser.generator.gen;
 import lexer.mlexer;
 import lexer.tokens;
 import lexer.preproc;
@@ -16,6 +16,7 @@ import std.string;
 import std.file : remove;
 import std.conv : to;
 import std.file;
+import llvm;
 
 string stdlibIncPath = "";
 string outputSimpleType = "";
@@ -24,6 +25,7 @@ bool debugModeFull = false;
 bool generateDocJson = false;
 string docJsonFile = "docs.json";
 bool not_delete_o = false;
+int optLevel = 1;
 
 string linker;
 
@@ -80,6 +82,7 @@ void compile(string linkFiles, bool nolink, string sourceFile, string outputType
 	Compiler comp = new Compiler(parser.getDecls(), nodes);
 	comp.debugInfo.debugMode = debugMode;
 	comp.debugInfo.printAst = debugModeFull;
+	comp.optLevel = optLevel;
 	CompilerError err = comp.generate(outputType, outputFile~".o");
 
 	if(err.hadError) {
@@ -109,7 +112,6 @@ void main(string[] args)
 	string outputType = "";
 	string outputFile = "a.o";
 	bool nolink = false;
-	string linkFiles = "";
 	bool isshared = false;
 	bool noentry = false;
 	stackMemory = new StackMemoryManager();
@@ -126,7 +128,8 @@ void main(string[] args)
 		"nolink", "Disable auto-link with runtime", &nolink,
 		"no-rm-obj", "Don't remove object file", &not_delete_o,
 		"shared", "Linking files as shared library", &isshared,
-		"noentry", "Linking without begin.o", &noentry
+		"noentry", "Linking without begin.o", &noentry,
+		"opt", "Optimization level", &optLevel
 	);
 	
     if(helpInformation.helpWanted)
@@ -170,20 +173,21 @@ void main(string[] args)
 	if(isshared) linkF ~= "-shared ";
 
   	LLVMInitializeNativeTarget();
+
 	if(sourceFiles.length > 1) {
 		string[] to_remove;
 		for(int i=1; i<sourceFiles.length; i++) {
 			string currF = sourceFiles[i];
-			if(
+			if( // If object file or library just add to link-files
 				currF[$-1..$] == "o"
 				||
 				currF[$-1..$] == "a"
 				||
 				(currF.length > 2 
-				&& 
+				&&
 				(currF[$-3..$] == "dll" 
 			|| currF[$-3..$] == "lib"))) linkF ~= sourceFiles[i] ~ " ";
-			else {
+			else { // Else compile source file
 				compile("",true,sourceFiles[i],outputType,sourceFiles[i]);
 				linkF ~= sourceFiles[i]~platformFileType ~ " ";
 				to_remove ~= sourceFiles[i]~platformFileType;
@@ -199,10 +203,3 @@ void main(string[] args)
 	}
 	else compile(linkF, nolink, sourceFile, outputType, outputFile);
 }
-
-/*
-"lflags": [
-		"-L/usr/lib/llvm-10/lib",
-		"-R/usr/lib/llvm-10/lib"
-],
-*/

@@ -26,6 +26,7 @@ class CompilerProgram {
 
 class Compiler {
     CompilerDebugInfo debugInfo;
+    int optLevel;
 
     CompilerProgram _program;
 
@@ -60,6 +61,8 @@ class Compiler {
 
         auto genctx = new GenerationContext();
         auto semaScope = new AnalyzerScope(genctx.sema, genctx);
+
+        genctx.optLevel = optLevel;
 
         implementDefaultTypeContext(genctx.sema.typeContext);
 

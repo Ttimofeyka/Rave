@@ -1,0 +1,17 @@
+@protected
+
+@inc "std/str/indexOf";
+
+indexOfs(str: char*, ss: char*): int {
+    len := strlen(ss);
+
+    i := 0;
+    while(i<len) {
+        index := indexOf(str,ss[i]);
+        if(index != -1) ret index;
+        i += 1;
+    }
+    ret -1;
+}
+
+@end

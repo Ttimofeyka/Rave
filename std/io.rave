@@ -1,6 +1,6 @@
 @protected
 
-@inc "std/str";
+@inc "std/str/strlen";
 @inc "std/defs";
 
 @def stdin 0 @end

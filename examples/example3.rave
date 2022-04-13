@@ -1,7 +1,6 @@
-@inc "std/base";
 @inc "std/io";
-@inc "std/conv";
 
 main(argc: int, argv: char**): int {
+    a: int = 0;
     ret 0;
 }

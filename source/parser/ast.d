@@ -4,7 +4,6 @@ import std.stdio, std.conv;
 import std.algorithm.iteration : map;
 import std.algorithm : canFind;
 import parser.generator.gen, lexer.tokens;
-import llvm;
 import std.conv : to;
 import core.stdc.stdlib : exit;
 import parser.typesystem;
@@ -18,6 +17,7 @@ import std.typecons;
 import core.stdc.stdlib : malloc;
 import parser.mparser;
 import parser.atst;
+import llvm;
 
 struct FuncSignature {
 	AtstNode ret;
@@ -452,8 +452,8 @@ class AstNodeFunction : AstNode {
 	    );
 
 		bool shouldMangle = true;
-		foreach(mod; decl.decl_mods) {
-			if(mod.name == "C") shouldMangle = false;
+		foreach(mod; decl.decl_mods) { // Function pre-options
+			if(mod.name == "C") shouldMangle = false; // Mangle C-mode
 			else if(mod.name == "dll") {
 				if(mod.args.length != 1) 
 					s.ctx.addError("Function modifier 'dll' needs exactly 1 parameter.",
@@ -576,7 +576,7 @@ class AstNodeFunction : AstNode {
 // 	binary_op_neq, // not equal to
 // }
 
-class AstNodeGet : AstNode {
+class AstNodeGet : AstNode { // ->, .
 	AstNode value;
 	string field;
 	bool isSugar; // true if '->' false if '.'
@@ -685,7 +685,7 @@ class AstNodeGet : AstNode {
 		if(base !in ctx.gstructs.structs) {
 			// Its var-struct or error?
 			if(AstNodeGet v = value.instanceof!AstNodeGet) {
-				writeln("It didn't implement!");
+				writeln(fromStringz(LLVMPrintTypeToString(LLVMTypeOf(v.gen(s)))));
 				exit(-1);
 			}
 			writeln("Didn't find structure '",base,"'!");
@@ -718,7 +718,7 @@ class AstNodeGet : AstNode {
 	}
 }
 
-class AstNodeBinary : AstNode {
+class AstNodeBinary : AstNode { // Binary operations
 	AstNode lhs, rhs;
 	TokType type;
 	Type valueType;
@@ -1117,7 +1117,7 @@ class AstNodeBinary : AstNode {
 	}
 }
 
-class AstNodeUnary : AstNode {
+class AstNodeUnary : AstNode { // Unary operations
 	AstNode node;
 	TokType type;
 
@@ -1795,6 +1795,37 @@ class AstNodeDecl : AstNode {
 								toStringz("struct_gep")
 							)
 						);
+						else {
+							if(AtstNodeName ty = ctx.gstructs.variables[n.name][i].decl.type.instanceof!AtstNodeName) {
+								if(ty.name in ctx.gstructs.ss) { // It's struct!
+									auto alloc = LLVMBuildAlloca(
+												ctx.currbuilder,
+												ctx.gstructs.getS(ty.name),
+												toStringz("temp_struct")
+											);
+									auto strucg = LLVMBuildStructGEP(
+												ctx.currbuilder,
+												cl,
+												ctx.gstructs.getV(ctx.gstructs.variables[n.name][i].decl.name, n.name),
+												toStringz("struct_gep")
+											);
+									LLVMValueRef allocc;
+									if(LLVMTypeOf(alloc) == LLVMTypeOf(strucg)) {
+										allocc = LLVMBuildLoad(
+											ctx.currbuilder,
+											alloc,
+											toStringz("alloc")
+										);
+									}
+									else allocc = alloc;
+									LLVMBuildStore(
+											ctx.currbuilder,
+											allocc,
+											strucg
+									);
+								}
+							}
+						}
 					}
 
 					return cl;
