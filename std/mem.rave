@@ -1,5 +1,9 @@
 @protected
 
-extern brk(long: b);
+@inc "std/io";
+
+extern brk(addr: void*): int;
+
+
 
 @end

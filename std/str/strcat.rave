@@ -1,0 +1,8 @@
+@protected
+
+@inc "std/str/strcpy";
+@inc "std/str/strlen";
+
+
+
+@end

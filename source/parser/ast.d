@@ -734,11 +734,27 @@ class AstNodeBinary : AstNode { // Binary operations
 		GenerationContext ctx = s.genctx;
 		switch(type) {
 			case TokType.tok_equ:
-				if(auto iden = lhs.instanceof!AstNodeIden) return LLVMBuildStore(
+				auto rhsgg = rhs.gen(s);
+				LLVMValueRef rhsg;
+				if(auto iden = lhs.instanceof!AstNodeIden) {
+					if(AstNodeIden iden2 = rhs.instanceof!AstNodeIden) {
+						if(LLVMTypeOf(rhsgg) == LLVMPointerType(LLVMInt8Type(),0)) {
+							rhsg = LLVMBuildPointerCast(
+								ctx.currbuilder,
+								rhsgg,
+								LLVMTypeOf(LLVMBuildLoad(ctx.currbuilder,ctx.gstack[iden.name],toStringz("l"))),
+								toStringz("ptrtoptr")
+							);
+						}
+						else rhsg = rhsgg;
+					}
+					else rhsg = rhsgg;
+					return LLVMBuildStore(
 						ctx.currbuilder,
-						rhs.gen(s),
+						rhsg,
 						ctx.gstack[iden.name]
-				);
+					);
+				}
 				else if(AstNodeIndex index = lhs.instanceof!AstNodeIndex) {
 					LLVMValueRef iindex;
 					auto iiden = index.base.gen(s);
@@ -827,7 +843,7 @@ class AstNodeBinary : AstNode { // Binary operations
 					get.isEqu = true;
 					auto store = LLVMBuildStore(
 						ctx.currbuilder,
-						rhs.gen(s),
+						rhsgg,
 						get.gen(s)
 					);
 					get.isEqu = false;
@@ -2062,17 +2078,11 @@ class AstNodeFuncCall : AstNode {
 					LLVMTypeKind k = LLVMGetTypeKind(LLVMTypeOf(valgen));
 					if(k == LLVMPointerTypeKind) {
 						// Hah.
-						auto ptrtoi = LLVMBuildPtrToInt(
+						return LLVMBuildPointerCast(
 							ctx.currbuilder,
 							valgen,
-							LLVMInt32Type(),
-							toStringz("ptoi")
-						);
-						return LLVMBuildIntToPtr(
-							ctx.currbuilder,
-							ptrtoi,
 							ctx.getLLVMType(t, s),
-							toStringz("itop")
+							toStringz("ptrcast")
 						);
 					}
 					else if(k == LLVMVectorTypeKind) {

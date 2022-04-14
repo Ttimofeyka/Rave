@@ -1,6 +1,10 @@
 @inc "std/io";
 
 main(argc: int, argv: char**): int {
-    a: int = 0;
-    ret 0;
+    a: int[128];
+    a[0] = 123;
+    ap: int* = &a;
+    avp: void* = cast("void*",ap);
+    ap2: int* = cast("int*",avp);
+    ret ap2[0];
 }
