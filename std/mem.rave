@@ -1,9 +1,14 @@
 @protected
 
-@inc "std/io";
-
 extern brk(addr: void*): int;
 
+mptr: char*;
 
+malloc(s: int): void* {
+    r: void*;
+    r = mptr;
+    mptr = itop(ptoi(mptr)+s);
+    ret r;
+}
 
 @end

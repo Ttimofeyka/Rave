@@ -7,6 +7,7 @@ import std.array;
 import std.uni;
 import std.ascii;
 import std.conv : to;
+import std.stdio : writeln;
 
 LLVMValueRef createLocal(GenerationContext ctx, LLVMTypeRef type, LLVMValueRef val, string name) {
 		LLVMValueRef local = LLVMBuildAlloca(
@@ -27,12 +28,13 @@ LLVMValueRef createLocal(GenerationContext ctx, LLVMTypeRef type, LLVMValueRef v
 		return local;
 }
 
-LLVMValueRef createGlobal(GenerationContext ctx, LLVMTypeRef type, LLVMValueRef val, string name) {
+LLVMValueRef createGlobal(GenerationContext ctx, LLVMTypeRef type, LLVMValueRef val, string name, bool isExt) {
 		LLVMValueRef global = LLVMAddGlobal(
 			ctx.mod,
 			type,
 			toStringz("_Raveg"~to!string(name.length)~name)
 		);
+		if(isExt) LLVMSetLinkage(global, LLVMAvailableExternallyLinkage);
 		if(val !is null) LLVMSetInitializer(global,val);
 		ctx.gstack.addGlobal(global,name);
 		return global;

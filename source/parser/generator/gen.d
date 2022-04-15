@@ -249,7 +249,11 @@ class GenerationContext {
         	else if(auto v = t.instanceof!TypeVoid) { // If void
             	return LLVMVoidType();
         	}
-			return LLVMInt32Type(); // If unknown - return int
+			// If unknown - return void*
+			return LLVMPointerType(
+				LLVMInt8Type(),
+				0
+			);
 		}
 		else {
 			// Array, or...?

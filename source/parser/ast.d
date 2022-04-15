@@ -19,6 +19,14 @@ import parser.mparser;
 import parser.atst;
 import llvm;
 
+const string[] predef_funcs = [
+	"sizeof",
+	"typeof",
+	"cast",
+	"itop",
+	"ptoi"
+];
+
 struct FuncSignature {
 	AtstNode ret;
 	AtstNode[] args;
@@ -737,16 +745,13 @@ class AstNodeBinary : AstNode { // Binary operations
 				auto rhsgg = rhs.gen(s);
 				LLVMValueRef rhsg;
 				if(auto iden = lhs.instanceof!AstNodeIden) {
-					if(AstNodeIden iden2 = rhs.instanceof!AstNodeIden) {
-						if(LLVMTypeOf(rhsgg) == LLVMPointerType(LLVMInt8Type(),0)) {
+					if(LLVMTypeOf(rhsgg) == LLVMPointerType(LLVMInt8Type(),0)) {
 							rhsg = LLVMBuildPointerCast(
 								ctx.currbuilder,
 								rhsgg,
 								LLVMTypeOf(LLVMBuildLoad(ctx.currbuilder,ctx.gstack[iden.name],toStringz("l"))),
 								toStringz("ptrtoptr")
 							);
-						}
-						else rhsg = rhsgg;
 					}
 					else rhsg = rhsgg;
 					return LLVMBuildStore(
@@ -1184,6 +1189,25 @@ class AstNodeUnary : AstNode { // Unary operations
 					val,
 					LLVMPointerType(LLVMTypeOf(val),0),
 					toStringz("inttoptr")
+				);
+			}
+			else if(LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMStructTypeKind) {
+				auto alloca = LLVMBuildAlloca(
+					ctx.currbuilder,
+					LLVMPointerType(LLVMTypeOf(val),0),
+					toStringz("alloca")
+				);
+				if(AstNodeIden id = node.instanceof!AstNodeIden) {
+					LLVMBuildStore(
+						ctx.currbuilder,
+						ctx.gstack[id.name],
+						alloca
+					);
+				}
+				return LLVMBuildLoad(
+					ctx.currbuilder,
+					alloca,
+					toStringz("load")
 				);
 			}
 			return null;
@@ -1706,7 +1730,10 @@ class AstNodeIden : AstNode {
 			auto t = s.ctx.typeContext.getType(name);
 			if(t !is null) type = new TypeType(t);
 			else {
-				if(name != "sizeof" && name != "typeof" && name != "cast") s.ctx.addError("Unknown binding: '" ~ name ~ "'.", this.where);
+				for(int i=0; i<predef_funcs.length; i++) {
+					if(name == predef_funcs[i]) return;
+				}
+				s.ctx.addError("Unknown binding: '" ~ name ~ "'.", this.where);
 			}
 		}
 	}
@@ -1750,7 +1777,8 @@ class AstNodeDecl : AstNode {
 			auto global = ctx.createGlobal(
 				ctx.getLLVMType(decl.type,s),
 				LLVMConstNull(ctx.getLLVMType(decl.type,s)),
-				decl.name
+				decl.name,
+				decl.isExtern
 			);
 
 			LLVMTypeRef ret_type = LLVMFunctionType(
@@ -1775,16 +1803,11 @@ class AstNodeDecl : AstNode {
 				value.gen(s),
 				global
 			);
-			else {
-				LLVMBuildStore(
-					ctx.currbuilder,
-					LLVMConstNull(LLVMGlobalGetValueType(global)),
-					global
-				);
-			}
 			LLVMBuildRetVoid(ctx.currbuilder);
 
 			ctx.presets.add(func);
+
+			ctx.currbuilder = null;
 
 			return global;
 		}
@@ -1961,17 +1984,11 @@ class AstNodeFuncCall : AstNode {
 
 		if(!funcType.instanceof!TypeFunction) {
 			if(AstNodeIden _sizeof = func.instanceof!AstNodeIden) {
-				if(_sizeof.name == "sizeof") {
-					cmd = "sizeof";
-					return;
-				}
-				else if(_sizeof.name == "typeof") {
-					cmd = "typeof";
-					return;
-				}
-				else if(_sizeof.name == "cast") {
-					cmd = "cast";
-					return;
+				for(int i=0; i<predef_funcs.length; i++) {
+					if(_sizeof.name == predef_funcs[i]) {
+						cmd = _sizeof.name;
+						return;
+					}
 				}
 			}
 			s.ctx.addError("Cannot call a non-function value!", this.where);
@@ -2017,11 +2034,35 @@ class AstNodeFuncCall : AstNode {
 		GenerationContext ctx = s.genctx;
 		// _Ravef4exit, not exit! ctx.mangleQualifiedName([name], true) -> string
 		AstNodeIden n = cast(AstNodeIden)func;
+		for(int i=0; i<predef_funcs.length; i++) {
+			if(predef_funcs[i] == n.name) {cmd = n.name; break;}
+		}
 
 		if(cmd == "") {LLVMValueRef* llvm_args = cast(LLVMValueRef*)malloc(LLVMValueRef.sizeof * args.length);
+		TypeFunction tf = ctx.gfuncs.getFType(n.name);
 		for(int i = 0; i < args.length; i++) {
 			auto genv = args[i].gen(s);
-			llvm_args[i] = genv;
+			if(tf.args[i].toString == "void*") {
+				LLVMTypeKind kind = LLVMGetTypeKind(LLVMTypeOf(genv));
+				if(kind == LLVMPointerTypeKind) {
+					llvm_args[i] = LLVMBuildPointerCast(
+						ctx.currbuilder,
+						genv,
+						LLVMPointerType(LLVMInt8Type(),0),
+						toStringz("temp")
+					);
+				}
+				else if(kind == LLVMIntegerTypeKind) {
+					llvm_args[i] = LLVMBuildIntToPtr(
+						ctx.currbuilder,
+						genv,
+						LLVMPointerType(LLVMInt8Type(),0),
+						toStringz("temp2")
+					);
+				}
+				else llvm_args[i] = genv;
+			}
+			else llvm_args[i] = genv;
 		}
 
 		if(ctx.gfuncs.getFType(n.name).ret.toString() == "void") {
@@ -2059,6 +2100,7 @@ class AstNodeFuncCall : AstNode {
 						return LLVMSizeOf(LLVMTypeOf(id.gen(s)));
 				}
 			}
+			else return LLVMSizeOf(LLVMTypeOf(args[0].gen(s)));
 		}
 		else if(cmd == "typeof") {
 			auto type = LLVMTypeOf(args[0].gen(s));
@@ -2103,11 +2145,11 @@ class AstNodeFuncCall : AstNode {
 					AtstNode tt = strToType(nn.name);
 					if(k == LLVMPointerTypeKind) {
 						// Integer to ptr
-						return LLVMBuildIntToPtr(
+						return LLVMBuildPtrToInt(
 							ctx.currbuilder,
 							valgen,
 							ctx.getLLVMType(tt, s),
-							toStringz("itop")
+							toStringz("ptoi")
 						);
 					}
 					else {
@@ -2119,8 +2161,36 @@ class AstNodeFuncCall : AstNode {
 						);
 					}
 				}
+		}
+		else if(cmd == "ptoi") {
+			// Pointer to Integer
+			// 0 Argument - Pointer
+			return LLVMBuildPtrToInt(
+				ctx.currbuilder,
+				args[0].gen(s),
+				LLVMInt32Type(),
+				toStringz("ptoi_cmd")
+			);
+		}
+		else if(cmd == "itop") {
+			// Integer to Pointer
+			// 0 Argument - Integer
+			// 1 Argument - Type of output pointer(if no - type = void*)
+			string t;
+			if(args.length>1) {
+				AstNodeString ss = args[1].instanceof!AstNodeString;
+				t = ss.value;
 			}
-			else exit(255);
+			else t = "void*";
+
+			return LLVMBuildIntToPtr(
+				ctx.currbuilder,
+				args[0].gen(s),
+				ctx.getLLVMType(strToType(t),s),
+				toStringz("itop_cmd")
+			);
+		}
+		else exit(255);
 		assert(0);
 	}
 

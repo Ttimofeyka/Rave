@@ -1,10 +1,9 @@
+@inc "std/mem";
 @inc "std/io";
 
 main(argc: int, argv: char**): int {
-    a: int[128];
-    a[0] = 123;
-    ap: int* = &a;
-    avp: void* = cast("void*",ap);
-    ap2: int* = cast("int*",avp);
-    ret ap2[0];
+    a: void* = malloc(2);
+    a = "A";
+    puts(a);
+    ret 0;
 }
