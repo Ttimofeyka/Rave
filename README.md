@@ -9,7 +9,7 @@ inspiration from C, C++, Rust and Assembly, making an easy-to-use but low-level 
 @inc "std/io";
 
 main: int {
-  writeln("Hello, world!");
+  puts("Hello, world!\n");
   ret 0;
 }
 ```
@@ -30,8 +30,8 @@ Copy `base.dub.json` to `dub.json` and change the flags (if you need to change t
 
 * ~~Make a lexer~~ (100%)
 * ~~Make a preprocessor~~ (100%)
-* ~~Make a parser~~ (100%
-* Make a semantic analyzer (87%)
-* Make a code generator (75%)
+* ~~Make a parser~~ (100%)
+* ~~Make a semantic analyzer~~ (100%)
+* ~~Make a code generator~~ (100%)
 
 Discord server - https://discord.gg/AfEtyArvsM
