@@ -1,6 +1,50 @@
 @protected
 
+@inc "std/defs";
+
 extern brk(addr: void*): int;
+
+extern mmap(addr: void*, l: int, p: int, f: int, fd: int, o: int): void*;
+extern munmap(addr: void*, len: int): int;
+extern mremap(olda: void*, olds: int, s: int, f: int, newaddr: void*): void*;
+
+@def PROT_READ 1 @end
+@def PROT_WRITE 2 @end
+@def MAP_ANON 20 @end
+@def MAP_PRIV 2 @end
+@def MAP_FAILED cast("int*",-1) @end
+@def MREMAP_MAYMOVE 1 @end
+@def MREMAP_FIXED 2 @end
+
+__currbrk: void* = NULL;
+
+__brk(addr: void*): int {
+    newbrk: void* = cast("void*",brk(addr));
+    __currbrk = newbrk;
+    ret 0;
+}
+
+__sbrk(incr: int): void* {
+    oldbrk: void*;
+
+    if(__currbrk == NULL) {
+        if(__brk(NULL) < 0) ret cast("void*",-1);
+    }
+
+    if(incr == 0) ret __currbrk;
+
+    oldbrk = __currbrk;
+
+    if(__brk(itop(ptoi(oldbrk)+incr)) < 0) {
+        ret cast("void*",-1);
+    }
+
+    ret oldbrk;
+}
+
+/*
+
+// bump-allocator
 
 mptr: char*;
 
@@ -9,6 +53,138 @@ malloc(s: int): void* {
     r = mptr;
     mptr = itop(ptoi(mptr)+s);
     ret r;
+}*/
+
+// Memory management
+
+memset(dest: void*, val: int, len: int): void* {
+    ptr: int* = cast("int*",dest);
+    
+    i: int = len;
+    b: int = 0;
+
+    while(i > 0) {
+        ptr[b] = val;
+        i -= 1;
+        b += 1;
+    }
+    ret dest;
+}
+
+memcpy(dest: void*, src: void*, len: int): void* {
+    i: int = len;
+    b: int = 0;
+    while(i > 0) {
+        dest[b] = src[b];
+        i -= 1;
+        b += 1;
+    }
+    ret dest;
+}
+
+memcmp(v1: void*, v2: void*, c: int): bool {
+    i: int = c;
+    
+    while(i > 0) {
+        if(v1[i] != v2[i]) ret false;
+        i += 1;
+    }
+    ret true;
+}
+
+MALLOC_has_init: bool = false;
+managed_memstart: void*;
+lastvaladdr: void*;
+
+malloc_init() {
+    lastvaladdr = __sbrk(0);
+    managed_memstart = lastvaladdr;
+
+    MALLOC_has_init = true;
+}
+
+struct memblock {
+    is_available: bool;
+    size: int;
+}
+
+free(firstbyte: void*) {
+    mb: memblock*;
+    mb = cast("memblock*",itop(ptoi(firstbyte)-cast(long,sizeof("memblock*"))));
+    *mb->is_available = cast(bool,false);
+}
+
+malloc(size: int): void* {
+    currentloc: void*;
+    currlocmcb: memblock*;
+
+    memloc: void*;
+
+    if(!MALLOC_has_init) malloc_init();
+
+    newsize: int = size + cast(int,sizeof("memblock"));
+    memloc = NULL;
+
+    currentloc = managed_memstart;
+
+    a: bool = (currentloc != lastvaladdr);
+    while(a) {
+        currlocmcb = cast("memblock*",currentloc);
+        if(*currlocmcb->is_available) {
+            if(*currlocmcb->size > newsize-1) {
+                *currlocmcb->is_available = cast(bool,false);
+                memloc = currentloc;
+                a = false;
+            }
+        }
+        if(a) currentloc = itop(ptoi(currentloc)+(*currlocmcb->size));
+    }
+
+    if(memloc == NULL) {
+        __sbrk(newsize);
+        memloc = lastvaladdr;
+        lastvaladdr = itop(ptoi(lastvaladdr)+newsize);
+        currlocmcb = cast("memblock*",memloc);
+        *currlocmcb->is_available = cast(bool,true);
+        *currlocmcb->size = size;
+    }
+
+    memloc = itop(ptoi(memloc)+cast(long,sizeof("memblock")));
+
+    ret memloc;
+}
+
+realloc(origptr: void*, newsize: int): void* {
+    if(origptr == NULL) ret malloc(newsize);
+    if(newsize < 1) {
+        free(origptr);
+        ret NULL;
+    }
+    newptr: void* = malloc(newsize);
+    mb: memblock* = cast("memblock*",itop(ptoi(origptr)-cast(long,sizeof("memblock*"))));
+    memcpy(origptr, newptr, *mb->size);
+    free(origptr);
+    ret newptr;
+}
+
+calloc(n: int, size: int): void* {
+    i: int;
+    nb: int;
+    p: char*;
+    q: char*;
+
+    nb = n * size;
+
+    q = malloc(nb);
+    p = q;
+    if(p != NULL) {
+        i = 0;
+        while(i<nb) {
+            p[i] = cast(char,0);
+            ++i;
+        }
+    }
+    ret q;
 }
 
 @end

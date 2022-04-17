@@ -307,6 +307,8 @@ class AstNodeStruct : AstNode {
 
 	override LLVMValueRef gen(AnalyzerScope s) {
 		GenerationContext ctx = s.genctx;
+		LLVMTypeRef t = LLVMStructCreateNamed(ctx.context, toStringz(name));
+		ctx.gstructs.ss[name] = t;
 		LLVMTypeRef* types = cast(LLVMTypeRef*)malloc(LLVMTypeRef.sizeof * variables.length);
 		for(int i=0; i<variables.length; i++) {
 			ctx.gstructs.addV(cast(uint)i, variables[i].decl.name, name);
@@ -314,7 +316,8 @@ class AstNodeStruct : AstNode {
 			types[i] = ctx.getLLVMType(variables[i].decl.type, s);
 		}
 		//ctx.gstructs.addS(LLVMVectorType(LLVMPointerType(LLVMInt8Type(),0), cast(uint)variables.length), name);
-		ctx.gstructs.addS(LLVMStructType(types, cast(uint)variables.length, false), name);
+		LLVMStructSetBody(t,types,cast(uint)variables.length,false);
+		ctx.gstructs.ss[name] = t;
 		return null;
 	}
 
@@ -699,7 +702,31 @@ class AstNodeGet : AstNode { // ->, .
 			writeln("Didn't find structure '",base,"'!");
 			exit(-1);
 		}
-		if(isEqu) return LLVMBuildStructGEP(
+		LLVMValueRef loaded = LLVMBuildLoad(
+			ctx.currbuilder,
+			ctx.gstack[base],
+			toStringz("load")
+		);
+		if(LLVMGetTypeKind(LLVMTypeOf(loaded)) == LLVMPointerTypeKind) {
+			// struct*
+			if(isEqu) return LLVMBuildStructGEP(
+				ctx.currbuilder,
+				loaded,
+				ctx.gstructs.getV(field, ctx.gstructs.structs[base]),
+				toStringz("struct_gep")
+			);
+			return LLVMBuildLoad(
+				ctx.currbuilder,
+				LLVMBuildStructGEP(
+					ctx.currbuilder,
+					loaded,
+					ctx.gstructs.getV(field, ctx.gstructs.structs[base]),
+					toStringz("struct_gep")
+				),
+				toStringz("load")
+			);
+		}
+		else {if(isEqu) return LLVMBuildStructGEP(
 			ctx.currbuilder,
 			ctx.gstack[base],
 			ctx.gstructs.getV(field, ctx.gstructs.structs[base]),
@@ -714,7 +741,7 @@ class AstNodeGet : AstNode { // ->, .
 				toStringz("struct_gep")
 			),
 			toStringz("load")
-		);
+		);}
 	}
 
 	debug {
@@ -1071,24 +1098,7 @@ class AstNodeBinary : AstNode { // Binary operations
 	}
 
 	private void checkTypes(AnalyzerScope s, Type neededType) {
-		if(!neededType.instanceof!TypeUnknown) {
-			if(neededType.assignable(lhs.getType(s))
-			&& neededType.assignable(rhs.getType(s))) {
-				this.valueType = neededType;
-			}
-			else {
-				/*s.ctx.addError("Bad binary operator types: expected '"
-					~ neededType.toString() ~ "' but got '"
-					~ lhs.getType(s).toString() ~ "' and '"
-					~ rhs.getType(s).toString() ~ "'.", where);*/
-
-				this.valueType = neededType;
-			}
-		}
-		else { // neededType --> unknown.
-			// TODO: Find best suitable type!
-			this.valueType = lhs.getType(s);
-		}
+		
 	}
 
 	override void analyze(AnalyzerScope s, Type neededType) {
@@ -1241,6 +1251,45 @@ class AstNodeUnary : AstNode { // Unary operations
 				ctx.currbuilder,
 				node.gen(s),
 				toStringz("unary")
+			);
+		}
+		else if(type == TokType.tok_multiply) {
+			auto nodeg = node.gen(s);
+
+			if(LLVMGetTypeKind(LLVMTypeOf(nodeg)) == LLVMPointerTypeKind) {
+				// Return value of first element
+				return LLVMBuildLoad(
+					ctx.currbuilder,
+					LLVMBuildGEP(
+						ctx.currbuilder,
+						nodeg,
+						[LLVMConstInt(LLVMInt32Type(),0,false)].ptr,
+						1,
+						toStringz("get_el_bi")
+					),
+					toStringz("load")
+				);
+			}
+			else if(LLVMGetTypeKind(LLVMTypeOf(nodeg)) == LLVMArrayTypeKind) {
+				// Return value of first element
+				return LLVMBuildLoad(ctx.currbuilder, LLVMBuildInBoundsGEP(
+					ctx.currbuilder,
+					nodeg,
+					[LLVMConstInt(LLVMInt32Type(),0,false),LLVMConstInt(LLVMInt32Type(),0,false)].ptr,
+					2,
+					toStringz("getel")
+				), toStringz("load"));
+			}
+			else {
+				writeln("Error: using unary operator '*' without array or pointer!");
+				exit(-1);
+			}
+		}
+		else if(type == TokType.tok_plu_plu) {
+			return operAdd(
+				ctx,
+				node.gen(s),
+				LLVMConstInt(LLVMInt32Type(),1,false)
 			);
 		}
 		return null;
@@ -1719,11 +1768,6 @@ class AstNodeIden : AstNode {
 	override void analyze(AnalyzerScope s, Type neededType) {
 		auto v = s.get(name);
 		if(v !is null && neededType !is null) {
-			if(!neededType.assignable(v.type) && !neededType.instanceof!TypeUnknown) {
-				s.ctx.addError("Type mismatch: variable '" ~ name ~ "' is of type "
-					~ v.type.toString() ~ ", but " ~ neededType.toString() ~ " was expected.",
-					this.where);
-			}
 			type = v.type;
 		}
 		else {
@@ -1798,6 +1842,64 @@ class AstNodeDecl : AstNode {
 			ctx.currbuilder = LLVMCreateBuilder();
 			LLVMPositionBuilderAtEnd(ctx.currbuilder, entry);
 
+			string stru = to!string(fromStringz(LLVMPrintTypeToString(ctx.getLLVMType(decl.type,s))));
+			if(indexOf(stru,"%") != -1) {
+				if(indexOf(stru,"type") == -1) {
+					string stru_2 = stru.replace("%","").replace("*","");
+					ctx.gstructs.structs[decl.name] = stru_2;
+				}
+			}
+
+			if(AtstNodeName n = decl.type.instanceof!AtstNodeName) {
+				if(n.name in ctx.gstructs.ss) {
+					ctx.gstructs.structs[decl.name] = n.name;
+
+					for(int i=0; i<ctx.gstructs.variables[n.name].length; i++) {
+						if(ctx.gstructs.variables[n.name][i].value !is null) LLVMBuildStore(
+							ctx.currbuilder,
+							ctx.gstructs.variables[n.name][i].value.gen(s),
+							LLVMBuildStructGEP(
+								ctx.currbuilder,
+								global,
+								ctx.gstructs.getV(ctx.gstructs.variables[n.name][i].decl.name, n.name),
+								toStringz("struct_gep")
+							)
+						);
+						else {
+							if(AtstNodeName ty = ctx.gstructs.variables[n.name][i].decl.type.instanceof!AtstNodeName) {
+								if(ty.name in ctx.gstructs.ss) { // It's struct!
+									auto alloc = LLVMBuildAlloca(
+												ctx.currbuilder,
+												ctx.gstructs.getS(ty.name),
+												toStringz("temp_struct")
+											);
+									auto strucg = LLVMBuildStructGEP(
+												ctx.currbuilder,
+												global,
+												ctx.gstructs.getV(ctx.gstructs.variables[n.name][i].decl.name, n.name),
+												toStringz("struct_gep")
+											);
+									LLVMValueRef allocc;
+									if(LLVMTypeOf(alloc) == LLVMTypeOf(strucg)) {
+										allocc = LLVMBuildLoad(
+											ctx.currbuilder,
+											alloc,
+											toStringz("alloc")
+										);
+									}
+									else allocc = alloc;
+									LLVMBuildStore(
+											ctx.currbuilder,
+											allocc,
+											strucg
+									);
+								}
+							}
+						}
+					}
+				}
+			}
+
 			if(value !is null) LLVMBuildStore(
 				ctx.currbuilder,
 				value.gen(s),
@@ -1813,6 +1915,13 @@ class AstNodeDecl : AstNode {
 		}
 		else {
 			// Local var
+			string stru = to!string(fromStringz(LLVMPrintTypeToString(ctx.getLLVMType(decl.type,s))));
+			if(indexOf(stru,"%") != -1) {
+				if(indexOf(stru,"type") == -1) {
+					string stru_2 = stru.replace("%","").replace("*","");
+					ctx.gstructs.structs[decl.name] = stru_2;
+				}
+			}
 			if(AtstNodeName n = decl.type.instanceof!AtstNodeName) {
 				if(n.name in ctx.gstructs.ss) {
 					// Structure
@@ -1870,16 +1979,22 @@ class AstNodeDecl : AstNode {
 					return cl;
 				}
 			}
-			if(value is null) return ctx.createLocal(
-				ctx.getLLVMType(decl.type, s),
-				null,
-				decl.name
-			);
-			return ctx.createLocal(
-				ctx.getLLVMType(decl.type, s),
-				value.gen(s),
-				decl.name
-			);
+			if(!decl.isExtern) {
+				if(value is null) return ctx.createLocal(
+					ctx.getLLVMType(decl.type, s),
+					null,
+					decl.name
+				);
+				return ctx.createLocal(
+					ctx.getLLVMType(decl.type, s),
+					value.gen(s),
+					decl.name
+				);
+			}
+			auto gl = LLVMAddGlobal(ctx.mod, ctx.getLLVMType(decl.type,s), toStringz(decl.name));
+			LLVMSetLinkage(gl, LLVMExternalLinkage);
+			ctx.gstack.addGlobal(gl, decl.name);
+			return gl;
 		}
 	}
 
@@ -1915,6 +2030,8 @@ class AstNodeLabel : AstNode {
 
 class AstNodeBreak : AstNode {
 	string label; /* optional */
+
+	override void analyze(AnalyzerScope s, Type neededType) {}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
 		auto ctx = s.genctx;
@@ -2083,24 +2200,12 @@ class AstNodeFuncCall : AstNode {
 		);}
 		if(cmd == "sizeof") {
 			if(AstNodeIden id = args[0].instanceof!AstNodeIden) {
-				switch(id.name) {
-					case "bool":
-					return LLVMSizeOf(LLVMInt1Type());
-					case "char":
-					return LLVMSizeOf(LLVMInt8Type());
-					case "short":
-					return LLVMSizeOf(LLVMInt16Type());
-					case "int":
-					return LLVMSizeOf(LLVMInt32Type());
-					case "long":
-					return LLVMSizeOf(LLVMInt64Type());
-					default:
-						// What it's?
-						// Oof... generate?
-						return LLVMSizeOf(LLVMTypeOf(id.gen(s)));
-				}
+				return LLVMSizeOf(ctx.getLLVMType(strToType(id.name),s));
 			}
-			else return LLVMSizeOf(LLVMTypeOf(args[0].gen(s)));
+			else {
+				AstNodeString ss = args[0].instanceof!AstNodeString;
+				return LLVMSizeOf(ctx.getLLVMType(strToType(ss.value),s));
+			}
 		}
 		else if(cmd == "typeof") {
 			auto type = LLVMTypeOf(args[0].gen(s));
@@ -2144,7 +2249,7 @@ class AstNodeFuncCall : AstNode {
 					LLVMTypeKind k = LLVMGetTypeKind(LLVMTypeOf(valgen));
 					AtstNode tt = strToType(nn.name);
 					if(k == LLVMPointerTypeKind) {
-						// Integer to ptr
+						// Pointer to int
 						return LLVMBuildPtrToInt(
 							ctx.currbuilder,
 							valgen,
@@ -2165,10 +2270,25 @@ class AstNodeFuncCall : AstNode {
 		else if(cmd == "ptoi") {
 			// Pointer to Integer
 			// 0 Argument - Pointer
+			LLVMValueRef farg = args[0].gen(s);
+			if(LLVMGetTypeKind(LLVMTypeOf(farg)) == LLVMArrayTypeKind) {
+				return LLVMBuildPtrToInt(
+					ctx.currbuilder,
+					LLVMBuildInBoundsGEP(
+						ctx.currbuilder,
+						farg,
+						[LLVMConstInt(LLVMInt32Type(),0,false),LLVMConstInt(LLVMInt32Type(),0,false)].ptr,
+						2,
+						toStringz("getarr")
+					),
+					LLVMInt64Type(),
+					toStringz("ptoi_cmd")
+				);
+			}
 			return LLVMBuildPtrToInt(
 				ctx.currbuilder,
 				args[0].gen(s),
-				LLVMInt32Type(),
+				LLVMInt64Type(),
 				toStringz("ptoi_cmd")
 			);
 		}

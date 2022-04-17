@@ -1,9 +1,6 @@
-@inc "std/mem";
 @inc "std/io";
+@inc "std/mem";
 
 main(argc: int, argv: char**): int {
-    a: void* = malloc(2);
-    a = "A";
-    puts(a);
     ret 0;
 }

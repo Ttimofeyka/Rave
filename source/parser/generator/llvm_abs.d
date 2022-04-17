@@ -35,7 +35,7 @@ LLVMValueRef createGlobal(GenerationContext ctx, LLVMTypeRef type, LLVMValueRef 
 			toStringz("_Raveg"~to!string(name.length)~name)
 		);
 		if(isExt) LLVMSetLinkage(global, LLVMAvailableExternallyLinkage);
-		if(val !is null) LLVMSetInitializer(global,val);
+		if(val !is null && !isExt) LLVMSetInitializer(global,val);
 		ctx.gstack.addGlobal(global,name);
 		return global;
 }
@@ -81,17 +81,36 @@ LLVMValueRef getVarPtr(GenerationContext ctx, string name) {
 }
 
 LLVMValueRef operAdd(GenerationContext ctx, LLVMValueRef one, LLVMValueRef two) {
-        if(!isReal(one) && !isReal(two)) return LLVMBuildAdd(
+        LLVMValueRef oneg;
+		LLVMValueRef twog;
+
+		if(LLVMTypeOf(one) != LLVMTypeOf(two)) {
+			if(!isReal(one)) {
+				oneg = one;
+				twog = LLVMBuildIntCast(
+					ctx.currbuilder,
+					two,
+					LLVMTypeOf(oneg),
+					toStringz("intcast")
+				);
+			}
+			else {
+				oneg = one; twog = two;
+			}
+		}
+		else {oneg = one; twog = two;}
+		
+		if(!isReal(one) && !isReal(two)) return LLVMBuildAdd(
 			ctx.currbuilder,
-			one,
-			two,
+			oneg,
+			twog,
 			toStringz("operaddi_result")
 		);
 
 		return LLVMBuildFAdd(
 			ctx.currbuilder,
-			one,
-			two,
+			oneg,
+			twog,
 			toStringz("operaddf_result")
 		);
 }
@@ -162,7 +181,7 @@ LLVMValueRef castNum(GenerationContext ctx, LLVMValueRef tocast, LLVMTypeRef typ
 			type,
 			toStringz("castNumItF")
 		);
-		return LLVMBuildSExt(
+		return LLVMBuildIntCast(
 			ctx.currbuilder,
 			tocast,
 			type,

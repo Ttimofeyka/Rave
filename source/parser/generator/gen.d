@@ -240,7 +240,7 @@ class GenerationContext {
 					default: return LLVMInt8Type();
 				}
 			}
-			else if(auto p = t.instanceof!TypePointer) { // If pointer
+			else if(TypePointer p = t.instanceof!TypePointer) { // If pointer
 				if(getLLVMType(p.to,s) == LLVMVoidType()) {
 					return LLVMPointerType(LLVMInt8Type(),0);
 				}
@@ -249,11 +249,8 @@ class GenerationContext {
         	else if(auto v = t.instanceof!TypeVoid) { // If void
             	return LLVMVoidType();
         	}
-			// If unknown - return void*
-			return LLVMPointerType(
-				LLVMInt8Type(),
-				0
-			);
+			// If unknown - return int
+			return LLVMInt32Type();
 		}
 		else {
 			// Array, or...?
@@ -267,6 +264,18 @@ class GenerationContext {
 				if(struc.name in s.genctx.gstructs.ss) {
 					return s.genctx.gstructs.getS(struc.name);
 				}
+			}
+			else if(AtstNodePointer p = t.instanceof!AtstNodePointer) {
+				if(p.toString() == "void*") {
+					return LLVMPointerType(
+						LLVMInt8Type(),
+						0
+					);
+				}
+				return LLVMPointerType(
+					getLLVMType(p.node, s),
+					0
+				);
 			}
 			// Else get Type and return getLLVMType(Type)
 			return getLLVMType(t.get(s),s);

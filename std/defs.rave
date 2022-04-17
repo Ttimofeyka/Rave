@@ -1,12 +1,7 @@
 @protected
 
-@def i1 bool @end
-@def i8 char @end
-@def i16 short @end
-@def i32 int @end
-@def i64 long @end
-@def f32 float @end
-@def NULL 0 @end
+@def NULL (cast("void*",0)) @end
 @def EOF (-1) @end
+@def wchar short @end
 
 @end
