@@ -276,3 +276,51 @@ LLVMValueRef[] trueNums(GenerationContext ctx, LLVMValueRef one, LLVMValueRef tw
 	LLVMValueRef two_to_one = castNum(ctx, two, LLVMTypeOf(one));
 	return [one, two_to_one];
 }
+
+LLVMValueRef castTo(GenerationContext ctx, LLVMValueRef v, LLVMTypeRef t) {
+	auto kindone = LLVMGetTypeKind(LLVMTypeOf(v));
+	auto kindtwo = LLVMGetTypeKind(t);
+	if(kindone == kindtwo) return v;
+	else if(kindone == LLVMIntegerTypeKind && kindtwo == LLVMPointerTypeKind) {
+		return LLVMBuildIntToPtr(
+			ctx.currbuilder,
+			v,
+			t,
+			toStringz("itop_cast")
+		);
+	}
+	else if(kindone == LLVMPointerTypeKind && kindtwo == LLVMIntegerTypeKind) {
+		return LLVMBuildPtrToInt(
+			ctx.currbuilder,
+			v,
+			t,
+			toStringz("ptoi_cast")
+		);
+	}
+	else if(kindone == LLVMIntegerTypeKind && kindtwo == LLVMIntegerTypeKind) {
+		return LLVMBuildIntCast(
+			ctx.currbuilder,
+			v,
+			t,
+			toStringz("itoi_cast")
+		);
+	}
+	else if(kindone == LLVMIntegerTypeKind && kindtwo == LLVMFloatTypeKind) {
+		return LLVMBuildFPToSI(
+			ctx.currbuilder,
+			v,
+			t,
+			toStringz("fptoi_cast")
+		);
+	}
+	else if(kindone == LLVMArrayTypeKind && kindtwo == LLVMPointerTypeKind) {
+		return LLVMBuildInBoundsGEP(
+				ctx.currbuilder,
+				v,
+				[LLVMConstInt(LLVMInt32Type(),0,false),LLVMConstInt(LLVMInt32Type(),0,false)].ptr,
+				2,
+				toStringz("gep")
+		);
+	}
+	return null;
+}

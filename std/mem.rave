@@ -1,26 +1,17 @@
-@protected
+@once
 
 @inc "std/defs";
 
+@def ENOMEM (-132) @end
+
 extern brk(addr: void*): int;
-
-extern mmap(addr: void*, l: int, p: int, f: int, fd: int, o: int): void*;
-extern munmap(addr: void*, len: int): int;
-extern mremap(olda: void*, olds: int, s: int, f: int, newaddr: void*): void*;
-
-@def PROT_READ 1 @end
-@def PROT_WRITE 2 @end
-@def MAP_ANON 20 @end
-@def MAP_PRIV 2 @end
-@def MAP_FAILED cast("int*",-1) @end
-@def MREMAP_MAYMOVE 1 @end
-@def MREMAP_FIXED 2 @end
 
 __currbrk: void* = NULL;
 
 __brk(addr: void*): int {
     newbrk: void* = cast("void*",brk(addr));
     __currbrk = newbrk;
+    if(newbrk < addr) ret ENOMEM;
     ret 0;
 }
 
@@ -41,19 +32,6 @@ __sbrk(incr: int): void* {
 
     ret oldbrk;
 }
-
-/*
-
-// bump-allocator
-
-mptr: char*;
-
-malloc(s: int): void* {
-    r: void*;
-    r = mptr;
-    mptr = itop(ptoi(mptr)+s);
-    ret r;
-}*/
 
 // Memory management
 
@@ -111,7 +89,7 @@ struct memblock {
 free(firstbyte: void*) {
     mb: memblock*;
     mb = cast("memblock*",itop(ptoi(firstbyte)-cast(long,sizeof("memblock*"))));
-    *mb->is_available = cast(bool,false);
+    *mb->is_available = false;
 }
 
 malloc(size: int): void* {
@@ -132,7 +110,7 @@ malloc(size: int): void* {
         currlocmcb = cast("memblock*",currentloc);
         if(*currlocmcb->is_available) {
             if(*currlocmcb->size > newsize-1) {
-                *currlocmcb->is_available = cast(bool,false);
+                *currlocmcb->is_available = false;
                 memloc = currentloc;
                 a = false;
             }
@@ -145,7 +123,7 @@ malloc(size: int): void* {
         memloc = lastvaladdr;
         lastvaladdr = itop(ptoi(lastvaladdr)+newsize);
         currlocmcb = cast("memblock*",memloc);
-        *currlocmcb->is_available = cast(bool,true);
+        *currlocmcb->is_available = true;
         *currlocmcb->size = size;
     }
 

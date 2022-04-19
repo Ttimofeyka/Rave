@@ -1,4 +1,4 @@
-@protected
+@once
 
 strcpy(dest: char*, src: char*): void {
     i := 0;

@@ -202,7 +202,7 @@ class Token {
                 case "@ifndef": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_ifndef; break;
                 case "@end": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_end; break;
                 case "@undef": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_undefine; break;
-                case "@protected": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_protected; break;
+                case "@once": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_protected; break;
                 case "@err": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_error; break;
                 case "@warn": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_warn; break;
                 case "@out": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_out; break;

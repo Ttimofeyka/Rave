@@ -355,6 +355,9 @@ class AstNodeFunction : AstNode {
 	}
 
 	override void analyze(AnalyzerScope s, Type) {
+		for(int i=0; i<decl.signature.args.length; i++) {
+			s.genctx.gfuncs.funcs_args[i] = decl.signature.args[i];
+		}
 		auto retType = this.decl.signature.ret.get(s);
 		Type[] argTypes = array(map!((a) => a.get(s))(this.decl.signature.args));
 		type = new TypeFunction(retType, argTypes);
@@ -365,7 +368,6 @@ class AstNodeFunction : AstNode {
 					this.where);
 				return;
 			}
-			
 
 			// if(this.decl.isExtern) {
 			// 	s.vars[this.decl.name] = actualDecl;
@@ -437,7 +439,7 @@ class AstNodeFunction : AstNode {
 
 			for(int i = 0; i < decl.signature.args.length; i++) {
 				
-				paramTypes[i] = ctx.getLLVMType(type.args[i],s);
+				paramTypes[i] = ctx.getLLVMType(decl.signature.args[i],s);
 				//char* ptype = LLVMPrintTypeToString(paramTypes[i]);
 				//writeln(fromStringz(ptype));
 				ctx.gargs.set(i, paramTypes[i], decl.argNames[i]);
@@ -454,6 +456,15 @@ class AstNodeFunction : AstNode {
 		AstNodeBlock funcBody = cast(AstNodeBlock)body_;
 
 		LLVMTypeRef retType = ctx.getLLVMType(type.ret,s);
+
+		for(int i=0; i<decl.signature.args.length; i++) {
+			if(AtstNodeName n = decl.signature.args[i].instanceof!AtstNodeName) {
+				if(n.name == "args") {
+					ctx.gfuncs.funcs_varargs[decl.name] = i;
+					break;
+				}
+			}
+		}
 
 		LLVMTypeRef funcType = LLVMFunctionType(
 		    retType,
@@ -491,6 +502,8 @@ class AstNodeFunction : AstNode {
 
 		ctx.gfuncs.add(decl.name, func, retType, type);
 		ctx.currfunc = func;
+
+		ctx.gstack.gen_init(ctx);
 
 		if(!decl.isExtern) {
 			LLVMBasicBlockRef entryBlock = LLVMAppendBasicBlock(func, toStringz("entry"));
@@ -1354,9 +1367,6 @@ class AstNodeIf : AstNode {
 				ctx.currfunc,
 				toStringz("end"));
 
-		ctx.thenbb = thenBlock;
-		ctx.exitbb = endBlock;
-
 		LLVMBuildCondBr(
 			ctx.currbuilder,
 			cond.gen(s),
@@ -1433,6 +1443,7 @@ class AstNodeWhile : AstNode {
 
 		ctx.exitbb = _after;
 		ctx.thenbb = _while;
+		ctx.whileexitbb = _after;
 
 		LLVMValueRef cond_as_cmp = cond.gen(s);
 		LLVMBuildCondBr(ctx.currbuilder,cond_as_cmp,_while,_after);
@@ -1448,9 +1459,10 @@ class AstNodeWhile : AstNode {
 		}
 		else body_.gen(s);
 
-		LLVMBuildCondBr(ctx.currbuilder,cond.gen(s), _while, _after);
-		LLVMPositionBuilderAtEnd(ctx.currbuilder, _after);
+		if(!ctx.break_inserted) LLVMBuildCondBr(ctx.currbuilder,cond.gen(s), _while, _after);
+		ctx.break_inserted = false;
 
+		LLVMPositionBuilderAtEnd(ctx.currbuilder, _after);
 		ctx.currbb = _after;
 
 		return null;
@@ -1473,8 +1485,7 @@ class AstNodeAsm : AstNode {
 
 	override LLVMValueRef gen(AnalyzerScope s) {
 		auto ctx = s.genctx;
-		LLVMValueRef a;
-		return a;
+		return null;
 	}
 }
 
@@ -1777,7 +1788,7 @@ class AstNodeIden : AstNode {
 				for(int i=0; i<predef_funcs.length; i++) {
 					if(name == predef_funcs[i]) return;
 				}
-				s.ctx.addError("Unknown binding: '" ~ name ~ "'.", this.where);
+				//writeln("Warning: unknown binding ",name,"!");
 			}
 		}
 	}
@@ -2034,8 +2045,9 @@ class AstNodeBreak : AstNode {
 	override void analyze(AnalyzerScope s, Type neededType) {}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
-		auto ctx = s.genctx;
-		return LLVMBuildBr(ctx.currbuilder, ctx.exitbb);
+		GenerationContext ctx = s.genctx;
+		ctx.break_inserted = true;
+		return LLVMBuildBr(ctx.currbuilder, ctx.whileexitbb);
 	}
 
 	debug {
@@ -2155,10 +2167,42 @@ class AstNodeFuncCall : AstNode {
 			if(predef_funcs[i] == n.name) {cmd = n.name; break;}
 		}
 
-		if(cmd == "") {LLVMValueRef* llvm_args = cast(LLVMValueRef*)malloc(LLVMValueRef.sizeof * args.length);
+		if(cmd == "") {
+		bool ishavevararg = false;
+		int num = 0;
+		LLVMValueRef vararg = null;
+		LLVMValueRef* llvm_args = cast(LLVMValueRef*)malloc(LLVMValueRef.sizeof * args.length);
 		TypeFunction tf = ctx.gfuncs.getFType(n.name);
 		for(int i = 0; i < args.length; i++) {
+			if(AtstNodeName nn = ctx.gfuncs.funcs_args[i].instanceof!AtstNodeName) {
+				if(nn.name == "args") {
+					// VARARG OMG!!
+					ishavevararg = true;
+					vararg = LLVMBuildAlloca(
+						ctx.currbuilder,
+						LLVMArrayType(
+							LLVMPointerType(
+								LLVMInt8Type(),
+								0,
+							),
+							cast(uint)args.length-(i+1)
+						),
+						toStringz("vararg")
+					);
+					/*
+					LLVMBuildInBoundsGEP(
+						ctx.currbuilder,
+						vararg,
+						[LLVMConstInt(LLVMInt32Type(),0,false),LLVMConstInt(LLVMInt32Type(),0,false)].ptr,
+						2,
+						toStringz("getel")
+					);
+					*/
+				}
+			}
+
 			auto genv = args[i].gen(s);
+			if(vararg == null) {
 			if(tf.args[i].toString == "void*") {
 				LLVMTypeKind kind = LLVMGetTypeKind(LLVMTypeOf(genv));
 				if(kind == LLVMPointerTypeKind) {
@@ -2179,9 +2223,27 @@ class AstNodeFuncCall : AstNode {
 				}
 				else llvm_args[i] = genv;
 			}
-			else llvm_args[i] = genv;
+			else llvm_args[i] = genv;}
+			else {
+				LLVMBuildStore(
+					ctx.currbuilder,
+					castTo(ctx, args[i].gen(s), LLVMPointerType(LLVMInt8Type(),0)),
+					LLVMBuildInBoundsGEP(
+						ctx.currbuilder,
+						vararg,
+						[LLVMConstInt(LLVMInt32Type(),0,false),LLVMConstInt(LLVMInt32Type(),cast(ulong)num,false)].ptr,
+						2,
+						toStringz("gep")
+					)
+				);
+				num += 1;
+			}
 		}
-
+		if(vararg != null) {
+			llvm_args[ctx.gfuncs.funcs_varargs[n.name]] = vararg;
+			llvm_args[ctx.gfuncs.funcs_varargs[n.name]+1] 
+			= LLVMConstInt(LLVMInt32Type(),cast(ulong)args.length-(ctx.gfuncs.funcs_varargs[n.name]+1),false);
+		}
 		if(ctx.gfuncs.getFType(n.name).ret.toString() == "void") {
 			return LLVMBuildCall(
 				ctx.currbuilder,

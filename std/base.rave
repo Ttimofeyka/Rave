@@ -1,4 +1,4 @@
-@protected
+@once
 
 extern exit(errCode: int);
 

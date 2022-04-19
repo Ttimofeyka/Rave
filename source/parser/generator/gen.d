@@ -19,6 +19,7 @@ class GStack {
     private LLVMValueRef[string] locals; // Local variables
 	string[string] structures;
 	bool setVar = false;
+	GenerationContext ctx;
 
     this() {}
 
@@ -51,12 +52,19 @@ class GStack {
 		else {}
 	}
 
+	void gen_init(GenerationContext ctx) {
+		this.ctx = ctx;
+	}
+
 	void clean() {locals.clear();}
 
 	LLVMValueRef opIndex(string n)
 	{
 		if(n in locals) return locals[n];
 		else if(n in globals) return globals[n];
+		else if(n in ctx.gargs.fargs_values) {
+			return LLVMGetParam(ctx.currfunc, cast(uint)ctx.gargs.fargs_values[n]);
+		}
 		else return null;
 	}
 }
@@ -107,6 +115,8 @@ class GFuncs {
     private LLVMValueRef[string] funcs;
     private LLVMTypeRef[string] types;
 	private TypeFunction[string] typesf;
+	int[string] funcs_varargs;
+	AtstNode[int] funcs_args;
 
     void add(string n, LLVMValueRef f, LLVMTypeRef t, TypeFunction tf) {
         funcs[n] = f;
@@ -189,16 +199,18 @@ class GenerationContext {
 	string target_platform;
 	LLVMContextRef context;
 	int optLevel;
+	LLVMBasicBlockRef whileexitbb;
+	bool break_inserted = false;
 
     this() {
         mod = LLVMModuleCreateWithName(toStringz("rave"));
 		context = LLVMContextCreate();
 		sema = new SemanticAnalyzerContext(new AtstTypeContext());
-		gstack = new GStack();
 		gargs = new GArgs();
         presets = new GPresets();
         gfuncs = new GFuncs();
 		gstructs = new GStructs();
+		gstack = new GStack();
 
 		// Initialization
 		LLVMInitializeAllTargets();
@@ -263,6 +275,15 @@ class GenerationContext {
 				// If struct
 				if(struc.name in s.genctx.gstructs.ss) {
 					return s.genctx.gstructs.getS(struc.name);
+				}
+				else if(struc.name == "args") {
+					return LLVMPointerType(
+						LLVMPointerType(
+							LLVMInt8Type(),
+							0
+						),
+						0
+					);
 				}
 			}
 			else if(AtstNodePointer p = t.instanceof!AtstNodePointer) {

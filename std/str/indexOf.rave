@@ -1,4 +1,4 @@
-@protected
+@once
 
 indexOf(str: char*, s: char): int {
     i: int = 0;

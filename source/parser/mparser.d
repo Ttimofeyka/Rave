@@ -497,7 +497,6 @@ class Parser {
 			expectToken(TokType.tok_rpar);
 			return e;
 		}
-		if(t.type == TokType.tok_cmd && t.cmd == TokCmd.cmd_break) return new AstNodeBreak();
 		
 		error("Expected a variable, a number, a string, a char or an expression in parentheses. Got: "
 			~ to!string(t.type));
@@ -701,6 +700,11 @@ class Parser {
 					next();
 					return new AstNodeReturn(tok.loc, null, currfunc);
 				}
+			}
+			else if(peek().cmd == TokCmd.cmd_break) {
+				next();
+				expectToken(TokType.tok_semicolon);
+				return new AstNodeBreak();
 			}
 			else if(peek().cmd == TokCmd.cmd_extern) {
 				return new AstNodeDecl(declToVarDecl(parseDecl()),null);

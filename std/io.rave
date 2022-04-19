@@ -1,4 +1,4 @@
-@protected
+@once
 
 @inc "std/str/strlen";
 @inc "std/defs";

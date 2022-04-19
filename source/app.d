@@ -44,9 +44,19 @@ void compile(string linkFiles, bool nolink, string sourceFile, string outputType
 	defines["_PLATFORM"] = new TList();
 	defines["_PLATFORM"].insertBack(new Token(SourceLocation(0,0,""),"\""~outputType~"\""));
 	defines["true"] = new TList();
-	defines["true"].insertBack(new Token(SourceLocation(0,0,""),"1"));
+	defines["true"].insertBack(new Token(SourceLocation(0,0,""),"cast"));
+	defines["true"].insertBack(new Token(SourceLocation(0,0,""),"("));
+	defines["true"].insertBack(new Token(SourceLocation(0,0,""),"bool"));
+	defines["true"].insertBack(new Token(SourceLocation(0,0,""),","));
+	defines["true"].insertBack(new Token(SourceLocation(0,0,""),"1")); //
+	defines["true"].insertBack(new Token(SourceLocation(0,0,""),")"));
 	defines["false"] = new TList();
-	defines["false"].insertBack(new Token(SourceLocation(0,0,""),"0"));
+	defines["false"].insertBack(new Token(SourceLocation(0,0,""),"cast"));
+	defines["false"].insertBack(new Token(SourceLocation(0,0,""),"("));
+	defines["false"].insertBack(new Token(SourceLocation(0,0,""),"bool"));
+	defines["false"].insertBack(new Token(SourceLocation(0,0,""),","));
+	defines["false"].insertBack(new Token(SourceLocation(0,0,""),"0")); //
+	defines["false"].insertBack(new Token(SourceLocation(0,0,""),")"));
 
 	if(outputType.indexOf("linux") != -1) {
 		defines["_LINUX"] = new TList();
