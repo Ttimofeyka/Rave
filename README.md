@@ -26,6 +26,10 @@ main: int {
 
 Copy `base.dub.json` to `dub.json` and change the flags (if you need to change them). Then run `dub build`
 
+## Documentation
+
+The full documentation is in `docs`.
+
 ## Goals
 
 * ~~Make a lexer~~ (100%)
@@ -35,3 +39,4 @@ Copy `base.dub.json` to `dub.json` and change the flags (if you need to change t
 * ~~Make a code generator~~ (100%)
 
 Discord server - https://discord.gg/AfEtyArvsM
+
