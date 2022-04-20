@@ -26,5 +26,7 @@ else
         checkLib "lldb-10"
         checkLib "llvm-10-dev"
         checkLib "llvm-10-runtime"
+        sudo curl https://dlang.org/install.sh | bash -s
+        checkLib "dub"
     fi
 fi
