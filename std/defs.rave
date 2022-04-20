@@ -1,6 +1,6 @@
 @once
 
-@def NULL (cast("void*",0)) @end
+@def NULL cast(void*)0 @end
 @def EOF (-1) @end
 @def wchar short @end
 @def ARGS args: void**, argc: int @end

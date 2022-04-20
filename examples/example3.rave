@@ -1,13 +1,6 @@
 @inc "std/io";
-@inc "std/defs";
+@inc "std/mem";
 
-printf(str: char*): void {
-    buff: char[128];
-    buffs := 128;
-    puts(str);
-}
-
-main(ARGS): int {
-    printf("Hello, %s");
+main: int {
     ret 0;
 }

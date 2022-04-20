@@ -9,7 +9,7 @@ extern brk(addr: void*): int;
 __currbrk: void* = NULL;
 
 __brk(addr: void*): int {
-    newbrk: void* = cast("void*",brk(addr));
+    newbrk: void* = cast(void*)brk(addr);
     __currbrk = newbrk;
     if(newbrk < addr) ret ENOMEM;
     ret 0;
@@ -19,7 +19,7 @@ __sbrk(incr: int): void* {
     oldbrk: void*;
 
     if(__currbrk == NULL) {
-        if(__brk(NULL) < 0) ret cast("void*",-1);
+        if(__brk(NULL) < 0) ret cast(void*)(-1);
     }
 
     if(incr == 0) ret __currbrk;
@@ -27,7 +27,7 @@ __sbrk(incr: int): void* {
     oldbrk = __currbrk;
 
     if(__brk(itop(ptoi(oldbrk)+incr)) < 0) {
-        ret cast("void*",-1);
+        ret cast(void*)(-1);
     }
 
     ret oldbrk;
@@ -36,7 +36,7 @@ __sbrk(incr: int): void* {
 // Memory management
 
 memset(dest: void*, val: int, len: int): void* {
-    ptr: int* = cast("int*",dest);
+    ptr: int* = cast(int*)dest;
     
     i: int = len;
     b: int = 0;
@@ -88,7 +88,7 @@ struct memblock {
 
 free(firstbyte: void*) {
     mb: memblock*;
-    mb = cast("memblock*",itop(ptoi(firstbyte)-cast(long,sizeof("memblock*"))));
+    mb = cast(memblock*)itop(ptoi(firstbyte)-cast(long)sizeof("memblock*"));
     *mb->is_available = false;
 }
 
@@ -100,14 +100,14 @@ malloc(size: int): void* {
 
     if(!MALLOC_has_init) malloc_init();
 
-    newsize: int = size + cast(int,sizeof("memblock"));
+    newsize: int = size + cast(int)(sizeof("memblock"));
     memloc = NULL;
 
     currentloc = managed_memstart;
 
     a: bool = (currentloc != lastvaladdr);
     while(a) {
-        currlocmcb = cast("memblock*",currentloc);
+        currlocmcb = cast(memblock*)currentloc;
         if(*currlocmcb->is_available) {
             if(*currlocmcb->size > newsize-1) {
                 *currlocmcb->is_available = false;
@@ -122,12 +122,12 @@ malloc(size: int): void* {
         __sbrk(newsize);
         memloc = lastvaladdr;
         lastvaladdr = itop(ptoi(lastvaladdr)+newsize);
-        currlocmcb = cast("memblock*",memloc);
+        currlocmcb = cast(memblock*)memloc;
         *currlocmcb->is_available = true;
         *currlocmcb->size = size;
     }
 
-    memloc = itop(ptoi(memloc)+cast(long,sizeof("memblock")));
+    memloc = itop(ptoi(memloc)+cast(long)sizeof("memblock"));
 
     ret memloc;
 }
@@ -139,7 +139,7 @@ realloc(origptr: void*, newsize: int): void* {
         ret NULL;
     }
     newptr: void* = malloc(newsize);
-    mb: memblock* = cast("memblock*",itop(ptoi(origptr)-cast(long,sizeof("memblock*"))));
+    mb: memblock* = cast(memblock*)itop(ptoi(origptr)-cast(long)sizeof("memblock*"));
     memcpy(origptr, newptr, *mb->size);
     free(origptr);
     ret newptr;
@@ -158,7 +158,7 @@ calloc(n: int, size: int): void* {
     if(p != NULL) {
         i = 0;
         while(i<nb) {
-            p[i] = cast(char,0);
+            p[i] = cast(char)0;
             ++i;
         }
     }

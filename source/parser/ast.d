@@ -2091,6 +2091,22 @@ class AstNodeSizeof : AstNode {
 	}
 }
 
+class AstNodeCast : AstNode {
+	AtstNode type;
+	AstNode val;
+
+	this(AtstNode t, AstNode v) {
+		this.type = t;
+		this.val = v;
+	}
+
+	override void analyze(AnalyzerScope s, Type neededType) {}
+	override LLVMValueRef gen(AnalyzerScope s) {
+		GenerationContext ctx = s.genctx;
+		return castTo(ctx, val.gen(s), ctx.getLLVMType(type,s));
+	}
+}
+
 class AstNodeFuncCall : AstNode {
 	AstNode func;
 	TypeFunction funcType;

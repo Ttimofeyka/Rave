@@ -211,6 +211,7 @@ class Parser {
 				if(peek().type == TokType.tok_comma) next();
 				else break; // TODO: trailing comma
 			}
+			writeln("hm, error there");
 			expectToken(TokType.tok_rpar);
 		}
 
@@ -491,7 +492,15 @@ class Parser {
 		}
 		if(t.type == TokType.tok_string) return new AstNodeString(t.loc, t.value[1..$]);
 		if(t.type == TokType.tok_char) return new AstNodeChar(t.loc, t.value[1..$][0]);
-		if(t.type == TokType.tok_id) return new AstNodeIden(t.loc, t.value);
+		if(t.type == TokType.tok_id) {
+			if(t.value == "cast") {
+				expectToken(TokType.tok_lpar);
+				AtstNode ty = parseType();
+				expectToken(TokType.tok_rpar);
+				return new AstNodeCast(ty, parseExpr());
+			}
+			else return new AstNodeIden(t.loc, t.value);
+		}
 		if(t.type == TokType.tok_lpar) {
 			auto e = parseExpr();
 			expectToken(TokType.tok_rpar);

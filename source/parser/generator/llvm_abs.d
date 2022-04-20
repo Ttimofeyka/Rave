@@ -8,6 +8,8 @@ import std.uni;
 import std.ascii;
 import std.conv : to;
 import std.stdio : writeln;
+import parser.atst;
+import parser.analyzer;
 
 LLVMValueRef createLocal(GenerationContext ctx, LLVMTypeRef type, LLVMValueRef val, string name) {
 		LLVMValueRef local = LLVMBuildAlloca(
@@ -278,10 +280,10 @@ LLVMValueRef[] trueNums(GenerationContext ctx, LLVMValueRef one, LLVMValueRef tw
 }
 
 LLVMValueRef castTo(GenerationContext ctx, LLVMValueRef v, LLVMTypeRef t) {
+	if(v == null) return v;
 	auto kindone = LLVMGetTypeKind(LLVMTypeOf(v));
 	auto kindtwo = LLVMGetTypeKind(t);
-	if(kindone == kindtwo) return v;
-	else if(kindone == LLVMIntegerTypeKind && kindtwo == LLVMPointerTypeKind) {
+	if(kindone == LLVMIntegerTypeKind && kindtwo == LLVMPointerTypeKind) {
 		return LLVMBuildIntToPtr(
 			ctx.currbuilder,
 			v,
@@ -306,6 +308,14 @@ LLVMValueRef castTo(GenerationContext ctx, LLVMValueRef v, LLVMTypeRef t) {
 		);
 	}
 	else if(kindone == LLVMIntegerTypeKind && kindtwo == LLVMFloatTypeKind) {
+		return LLVMBuildSIToFP(
+			ctx.currbuilder,
+			v,
+			t,
+			toStringz("fptoi_cast")
+		);
+	}
+	else if(kindtwo == LLVMIntegerTypeKind && kindone == LLVMFloatTypeKind) {
 		return LLVMBuildFPToSI(
 			ctx.currbuilder,
 			v,
@@ -320,6 +330,15 @@ LLVMValueRef castTo(GenerationContext ctx, LLVMValueRef v, LLVMTypeRef t) {
 				[LLVMConstInt(LLVMInt32Type(),0,false),LLVMConstInt(LLVMInt32Type(),0,false)].ptr,
 				2,
 				toStringz("gep")
+		);
+	}
+	else if(kindone == LLVMPointerTypeKind && kindtwo == LLVMPointerTypeKind) {
+		// Ptr to Ptr
+		return LLVMBuildPointerCast(
+			ctx.currbuilder,
+			v,
+			t,
+			toStringz("ptop")
 		);
 	}
 	return null;
