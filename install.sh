@@ -1,4 +1,3 @@
-#!/bin/bash
 function checkLib {
     REQUIRED_PKG=$1
     PKG_OK=$(dpkg-query -W --showformat='${Status}\n' $REQUIRED_PKG|grep "install ok installed")
