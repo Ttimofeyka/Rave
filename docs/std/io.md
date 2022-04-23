@@ -51,3 +51,10 @@ Change file permissions.
 
 + `file` - The name of the file.
 + `mode` - New permissions for the file.
+
+<h3 id="--std/io/fchmod"><code>fchmod(fd: int, mode: int)</code></h3>
+
+Change file(using descriptor) permissions.
+
++ `fd` - File descriptor.
++ `mode` - New permissions for the file.
