@@ -145,6 +145,8 @@ class Preprocessor {
         this.newtokens = new TList();
         this.stdlibIncPath = stdlibIncPath;
 
+        int currPr = 0;
+
         while(i < tokens.length) {
             if(get().type == TokType.tok_at) {
                 i += 1;
@@ -218,16 +220,9 @@ class Preprocessor {
                     _ifStack[$-1] = !_ifStack[$-1];
                 }
                 else if(get().cmd == TokCmd.cmd_protected) {
-                    SysTime st = Clock.currTime();
                     string randomname = defines["_FILE"][0].value;
-
-                    randomname ~= to!string(st.day) ~ to!string(st.hour);
-                    randomname ~= to!string(os);
-                    randomname ~= to!string(st.year) ~ to!string(st.month);
-                    randomname ~= to!string(st.second);
-
-                    // Finally randomize
-                    randomname ~= to!string(uniform!"[]"(0,555));
+                    randomname ~= to!string(currPr);
+                    currPr += 1;
 
                     if(canOutput()) {
                          _ifStack ~= randomname !in defines;

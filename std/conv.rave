@@ -1,10 +1,13 @@
 @once
 
-@inc "std/str";
 @inc "std/defs";
 
 ctoi(c: char): int {
     ret cast(int)c - cast(int)'0';
+}
+
+itoc(i: int): char {
+    ret cast(char)(i+cast(int)'0');
 }
 
 @end

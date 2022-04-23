@@ -505,6 +505,27 @@ class Parser {
 				expectToken(TokType.tok_rpar);
 				return new AstNodeSizeof(ty);
 			}
+			else if(t.value == "ptoi") {
+				expectToken(TokType.tok_lpar);
+				AstNode val = parseExpr();
+				expectToken(TokType.tok_rpar);
+				return new AstNodePtoi(val);
+			}
+			else if(t.value == "itop") {
+				expectToken(TokType.tok_lpar);
+				AstNode val = parseExpr();
+				if(peek().type == TokType.tok_comma) {
+					// no-void*
+					expectToken(TokType.tok_comma);
+					AtstNode ty = parseType();
+					expectToken(TokType.tok_rpar);
+					return new AstNodeItop(val, ty);
+				}
+				else {
+					expectToken(TokType.tok_rpar);
+					return new AstNodeItop(val);
+				}
+			}
 			else return new AstNodeIden(t.loc, t.value);
 		}
 		if(t.type == TokType.tok_lpar) {
@@ -714,6 +735,13 @@ class Parser {
 			}
 			else if(peek().cmd == TokCmd.cmd_extern) {
 				return new AstNodeDecl(declToVarDecl(parseDecl()),null);
+			}
+			else if(peek().cmd == TokCmd.cmd_asm) {
+				next();
+				expectToken(TokType.tok_lpar);
+				string s = expectToken(TokType.tok_string).value;
+				expectToken(TokType.tok_rpar);
+				return new AstNodeAsm(s);
 			}
 		}
 		else if(peek().type == TokType.tok_id) {

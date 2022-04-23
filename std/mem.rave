@@ -74,13 +74,6 @@ MALLOC_has_init: bool = false;
 managed_memstart: void*;
 lastvaladdr: void*;
 
-malloc_init() {
-    lastvaladdr = __sbrk(0);
-    managed_memstart = lastvaladdr;
-
-    MALLOC_has_init = true;
-}
-
 struct memblock {
     is_available: bool;
     size: int;
@@ -98,7 +91,11 @@ malloc(size: int): void* {
 
     memloc: void*;
 
-    if(!MALLOC_has_init) malloc_init();
+    if(!MALLOC_has_init) {
+        lastvaladdr = __sbrk(0);
+        managed_memstart = lastvaladdr;
+        MALLOC_has_init = true;
+    }
 
     newsize: int = size + cast(int)(sizeof(memblock));
     memloc = NULL;

@@ -1481,11 +1481,27 @@ class AstNodeWhile : AstNode {
 }
 
 class AstNodeAsm : AstNode {
-	string value; // TODO
+	string value;
 
+	this(string value) {
+		this.value = value;
+	}
+
+	override void analyze(AnalyzerScope s, Type neededType) {}
 	override LLVMValueRef gen(AnalyzerScope s) {
 		auto ctx = s.genctx;
-		return null;
+		LLVMTypeRef functy = LLVMFunctionType(LLVMVoidType(), null,cast(uint)0, false);
+		LLVMValueRef asmc = LLVMGetInlineAsm(
+			functy,
+			cast(char*)toStringz(value),
+			cast(size_t)value.length,
+			cast(char*)toStringz(""),
+			cast(size_t)0,
+			true,
+			false,
+			LLVMInlineAsmDialectATT
+		);
+		return LLVMBuildCall2(ctx.currbuilder, functy, asmc, null, cast(uint)0, toStringz(""));
 	}
 }
 
@@ -2107,11 +2123,57 @@ class AstNodeCast : AstNode {
 	}
 }
 
+class AstNodePtoi : AstNode {
+	AstNode val;
+	
+	this(AstNode val) {
+		this.val = val;
+	}
+
+	override void analyze(AnalyzerScope s, Type neededType) {}
+	override LLVMValueRef gen(AnalyzerScope s) {
+		GenerationContext ctx = s.genctx;
+
+		return LLVMBuildPtrToInt(
+				ctx.currbuilder,
+				val.gen(s),
+				LLVMInt32Type(),
+				toStringz("ptoi")
+		);
+	}
+}
+
+class AstNodeItop : AstNode {
+	AstNode val; // Integer
+	AtstNode ptrt; // Pointer type - maybe null?
+
+	this(AstNode val, AtstNode p) {
+		this.val = val;
+		this.ptrt = p;
+	}
+
+	this(AstNode val) {
+		this.val = val;
+		this.ptrt = new AtstNodePointer(new AtstNodeVoid());
+	}
+
+	override void analyze(AnalyzerScope s, Type neededType) {}
+	override LLVMValueRef gen(AnalyzerScope s) {
+		GenerationContext ctx = s.genctx;
+
+		return LLVMBuildIntToPtr(
+			ctx.currbuilder,
+			val.gen(s),
+			ctx.getLLVMType(ptrt,s),
+			toStringz("itop")
+		);
+	}
+}
+
 class AstNodeFuncCall : AstNode {
 	AstNode func;
 	TypeFunction funcType;
 	AstNode[] args;
-	string cmd = "";
 
 	this(SourceLocation where, AstNode func, AstNode[] args) {
 		this.where = where;
@@ -2128,14 +2190,6 @@ class AstNodeFuncCall : AstNode {
 		auto funcType = this.func.getType(s);
 
 		if(!funcType.instanceof!TypeFunction) {
-			if(AstNodeIden _sizeof = func.instanceof!AstNodeIden) {
-				for(int i=0; i<predef_funcs.length; i++) {
-					if(_sizeof.name == predef_funcs[i]) {
-						cmd = _sizeof.name;
-						return;
-					}
-				}
-			}
 			s.ctx.addError("Cannot call a non-function value!", this.where);
 			return;
 		}
@@ -2179,11 +2233,7 @@ class AstNodeFuncCall : AstNode {
 		GenerationContext ctx = s.genctx;
 		// _Ravef4exit, not exit! ctx.mangleQualifiedName([name], true) -> string
 		AstNodeIden n = cast(AstNodeIden)func;
-		for(int i=0; i<predef_funcs.length; i++) {
-			if(predef_funcs[i] == n.name) {cmd = n.name; break;}
-		}
 
-		if(cmd == "") {
 		bool ishavevararg = false;
 		int num = 0;
 		LLVMValueRef vararg = null;
@@ -2219,7 +2269,8 @@ class AstNodeFuncCall : AstNode {
 
 			auto genv = args[i].gen(s);
 			if(vararg == null) {
-			if(tf.args[i].toString == "void*") {
+			if(tf.args[i] is null) llvm_args[i] = genv;
+			else if(tf.args[i].toString == "void*") {
 				LLVMTypeKind kind = LLVMGetTypeKind(LLVMTypeOf(genv));
 				if(kind == LLVMPointerTypeKind) {
 					llvm_args[i] = LLVMBuildPointerCast(
@@ -2275,121 +2326,7 @@ class AstNodeFuncCall : AstNode {
 			llvm_args,
 			cast(uint)args.length,
 			toStringz("call")
-		);}
-		if(cmd == "sizeof") {
-			if(AstNodeIden id = args[0].instanceof!AstNodeIden) {
-				return LLVMSizeOf(ctx.getLLVMType(strToType(id.name),s));
-			}
-			else {
-				AstNodeString ss = args[0].instanceof!AstNodeString;
-				return LLVMSizeOf(ctx.getLLVMType(strToType(ss.value),s));
-			}
-		}
-		else if(cmd == "typeof") {
-			auto type = LLVMTypeOf(args[0].gen(s));
-			return LLVMBuildGlobalStringPtr(ctx.currbuilder, toStringz(ctx.llvmTypeToString(type)), toStringz("t"));
-		}
-		else if(cmd == "cast") {
-			// First argument = type(string)
-			string name = "";
-			if(AstNodeString ss = args[0].instanceof!AstNodeString) name = ss.value;
-			if(AstNodeIden id = args[0].instanceof!AstNodeIden) name = id.name;
-			name = name.replace("\"","");
-				// Second argument = value
-				LLVMValueRef valgen = args[1].gen(s);
-				AtstNode t = strToType(name);
-
-				if(AtstNodePointer p = t.instanceof!AtstNodePointer) {
-					LLVMTypeKind k = LLVMGetTypeKind(LLVMTypeOf(valgen));
-					if(k == LLVMPointerTypeKind) {
-						// Hah.
-						return LLVMBuildPointerCast(
-							ctx.currbuilder,
-							valgen,
-							ctx.getLLVMType(t, s),
-							toStringz("ptrcast")
-						);
-					}
-					else if(k == LLVMVectorTypeKind) {
-						writeln("It is impossible to use cast with arrays!");
-						exit(-1);
-					}
-					else {
-						return LLVMBuildIntToPtr(
-							ctx.currbuilder,
-							valgen,
-							LLVMPointerType(LLVMInt8Type(),0),
-							toStringz("inttoptr")
-						);
-					}
-				}
-				else if(AtstNodeName nn = t.instanceof!AtstNodeName) {
-					LLVMTypeKind k = LLVMGetTypeKind(LLVMTypeOf(valgen));
-					AtstNode tt = strToType(nn.name);
-					if(k == LLVMPointerTypeKind) {
-						// Pointer to int
-						return LLVMBuildPtrToInt(
-							ctx.currbuilder,
-							valgen,
-							ctx.getLLVMType(tt, s),
-							toStringz("ptoi")
-						);
-					}
-					else {
-						// ... to ...
-						return castNum(
-							ctx,
-							valgen,
-							ctx.getLLVMType(tt ,s)
-						);
-					}
-				}
-		}
-		else if(cmd == "ptoi") {
-			// Pointer to Integer
-			// 0 Argument - Pointer
-			LLVMValueRef farg = args[0].gen(s);
-			if(LLVMGetTypeKind(LLVMTypeOf(farg)) == LLVMArrayTypeKind) {
-				return LLVMBuildPtrToInt(
-					ctx.currbuilder,
-					LLVMBuildInBoundsGEP(
-						ctx.currbuilder,
-						farg,
-						[LLVMConstInt(LLVMInt32Type(),0,false),LLVMConstInt(LLVMInt32Type(),0,false)].ptr,
-						2,
-						toStringz("getarr")
-					),
-					LLVMInt64Type(),
-					toStringz("ptoi_cmd")
-				);
-			}
-			return LLVMBuildPtrToInt(
-				ctx.currbuilder,
-				args[0].gen(s),
-				LLVMInt64Type(),
-				toStringz("ptoi_cmd")
-			);
-		}
-		else if(cmd == "itop") {
-			// Integer to Pointer
-			// 0 Argument - Integer
-			// 1 Argument - Type of output pointer(if no - type = void*)
-			string t;
-			if(args.length>1) {
-				AstNodeString ss = args[1].instanceof!AstNodeString;
-				t = ss.value;
-			}
-			else t = "void*";
-
-			return LLVMBuildIntToPtr(
-				ctx.currbuilder,
-				args[0].gen(s),
-				ctx.getLLVMType(strToType(t),s),
-				toStringz("itop_cmd")
-			);
-		}
-		else exit(255);
-		assert(0);
+		);
 	}
 
 	debug {
