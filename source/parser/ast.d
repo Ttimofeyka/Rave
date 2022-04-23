@@ -2078,16 +2078,16 @@ class AstNodeContinue : AstNode {
 }
 
 class AstNodeSizeof : AstNode {
-	AstNode val;
+	AtstNode val;
 
-	this(AstNode value) {
+	this(AtstNode value) {
 		this.val = value;
 	}
 
 	override void analyze(AnalyzerScope s, Type neededType) {}
 	override LLVMValueRef gen(AnalyzerScope s) {
 		GenerationContext ctx = s.genctx;
-		return LLVMSizeOf(LLVMTypeOf(val.gen(s)));
+		return castTo(ctx,LLVMSizeOf(ctx.getLLVMType(val,s)),LLVMInt32Type());
 	}
 }
 

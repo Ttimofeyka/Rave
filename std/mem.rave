@@ -88,7 +88,7 @@ struct memblock {
 
 free(firstbyte: void*) {
     mb: memblock*;
-    mb = cast(memblock*)itop(ptoi(firstbyte)-cast(long)sizeof("memblock*"));
+    mb = cast(memblock*)itop(ptoi(firstbyte)-cast(long)sizeof(memblock*));
     *mb->is_available = false;
 }
 
@@ -100,7 +100,7 @@ malloc(size: int): void* {
 
     if(!MALLOC_has_init) malloc_init();
 
-    newsize: int = size + cast(int)(sizeof("memblock"));
+    newsize: int = size + cast(int)(sizeof(memblock));
     memloc = NULL;
 
     currentloc = managed_memstart;
@@ -127,7 +127,7 @@ malloc(size: int): void* {
         *currlocmcb->size = size;
     }
 
-    memloc = itop(ptoi(memloc)+cast(long)sizeof("memblock"));
+    memloc = itop(ptoi(memloc)+cast(long)sizeof(memblock));
 
     ret memloc;
 }
@@ -139,7 +139,7 @@ realloc(origptr: void*, newsize: int): void* {
         ret NULL;
     }
     newptr: void* = malloc(newsize);
-    mb: memblock* = cast(memblock*)itop(ptoi(origptr)-cast(long)sizeof("memblock*"));
+    mb: memblock* = cast(memblock*)itop(ptoi(origptr)-cast(long)sizeof(memblock*));
     memcpy(origptr, newptr, *mb->size);
     free(origptr);
     ret newptr;

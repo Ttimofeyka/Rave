@@ -499,6 +499,12 @@ class Parser {
 				expectToken(TokType.tok_rpar);
 				return new AstNodeCast(ty, parseExpr());
 			}
+			else if(t.value == "sizeof") {
+				expectToken(TokType.tok_lpar);
+				AtstNode ty = parseType();
+				expectToken(TokType.tok_rpar);
+				return new AstNodeSizeof(ty);
+			}
 			else return new AstNodeIden(t.loc, t.value);
 		}
 		if(t.type == TokType.tok_lpar) {
@@ -672,15 +678,6 @@ class Parser {
 		expectToken(TokType.tok_rpar);
 		auto body_ = parseStmt();
 		return new AstNodeWhile(cond, body_);
-	}
-
-	private AstNode parseSizeof() {
-		assert(peek().cmd == TokCmd.cmd_sizeof);
-		next();
-		expectToken(TokType.tok_lpar);
-		auto type = parseExpr();
-		expectToken(TokType.tok_rpar);
-		return new AstNodeSizeof(type);
 	}
 
 	private AstNode parseStmt() {

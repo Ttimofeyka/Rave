@@ -2,5 +2,7 @@
 @inc "std/mem";
 
 main: int {
-    ret 0;
+    a: int* = cast(int*)malloc(cast(int)sizeof(int));
+    a[0] = 5;
+    ret a[0];
 }

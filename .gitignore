@@ -25,7 +25,6 @@ __dummy.html
 *.lst
 
 rave
-dub.json
 llvm.bc
 source/old.ast.d
 

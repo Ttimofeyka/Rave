@@ -4,7 +4,7 @@
 @inc "std/defs";
 
 ctoi(c: char): int {
-    ret cast(int,c) - cast(int,'0');
+    ret cast(int)c - cast(int)'0';
 }
 
 @end

@@ -3,7 +3,7 @@ function checkLib {
     PKG_OK=$(dpkg-query -W --showformat='${Status}\n' $REQUIRED_PKG|grep "install ok installed")
     echo Checking for $REQUIRED_PKG: $PKG_OK
     if [ "" = "$PKG_OK" ]; then
-        echo "No $REQUIRED_PKG. Setting up $REQUIRED_PKG."
+        echo "No $REQUIRED_PKG. Installing $REQUIRED_PKG."
         sudo apt-get --yes install $REQUIRED_PKG
     fi
 }   
@@ -11,12 +11,12 @@ function checkLib {
 if [command -v termux-setup-storage]; then
     clear
     pkg install ldc
-    clear
+    pkg install wget
     echo "You need install llvm-10 for Termux yourself."
 else
     clear
     if [ -f "/etc/arch-release" ]; then
-        sudo pacman -S dlang-dmd
+        sudo pacman -S dlang
         sudo pacman -S dub
         echo "Unfortunately, llvm-10 is not available for your platform, so you will have to build and install it yourself."
         echo "The script will download the source code for you."
@@ -27,6 +27,7 @@ else
         checkLib "llvm-10-dev"
         checkLib "llvm-10-runtime"
         sudo curl https://dlang.org/install.sh | bash -s
-        checkLib "dub"
+        checkLib "lld"
+        dub build
     fi
 fi

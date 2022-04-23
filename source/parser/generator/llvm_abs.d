@@ -118,49 +118,107 @@ LLVMValueRef operAdd(GenerationContext ctx, LLVMValueRef one, LLVMValueRef two) 
 }
 
 LLVMValueRef operSub(GenerationContext ctx, LLVMValueRef one, LLVMValueRef two) {
+        LLVMValueRef oneg;
+		LLVMValueRef twog;
+
+		if(LLVMTypeOf(one) != LLVMTypeOf(two)) {
+			if(!isReal(one)) {
+				oneg = one;
+				twog = LLVMBuildIntCast(
+					ctx.currbuilder,
+					two,
+					LLVMTypeOf(oneg),
+					toStringz("intcast")
+				);
+			}
+			else {
+				oneg = one; twog = two;
+			}
+		}
+		else {oneg = one; twog = two;}
+		
 		if(!isReal(one) && !isReal(two)) return LLVMBuildSub(
 			ctx.currbuilder,
-			one,
-			two,
+			oneg,
+			twog,
 			toStringz("opersubi_result")
 		);
 
 		return LLVMBuildFSub(
 			ctx.currbuilder,
-			one,
-			two,
+			oneg,
+			twog,
 			toStringz("opersubf_result")
 		);
 }
 
 LLVMValueRef operMul(GenerationContext ctx, LLVMValueRef one, LLVMValueRef two) {
+        LLVMValueRef oneg;
+		LLVMValueRef twog;
+
+		if(LLVMTypeOf(one) != LLVMTypeOf(two)) {
+			if(!isReal(one)) {
+				oneg = one;
+				twog = LLVMBuildIntCast(
+					ctx.currbuilder,
+					two,
+					LLVMTypeOf(oneg),
+					toStringz("intcast")
+				);
+			}
+			else {
+				oneg = one; twog = two;
+			}
+		}
+		else {oneg = one; twog = two;}
+		
 		if(!isReal(one) && !isReal(two)) return LLVMBuildMul(
 			ctx.currbuilder,
-			one,
-			two,
+			oneg,
+			twog,
 			toStringz("opermuli_result")
 		);
 
 		return LLVMBuildFMul(
 			ctx.currbuilder,
-			one,
-			two,
+			oneg,
+			twog,
 			toStringz("opermulf_result")
 		);
 }
 
 LLVMValueRef operDiv(GenerationContext ctx, LLVMValueRef one, LLVMValueRef two) {
-		if(LLVMTypeOf(one) == LLVMFloatType()) return LLVMBuildFDiv(
+        LLVMValueRef oneg;
+		LLVMValueRef twog;
+
+		if(LLVMTypeOf(one) != LLVMTypeOf(two)) {
+			if(!isReal(one)) {
+				oneg = one;
+				twog = LLVMBuildIntCast(
+					ctx.currbuilder,
+					two,
+					LLVMTypeOf(oneg),
+					toStringz("intcast")
+				);
+			}
+			else {
+				oneg = one; twog = two;
+			}
+		}
+		else {oneg = one; twog = two;}
+		
+		if(!isReal(one) && !isReal(two)) return LLVMBuildSDiv(
 			ctx.currbuilder,
-			one,
-			two,
-			toStringz("operdivf_result")
+			oneg,
+			twog,
+			toStringz("opersubi_result")
 		);
-        return LLVMBuildSDiv(
+
+		return LLVMBuildFDiv(
 			ctx.currbuilder,
-			one,
-			two,
-			toStringz("operdivi_result")
+			oneg,
+			twog,
+			toStringz("opersubf_result")
 		);
 }
 
