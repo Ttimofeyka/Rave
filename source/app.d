@@ -26,6 +26,7 @@ bool generateDocJson = false;
 string docJsonFile = "docs.json";
 bool not_delete_o = false;
 int optLevel = 1;
+TList[string] defines;
 
 string linker;
 
@@ -33,40 +34,6 @@ string platformFileType = "";
 
 void compile(string linkFiles, bool nolink, string sourceFile, string outputType, string outputFile) {
 	stdlibIncPath = buildNormalizedPath(absolutePath("./stdlib"));
-
-	TList[string] defines;
-	defines["_MFILE"] = new TList();
-	defines["_MFILE"].insertBack(new Token(SourceLocation(0,0,""), sourceFile));
-	defines["_FILE"] = new TList();
-	defines["_FILE"].insertBack(new Token(SourceLocation(0, 0, sourceFile), sourceFile));
-	defines["_OFILE"] = new TList();
-	defines["_OFILE"].insertBack(new Token(SourceLocation(0, 0, outputFile), outputFile));
-	defines["_PLATFORM"] = new TList();
-	defines["_PLATFORM"].insertBack(new Token(SourceLocation(0,0,""),"\""~outputType~"\""));
-	defines["true"] = new TList();
-	defines["true"].insertBack(new Token(SourceLocation(0,0,""),"cast"));
-	defines["true"].insertBack(new Token(SourceLocation(0,0,""),"("));
-	defines["true"].insertBack(new Token(SourceLocation(0,0,""),"bool"));
-	defines["true"].insertBack(new Token(SourceLocation(0,0,""),")"));
-	defines["true"].insertBack(new Token(SourceLocation(0,0,""),"1")); //
-	defines["false"] = new TList();
-	defines["false"].insertBack(new Token(SourceLocation(0,0,""),"cast"));
-	defines["false"].insertBack(new Token(SourceLocation(0,0,""),"("));
-	defines["false"].insertBack(new Token(SourceLocation(0,0,""),"bool"));
-	defines["false"].insertBack(new Token(SourceLocation(0,0,""),")"));
-	defines["false"].insertBack(new Token(SourceLocation(0,0,""),"0")); //
-
-	if(outputType.indexOf("linux") != -1) {
-		defines["_LINUX"] = new TList();
-		defines["_LINUX"].insertBack(new Token(SourceLocation(0,0,""),""));
-	}
-	else if(outputType.indexOf("windows") != -1) {
-		defines["_WINDOWS"] = new TList();
-		defines["_WINDOWS"].insertBack(new Token(SourceLocation(0,0,""),""));
-	}
-
-	if(debugMode) defines["_DEBUG"] = new TList();
-	else defines["_NDEBUG"] = new TList();
 
 	// writeln("------------------ Lexer -------------------");
 	auto lexer = new Lexer(sourceFile, readText(sourceFile));
@@ -108,7 +75,7 @@ void compile(string linkFiles, bool nolink, string sourceFile, string outputType
 
 	// Linking with runtime
 	
-	if(!nolink){
+	if(!nolink) {
 		auto cmd = executeShell(linker~" "~outputFile~platformFileType~" "~linkFiles~" -o "~outputFile);
 		if(cmd.status != 0) writeln(cmd.output);
 		if(!not_delete_o) remove(outputFile~platformFileType);
@@ -135,9 +102,10 @@ void main(string[] args)
 		"doc-json-file", "JSON documentation file name", &docJsonFile,
 		"nolink", "Disable auto-link with runtime", &nolink,
 		"no-rm-obj", "Don't remove object file", &not_delete_o,
-		"shared", "Linking files as shared library", &isshared,
+		"shared", "Linking as shared library", &isshared,
 		"noentry", "Linking without begin.o", &noentry,
-		"opt", "Optimization level", &optLevel
+		"opt", "Optimization level", &optLevel,
+		"linker", "Set linker", &linker
 	);
 	
     if(helpInformation.helpWanted)
@@ -146,10 +114,12 @@ void main(string[] args)
 	    return;
     }
 
-	version(linux) { linker = "ld.lld";}
-	version(Windows) { linker = "lld-link";}
-	version(OSX) { linker = "ld64.lld";}
-
+	if(linker == null) {
+		version(linux) { linker = "ld.lld";}
+		version(Windows) { linker = "lld-link";}
+		version(OSX) { linker = "ld64.lld";}
+	}
+	
 	if(outputType == "") {
 		outputType = to!string(fromStringz(LLVMGetDefaultTargetTriple()));
 	}
@@ -171,6 +141,39 @@ void main(string[] args)
 
     string[] sourceFiles = args[1..$].dup;
     string sourceFile = sourceFiles[0];
+
+	defines["_MFILE"] = new TList();
+	defines["_MFILE"].insertBack(new Token(SourceLocation(0,0,""), sourceFile));
+	defines["_FILE"] = new TList();
+	defines["_FILE"].insertBack(new Token(SourceLocation(0, 0, sourceFile), sourceFile));
+	defines["_OFILE"] = new TList();
+	defines["_OFILE"].insertBack(new Token(SourceLocation(0, 0, outputFile), outputFile));
+	defines["_PLATFORM"] = new TList();
+	defines["_PLATFORM"].insertBack(new Token(SourceLocation(0,0,""),"\""~outputType~"\""));
+	defines["true"] = new TList();
+	defines["true"].insertBack(new Token(SourceLocation(0,0,""),"cast"));
+	defines["true"].insertBack(new Token(SourceLocation(0,0,""),"("));
+	defines["true"].insertBack(new Token(SourceLocation(0,0,""),"bool"));
+	defines["true"].insertBack(new Token(SourceLocation(0,0,""),")"));
+	defines["true"].insertBack(new Token(SourceLocation(0,0,""),"1")); //
+	defines["false"] = new TList();
+	defines["false"].insertBack(new Token(SourceLocation(0,0,""),"cast"));
+	defines["false"].insertBack(new Token(SourceLocation(0,0,""),"("));
+	defines["false"].insertBack(new Token(SourceLocation(0,0,""),"bool"));
+	defines["false"].insertBack(new Token(SourceLocation(0,0,""),")"));
+	defines["false"].insertBack(new Token(SourceLocation(0,0,""),"0")); //
+
+	if(outputType.indexOf("linux") != -1) {
+		defines["_LINUX"] = new TList();
+		defines["_LINUX"].insertBack(new Token(SourceLocation(0,0,""),""));
+	}
+	else if(outputType.indexOf("windows") != -1) {
+		defines["_WINDOWS"] = new TList();
+		defines["_WINDOWS"].insertBack(new Token(SourceLocation(0,0,""),""));
+	}
+
+	if(debugMode) defines["_DEBUG"] = new TList();
+	else defines["_NDEBUG"] = new TList();
 
 	string path_to_rt = thisExePath()
 		.replace("/rave.exe","/")

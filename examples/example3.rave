@@ -1,5 +1,6 @@
 @inc "std/io";
 @inc "std/mem";
+@inc "std/math";
 
 main: int {
     ret 0;
