@@ -24,7 +24,9 @@ main: int {
 
 ## Building/Running
 
-Copy `base.dub.json` to `dub.json` and change the flags (if you need to change them). Then run `dub build`
+If you don't want to break your head, you can just run one of the install files, one for Linux, the other for Windows (Powershell).
+
+Otherwise, install all dependencies and write `dub build` in the project directory.
 
 ## Documentation
 
