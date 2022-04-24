@@ -194,7 +194,7 @@ void main(string[] args)
 				||
 				currF[$-1..$] == "a"
 				||
-				(currF.length > 2 
+				(currF.length > 2
 				&&
 				(currF[$-3..$] == "dll" 
 			|| currF[$-3..$] == "lib"))) linkF ~= sourceFiles[i] ~ " ";

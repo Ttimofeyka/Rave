@@ -5,5 +5,7 @@
 @inc "std/str/indexOfs";
 @inc "std/str/strcpy";
 @inc "std/str/strcmp";
+@inc "std/str/strcat";
+@inc "std/str/strncmp";
 
 @end

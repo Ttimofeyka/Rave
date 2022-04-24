@@ -1,7 +1,7 @@
 @inc "std/io";
 @inc "std/mem";
-@inc "std/math";
+@inc "std/str";
 
 main: int {
-    ret 0;
+    ret 5;
 }

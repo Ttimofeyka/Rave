@@ -19,14 +19,6 @@ import parser.mparser;
 import parser.atst;
 import llvm;
 
-const string[] predef_funcs = [
-	"sizeof",
-	"typeof",
-	"cast",
-	"itop",
-	"ptoi"
-];
-
 struct FuncSignature {
 	AtstNode ret;
 	AtstNode[] args;
@@ -1801,10 +1793,7 @@ class AstNodeIden : AstNode {
 			auto t = s.ctx.typeContext.getType(name);
 			if(t !is null) type = new TypeType(t);
 			else {
-				for(int i=0; i<predef_funcs.length; i++) {
-					if(name == predef_funcs[i]) return;
-				}
-				//writeln("Warning: unknown binding ",name,"!");
+				s.ctx.addError("Unknown identifier: \""~name~"\"",this.where);
 			}
 		}
 	}
@@ -1840,8 +1829,7 @@ class AstNodeDecl : AstNode {
 	override LLVMValueRef gen(AnalyzerScope s) {
 		GenerationContext ctx = s.genctx;
 		if(ctx.gstack.isVariable(decl.name)) {
-			writeln("The variable " ~ decl.name ~ " has been declared multiple times!");
-			exit(-1);
+			s.ctx.addError("The variable " ~ decl.name ~ " has been declared multiple times!",this.where);
 		}
 		if(s.genctx.currbuilder == null) {
 			// Global var

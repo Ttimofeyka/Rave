@@ -1,0 +1,12 @@
+@once
+
+strncmp(s1: char*, s2: char*, n: int): bool {
+    i := 0;
+    while(i<n) {
+        if(s1[i] != s2[i]) ret false;
+        i += 1;
+    }
+    ret true;
+}
+
+@end
