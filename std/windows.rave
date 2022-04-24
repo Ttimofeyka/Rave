@@ -2,7 +2,7 @@
 
 @inc "std/defs";
 
-@ifdef WINDOWS
+@ifdef _WINDOWS
 
 @def STD_INPUT_HANDLE -10 @end
 @def STD_OUTPUT_HANDLE -11 @end
