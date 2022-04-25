@@ -1,6 +1,8 @@
 # Using the D template
 
 # Compiled Object files
+*.o
+*.obj
 
 # Compiled Dynamic libraries
 *.so

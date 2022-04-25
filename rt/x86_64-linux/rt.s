@@ -73,17 +73,4 @@ _Ravef3brk:
 	movq $12, %rax
 	syscall
 	ret
-
-.global _Ravef4mmap
-.type   _Ravef4mmap, @function
-_Ravef4mmap:
-	movq $9, %rax
-	syscall
-	ret
-
-.global _Ravef6munmap
-.type   _Ravef6munmap, @function
-_Ravef6munmap:
-	movq $11, %rax
-	syscall
-	ret
+	

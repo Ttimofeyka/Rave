@@ -1,8 +1,8 @@
 #!/bin/sh
 
-rm i686-linux/rt.o
-rm x86_64-linux/rt.o
-rm i686-mac/rt.o
-rm x86_64-mac/rt.o
-rm win32/rt.o
-rm win64/rt.o
+rm i686-linux/*.o
+rm x86_64-linux/*.o
+rm i686-mac/*.o
+rm x86_64-mac/*.o
+rm win32/*.o
+rm win64/*.o

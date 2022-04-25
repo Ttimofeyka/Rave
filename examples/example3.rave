@@ -1,7 +1,5 @@
-@inc "std/io";
-@inc "std/mem";
-@inc "std/str";
+@inc "std/defs";
 
 main: int {
-    ret 5;
+    ret 123;
 }

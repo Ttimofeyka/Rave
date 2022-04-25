@@ -1,4 +1,3 @@
-.extern _Ravef4main
 .extern ExitProcess
 
 .global _Ravef4exit
@@ -6,10 +5,3 @@
 _Ravef4exit:
  	movl %eax, %ecx
     call ExitProcess
-
-.global _start
-.type   _start, @function
-_start:
-	call _Ravef4main
-    call _Ravef4exit
-    

@@ -4,9 +4,9 @@
 
 @ifdef _WINDOWS
 
-@def STD_INPUT_HANDLE -10 @end
-@def STD_OUTPUT_HANDLE -11 @end
-@def STD_ERROR_HANDLE -12 @end
+@def STD_INPUT_HANDLE cast(long)(-10) @end
+@def STD_OUTPUT_HANDLE cast(long)(-11) @end
+@def STD_ERROR_HANDLE cast(long)(-12) @end
 
 // Types
 @def BYTE short @end
@@ -39,6 +39,12 @@
 @def INT32 int @end
 @def INT64 long @end
 @def LONG long @end
+@def LPCVOID void* @end
+@def LPDWORD DWORD* @end
+
+extern(C) GetStdHandle(nStdHandle: DWORD): HANDLE;
+extern(C) ExitProcess(code: int);
+extern(C) WriteFile(hF: HANDLE, lpB: LPCVOID, nNOBTW: DWORD, th: LP: ov: void*): BOOL;
 
 @end
 @else

@@ -1,6 +1,7 @@
 @once
 
 @inc "std/defs";
+@inc "std/mem";
 
 ctoi(c: char): int {
     ret cast(int)c - cast(int)'0';

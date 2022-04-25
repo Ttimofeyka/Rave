@@ -816,7 +816,13 @@ class AstNodeBinary : AstNode { // Binary operations
 											ctx.currbuilder,
 											loaded,
 											brhs,
-											LLVMConstInt(LLVMInt32Type(), cast(ulong)ctx.gstructs.getV(ss.value[0..$-1], ctx.gstructs.structs[id.name]), false),
+											LLVMConstInt(LLVMInt32Type(),
+											 	cast(ulong)ctx.gstructs.getV(
+													 ss.value[0..$-1], 
+													 ctx.gstructs.structs[id.name]
+												), 
+												false
+											),
 											toStringz("struct_set")
 										);
 

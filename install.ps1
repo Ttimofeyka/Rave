@@ -29,4 +29,4 @@ Write-Output "Running D-Installer..."
 
 Start-Process $d # Run installer
 
-cmd.exe /c "dub build" 
+cmd.exe /c "dub build"

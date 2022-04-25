@@ -182,6 +182,7 @@ void main(string[] args)
 	string linkF = path_to_rt~"rt"~platformFileType~" ";
 	if(!noentry) linkF ~= path_to_rt~"begin"~platformFileType~" ";
 	if(isshared) linkF ~= "-shared ";
+	if("_WINDOWS" in defines) linkF ~= "lib/kernel32.lib ";
 
   	LLVMInitializeNativeTarget();
 

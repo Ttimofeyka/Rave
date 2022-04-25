@@ -17,10 +17,10 @@ main: int {
 ## Requirements
 
 * `llvm-10` (including dev libs)
-* `binutils`, `binutils-avr` (if you need avr support)
+* `binutils`, `binutils-avr` (if you need AVR-support)
 * dub
 * D compiler (dmd/ldc/gdc)
-* [node.js](https://nodejs.org/) (for documentation)
+* [node.js](https://nodejs.org/) (for documentation) (optionally)
 
 ## Building/Running
 
