@@ -1,5 +1,8 @@
 @inc "std/defs";
 
+d: int => 0;
+
 main: int {
-    ret 123;
+    a: void* = ftop(d);
+    ret 124;
 }
