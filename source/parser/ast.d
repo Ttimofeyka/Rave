@@ -2164,33 +2164,6 @@ class AstNodeItop : AstNode {
 	}
 }
 
-class AstNodeFtop : AstNode {
-	AstNode val; // Function name
-	AtstNode ptrt; // Pointer type - maybe null?
-
-	this(AstNode val, AtstNode p) {
-		this.val = val;
-		this.ptrt = p;
-	}
-
-	this(AstNode val) {
-		this.val = val;
-	}
-
-	override void analyze(AnalyzerScope s, Type neededType) {}
-	override LLVMValueRef gen(AnalyzerScope s) {
-		GenerationContext ctx = s.genctx;
-
-		// val is AstNodeIden, 100%
-		AstNodeIden fname = val.instanceof!AstNodeIden;
-
-		return castTo(ctx,
-			ctx.gfuncs[fname.name],
-			ctx.getLLVMType(ptrt,s)
-		);
-	}
-}
-
 class AstNodeFuncCall : AstNode {
 	AstNode func;
 	TypeFunction funcType;
