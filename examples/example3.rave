@@ -1,5 +1,5 @@
-@inc "std/defs";
-@inc "std/mem";
+@inc "std/io";
+@inc "std/net";
 
 main: int {
     ret 0;

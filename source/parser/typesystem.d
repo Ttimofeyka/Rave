@@ -112,6 +112,7 @@ class TypePointer : Type {
     }
 
     override string toString() const {
+        if(to is null) {return "";}
         return to.toString() ~ "*";
     }
 }

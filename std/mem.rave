@@ -1,10 +1,11 @@
 @once
 
 @inc "std/defs";
+@inc "std/unix";
 
-@def ENOMEM (-132) @end
-
-extern brk(addr: void*): int;
+brk(addr: void*): int {
+    ret cast(int)sysc1(12,addr);
+}
 
 stdmem_currbrk: void* = NULL;
 

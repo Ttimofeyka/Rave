@@ -1,6 +1,10 @@
 @once
 
-extern exit(errCode: int);
+@inc "std/unix";
+
+exit(errCode: int) {
+    sysc1(60,errCode);
+}
 
 assert(cond: bool) {
     if(!cond) exit(-1);

@@ -1,0 +1,11 @@
+@once
+
+extern sysc0(cmd: int): void*;
+extern sysc1(cmd: int, arg1: void*): void*;
+extern sysc2(cmd: int, arg1: void*, arg2: void*): void*;
+extern sysc3(cmd: int, arg1: void*, arg2: void*, arg3: void*): void*;
+extern sysc4(cmd: int, arg1: void*, arg2: void*, arg3: void*, arg4: void*): void*;
+extern sysc5(cmd: int, arg1: void*, arg2: void*, arg3: void*, arg4: void*, arg5: void*): void*;
+extern sysc6(cmd: int, arg1: void*, arg2: void*, arg3: void*, arg4: void*, arg5: void*, arg6: void*): void*;
+
+@end

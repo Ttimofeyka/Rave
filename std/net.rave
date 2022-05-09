@@ -1,0 +1,71 @@
+@once
+
+@inc "std/unix";
+@inc "std/defs";
+
+@def SOCKET_IP4 4 @end
+@def SOCKET_IP6 10 @end
+
+@def SOCKET_STREAM 1 @end
+@def SOCKET_DGRAM 2 @end
+@def SOCKET_RAW 3 @end
+@def SOCKET_RDM 4 @end
+@def SOCKET_SEQPACKET 5 @end
+@def SOCKET_DCCP 6 @end
+@def SOCKET_PACKET 10 @end
+@def SOCKET_NONBLOCK 00004000 @end
+@def SOCKET_CLOEXEC 02000000 @end
+
+@def MSG_CONFIRM 0x800 @end
+@def MSG_DONTROUTE 0x04 @end
+@def MSG_DONTWAIT 0x40 @end
+@def MSG_EOR 0x80 @end
+@def MSG_MORE 0x8000 @end
+@def MSG_NOSIGNAL 0x4000 @end
+@def MSG_OOB 0x01 @end
+
+struct ssockaddr {
+    sa_family: int;
+    sa_data: char[14];
+}
+
+struct iovec {
+    iov_base: void*;
+    iov_len: int;
+}
+
+struct smsghdr {
+    msg_name: void*;      
+    msg_namelen: int;  
+    msg_iov: iovec*;   
+    msg_iovlen: int;   
+    msg_control: void*;  
+    msg_controllen: int; 
+    msg_flags: int;    
+}
+
+ssocket(domain: int, type: int, protocol: int): int {
+    ret cast(int)sysc3(41,domain,type,protocol);
+}
+
+sconnect(sockfd: int, addr: sockaddr*, addrlen: int): int {
+    ret cast(int)sysc3(42,sockfd,addr,addrlen);
+}
+
+saccept(sockfd: int, addr: sockaddr*, addrlen: int): int {
+    ret cast(int)sysc3(43,sockfd,addr,addrlen);
+}
+
+ssendto(sockfd: int, buff: void*, len: int, flags: int, dest: sockaddr*, addrlen: int): int {
+    ret cast(int)sysc6(44,sockfd,buff,len,flags,dest,addrlen);
+}
+
+ssend(sockfd: int, buff: void*, len: int, flags: int): int {
+    ret ssendto(sockfd, buff, len, flags, cast(sockaddr*)0, 0);
+}
+
+ssendmsg(sockfd: int, msg: smsghdr*, flags: int): int {
+    ret cast(int)sysc3(46,sockfd,msg,flags);
+}
+
+@end

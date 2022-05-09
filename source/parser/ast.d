@@ -492,6 +492,8 @@ class AstNodeFunction : AstNode {
 			funcType
 		);
 
+		//LLVMSetFunctionCallConv(func, LLVMPTXKernelCallConv);
+
 		ctx.gfuncs.add(decl.name, func, retType, type);
 		ctx.currfunc = func;
 

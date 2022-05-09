@@ -2,32 +2,55 @@
 
 @inc "std/str/strlen";
 @inc "std/defs";
+@inc "std/unix";
 
 @def stdin 0 @end
 @def stdout 1 @end
 @def stderr 2 @end
 @def errno -1 @end
 
-extern fopen(filename: char*, flags: int, mode: int): int;
-extern fclose(fd: int);
-extern _fwrite(fd: int, buff: char*, size: int);
-extern fread(fd: int, buff: char*, size: int): int;
-extern mkdir(pathname: char*, mode: int);
-extern rmdir(pathname: char*);
-extern chmod(file: char*, mode: int);
-extern uselib(file: char*): int;
-extern fchmod(fd: int, mode: int);
+fopen(filename: char*, flags: int, mode: int): int {
+    ret cast(int)sysc3(2,filename,flags,mode);
+}
 
-fwrite(fd: int, buff: char*): void {
-    _fwrite(fd, buff, strlen(buff));
+fclose(fd: int) {
+    sysc1(3,fd);
+}
+
+fwrite(fd: int, buff: char*, size: int) {
+    sysc3(1,fd,buff,size);
+}
+
+fread(fd: int, buff: char*, size: int): int {
+    ret cast(int)sysc3(0,fd,buff,size);
+}
+
+mkdir(pathname: char*, mode: int) {
+    sysc2(83,pathname,mode);
+}
+
+rmdir(pathname: char*) {
+    sysc1(84,pathname);
+}
+
+chmod(file: char*, mode: int) {
+    sysc2(90,file,mode);
+}
+
+uselib(file: char*): int {
+    ret cast(int)sysc1(134,file);
+}
+
+fchmod(fd: int, mode: int) {
+    sysc2(91,fd,mode);
+}
+
+fputs(fd: int, s: char*) {
+    fwrite(fd, s, strlen(s));
 }
 
 puts(s: char*) {
-    fwrite(stdout, s);
-}
-
-putc(c: char) {
-    _fwrite(stdout, &c, 1);
+    fwrite(stdout, s, strlen(s));
 }
 
 @end

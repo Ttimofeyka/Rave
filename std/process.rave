@@ -1,0 +1,7 @@
+@once
+
+getpid(): int {
+    ret cast(int)sysc0(39);
+}
+
+@end

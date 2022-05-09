@@ -3,4 +3,15 @@
 @def NULL cast(void*)0 @end
 @def EOF (-1) @end
 
+// ERRORS CODES
+@def EACCESS 111 @end
+@def ESOCKNOSUPPORT 1114 @end
+@def EINVAL 3021 @end
+@def EALREADY 1104 @end
+@def EAGAIN 112 @end
+@def EINVAL 3021 @end
+@def ENOMEM -132 @end
+@def ENOTSOCK 1105 @end
+@def ENOTCONN 3438 @end
+
 @end
