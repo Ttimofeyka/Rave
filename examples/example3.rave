@@ -1,6 +1,9 @@
-@inc "std/io";
-@inc "std/net";
+namespace A {
+    namespace B {
+        c: int => 6;
+    }
+}
 
 main: int {
-    ret 0;
+    ret A::B::c();
 }

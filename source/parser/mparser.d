@@ -701,6 +701,20 @@ class Parser {
 		return new AstNodeWhile(cond, body_);
 	}
 
+	private AstNode parseNamespace() {
+		assert(peek().cmd == TokCmd.cmd_namespace);
+		next();
+		string name = expectToken(TokType.tok_id).value;
+		expectToken(TokType.tok_2lbra);
+		AstNode[] nodes;
+		AstNode p;
+		while((p = parseTopLevel()) !is null) {
+			nodes ~= p;
+		}
+		expectToken(TokType.tok_2rbra);
+		return new AstNodeNamespace(name, nodes);
+	}
+
 	private AstNode parseStmt() {
 		if(peek().type == TokType.tok_2lbra) {
 			return parseBlock();
@@ -860,6 +874,12 @@ class Parser {
 		if(peek().type == TokType.tok_eof) {
 			return null;
 		}
+
+		if(peek().type == TokType.tok_cmd && peek().cmd == TokCmd.cmd_namespace) {
+			return parseNamespace();
+		}
+
+		if(peek().value == "}") return null;
 		
 		Decl d = parseDecl();
 		if(!d.isMethod) {

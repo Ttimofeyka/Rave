@@ -191,12 +191,18 @@ class Lexer {
 
     private string getTID() {
         string temp = "";
-        while((get() >= 'a' && get() <= 'z')
-           || (get() >= 'A' && get() <= 'Z')
-           || (get() >= '0' && get() <= '9')
-           || get() == '_') {
-            temp ~= get();
+        char ch = get();
+        while((ch >= 'a' && ch <= 'z')
+           || (ch >= 'A' && ch <= 'Z')
+           || (ch >= '0' && ch <= '9')
+           || ch == '_'
+           || (
+               ch == ':' && get(-1) == ':'
+               || ch == ':' && get(1) == ':'
+           )) {
+            temp ~= ch;
             next(1);
+            ch = get();
         }
         return temp;
     }
@@ -339,7 +345,16 @@ class Lexer {
                 case ',': tokens.insertBack(new Token(loc, ",")); next(1); break;
                 case '.': tokens.insertBack(new Token(loc, ".")); next(1); break;
                 case ';': tokens.insertBack(new Token(loc, ";")); next(1); break;
-                case ':': tokens.insertBack(new Token(loc, ":")); next(1); break;
+                case ':': 
+                    if(get(+1)==':') {
+                        tokens.insertBack(new Token(loc, "::"));
+                        next(2);
+                    }
+                    else {
+                        tokens.insertBack(new Token(loc, ":"));
+                        next(1);
+                    }
+                    break;
                 case '^': tokens.insertBack(new Token(loc, "^")); next(1); break;
                 case '@': _hadAt = true; tokens.insertBack(new Token(loc, "@")); next(1); break;
                 case '~': tokens.insertBack(new Token(loc, "~")); next(1); break;

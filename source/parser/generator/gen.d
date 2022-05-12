@@ -15,7 +15,7 @@ import std.uni;
 import parser.atst;
 
 class GStack {
-    private LLVMValueRef[string] globals; // Global variables
+    LLVMValueRef[string] globals; // Global variables
     private LLVMValueRef[string] locals; // Local variables
 	string[string] structures;
 	bool setVar = false;
@@ -112,9 +112,9 @@ class GPresets {
 }
 
 class GFuncs {
-    private LLVMValueRef[string] funcs;
-    private LLVMTypeRef[string] types;
-	private TypeFunction[string] typesf;
+    LLVMValueRef[string] funcs;
+    LLVMTypeRef[string] types;
+	TypeFunction[string] typesf;
 	int[string] funcs_varargs;
 	AtstNode[int] funcs_args;
 
@@ -125,7 +125,9 @@ class GFuncs {
     }
 
     LLVMTypeRef getType(string n) {return types[n];}
-	TypeFunction getFType(string n) {return typesf[n];}
+	TypeFunction getFType(string n) {
+		return typesf[n];
+	}
 
     LLVMValueRef opIndex(string n)
     {

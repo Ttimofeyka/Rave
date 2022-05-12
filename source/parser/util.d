@@ -36,3 +36,31 @@ const size_t BASICMM_BLOCK_SIZE = 1024;
 }
 
 StackMemoryManager stackMemory;
+
+string namespacesToGenName(string[] ns, string original, string type) {
+	// Example:
+	// Original name - foo
+	// ns - A,B
+	// Name = _nsAnsBvarfoo
+	string newname = "_";
+
+	for(int i=0; i<ns.length; i++) {
+		newname ~= "ns"~ns[i];
+	}
+
+	return (newname ~ type ~ original);
+}
+
+string namespacesToVarName(string[] ns, string original) {
+	// Example:
+	// Original name - foo
+	// ns - A,B
+	// Name = A::B::foo
+	string newname = "";
+
+	for(int i=0; i<ns.length; i++) {
+		newname ~= ns[i] ~ "::";
+	}
+
+	return (newname ~ original);
+}

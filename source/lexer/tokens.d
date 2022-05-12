@@ -64,6 +64,7 @@ enum TokType {
     tok_at = 51, // @
     tok_doc = 52, // documentation comment
     tok_question = 53, // ?
+    tok_namesp_get = 54, // ::
 }
 
 enum TokCmd {
@@ -94,7 +95,8 @@ enum TokCmd {
     cmd_warn = 29,
     cmd_out = 30,
     cmd_ifequ = 31,
-    cmd_exit = 32
+    cmd_exit = 32,
+    cmd_namespace = 33
 }
 
 struct SourceLocation {
@@ -181,6 +183,8 @@ class Token {
                 case "=>": this.type = TokType.tok_arrow; break;
                 case "#": this.type = TokType.tok_hash; break;
                 case "?": this.type = TokType.tok_question; break;
+                case "::": this.type = TokType.tok_namesp_get; break;
+                // Commands
                 case "if": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_if; break;
                 case "else": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_else; break;
                 case "while": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_while; break;
@@ -194,6 +198,7 @@ class Token {
                 case "enum": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_enum; break;
                 case "static": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_static; break;
                 case "const": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_const; break;
+                case "namespace": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_namespace; break;
                 // Preprocessor commands
                 case "@else": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_else; break;
                 case "@inc": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_include; break;

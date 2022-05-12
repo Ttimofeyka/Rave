@@ -337,6 +337,7 @@ class AstNodeFunction : AstNode {
 	LLVMBasicBlockRef exitBlock;
 	LLVMBuilderRef builder;
 	ReturnGenStmt[] genReturns;
+	Type retT;
 
 	LLVMTypeRef* paramTypes = null;
 
@@ -352,7 +353,7 @@ class AstNodeFunction : AstNode {
 		}
 		auto retType = this.decl.signature.ret.get(s);
 		Type[] argTypes = array(map!((a) => a.get(s))(this.decl.signature.args));
-		type = new TypeFunction(retType, argTypes);
+		this.type = new TypeFunction(retType, argTypes);
 
 		if(this.body_ is null) {
 			if(retType.instanceof!TypeUnknown) {
@@ -418,9 +419,10 @@ class AstNodeFunction : AstNode {
 		}
 
 		// TODO: Check if types are not inferred!
-		type = new TypeFunction(retType, argTypes);
+		this.type = new TypeFunction(retType, argTypes);
+		retT = this.type.ret;
 		s.vars[this.decl.name] = new ScopeVar(type, decl.isStatic, decl.isExtern);
-		}
+	}
 
 	private LLVMTypeRef* getParamsTypes(AnalyzerScope s) {
 		GenerationContext ctx = s.genctx;
@@ -447,7 +449,7 @@ class AstNodeFunction : AstNode {
 
 		AstNodeBlock funcBody = cast(AstNodeBlock)body_;
 
-		LLVMTypeRef retType = ctx.getLLVMType(type.ret,s);
+		LLVMTypeRef retType = ctx.getLLVMType(retT,s);
 
 		for(int i=0; i<decl.signature.args.length; i++) {
 			if(AtstNodeName n = decl.signature.args[i].instanceof!AtstNodeName) {
@@ -1801,7 +1803,7 @@ class AstNodeIden : AstNode {
 			auto t = s.ctx.typeContext.getType(name);
 			if(t !is null) type = new TypeType(t);
 			else {
-				s.ctx.addError("Unknown identifier: \""~name~"\"",this.where);
+				//s.ctx.addError("Unknown identifier: \""~name~"\"",this.where);
 			}
 		}
 	}
@@ -1811,6 +1813,65 @@ class AstNodeIden : AstNode {
 			writeTabs(indent);
 			writeln("Identifier: ", name);
 		}
+	}
+}
+
+class AstNodeNamespace : AstNode {
+	string[] names;
+	AstNode[] nodes;
+
+	this(string name, AstNode[] nodes) {
+		this.names ~= name;
+		this.nodes = nodes.dup;
+	}
+
+	override void analyze(AnalyzerScope s, Type neededType) {
+		for(int i=0; i<nodes.length; i++) {
+			AstNode currnode = nodes[i];
+
+			if(AstNodeDecl decl = currnode.instanceof!AstNodeDecl) {
+				decl.analyze(s,neededType);
+			}
+			else if(AstNodeFunction func = currnode.instanceof!AstNodeFunction) {
+				func.analyze(s,neededType);
+			}
+			else if(AstNodeNamespace sp = currnode.instanceof!AstNodeNamespace) {
+				sp.analyze(s,neededType);
+			}
+		}
+	}
+	override LLVMValueRef gen(AnalyzerScope s) {
+		GenerationContext ctx = s.genctx;
+
+		for(int i=0; i<nodes.length; i++) {
+			AstNode currnode = nodes[i];
+
+			if(AstNodeDecl decl = currnode.instanceof!AstNodeDecl) {
+				string oldname = decl.decl.name;
+				decl.decl.name = namespacesToGenName(names,decl.decl.name,"var");
+				decl.gen(s);
+				ctx.gstack.globals[namespacesToVarName(names,oldname)] = ctx.gstack.globals[decl.decl.name];
+				ctx.gstack.globals.remove(decl.decl.name);
+			}
+			else if(AstNodeFunction func = currnode.instanceof!AstNodeFunction) {
+				string oldname = func.decl.name;
+				func.decl.name = namespacesToGenName(names,oldname,"func");
+				func.gen(s);
+				string newname = namespacesToVarName(names,oldname);
+				ctx.gfuncs.funcs[newname] = ctx.gfuncs.funcs[func.decl.name];
+				ctx.gfuncs.funcs.remove(func.decl.name);
+				ctx.gfuncs.types[newname] = ctx.gfuncs.types[func.decl.name];
+				ctx.gfuncs.types.remove(func.decl.name);
+				ctx.gfuncs.typesf[newname] = ctx.gfuncs.typesf[func.decl.name];
+				ctx.gfuncs.typesf.remove(func.decl.name);
+			}
+			else if(AstNodeNamespace sp = currnode.instanceof!AstNodeNamespace) {
+				sp.names = names ~ sp.names;
+				sp.gen(s);
+			}
+		}
+
+		return null;
 	}
 }
 
@@ -1855,9 +1916,13 @@ class AstNodeDecl : AstNode {
 		    	false
 	    	);
 
+			string stru = to!string(fromStringz(LLVMPrintTypeToString(ctx.getLLVMType(decl.type,s))));
+
+			if(indexOf(stru,"%") == -1 && value is null) return global;
+
 			LLVMValueRef func = LLVMAddFunction(
 				ctx.mod,
-				toStringz("_Ravef"~to!string((decl.name~"_init").length)~decl.name~"_init"),
+				toStringz("_Ravei"~to!string((decl.name~"_init").length)~decl.name~"_init"),
 				ret_type
 			);
 
@@ -1865,7 +1930,6 @@ class AstNodeDecl : AstNode {
 			ctx.currbuilder = LLVMCreateBuilder();
 			LLVMPositionBuilderAtEnd(ctx.currbuilder, entry);
 
-			string stru = to!string(fromStringz(LLVMPrintTypeToString(ctx.getLLVMType(decl.type,s))));
 			if(indexOf(stru,"%") != -1) {
 				if(indexOf(stru,"type") == -1) {
 					string stru_2 = stru.replace("%","").replace("*","");
@@ -1923,7 +1987,7 @@ class AstNodeDecl : AstNode {
 				}
 			}
 
-			if(value !is null) LLVMBuildStore(
+			LLVMBuildStore(
 				ctx.currbuilder,
 				value.gen(s),
 				global
@@ -2186,7 +2250,7 @@ class AstNodeFuncCall : AstNode {
 		auto funcType = this.func.getType(s);
 
 		if(!funcType.instanceof!TypeFunction) {
-			s.ctx.addError("Cannot call a non-function value!", this.where);
+			//s.ctx.addError("Cannot call a non-function value!", this.where);
 			return;
 		}
 
