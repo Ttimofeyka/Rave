@@ -17,6 +17,7 @@ import std.file : remove;
 import std.conv : to;
 import std.file;
 import llvm;
+import std.path;
 
 string stdlibIncPath = "";
 string outputSimpleType = "";
@@ -180,9 +181,7 @@ void main(string[] args)
 	if(debugMode) defines["_DEBUG"] = new TList();
 	else defines["_NDEBUG"] = new TList();
 
-	string path_to_rt = thisExePath()
-		.replace("/rave.exe","/")
-		.replace("/rave","/")~"rt/"~outputSimpleType~"/";
+	string path_to_rt = dirName(thisExePath())~"/rt/"~outputSimpleType~"/";
 
 	string linkF = path_to_rt~"rt"~platformFileType~" ";
 	if(!noentry) linkF ~= path_to_rt~"begin"~platformFileType~" ";
