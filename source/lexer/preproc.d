@@ -268,7 +268,9 @@ class Preprocessor {
                     if(canOutput()) _ifStack ~= (v == v2);
                 }
                 else if(get().cmd == TokCmd.cmd_exit) {
-                    if(canOutput()) exit(0);
+                    i += 1;
+                    int exitcode = to!int(get().value);
+                    if(canOutput()) exit(exitcode);
                     i += 1;
                 }
                 else {
