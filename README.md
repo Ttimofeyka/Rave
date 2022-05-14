@@ -28,9 +28,9 @@ If you don't want to break your head, you can just run one of the install files,
 
 Otherwise, install all dependencies and write `dub build` in the project directory.
 
-## Documentation
+## Reference
 
-The full documentation is in `docs`.
+The reference is in `reference` directory.
 
 ## Goals
 
