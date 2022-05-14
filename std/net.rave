@@ -94,6 +94,14 @@ listen(sockfd: int, backlog: int): int {
     ret cast(int)std::sysc2(50,sockfd,backlog);
 }
 
+bind(sockfd: int, addr: std::net::sockaddr*, addrlen: int): int {
+    ret cast(int)std::sysc3(49,sockfd,addr,addrlen);
+}
+
+shutdown(sockfd: int, how: int): int {
+    ret cast(int)std::sysc2(48,sockfd,how);
+}
+
 }
 
 }

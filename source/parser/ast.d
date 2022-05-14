@@ -1860,12 +1860,7 @@ class AstNodeNamespace : AstNode {
 				func.decl.name = namespacesToGenName(names,oldname,"func");
 				func.gen(s);
 				string newname = namespacesToVarName(names,oldname);
-				ctx.gfuncs.funcs[newname] = ctx.gfuncs.funcs[func.decl.name];
-				ctx.gfuncs.funcs.remove(func.decl.name);
-				ctx.gfuncs.types[newname] = ctx.gfuncs.types[func.decl.name];
-				ctx.gfuncs.types.remove(func.decl.name);
-				ctx.gfuncs.typesf[newname] = ctx.gfuncs.typesf[func.decl.name];
-				ctx.gfuncs.typesf.remove(func.decl.name);
+				ctx.gfuncs.newfuncs[newname] = func.decl.name;
 			}
 			else if(AstNodeNamespace sp = currnode.instanceof!AstNodeNamespace) {
 				sp.names = names ~ sp.names;

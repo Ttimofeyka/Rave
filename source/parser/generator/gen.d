@@ -164,6 +164,7 @@ class GStructs {
 	private uint[string[]] vs;
 	string[string] structs;
 	AstNodeDecl[][string] variables;
+	string[string] newstructs;
 
 	this() {}
 
@@ -180,9 +181,11 @@ class GStructs {
 	}
 
 	LLVMTypeRef getS(string n) {
+		if(n in newstructs) return ss[newstructs[n]];
 		return ss[n];
 	}
 	uint getV(string vname, string sname) {
+		if(sname in newstructs) return vs[cast(immutable)[newstructs[sname],vname]];
 		return vs[cast(immutable)[sname,vname]];
 	}
 }
