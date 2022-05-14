@@ -1,11 +1,13 @@
 @once
 
+@inc "std/unix";
+
 getpid(): int {
-    ret cast(int)sysc0(39);
+    ret cast(int)std::sysc0(39);
 }
 
 execve(pathname: char*, argv: char**, envp: char**): int {
-    ret cast(int)sysc3(59,pathname,argv,envp);
+    ret cast(int)std:sysc3(59,pathname,argv,envp);
 }
 
 @end
