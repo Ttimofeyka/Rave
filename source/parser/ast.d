@@ -1838,6 +1838,9 @@ class AstNodeNamespace : AstNode {
 			else if(AstNodeNamespace sp = currnode.instanceof!AstNodeNamespace) {
 				sp.analyze(s,neededType);
 			}
+			else if(AstNodeStruct st = currnode.instanceof!AstNodeStruct) {
+				st.analyze(s,neededType);
+			}
 		}
 	}
 	override LLVMValueRef gen(AnalyzerScope s) {
@@ -1850,24 +1853,26 @@ class AstNodeNamespace : AstNode {
 				string oldname = decl.decl.name;
 				decl.decl.name = namespacesToGenName(names,decl.decl.name,"var");
 				decl.gen(s);
-				ctx.gstack.globals[namespacesToVarName(names,oldname)] = ctx.gstack.globals[decl.decl.name];
-				ctx.gstack.globals.remove(decl.decl.name);
+				ctx.gstack.newnames[namespacesToVarName(names,oldname)] = decl.decl.name;
 			}
 			else if(AstNodeFunction func = currnode.instanceof!AstNodeFunction) {
 				string oldname = func.decl.name;
 				func.decl.name = namespacesToGenName(names,oldname,"func");
 				func.gen(s);
-				string newname = namespacesToVarName(names,oldname);
-				ctx.gfuncs.funcs[newname] = ctx.gfuncs.funcs[func.decl.name];
-				ctx.gfuncs.funcs.remove(func.decl.name);
-				ctx.gfuncs.types[newname] = ctx.gfuncs.types[func.decl.name];
-				ctx.gfuncs.types.remove(func.decl.name);
-				ctx.gfuncs.typesf[newname] = ctx.gfuncs.typesf[func.decl.name];
-				ctx.gfuncs.typesf.remove(func.decl.name);
+				ctx.gfuncs.newfuncs[namespacesToVarName(names,oldname)] = func.decl.name;
 			}
 			else if(AstNodeNamespace sp = currnode.instanceof!AstNodeNamespace) {
 				sp.names = names ~ sp.names;
 				sp.gen(s);
+			}
+			else if(AstNodeStruct st = currnode.instanceof!AstNodeStruct) {
+				string oldname = st.name;
+				st.name = namespacesToGenName(names,st.name,"struct");
+				st.gen(s);
+				string newname = namespacesToVarName(names,oldname);
+				// TODO: Use newstructs
+				ctx.gstructs.ss[newname] = ctx.gstructs.ss[st.name];
+				ctx.gstructs.ss.remove(st.name);
 			}
 		}
 

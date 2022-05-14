@@ -1,9 +1,5 @@
-namespace A {
-    namespace B {
-        c: int => 8;
-    }
-}
+@inc "std/net";
 
 main: int {
-    ret A::B::c();
+    ret 0;
 }

@@ -20,6 +20,7 @@ class GStack {
 	string[string] structures;
 	bool setVar = false;
 	GenerationContext ctx;
+	string[string] newnames; // For namespace-vars
 
     this() {}
 
@@ -32,9 +33,11 @@ class GStack {
 	}
 
 	bool isGlobal(string var) {
+		if(var in newnames) return globals.keys.canFind(newnames[var]);
 		return globals.keys.canFind(var);
 	}
 	bool isLocal(string var) {
+		if(var in newnames) return locals.keys.canFind(newnames[var]);
 		return locals.keys.canFind(var);
 	}
 	bool isVariable(string var) {
@@ -42,11 +45,21 @@ class GStack {
 	}
 
 	void set(LLVMValueRef newval, string n) {
-		if(isGlobal(n)) globals[n] = newval;
-		else locals[n] = newval;
+		if(n in newnames) {
+			if(isGlobal(newnames[n])) globals[newnames[n]] = newval;
+			else locals[newnames[n]] = newval;
+		}
+		else {
+			if(isGlobal(n)) globals[n] = newval;
+			else locals[n] = newval;
+		}
 	}
 
 	void remove(string n) {
+		if(n in newnames) {
+			if(isLocal(newnames[n])) locals.remove(newnames[n]);
+			else globals.remove(newnames[n]);
+		}
 		if(n in locals) locals.remove(n);
 		else if(n in globals) globals.remove(n);
 		else {}
@@ -60,10 +73,14 @@ class GStack {
 
 	LLVMValueRef opIndex(string n)
 	{
-		if(n in locals) return locals[n];
-		else if(n in globals) return globals[n];
-		else if(n in ctx.gargs.fargs_values) {
-			return LLVMGetParam(ctx.currfunc, cast(uint)ctx.gargs.fargs_values[n]);
+		string nn = n;
+		if(n in newnames) {
+			nn = newnames[n];
+		}
+		if(nn in locals) return locals[nn];
+		else if(nn in globals) return globals[nn];
+		else if(nn in ctx.gargs.fargs_values) {
+			return LLVMGetParam(ctx.currfunc, cast(uint)ctx.gargs.fargs_values[nn]);
 		}
 		else return null;
 	}
@@ -117,6 +134,7 @@ class GFuncs {
 	TypeFunction[string] typesf;
 	int[string] funcs_varargs;
 	AtstNode[int] funcs_args;
+	string[string] newfuncs;
 
     void add(string n, LLVMValueRef f, LLVMTypeRef t, TypeFunction tf) {
         funcs[n] = f;
@@ -124,13 +142,18 @@ class GFuncs {
 		typesf[n] = tf;
     }
 
-    LLVMTypeRef getType(string n) {return types[n];}
+    LLVMTypeRef getType(string n) {
+		if(n in newfuncs) return types[newfuncs[n]];
+		return types[n];
+	}
 	TypeFunction getFType(string n) {
+		if(n in newfuncs) return typesf[newfuncs[n]];
 		return typesf[n];
 	}
 
     LLVMValueRef opIndex(string n)
     {
+	   if(n in newfuncs) return funcs[newfuncs[n]];
        return funcs[n]; 
     }
 }
@@ -155,8 +178,12 @@ class GStructs {
 		variables[name] ~= d;
 	}
 
-	LLVMTypeRef getS(string n) {return ss[n];}
-	uint getV(string vname, string sname) {return vs[cast(immutable)[sname,vname]];}
+	LLVMTypeRef getS(string n) {
+		return ss[n];
+	}
+	uint getV(string vname, string sname) {
+		return vs[cast(immutable)[sname,vname]];
+	}
 }
 
 bool isSimpleType(string t) {

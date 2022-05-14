@@ -24,7 +24,17 @@
 @def MSG_NOSIGNAL 0x4000 @end
 @def MSG_OOB 0x01 @end
 
-struct ssockaddr {
+@def MSG_CMSG_CLOEXEC 0x40000000 @end
+@def MSG_DONTWAIT 0x40 @end
+@def MSG_ERRQUEUE 0x2000 @end
+@def MSG_PEEK  0x02 @end
+@def MSG_WAITALL 0x100 @end
+
+namespace std {
+
+namespace net {
+
+struct sockaddr {
     sa_family: int;
     sa_data: char[14];
 }
@@ -34,38 +44,54 @@ struct iovec {
     iov_len: int;
 }
 
-struct smsghdr {
+struct msghdr {
     msg_name: void*;      
     msg_namelen: int;  
-    msg_iov: iovec*;   
+    msg_iov: std::net::iovec*;   
     msg_iovlen: int;   
     msg_control: void*;  
     msg_controllen: int; 
     msg_flags: int;    
 }
 
-ssocket(domain: int, type: int, protocol: int): int {
+socket(domain: int, type: int, protocol: int): int {
     ret cast(int)sysc3(41,domain,type,protocol);
 }
 
-sconnect(sockfd: int, addr: sockaddr*, addrlen: int): int {
+connect(sockfd: int, addr: std::net::sockaddr*, addrlen: int): int {
     ret cast(int)sysc3(42,sockfd,addr,addrlen);
 }
 
-saccept(sockfd: int, addr: sockaddr*, addrlen: int): int {
+accept(sockfd: int, addr: std::net::sockaddr*, addrlen: int): int {
     ret cast(int)sysc3(43,sockfd,addr,addrlen);
 }
 
-ssendto(sockfd: int, buff: void*, len: int, flags: int, dest: sockaddr*, addrlen: int): int {
+sendto(sockfd: int, buff: void*, len: int, flags: int, dest: std::net::sockaddr*, addrlen: int): int {
     ret cast(int)sysc6(44,sockfd,buff,len,flags,dest,addrlen);
 }
 
-ssend(sockfd: int, buff: void*, len: int, flags: int): int {
-    ret ssendto(sockfd, buff, len, flags, cast(sockaddr*)0, 0);
+send(sockfd: int, buff: void*, len: int, flags: int): int {
+    ret std::net::sendto(sockfd, buff, len, flags, cast(std::net::sockaddr*)0, 0);
 }
 
-ssendmsg(sockfd: int, msg: smsghdr*, flags: int): int {
+sendmsg(sockfd: int, msg: std::net::msghdr*, flags: int): int {
     ret cast(int)sysc3(46,sockfd,msg,flags);
+}
+
+recvfrom(sockfd: int, buf: void*, len: int, flags: int, src_addr: std::net::sockaddr*, addrlen: int*): int {
+    ret cast(int)sysc6(45,sockfd,buf,len,flags,src_addr,addrlen);
+}
+
+recv(sockfd: int, buf: void*, len: int, flags: int): int {
+    ret std::net::recvfrom(sockfd, buf, len, flags, cast(std::net::sockaddr*)NULL, cast(int*)NULL);
+}
+
+recvmsg(sockfd: int, msg: std::net::msghdr*, flags: int): int {
+    ret cast(int)sysc3(47,sockfd,msg,flags);
+}
+
+}
+
 }
 
 @end
