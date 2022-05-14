@@ -3,7 +3,7 @@
 @inc "std/unix";
 
 exit(errCode: int) {
-    sysc1(60,errCode);
+    std::sysc1(60,errCode);
 }
 
 assert(cond: bool) {
