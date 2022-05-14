@@ -172,6 +172,11 @@ void main(string[] args)
 		defines["_WINDOWS"].insertBack(new Token(SourceLocation(0,0,""),""));
 	}
 
+	if(outputType.indexOf("i686") != -1) {
+		defines["_I686"] = new TList();
+		defines["_I686"].insertBack(new Token(SourceLocation(0,0,""),""));
+	}
+
 	if(debugMode) defines["_DEBUG"] = new TList();
 	else defines["_NDEBUG"] = new TList();
 

@@ -9,94 +9,94 @@ import lexer.logger;
 import std.uni : isNumber;
 
 enum TokType {
-    tok_num = 0, // number
-    tok_id = 1, // identifier
-    tok_equ = 2, // =
-    tok_lbra = 3, // [
-    tok_rbra = 4, // ]
-    tok_lpar = 5, // (
-    tok_rpar = 6, // )
-    tok_plus = 7, // +
-    tok_minus = 8, // -
-    tok_multiply = 9, // *
-    tok_divide = 10, // /
-    tok_more = 11, // >
-    tok_less = 12, // <
-    tok_equal = 13, // ==
-    tok_nequal = 14, // !=
-    tok_string = 15, // string
-    tok_char = 16, // character
-    tok_comma = 17, // ,
-    tok_cmd = 18, // keyword
-    tok_2rbra = 19, // {
-    tok_2lbra = 20, // }
-    tok_struct_get = 21, // ->
-    tok_semicolon = 22, // ;
-    tok_shortplu = 23, // +=
-    tok_shortmin = 24, // -=
-    tok_shortmul = 25, // *=
-    tok_shortdiv = 26, // /=
-    tok_and = 27, // &&
-    tok_or = 28, // ||
-    tok_bit_and = 29, // &
-    tok_bit_or = 30, // |
-    tok_bit_ls = 31, // <<
-    tok_bit_rs = 32, // >>
-    tok_bit_xor = 33, // ^
-    tok_bit_not = 34, // ~
-    tok_not = 35, // !
-    tok_type = 36, // :
-    tok_eof = 37, // eof
-    tok_dot = 38, // .
+    tok_num, // number
+    tok_id, // identifier
+    tok_equ, // =
+    tok_lbra, // [
+    tok_rbra, // ]
+    tok_lpar, // (
+    tok_rpar, // )
+    tok_plus, // +
+    tok_minus, // -
+    tok_multiply, // *
+    tok_divide, // /
+    tok_more, // >
+    tok_less, // <
+    tok_equal, // ==
+    tok_nequal, // !=
+    tok_string, // string
+    tok_char, // character
+    tok_comma, // ,
+    tok_cmd, // keyword
+    tok_2rbra, // {
+    tok_2lbra, // }
+    tok_struct_get, // ->
+    tok_semicolon, // ;
+    tok_shortplu, // +=
+    tok_shortmin, // -=
+    tok_shortmul, // *=
+    tok_shortdiv, // /=
+    tok_and, // &&
+    tok_or, // ||
+    tok_bit_and, // &
+    tok_bit_or, // |
+    tok_bit_ls, // <<
+    tok_bit_rs, // >>
+    tok_bit_xor, // ^
+    tok_bit_not, // ~
+    tok_not, // !
+    tok_type, // :
+    tok_eof, // eof
+    tok_dot, // .
 
-    tok_bit_and_eq = 39, // &=
-    tok_and_eq = 40, // &&=
-    tok_bit_or_eq = 41, // |=
-    tok_or_eq = 42, // ||=
-    tok_more_more_eq = 43, // >>=
-    tok_less_less_eq = 44, // <<=
-    tok_min_min = 45, // --
-    tok_plu_plu = 46, // ++
-    tok_r_min_min = 47, // -- on the right (unused by lexer)
-    tok_r_plu_plu = 48, // ++ on the right (unused by lexer)
-    tok_arrow = 49, // =>
-    tok_hash = 50, // #
-    tok_at = 51, // @
-    tok_doc = 52, // documentation comment
-    tok_question = 53, // ?
-    tok_namesp_get = 54, // ::
+    tok_bit_and_eq, // &=
+    tok_and_eq, // &&=
+    tok_bit_or_eq, // |=
+    tok_or_eq, // ||=
+    tok_more_more_eq, // >>=
+    tok_less_less_eq, // <<=
+    tok_min_min, // --
+    tok_plu_plu, // ++
+    tok_r_min_min, // -- on the right (unused by lexer)
+    tok_r_plu_plu, // ++ on the right (unused by lexer)
+    tok_arrow, // =>
+    tok_hash, // #
+    tok_at, // @
+    tok_doc, // documentation comment
+    tok_question, // ?
+    tok_namesp_get, // ::
 }
 
 enum TokCmd {
-    cmd_if = 0,
-    cmd_else = 1,
-    cmd_while = 2,
-    cmd_do = 3,
-    cmd_include = 4,
-    cmd_extern = 5,
-    cmd_asm = 11,
-    cmd_struct = 12,
-    cmd_ret = 14,
-    cmd_break = 15,
-    cmd_continue = 16,
-    cmd_sizeof = 17,
-    cmd_void = 19,
-    cmd_enum = 20,
-    cmd_static = 21,
-    cmd_const = 22,
+    cmd_if,
+    cmd_else,
+    cmd_while,
+    cmd_do,
+    cmd_include,
+    cmd_extern,
+    cmd_asm,
+    cmd_struct,
+    cmd_ret,
+    cmd_break,
+    cmd_continue,
+    cmd_sizeof,
+    cmd_void,
+    cmd_enum,
+    cmd_static,
+    cmd_const,
     // Preprocessor
-    cmd_define = 13,
-    cmd_ifdef = 23,
-    cmd_ifndef = 24,
-    cmd_end = 25,
-    cmd_undefine = 26,
-    cmd_protected = 27,
-    cmd_error = 28,
-    cmd_warn = 29,
-    cmd_out = 30,
-    cmd_ifequ = 31,
-    cmd_exit = 32,
-    cmd_namespace = 33
+    cmd_define,
+    cmd_ifdef,
+    cmd_ifndef,
+    cmd_end,
+    cmd_undefine,
+    cmd_protected,
+    cmd_error,
+    cmd_warn,
+    cmd_out,
+    cmd_ifequ,
+    cmd_exit,
+    cmd_namespace
 }
 
 struct SourceLocation {

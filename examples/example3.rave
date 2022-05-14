@@ -1,6 +1,6 @@
 namespace A {
     namespace B {
-        c: int => 6;
+        c: int => 8;
     }
 }
 
