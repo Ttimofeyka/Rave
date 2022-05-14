@@ -14,7 +14,7 @@ Variables can be set to values in the form `[varname] = [varvalue];`.
 
 ### Functions
 
-The functions have the form `[funcname] [[funcargs] or none]: [functype] [=> [funcblock]; or {[funcblock]}]`.
+The functions have the form `[extern or none] [funcname] [[funcargs] or none]: [functype] [=> [funcblock]; or {[funcblock]}]`.
 
 The arguments of the function have the form `([[argname]: [argtype] [,(if there is the next argument) or none] ...)`.
 
