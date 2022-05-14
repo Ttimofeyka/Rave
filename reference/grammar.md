@@ -1,4 +1,4 @@
-# Grammar and built-in functions reference
+# Grammar reference
 
 ## Declarations
 
@@ -43,7 +43,7 @@ Example:
         a: int;
     }
     
-## Built-in functions
+## Control constructions and operators
 
 ### if/else
 
