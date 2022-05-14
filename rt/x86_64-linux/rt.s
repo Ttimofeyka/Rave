@@ -1,30 +1,30 @@
-.global _Ravef5sysc0
-.type _Ravef5sysc, @function
-_Ravef4sysc:
+.global _Ravef15_nsstdfuncsysc0
+.type   _Ravef15_nsstdfuncsysc0, @function
+_Ravef15_nsstdfuncsysc0:
 	movsx %edi, %rax
 	syscall
 	ret
 
-.global _Ravef5sysc1
-.type   _Ravef5sysc1, @function
-_Ravef5sysc1:
+.global _Ravef15_nsstdfuncsysc1
+.type   _Ravef15_nsstdfuncsysc1, @function
+_Ravef15_nsstdfuncsysc1:
 	movsx %edi, %rax
 	movsx %esi, %rdi
 	syscall
 	ret
 
-.global _Ravef5sysc2
-.type   _Ravef5sysc2, @function
-_Ravef5sysc2:
+.global _Ravef15_nsstdfuncsysc2
+.type   _Ravef15_nsstdfuncsysc2, @function
+_Ravef15_nsstdfuncsysc2:
 	movsx %edi, %rax
 	movsx %esi, %rdi
 	movsx %edx, %rsi
 	syscall
 	ret
 
-.global _Ravef5sysc3
-.type   _Ravef5sysc3, @function
-_Ravef5sysc3:
+.global _Ravef15_nsstdfuncsysc3
+.type   _Ravef15_nsstdfuncsysc3, @function
+_Ravef15_nsstdfuncsysc3:
 	movsx %edi, %rax
 	movsx %esi, %rdi
 	movsx %edx, %rsi
@@ -32,9 +32,9 @@ _Ravef5sysc3:
 	syscall
 	ret
 
-.global _Ravef5sysc4
-.type   _Ravef5sysc4, @function
-_Ravef5sysc4:
+.global _Ravef15_nsstdfuncsysc4
+.type   _Ravef15_nsstdfuncsysc4, @function
+_Ravef15_nsstdfuncsysc4:
 	movsx %edi, %rax
 	movsx %esi, %rdi
 	movsx %edx, %rsi
@@ -43,9 +43,9 @@ _Ravef5sysc4:
 	syscall
 	ret
 
-.global _Ravef5sysc5
-.type   _Ravef5sysc5, @function
-_Ravef5sysc5:
+.global _Ravef15_nsstdfuncsysc5
+.type   _Ravef15_nsstdfuncsysc5, @function
+_Ravef15_nsstdfuncsysc5:
 	movsx %edi, %rax
 	movsx %esi, %rdi
 	movsx %edx, %rsi
@@ -54,9 +54,9 @@ _Ravef5sysc5:
 	movsx %r9d, %r8
 	syscall
 	ret
-.global _Ravef5sysc6
-.type   _Ravef5sysc6, @function
-_Ravef5sysc6:
+.global _Ravef15_nsstdfuncsysc6
+.type   _Ravef15_nsstdfuncsysc6, @function
+_Ravef15_nsstdfuncsysc6:
 	movsx %edi, %rax
 	movsx %esi, %rdi
 	movsx %edx, %rsi

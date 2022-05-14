@@ -55,19 +55,19 @@ struct msghdr {
 }
 
 socket(domain: int, type: int, protocol: int): int {
-    ret cast(int)sysc3(41,domain,type,protocol);
+    ret cast(int)std::sysc3(41,domain,type,protocol);
 }
 
 connect(sockfd: int, addr: std::net::sockaddr*, addrlen: int): int {
-    ret cast(int)sysc3(42,sockfd,addr,addrlen);
+    ret cast(int)std::sysc3(42,sockfd,addr,addrlen);
 }
 
 accept(sockfd: int, addr: std::net::sockaddr*, addrlen: int): int {
-    ret cast(int)sysc3(43,sockfd,addr,addrlen);
+    ret cast(int)std::sysc3(43,sockfd,addr,addrlen);
 }
 
 sendto(sockfd: int, buff: void*, len: int, flags: int, dest: std::net::sockaddr*, addrlen: int): int {
-    ret cast(int)sysc6(44,sockfd,buff,len,flags,dest,addrlen);
+    ret cast(int)std::sysc6(44,sockfd,buff,len,flags,dest,addrlen);
 }
 
 send(sockfd: int, buff: void*, len: int, flags: int): int {
@@ -75,11 +75,11 @@ send(sockfd: int, buff: void*, len: int, flags: int): int {
 }
 
 sendmsg(sockfd: int, msg: std::net::msghdr*, flags: int): int {
-    ret cast(int)sysc3(46,sockfd,msg,flags);
+    ret cast(int)std::sysc3(46,sockfd,msg,flags);
 }
 
 recvfrom(sockfd: int, buf: void*, len: int, flags: int, src_addr: std::net::sockaddr*, addrlen: int*): int {
-    ret cast(int)sysc6(45,sockfd,buf,len,flags,src_addr,addrlen);
+    ret cast(int)std::sysc6(45,sockfd,buf,len,flags,src_addr,addrlen);
 }
 
 recv(sockfd: int, buf: void*, len: int, flags: int): int {
@@ -87,7 +87,11 @@ recv(sockfd: int, buf: void*, len: int, flags: int): int {
 }
 
 recvmsg(sockfd: int, msg: std::net::msghdr*, flags: int): int {
-    ret cast(int)sysc3(47,sockfd,msg,flags);
+    ret cast(int)std::sysc3(47,sockfd,msg,flags);
+}
+
+listen(sockfd: int, backlog: int): int {
+    ret cast(int)std::sysc2(50,sockfd,backlog);
 }
 
 }

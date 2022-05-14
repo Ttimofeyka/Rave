@@ -148,6 +148,7 @@ class GFuncs {
 	}
 	TypeFunction getFType(string n) {
 		if(n in newfuncs) return typesf[newfuncs[n]];
+		if(n !in typesf) writeln(n);
 		return typesf[n];
 	}
 

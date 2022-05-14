@@ -1859,7 +1859,13 @@ class AstNodeNamespace : AstNode {
 				string oldname = func.decl.name;
 				func.decl.name = namespacesToGenName(names,oldname,"func");
 				func.gen(s);
-				ctx.gfuncs.newfuncs[namespacesToVarName(names,oldname)] = func.decl.name;
+				string newname = namespacesToVarName(names,oldname);
+				ctx.gfuncs.funcs[newname] = ctx.gfuncs.funcs[func.decl.name];
+				ctx.gfuncs.funcs.remove(func.decl.name);
+				ctx.gfuncs.types[newname] = ctx.gfuncs.types[func.decl.name];
+				ctx.gfuncs.types.remove(func.decl.name);
+				ctx.gfuncs.typesf[newname] = ctx.gfuncs.typesf[func.decl.name];
+				ctx.gfuncs.typesf.remove(func.decl.name);
 			}
 			else if(AstNodeNamespace sp = currnode.instanceof!AstNodeNamespace) {
 				sp.names = names ~ sp.names;
@@ -1870,7 +1876,6 @@ class AstNodeNamespace : AstNode {
 				st.name = namespacesToGenName(names,st.name,"struct");
 				st.gen(s);
 				string newname = namespacesToVarName(names,oldname);
-				// TODO: Use newstructs
 				ctx.gstructs.ss[newname] = ctx.gstructs.ss[st.name];
 				ctx.gstructs.ss.remove(st.name);
 			}
