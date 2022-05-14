@@ -1,6 +1,6 @@
- # Lexer Specification
+ # Lexer Reference
  
-Here is the specification of the Rave programming language lexer.
+Here is the reference of the Rave programming language lexer.
 
 ### Supported encodings
 
