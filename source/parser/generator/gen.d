@@ -146,9 +146,13 @@ class GFuncs {
 		if(n in newfuncs) return types[newfuncs[n]];
 		return types[n];
 	}
-	TypeFunction getFType(string n) {
+	TypeFunction getFType(SemanticAnalyzerContext sac, string n) {
 		if(n in newfuncs) return typesf[newfuncs[n]];
-		if(n !in typesf) writeln(n);
+		if(n !in typesf) {
+			// Error
+			writeln("\u001b[31mError: undefined function \""~n~"\"!\u001b[0m");
+			exit(-1);
+		}
 		return typesf[n];
 	}
 

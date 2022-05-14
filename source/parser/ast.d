@@ -2303,7 +2303,7 @@ class AstNodeFuncCall : AstNode {
 		int num = 0;
 		LLVMValueRef vararg = null;
 		LLVMValueRef* llvm_args = cast(LLVMValueRef*)malloc(LLVMValueRef.sizeof * args.length);
-		TypeFunction tf = ctx.gfuncs.getFType(n.name);
+		TypeFunction tf = ctx.gfuncs.getFType(s.ctx, n.name);
 		for(int i = 0; i < args.length; i++) {
 			if(AtstNodeName nn = ctx.gfuncs.funcs_args[i].instanceof!AtstNodeName) {
 				if(nn.name == "args") {
@@ -2376,7 +2376,7 @@ class AstNodeFuncCall : AstNode {
 			llvm_args[ctx.gfuncs.funcs_varargs[n.name]+1] 
 			= LLVMConstInt(LLVMInt32Type(),cast(ulong)args.length-(ctx.gfuncs.funcs_varargs[n.name]+1),false);
 		}
-		if(ctx.gfuncs.getFType(n.name).ret.toString() == "void") {
+		if(ctx.gfuncs.getFType(s.ctx, n.name).ret.toString() == "void") {
 			return LLVMBuildCall(
 				ctx.currbuilder,
 				ctx.gfuncs[n.name],
