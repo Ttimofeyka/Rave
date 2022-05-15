@@ -106,7 +106,7 @@ void main(string[] args)
 		"shared", "Linking as shared library", &isshared,
 		"noentry", "Linking without begin.o", &noentry,
 		"opt", "Optimization level", &optLevel,
-		"linker", "Set linker", &linker
+		"linker", "Set linker", &linker,
 	);
 	
     if(helpInformation.helpWanted)

@@ -73,6 +73,40 @@ struct address {
 	sortkey: int;
 }
 
+struct in_addr {
+    value: int;
+}
+
+struct in6_addr {
+    value: int[4];
+}
+
+struct sockaddr_in6 {
+	sin6_family: int;   /* SOCKET_IP6               */
+	sin6_port: short;     /* Port number            */
+	sin6_addr: in6_addr;     /* IPv6 address           */
+	sin6_scope_id: char; /* interfaces for a scope */
+}
+
+struct sockaddr_in6_ptr {
+	sin6_family: int;   /* SOCKET_IP6               */
+	sin6_port: short;     /* Port number            */
+	sin6_addr: in6_addr*;   /* IPv6 address           */
+	sin6_scope_id: char; /* interfaces for a scope */
+}
+
+struct sockaddr_in {
+	sin_family: int;    /* SOCKET_IP4      */
+	sin_port: short;      /* Port number  */
+	sin_addr: in_addr;      /* IPv4 address */
+}
+
+struct sockaddr_in_ptr {
+	sin_family: int;    /* SOCKET_IP4      */
+	sin_port: short;    /* Port number  */
+	sin_addr: in_addr*;     /* IPv4 address */
+}
+
 socket(domain: int, type: int, protocol: int): int {
     ret cast(int)std::sysc3(41,domain,type,protocol);
 }
@@ -119,51 +153,6 @@ bind(sockfd: int, addr: std::net::sockaddr*, addrlen: int): int {
 
 shutdown(sockfd: int, how: int): int {
     ret cast(int)std::sysc2(48,sockfd,how);
-}
-
-name_from_null(buf: std::net::address*, name: char*, fam: int, flags: int): int {
-    cnt: int = 0;
-    if(name == NULL) ret 0;
-    if((flags & AI_PASSIVE) == true) {
-        if(fam != SOCKET_IP6) {
-            cnt = cnt + 1;
-            a: std::net::address = buf[cnt];
-            a->family = SOCKET_IP4;
-            buf[cnt] = a;
-        }
-        if(fam != SOCKET_IP4) {
-            cnt = cnt + 1;
-            a: std::net::address = buf[cnt];
-            a->family = SOCKET_IP6;
-            buf[cnt] = a;
-        }
-    }
-    else {
-        if(fam != SOCKET_IP6) {
-            cnt = cnt + 1;
-            a: std::net::address = buf[cnt];
-            a->family = SOCKET_IP4;
-            addrr: int[16] = a->addr;
-            addrr[0] = 1;
-            addrr[1] = 2;
-            addrr[2] = 7;
-            addrr[3] = 0;
-            addrr[4] = 0;
-            addrr[5] = 1;
-            a->addr = addrr;
-            buf[cnt] = a;
-        }
-        if(fam != SOCKET_IP4) {
-            cnt = cnt + 1;
-            a: std::net::address = buf[cnt];
-            a->family = SOCKET_IP6;
-            addrr: int[16] = a->addr;
-            addrr[15] = 0;
-            a->addr = addrr;
-            buf[cnt] = a;
-        }
-    }
-    ret cnt;
 }
 
 }

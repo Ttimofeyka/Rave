@@ -14,6 +14,8 @@ import std.datetime;
 import std.conv : to;
 import std.system;
 import std.random : uniform;
+import parser.mparser;
+import parser.ast;
 
 class Preprocessor {
     TList tokens;
@@ -156,7 +158,7 @@ class Preprocessor {
                 if(get().cmd == TokCmd.cmd_define) {
                     i += 1;
                     if(get().type != TokType.tok_id) {
-                        error("Expected an identifier after \"def\"!");
+                        error("Expected an identifier after \"@def\"!");
                         continue;
                     }
                     string name = get().value;
@@ -167,7 +169,7 @@ class Preprocessor {
                 else if(get().cmd == TokCmd.cmd_include) {
                     i += 1;
                     if(get().type != TokType.tok_string) {
-                        error("Expected a string after the \"inc\" keyword!");
+                        error("Expected a string after the \"@inc\" keyword!");
                         continue;
                     }
                     string name = get().value.replace("\"", "");
@@ -178,6 +180,18 @@ class Preprocessor {
                    defines["_FILE"].insertBack(new Token(SourceLocation(0,0,""), name~".rave"));
                    if(canOutput()) insertFile(name~".rave");
                    defines["_FILE"].tokens = defines["_MFILE"].tokens.dup;
+                }
+                else if(get().cmd == TokCmd.cmd_import) {
+                    i += 1;
+                    if(get().type != TokType.tok_string) {
+                        error("Expected a string after the \"@imp\" keyword!");
+                        continue;
+                    }
+                    string name = get().value.replace("\"","");
+                    i += 1;
+                    // Lexing
+                    Lexer l = new Lexer(name,readText(name));
+                    
                 }
                 else if(get().cmd == TokCmd.cmd_ifdef) {
                     i += 1;

@@ -565,16 +565,19 @@ class Parser {
 	}
 
 	private AstNodeArray parseConstArray() {
-		// Current token - '['
-		next();
-		AstNode[] values;
-		while(peek().type != TokType.tok_rbra) {
-			if(peek().type == TokType.tok_comma) next();
-			values ~= parseExpr();
-			next();
-		}
-		next();
-		return new AstNodeArray(values);
+        // Current token - '['
+        AstNode[] values;
+        while(peek().type != TokType.tok_rbra) {
+                values ~= parseExpr();
+                if(peek().type == TokType.tok_rbra) break;
+                if(peek().type != TokType.tok_comma) {
+                        writeln("Err");
+                        exit(123);
+                }
+                next();
+        }
+        next();
+        return new AstNodeArray(values);
 	}
 
 	private AstNode parsePrefix() {

@@ -98,6 +98,7 @@ enum TokCmd {
     cmd_exit,
     cmd_namespace,
     cmd_using,
+    cmd_import,
 }
 
 struct SourceLocation {
@@ -214,6 +215,7 @@ class Token {
                 case "@warn": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_warn; break;
                 case "@out": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_out; break;
                 case "@exit": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_ifequ; break;
+                case "@imp": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_import; break;
                 // Identifier
                 default: this.type = TokType.tok_id; break;
             }
@@ -241,6 +243,10 @@ class TList {
 
     public void insertBack(Token token) {
         tokens ~= token;
+    }
+
+    public void insertBack(TList t) {
+        tokens ~= t.tokens.dup;
     }
 
     public int length() const { return cast(int)tokens.length; }

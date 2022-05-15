@@ -19,6 +19,8 @@ import parser.mparser;
 import parser.atst;
 import llvm;
 
+SourceLocation basic = SourceLocation(0,0,"");
+
 struct FuncSignature {
 	AtstNode ret;
 	AtstNode[] args;
@@ -62,6 +64,8 @@ class AstNode {
 			this.classinfo.name);
 		assert(0);
 	}
+
+	TList getTokens() { return null; }
 
 	debug {
 		void writeTabs(int indent) {
@@ -1945,6 +1949,19 @@ class AstNodeDecl : AstNode {
 		s.vars[decl.name] = new ScopeVar(actualType);
 	}
 
+	override TList getTokens() {
+		TList toret = new TList();
+		toret.insertBack(new Token(basic,decl.name));
+		toret.insertBack(new Token(basic,":"));
+		toret.insertBack(new Token(basic,decl.type.toString()));
+		if(value !is null) {
+			toret.insertBack(new Token(basic,"="));
+			toret.insertBack(value.getTokens());
+		}
+		toret.insertBack(new Token(basic,";"));
+		return toret;
+	}
+
 	override LLVMValueRef gen(AnalyzerScope s) {
 		GenerationContext ctx = s.genctx;
 		if(ctx.gstack.isGlobal(decl.name)) {
@@ -2256,7 +2273,7 @@ class AstNodePtoi : AstNode {
 
 class AstNodeItop : AstNode {
 	AstNode val; // Integer
-	AtstNode ptrt; // Pointer type - maybe null?
+	AtstNode ptrt; // Pointer type
 
 	this(AstNode val, AtstNode p) {
 		this.val = val;
@@ -2278,6 +2295,16 @@ class AstNodeItop : AstNode {
 			ctx.getLLVMType(ptrt,s),
 			toStringz("itop")
 		);
+	}
+	override TList getTokens() {
+		TList toret = new TList();
+		toret.insertBack(new Token(basic,"itop"));
+		toret.insertBack(new Token(basic,"("));
+		toret.insertBack(new Token(basic,val.getTokens()));
+		toret.insertBack(new Token(basic,","));
+		toret.insertBack(new Token(basic,ptrt.toString()));
+		toret.insertBack(new Token(basic,")"));
+		return toret;
 	}
 }
 
@@ -2545,6 +2572,12 @@ class AstNodeInt : AstNode {
 		}
 	}
 
+	override TList getTokens() {
+		TList toret = new TList();
+		toret.insertBack(new Token(basic,to!string(value)));
+		return toret;
+	}
+
 	debug {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
@@ -2567,6 +2600,12 @@ class AstNodeFloat : AstNode {
 	override LLVMValueRef gen(AnalyzerScope s) {
 		auto ctx = s.genctx;
 		return LLVMConstReal(LLVMFloatType(),cast(double)value);
+	}
+
+	override TList getTokens() {
+		TList toret = new TList();
+		toret.insertBack(new Token(basic,to!string(value)));
+		return toret;
 	}
 
 	debug {
@@ -2597,6 +2636,12 @@ class AstNodeString : AstNode {
 		);
 	}
 
+	override TList getTokens() {
+		TList toret = new TList();
+		toret.insertBack(new Token(basic,"\""~value~"\""));
+		return toret;
+	}
+
 	debug {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
@@ -2621,6 +2666,12 @@ class AstNodeChar : AstNode {
 	override LLVMValueRef gen(AnalyzerScope s) {
 		auto ctx = s.genctx;
 		return LLVMConstInt(LLVMInt8Type(),value,false);
+	}
+
+	override TList getTokens() {
+		TList toret = new TList();
+		toret.insertBack(new Token(basic,"\'"~value~"\'"));
+		return toret;
 	}
 
 	debug {
