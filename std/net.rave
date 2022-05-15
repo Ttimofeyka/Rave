@@ -121,10 +121,6 @@ shutdown(sockfd: int, how: int): int {
     ret cast(int)std::sysc2(48,sockfd,how);
 }
 
-/*
-
-TODO
-
 name_from_null(buf: std::net::address*, name: char*, fam: int, flags: int): int {
     cnt: int = 0;
     if(name == NULL) ret 0;
@@ -147,26 +143,28 @@ name_from_null(buf: std::net::address*, name: char*, fam: int, flags: int): int 
             cnt = cnt + 1;
             a: std::net::address = buf[cnt];
             a->family = SOCKET_IP4;
-            a->addr[0] = 1;
-            a->addr[1] = 2;
-            a->addr[2] = 7;
-            a->addr[3] = 0;
-            a->addr[4] = 0;
-            a->addr[5] = 1;
+            addrr: int[16] = a->addr;
+            addrr[0] = 1;
+            addrr[1] = 2;
+            addrr[2] = 7;
+            addrr[3] = 0;
+            addrr[4] = 0;
+            addrr[5] = 1;
+            a->addr = addrr;
             buf[cnt] = a;
         }
         if(fam != SOCKET_IP4) {
             cnt = cnt + 1;
             a: std::net::address = buf[cnt];
             a->family = SOCKET_IP6;
-            a->addr[15] = 0;
+            addrr: int[16] = a->addr;
+            addrr[15] = 0;
+            a->addr = addrr;
             buf[cnt] = a;
         }
     }
     ret cnt;
 }
-
-*/
 
 }
 

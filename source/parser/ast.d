@@ -579,6 +579,25 @@ class AstNodeFunction : AstNode {
 	}
 }
 
+class AstNodeArray : AstNode {
+	// [0,1,2,etc.], etc.
+	AstNode[] values;
+
+	this(AstNode[] values) {
+		this.values = values.dup;
+	}
+
+	override void analyze(AnalyzerScope s, Type neededType) {}
+	override LLVMValueRef gen(AnalyzerScope s) {
+		GenerationContext ctx = s.genctx;
+		LLVMValueRef* constvalues = cast(LLVMValueRef*)malloc(LLVMValueRef.sizeof * values.length);
+		for(int i=0; i<values.length; i++) {
+			constvalues[i] = values[i].gen(s);
+		}
+		return LLVMConstArray(ctx.getLLVMType(values[0].getType(s),s),constvalues,cast(uint)values.length);
+	}
+}
+
 // token naming sucks
 // enum BinaryOpType {
 // 	binary_op_add, // addition
@@ -893,7 +912,6 @@ class AstNodeBinary : AstNode { // Binary operations
 						rhsgg,
 						get.gen(s)
 					);
-					get.isEqu = false;
 					return store;
 				}
 				return null;
@@ -1929,7 +1947,7 @@ class AstNodeDecl : AstNode {
 
 	override LLVMValueRef gen(AnalyzerScope s) {
 		GenerationContext ctx = s.genctx;
-		if(ctx.gstack.isVariable(decl.name)) {
+		if(ctx.gstack.isGlobal(decl.name)) {
 			s.ctx.addError("The variable " ~ decl.name ~ " has been declared multiple times!",this.where);
 		}
 		if(s.genctx.currbuilder == null) {

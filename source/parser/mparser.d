@@ -533,7 +533,10 @@ class Parser {
 			expectToken(TokType.tok_rpar);
 			return e;
 		}
-		
+		if(t.type == TokType.tok_lbra) {
+			return parseConstArray();
+		}
+
 		error("Expected a variable, a number, a string, a char or an expression in parentheses. Got: "
 			~ to!string(t.type));
 		return null;
@@ -559,6 +562,19 @@ class Parser {
 			_then,
 			parseExpr()
 		);
+	}
+
+	private AstNodeArray parseConstArray() {
+		// Current token - '['
+		next();
+		AstNode[] values;
+		while(peek().type != TokType.tok_rbra) {
+			if(peek().type == TokType.tok_comma) next();
+			values ~= parseExpr();
+			next();
+		}
+		next();
+		return new AstNodeArray(values);
 	}
 
 	private AstNode parsePrefix() {
