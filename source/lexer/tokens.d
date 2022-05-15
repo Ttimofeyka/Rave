@@ -96,7 +96,8 @@ enum TokCmd {
     cmd_out,
     cmd_ifequ,
     cmd_exit,
-    cmd_namespace
+    cmd_namespace,
+    cmd_using,
 }
 
 struct SourceLocation {
@@ -199,6 +200,7 @@ class Token {
                 case "static": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_static; break;
                 case "const": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_const; break;
                 case "namespace": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_namespace; break;
+                case "using": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_using; break;
                 // Preprocessor commands
                 case "@else": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_else; break;
                 case "@inc": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_include; break;

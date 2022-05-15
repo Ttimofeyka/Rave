@@ -856,6 +856,13 @@ class Parser {
 		return new AstNodeStruct(sname, variables, methods);
 	}
 
+	private AstNode parseUsing() {
+		next(); // Ignore "using"
+		string namespace = peek().value;
+		next();
+		return new AstNodeUsing(namespace);
+	}
+
 	private AstNode parseTopLevel() {
 		// top-level ::= <func-decl> (';' | <block>)
 		//             | extern <func-decl> ';'
@@ -877,6 +884,9 @@ class Parser {
 
 		if(peek().type == TokType.tok_cmd && peek().cmd == TokCmd.cmd_namespace) {
 			return parseNamespace();
+		}
+		else if(peek().type == TokType.tok_cmd && peek().cmd == TokCmd.cmd_using) {
+			return parseUsing();
 		}
 
 		if(peek().value == "}") return null;

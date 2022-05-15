@@ -1,5 +1,5 @@
-@inc "std/net";
+@inc "std/base";
 
 main: int {
-    ret A::b();
+    ret 0;
 }

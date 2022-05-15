@@ -2,12 +2,16 @@
 
 @inc "std/unix";
 
+namespace std {
+
 exit(errCode: int) {
     std::sysc1(60,errCode);
 }
 
 assert(cond: bool) {
-    if(!cond) exit(-1);
+    if(!cond) std::exit(-1);
+}
+
 }
 
 @end

@@ -30,6 +30,10 @@
 @def MSG_PEEK  0x02 @end
 @def MSG_WAITALL 0x100 @end
 
+@def AI_V4MAPPED 0x0008 @end
+@def AF_UNSPEC 0 @end
+@def AI_PASSIVE 0x1 @end
+
 namespace std {
 
 namespace net {
@@ -52,6 +56,21 @@ struct msghdr {
     msg_control: void*;  
     msg_controllen: int; 
     msg_flags: int;    
+}
+
+struct hostent {
+    h_name: char*;
+    h_aliases: char**;
+    h_addrtype: int;
+    h_length: int;
+    h_addr_list: char**;
+}
+
+struct address {
+	family: int;
+	scopeid: int;
+    addr: int[16];
+	sortkey: int;
 }
 
 socket(domain: int, type: int, protocol: int): int {
@@ -101,6 +120,53 @@ bind(sockfd: int, addr: std::net::sockaddr*, addrlen: int): int {
 shutdown(sockfd: int, how: int): int {
     ret cast(int)std::sysc2(48,sockfd,how);
 }
+
+/*
+
+TODO
+
+name_from_null(buf: std::net::address*, name: char*, fam: int, flags: int): int {
+    cnt: int = 0;
+    if(name == NULL) ret 0;
+    if((flags & AI_PASSIVE) == true) {
+        if(fam != SOCKET_IP6) {
+            cnt = cnt + 1;
+            a: std::net::address = buf[cnt];
+            a->family = SOCKET_IP4;
+            buf[cnt] = a;
+        }
+        if(fam != SOCKET_IP4) {
+            cnt = cnt + 1;
+            a: std::net::address = buf[cnt];
+            a->family = SOCKET_IP6;
+            buf[cnt] = a;
+        }
+    }
+    else {
+        if(fam != SOCKET_IP6) {
+            cnt = cnt + 1;
+            a: std::net::address = buf[cnt];
+            a->family = SOCKET_IP4;
+            a->addr[0] = 1;
+            a->addr[1] = 2;
+            a->addr[2] = 7;
+            a->addr[3] = 0;
+            a->addr[4] = 0;
+            a->addr[5] = 1;
+            buf[cnt] = a;
+        }
+        if(fam != SOCKET_IP4) {
+            cnt = cnt + 1;
+            a: std::net::address = buf[cnt];
+            a->family = SOCKET_IP6;
+            a->addr[15] = 0;
+            buf[cnt] = a;
+        }
+    }
+    ret cnt;
+}
+
+*/
 
 }
 

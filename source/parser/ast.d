@@ -1868,11 +1868,38 @@ class AstNodeNamespace : AstNode {
 			}
 			else if(AstNodeStruct st = currnode.instanceof!AstNodeStruct) {
 				string oldname = st.name;
-				st.name = namespacesToGenName(names,st.name,"struct");
+				st.name = namespacesToVarName(names,oldname);
 				st.gen(s);
-				string newname = namespacesToVarName(names,oldname);
-				ctx.gstructs.ss[newname] = ctx.gstructs.ss[st.name];
-				ctx.gstructs.ss.remove(st.name);
+			}
+		}
+
+		return null;
+	}
+}
+
+class AstNodeUsing : AstNode {
+	string namespace;
+
+	this(string namespace) {
+		this.namespace = namespace;
+	}
+
+	override void analyze(AnalyzerScope s, Type neededType) {}
+	override LLVMValueRef gen(AnalyzerScope s) {
+		// Example: "using std;"
+		GenerationContext ctx = s.genctx;
+		
+		for(int i=0; i<keys(ctx.gstack.newnames).length; i++) {
+			if(firstNamespaceEqual(namespace,ctx.gstack.newnames.keys()[i])) {
+				ctx.gstack.newnames[removeFirstNamespace(keys(ctx.gstack.newnames)[i])] = ctx.gstack.newnames[keys(ctx.gstack.newnames)[i]];
+				ctx.gstack.newnames.remove(keys(ctx.gstack.newnames)[i]);
+			}
+		}
+
+		for(int i=0; i<keys(ctx.gfuncs.newfuncs).length; i++) {
+			if(firstNamespaceEqual(namespace,ctx.gfuncs.newfuncs.keys()[i])) {
+				ctx.gfuncs.newfuncs[removeFirstNamespace(keys(ctx.gfuncs.newfuncs)[i])] = ctx.gfuncs.newfuncs[keys(ctx.gfuncs.newfuncs)[i]];
+				ctx.gfuncs.newfuncs.remove(keys(ctx.gfuncs.newfuncs)[i]);
 			}
 		}
 
@@ -2024,6 +2051,7 @@ class AstNodeDecl : AstNode {
 						decl.name
 					);
 
+					if(n.name in ctx.gstructs.variables) {
 					for(int i=0; i<ctx.gstructs.variables[n.name].length; i++) {
 						if(ctx.gstructs.variables[n.name][i].value !is null) LLVMBuildStore(
 							ctx.currbuilder,
@@ -2066,7 +2094,7 @@ class AstNodeDecl : AstNode {
 								}
 							}
 						}
-					}
+					}}
 
 					return cl;
 				}

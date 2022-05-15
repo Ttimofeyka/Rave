@@ -165,7 +165,7 @@ class GFuncs {
 
 class GStructs {
 	LLVMTypeRef[string] ss;
-	private uint[string[]] vs;
+	uint[string[]] vs;
 	string[string] structs;
 	AstNodeDecl[][string] variables;
 	string[string] newstructs;
