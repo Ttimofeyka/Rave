@@ -2300,7 +2300,7 @@ class AstNodeItop : AstNode {
 		TList toret = new TList();
 		toret.insertBack(new Token(basic,"itop"));
 		toret.insertBack(new Token(basic,"("));
-		toret.insertBack(new Token(basic,val.getTokens()));
+		toret.insertBack(val.getTokens());
 		toret.insertBack(new Token(basic,","));
 		toret.insertBack(new Token(basic,ptrt.toString()));
 		toret.insertBack(new Token(basic,")"));

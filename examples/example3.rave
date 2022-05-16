@@ -1,3 +1,5 @@
+@inc "std/process";
+
 main: int {
     ret 0;
 }
