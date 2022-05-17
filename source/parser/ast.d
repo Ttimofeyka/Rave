@@ -66,6 +66,7 @@ class AstNode {
 	}
 
 	TList getTokens() { return null; }
+	
 
 	debug {
 		void writeTabs(int indent) {
@@ -2249,6 +2250,15 @@ class AstNodeCast : AstNode {
 		GenerationContext ctx = s.genctx;
 		return castTo(ctx, val.gen(s), ctx.getLLVMType(type,s));
 	}
+	override TList getTokens() {
+		TList toret = new TList();
+		toret.insertBack(new Token(basic,"cast"));
+		toret.insertBack(new Token(basic,"("));
+		toret.insertBack(new Token(basic,type.toString()));
+		toret.insertBack(new Token(basic,")"));
+		toret.insertBack(val.getTokens());
+		return toret;
+	}
 }
 
 class AstNodePtoi : AstNode {
@@ -2268,6 +2278,14 @@ class AstNodePtoi : AstNode {
 				LLVMInt32Type(),
 				toStringz("ptoi")
 		);
+	}
+	override TList getTokens() {
+		TList toret = new TList();
+		toret.insertBack(new Token(basic,"ptoi"));
+		toret.insertBack(new Token(basic,"("));
+		toret.insertBack(val.getTokens());
+		toret.insertBack(new Token(basic,")"));
+		return toret;
 	}
 }
 
@@ -2305,6 +2323,16 @@ class AstNodeItop : AstNode {
 		toret.insertBack(new Token(basic,ptrt.toString()));
 		toret.insertBack(new Token(basic,")"));
 		return toret;
+	}
+}
+
+class AstNodeAlias : AstNode {
+	string name;
+	AstNode value;
+
+	this(string name, AstNode value) {
+		this.name = name;
+		this.value = value;
 	}
 }
 

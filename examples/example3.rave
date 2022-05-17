@@ -1,5 +1,5 @@
-@inc "std/process";
+@inc "std/proc";
 
 main: int {
-    ret 0;
+    ret 5;
 }

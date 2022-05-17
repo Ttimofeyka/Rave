@@ -45,17 +45,20 @@ class Lexer {
 
     private string getTInt() {
         string temp = "";
-        if(get() == '0' && get(+1) == 'x') {
+        char fg = get();
+        if(fg == '0' && get(+1) == 'x') {
             temp ~= "0x";
             next(2);
-            while((get() >= '0' && get() <= '9')
-               || (get() >= 'a' && get() <= 'f')
-               || (get() >= 'A' && get() <= 'F') || get() == '_') {
-                temp ~= get();
+            char g = get();
+            while((g >= '0' && g <= '9')
+               || (g >= 'a' && g <= 'f')
+               || (g >= 'A' && g <= 'F') || g == '_') {
+                temp ~= g;
                 next(1);
+                g = get();
             }
         }
-        else if(get() == '0' && get(+1) == 'o') {
+        else if(fg == '0' && get(+1) == 'o') {
             temp ~= "0o";
             next(2);
             while((get() >= '0' && get() <= '7') || get() == '_') {
@@ -63,7 +66,7 @@ class Lexer {
                 next(1);
             }
         }
-        else if(get() == '0' && get(+1) == 'b') {
+        else if(fg == '0' && get(+1) == 'b') {
             temp ~= "0b";
             next(2);
             while((get() >= '0' && get() <= '1') || get() == '_') {
@@ -71,7 +74,7 @@ class Lexer {
                 next(1);
             }
         }
-        else if(get() == '0' && get(+1) == 'd') {
+        else if(fg == '0' && get(+1) == 'd') {
             temp ~= "0d";
             next(2);
             while((get() >= '0' && get() <= '9') || get() == '_') {

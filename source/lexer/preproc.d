@@ -176,7 +176,6 @@ class Preprocessor {
                     i += 1;
                     // name = absolutePath(name);
                     // if(exists(name) && isDir(name)) insertFile(buildPath(name, "*"));
-                    if(!exists(name)) error("Unknown file \""~name~".rave\"!");
                    defines["_FILE"] = new TList();
                    defines["_FILE"].insertBack(new Token(SourceLocation(0,0,""), name~".rave"));
                    if(canOutput()) insertFile(name~".rave");

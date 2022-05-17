@@ -907,7 +907,6 @@ class Parser {
 		else if(peek().type == TokType.tok_cmd && peek().cmd == TokCmd.cmd_using) {
 			return parseUsing();
 		}
-
 		if(peek().value == "}") return null;
 		
 		Decl d = parseDecl();
