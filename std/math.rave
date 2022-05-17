@@ -18,10 +18,7 @@ pow(n: float, e: int): float {
     ret r;
 }
 
-ipow(n: int, e: int): int {
-    r: float = pow(cast(float)(n),e);
-    ret cast(int)r;
-}
+ipow(n: int, e: int): int => cast(int)pow(cast(float)n,e);
 
 sqrt(nn: void*): float {
     n: float = cast(float)nn;

@@ -3,12 +3,8 @@
 @inc "std/defs";
 @inc "std/mem";
 
-ctoi(c: char): int {
-    ret cast(int)c - cast(int)'0';
-}
+ctoi(c: char): int => cast(int)c - cast(int)'0';
 
-itoc(i: int): char {
-    ret cast(char)(i+cast(int)'0');
-}
+itoc(i: int): char => cast(char)(i+cast(int)'0');
 
 @end
