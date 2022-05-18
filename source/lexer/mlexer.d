@@ -430,6 +430,10 @@ class Lexer {
                         tokens.insertBack(new Token(loc, "<<"));
                         next(2);
                     }
+                    else if(get(+1)=='=') {
+                        tokens.insertBack(new Token(loc, "<="));
+                        next(2);
+                    }
                     else {
                         tokens.insertBack(new Token(loc, "<"));
                         next(1);
@@ -438,6 +442,10 @@ class Lexer {
                 case '>':
                     if(get(+1)=='>') {
                         tokens.insertBack(new Token(loc, ">>"));
+                        next(2);
+                    }
+                    else if(get(+1)=='=') {
+                        tokens.insertBack(new Token(loc, ">="));
                         next(2);
                     }
                     else {

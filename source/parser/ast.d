@@ -1125,6 +1125,24 @@ class AstNodeBinary : AstNode { // Binary operations
 					trn[1],
 					toStringz("more")
 				);
+			case TokType.tok_less_equal:
+				LLVMValueRef[] trn = trueNums(ctx,lhs.gen(s),rhs.gen(s));
+				return LLVMBuildICmp(
+					ctx.currbuilder,
+					LLVMIntSLE,
+					trn[0],
+					trn[1],
+					toStringz("lessequal")
+				);
+			case TokType.tok_more_equal:
+				LLVMValueRef[] trn = trueNums(ctx,lhs.gen(s),rhs.gen(s));
+				return LLVMBuildICmp(
+					ctx.currbuilder,
+					LLVMIntSGE,
+					trn[0],
+					trn[1],
+					toStringz("moreequal")
+				);
 			default:
 				break;
 		}

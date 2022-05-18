@@ -48,6 +48,8 @@ enum TokType {
     tok_type, // :
     tok_eof, // eof
     tok_dot, // .
+    tok_more_equal, // >=
+    tok_less_equal, // <=
 
     tok_bit_and_eq, // &=
     tok_and_eq, // &&=
@@ -186,6 +188,8 @@ class Token {
                 case "#": this.type = TokType.tok_hash; break;
                 case "?": this.type = TokType.tok_question; break;
                 case "::": this.type = TokType.tok_namesp_get; break;
+                case "<=": this.type = TokType.tok_less_equal; break;
+                case ">=": this.type = TokType.tok_more_equal; break;
                 // Commands
                 case "if": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_if; break;
                 case "else": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_else; break;

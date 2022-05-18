@@ -1,5 +1,6 @@
-@inc "std/proc";
+@inc "std/conv";
+@inc "std/io";
 
 main: int {
-    ret 5;
+    ret 0;
 }

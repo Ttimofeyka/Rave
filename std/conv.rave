@@ -1,10 +1,36 @@
 @once
 
 @inc "std/defs";
-@inc "std/mem";
+@inc "std/ascii";
+
+@def LONG_MIN 0x80000000 @end
+@def LONG_MAX 9223372036854775807 @end
 
 ctoi(c: char): int => cast(int)c - cast(int)'0';
 
 itoc(i: int): char => cast(char)(i+cast(int)'0');
+
+stol(s: char*): long {
+   res: long = 0;
+   i: int = 0;
+   minus: bool = (s[0] == '-');
+
+   if(minus || (s[0] == '+')) i += 1;
+
+   while (isdigit(s[i])) {
+      res = res*10 + (s[i] - '0');
+      i += 1;
+   }
+
+   if(minus) ret -res;
+   ret res;
+}
+
+btos(b: bool): char* {
+    toret: char*;
+    if(b) toret = "true";
+    else toret = "false";
+    ret toret;
+}
 
 @end

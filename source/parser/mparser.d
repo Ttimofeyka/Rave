@@ -623,6 +623,8 @@ class Parser {
 			TokType.tok_nequal: -80,
 			TokType.tok_less: -70,
 			TokType.tok_more: -70,
+			TokType.tok_less_equal: -70,
+			TokType.tok_more_equal: -70,
 			TokType.tok_or: -50,
 			TokType.tok_and: -50,
 			TokType.tok_bit_and: -20,

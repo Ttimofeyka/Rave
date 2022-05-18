@@ -75,6 +75,12 @@ struct address {
 
 struct in_addr {
     value: int;
+    /*
+    s4_addr: char[4];
+    s4_addr16: int[2];
+    s4_addr32: int[1];
+    s_addr: int;
+    */
 }
 
 struct in6_addr {
