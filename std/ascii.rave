@@ -1,4 +1,6 @@
-@once
+namespace std {
+
+namespace ascii {
 
 isdigit(c: char): bool {
     ret (c >= '0') && (c <= '9');
@@ -12,15 +14,6 @@ islower(c: char): bool {
     ret ((c >= 'a') && (c <= 'z'));
 }
 
-isupper(c: char): bool {
-    ret !islower(c);
 }
 
-toupper(c: char): char {
-    if(islower(c)) {
-        ret toret - 'a' + 'A';
-    }
-    ret toret;
 }
-
-@end

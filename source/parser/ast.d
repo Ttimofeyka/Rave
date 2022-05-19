@@ -450,6 +450,9 @@ class AstNodeFunction : AstNode {
 
 	override LLVMValueRef gen(AnalyzerScope s) {
 		GenerationContext ctx = s.genctx;
+		if(decl.name in ctx.gfuncs.funcs) {
+			ctx.err("Function \""~decl.name~"\" already exists!",where);
+		}
 		builder = LLVMCreateBuilder();
 
 		AstNodeBlock funcBody = cast(AstNodeBlock)body_;
@@ -2372,6 +2375,7 @@ class AstNodeFuncCall : AstNode {
 	override void analyze(AnalyzerScope s, Type neededType) {
 		this.func.analyze(s, new TypeFunctionLike());
 		auto funcType = this.func.getType(s);
+		AstNodeFunction f = func.instanceof!AstNodeFunction;
 
 		if(!funcType.instanceof!TypeFunction) {
 			//s.ctx.addError("Cannot call a non-function value!", this.where);

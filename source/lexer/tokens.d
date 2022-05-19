@@ -101,6 +101,7 @@ enum TokCmd {
     cmd_namespace,
     cmd_using,
     cmd_import,
+    cmd_insert,
 }
 
 struct SourceLocation {
@@ -220,6 +221,7 @@ class Token {
                 case "@out": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_out; break;
                 case "@exit": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_ifequ; break;
                 case "@imp": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_import; break;
+                case "@ins": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_insert; break;
                 // Identifier
                 default: this.type = TokType.tok_id; break;
             }

@@ -22,6 +22,7 @@ class Preprocessor {
     TList[string] defines;
     TList newtokens;
     bool hadErrors = false;
+    bool[string] _includeFiles;
 
     bool[] _ifStack;
     int i = 0; // Iterate by tokens
@@ -121,7 +122,7 @@ class Preprocessor {
         else  return output[0..$-1]; // Just output
     }
 
-    private void insertFile(string pattern) {
+    private void insertFile(string pattern, bool isInc) {
         if(pattern[0] == ':') {
             pattern = buildPath(stdlibIncPath, pattern[1..$]);
         }
@@ -129,14 +130,26 @@ class Preprocessor {
             foreach(fname; dirEntries(pattern, SpanMode.breadth)) {
                 // writeln("-> ", fname.name);
                 if(fname.isDir) continue;
-                insertFile(fname.name);
+                insertFile(fname.name, isInc);
             }
         }
         else {
-            auto l = new Lexer(pattern, readText(pattern));
-            auto preproc = new Preprocessor(l.getTokens(), stdlibIncPath, this.defines);
-            foreach(token; preproc.getTokens().tokens) {
-                newtokens.insertBack(copyToken(token));
+            if(isInc) {
+                if(pattern !in _includeFiles) {
+                    _includeFiles[pattern] = true;
+                    auto l = new Lexer(pattern, readText(pattern));
+                    auto preproc = new Preprocessor(l.getTokens(), stdlibIncPath, this.defines);
+                    foreach(token; preproc.getTokens().tokens) {
+                        newtokens.insertBack(copyToken(token));
+                    }
+                }
+            }
+            else {
+                auto l = new Lexer(pattern, readText(pattern));
+                auto preproc = new Preprocessor(l.getTokens(), stdlibIncPath, this.defines);
+                foreach(token; preproc.getTokens().tokens) {
+                    newtokens.insertBack(copyToken(token));
+                }
             }
         }
     }
@@ -178,7 +191,22 @@ class Preprocessor {
                     // if(exists(name) && isDir(name)) insertFile(buildPath(name, "*"));
                    defines["_FILE"] = new TList();
                    defines["_FILE"].insertBack(new Token(SourceLocation(0,0,""), name~".rave"));
-                   if(canOutput()) insertFile(name~".rave");
+                   if(canOutput()) insertFile(name~".rave",true);
+                   defines["_FILE"].tokens = defines["_MFILE"].tokens.dup;
+                }
+                else if(get().cmd == TokCmd.cmd_insert) {
+                    i += 1;
+                    if(get().type != TokType.tok_string) {
+                        error("Expected a string after the \"@inc\" keyword!");
+                        continue;
+                    }
+                    string name = get().value.replace("\"", "");
+                    i += 1;
+                    // name = absolutePath(name);
+                    // if(exists(name) && isDir(name)) insertFile(buildPath(name, "*"));
+                   defines["_FILE"] = new TList();
+                   defines["_FILE"].insertBack(new Token(SourceLocation(0,0,""), name~".rave"));
+                   if(canOutput()) insertFile(name~".rave",false);
                    defines["_FILE"].tokens = defines["_MFILE"].tokens.dup;
                 }
                 else if(get().cmd == TokCmd.cmd_import) {

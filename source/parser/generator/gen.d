@@ -13,6 +13,7 @@ import std.algorithm : canFind;
 import std.ascii;
 import std.uni;
 import parser.atst;
+import lexer.tokens;
 
 class GStack {
     LLVMValueRef[string] globals; // Global variables
@@ -263,6 +264,15 @@ class GenerationContext {
 			o ~= to!string(part.length) ~ part;
 		}
 		return o;
+	}
+
+	private string loctostr(SourceLocation loc) {
+		return "("~loc.fname~","~" line "~to!string(loc.line)~")";
+	}
+
+	void err(string msg, SourceLocation loc) {
+		writeln("\u001b[31mError"~loctostr(loc)~": "~msg~"\u001b[0m");
+		exit(-1);
 	}
 
 	// Get LLVM type from Type or Atst

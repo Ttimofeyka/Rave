@@ -1,6 +1,5 @@
-@inc "std/conv";
-@inc "std/io";
+@inc "std/ascii";
 
 main: int {
-    ret 0;
+    ret 5;
 }
