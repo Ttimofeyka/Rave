@@ -263,16 +263,16 @@ class Lexer {
             }
             else switch(get()) {
                 case '#':
-                    tokens.insertBack(new Token(loc, "#"));
+                    tokens.insertBack(new Token(loc, "#", TokType.tok_hash));
                     next(1);
                     break;
                 case '0': case '1': case '2':
                 case '3': case '4': case '5':
                 case '6': case '7': case '8': case '9':
-                    tokens.insertBack(new Token(loc, getTNum()));
+                    tokens.insertBack(new Token(loc, getTNum(), TokType.tok_num));
                     break;
-                case '\'': tokens.insertBack(new Token(loc, "'"~getTChar()~"'")); break;
-                case '"': tokens.insertBack(new Token(loc, "\""~getTStr()~"\"")); break;
+                case '\'': tokens.insertBack(new Token(loc, "'"~getTChar()~"'", TokType.tok_char)); break;
+                case '"': tokens.insertBack(new Token(loc, "\""~getTStr()~"\"", TokType.tok_string)); break;
                 case '(': tokens.insertBack(new Token(loc, "(")); next(1); break;
                 case ')': tokens.insertBack(new Token(loc, ")")); next(1); break;
                 case '{': tokens.insertBack(new Token(loc, "{")); next(1); break;
@@ -289,7 +289,7 @@ class Lexer {
                         next(2);
                     }
                     else {
-                        tokens.insertBack(new Token(loc, "+"));
+                        tokens.insertBack(new Token(loc, "+", TokType.tok_plus));
                         next(1);
                     }
                     break;
@@ -299,7 +299,7 @@ class Lexer {
                         next(2);
                     }
                     else {
-                        tokens.insertBack(new Token(loc, "*"));
+                        tokens.insertBack(new Token(loc, "*", TokType.tok_multiply));
                         next(1);
                     }
                     break;
@@ -341,13 +341,22 @@ class Lexer {
                         next(2);
                     }
                     else {
-                        tokens.insertBack(new Token(loc, "-"));
+                        tokens.insertBack(new Token(loc, "-", TokType.tok_minus));
                         next(1);
                     }
                     break;
-                case ',': tokens.insertBack(new Token(loc, ",")); next(1); break;
-                case '.': tokens.insertBack(new Token(loc, ".")); next(1); break;
-                case ';': tokens.insertBack(new Token(loc, ";")); next(1); break;
+                case ',': tokens.insertBack(new Token(loc, ",", TokType.tok_comma)); next(1); break;
+                case '.': 
+                    if(get(+1)=='.') {
+                        tokens.insertBack(new Token(loc, "..", TokType.tok_multiargs)); 
+                        next(1); 
+                    }
+                    else {
+                        tokens.insertBack(new Token(loc, ".")); 
+                        next(1); 
+                    }
+                    break;
+                case ';': tokens.insertBack(new Token(loc, ";", TokType.tok_semicolon)); next(1); break;
                 case ':': 
                     if(get(+1)==':') {
                         tokens.insertBack(new Token(loc, "::"));
@@ -373,7 +382,7 @@ class Lexer {
                     break;
                 case '=':
                     if(get(+1)=='=') {
-                        tokens.insertBack(new Token(loc, "=="));
+                        tokens.insertBack(new Token(loc, "==", TokType.tok_equal));
                         next(2);
                     }
                     else if(get(+1)=='>') {
@@ -381,7 +390,7 @@ class Lexer {
                         next(2);
                     }
                     else {
-                        tokens.insertBack(new Token(loc, "="));
+                        tokens.insertBack(new Token(loc, "=", TokType.tok_equ));
                         next(1);
                     }
                     break;

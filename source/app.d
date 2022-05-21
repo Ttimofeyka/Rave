@@ -28,17 +28,23 @@ string docJsonFile = "docs.json";
 bool not_delete_o = false;
 int optLevel = 1;
 TList[string] defines;
+TList[string] macros;
+string[][string] macrosDN;
+bool[string] incF;
 
 string linker;
 
 string platformFileType = "";
+bool noprelude = false;
 
 void compile(string linkFiles, bool nolink, string sourceFile, string outputType, string outputFile) {
 	stdlibIncPath = buildNormalizedPath(absolutePath("./stdlib"));
 
 	// writeln("------------------ Lexer -------------------");
-	auto lexer = new Lexer(sourceFile, readText(sourceFile));
-	auto preproc = new Preprocessor(lexer.getTokens(), stdlibIncPath, defines);
+	string srcF = readText(sourceFile);
+	if(!noprelude) srcF = "@inc \"std/base\"\n" ~ srcF;
+	auto lexer = new Lexer(sourceFile, srcF);
+	auto preproc = new Preprocessor(lexer.getTokens(), stdlibIncPath, defines, macros, incF, macrosDN);
 
 	if(preproc.hadErrors) {
 		writeln("Failed with 1 or more errors.");
@@ -59,6 +65,7 @@ void compile(string linkFiles, bool nolink, string sourceFile, string outputType
 	comp.debugInfo.debugMode = debugMode;
 	comp.debugInfo.printAst = debugModeFull;
 	comp.optLevel = optLevel;
+	comp.defs = defines.dup;
 	CompilerError err = comp.generate(outputType, outputFile~".o");
 
 	if(err.hadError) {
@@ -107,6 +114,7 @@ void main(string[] args)
 		"noentry", "Linking without begin.o", &noentry,
 		"opt", "Optimization level", &optLevel,
 		"linker", "Set linker", &linker,
+		"noprelude", "Disable automatically include std/base", &noprelude,
 	);
 	
     if(helpInformation.helpWanted)
@@ -205,6 +213,7 @@ void main(string[] args)
 			|| currF[$-3..$] == "lib"))) linkF ~= sourceFiles[i] ~ " ";
 			else { // Else compile source file
 				compile("",true,sourceFiles[i],outputType,sourceFiles[i]);
+				noprelude = true;
 				linkF ~= sourceFiles[i]~platformFileType ~ " ";
 				to_remove ~= sourceFiles[i]~platformFileType;
 			}

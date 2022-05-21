@@ -1,5 +1,3 @@
-@once
-
 namespace std {
 
 extern sysc0(cmd: int): void*;
@@ -11,5 +9,3 @@ extern sysc5(cmd: int, arg1: void*, arg2: void*, arg3: void*, arg4: void*, arg5:
 extern sysc6(cmd: int, arg1: void*, arg2: void*, arg3: void*, arg4: void*, arg5: void*, arg6: void*): void*;
 
 }
-
-@end

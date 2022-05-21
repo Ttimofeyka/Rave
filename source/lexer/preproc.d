@@ -16,6 +16,7 @@ import std.system;
 import std.random : uniform;
 import parser.mparser;
 import parser.ast;
+import std.string;
 
 class Preprocessor {
     TList tokens;
@@ -23,6 +24,9 @@ class Preprocessor {
     TList newtokens;
     bool hadErrors = false;
     bool[string] _includeFiles;
+    TList[string] _macros;
+    string[][string] _macrosDefinesNames;
+    int idxx = 0;
 
     bool[] _ifStack;
     int i = 0; // Iterate by tokens
@@ -138,7 +142,16 @@ class Preprocessor {
                 if(pattern !in _includeFiles) {
                     _includeFiles[pattern] = true;
                     auto l = new Lexer(pattern, readText(pattern));
-                    auto preproc = new Preprocessor(l.getTokens(), stdlibIncPath, this.defines);
+                    auto preproc = new Preprocessor(l.getTokens(), stdlibIncPath, this.defines, this._macros, this._includeFiles, this._macrosDefinesNames);
+                    foreach(key; byKey(preproc._macros)) {
+                        this._macros[key] = preproc._macros[key];
+                    }
+                    foreach(key; byKey(preproc._includeFiles)) {
+                        this._includeFiles[key] = preproc._includeFiles[key];
+                    }
+                    foreach(key; byKey(preproc._macrosDefinesNames)) {
+                        this._macrosDefinesNames[key] = preproc._macrosDefinesNames[key];
+                    }
                     foreach(token; preproc.getTokens().tokens) {
                         newtokens.insertBack(copyToken(token));
                     }
@@ -146,7 +159,7 @@ class Preprocessor {
             }
             else {
                 auto l = new Lexer(pattern, readText(pattern));
-                auto preproc = new Preprocessor(l.getTokens(), stdlibIncPath, this.defines);
+                auto preproc = new Preprocessor(l.getTokens(), stdlibIncPath, this.defines, this._macros, this._includeFiles, this._macrosDefinesNames);
                 foreach(token; preproc.getTokens().tokens) {
                     newtokens.insertBack(copyToken(token));
                 }
@@ -154,11 +167,78 @@ class Preprocessor {
         }
     }
 
-    this(TList tokens, string stdlibIncPath, TList[string] defines) {
+    private void prMacro() {
+        string mname = get().value;
+        i += 1;
+
+        // Next - arguments(defines of values)
+        i += 1; // skip (
+        while(get().type != TokType.tok_rpar) {
+            _macrosDefinesNames[mname] ~= get().value;
+            i += 1;
+            if(get().type == TokType.tok_comma) i += 1;
+            else if(get().type == TokType.tok_multiargs) {
+                // =) Multiargs
+                _macrosDefinesNames[mname] ~= ("_RaveAA"~get(-1).value);
+                i += 1;
+            }
+        }
+        i += 1; // skip )
+        // Next - tokens before @endm
+        TList toks = new TList();
+        while(true) {
+            if(get().type == TokType.tok_at) {
+                // next - @endm
+                i += 1;
+                continue;
+            }
+            if(get().cmd != TokCmd.cmd_endm) {
+                toks.insertBack(get());
+                i += 1;
+            }
+            else break;
+        }
+        i += 1; // skip @endm
+        if(canOutput()) _macros[mname] = toks;
+    }
+
+    private TList getBeforeComma() {
+        TList t = new TList();
+        while(get().type != TokType.tok_comma && get().type != TokType.tok_rpar) {
+            t.insertBack(get());
+            i += 1;
+        }
+        return t;
+    }
+
+    private TList getBeforeEndOfExpr() {
+        TList t = new TList();
+        idxx += 1;
+        while(get().type != TokType.tok_rpar) {
+            t.insertBack(get());
+            if(get().type == TokType.tok_comma) idxx += 1;
+            i += 1;
+        }
+        return t;
+    }
+
+    private void addT(Token t) {
+        if(t.type == TokType.tok_id && t.value in defines) {
+            for(int z=0; z<defines[t.value].length; z++) {
+                addT(defines[t.value][z]);
+            }
+        }
+        else newtokens.insertBack(t);
+    }
+
+    this(TList tokens, string stdlibIncPath, TList[string] defines, TList[string] macros, bool[string] iF, string[][string] mN) {
         this.tokens = tokens;
         this.defines = defines;
         this.newtokens = new TList();
         this.stdlibIncPath = stdlibIncPath;
+        this._macros = macros;
+        this._macrosDefinesNames = mN;
+        this._includeFiles = iF;
 
         int currPr = 0;
 
@@ -208,6 +288,14 @@ class Preprocessor {
                    defines["_FILE"].insertBack(new Token(SourceLocation(0,0,""), name~".rave"));
                    if(canOutput()) insertFile(name~".rave",false);
                    defines["_FILE"].tokens = defines["_MFILE"].tokens.dup;
+                }
+                else if(get().cmd == TokCmd.cmd_macro) {
+                    i += 1;
+                    if(!canOutput()) {
+                        while(get().cmd != TokCmd.cmd_endm) {i+=1;}
+                        i += 1;
+                    }
+                    else prMacro();
                 }
                 else if(get().cmd == TokCmd.cmd_import) {
                     i += 1;
@@ -259,7 +347,7 @@ class Preprocessor {
                         error("Unmatched '@else'!");
                     }
 
-                    _ifStack[$-1] = !_ifStack[$-1];
+                    _ifStack ~= !_ifStack[$-1];
                 }
                 else if(get().cmd == TokCmd.cmd_protected) {
                     string randomname = defines["_FILE"][0].value;
@@ -282,7 +370,7 @@ class Preprocessor {
                     string name = get().value;
                     i += 1;
 
-                    this.defines.remove(name);
+                    if(canOutput()) this.defines.remove(name);
                 }
                 else if(get().cmd == TokCmd.cmd_error) {
                     string to_out = analyze_outcmd(0);
@@ -323,6 +411,37 @@ class Preprocessor {
                 if(get().value in defines) {
                     if(canOutput()) insertDefine(defines[get().value]);
                     i += 1;
+                }
+                else if(get().value in _macros) {
+                    string mname = get().value;
+                    i += 2; // skip (
+                    int currMVar = 0;
+                    while(get().type != TokType.tok_rpar) {
+                        if(_macrosDefinesNames[mname][currMVar].indexOf("_RaveAA") != -1) {
+                            // After, all - this multiargs
+                            while(get().value != "(") i -= 1;
+                            i += 1;
+                            TList margs = getBeforeEndOfExpr();
+                            defines[_macrosDefinesNames[mname][currMVar].replace("_RaveAA","")] = margs;
+                            break;
+                        }
+                        else {
+                            defines[_macrosDefinesNames[mname][currMVar]] = getBeforeComma();
+                            currMVar += 1;
+                            if(get().type == TokType.tok_rpar) break;
+                            else i += 1;
+                        }
+                    }
+                    defines[mname~"_argslen"] = new TList();
+                    defines[mname~"_argslen"].insertBack(new Token(SourceLocation(0,0,""),to!string(idxx)));
+                    for(int z=0; z<_macros[mname].length; z++) {
+                        if(canOutput()) addT(_macros[mname][z]);
+                    }
+                    i += 1; // skip )
+                    for(int b=0; b<_macrosDefinesNames.length; b++) {
+                        defines.remove(_macrosDefinesNames[mname][b]);
+                    }
+                    defines.remove(mname~"_argslen");
                 }
                 else {
                     if(canOutput()) newtokens.insertBack(get());

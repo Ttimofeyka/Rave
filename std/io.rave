@@ -1,8 +1,7 @@
-@once
-
-@inc "std/str/strlen";
-@inc "std/defs";
-@inc "std/unix";
+@inc "std/str/strlen"
+@inc "std/defs"
+@inc "std/unix"
+@inc "std/mem"
 
 @def stdin 0 @end
 @def stdout 1 @end
@@ -46,5 +45,3 @@ fputs(fd: int, s: char*) {
 puts(s: char*) {
     fwrite(stdout, s, strlen(s));
 }
-
-@end

@@ -67,6 +67,7 @@ enum TokType {
     tok_doc, // documentation comment
     tok_question, // ?
     tok_namesp_get, // ::
+    tok_multiargs, // ..
 }
 
 enum TokCmd {
@@ -102,6 +103,8 @@ enum TokCmd {
     cmd_using,
     cmd_import,
     cmd_insert,
+    cmd_macro,
+    cmd_endm,
 }
 
 struct SourceLocation {
@@ -119,6 +122,12 @@ class Token {
     TokCmd cmd;
     string value;
     SourceLocation loc;
+
+    this(SourceLocation loc, string s, TokType t) {
+        this.type = t;
+        this.value = s;
+        this.loc = loc;
+    }
 
     this(SourceLocation loc, string s) {
         this.loc = loc;
@@ -222,6 +231,8 @@ class Token {
                 case "@exit": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_ifequ; break;
                 case "@imp": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_import; break;
                 case "@ins": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_insert; break;
+                case "@macro": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_macro; break;
+                case "@endm": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_endm; break;
                 // Identifier
                 default: this.type = TokType.tok_id; break;
             }

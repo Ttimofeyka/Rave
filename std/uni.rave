@@ -1,0 +1,11 @@
+namespace std {
+
+namespace uni {
+
+isdigit(c: char): bool {
+    ret (c >= '0') && (c <= '9');
+}
+
+}
+
+}

@@ -9,6 +9,8 @@ import parser.atst;
 import std.format;
 import std.stdio;
 
+import lexer.tokens;
+
 struct CompilerDebugInfo {
     bool printAst;
     bool debugMode;
@@ -27,6 +29,7 @@ class CompilerProgram {
 class Compiler {
     CompilerDebugInfo debugInfo;
     int optLevel;
+    TList[string] defs;
 
     CompilerProgram _program;
 

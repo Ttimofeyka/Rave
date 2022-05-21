@@ -30,7 +30,8 @@ Inserts the specified file.
 
 ### `@once [onceblock] @end`
 
-Indicates that when you insert this file multiple times from other files, this code will be inserted only 1 time.
+Indicates that when you insert this file multiple times from other files(using @ins), this code will be inserted only 1 time.
+
 
 ### `@else [elseblock] @end`
 
@@ -51,3 +52,11 @@ Outputs a text.
 ### `@exit [exitcode]`
 
 Stops compilation with specific code.
+
+### `@macro [macroname]([macroargs]) [macroblock] @endm`
+
+Simplified - extended definitions.
+They allow you to work with arguments, which cannot be done in definitions.
+Example:
+
+    @macro A(first,second) (first+second) @endm

@@ -1,5 +1,4 @@
-@inc "std/ascii";
-
-main: int {
-    ret 5;
+main: void {
+    tbuff: char* = cast(char*)0xB8000;
+    tbuff[0] = 'A';
 }

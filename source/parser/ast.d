@@ -599,10 +599,16 @@ class AstNodeArray : AstNode {
 	override LLVMValueRef gen(AnalyzerScope s) {
 		GenerationContext ctx = s.genctx;
 		LLVMValueRef* constvalues = cast(LLVMValueRef*)malloc(LLVMValueRef.sizeof * values.length);
-		for(int i=0; i<values.length; i++) {
-			constvalues[i] = values[i].gen(s);
+		LLVMValueRef fvalgen = values[0].gen(s);
+		constvalues[0] = fvalgen;
+		for(int i=1; i<values.length; i++) {
+			LLVMValueRef valgen = values[i].gen(s);
+			if(LLVMTypeOf(valgen) != LLVMTypeOf(fvalgen)) {
+				constvalues[i] = castTo(ctx, valgen, LLVMTypeOf(fvalgen));
+			}
+			else constvalues[i] = valgen;
 		}
-		return LLVMConstArray(ctx.getLLVMType(values[0].getType(s),s),constvalues,cast(uint)values.length);
+		return LLVMConstArray(LLVMArrayType(LLVMTypeOf(fvalgen),cast(uint)values.length),constvalues,cast(uint)values.length);
 	}
 }
 
@@ -1530,7 +1536,7 @@ class AstNodeAsm : AstNode {
 	string value;
 
 	this(string value) {
-		this.value = value;
+		this.value = value[1..$-1];
 	}
 
 	override void analyze(AnalyzerScope s, Type neededType) {}
@@ -1545,7 +1551,7 @@ class AstNodeAsm : AstNode {
 			cast(size_t)0,
 			true,
 			false,
-			LLVMInlineAsmDialectATT
+			LLVMInlineAsmDialectIntel
 		);
 		return LLVMBuildCall2(ctx.currbuilder, functy, asmc, null, cast(uint)0, toStringz(""));
 	}
@@ -2679,6 +2685,7 @@ class AstNodeString : AstNode {
 
 	override LLVMValueRef gen(AnalyzerScope s) {
 		auto ctx = s.genctx;
+		
 		return LLVMBuildGlobalStringPtr(
 			ctx.currbuilder,
 			toStringz(value[0..$-1]),

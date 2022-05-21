@@ -2,16 +2,16 @@ namespace std {
 
 namespace ascii {
 
-isdigit(c: char): bool {
-    ret (c >= '0') && (c <= '9');
-}
-
 isalpha(c: char): bool {
     ret ((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z'));
 }
 
 islower(c: char): bool {
     ret ((c >= 'a') && (c <= 'z'));
+}
+
+isupper(c: char): bool {
+    ret ((c >= 'A') && (c <= 'Z'));
 }
 
 }
