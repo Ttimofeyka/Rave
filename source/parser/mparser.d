@@ -67,15 +67,13 @@ class Parser {
 	}
 
 	private Token next() {
-		if(_idx == _toks.length)
-			return new Token(SourceLocation(-1, -1, ""), "");
-		return _toks[_idx++];
+		pragma(inline,true);
+		return (_idx==_toks.length) ? new Token(SourceLocation(-1,-1,""),"") : _toks[_idx++];
 	}
 
 	private Token peek() {
-		if(_idx == _toks.length)
-			return new Token(SourceLocation(-1, -1, ""), "");
-		return _toks[_idx];
+		pragma(inline,true);
+		return (_idx==_toks.length) ? new Token(SourceLocation(-1,-1,""),"") : _toks[_idx];
 	}
 
 	private Token expectToken(TokType type) {

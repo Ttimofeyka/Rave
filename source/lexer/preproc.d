@@ -55,8 +55,8 @@ class Preprocessor {
     }
 
     private Token get(int n = 0) {
-        if(i < tokens.length()) return tokens[i + n];
-        return new Token(SourceLocation(-1, -1, ""), "");
+        pragma(inline,true);
+        return (i<tokens.length()) ? tokens[i+n] : new Token(SourceLocation(-1,-1,""),"");
     }
 
     private TList getDefine() {
@@ -122,8 +122,7 @@ class Preprocessor {
         }
 
         if(t == 0) return user_error(output[0..$-1]); // Error
-        else if(t == 1) return user_warn(output[0..$-1]); // Warning
-        else  return output[0..$-1]; // Just output
+        return (t == 1) ? user_warn(output[0..$-1]) : output[0..$-1]; // Error && Just output
     }
 
     private void insertFile(string pattern, bool isInc) {
@@ -416,6 +415,7 @@ class Preprocessor {
                     string mname = get().value;
                     i += 2; // skip (
                     int currMVar = 0;
+                    int[] toclear;
                     while(get().type != TokType.tok_rpar) {
                         if(_macrosDefinesNames[mname][currMVar].indexOf("_RaveAA") != -1) {
                             // After, all - this multiargs
@@ -423,11 +423,13 @@ class Preprocessor {
                             i += 1;
                             TList margs = getBeforeEndOfExpr();
                             defines[_macrosDefinesNames[mname][currMVar].replace("_RaveAA","")] = margs;
+                            toclear ~= currMVar;
                             break;
                         }
                         else {
                             defines[_macrosDefinesNames[mname][currMVar]] = getBeforeComma();
                             currMVar += 1;
+                            toclear ~= currMVar;
                             if(get().type == TokType.tok_rpar) break;
                             else i += 1;
                         }
@@ -438,18 +440,19 @@ class Preprocessor {
                         if(canOutput()) addT(_macros[mname][z]);
                     }
                     i += 1; // skip )
-                    for(int b=0; b<_macrosDefinesNames.length; b++) {
-                        defines.remove(_macrosDefinesNames[mname][b]);
+                    for(int b=0; b<toclear.length; b++) {
+                        try {defines.remove(_macrosDefinesNames[mname][toclear[b]]);} catch(Error e) {}
                     }
+                    _macrosDefinesNames.clear();
                     defines.remove(mname~"_argslen");
                 }
                 else {
-                    if(canOutput()) newtokens.insertBack(get());
+                    if(canOutput()) addT(get());
                     i += 1;
                 }
             }
             else {
-                if(canOutput()) newtokens.insertBack(get());
+                if(canOutput()) addT(get());
                 i += 1;
             }
         }

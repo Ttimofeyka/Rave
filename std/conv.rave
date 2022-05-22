@@ -17,7 +17,7 @@ stol(s: char*): long {
 
    if(minus || (s[0] == '+')) i += 1;
 
-   while (isdigit(s[i])) {
+   while (std::isdigit(s[i])) {
       res = res*10 + (s[i] - '0');
       i += 1;
    }

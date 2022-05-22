@@ -35,12 +35,8 @@ class Lexer {
     bool _hadAt = false;
 
     private char get(uint x = 0) {
-        if(i < lex.length) {
-            return lex[i + x];
-        }
-        else {
-            return '\0';
-        }
+        pragma(inline,true);
+        return (i<lex.length) ? lex[i+x] : '\0';
     }
 
     private string getTInt() {

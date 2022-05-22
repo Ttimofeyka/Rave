@@ -66,7 +66,6 @@ class AstNode {
 	}
 
 	TList getTokens() { return null; }
-	
 
 	debug {
 		void writeTabs(int indent) {
