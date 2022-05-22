@@ -18,9 +18,7 @@ main: int {
 
 * `llvm-10` (including dev libs)
 * `binutils`, `binutils-avr` (if you need AVR-support)
-* dub
-* D compiler (dmd/ldc/gdc)
-* [node.js](https://nodejs.org/) (for documentation) (optionally)
+* dub and dmd compiler
 
 ## Building/Running
 
@@ -32,13 +30,4 @@ Otherwise, install all dependencies and write `dub build` in the project directo
 
 The reference is in `reference` directory.
 
-## Goals
-
-* ~~Make a lexer~~ (100%)
-* ~~Make a preprocessor~~ (100%)
-* ~~Make a parser~~ (100%)
-* ~~Make a semantic analyzer~~ (100%)
-* ~~Make a code generator~~ (100%)
-
 Discord server - https://discord.gg/AfEtyArvsM
-

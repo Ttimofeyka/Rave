@@ -47,10 +47,12 @@ class Preprocessor {
     }
 
     private string user_error(string msg) {
+        pragma(inline,true);
         return "\033[0;31m"~msg~"\033[0;0m";
     }
 
     private string user_warn(string msg) {
+        pragma(inline,true);
         return "\033[0;33m"~msg~"\033[0;0m";
     }
 
