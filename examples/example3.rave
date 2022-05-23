@@ -1,8 +1,5 @@
-@macro A(text)
-    @strify text
-@endm
+@inc "std/err"
 
 main: int {
-    a: char* = A(g);
     ret 0;
 }

@@ -98,9 +98,18 @@ class Lexer {
 
     private char parseOctalEscape(string s)
     {
-        assert(s.length == 4);
-        assert(s[0] == '\\');
+        if(s[0] != '\\')  return cast(char)s.to!int(8);
         return cast(char)s[1 .. $].to!int(8);
+    }
+
+    private char parseNumEscape(string s) {
+        if(s.length == 2) return parseOctalEscape(s~"00");
+        else if(s.length == 3) return parseNumEscape("0");
+        return parseOctalEscape(s);
+    }
+
+    private char parseOctalChar(char s) {
+        return parseNumEscape(""~cast(int)s);
     }
     
     private char getTChar() {

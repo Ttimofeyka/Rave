@@ -1,7 +1,6 @@
-@inc "std/str/strlen"
 @inc "std/defs"
 @inc "std/unix"
-@inc "std/mem"
+@inc "std/str/strlen"
 
 @def stdin 0 @end
 @def stdout 1 @end

@@ -1,0 +1,8 @@
+@inc "std/io"
+
+err(error: char*) {
+    puts("\033[31mError: ");
+    puts(error);
+    puts("\033[0m\n");
+    std::exit(1);
+}
