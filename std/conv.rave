@@ -26,6 +26,8 @@ stol(s: char*): long {
    ret res;
 }
 
+@macro stoi(s) (cast(int)stol(s)) @endm
+
 btos(b: bool): char* {
     toret: char*;
     if(b) toret = "true";

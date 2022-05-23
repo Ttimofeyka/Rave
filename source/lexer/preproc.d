@@ -225,11 +225,48 @@ class Preprocessor {
 
     private void addT(Token t) {
         if(t.type == TokType.tok_id && t.value in defines) {
-            for(int z=0; z<defines[t.value].length; z++) {
-                addT(defines[t.value][z]);
-            }
+            addTorL(defines[t.value]);
         }
         else newtokens.insertBack(t);
+    }
+
+    private void addTL(TList t) {
+        for(int z=0; z<t.length; z++) {
+            addTorL(t[z]);
+        }
+    }
+
+    private void addTorL(T)(T t) {
+        if(is(typeof(t) == lexer.tokens.Token)) {
+            Token s = cast(Token)t;
+            addT(s);
+        }
+        else {
+            TList tt = cast(TList)t;
+            addTL(tt);
+        }
+    }
+
+    private TList getT(Token t) {
+        // If in defines - return full TList
+        if(t.type == TokType.tok_id && t.value in defines) {
+            TList n = new TList();
+            for(int z=0; z<defines[t.value].length; z++) {
+                n.insertBack(getT(defines[t.value][z]));
+            }
+            return n;
+        }
+        TList n = new TList();
+        n.insertBack(t);
+        return n;
+    }
+
+    private string ttos(TList t) {
+        string s = "";
+        for(int z=0; z<t.length; z++) {
+            s ~= t[z].value ~ " ";
+        }
+        return strip(s);
     }
 
     this(TList tokens, string stdlibIncPath, TList[string] defines, TList[string] macros, bool[string] iF, string[][string] mN) {
@@ -319,7 +356,7 @@ class Preprocessor {
                     auto name = get().value;
                     i += 1;
                     // writeln("#ifdef " ~ name ~ " -> " ~ (name !in defines ? "not defined" : "defined"));
-                    _ifStack ~= !(name !in defines);
+                    if(canOutput())_ifStack ~= !(name !in defines);
                 }
                 else if(get().cmd == TokCmd.cmd_ifndef) {
                     i += 1;
@@ -329,7 +366,7 @@ class Preprocessor {
                     }
                     auto name = get().value;
                     i += 1;
-                    _ifStack ~= name !in defines;
+                    if(canOutput()) _ifStack ~= name !in defines;
                 }
                 else if(get().cmd == TokCmd.cmd_end) {
                     i += 1;
@@ -338,7 +375,7 @@ class Preprocessor {
                         error("Unmatched '@end'!");
                     }
                     else {
-                        remove(_ifStack, cast(size_t)(_ifStack.length) - 1);
+                        if(canOutput()) remove(_ifStack, cast(size_t)(_ifStack.length) - 1);
                     }
                 }
                 else if(get().cmd == TokCmd.cmd_else) {
@@ -348,7 +385,7 @@ class Preprocessor {
                         error("Unmatched '@else'!");
                     }
 
-                    _ifStack ~= !_ifStack[$-1];
+                    if(canOutput()) _ifStack ~= !_ifStack[$-1];
                 }
                 else if(get().cmd == TokCmd.cmd_protected) {
                     string randomname = defines["_FILE"][0].value;
@@ -404,8 +441,32 @@ class Preprocessor {
                     if(canOutput()) exit(exitcode);
                     i += 1;
                 }
+                else if(get().cmd == TokCmd.cmd_nexttok_str) {
+                    i += 1;
+                    if(canOutput()) {
+                        Token g = get();
+                        g.type = TokType.tok_string;
+                        g.value = "\""~g.value~"\"";
+                        newtokens.insertBack(g);
+                    }
+                    i += 1;
+                }
                 else {
                     error("Unknown command: '@" ~ to!string(get().cmd)[4..$] ~ "'!");
+                }
+            }
+            else if(get().type == TokType.tok_cmd) {
+                if(get().cmd == TokCmd.cmd_nexttok_str) {
+                    i += 1;
+                    Token g = get();
+                    g.value = "\""~ttos(getT(g))~"\"";
+                    g.type = TokType.tok_string;
+                    if(canOutput()) addT(g);
+                    i += 1;
+                }
+                else {
+                    if(canOutput()) addT(get());
+                    i += 1;
                 }
             }
             else if(get().type == TokType.tok_id) {
@@ -438,8 +499,9 @@ class Preprocessor {
                     }
                     defines[mname~"_argslen"] = new TList();
                     defines[mname~"_argslen"].insertBack(new Token(SourceLocation(0,0,""),to!string(idxx)));
-                    for(int z=0; z<_macros[mname].length; z++) {
-                        if(canOutput()) addT(_macros[mname][z]);
+                    Preprocessor p = new Preprocessor(_macros[mname],stdlibIncPath,this.defines,_macros,_includeFiles,_macrosDefinesNames);
+                    for(int z=0; z<p.getTokens().length; z++) {
+                        if(canOutput()) addT(p.getTokens()[z]);
                     }
                     i += 1; // skip )
                     for(int b=0; b<toclear.length; b++) {
@@ -449,12 +511,12 @@ class Preprocessor {
                     defines.remove(mname~"_argslen");
                 }
                 else {
-                    if(canOutput()) addT(get());
+                    if(canOutput()) addTorL(get());
                     i += 1;
                 }
             }
             else {
-                if(canOutput()) addT(get());
+                if(canOutput()) addTorL(get());
                 i += 1;
             }
         }

@@ -269,8 +269,8 @@ class Lexer {
                     break;
                 case '\'': tokens.insertBack(new Token(loc, "'"~getTChar()~"'", TokType.tok_char)); break;
                 case '"': tokens.insertBack(new Token(loc, "\""~getTStr()~"\"", TokType.tok_string)); break;
-                case '(': tokens.insertBack(new Token(loc, "(")); next(1); break;
-                case ')': tokens.insertBack(new Token(loc, ")")); next(1); break;
+                case '(': tokens.insertBack(new Token(loc, "(", TokType.tok_lpar)); next(1); break;
+                case ')': tokens.insertBack(new Token(loc, ")", TokType.tok_rpar)); next(1); break;
                 case '{': tokens.insertBack(new Token(loc, "{")); next(1); break;
                 case '}': tokens.insertBack(new Token(loc, "}")); next(1); break;
                 case '[': tokens.insertBack(new Token(loc, "[")); next(1); break;
@@ -368,7 +368,7 @@ class Lexer {
                 case '~': tokens.insertBack(new Token(loc, "~")); next(1); break;
                 case '!':
                     if(get(+1)=='=') {
-                        tokens.insertBack(new Token(loc, "!="));
+                        tokens.insertBack(new Token(loc, "!=", TokType.tok_nequal));
                         next(2);
                     }
                     else {
@@ -450,11 +450,11 @@ class Lexer {
                         next(2);
                     }
                     else if(get(+1)=='=') {
-                        tokens.insertBack(new Token(loc, ">="));
+                        tokens.insertBack(new Token(loc, ">=", TokType.tok_more_equal));
                         next(2);
                     }
                     else {
-                        tokens.insertBack(new Token(loc, ">"));
+                        tokens.insertBack(new Token(loc, ">", TokType.tok_more));
                         next(1);
                     }
                     break;

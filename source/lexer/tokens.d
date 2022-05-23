@@ -105,6 +105,7 @@ enum TokCmd {
     cmd_insert,
     cmd_macro,
     cmd_endm,
+    cmd_nexttok_str,
 }
 
 struct SourceLocation {
@@ -145,9 +146,6 @@ class Token {
         }
         else if(s.length >= 2 && s[0..2] == "/*") {
             this.type = TokType.tok_doc;
-        }
-        else if(isNumber(s[0])) {
-            this.type = TokType.tok_num;
         }
         else {
             switch(s) {
@@ -233,6 +231,7 @@ class Token {
                 case "@ins": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_insert; break;
                 case "@macro": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_macro; break;
                 case "@endm": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_endm; break;
+                case "@strify": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_nexttok_str; break;
                 // Identifier
                 default: this.type = TokType.tok_id; break;
             }

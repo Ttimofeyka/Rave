@@ -161,16 +161,16 @@ void main(string[] args)
 	defines["_PLATFORM"].insertBack(new Token(SourceLocation(0,0,""),"\""~outputType~"\""));
 	defines["true"] = new TList();
 	defines["true"].insertBack(new Token(SourceLocation(0,0,""),"cast"));
-	defines["true"].insertBack(new Token(SourceLocation(0,0,""),"("));
-	defines["true"].insertBack(new Token(SourceLocation(0,0,""),"bool"));
-	defines["true"].insertBack(new Token(SourceLocation(0,0,""),")"));
-	defines["true"].insertBack(new Token(SourceLocation(0,0,""),"1")); //
+	defines["true"].insertBack(new Token(SourceLocation(0,0,""),"(", TokType.tok_lpar));
+	defines["true"].insertBack(new Token(SourceLocation(0,0,""),"bool", TokType.tok_id));
+	defines["true"].insertBack(new Token(SourceLocation(0,0,""),")", TokType.tok_rpar));
+	defines["true"].insertBack(new Token(SourceLocation(0,0,""),"1",TokType.tok_num)); //
 	defines["false"] = new TList();
 	defines["false"].insertBack(new Token(SourceLocation(0,0,""),"cast"));
-	defines["false"].insertBack(new Token(SourceLocation(0,0,""),"("));
-	defines["false"].insertBack(new Token(SourceLocation(0,0,""),"bool"));
-	defines["false"].insertBack(new Token(SourceLocation(0,0,""),")"));
-	defines["false"].insertBack(new Token(SourceLocation(0,0,""),"0")); //
+	defines["false"].insertBack(new Token(SourceLocation(0,0,""),"(", TokType.tok_rpar));
+	defines["false"].insertBack(new Token(SourceLocation(0,0,""),"bool", TokType.tok_id));
+	defines["false"].insertBack(new Token(SourceLocation(0,0,""),")", TokType.tok_rpar));
+	defines["false"].insertBack(new Token(SourceLocation(0,0,""),"0",TokType.tok_num)); //
 
 	if(outputType.indexOf("linux") != -1) {
 		defines["_LINUX"] = new TList();

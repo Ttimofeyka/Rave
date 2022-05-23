@@ -1,3 +1,8 @@
+@macro A(text)
+    @strify text
+@endm
+
 main: int {
+    a: char* = A(g);
     ret 0;
 }
