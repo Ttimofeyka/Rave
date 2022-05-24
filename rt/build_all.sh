@@ -1,8 +1,8 @@
 #!/bin/sh
 
 cd i686-linux
-as rt.s -o rt.o
-as begin.s -o begin.o
+i686-elf-as rt.s -o rt.o
+i686-elf-as begin.s -o begin.o
 
 cd ../win32
 as rt.s -o rt.o

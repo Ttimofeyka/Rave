@@ -7,15 +7,15 @@
 
 namespace std {
 
-getpid(): int => cast(int)std::sysc0(39);
+getpid(): int => cast(int)std::sysc0(20);
 
-execve(pathname: char*, argv: char**, envp: char**): int => cast(int)std::sysc3(59,pathname,argv,envp);
+execve(pathname: char*, argv: char**, envp: char**): int => cast(int)std::sysc3(11,pathname,argv,envp);
 
-kill(pid: int, sig: int): int => cast(int)std::sysc2(62,pid,sig);
+kill(pid: int, sig: int): int => cast(int)std::sysc2(37,pid,sig);
 
 fork(): int => cast(int)std::sysc0(57);
 
-vfork(): int => cast(int)std::sysc0(58); 
+vfork(): int => cast(int)std::sysc0(190); 
 
 }
 

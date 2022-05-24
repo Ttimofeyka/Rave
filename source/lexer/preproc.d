@@ -18,6 +18,22 @@ import parser.mparser;
 import parser.ast;
 import std.string;
 
+class BoolStack {
+    bool[int] b;
+    int ptr = -1;
+
+    this() {}
+
+    bool pop() {
+        bool toret = b[ptr];
+        b.remove(ptr);
+        ptr -= 1;
+        return toret;
+    }
+    void push(bool p) {ptr += 1; b[ptr] = p;}
+    long length() {return cast(long)b.length;}
+}
+
 class Preprocessor {
     TList tokens;
     TList[string] defines;
@@ -28,7 +44,7 @@ class Preprocessor {
     string[][string] _macrosDefinesNames;
     int idxx = 0;
 
-    bool[] _ifStack;
+    BoolStack bs;
     int i = 0; // Iterate by tokens
 
     string stdlibIncPath;
@@ -36,8 +52,8 @@ class Preprocessor {
     private bool canOutput() {
         // _ifStack: StdList<bool>;
         // canOutput => this->_ifStack.length == 0 || this->_ifStack->get(-1);
-        if(_ifStack.length == 0) return true;
-        foreach(c; _ifStack) { if(!c) return false; }
+        if(bs.length == 0) return true;
+        foreach(c; bs.b) { if(!c) return false; }
         return true;
     }
 
@@ -277,6 +293,7 @@ class Preprocessor {
         this._macros = macros;
         this._macrosDefinesNames = mN;
         this._includeFiles = iF;
+        this.bs = new BoolStack();
 
         int currPr = 0;
 
@@ -356,7 +373,10 @@ class Preprocessor {
                     auto name = get().value;
                     i += 1;
                     // writeln("#ifdef " ~ name ~ " -> " ~ (name !in defines ? "not defined" : "defined"));
-                    if(canOutput())_ifStack ~= !(name !in defines);
+                    //if(canOutput()) {
+                        //writeln("ifdef "~name~",",!(name !in defines));
+                        bs.push(!(name !in defines));
+                    //}
                 }
                 else if(get().cmd == TokCmd.cmd_ifndef) {
                     i += 1;
@@ -366,26 +386,35 @@ class Preprocessor {
                     }
                     auto name = get().value;
                     i += 1;
-                    if(canOutput()) _ifStack ~= name !in defines;
+                    //if(canOutput()) {
+                        //writeln("ifdef "~name~",",name !in defines);
+                        bs.push(name !in defines);
+                    //}
                 }
                 else if(get().cmd == TokCmd.cmd_end) {
                     i += 1;
 
-                    if(_ifStack.length == 0) {
+                    if(bs.length == 0) {
                         error("Unmatched '@end'!");
                     }
                     else {
-                        if(canOutput()) remove(_ifStack, cast(size_t)(_ifStack.length) - 1);
+                        //writeln("end");
+                        //writeln("BEFORE: "~to!string(bs.length));
+                        bs.pop();
+                        //writeln("AFTER: "~to!string(bs.length));
+                        //for(int z=0; z<bs.length; z++) {
+                            //writeln("%"~to!string(bs.b[z]));
+                        //}
                     }
                 }
                 else if(get().cmd == TokCmd.cmd_else) {
                     i += 1;
 
-                    if(_ifStack.length == 0) {
+                    if(bs.length == 0) {
                         error("Unmatched '@else'!");
                     }
 
-                    if(canOutput()) _ifStack ~= !_ifStack[$-1];
+                   bs.push(!(bs.b[bs.ptr-1]));
                 }
                 else if(get().cmd == TokCmd.cmd_protected) {
                     string randomname = defines["_FILE"][0].value;
@@ -393,7 +422,7 @@ class Preprocessor {
                     currPr += 1;
 
                     if(canOutput()) {
-                         _ifStack ~= randomname !in defines;
+                         bs.push(randomname !in defines);
                          defines[randomname] = new TList();
                     }
 
@@ -433,7 +462,7 @@ class Preprocessor {
                     string v2 = get().value;
                     if(v2 in defines) v = defines[v2][0].value;
                     i += 1;
-                    if(canOutput()) _ifStack ~= (v == v2);
+                    if(canOutput()) bs.push(v == v2);
                 }
                 else if(get().cmd == TokCmd.cmd_exit) {
                     i += 1;

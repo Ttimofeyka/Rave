@@ -7,6 +7,7 @@
 @def stderr 2 @end
 @def errno -1 @end
 
+@ifndef _I686
 fopen(filename: char*, flags: int, mode: int): int => cast(int)std::sysc3(2,filename,flags,mode);
 
 fclose(fd: int) {
@@ -36,6 +37,38 @@ uselib(file: char*): int => cast(int)std::sysc1(134,file);
 fchmod(fd: int, mode: int) {
     std::sysc2(91,fd,mode);
 }
+@end
+@ifdef _I686
+fopen(filename: char*, flags: int, mode: int): int => cast(int)std::sysc3(5,filename,flags,mode);
+
+fclose(fd: int) {
+    std::sysc1(6,fd);
+}
+
+fwrite(fd: int, buff: char*, size: int) {
+    std::sysc3(4,fd,buff,size);
+}
+
+fread(fd: int, buff: char*, size: int): int => cast(int)std::sysc3(3,fd,buff,size);
+
+mkdir(pathname: char*, mode: int) {
+    std::sysc2(39,pathname,mode);
+}
+
+rmdir(pathname: char*) {
+    std::sysc1(40,pathname);
+}
+
+chmod(file: char*, mode: int) {
+    std::sysc2(15,file,mode);
+}
+
+uselib(file: char*): int => cast(int)std::sysc1(86,file);
+
+fchmod(fd: int, mode: int) {
+    std::sysc2(94,fd,mode);
+}
+@end
 
 fputs(fd: int, s: char*) {
     fwrite(fd, s, strlen(s));

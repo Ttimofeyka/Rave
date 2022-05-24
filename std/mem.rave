@@ -4,7 +4,7 @@
 @inc "std/unix";
 
 brk(addr: void*): int {
-    ret cast(int)std::sysc1(12,addr);
+    ret cast(int)std::sysc1(45,addr);
 }
 
 stdmem_currbrk: void* = NULL;

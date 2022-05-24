@@ -2,8 +2,17 @@
 
 @macro assert(cond) if(!cond) std::exit(3) @endm
 
+@ifndef _I686
 namespace std {
     exit(errCode: int) {
         std::sysc1(60,errCode);
     }
 }
+@end
+@ifdef _I686
+namespace std {
+    exit(errCode: int) {
+        std::sysc1(1,errCode);
+    }
+}
+@end
