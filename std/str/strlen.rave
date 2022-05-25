@@ -1,9 +1,7 @@
-@once
-
 strlen(str: char*): int {
     i: int = 0;
-    while(str[i] != '\0') i += 1;
+    while(str[i] != '\0') {
+        i += 1;
+    }
     ret i;
 }
-
-@end

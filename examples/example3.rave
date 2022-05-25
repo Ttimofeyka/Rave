@@ -1,6 +1,3 @@
-@inc "std/io"
-
 main: int {
-    std::exit(6);
     ret 0;
 }

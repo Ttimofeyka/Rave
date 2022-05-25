@@ -65,7 +65,7 @@ class AstNode {
 		assert(0);
 	}
 
-	TList getTokens() { return null; }
+	TList getTokens(string caller) { TList toret = new TList(); toret.insertBack(new Token(basic,"LOL")); return toret; }
 
 	debug {
 		void writeTabs(int indent) {
@@ -573,6 +573,48 @@ class AstNodeFunction : AstNode {
 		LLVMVerifyFunction(func, 0);
 		
 		return func;
+	}
+
+	override TList getTokens(string caller) {
+		TList toret = new TList();
+		if(body_ !is null) {
+			AstNodeBlock funcBody = cast(AstNodeBlock)body_;
+			toret.insertBack(new Token(basic,decl.name,TokType.tok_id));
+			if(decl.argNames.length > 0) {
+				toret.insertBack(new Token(basic,"(",TokType.tok_lpar));
+				for(int i=0; i<decl.signature.args.length; i++) {
+					toret.insertBack(new Token(basic,decl.argNames[i],TokType.tok_id));
+					toret.insertBack(new Token(basic,":",TokType.tok_type));
+					toret.insertBack(new Token(basic,decl.signature.args[i].toString(),TokType.tok_id));
+					if((i+1) < decl.signature.args.length) toret.insertBack(new Token(basic,",",TokType.tok_comma));
+				}
+				toret.insertBack(new Token(basic,")",TokType.tok_rpar));
+			}
+			toret.insertBack(new Token(basic,":",TokType.tok_type));
+			toret.insertBack(new Token(basic,decl.signature.ret.toString()));
+			toret.insertBack(new Token(basic,"{",TokType.tok_2lbra));
+			toret.insertBack(funcBody.getTokens("AstNodeFunction"));
+			toret.insertBack(new Token(basic,"}",TokType.tok_2rbra));
+			return toret;
+		}
+		else {
+			toret.insertBack(new Token(basic,"extern"));
+			toret.insertBack(new Token(basic,decl.name,TokType.tok_id));
+			toret.insertBack(new Token(basic,"(",TokType.tok_lpar));
+			if(decl.argNames.length > 0) {
+				for(int i=0; i<decl.signature.args.length; i++) {
+					toret.insertBack(new Token(basic,decl.argNames[i],TokType.tok_id));
+					toret.insertBack(new Token(basic,":",TokType.tok_type));
+					toret.insertBack(new Token(basic,decl.signature.args[i].toString(),TokType.tok_id));
+					if((i+1) < decl.signature.args.length) toret.insertBack(new Token(basic,",",TokType.tok_comma));
+				}
+			}
+			toret.insertBack(new Token(basic,")",TokType.tok_rpar));
+			toret.insertBack(new Token(basic,":",TokType.tok_type));
+			toret.insertBack(new Token(basic,decl.signature.ret.toString()));
+			toret.insertBack(new Token(basic,";",TokType.tok_semicolon));
+			return toret;
+		}
 	}
 
 	debug {
@@ -1165,6 +1207,15 @@ class AstNodeBinary : AstNode { // Binary operations
 		
 	}
 
+	override TList getTokens(string caller) {
+		TList toret = new TList();
+		toret.insertBack(lhs.getTokens("AstNodeBinary"));
+		toret.insertBack(new Token(basic,"",type));
+		toret.insertBack(rhs.getTokens("AstNodeBinary"));
+		if(caller == "AstNodeBlock") toret.insertBack(new Token(basic,";",TokType.tok_semicolon));
+		return toret;
+	}
+
 	override void analyze(AnalyzerScope s, Type neededType) {
 		if(this.type == TokType.tok_equ) {
 			lhs.analyze(s, new TypeUnknown()); // TODO: Check if it's assignable
@@ -1449,6 +1500,18 @@ class AstNodeIf : AstNode {
 
 		return null;
 	}
+
+	override TList getTokens(string caller) {
+		TList toret = new TList();
+		toret.insertBack(new Token(basic,"if"));
+		toret.insertBack(new Token(basic,"(",TokType.tok_lpar));
+		toret.insertBack(cond.getTokens("AstNodeIf"));
+		toret.insertBack(new Token(basic,")",TokType.tok_rpar));
+		toret.insertBack(new Token(basic,"{"));
+		toret.insertBack(body_.getTokens("AstNodeIf"));
+		toret.insertBack(new Token(basic,"}"));
+		return toret;
+	}
 	
 	debug {
 		override void debugPrint(int indent) {
@@ -1519,6 +1582,18 @@ class AstNodeWhile : AstNode {
 		return null;
 	}
 
+	override TList getTokens(string caller) {
+		TList toret = new TList();
+		toret.insertBack(new Token(basic,"while"));
+		toret.insertBack(new Token(basic,"(",TokType.tok_lpar));
+		toret.insertBack(cond.getTokens("AstNodeWhile"));
+		toret.insertBack(new Token(basic,")",TokType.tok_rpar));
+		toret.insertBack(new Token(basic,"{"));
+		toret.insertBack(body_.getTokens("AstNodeWhile"));
+		toret.insertBack(new Token(basic,"}"));
+		return toret;
+	}
+
 	debug {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
@@ -1585,6 +1660,14 @@ class AstNodeBlock : AstNode {
 		}
 		s.hadReturn = s.hadReturn || newScope.hadReturn;
 		return cast(LLVMValueRef)0;
+	}
+
+	override TList getTokens(string caller) {
+		TList toret = new TList();
+		for(int i=0; i<nodes.length; i++) {
+			toret.insertBack(nodes[i].getTokens("AstNodeBlock"));
+		}
+		return toret;
 	}
 
 	debug {
@@ -1664,6 +1747,14 @@ class AstNodeReturn : AstNode {
 
 		s.hadReturn = true;
 		return v;
+	}
+
+	override TList getTokens(string caller) {
+		TList toret = new TList();
+		toret.insertBack(new Token(basic,"ret"));
+		toret.insertBack(value.getTokens("AstNodeReturn"));
+		toret.insertBack(new Token(basic,";",TokType.tok_semicolon));
+		return toret;
 	}
 
 	debug {
@@ -1857,6 +1948,12 @@ class AstNodeIden : AstNode {
 		}
 	}
 
+	override TList getTokens(string caller) {
+		TList toret = new TList();
+		toret.insertBack(new Token(basic,name,TokType.tok_id));
+		return toret;
+	}
+
 	debug {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
@@ -1960,6 +2057,7 @@ class AstNodeDecl : AstNode {
 	VariableDeclaration decl;
 	Type actualType;
 	AstNode value; // can be null!
+	bool isInImport = false;
 
 	this(VariableDeclaration decl, AstNode value) {
 		this.decl = decl;
@@ -1976,19 +2074,6 @@ class AstNodeDecl : AstNode {
 		s.vars[decl.name] = new ScopeVar(actualType);
 	}
 
-	override TList getTokens() {
-		TList toret = new TList();
-		toret.insertBack(new Token(basic,decl.name));
-		toret.insertBack(new Token(basic,":"));
-		toret.insertBack(new Token(basic,decl.type.toString()));
-		if(value !is null) {
-			toret.insertBack(new Token(basic,"="));
-			toret.insertBack(value.getTokens());
-		}
-		toret.insertBack(new Token(basic,";"));
-		return toret;
-	}
-
 	override LLVMValueRef gen(AnalyzerScope s) {
 		GenerationContext ctx = s.genctx;
 		if(ctx.gstack.isGlobal(decl.name)) {
@@ -1996,7 +2081,44 @@ class AstNodeDecl : AstNode {
 		}
 		if(s.genctx.currbuilder == null) {
 			// Global var
-			auto global = ctx.createGlobal(
+
+			LLVMValueRef global;
+
+			if(AstNodeInt i = value.instanceof!AstNodeInt) {
+				global = ctx.createGlobal(
+					ctx.getLLVMType(decl.type,s),
+					value.gen(s),
+					decl.name,
+					decl.isExtern
+				);
+			}
+			else if(AstNodeString str = value.instanceof!AstNodeString) {
+				global = ctx.createGlobal(
+					ctx.getLLVMType(decl.type,s),
+					value.gen(s),
+					decl.name,
+					decl.isExtern
+				);
+			}
+			else if(AstNodeChar ch = value.instanceof!AstNodeChar) {
+				global = ctx.createGlobal(
+					ctx.getLLVMType(decl.type,s),
+					value.gen(s),
+					decl.name,
+					decl.isExtern
+				);
+			}
+			else if(AstNodeFloat fl = value.instanceof!AstNodeFloat) {
+				global = ctx.createGlobal(
+					ctx.getLLVMType(decl.type,s),
+					value.gen(s),
+					decl.name,
+					decl.isExtern
+				);
+			}
+
+			else {
+			global = ctx.createGlobal(
 				ctx.getLLVMType(decl.type,s),
 				LLVMConstNull(ctx.getLLVMType(decl.type,s)),
 				decl.name,
@@ -2020,9 +2142,14 @@ class AstNodeDecl : AstNode {
 				ret_type
 			);
 
-			auto entry = LLVMAppendBasicBlock(func,toStringz("entry"));
-			ctx.currbuilder = LLVMCreateBuilder();
-			LLVMPositionBuilderAtEnd(ctx.currbuilder, entry);
+			ctx.currfunc = func;
+
+			ctx.gstack.gen_init(ctx);
+
+			if(!decl.isExtern) {
+				auto entry = LLVMAppendBasicBlock(func,toStringz("entry"));
+				ctx.currbuilder = LLVMCreateBuilder();
+				LLVMPositionBuilderAtEnd(ctx.currbuilder, entry);
 
 			if(indexOf(stru,"%") != -1) {
 				if(indexOf(stru,"type") == -1) {
@@ -2087,10 +2214,14 @@ class AstNodeDecl : AstNode {
 				global
 			);
 			LLVMBuildRetVoid(ctx.currbuilder);
+			}
+
+			ctx.currfunc = null;
 
 			ctx.presets.add(func);
 
 			ctx.currbuilder = null;
+			}
 
 			return global;
 		}
@@ -2178,6 +2309,27 @@ class AstNodeDecl : AstNode {
 			ctx.gstack.addGlobal(gl, decl.name);
 			return gl;
 		}
+	}
+
+	override TList getTokens(string caller) {
+		TList toret = new TList();
+		if(!isInImport) {
+			toret.insertBack(new Token(basic,decl.name,TokType.tok_id));
+			toret.insertBack(new Token(basic,":",TokType.tok_type));
+			toret.insertBack(new Token(basic,decl.type.toString(),TokType.tok_id));
+			if(value !is null) {
+				toret.insertBack(new Token(basic,"=",TokType.tok_equ));
+				toret.insertBack(value.getTokens("AstNodeDecl"));
+			}
+			toret.insertBack(new Token(basic,";",TokType.tok_semicolon));
+			return toret;
+		}
+		toret.insertBack(new Token(basic,"extern"));
+		toret.insertBack(new Token(basic,decl.name,TokType.tok_id));
+		toret.insertBack(new Token(basic,":",TokType.tok_type));
+		toret.insertBack(new Token(basic,decl.type.toString(),TokType.tok_id));
+		toret.insertBack(new Token(basic,";",TokType.tok_semicolon));
+		return toret;
 	}
 
 	debug {
@@ -2276,13 +2428,13 @@ class AstNodeCast : AstNode {
 		GenerationContext ctx = s.genctx;
 		return castTo(ctx, val.gen(s), ctx.getLLVMType(type,s));
 	}
-	override TList getTokens() {
+	override TList getTokens(string caller) {
 		TList toret = new TList();
 		toret.insertBack(new Token(basic,"cast"));
 		toret.insertBack(new Token(basic,"("));
 		toret.insertBack(new Token(basic,type.toString()));
 		toret.insertBack(new Token(basic,")"));
-		toret.insertBack(val.getTokens());
+		toret.insertBack(val.getTokens("AstNodeCast"));
 		return toret;
 	}
 }
@@ -2305,11 +2457,11 @@ class AstNodePtoi : AstNode {
 				toStringz("ptoi")
 		);
 	}
-	override TList getTokens() {
+	override TList getTokens(string caller) {
 		TList toret = new TList();
 		toret.insertBack(new Token(basic,"ptoi"));
 		toret.insertBack(new Token(basic,"("));
-		toret.insertBack(val.getTokens());
+		toret.insertBack(val.getTokens("AstNodePtoi"));
 		toret.insertBack(new Token(basic,")"));
 		return toret;
 	}
@@ -2340,11 +2492,11 @@ class AstNodeItop : AstNode {
 			toStringz("itop")
 		);
 	}
-	override TList getTokens() {
+	override TList getTokens(string caller) {
 		TList toret = new TList();
 		toret.insertBack(new Token(basic,"itop"));
 		toret.insertBack(new Token(basic,"("));
-		toret.insertBack(val.getTokens());
+		toret.insertBack(val.getTokens("AstNodeItop"));
 		toret.insertBack(new Token(basic,","));
 		toret.insertBack(new Token(basic,ptrt.toString()));
 		toret.insertBack(new Token(basic,")"));
@@ -2522,6 +2674,22 @@ class AstNodeFuncCall : AstNode {
 		);
 	}
 
+	override TList getTokens(string caller) {
+		TList toret = new TList();
+		AstNodeIden n = cast(AstNodeIden)func;
+		toret.insertBack(new Token(basic,n.name,TokType.tok_id));
+		toret.insertBack(new Token(basic,"(",TokType.tok_lpar));
+		if(args.length>0) {
+			for(int i=0; i<args.length; i++) {
+				toret.insertBack(args[i].getTokens("AstNodeFuncCall"));
+				if((i+1) != args.length) toret.insertBack(new Token(basic,",",TokType.tok_comma));
+			}
+		}
+		toret.insertBack(new Token(basic,")",TokType.tok_lpar));
+		if(caller == "AstNodeBlock") toret.insertBack(new Token(basic,";",TokType.tok_semicolon));
+		return toret;
+	}
+
 	debug {
 		override void debugPrint(int indent) {
 			writeTabs(indent);
@@ -2627,7 +2795,7 @@ class AstNodeInt : AstNode {
 		}
 	}
 
-	override TList getTokens() {
+	override TList getTokens(string caller) {
 		TList toret = new TList();
 		toret.insertBack(new Token(basic,to!string(value)));
 		return toret;
@@ -2657,7 +2825,7 @@ class AstNodeFloat : AstNode {
 		return LLVMConstReal(LLVMFloatType(),cast(double)value);
 	}
 
-	override TList getTokens() {
+	override TList getTokens(string caller) {
 		TList toret = new TList();
 		toret.insertBack(new Token(basic,to!string(value)));
 		return toret;
@@ -2692,7 +2860,7 @@ class AstNodeString : AstNode {
 		);
 	}
 
-	override TList getTokens() {
+	override TList getTokens(string caller) {
 		TList toret = new TList();
 		toret.insertBack(new Token(basic,"\""~value~"\""));
 		return toret;
@@ -2724,7 +2892,7 @@ class AstNodeChar : AstNode {
 		return LLVMConstInt(LLVMInt8Type(),value,false);
 	}
 
-	override TList getTokens() {
+	override TList getTokens(string caller) {
 		TList toret = new TList();
 		toret.insertBack(new Token(basic,"\'"~value~"\'"));
 		return toret;

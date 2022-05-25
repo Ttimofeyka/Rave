@@ -373,7 +373,6 @@ class GenerationContext {
 
     void gen(string t, AnalyzerScope s, AstNode[] nodes, string file, bool debugMode) {
 		for(int i=0; i<nodes.length; i++) {
-			//nodes[i].debugPrint(0);
 			nodes[i].gen(s);
 		}
 		this.target_platform = t;

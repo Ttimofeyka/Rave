@@ -209,7 +209,6 @@ class Parser {
 				if(peek().type == TokType.tok_comma) next();
 				else break; // TODO: trailing comma
 			}
-			writeln("hm, error there");
 			expectToken(TokType.tok_rpar);
 		}
 

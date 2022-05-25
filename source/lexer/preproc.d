@@ -17,6 +17,7 @@ import std.random : uniform;
 import parser.mparser;
 import parser.ast;
 import std.string;
+import parser.util;
 
 class BoolStack {
     bool[int] b;
@@ -159,7 +160,7 @@ class Preprocessor {
                 if(pattern !in _includeFiles) {
                     _includeFiles[pattern] = true;
                     auto l = new Lexer(pattern, readText(pattern));
-                    auto preproc = new Preprocessor(l.getTokens(), stdlibIncPath, this.defines, this._macros, this._includeFiles, this._macrosDefinesNames);
+                    auto preproc = new Preprocessor(toCompile, l.getTokens(), stdlibIncPath, this.defines, this._macros, this._includeFiles, this._macrosDefinesNames);
                     foreach(key; byKey(preproc._macros)) {
                         this._macros[key] = preproc._macros[key];
                     }
@@ -176,7 +177,7 @@ class Preprocessor {
             }
             else {
                 auto l = new Lexer(pattern, readText(pattern));
-                auto preproc = new Preprocessor(l.getTokens(), stdlibIncPath, this.defines, this._macros, this._includeFiles, this._macrosDefinesNames);
+                auto preproc = new Preprocessor(toCompile, l.getTokens(), stdlibIncPath, this.defines, this._macros, this._includeFiles, this._macrosDefinesNames);
                 foreach(token; preproc.getTokens().tokens) {
                     newtokens.insertBack(copyToken(token));
                 }
@@ -285,7 +286,9 @@ class Preprocessor {
         return strip(s);
     }
 
-    this(TList tokens, string stdlibIncPath, TList[string] defines, TList[string] macros, bool[string] iF, string[][string] mN) {
+    string[] toCompile;
+
+    this(ref string[] toCompile, TList tokens, string stdlibIncPath, TList[string] defines, TList[string] macros, bool[string] iF, string[][string] mN) {
         this.tokens = tokens;
         this.defines = defines;
         this.newtokens = new TList();
@@ -294,6 +297,7 @@ class Preprocessor {
         this._macrosDefinesNames = mN;
         this._includeFiles = iF;
         this.bs = new BoolStack();
+        this.toCompile = toCompile;
 
         int currPr = 0;
 
@@ -358,11 +362,29 @@ class Preprocessor {
                         error("Expected a string after the \"@imp\" keyword!");
                         continue;
                     }
-                    string name = get().value.replace("\"","");
+                    string name = get().value.replace("\"","")~".rave";
                     i += 1;
                     // Lexing
                     Lexer l = new Lexer(name,readText(name));
-                    
+                    Preprocessor p = new Preprocessor(toCompile,l.getTokens(),this.stdlibIncPath,this.defines,this._macros,this._includeFiles,this._macrosDefinesNames);
+                    this.defines = p.defines;
+                    this._includeFiles = p._includeFiles;
+                    this.stdlibIncPath = p.stdlibIncPath;
+                    this._macros = p._macros;
+                    this._macrosDefinesNames = p._macrosDefinesNames;
+                    this.toCompile = p.toCompile;
+                    Parser ps = new Parser(p.getTokens());
+                    AstNode[] nodes = ps.parseProgram();
+                    for(int z=0; z<nodes.length; z++) {
+                        if(AstNodeFunction f = nodes[z].instanceof!AstNodeFunction) {
+                            f.body_ = null;
+                            newtokens.insertBack(f.getTokens("Preprocessor"));
+                        }
+                        else if(AstNodeDecl d = nodes[z].instanceof!AstNodeDecl) {
+                            d.isInImport = true;
+                            newtokens.insertBack(d.getTokens("Preprocessor"));
+                        }
+                    }
                 }
                 else if(get().cmd == TokCmd.cmd_ifdef) {
                     i += 1;
@@ -528,7 +550,7 @@ class Preprocessor {
                     }
                     defines[mname~"_argslen"] = new TList();
                     defines[mname~"_argslen"].insertBack(new Token(SourceLocation(0,0,""),to!string(idxx)));
-                    Preprocessor p = new Preprocessor(_macros[mname],stdlibIncPath,this.defines,_macros,_includeFiles,_macrosDefinesNames);
+                    Preprocessor p = new Preprocessor(toCompile, _macros[mname],stdlibIncPath,this.defines,_macros,_includeFiles,_macrosDefinesNames);
                     for(int z=0; z<p.getTokens().length; z++) {
                         if(canOutput()) addT(p.getTokens()[z]);
                     }

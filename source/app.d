@@ -31,6 +31,7 @@ TList[string] defines;
 TList[string] macros;
 string[][string] macrosDN;
 bool[string] incF;
+string[] toCompile;
 
 string linker;
 
@@ -44,7 +45,7 @@ void compile(string linkFiles, bool nolink, string sourceFile, string outputType
 	string srcF = readText(sourceFile);
 	if(!noprelude) srcF = "@inc \"std/base\"\n" ~ srcF;
 	auto lexer = new Lexer(sourceFile, srcF);
-	auto preproc = new Preprocessor(lexer.getTokens(), stdlibIncPath, defines, macros, incF, macrosDN);
+	auto preproc = new Preprocessor(toCompile, lexer.getTokens(), stdlibIncPath, defines, macros, incF, macrosDN);
 
 	if(preproc.hadErrors) {
 		writeln("Failed with 1 or more errors.");
@@ -83,7 +84,7 @@ void compile(string linkFiles, bool nolink, string sourceFile, string outputType
 
 	// Linking with runtime
 	
-	if(!nolink) {
+	if(!nolink && linkFiles != "") {
 		auto cmd = executeShell(linker~" "~outputFile~platformFileType~" "~linkFiles~" -o "~outputFile);
 		if(cmd.status != 0) writeln(cmd.output);
 		if(!not_delete_o) remove(outputFile~platformFileType);
@@ -149,7 +150,8 @@ void main(string[] args)
 	}
 
     string[] sourceFiles = args[1..$].dup;
-    string sourceFile = sourceFiles[0];
+	toCompile = sourceFiles;
+    string sourceFile = toCompile[0];
 
 	defines["_MFILE"] = new TList();
 	defines["_MFILE"].insertBack(new Token(SourceLocation(0,0,""), sourceFile));
@@ -198,10 +200,11 @@ void main(string[] args)
 
   	LLVMInitializeNativeTarget();
 
-	if(sourceFiles.length > 1) {
+	if(toCompile.length > 1) {
+		noprelude = true;
 		string[] to_remove;
-		for(int i=1; i<sourceFiles.length; i++) {
-			string currF = sourceFiles[i];
+		for(int i=1; i<toCompile.length; i++) {
+			string currF = toCompile[i];
 			if( // If object file or library just add to link-files
 				currF[$-1..$] == "o"
 				||
@@ -210,14 +213,15 @@ void main(string[] args)
 				(currF.length > 2
 				&&
 				(currF[$-3..$] == "dll" 
-			|| currF[$-3..$] == "lib"))) linkF ~= sourceFiles[i] ~ " ";
+			|| currF[$-3..$] == "lib"))) linkF ~= toCompile[i] ~ " ";
 			else { // Else compile source file
-				compile("",true,sourceFiles[i],outputType,sourceFiles[i]);
-				noprelude = true;
-				linkF ~= sourceFiles[i]~platformFileType ~ " ";
-				to_remove ~= sourceFiles[i]~platformFileType;
+				compile("",true,toCompile[i],outputType,toCompile[i]);
+				linkF ~= toCompile[i]~platformFileType ~ " ";
+				to_remove ~= toCompile[i]~platformFileType;
 			}
 		}
+
+		noprelude = false;
 		compile(linkF, false, sourceFile, outputType, outputFile);
 
 		if(!not_delete_o) {

@@ -277,4 +277,13 @@ class TList {
             }
         }
     }
+
+    public override string toString()
+    {
+        string toret = "";
+        for(int z=0; z<tokens.length; z++) {
+            toret ~= tokens[z].value ~ " ";
+        }
+        return strip(toret);
+    }
 }
