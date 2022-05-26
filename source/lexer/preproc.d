@@ -385,6 +385,7 @@ class Preprocessor {
                             newtokens.insertBack(d.getTokens("Preprocessor"));
                         }
                     }
+                    toCompile ~= name;
                 }
                 else if(get().cmd == TokCmd.cmd_ifdef) {
                     i += 1;
