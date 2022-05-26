@@ -34,9 +34,6 @@ else
         sudo curl https://dlang.org/install.sh | bash -s
         checkLib "lld"
         dub build
-        cd rt
-        bash build_all.sh
-        cd ../
         clear
         echo "Done!"
     fi
