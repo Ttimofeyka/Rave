@@ -1,3 +1,5 @@
+@inc <std/io>
+
 main: int {
     ret 0;
 }

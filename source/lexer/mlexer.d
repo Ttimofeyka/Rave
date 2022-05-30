@@ -23,7 +23,7 @@ const string[] operators = [
     "||=", "&&=",
     ">>=", "<<=",
     "++", "--",
-    "=>"
+    "=>", "%"
 ];
 
 class Lexer {
@@ -276,6 +276,10 @@ class Lexer {
                 case '6': case '7': case '8': case '9':
                     tokens.insertBack(new Token(loc, getTNum(), TokType.tok_num));
                     break;
+                case '%':
+                    tokens.insertBack(new Token(loc, "%", TokType.tok_proc));
+                    next(1);
+                    break;
                 case '\'': tokens.insertBack(new Token(loc, "'"~getTChar()~"'", TokType.tok_char)); break;
                 case '"': tokens.insertBack(new Token(loc, "\""~getTStr()~"\"", TokType.tok_string)); break;
                 case '(': tokens.insertBack(new Token(loc, "(", TokType.tok_lpar)); next(1); break;
@@ -373,7 +377,12 @@ class Lexer {
                     }
                     break;
                 case '^': tokens.insertBack(new Token(loc, "^")); next(1); break;
-                case '@': _hadAt = true; tokens.insertBack(new Token(loc, "@")); next(1); break;
+                case '@':
+                    next(1);
+                    string cmd = getTID();
+                    tokens.insertBack(new Token(loc,"@"~cmd));
+                    next(1);
+                    break;
                 case '~': tokens.insertBack(new Token(loc, "~")); next(1); break;
                 case '!':
                     if(get(+1)=='=') {

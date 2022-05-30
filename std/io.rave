@@ -1,79 +1,18 @@
-@inc "std/defs"
-@inc "std/unix"
-@inc "std/str/strlen"
+@inc <std/defs>
 
-@def stdin 0 @end
-@def stdout 1 @end
-@def stderr 2 @end
-@def errno -1 @end
-
-@ifndef _I686
-fopen(filename: char*, flags: int, mode: int): int => cast(int)std::sysc3(2,filename,flags,mode);
-
-fclose(fd: int) {
-    std::sysc1(3,fd);
+struct FILE {
+    __x: char;
 }
 
-fwrite(fd: int, buff: char*, size: int) {
-    std::sysc3(1,fd,buff,size);
-}
-
-fread(fd: int, buff: char*, size: int): int => cast(int)std::sysc3(0,fd,buff,size);
-
-mkdir(pathname: char*, mode: int) {
-    std::sysc2(83,pathname,mode);
-}
-
-rmdir(pathname: char*) {
-    std::sysc1(84,pathname);
-}
-
-chmod(file: char*, mode: int) {
-    std::sysc2(90,file,mode);
-}
-
-uselib(file: char*): int => cast(int)std::sysc1(134,file);
-
-fchmod(fd: int, mode: int) {
-    std::sysc2(91,fd,mode);
-}
-@end
-@ifdef _I686
-fopen(filename: char*, flags: int, mode: int): int => cast(int)std::sysc3(5,filename,flags,mode);
-
-fclose(fd: int) {
-    std::sysc1(6,fd);
-}
-
-fwrite(fd: int, buff: char*, size: int) {
-    std::sysc3(4,fd,buff,size);
-}
-
-fread(fd: int, buff: char*, size: int): int => cast(int)std::sysc3(3,fd,buff,size);
-
-mkdir(pathname: char*, mode: int) {
-    std::sysc2(39,pathname,mode);
-}
-
-rmdir(pathname: char*) {
-    std::sysc1(40,pathname);
-}
-
-chmod(file: char*, mode: int) {
-    std::sysc2(15,file,mode);
-}
-
-uselib(file: char*): int => cast(int)std::sysc1(86,file);
-
-fchmod(fd: int, mode: int) {
-    std::sysc2(94,fd,mode);
-}
-@end
-
-fputs(fd: int, s: char*) {
-    fwrite(fd, s, strlen(s));
-}
-
-puts(s: char*) {
-    fwrite(stdout, s, strlen(s));
+namespace std {
+    extern(C,vararg,linkname:"printf") printf(str: char*);
+    extern(C,linkname:"puts") puts(s: char*);
+    extern(C,linkname:"gets") gets(buf: char*): char*;
+    extern(C,linkname:"getchar") getchar(): char;
+    extern(C,linkname:"fopen") fopen(file: char*, mode: char*): void*;
+    extern(C,linkname:"fclose") fclose(file: FILE*): bool;
+    extern(C,linkname:"getc") getc(file: FILE*): char;
+    extern(C,linkname:"fgetc") fgetc(file: FILE*): char;
+    extern(C,vararg,linkname:"scanf") scanf(s: char*);
+    extern(C,vararg,linkname:"fscanf") fscanf(file: FILE*, s: char*);
 }

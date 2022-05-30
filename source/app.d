@@ -43,15 +43,9 @@ void compile(string linkFiles, bool nolink, string sourceFile, string outputType
 
 	// writeln("------------------ Lexer -------------------");
 	string srcF = readText(sourceFile);
-	if(!noprelude) srcF = "@inc \"std/base\"\n" ~ srcF;
+	if(!noprelude) srcF = "@inc <std/base>\n@inc <std/mem>\n" ~ srcF;
 	auto lexer = new Lexer(sourceFile, srcF);
-	auto preproc = new Preprocessor(toCompile, lexer.getTokens(), stdlibIncPath, defines, macros, incF, macrosDN);
-
-	if(preproc.hadErrors) {
-		writeln("Failed with 1 or more errors.");
-		stackMemory.cleanup();
-		exit(1);
-	}
+	auto preproc = new Preprocessor(lexer.getTokens(),dirName(sourceFile));
 
 	auto parser = new Parser(preproc.getTokens());
 	auto nodes = parser.parseProgram();
@@ -161,18 +155,6 @@ void main(string[] args)
 	defines["_OFILE"].insertBack(new Token(SourceLocation(0, 0, outputFile), outputFile));
 	defines["_PLATFORM"] = new TList();
 	defines["_PLATFORM"].insertBack(new Token(SourceLocation(0,0,""),"\""~outputType~"\""));
-	defines["true"] = new TList();
-	defines["true"].insertBack(new Token(SourceLocation(0,0,""),"cast"));
-	defines["true"].insertBack(new Token(SourceLocation(0,0,""),"(", TokType.tok_lpar));
-	defines["true"].insertBack(new Token(SourceLocation(0,0,""),"bool", TokType.tok_id));
-	defines["true"].insertBack(new Token(SourceLocation(0,0,""),")", TokType.tok_rpar));
-	defines["true"].insertBack(new Token(SourceLocation(0,0,""),"1",TokType.tok_num)); //
-	defines["false"] = new TList();
-	defines["false"].insertBack(new Token(SourceLocation(0,0,""),"cast"));
-	defines["false"].insertBack(new Token(SourceLocation(0,0,""),"(", TokType.tok_lpar));
-	defines["false"].insertBack(new Token(SourceLocation(0,0,""),"bool", TokType.tok_id));
-	defines["false"].insertBack(new Token(SourceLocation(0,0,""),")", TokType.tok_rpar));
-	defines["false"].insertBack(new Token(SourceLocation(0,0,""),"0",TokType.tok_num)); //
 
 	if(outputType.indexOf("linux") != -1) {
 		defines["_LINUX"] = new TList();
@@ -187,6 +169,10 @@ void main(string[] args)
 		defines["_I686"] = new TList();
 		defines["_I686"].insertBack(new Token(SourceLocation(0,0,""),""));
 	}
+	else if(outputType.indexOf("x86_64") != -1) {
+		defines["_X86_64"] = new TList();
+		defines["_X86_64"].insertBack(new Token(SourceLocation(0,0,""),""));
+	}
 
 	if(debugMode) defines["_DEBUG"] = new TList();
 	else defines["_NDEBUG"] = new TList();
@@ -197,6 +183,7 @@ void main(string[] args)
 	if(!noentry) linkF ~= path_to_rt~"begin"~platformFileType~" ";
 	if(isshared) linkF ~= "-shared ";
 	if("_WINDOWS" in defines) linkF ~= "lib/kernel32.lib ";
+	if("_X86_64" in defines) linkF ~= "lib/x86_64-linux/libc.a ";
 
   	LLVMInitializeNativeTarget();
 

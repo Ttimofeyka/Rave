@@ -472,6 +472,10 @@ class Parser {
 				auto tok = next();
 				base = new AstNodeUnary(tok.loc, base, TokType.tok_r_min_min);
 			}
+			else if(peek().type == TokType.tok_hash) {
+				auto tok = next();
+				base = new AstNodeUnary(tok.loc, base, TokType.tok_hash);
+			}
 		}
 
 		return base;
@@ -486,6 +490,16 @@ class Parser {
 			}
 			if(canFind(t.value, '.')) return new AstNodeFloat(t.loc, parse!float(t.value));
 			else return new AstNodeInt(t.loc, parse!ulong(t.value));
+		}
+		if(t.type == TokType.tok_true) {
+			return new AstNodeBool(true);
+		}
+		if(t.type == TokType.tok_false) {
+			return new AstNodeBool(false);
+		}
+		if(t.type == TokType.tok_hash) {
+			auto t2 = next();
+			return new AstNodeUnary(t.loc,new AstNodeIden(t2.loc,t2.value),TokType.tok_hash);
 		}
 		if(t.type == TokType.tok_string) return new AstNodeString(t.loc, t.value[1..$]);
 		if(t.type == TokType.tok_char) return new AstNodeChar(t.loc, t.value[1..$][0]);
@@ -507,6 +521,12 @@ class Parser {
 				AstNode val = parseExpr();
 				expectToken(TokType.tok_rpar);
 				return new AstNodePtoi(val);
+			}
+			else if(t.value == "addr") {
+				expectToken(TokType.tok_lpar);
+				string id = next().value;
+				expectToken(TokType.tok_rpar);
+				return new AstNodeAddr(id);
 			}
 			else if(t.value == "itop") {
 				expectToken(TokType.tok_lpar);
@@ -533,7 +553,6 @@ class Parser {
 		if(t.type == TokType.tok_lbra) {
 			return parseConstArray();
 		}
-
 		error("Expected a variable, a number, a string, a char or an expression in parentheses. Got: "
 			~ to!string(t.type));
 		return null;
@@ -629,6 +648,7 @@ class Parser {
 			TokType.tok_bit_ls: -25,
 			TokType.tok_bit_rs: -25,
 			TokType.tok_bit_xor: -30,
+			TokType.tok_proc: -25,
 		];
 
 		SList!Token operatorStack;

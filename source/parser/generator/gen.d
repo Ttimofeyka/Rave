@@ -66,6 +66,16 @@ class GStack {
 		else {}
 	}
 
+	void rename(string old, string n) {
+		if(isLocal(old)) {
+			locals[n] = locals[old];
+			locals.remove(old);
+			return;
+		}
+		globals[n] = globals[old];
+		globals.remove(old);
+	}
+
 	void gen_init(GenerationContext ctx) {
 		this.ctx = ctx;
 	}
@@ -142,6 +152,17 @@ class GFuncs {
         types[n] = t;
 		typesf[n] = tf;
     }
+
+	void rename(string old, string n) {
+		funcs[n] = funcs[old];
+		funcs.remove(old);
+		types[n] = types[old];
+		types.remove(old);
+		typesf[n] = typesf[old];
+		typesf.remove(old);
+		try{funcs_varargs[n] = funcs_varargs[old];} catch(Error e) {}
+		funcs_varargs.remove(old);
+	}
 
     LLVMTypeRef getType(string n) {
 		if(n in newfuncs) return types[newfuncs[n]];

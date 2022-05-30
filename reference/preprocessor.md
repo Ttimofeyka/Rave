@@ -14,40 +14,18 @@ If the definition doesn't exist, the code is processed.
 
 Creating a definition.
 
-### `@redef [defname] [newdefvalue] @end`
-
-Changing the definition value.
-
 ### `@undef [defname]`
 
 Deletes the definition.
 
-### `@inc "[pathname]"`
+### `@inc "[pathname]" or <pathname>(if std)`
+### `@ins "[pathname]" or <pathname>(if std)`
 
-Inserts the specified file.
+Inserts the specified file, but "@inc" inserts the file taking into account the protection against its re-inclusion.
+
+This means that "@ins" is an include from C.
 
 `.rave` is inserted automatically.
-
-### `@once [onceblock] @end`
-
-Indicates that when you insert this file multiple times from other files(using @ins), this code will be inserted only 1 time.
-
-
-### `@else [elseblock] @end`
-
-If the previous command associated with the conditions is incorrect, then this code is inserted.
-
-### `@err [errval] @end`
-
-Outputs an error with compilation stopped.
-
-### `@warn [warnval] @end`
-
-Outputs a warning.
-
-### `@out [outval] @end`
-
-Outputs a text.
 
 ### `@exit [exitcode]`
 

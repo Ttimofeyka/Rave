@@ -36,7 +36,6 @@
 
 namespace std {
 
-namespace net {
 
 struct sockaddr {
     sa_family: int;
@@ -51,7 +50,7 @@ struct iovec {
 struct msghdr {
     msg_name: void*;      
     msg_namelen: int;  
-    msg_iov: std::net::iovec*;   
+    msg_iov: std::iovec*;   
     msg_iovlen: int;   
     msg_control: void*;  
     msg_controllen: int; 
@@ -90,54 +89,33 @@ struct in6_addr {
 struct sockaddr_in6 {
 	sin6_family: int;   /* SOCKET_IP6               */
 	sin6_port: short;     /* Port number            */
-	sin6_addr: in6_addr;     /* IPv6 address           */
+	sin6_addr: std::in6_addr;     /* IPv6 address           */
 	sin6_scope_id: char; /* interfaces for a scope */
 }
 
 struct sockaddr_in6_ptr {
 	sin6_family: int;   /* SOCKET_IP6               */
 	sin6_port: short;     /* Port number            */
-	sin6_addr: in6_addr*;   /* IPv6 address           */
+	sin6_addr: std::in6_addr*;   /* IPv6 address           */
 	sin6_scope_id: char; /* interfaces for a scope */
 }
 
 struct sockaddr_in {
 	sin_family: int;    /* SOCKET_IP4      */
 	sin_port: short;      /* Port number  */
-	sin_addr: in_addr;      /* IPv4 address */
+	sin_addr: std::in_addr;      /* IPv4 address */
 }
 
 struct sockaddr_in_ptr {
 	sin_family: int;    /* SOCKET_IP4      */
 	sin_port: short;    /* Port number  */
-	sin_addr: in_addr*;     /* IPv4 address */
+	sin_addr: std::in_addr*;     /* IPv4 address */
 }
 
-socket(domain: int, type: int, protocol: int): int => cast(int)std::sysc3(41,domain,type,protocol);
+extern(C,linkname:"socket") socket(dom: int, t: int, prot: int): int;
+extern(C,linkname:"gethostbyname") _gethostbyname(n: char*): void*;
 
-connect(sockfd: int, addr: std::net::sockaddr*, addrlen: int): int => cast(int)std::sysc3(42,sockfd,addr,addrlen);
-
-accept(sockfd: int, addr: std::net::sockaddr*, addrlen: int): int => cast(int)std::sysc3(43,sockfd,addr,addrlen);
-
-sendto(sockfd: int, buff: void*, len: int, flags: int, dest: std::net::sockaddr*, addrlen: int): int => cast(int)std::sysc6(44,sockfd,buff,len,flags,dest,addrlen);
-
-send(sockfd: int, buff: void*, len: int, flags: int): int => std::net::sendto(sockfd, buff, len, flags, cast(std::net::sockaddr*)0, 0);
-
-sendmsg(sockfd: int, msg: std::net::msghdr*, flags: int): int => cast(int)std::sysc3(46,sockfd,msg,flags);
-
-recvfrom(sockfd: int, buf: void*, len: int, flags: int, src_addr: std::net::sockaddr*, addrlen: int*): int => cast(int)std::sysc6(45,sockfd,buf,len,flags,src_addr,addrlen);
-
-recv(sockfd: int, buf: void*, len: int, flags: int): int => std::net::recvfrom(sockfd, buf, len, flags, cast(std::net::sockaddr*)NULL, cast(int*)NULL);
-
-recvmsg(sockfd: int, msg: std::net::msghdr*, flags: int): int => cast(int)std::sysc3(47,sockfd,msg,flags);
-
-listen(sockfd: int, backlog: int): int => cast(int)std::sysc2(50,sockfd,backlog);
-
-bind(sockfd: int, addr: std::net::sockaddr*, addrlen: int): int => cast(int)std::sysc3(49,sockfd,addr,addrlen);
-
-shutdown(sockfd: int, how: int): int => cast(int)std::sysc2(48,sockfd,how);
-
-}
+@macro gethostbyname(name) cast(std::hostent*)_gethostbyname(name) @endm
 
 }
 

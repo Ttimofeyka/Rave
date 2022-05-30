@@ -3,36 +3,12 @@
 @inc "std/defs";
 @inc "std/ascii";
 
-@def LONG_MIN 0x80000000 @end
-@def LONG_MAX 9223372036854775807 @end
+namespace std {
 
-ctoi(c: char): int => cast(int)c - cast(int)'0';
+extern(C,linkname:"atoi") stoi(a: char*): int;
+extern(C,linkname:"atol") stol(a: char*): long;
+extern(C,linkname:"atof") stof(a: char*): float;
 
-itoc(i: int): char => cast(char)(i+cast(int)'0');
-
-stol(s: char*): long {
-   res: long = 0;
-   i: int = 0;
-   minus: bool = (s[0] == '-');
-
-   if(minus || (s[0] == '+')) i += 1;
-
-   while (std::isdigit(s[i])) {
-      res = res*10 + (s[i] - '0');
-      i += 1;
-   }
-
-   if(minus) ret -res;
-   ret res;
-}
-
-@macro stoi(s) (cast(int)stol(s)) @endm
-
-btos(b: bool): char* {
-    toret: char*;
-    if(b) toret = "true";
-    else toret = "false";
-    ret toret;
 }
 
 @end

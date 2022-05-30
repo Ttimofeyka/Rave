@@ -1,18 +1,7 @@
-@inc "std/unix"
+@inc <std/unix>
 
-@macro assert(cond) if(!cond) std::exit(3) @endm
+@macro assert(cond) if(!(cond)) std::exit(3) @endm
 
-@ifndef _I686
 namespace std {
-    exit(errCode: int) {
-        std::sysc1(60,errCode);
-    }
+    extern(C,linkname:"exit") exit(code: int);
 }
-@end
-@ifdef _I686
-namespace std {
-    exit(errCode: int) {
-        std::sysc1(1,errCode);
-    }
-}
-@end

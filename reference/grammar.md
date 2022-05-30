@@ -69,6 +69,12 @@ Sizeof lets you know the exact size of a type or structure.
 
 Sizeof form is `sizeof([type/structname])`.
 
+### addr
+
+Addr - taking the address of the variable.
+
+Addr form is `addr([varname])`.
+
 ### ret
 
 `ret` returns the value from the function.

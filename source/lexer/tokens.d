@@ -68,6 +68,9 @@ enum TokType {
     tok_question, // ?
     tok_namesp_get, // ::
     tok_multiargs, // ..
+    tok_true,
+    tok_false,
+    tok_proc, // %
 }
 
 enum TokCmd {
@@ -106,6 +109,7 @@ enum TokCmd {
     cmd_macro,
     cmd_endm,
     cmd_nexttok_str,
+    cmd_nexttok_unstr,
 }
 
 struct SourceLocation {
@@ -198,6 +202,8 @@ class Token {
                 case "::": this.type = TokType.tok_namesp_get; break;
                 case "<=": this.type = TokType.tok_less_equal; break;
                 case ">=": this.type = TokType.tok_more_equal; break;
+                case "true": this.type = TokType.tok_true; break;
+                case "false": this.type = TokType.tok_false; break;
                 // Commands
                 case "if": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_if; break;
                 case "else": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_else; break;
@@ -232,6 +238,7 @@ class Token {
                 case "@macro": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_macro; break;
                 case "@endm": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_endm; break;
                 case "@strify": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_nexttok_str; break;
+                case "@unstrify": this.type=TokType.tok_cmd; this.cmd=TokCmd.cmd_nexttok_unstr; break;
                 // Identifier
                 default: this.type = TokType.tok_id; break;
             }

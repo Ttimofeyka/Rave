@@ -1,7 +1,7 @@
-@inc "std/str/strlen";
-@inc "std/str/indexOf";
-@inc "std/str/indexOfs";
-@inc "std/str/strcpy";
-@inc "std/str/strcmp";
-@inc "std/str/strcat";
-@inc "std/str/strncmp";
+namespace std {
+    extern(C,linkname:"strlen") strlen(s: char*): int;
+    extern(C,linkname:"strcpy") strcpy(s1: char*, s2: char*): char*;
+    extern(C,linkname:"strcmp") strcmp(s1: char*, s2: char*): bool;
+    extern(C,linkname:"strcat") strcat(s1: char*, s2: char*): char*;
+    extern(C,linkname:"strdup") strdup(s: char*): char*;
+}

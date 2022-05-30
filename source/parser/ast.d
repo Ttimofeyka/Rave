@@ -436,7 +436,6 @@ class AstNodeFunction : AstNode {
 			);
 
 			for(int i = 0; i < decl.signature.args.length; i++) {
-				
 				paramTypes[i] = ctx.getLLVMType(decl.signature.args[i],s);
 				//char* ptype = LLVMPrintTypeToString(paramTypes[i]);
 				//writeln(fromStringz(ptype));
@@ -448,6 +447,7 @@ class AstNodeFunction : AstNode {
 	}
 
 	override LLVMValueRef gen(AnalyzerScope s) {
+		bool vararg = false;
 		GenerationContext ctx = s.genctx;
 		if(decl.name in ctx.gfuncs.funcs) {
 			ctx.err("Function \""~decl.name~"\" already exists!",where);
@@ -456,7 +456,7 @@ class AstNodeFunction : AstNode {
 
 		AstNodeBlock funcBody = cast(AstNodeBlock)body_;
 
-		LLVMTypeRef retType = ctx.getLLVMType(retT,s);
+		LLVMTypeRef retType = ctx.getLLVMType(decl.signature.ret,s);
 
 		for(int i=0; i<decl.signature.args.length; i++) {
 			if(AtstNodeName n = decl.signature.args[i].instanceof!AtstNodeName) {
@@ -467,12 +467,7 @@ class AstNodeFunction : AstNode {
 			}
 		}
 
-		LLVMTypeRef funcType = LLVMFunctionType(
-		    retType,
-			getParamsTypes(s),
-		    cast(uint)decl.signature.args.length,
-		    false
-	    );
+		string linkname = null;
 
 		bool shouldMangle = true;
 		foreach(mod; decl.decl_mods) { // Function pre-options
@@ -487,12 +482,24 @@ class AstNodeFunction : AstNode {
 					s.ctx.addError("Function modifier 'lib' needs exactly 1 parameter.",
 						this.where);
 			}
+			else if(mod.name == "linkname") {
+				linkname = mod.args[0];
+			}
+			else if(mod.name == "vararg") vararg = true;
 			else {
 				s.ctx.addError("Unknown modifier: '" ~ mod.name ~ "'", this.where);
 			}
 		}
 
-		LLVMValueRef func = LLVMAddFunction(
+		LLVMTypeRef funcType = LLVMFunctionType(
+		    retType,
+			getParamsTypes(s),
+		    cast(uint)decl.signature.args.length,
+		    vararg
+	    );
+
+		LLVMValueRef func;
+		if(linkname == null) func = LLVMAddFunction(
 			ctx.mod,
 			toStringz(
 				shouldMangle
@@ -500,8 +507,17 @@ class AstNodeFunction : AstNode {
 				: decl.name),
 			funcType
 		);
+		else func = LLVMAddFunction(
+			ctx.mod,
+			toStringz(
+				shouldMangle
+				? ctx.mangleQualifiedName([decl.name], true)
+				: linkname),
+			funcType
+		);
 
 		//LLVMSetFunctionCallConv(func, LLVMPTXKernelCallConv);
+		
 
 		ctx.gfuncs.add(decl.name, func, retType, type);
 		ctx.currfunc = func;
@@ -833,6 +849,25 @@ class AstNodeGet : AstNode { // ->, .
 			writeln("Get(" ~ (isSugar?"->":".") ~ ") ", this.field);
 			value.debugPrint(indent + 1);
 		}
+	}
+}
+
+class AstNodeBool : AstNode {
+	bool value;
+
+	override void analyze(AnalyzerScope s, Type neededType) {}
+	override TList getTokens(string caller) {
+		TList toret = new TList();
+		toret.insertBack(new Token(basic,to!string(value)));
+		return toret;
+	}
+	this(bool value) {this.value = value;}
+	override LLVMValueRef gen(AnalyzerScope s) {
+		return LLVMConstInt(
+			LLVMInt1Type(),
+			cast(ulong)value,
+			true
+		);
 	}
 }
 
@@ -1193,6 +1228,14 @@ class AstNodeBinary : AstNode { // Binary operations
 					trn[1],
 					toStringz("moreequal")
 				);
+			case TokType.tok_proc:
+				LLVMValueRef[] trn = trueNums(ctx,lhs.gen(s),rhs.gen(s));
+				return LLVMBuildSRem(
+					ctx.currbuilder,
+					trn[0],
+					trn[1],
+					toStringz("srem")
+				);
 			default:
 				break;
 		}
@@ -1260,6 +1303,27 @@ class AstNodeBinary : AstNode { // Binary operations
 			lhs.debugPrint(indent + 1);
 			rhs.debugPrint(indent + 1);
 		}
+	}
+}
+
+class AstNodeAddr : AstNode {
+	string id;
+	
+	this(string id) {this.id = id;}
+
+	override void analyze(AnalyzerScope s, Type neededType) {
+
+	}
+
+	override LLVMValueRef gen(AnalyzerScope s) {
+		GenerationContext ctx = s.genctx;
+		LLVMTypeRef lt = LLVMTypeOf(ctx.gstack[id]);
+		if(lt == LLVMPointerType(LLVMInt1Type(),0)
+		 ||lt == LLVMPointerType(LLVMInt8Type(),0)
+		 ||lt == LLVMPointerType(LLVMInt16Type(),0)
+		 ||lt == LLVMPointerType(LLVMInt32Type(),0)
+		 ||lt == LLVMPointerType(LLVMInt64Type(),0)) return LLVMBuildPtrToInt(ctx.currbuilder,ctx.gstack[id],LLVMTypeOf(ctx.gstack[id]),toStringz("addr"));
+		return LLVMBuildBitCast(ctx.currbuilder,ctx.gstack[id],LLVMTypeOf(LLVMBuildLoad(ctx.currbuilder,ctx.gstack[id],toStringz("l"))),toStringz("link"));
 	}
 }
 
@@ -1406,6 +1470,12 @@ class AstNodeUnary : AstNode { // Unary operations
 				node.gen(s),
 				LLVMConstInt(LLVMInt32Type(),1,false)
 			);
+		}
+		else if(type == TokType.tok_hash) {
+			if(AstNodeIden id = node.instanceof!AstNodeIden) {
+				LLVMValueRef vid = id.gen(s);
+				return LLVMBuildPtrToInt(ctx.currbuilder, vid, LLVMTypeOf(vid), toStringz("link"));
+			}
 		}
 		return null;
 	}
@@ -1791,7 +1861,16 @@ class AstNodeIndex : AstNode {
 				ctx.currbuilder,
 				baseg,
 				[index.gen(s)].ptr,
-				1,
+				cast(uint)1,
+				toStringz("getelbyix_gfs")
+			);
+		}
+		else if(LLVMGetTypeKind(LLVMTypeOf(baseg)) == LLVMArrayTypeKind) {
+			return LLVMBuildGEP(
+				ctx.currbuilder,
+				baseg,
+				[LLVMConstInt(LLVMInt32Type(),cast(ulong)0,true),index.gen(s)].ptr,
+				2,
 				toStringz("get_el_by_index_genforset")
 			);
 		}
@@ -1999,14 +2078,15 @@ class AstNodeNamespace : AstNode {
 				string oldname = decl.decl.name;
 				decl.decl.name = namespacesToGenName(names,decl.decl.name,"var");
 				decl.gen(s);
-				ctx.gstack.newnames[namespacesToVarName(names,oldname)] = decl.decl.name;
+				string newname = namespacesToVarName(names,oldname);
+				ctx.gstack.rename(decl.decl.name,newname);
 			}
 			else if(AstNodeFunction func = currnode.instanceof!AstNodeFunction) {
 				string oldname = func.decl.name;
 				func.decl.name = namespacesToGenName(names,oldname,"func");
 				func.gen(s);
 				string newname = namespacesToVarName(names,oldname);
-				ctx.gfuncs.newfuncs[newname] = func.decl.name;
+				ctx.gfuncs.rename(func.decl.name,newname);
 			}
 			else if(AstNodeNamespace sp = currnode.instanceof!AstNodeNamespace) {
 				sp.names = names ~ sp.names;
@@ -2081,9 +2161,7 @@ class AstNodeDecl : AstNode {
 		}
 		if(s.genctx.currbuilder == null) {
 			// Global var
-
 			LLVMValueRef global;
-
 			if(AstNodeInt i = value.instanceof!AstNodeInt) {
 				global = ctx.createGlobal(
 					ctx.getLLVMType(decl.type,s),
@@ -2116,7 +2194,14 @@ class AstNodeDecl : AstNode {
 					decl.isExtern
 				);
 			}
-
+			else if(AstNodeBool bl = value.instanceof!AstNodeBool) {
+				global = ctx.createGlobal(
+					ctx.getLLVMType(decl.type,s),
+					value.gen(s),
+					decl.name,
+					decl.isExtern
+				);
+			}
 			else {
 			global = ctx.createGlobal(
 				ctx.getLLVMType(decl.type,s),
@@ -2208,7 +2293,7 @@ class AstNodeDecl : AstNode {
 				}
 			}
 
-			LLVMBuildStore(
+			if(value !is null) LLVMBuildStore(
 				ctx.currbuilder,
 				value.gen(s),
 				global
@@ -2554,16 +2639,16 @@ class AstNodeFuncCall : AstNode {
 
 		this.funcType = cast(TypeFunction)funcType;
 
-		if(this.args.length != this.funcType.args.length) {
+		/*if(this.args.length != this.funcType.args.length) {
 			s.ctx.addError("Invalid call to function, "
 				~ to!string(this.funcType.args.length)
 				~ " arguments are required, but got "
 				~ to!string(this.args.length), this.where);
 			return;
-		}
-
+		}*/
 		for(int i = 0; i < this.args.length; ++i) {
-			this.args[i].analyze(s, this.funcType.args[i]);
+			try{this.args[i].analyze(s, this.funcType.args[i]);}
+			catch(Error e) {}
 		}
 
 		if(!neededType.instanceof!TypeUnknown && !neededType.assignable(getType(s))) {
@@ -2614,8 +2699,8 @@ class AstNodeFuncCall : AstNode {
 
 			auto genv = args[i].gen(s);
 			if(vararg == null) {
-			if(tf.args[i] is null) llvm_args[i] = genv;
-			else if(tf.args[i].toString == "void*") {
+			if(tf.args.length>0) llvm_args[i] = genv;
+			else if(tf.args.length>0 && tf.args[i].toString == "void*") {
 				LLVMTypeKind kind = LLVMGetTypeKind(LLVMTypeOf(genv));
 				if(kind == LLVMPointerTypeKind) {
 					llvm_args[i] = LLVMBuildPointerCast(

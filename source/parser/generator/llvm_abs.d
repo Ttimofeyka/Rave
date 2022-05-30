@@ -10,6 +10,7 @@ import std.conv : to;
 import std.stdio : writeln;
 import parser.atst;
 import parser.analyzer;
+import lexer.tokens;
 
 LLVMValueRef createLocal(GenerationContext ctx, LLVMTypeRef type, LLVMValueRef val, string name) {
 		LLVMValueRef local = LLVMBuildAlloca(
@@ -399,5 +400,6 @@ LLVMValueRef castTo(GenerationContext ctx, LLVMValueRef v, LLVMTypeRef t) {
 			toStringz("ptop")
 		);
 	}
-	return null;
+	ctx.err("Illegal cast! (maybe, you did cast struct?)",SourceLocation(-1,-1,"Unknown"));
+	assert(0);
 }
