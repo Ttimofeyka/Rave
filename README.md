@@ -6,7 +6,7 @@ inspiration from C, C++, Rust and Assembly, making an easy-to-use but low-level 
 ## "Hello, world!" Example
 
 ```nasm
-@inc "std/io";
+@inc "std/io"
 
 main: int {
   puts("Hello, world!\n");
