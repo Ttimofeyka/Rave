@@ -9,7 +9,7 @@ inspiration from C, C++, Rust and Assembly, making an easy-to-use but low-level 
 @inc <std/io>
 
 main: int {
-  puts("Hello, world!\n");
+  std::printf("Hello, world!\n");
   ret 0;
 }
 ```
