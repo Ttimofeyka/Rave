@@ -1,19 +1,8 @@
 namespace std {
 
-isalpha(c: char): bool {
-    ret ((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z'));
-}
-
-islower(c: char): bool {
-    ret ((c >= 'a') && (c <= 'z'));
-}
-
-isupper(c: char): bool {
-    ret ((c >= 'A') && (c <= 'Z'));
-}
-
-isdigit(c: char): bool {
-    ret ((c >= '0') && (c <= '9'));
-}
+    isalpha(c: char): bool => ((c >= 'a') && (c <= 'z')) || ((c >= 'A') && (c <= 'Z'));
+    islower(c: char): bool => ((c >= 'a') && (c <= 'z'));
+    isupper(c: char): bool => ((c >= 'A') && (c <= 'Z'));
+    isdigit(c: char): bool => ((c >= '0') && (c <= '9'));
 
 }
