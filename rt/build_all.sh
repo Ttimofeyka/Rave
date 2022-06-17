@@ -1,16 +1,20 @@
 #!/bin/sh
 
-cd i686-linux
-i686-elf-as rt.s -o rt.o
-i686-elf-as begin.s -o begin.o
+echo "Compile i686-linux rt? (y - yes, n - no)"
+read yesorno
 
-cd ../win32
-as rt.s -o rt.o
-as begin.s -o begin.o
+if [[ "$yesorno" == "y" ]]; then
+    cd i686-linux
+    i686-elf-as rt.s -o rt.o
+    i686-elf-as begin.s -o begin.o
+    cd ../
+fi
 
-cd ../win64
-as rt.s -o rt.o
+echo "Compile x86_64-linux rt? (y - yes, n - no)"
+read yesorno
 
-cd ../x86_64-linux
-as rt.s -o rt.o
-as begin.s -o begin.o
+if [[ "$yesorno" == "y" ]]; then
+    cd x86_64-linux
+    as rt.s -o rt.o
+    as begin.s -o begin.o
+fi

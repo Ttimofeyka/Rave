@@ -157,13 +157,46 @@ class Preprocessor {
         _idx += 1;
         string p = getCorrectPath()~".rave";
         if(canOut() && !canFind(_incFiles,p)) {
+            _incFiles ~= p;
             Lexer l = new Lexer(p,readText(p));
             Preprocessor pr = new Preprocessor(l.getTokens(),macros,defines,sourceDirName, _incFiles);
             this.defines = pr.defines.dup;
             this.macros = pr.macros.dup;
             this._incFiles = pr._incFiles.dup;
             addTList(pr.getTokens());
+        }
+    }
+
+    void _imp() {
+        _idx += 1;
+        string p = getCorrectPath()~".rave";
+        if(canOut() && !canFind(_incFiles,p)) {
             _incFiles ~= p;
+            Lexer l = new Lexer(p,readText(p));
+            Preprocessor pr = new Preprocessor(l.getTokens(),macros,defines,sourceDirName, _incFiles);
+            this.defines = pr.defines.dup;
+            this.macros = pr.macros.dup;
+            this._incFiles = pr._incFiles.dup;
+            Parser prsr = new Parser(pr.getTokens());
+            int i = 0;
+            AstNode[] nodes = prsr.parseProgram();
+            AstNode[] newnodes;
+            while(i < nodes.length) {
+                if(AstNodeFunction f = nodes[i].instanceof!AstNodeFunction) {
+                    f.decl.isExtern = true;
+                    i += 1;
+                    newnodes ~= f;
+                }
+                else if(AstNodeDecl d = nodes[i].instanceof!AstNodeDecl) {
+                    d.decl.isExtern = true;
+                    i += 1;
+                    newnodes ~= d;
+                }
+                else {
+                    i += 1;
+                    newnodes ~= nodes[i];
+                }
+            }
         }
     }
 
@@ -197,6 +230,10 @@ class Preprocessor {
             }
             else if(peek().cmd == TokCmd.cmd_include) {
                 _inc();
+                return;
+            }
+            else if(peek().cmd == TokCmd.cmd_import) {
+                _imp();
                 return;
             }
             else if(peek().cmd == TokCmd.cmd_ifdef) {
