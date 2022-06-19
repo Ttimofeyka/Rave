@@ -18,7 +18,7 @@ pow(n: float, e: int): float {
     ret r;
 }
 
-@macro ipow(ni,ei) cast(int)pow(cast(floan)ni,ei) @endm
+@macro ipow(ni,ei) cast(int)pow(cast(float)ni,ei) @endm
 
 sqrt(nn: void*): float {
     n: float = cast(float)nn;

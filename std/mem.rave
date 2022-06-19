@@ -9,5 +9,7 @@ namespace std {
     extern(C,linkname:"memcmp") memcmp(m1: void*, m2: void*, n: int): bool;
 }
 
-@macro std::delete(T) std::free(cast(void*)T) @endm
-@macro std::new(T,C) cast(T*)std::malloc(sizeof(T)*C) @endm
+@macro delete(T) std::free(cast(void*)T) @endm
+@macro new(T,C) cast(T*)std::malloc(sizeof(T)*C) @endm
+
+// TODO: fix free

@@ -18,8 +18,8 @@ Creating a definition.
 
 Deletes the definition.
 
-### `@inc "[pathname]" or <pathname>(if std)`
-### `@ins "[pathname]" or <pathname>(if std)`
+### `@inc "pathname" or <pathname>(if std)`
+### `@ins "pathname" or <pathname>(if std)`
 
 Inserts the specified file, but "@inc" inserts the file taking into account the protection against its re-inclusion.
 

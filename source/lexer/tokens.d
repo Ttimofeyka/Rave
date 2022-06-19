@@ -261,18 +261,21 @@ class TList {
     }
 
     public Token opIndex(int index) {
+        pragma(inline,true);
         return tokens[index];
     }
 
     public void insertBack(Token token) {
+        pragma(inline,true);
         tokens ~= token;
     }
 
     public void insertBack(TList t) {
+        pragma(inline,true);
         tokens ~= t.tokens.dup;
     }
 
-    public int length() const { return cast(int)tokens.length; }
+    public int length() const { pragma(inline,true); return cast(int)tokens.length; }
 
     public void debugPrint() const {
         foreach(tok; tokens) {
