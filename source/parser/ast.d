@@ -2203,6 +2203,8 @@ class AstNodeDecl : AstNode {
 				);
 			}
 			else {
+			
+			writeln("\u001b[33mWarning: Setting non-constant values for global variables by default is unsafe!\u001b[0m");
 			global = ctx.createGlobal(
 				ctx.getLLVMType(decl.type,s),
 				LLVMConstNull(ctx.getLLVMType(decl.type,s)),
