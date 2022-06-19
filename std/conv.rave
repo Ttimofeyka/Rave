@@ -1,7 +1,6 @@
 @once
 
-@inc "std/defs";
-@inc "std/ascii";
+@inc "std/defs"
 
 namespace std {
 
