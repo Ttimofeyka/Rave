@@ -2169,6 +2169,9 @@ class AstNodeDecl : AstNode {
 					decl.name,
 					decl.isExtern
 				);
+				if(decl.decl_mods.length>0 && decl.decl_mods[0].name=="noalias") {
+					LLVMAddNamedMetadataOperand(ctx.mod,toStringz("noalias"),global);
+				}
 			}
 			else if(AstNodeString str = value.instanceof!AstNodeString) {
 				global = ctx.createGlobal(
@@ -2177,6 +2180,9 @@ class AstNodeDecl : AstNode {
 					decl.name,
 					decl.isExtern
 				);
+				if(decl.decl_mods.length>0 && decl.decl_mods[0].name=="noalias") {
+					LLVMAddNamedMetadataOperand(ctx.mod,toStringz("noalias"),global);
+				}
 			}
 			else if(AstNodeChar ch = value.instanceof!AstNodeChar) {
 				global = ctx.createGlobal(
@@ -2185,6 +2191,9 @@ class AstNodeDecl : AstNode {
 					decl.name,
 					decl.isExtern
 				);
+				if(decl.decl_mods.length>0 && decl.decl_mods[0].name=="noalias") {
+					LLVMAddNamedMetadataOperand(ctx.mod,toStringz("noalias"),global);
+				}
 			}
 			else if(AstNodeFloat fl = value.instanceof!AstNodeFloat) {
 				global = ctx.createGlobal(
@@ -2193,6 +2202,9 @@ class AstNodeDecl : AstNode {
 					decl.name,
 					decl.isExtern
 				);
+				if(decl.decl_mods.length>0 && decl.decl_mods[0].name=="noalias") {
+					LLVMAddNamedMetadataOperand(ctx.mod,toStringz("noalias"),global);
+				}
 			}
 			else if(AstNodeBool bl = value.instanceof!AstNodeBool) {
 				global = ctx.createGlobal(
@@ -2201,6 +2213,9 @@ class AstNodeDecl : AstNode {
 					decl.name,
 					decl.isExtern
 				);
+				if(decl.decl_mods.length>0 && decl.decl_mods[0].name=="noalias") {
+					LLVMAddNamedMetadataOperand(ctx.mod,toStringz("noalias"),global);
+				}
 			}
 			else {
 			
