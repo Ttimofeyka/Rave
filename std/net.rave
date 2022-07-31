@@ -1,0 +1,13 @@
+namespace std {
+    namespace net {
+        extern(linkname: "recv") int recv(int s, char* buff, int len, int flags);
+        extern(linkname: "socket") int socket(int domain, int type, int protocol);
+        extern(linkname: "bind") int bind(int s, char * name, int namelen);
+        extern(linkname: "listen") int listen(int s, int backlog);
+        extern(linkname: "accept") int accept(int s, char * name, int* anamelen);
+        extern(linkname: "connect") int connect(int s, char * name, int namelen);
+        extern(linkname: "send") int send(int s, char * buf, int len, int flags);
+        extern(linkname: "shutdown") int shutdown(int s, int how);
+        extern(linkname: "close") int close (int s);
+    }
+}

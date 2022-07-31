@@ -23,7 +23,8 @@ class Compiler {
         this.outfile = outfile;
         this.outtype = outtype;
         this.opts = opts;
-        this.linkString = linkString~"runtime/"~outtype~"/begin.o ";
+        if(!opts.noEntry) linkString = linkString~"rt/linux/x86_64/crt1.o ";
+        if(!opts.noStd) linkString = linkString~"rt/linux/x86_64/libc.a ";
     }
 
     void clearAll() {
@@ -58,10 +59,11 @@ class Compiler {
 
         char* errors;
         LLVMTargetRef target;
-    	LLVMGetTargetFromTriple(LLVMGetDefaultTargetTriple(), &target, &errors);
+        char* triple = LLVMNormalizeTargetTriple(toStringz(outtype));
+    	LLVMGetTargetFromTriple(triple, &target, &errors);
     	LLVMTargetMachineRef machine = LLVMCreateTargetMachine(
 			target, 
-			LLVMGetDefaultTargetTriple(), 
+			triple, 
 			"generic", 
 			LLVMGetHostCPUFeatures(),
 			 LLVMCodeGenLevelDefault, 
@@ -69,8 +71,7 @@ class Compiler {
 		LLVMCodeModelDefault);
 
         LLVMDisposeMessage(errors);
-
-    	LLVMSetTarget(Generator.Module, LLVMGetDefaultTargetTriple());
+    	LLVMSetTarget(Generator.Module, triple);
     	LLVMTargetDataRef datalayout = LLVMCreateTargetDataLayout(machine);
     	char* datalayout_str = LLVMCopyStringRepOfTargetData(datalayout);
     	LLVMSetDataLayout(Generator.Module, datalayout_str);
@@ -86,6 +87,14 @@ class Compiler {
     }
 
     void compileAll() {
+        if(opts.onlyObject) {
+            if(!isFile(files[0])) {
+                writeln("Error: file \""~files[0]~"\" doesn't exists!");
+                exit(1);
+            }
+            compile(files[0]);
+            return;
+        }
         string[] toRemove;
         for(int i=0; i<files.length; i++) {
             if(!isFile(files[i])) {

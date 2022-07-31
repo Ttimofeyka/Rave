@@ -1,0 +1,13 @@
+namespace std {
+    extern(linkname: "malloc") void* malloc(long size);
+    extern(linkname: "free") void free(void* ptr);
+    extern(linkname: "realloc") void* realloc(void* ptr, long newsize);
+}
+
+macro delete {
+    std::free(cast(void*)#0);
+}
+
+macro new {
+    ret std::malloc(sizeof(#0));
+}

@@ -24,8 +24,30 @@ class Lexer {
         _idx++;
         return text[_idx];
     }
+    
+    private char replaceAllEscapesInChar(string str) {
+        string newchar = 
+            str.replace("\\n","\n")
+            .replace("\\r","\r")
+            .replace("\\t","\t");
+        if(newchar[0] == '\\') {
+            return cast(char)(str[1..$]).to!int(8);
+        }
+        return to!char(newchar);
+    }
+
+    private string getNumEscape() {
+        // Current symbol - number
+        string buffer = "";
+        while(isNumeric(peek()~"")) {
+            buffer ~= peek();
+            next();
+        }
+        return cast(char)(buffer.to!int(8))~"";
+    }
 
     this(string text) {
+        import core.stdc.stdlib : exit;
         this.text = text~"\n";
         bool isPreprocessorCommand = false;
         while(_idx<text.length) {
@@ -125,9 +147,35 @@ class Lexer {
                         string bufferstr = "";
                         next();
                         while(peek() != '"') {
-                            if(peek() == '\\' && text[_idx+1] == '"') {
-                                _idx += 1;
-                                bufferstr ~= "\"";
+                            if(peek() == '\\') {
+                                if(text[_idx+1] == '"') {
+                                    _idx += 1;
+                                    bufferstr ~= "\"";
+                                }
+                                else if(text[_idx+1] == '\\') {
+                                    _idx += 1;
+                                    bufferstr ~= "\\";
+                                }
+                                else if(isNumeric(text[_idx+1]~"")) {
+                                    _idx += 1;
+                                    bufferstr ~= getNumEscape();
+                                }
+                                else if(text[_idx+1] == 'n') {
+                                    _idx += 1;
+                                    bufferstr ~= "\n";
+                                }
+                                else if(text[_idx+1] == 't') {
+                                    _idx += 1;
+                                    bufferstr ~= "\t";
+                                }
+                                else if(text[_idx+1] == 'r') {
+                                    _idx += 1;
+                                    bufferstr ~= "\r";
+                                }
+                                else {
+                                    writeln("Lexer error on ",line+1," line: use '\\' without a needed symbol!");
+                                    exit(1);
+                                }
                             }
                             else bufferstr ~= ""~peek();
                             next();
@@ -147,7 +195,7 @@ class Lexer {
                             next();
                         }
                         next();
-                        tokens ~= new Token(TokType.Char,bufferchar,line);
+                        tokens ~= new Token(TokType.Char,replaceAllEscapesInChar(bufferchar)~"",line);
                         break;
                     case '@':
                         next();
@@ -252,12 +300,6 @@ class Lexer {
                                         tokens ~= new Token(TokType.Command,"break",line); break;
                                     case "continue":
                                         tokens ~= new Token(TokType.Command,"continue",line); break;
-                                    case "addr":
-                                        tokens ~= new Token(TokType.Command,"addr",line); break;
-                                    case "itop":
-                                        tokens ~= new Token(TokType.Command,"itop",line); break;
-                                    case "ptoi":
-                                        tokens ~= new Token(TokType.Command,"ptoi",line); break;
                                     case "namespace":
                                         tokens ~= new Token(TokType.Command,"namespace",line); break;
                                     default:

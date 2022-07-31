@@ -1,0 +1,4 @@
+namespace std {
+    extern(linkname: "printf", vararg) int printf(char* str);
+    extern(linkname: "scanf", vararg) int scanf(char* fmt);
+}

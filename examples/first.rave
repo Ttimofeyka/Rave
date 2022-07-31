@@ -1,6 +1,7 @@
-
+int b => 5;
 
 int main {
-    char* A = "Hello!";
-    ret 0;
+    int() a;
+    a = b;
+    ret a();
 }

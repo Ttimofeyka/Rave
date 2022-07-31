@@ -19,10 +19,10 @@ version(Win32) {
 
 version(linux) {
 	version(X86_64) {
-		string outtype = "linux/x86_64";
+		string outtype = "linux-x86_64";
 	}
 	version(X86) {
-		string outtype = "linux/i686";
+		string outtype = "linux-i686";
 	}
 }
 
@@ -31,6 +31,9 @@ struct CompOpts {
 	bool debugMode = false;
 	bool emit_llvm = false;
 	string linkparams = "";
+	bool onlyObject = false;
+	bool noEntry = false;
+	bool noStd = false;
 }
 
 CompOpts analyzeArgs(string[] args) {
@@ -63,6 +66,18 @@ CompOpts analyzeArgs(string[] args) {
 				idx += 1;
 				opts.linkparams ~= "-l"~args[idx];
 				idx += 1;
+			}
+			else if(args[idx] == "-c") {
+				idx += 1;
+				opts.onlyObject = true;
+			}
+			else if(args[idx] == "-noentry") {
+				idx += 1;
+				opts.noEntry = true;
+			}
+			else if(args[idx] == "-nostd") {
+				idx += 1;
+				opts.noStd = true;
 			}
 			else {
 				files ~= args[idx];

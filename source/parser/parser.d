@@ -27,6 +27,7 @@ class Parser {
     Token[] tokens;
     int _idx = 0;
     private Node[] _nodes;
+    private string[] structs;
 
     private void error(string msg) {
         pragma(inline,true);
@@ -79,7 +80,7 @@ class Parser {
 
     Type parseType() {
         auto t = parseTypeAtom();
-        while(peek().type == TokType.Multiply || peek().type == TokType.Rarr) {
+        while(peek().type == TokType.Multiply || peek().type == TokType.Rarr || peek().type == TokType.Rpar) {
             if(peek().type == TokType.Multiply) {
                 next();
                 t = new TypePointer(t);
@@ -93,6 +94,11 @@ class Parser {
                 next();
                 expect(TokType.Larr);
                 t = new TypeArray(num,t);
+            }
+            else if(peek().type == TokType.Rpar) {
+                next();
+                Type[] types = getFuncTypeArgs().dup;
+                t = new TypeFunc(t,types.dup);
             }
         }
         return t;
@@ -155,6 +161,7 @@ class Parser {
     }
 
     Node parseAtom() {
+        import std.algorithm : canFind;
         auto t = next();
         if(t.type == TokType.Number) return new NodeInt(to!ulong(t.value));
         if(t.type == TokType.FloatNumber) return new NodeFloat(to!double(t.value));
@@ -176,6 +183,43 @@ class Parser {
                 Node val = parseExpr();
                 next(); //skip )
                 return new NodeTypeof(val,t.line);
+            }
+            else if(t.value == "sizeof") {
+                next();
+                Node val = parseExpr();
+                next();
+                return new NodeSizeof(val,t.line);
+            }
+            else if(t.value == "itop") {
+                next();
+                Node val = parseExpr();
+                next();
+                return new NodeItop(val,t.line);
+            }
+            else if(t.value == "ptoi") {
+                next();
+                Node val = parseExpr();
+                next();
+                return new NodePtoi(val,t.line);
+            }
+            else {
+                switch(t.value) {
+                    case "bool":
+                    case "int":
+                    case "short":
+                    case "char":
+                    case "long":
+                    case "cent":
+                    case "void":
+                        _idx--;
+                        return new NodeType(parseType(),t.line);
+                    default:
+                        break;
+                }
+                if(structs.canFind(t.value)) {
+                    _idx--;
+                    return new NodeType(parseType(),t.line);
+                }
             }
             return new NodeIden(t.value,peek().line);
         }
@@ -335,6 +379,7 @@ class Parser {
     }
 
     Node parseStmt(string f = "") {
+        import std.algorithm : canFind;
         if(peek().type == TokType.Rbra) {
             return parseBlock(f);
         }
@@ -361,8 +406,30 @@ class Parser {
             if(peek().value == "extern") return parseDecl();
         }
         else if(peek().type == TokType.Identifier) {
+                string iden = peek().value;
                 _idx++;
-                if(peek().type != TokType.Identifier && peek().type != TokType.Multiply && peek().type != TokType.Rarr) {
+                if(peek().type != TokType.Identifier) {
+                    if(peek().type == TokType.Multiply || peek().type == TokType.Rarr)  {
+                        _idx -= 1;
+                        return parseDecl(f);
+                    }
+                    else if(peek().type == TokType.Rpar) {
+                        switch(iden) {
+                            case "void":
+                            case "bool":
+                            case "int":
+                            case "short":
+                            case "char":
+                            case "cent":
+                                _idx -= 1;
+                                return parseDecl(f);
+                            default: break;
+                        }
+                        if(structs.canFind(iden)) {
+                            _idx -= 1;
+                            return parseDecl(f);
+                        }
+                    }
                     _idx -= 1;
                     auto e = parseExpr();
                     expect(TokType.Semicolon);
@@ -409,11 +476,13 @@ class Parser {
                 auto nam = expect(TokType.Identifier).value;
                 string value = "";
                 if(peek().type == TokType.ValSel) {
-                    value = next().value;
+                    next();
+                    value = peek().value;
                     next();
                 }
                 mods ~= DeclMod(nam,value);
                 if(peek().type == TokType.Comma) next();
+                else if(peek().type == TokType.Lpar) break;
             }
             next(); // Skip lpar
         }
@@ -426,12 +495,16 @@ class Parser {
         if(peek().type == TokType.Rpar) {
             // Function with args
             FuncArgSet[] args = parseFuncArgSets();
-            next();
+            if(peek().type == TokType.Rbra) next();
             if(peek().type == TokType.ShortRet) {
                 next();
                 Node expr = parseExpr();
                 expect(TokType.Semicolon);
                 return new NodeFunc(name,args,new NodeBlock([new NodeRet(expr,loc,name)]),isExtern,mods,loc,type);
+            }
+            else if(peek().type == TokType.Semicolon) {
+                next();
+                return new NodeFunc(name,args,new NodeBlock([]),isExtern,mods,loc,type);
             }
             // {block}
             return new NodeFunc(name,args,parseBlock(name),isExtern,mods,loc,type);
@@ -536,17 +609,11 @@ class Parser {
         Node currNode;
         while((currNode = parseTopLevel(name)) !is null) nodes ~= currNode;
         expect(TokType.Lbra); // skip }
+        structs ~= name;
         return new NodeStruct(name,nodes,loc);
     }
     
     Node parseMacro() {
-
-        /*
-        macro A {
-            ret 2+2;
-        }
-        */
-
         next();
         string m = peek().value;
         int line = peek().line;
