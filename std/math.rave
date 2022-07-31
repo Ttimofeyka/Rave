@@ -1,36 +1,3 @@
-@once
-
-@def M_PI 3.14159265358979323846 @end
-
-abs(i: long): long {
-    if(i<0) ret -i;
-    ret i;
+namespace std {
+    alias PI = 3.14159265358979323846;
 }
-
-pow(n: float, e: int): float {
-    r: float = 1;
-
-    i: int = 0;
-    while(i<e) {
-        r *= n;
-        i += 1;
-    }
-    ret r;
-}
-
-@macro ipow(ni,ei) cast(int)pow(cast(float)ni,ei) @endm
-
-sqrt(nn: void*): float {
-    n: float = cast(float)nn;
-    sqrt: float = n/2;
-    temp: float = 0;
-
-    while(sqrt != temp) {
-        temp = sqrt;
-        sqrt = (n / sqrt + sqrt) / 2;
-    }
-
-    ret sqrt;
-}
-
-@end

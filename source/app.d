@@ -1,221 +1,84 @@
 import std.stdio;
+import lexer.lexer;
 import std.conv : to;
-import std.path : buildNormalizedPath, absolutePath;
+import compiler;
 import core.stdc.stdlib : exit;
-import parser.analyzer, parser.mparser, parser.ast, parser.typesystem, parser.generator.gen;
-import lexer.mlexer;
-import lexer.tokens;
-import lexer.preproc;
-import parser.util;
-import compiler.compiler;
-import user.jsondoc;
-import std.getopt;
-import std.process;
-import std.array;
-import std.string;
-import std.file : remove;
-import std.conv : to;
-import std.file;
+import parser.parser;
 import llvm;
-import std.path;
 
-string stdlibIncPath = "";
-string outputSimpleType = "";
-bool debugMode = false;
-bool debugModeFull = false;
-bool generateDocJson = false;
-string docJsonFile = "docs.json";
-bool not_delete_o = false;
-int optLevel = 1;
-TList[string] defines;
-TList[string] macros;
-string[][string] macrosDN;
-bool[string] incF;
-string[] toCompile;
+string[] files;
+string outfile;
 
-string linker;
+version(Win64) {
+	string outtype = "win64";
+}
 
-string platformFileType = "";
-bool noprelude = false;
+version(Win32) {
+	string outtype = "win32";
+}
 
-void compile(string linkFiles, bool nolink, string sourceFile, string outputType, string outputFile) {
-	stdlibIncPath = buildNormalizedPath(absolutePath("./stdlib"));
-
-	// writeln("------------------ Lexer -------------------");
-	string srcF = readText(sourceFile);
-	if(!noprelude) srcF = "@inc <std/base>\n@inc <std/mem>\n" ~ srcF;
-	auto lexer = new Lexer(sourceFile, srcF);
-	auto preproc = new Preprocessor(lexer.getTokens(),dirName(sourceFile));
-
-	auto parser = new Parser(preproc.getTokens());
-	auto nodes = parser.parseProgram();
-
-	if(parser.hadErrors) {
-		writeln("Failed with 1 or more errors.");
-		stackMemory.cleanup();
-		exit(1);
+version(linux) {
+	version(X86_64) {
+		string outtype = "linux/x86_64";
 	}
-
-	Compiler comp = new Compiler(parser.getDecls(), nodes);
-	comp.debugInfo.debugMode = debugMode;
-	comp.debugInfo.printAst = debugModeFull;
-	comp.optLevel = optLevel;
-	comp.defs = defines.dup;
-	CompilerError err = comp.generate(outputType, outputFile~".o");
-
-	if(err.hadError) {
-		stackMemory.cleanup();
-		exit(1);
+	version(X86) {
+		string outtype = "linux/i686";
 	}
+}
 
-	if(generateDocJson) {
-		auto jsonDocGen = new JSONDocGenerator();
-		foreach(node; nodes) jsonDocGen.generate(node);
-		jsonDocGen.output(docJsonFile);
+struct CompOpts {
+	bool noPrelude = false;
+	bool debugMode = false;
+	bool emit_llvm = false;
+	string linkparams = "";
+}
+
+CompOpts analyzeArgs(string[] args) {
+	int idx = 0;
+	CompOpts opts;
+	while(idx<args.length) {
+			if(args[idx] == "-o") {
+				idx += 1;
+				outfile = args[idx];
+				idx += 1;
+			}
+			else if(args[idx] == "-noprelude") {
+				opts.noPrelude = true;
+				idx += 1;
+			}
+			else if(args[idx] == "-debug") {
+				opts.debugMode = true;
+				idx += 1;
+			}
+			else if(args[idx] == "-type") {
+				idx += 1;
+				outtype = args[idx];
+				idx += 1;
+			}
+			else if(args[idx] == "-emit-llvm") {
+				idx += 1;
+				opts.emit_llvm = true;
+			}
+			else if(args[idx] == "-l") {
+				idx += 1;
+				opts.linkparams ~= "-l"~args[idx];
+				idx += 1;
+			}
+			else {
+				files ~= args[idx];
+				idx += 1;
+			}
 	}
-
-	stackMemory.cleanup();
-
-	// Linking with runtime
-	
-	if(!nolink && linkFiles != "") {
-		auto cmd = executeShell(linker~" "~outputFile~platformFileType~" "~linkFiles~" -o "~outputFile);
-		if(cmd.status != 0) writeln(cmd.output);
-		if(!not_delete_o) remove(outputFile~platformFileType);
-	}
+	return opts;
 }
 
 void main(string[] args)
 {
-	string outputType = "";
-	string outputFile = "a.o";
-	bool nolink = false;
-	bool isshared = false;
-	bool noentry = false;
-	stackMemory = new StackMemoryManager();
-
-	auto helpInformation = getopt(
-	    args,
-	    "o", "Output file", &outputFile,
-	    "debug", "Debug mode", &debugMode,
-	    "debug-full", "Full debug mode", &debugModeFull,
-	    "stdinc", "Stdlib include path (':' in @inc)", &stdlibIncPath,
-		"type", "Output file(platform) type", &outputType,
-		"doc-json", "Generate JSON documentation file", &generateDocJson,
-		"doc-json-file", "JSON documentation file name", &docJsonFile,
-		"nolink", "Disable auto-link with runtime", &nolink,
-		"no-rm-obj", "Don't remove object file", &not_delete_o,
-		"shared", "Linking as shared library", &isshared,
-		"noentry", "Linking without begin.o", &noentry,
-		"opt", "Optimization level", &optLevel,
-		"linker", "Set linker", &linker,
-		"noprelude", "Disable automatically include std/base", &noprelude,
-	);
-	
-    if(helpInformation.helpWanted)
-    {
-	    defaultGetoptPrinter("Help", helpInformation.options);
-	    return;
-    }
-
-	if(linker == null) {
-		version(linux) { linker = "ld.lld";}
-		version(Windows) { linker = "lld-link";}
-		version(OSX) { linker = "ld64.lld";}
+	if(args.length==1) {
+		writeln("Error: files to compile didn't found!");
+		exit(1);
 	}
-	
-	if(outputType == "") {
-		outputType = to!string(fromStringz(LLVMGetDefaultTargetTriple()));
-	}
-
-	if(outputType.indexOf("linux") != -1) {
-		if(outputType.indexOf("x86_64") != -1) {
-			outputSimpleType = "x86_64-linux";
-		}
-		else outputSimpleType = "i686-linux";
-		platformFileType = ".o";
-	}
-	else if(outputType.indexOf("win") != -1) {
-		if(outputType.indexOf("x86_64") != -1) {
-			outputSimpleType = "win64";
-		}
-		else outputSimpleType = "win32";
-		platformFileType = ".obj";
-	}
-
-    string[] sourceFiles = args[1..$].dup;
-	toCompile = sourceFiles;
-    string sourceFile = toCompile[0];
-
-	defines["_MFILE"] = new TList();
-	defines["_MFILE"].insertBack(new Token(SourceLocation(0,0,""), sourceFile));
-	defines["_FILE"] = new TList();
-	defines["_FILE"].insertBack(new Token(SourceLocation(0, 0, sourceFile), sourceFile));
-	defines["_OFILE"] = new TList();
-	defines["_OFILE"].insertBack(new Token(SourceLocation(0, 0, outputFile), outputFile));
-	defines["_PLATFORM"] = new TList();
-	defines["_PLATFORM"].insertBack(new Token(SourceLocation(0,0,""),"\""~outputType~"\""));
-
-	if(outputType.indexOf("linux") != -1) {
-		defines["_LINUX"] = new TList();
-		defines["_LINUX"].insertBack(new Token(SourceLocation(0,0,""),""));
-	}
-	else if(outputType.indexOf("windows") != -1) {
-		defines["_WINDOWS"] = new TList();
-		defines["_WINDOWS"].insertBack(new Token(SourceLocation(0,0,""),""));
-	}
-
-	if(outputType.indexOf("i686") != -1) {
-		defines["_I686"] = new TList();
-		defines["_I686"].insertBack(new Token(SourceLocation(0,0,""),""));
-	}
-	else if(outputType.indexOf("x86_64") != -1) {
-		defines["_X86_64"] = new TList();
-		defines["_X86_64"].insertBack(new Token(SourceLocation(0,0,""),""));
-	}
-
-	if(debugMode) defines["_DEBUG"] = new TList();
-	else defines["_NDEBUG"] = new TList();
-
-	string path_to_rt = dirName(thisExePath())~"/rt/"~outputSimpleType~"/";
-
-	string linkF = path_to_rt~"rt"~platformFileType~" ";
-	if(!noentry) linkF ~= path_to_rt~"begin"~platformFileType~" ";
-	if(isshared) linkF ~= "-shared ";
-	if("_WINDOWS" in defines) linkF ~= "lib/kernel32.lib ";
-	if("_X86_64" in defines) linkF ~= "lib/x86_64-linux/libc.a ";
-
-  	LLVMInitializeNativeTarget();
-
-	if(toCompile.length > 1) {
-		noprelude = true;
-		string[] to_remove;
-		for(int i=1; i<toCompile.length; i++) {
-			string currF = toCompile[i];
-			if( // If object file or library just add to link-files
-				currF[$-1..$] == "o"
-				||
-				currF[$-1..$] == "a"
-				||
-				(currF.length > 2
-				&&
-				(currF[$-3..$] == "dll" 
-			|| currF[$-3..$] == "lib"))) linkF ~= toCompile[i] ~ " ";
-			else { // Else compile source file
-				compile("",true,toCompile[i],outputType,toCompile[i]);
-				linkF ~= toCompile[i]~platformFileType ~ " ";
-				to_remove ~= toCompile[i]~platformFileType;
-			}
-		}
-
-		noprelude = false;
-		compile(linkF, false, sourceFile, outputType, outputFile);
-
-		if(!not_delete_o) {
-			for(int i=0; i<to_remove.length; i++) {
-				remove(to_remove[i]);
-			}
-		}
-	}
-	else compile(linkF, nolink, sourceFile, outputType, outputFile);
+	CompOpts o = analyzeArgs(args[1..$]);
+	Compiler compiler = new Compiler(outfile,outtype,o);
+	compiler.compileAll();
 }

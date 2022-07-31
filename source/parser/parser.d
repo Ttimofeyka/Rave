@@ -1,0 +1,616 @@
+module parser.parser;
+
+import std.string;
+import std.array;
+import std.conv : to;
+import lexer.tokens;
+import core.stdc.stdlib : exit;
+import std.stdio : writeln;
+import parser.types;
+import parser.ast;
+import std.container : SList;
+import app : files;
+import std.conv : parse;
+
+bool[string] _imported;
+
+T instanceof(T)(Object o) if(is(T == class)) {
+	return cast(T) o;
+}
+
+struct DeclMod {
+    string name;
+    string value;
+}
+
+class Parser {
+    Token[] tokens;
+    int _idx = 0;
+    private Node[] _nodes;
+
+    private void error(string msg) {
+        pragma(inline,true);
+		writeln("\033[0;31mError: " ~ msg ~ "\033[0;0m");
+		exit(1);
+	}
+
+    private Token peek() {
+        pragma(inline,true);
+        return tokens[_idx];
+    }
+
+    private Token next() {
+        pragma(inline,true);
+        return tokens[_idx++];
+    }
+
+    private Token expect(TokType t, int line = -1) {
+        pragma(inline,true);
+        if(peek().type != t) {
+            error("Expected "~to!string(t)~" on "~to!string(peek().line+1)~" line!");
+        }
+        return next();
+    }
+
+    private Type parseTypeAtom() {
+        if(peek().type == TokType.Identifier) {
+            auto t = next();
+            if(t.value == "void") return new TypeVoid();
+            return getType(t.value);
+        }
+        else {
+            error("Expected a typename on "~to!string(peek().line+1)~" line!");
+        }
+        return null;
+    }
+
+    Type[] getFuncTypeArgs() {
+        Type[] buff;
+
+        while(peek().type != TokType.Lpar) {
+            buff ~= parseType();
+            if(peek().type == TokType.Comma) next();
+        }
+
+        next();
+
+        return buff.dup;
+    }
+
+    Type parseType() {
+        auto t = parseTypeAtom();
+        while(peek().type == TokType.Multiply || peek().type == TokType.Rarr || peek().type == TokType.Rpar) {
+            if(peek().type == TokType.Multiply) {
+                next();
+                t = new TypePointer(t);
+            }
+            else if(peek().type == TokType.Rarr) {
+                next();
+                int num = 0;
+                if(peek().type == TokType.Number) {
+                    num = to!int(peek().value);
+                }
+                next();
+                expect(TokType.Larr);
+                t = new TypeArray(num,t);
+            }
+        }
+        return t;
+    }
+
+    FuncArgSet[] parseFuncArgSets() {
+        FuncArgSet[] args;
+
+        if(peek().type != TokType.Rpar) return [];
+        next();
+
+        while(peek().type != TokType.Lpar) {
+            auto type = parseType();
+            auto name = expect(TokType.Identifier).value;
+
+            args ~= FuncArgSet(name,type);
+            if(peek().type == TokType.Lpar) {next(); break;}
+            expect(TokType.Comma);
+        }
+
+        return args.dup;
+    }
+
+    Node[] parseFuncCallArgs() {
+        next(); // skip (
+        Node[] args;
+        while(peek().type != TokType.Lpar) {
+            args ~= parseExpr();
+            if(peek().type == TokType.Comma) next();
+        }
+        next(); // skip )
+        return args;
+    }
+
+    Node parseCall(Node func) {
+        return new NodeCall(peek().line,func,parseFuncCallArgs());
+    }
+
+    Node parseSuffix(Node base) {
+        while(peek().type == TokType.Rpar
+             || peek().type == TokType.Rarr
+             || peek().type == TokType.Dot
+        ) {
+            if(peek().type == TokType.Rpar) base = parseCall(base);
+            else if(peek().type == TokType.Rarr) {
+                next();
+                auto idx = to!int(peek().value);
+                next();
+                expect(TokType.Larr);
+                base = new NodeIndex(base,idx,peek().line);
+            }
+            else if(peek().type == TokType.Dot) {
+                next();
+                string field = expect(TokType.Identifier).value;
+                base = new NodeGet(base,field,peek().type == TokType.Equ,peek().line);
+            }
+        }
+
+        return base;
+    }
+
+    Node parseAtom() {
+        auto t = next();
+        if(t.type == TokType.Number) return new NodeInt(to!ulong(t.value));
+        if(t.type == TokType.FloatNumber) return new NodeFloat(to!double(t.value));
+        if(t.type == TokType.HexNumber) return new NodeInt(parse!ulong(t.value,16));
+        if(t.type == TokType.True) return new NodeBool(true);
+        if(t.type == TokType.False) return new NodeBool(false);
+        if(t.type == TokType.String) return new NodeString(t.value);
+        if(t.type == TokType.Char) return new NodeChar(to!char(t.value));
+        if(t.type == TokType.Identifier) {
+            if(t.value == "cast") {
+                next();
+                Type ty = parseType();
+                next(); // skip )
+                Node expr = parseExpr();
+                return new NodeCast(ty,expr,t.line);
+            }
+            else if(t.value == "typeof") {
+                next();
+                Node val = parseExpr();
+                next(); //skip )
+                return new NodeTypeof(val,t.line);
+            }
+            return new NodeIden(t.value,peek().line);
+        }
+        if(t.type == TokType.MacroArgNum) {
+            return new MacroGetArg(to!int(t.value), t.line);
+        }
+        if(t.type == TokType.Null) return new NodeNull();
+        if(t.type == TokType.Rpar) {
+            auto e = parseExpr();
+            expect(TokType.Lpar);
+            return e;
+        }
+        if(t.type == TokType.Rarr) {
+            return null; // TODO: CONST ARRAY
+        }
+        error("Expected a number, true/false, char, variable or expression. Got: "~to!string(t.type)~" on "~to!string(peek().line+1)~" line.");
+        return null;
+    }
+
+    Node parsePrefix() {
+        import std.algorithm : canFind;
+        const TokType[] operators = [
+            TokType.Multiply,
+            TokType.Minus,
+            TokType.GetPtr
+        ];
+
+        if(operators.canFind(peek().type)) {
+            auto tok = next();
+            return new NodeUnary(tok.line, tok.type, parsePrefix());
+        }
+        return parseAtom();
+    }
+
+    Node parseBasic() {
+        return parseSuffix(parsePrefix());
+    }
+
+    Node parseExpr() {
+        const int[TokType] operators = [
+            TokType.Plus: 0,
+            TokType.Minus: 0,
+            TokType.Multiply: 1,
+            TokType.Divide: 1,
+            TokType.Equ: -95,
+            TokType.PluEqu: -97,
+            TokType.MinEqu: -97,
+            TokType.DivEqu: -97,
+            TokType.MinEqu: -97,
+            TokType.Equal: -80,
+            TokType.Nequal: -80,
+            TokType.Less: -70,
+            TokType.More: -70,
+            TokType.Or: -50,
+            TokType.And: -50,
+        ];
+
+        SList!Token operatorStack;
+		SList!Node nodeStack;
+		uint nodeStackSize = 0;
+		uint operatorStackSize = 0;
+
+		nodeStack.insertFront(parseBasic());
+		nodeStackSize += 1;
+
+        while(peek().type in operators)
+		{
+			if(operatorStack.empty) {
+				operatorStack.insertFront(next());
+				operatorStackSize += 1;
+			}
+			else {
+				auto tok = next();
+				auto t = tok.type;
+				int prec = operators[t];
+				while(operatorStackSize > 0 && prec <= operators[operatorStack.front.type]) {
+					// push the operator onto the nodeStack
+					assert(nodeStackSize >= 2);
+
+					auto lhs = nodeStack.front(); nodeStack.removeFront();
+					auto rhs = nodeStack.front(); nodeStack.removeFront();
+
+					nodeStack.insertFront(new NodeBinary(operatorStack.front.type,lhs,rhs,tok.line));
+					nodeStackSize -= 1;
+
+					operatorStack.removeFront();
+					operatorStackSize -= 1;
+				}
+
+				operatorStack.insertFront(tok);
+				operatorStackSize += 1;
+			}
+
+			nodeStack.insertFront(parseBasic());
+			nodeStackSize += 1;
+		}
+
+        // push the remaining operator onto the nodeStack
+		while(!operatorStack.empty()) {
+			assert(nodeStackSize >= 2);
+
+			auto rhs = nodeStack.front(); nodeStack.removeFront();
+			auto lhs = nodeStack.front(); nodeStack.removeFront();
+
+			nodeStack.insertFront(new NodeBinary(
+				operatorStack.front.type, lhs, rhs,
+				operatorStack.front.line));
+			nodeStackSize -= 1;
+
+			operatorStack.removeFront();
+			operatorStackSize -= 1;
+		}
+
+        return nodeStack.front();
+    }
+
+    Node parseIf(string f = "") {
+        assert(peek().value == "if");
+        int line = peek().line;
+        next();
+        expect(TokType.Rpar);
+        auto cond = parseExpr();
+        expect(TokType.Lpar);
+        auto body_ = parseStmt(f);
+        if(peek().value == "else") {
+            next();
+            auto othr = parseStmt();
+            return new NodeIf(cond, body_, othr, line, f);
+        }
+        return new NodeIf(cond, body_, null, line, f);
+    }
+
+    Node parseWhile(string f = "") {
+        int line = peek().line;
+        next();
+
+        Node condition;
+
+        if(peek().type == TokType.Rbra) {
+            condition = new NodeBool(true);
+        }
+        else {
+            next();
+            condition = parseExpr();
+            expect(TokType.Lpar);
+        }
+
+        auto body_ = parseStmt(f);
+        return new NodeWhile(condition, body_, line, f);
+    }
+
+    Node parseBreak() {
+        next();
+        Node _break = new NodeBreak(peek().line);
+        expect(TokType.Semicolon);
+        return _break;
+    }
+
+    Node parseStmt(string f = "") {
+        if(peek().type == TokType.Rbra) {
+            return parseBlock(f);
+        }
+        else if(peek().type == TokType.Semicolon) {
+            next();
+            return parseStmt(f);
+        }
+        else if(peek().type == TokType.Command) {
+            if(peek().value == "if") return parseIf(f);
+            if(peek().value == "while") return parseWhile(f);
+            if(peek().value == "break") return parseBreak();
+            if(peek().value == "ret") {
+                auto tok = next();
+                if(peek().type != TokType.Semicolon) {
+                    auto e = parseExpr();
+                    expect(TokType.Semicolon);
+                    return new NodeRet(e,tok.line,f);
+                }
+                else {
+                    next();
+                    return new NodeRet(null,tok.line,f);
+                }
+            }
+            if(peek().value == "extern") return parseDecl();
+        }
+        else if(peek().type == TokType.Identifier) {
+                _idx++;
+                if(peek().type != TokType.Identifier && peek().type != TokType.Multiply) {
+                    _idx -= 1;
+                    auto e = parseExpr();
+                    expect(TokType.Semicolon);
+                    return e;
+                }
+                _idx -= 1;
+                return parseDecl(f);
+        }
+        else if(peek().type == TokType.Eof) return null;
+        auto e = parseExpr();
+        expect(TokType.Semicolon);
+        return e;
+    }
+
+    NodeBlock parseBlock(string f = "") {
+        Node[] nodes;
+        if(peek().type == TokType.Rbra) next();
+        while(peek().type != TokType.Lbra && peek().type != TokType.Eof) nodes ~= parseStmt(f);
+        if(peek().type != TokType.Eof) next();
+        return new NodeBlock(nodes.dup);
+    }
+
+    Node parseDecl(string s = "") {
+        DeclMod[] mods;
+        int loc;
+        string name;
+        bool isExtern = false;
+        bool isConst = false;
+
+        if(peek().value == "extern") {
+            isExtern = true;
+            next();
+        }
+
+        if(peek().value == "const") {
+            if(s == "") isConst = true;
+            next();
+        }
+
+        if(peek().type == TokType.Rpar) {
+            // Decl have mods
+            next();
+            while(peek().type != TokType.Lpar) {
+                auto nam = expect(TokType.Identifier).value;
+                string value = "";
+                if(peek().type == TokType.ValSel) {
+                    value = next().value;
+                    next();
+                }
+                mods ~= DeclMod(nam,value);
+                if(peek().type == TokType.Comma) next();
+            }
+            next(); // Skip lpar
+        }
+
+        auto type = parseType();
+        loc = peek().line;
+        name = peek().value;
+        next();
+
+        if(peek().type == TokType.Rpar) {
+            // Function with args
+            FuncArgSet[] args = parseFuncArgSets();
+            next();
+            if(peek().type == TokType.ShortRet) {
+                next();
+                Node expr = parseExpr();
+                expect(TokType.Semicolon);
+                return new NodeFunc(name,args,new NodeBlock([new NodeRet(expr,loc,name)]),isExtern,mods,loc,type);
+            }
+            // {block}
+            return new NodeFunc(name,args,parseBlock(name),isExtern,mods,loc,type);
+        }
+        else if(peek().type == TokType.Rbra) {
+            return new NodeFunc(name,[],parseBlock(name),isExtern,mods,loc,type);
+        }
+        else if(peek().type == TokType.Semicolon) {
+            // Var without value
+            next();
+            return new NodeVar(name,null,isExtern,isConst,(s==""),mods,loc,type);
+        }
+        else if(peek().type == TokType.ShortRet) {
+            next();
+            Node expr = parseExpr();
+            expect(TokType.Semicolon);
+            return new NodeFunc(name,[],new NodeBlock([new NodeRet(expr,loc,name)]),isExtern,mods,loc,type);
+        }
+        else if(peek().type == TokType.Equ) {
+            // Var with value
+            next();
+            auto e = parseExpr();
+            expect(TokType.Semicolon);
+            return new NodeVar(name,e,isExtern,isConst,(s==""),mods,loc,type);
+        }
+        return new NodeFunc(name,[],parseBlock(name), isExtern, mods, loc, type);
+    }
+
+    Node parseNamespace() {
+        int loc = peek().line;
+        next();
+        string name = peek().value;
+        next(); // current token = {
+        expect(TokType.Rbra); // skip {
+        Node[] nodes;
+        Node currNode;
+        while((currNode = parseTopLevel()) !is null) nodes ~= currNode;
+        expect(TokType.Lbra); // skip }
+        return new NodeNamespace(name,nodes,loc);
+    }
+
+    string getGlobalFile() {
+        next();
+        string buffer = "";
+
+        while(peek().type != TokType.More) {
+            buffer ~= peek().value;
+            next();
+        }
+
+        return buffer;
+    }
+
+    string MainFile = "";
+
+    Node parseImport() {
+        import lexer.lexer, std.file, std.path;
+        next();
+        string _file;
+
+        if(peek().type == TokType.Less) {
+            // Global
+            _file = getGlobalFile()~".rave";
+        }
+        else {
+            // Local
+            _file = dirName(MainFile)~"/"~peek().value~".rave";
+        }
+        next();
+
+        if(peek().type == TokType.Semicolon) next();
+
+        if(!(_file !in _imported)) return new NodeNone();
+        Lexer l = new Lexer(readText(_file));
+        Parser p = new Parser(l.getTokens().dup);
+        p.parseAll();
+        Node[] nodes = p.getNodes();
+        for(int i=0; i<nodes.length; i++) {
+            if(NodeVar v = nodes[i].instanceof!NodeVar) {
+                v.isExtern = true;
+            }
+            else if(NodeFunc f = nodes[i].instanceof!NodeFunc) {
+                f.isExtern = true;
+            }
+            else if(NodeNamespace n = nodes[i].instanceof!NodeNamespace) {
+                n.isImport = true;
+            }
+        }
+        this._nodes ~= nodes.dup;
+        files ~= _file;
+        _imported[_file] = true;
+        return new NodeNone();
+    }
+
+    Node parseStruct() {
+        int loc = peek().line;
+        next();
+        string name = peek().value;
+        next(); // current token = {
+        expect(TokType.Rbra); // skip {
+        Node[] nodes;
+        Node currNode;
+        while((currNode = parseTopLevel(name)) !is null) nodes ~= currNode;
+        expect(TokType.Lbra); // skip }
+        return new NodeStruct(name,nodes,loc);
+    }
+    
+    Node parseMacro() {
+
+        /*
+        macro A {
+            ret 2+2;
+        }
+        */
+
+        next();
+        string m = peek().value;
+        int line = peek().line;
+        next();
+        string[] args;
+        if(peek().type == TokType.Rpar) {
+            next();
+            while(peek().type != TokType.Lpar) {
+                args ~= peek().value;
+                next();
+                if(peek().type == TokType.Comma) next();
+            }
+            next();
+        }
+
+        NodeBlock block = parseBlock(m);
+
+        return new NodeMacro(block, m, args.dup, line);
+    }
+
+    Node parseUsing() {
+        next();
+        string namespace = peek().value;
+        int loc = peek().line;
+        next();
+        expect(TokType.Semicolon,loc);
+        return new NodeUsing(namespace,loc);
+    }
+
+    Node parseTopLevel(string s = "") {
+        while(peek().type == TokType.Semicolon) {
+            next();
+        }
+
+        if(peek().type == TokType.Eof) return null;
+
+        if(peek().value == "}") return null;
+        
+        if(peek().value == "namespace") return parseNamespace();
+
+        if(peek().value == "struct") return parseStruct();
+
+        if(peek().value == "macro") return parseMacro();
+
+        if(peek().value == "using") return parseUsing();
+
+        if(peek().value == "import") {
+            return parseImport();
+        }
+        
+        return parseDecl(s);
+    }
+
+    void parseAll() {
+        while(peek().type != TokType.Eof) {
+            auto n = parseTopLevel();
+            if(n is null) break;
+            if(!(n.instanceof!NodeNone)) _nodes ~= n;
+        }
+    }
+
+    Node[] getNodes() {
+        return this._nodes.dup;
+    }
+    
+    this(Token[] t) {this.tokens = t;}
+}

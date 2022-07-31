@@ -8,9 +8,10 @@
 		"d-glob": "~>0.4.0",
 		"llvm-d": "~>3.0.0"
 	},
-	"lflags": ["libllvm-d.a"],
 	"buildRequirements": ["silenceDeprecations"],
 	"libs": ["LLVM-10"],
+	"lflags-x86": ["lib/dso32.a"],
+	"lflags-x86_64": ["lib/dso.a"],
 	"description": "Rave Programming Language",
 	"license": "MPLv3",
 	"name": "rave"

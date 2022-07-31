@@ -1,7 +1,0 @@
-@inc <std/unix>
-
-@macro assert(cond) if(!(cond)) std::exit(3) @endm
-
-namespace std {
-    extern(C,linkname:"exit") exit(code: int);
-}

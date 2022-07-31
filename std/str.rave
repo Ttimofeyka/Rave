@@ -1,7 +1,0 @@
-namespace std {
-    extern(C,linkname:"strlen") strlen(s: char*): int;
-    extern(C,linkname:"strcpy") strcpy(s1: char*, s2: char*): char*;
-    extern(C,linkname:"strcmp") strcmp(s1: char*, s2: char*): bool;
-    extern(C,linkname:"strcat") strcat(s1: char*, s2: char*): char*;
-    extern(C,linkname:"strdup") strdup(s: char*): char*;
-}
