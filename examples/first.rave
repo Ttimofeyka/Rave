@@ -1,1 +1,6 @@
-int main => 2;
+
+
+int main {
+    char* A = "Hello!";
+    ret 0;
+}

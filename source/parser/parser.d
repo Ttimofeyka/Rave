@@ -79,7 +79,7 @@ class Parser {
 
     Type parseType() {
         auto t = parseTypeAtom();
-        while(peek().type == TokType.Multiply || peek().type == TokType.Rarr || peek().type == TokType.Rpar) {
+        while(peek().type == TokType.Multiply || peek().type == TokType.Rarr) {
             if(peek().type == TokType.Multiply) {
                 next();
                 t = new TypePointer(t);
@@ -362,7 +362,7 @@ class Parser {
         }
         else if(peek().type == TokType.Identifier) {
                 _idx++;
-                if(peek().type != TokType.Identifier && peek().type != TokType.Multiply) {
+                if(peek().type != TokType.Identifier && peek().type != TokType.Multiply && peek().type != TokType.Rarr) {
                     _idx -= 1;
                     auto e = parseExpr();
                     expect(TokType.Semicolon);

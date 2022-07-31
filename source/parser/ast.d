@@ -77,7 +77,8 @@ class LLVMGen {
             }
         }
         if(TypePointer p = t.instanceof!TypePointer) {
-            return LLVMPointerType(this.GenerateType(p.instance),0);
+            LLVMTypeRef a = LLVMPointerType(this.GenerateType(p.instance),0);
+            return a;
         }
         if(TypeArray a = t.instanceof!TypeArray) {
             return LLVMArrayType(this.GenerateType(a.element),cast(uint)a.count);
@@ -299,7 +300,24 @@ class NodeString : Node {
     }
 
     override LLVMValueRef generate() {
-        return LLVMBuildGlobalStringPtr(Generator.Builder,toStringz(value),toStringz("_str"));
+        LLVMValueRef globalstr = LLVMAddGlobal(
+            Generator.Module,
+            LLVMArrayType(LLVMInt8TypeInContext(Generator.Context),cast(uint)value.length+1),
+            toStringz("_str")
+        );
+        LLVMSetGlobalConstant(globalstr, true);
+        LLVMSetUnnamedAddr(globalstr, true);
+        LLVMSetLinkage(globalstr, LLVMPrivateLinkage);
+        LLVMSetAlignment(globalstr, 1);
+        LLVMSetInitializer(globalstr, LLVMConstStringInContext(Generator.Context, toStringz(value), cast(uint)value.length, false));
+        return LLVMConstInBoundsGEP(
+            globalstr,
+            [
+                LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),0,false),
+                LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),0,false)
+            ].ptr,
+            2
+        );
     }
 
     override void debugPrint() {
@@ -639,7 +657,7 @@ class NodeVar : Node {
                 Generator.Builder,
                 value.generate(),
                 currScope.getWithoutLoad(name)
-            );
+            ).LLVMSetAlignment(Generator.getAlignmentOfType(t));
         }
         return null;
     }
