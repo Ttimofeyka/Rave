@@ -1,4 +1,46 @@
 namespace std {
+    namespace file {
+        struct File {
+            int flags;
+            char* rpos;
+            char* rend;
+            int(void*) close;
+            char* wend;
+            char* wpos;
+            char* mustbezero_1;
+            char* wbase;
+            int(void*,char*,int) read;
+            int(void*,char*,int) write;
+            int(void*,int,int) seek;
+            char* buff;
+            int buffSize;
+            void* prev;
+            void* next;
+            int fd;
+            int pipePid;
+            long lockCount;
+            int mode;
+            int lock;
+            int lbf;
+            void* cookie;
+            int off;
+            char* readSBuff;
+            void* mustbezero_2;
+            char* shend;
+            int shlim;
+            int shcnt;
+            void* prevLocked;
+            void* nextLocked;
+            void* locale;
+        }
+        extern(linkname: "fopen") std::file::File* open(char* path, char* mode);
+        extern(linkname: "fclose") int close(std::file::File* file);
+        extern(linkname: "ferror") int hasError(std::file::File* file);
+        extern(linkname: "fprintf", vararg) int printf(std::file::File* file, char* str);
+        extern(linkname: "fflush") int flush(std::file::File* file);
+        extern(linkname: "fscanf", vararg) int scanf(std::file::File* file, char* fmt);
+    }
+
     extern(linkname: "printf", vararg) int printf(char* str);
     extern(linkname: "scanf", vararg) int scanf(char* fmt);
 }

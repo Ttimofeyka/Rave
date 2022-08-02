@@ -16,11 +16,10 @@ enum BasicType {
     Float,
     Double,
 
-    /*Ubool,
-    Ubyte,
     Ushort,
     Uint,
-    Ulong*/
+    Ulong,
+    Uchar
 }
 
 
@@ -28,7 +27,6 @@ enum BasicType {
 Type getType(string name) {
     switch(name) {
         case "bool": return new TypeBasic("bool");
-        //case "byte": return new TypeBasic("byte");
         case "char": return new TypeBasic("char");
         case "int": return new TypeBasic("int");
         case "short": return new TypeBasic("short");
@@ -37,11 +35,11 @@ Type getType(string name) {
         case "double": return new TypeBasic("double");
         case "cent": return new TypeBasic("cent");
 
-        /*case "ubool": return new TypeBasic("ubool");
-        case "ubyte": return new TypeBasic("ubyte");
+        case "ubool": return new TypeBasic("ubool");
         case "uint": return new TypeBasic("uint");
         case "ushort": return new TypeBasic("ushort");
-        case "ulong": return new TypeBasic("ulong");*/
+        case "ulong": return new TypeBasic("ulong");
+        case "uchar": return new TypeBasic("uchar");
 
         case "alias": return new TypeAlias();
         default: return new TypeStruct(name);
@@ -61,8 +59,6 @@ class TypeBasic : Type {
                 type = BasicType.Int; break;
             case "bool":
                 type = BasicType.Bool; break;
-            /*case "byte":
-                type = BasicType.Byte; break;*/
             case "short":
                 type = BasicType.Short; break;
             case "long":
@@ -76,16 +72,14 @@ class TypeBasic : Type {
             case "cent":
                 type = BasicType.Cent; break;
 
-            /*case "uint":
+            case "uint":
                 type = BasicType.Uint; break;
-            case "ubool":
-                type = BasicType.Ubool; break;
-            case "ubyte":
-                type = BasicType.Ubyte; break;
             case "ushort":
                 type = BasicType.Ushort; break;
             case "ulong":
-                type = BasicType.Ulong; break;*/
+                type = BasicType.Ulong; break;
+            case "uchar":
+                type = BasicType.Uchar; break;
             default: break;
         }
     }

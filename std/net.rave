@@ -1,5 +1,16 @@
 namespace std {
     namespace net {
+        struct sockaddr {
+            int sa_family;
+            char[14] sa_data;
+        }
+
+        struct sockaddr_storage {
+            int sa_family;
+            long __ss_align;
+            char[120] __ss_padding;
+        }
+
         extern(linkname: "recv") int recv(int s, char* buff, int len, int flags);
         extern(linkname: "socket") int socket(int domain, int type, int protocol);
         extern(linkname: "bind") int bind(int s, char * name, int namelen);
@@ -9,5 +20,6 @@ namespace std {
         extern(linkname: "send") int send(int s, char * buf, int len, int flags);
         extern(linkname: "shutdown") int shutdown(int s, int how);
         extern(linkname: "close") int close (int s);
+        extern(linkname: "getsockname") int getsockname(int fd, std::net::sockaddr addr, int len);
     }
 }

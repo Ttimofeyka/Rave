@@ -66,10 +66,18 @@ class LLVMGen {
             TypeBasic b = cast(TypeBasic)t;
             switch(b.type) {
                 case BasicType.Bool: return LLVMInt1TypeInContext(Generator.Context);
-                case BasicType.Char: return LLVMInt8TypeInContext(Generator.Context);
-                case BasicType.Short: return LLVMInt16TypeInContext(Generator.Context);
-                case BasicType.Int: return LLVMInt32TypeInContext(Generator.Context);
-                case BasicType.Long: return LLVMInt64TypeInContext(Generator.Context);
+                case BasicType.Char:
+                case BasicType.Uchar:
+                    return LLVMInt8TypeInContext(Generator.Context);
+                case BasicType.Short: 
+                case BasicType.Ushort:
+                    return LLVMInt16TypeInContext(Generator.Context);
+                case BasicType.Int: 
+                case BasicType.Uint:
+                    return LLVMInt32TypeInContext(Generator.Context);
+                case BasicType.Long: 
+                case BasicType.Ulong:
+                    return LLVMInt64TypeInContext(Generator.Context);
                 case BasicType.Cent: return LLVMInt128TypeInContext(Generator.Context);
                 case BasicType.Float: return LLVMFloatTypeInContext(Generator.Context);
                 case BasicType.Double: return LLVMDoubleTypeInContext(Generator.Context);
@@ -84,6 +92,7 @@ class LLVMGen {
             return LLVMArrayType(this.GenerateType(a.element),cast(uint)a.count);
         }
         if(TypeStruct s = t.instanceof!TypeStruct) {
+            if(!s.name.into(Generator.Structs)) return StructTable[s.name].asConstType();
             return Generator.Structs[s.name];
         }
         if(t.instanceof!TypeVoid) return LLVMVoidTypeInContext(Generator.Context);
@@ -115,15 +124,21 @@ class LLVMGen {
             switch(bt.type) {
                 case BasicType.Bool:
                 case BasicType.Char:
+                case BasicType.Uchar:
                     return 1;
                 case BasicType.Short:
+                case BasicType.Ushort:
                     return 2;
                 case BasicType.Int:
                 case BasicType.Float:
+                case BasicType.Uint:
                     return 4;
                 case BasicType.Long:
                 case BasicType.Double:
+                case BasicType.Ulong:
                     return 8;
+                case BasicType.Cent:
+                    return 16;
                 default: assert(0);
             }
         }
@@ -495,9 +510,23 @@ class NodeBinary : Node {
                     AliasTable[i.name] = second;
                     return null;
                 }
+
+                LLVMValueRef val = second.generate();
+                LLVMTypeRef ty = LLVMTypeOf(currScope.get(i.name));
+
+                if(LLVMTypeOf(val) != ty 
+                   && LLVMTypeOf(val) == LLVMPointerType(LLVMVoidTypeInContext(Generator.Context),0)) {
+                    val = LLVMBuildPointerCast(
+                        Generator.Builder,
+                        val,
+                        ty,
+                        toStringz("ptrcast")
+                    );
+                }
+
                 return LLVMBuildStore(
                     Generator.Builder,
-                    second.generate(),
+                    val,
                     currScope.getWithoutLoad(i.name)
                 );
             }
@@ -1570,11 +1599,18 @@ class NodeStruct : Node {
     StructPredefined[] predefines;
     string[] namespacesNames;
     int loc;
+    string origname;
 
     this(string name, Node[] elements, int loc) {
         this.name = name;
         this.elements = elements.dup;
         this.loc = loc;
+        this.origname = name;
+    }
+
+    LLVMTypeRef asConstType() {
+        LLVMTypeRef[] types = getParameters();
+        return LLVMStructType(types.ptr, cast(uint)types.length, false);
     }
 
     override void check() {
@@ -1712,12 +1748,14 @@ class NodeMacro : Node {
     string[] args;
     NodeRet ret;
     int loc;
+    string origname;
 
     this(NodeBlock block, string name, string[] args, int loc) {
         this.block = block;
         this.name = name;
         this.args = args;
         this.loc = loc;
+        this.origname = name;
     }
 
     override void check() {
@@ -1756,9 +1794,7 @@ class NodeUsing : Node {
         this.loc = loc;
     }
 
-    override void check() {
-        
-    }
+    override void check() {}
 
     override LLVMValueRef generate() {
         foreach(var; VarTable) {
@@ -1769,11 +1805,11 @@ class NodeUsing : Node {
                 }
                 var.namespacesNames = newNamespacesNames.dup;
                 string oldname = var.name;
-                var.name = namespacesNamesToString(var.namespacesNames, var.name);
+                var.name = namespacesNamesToString(var.namespacesNames, var.origname);
                 VarTable[var.name] = var;
-                VarTable.remove(oldname);
+                //VarTable.remove(oldname);
                 Generator.Globals[var.name] = Generator.Globals[oldname];
-                Generator.Globals.remove(oldname);
+                //Generator.Globals.remove(oldname);
             }
         }
         foreach(f; FuncTable) {
@@ -1786,9 +1822,9 @@ class NodeUsing : Node {
                 string oldname = f.name;
                 f.name = namespacesNamesToString(f.namespacesNames, f.origname);
                 FuncTable[f.name] = f;
-                FuncTable.remove(oldname);
+                //FuncTable.remove(oldname);
                 Generator.Functions[f.name] = Generator.Functions[oldname];
-                Generator.Functions.remove(oldname);
+                //Generator.Functions.remove(oldname);
             }
         }
         foreach(var; MacroTable) {
@@ -1799,9 +1835,9 @@ class NodeUsing : Node {
                 }
                 var.namespacesNames = newNamespacesNames.dup;
                 string oldname = var.name;
-                var.name = namespacesNamesToString(var.namespacesNames, var.name);
+                var.name = namespacesNamesToString(var.namespacesNames, var.origname);
                 MacroTable[var.name] = var;
-                MacroTable.remove(oldname);
+                //MacroTable.remove(oldname);
             }
         }
         foreach(var; StructTable) {
@@ -1812,16 +1848,14 @@ class NodeUsing : Node {
                 }
                 var.namespacesNames = newNamespacesNames.dup;
                 string oldname = var.name;
-                var.name = namespacesNamesToString(var.namespacesNames, var.name);
+                var.name = namespacesNamesToString(var.namespacesNames, var.origname);
                 StructTable[var.name] = var;
-                StructElements[var] = StructElements[StructTable[oldname]];
-                StructElements.remove(StructTable[oldname]);
-                StructTable.remove(oldname);
+                //StructTable.remove(oldname);
 
                 foreach(k; byKey(structsNumbers)) {
                     if(k[0] == oldname) {
                         structsNumbers[cast(immutable)[var.name,k[1]]] = structsNumbers[k];
-                        structsNumbers.remove(k);
+                        //structsNumbers.remove(k);
                     }
                 }
             }

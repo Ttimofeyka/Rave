@@ -1,9 +1,10 @@
 import <std/io>
 import <std/mem>
+import <std/net>
 
 using std;
 
 int main {
-    printf("Hello, world!\n");
+    int* a = new(10);
     ret 0;
 }

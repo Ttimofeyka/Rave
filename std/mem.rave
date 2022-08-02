@@ -1,12 +1,11 @@
 namespace std {
-    extern(linkname: "malloc") void* malloc(long size);
+    extern(linkname: "malloc") void* malloc(int size);
     extern(linkname: "free") void free(void* ptr);
     extern(linkname: "realloc") void* realloc(void* ptr, long newsize);
     extern(linkname: "memcpy") void* memcpy(void* dest, void* src, int n);
     extern(linkname: "memmove") void* memmove(void* dest, void* src, int n);
     extern(linkname: "memcmp") bool memcmp(void* one, void* two, int n);
     extern(linkname: "memset") void* memset(void* dest, int val);
-
 }
 
 macro delete {
