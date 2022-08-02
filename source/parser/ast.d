@@ -1757,10 +1757,77 @@ class NodeUsing : Node {
     }
 
     override void check() {
-        // TODO
+        
     }
 
-    override LLVMValueRef generate() {return null;}
+    override LLVMValueRef generate() {
+        foreach(var; VarTable) {
+            if(var.namespacesNames.length>0) {
+                string[] newNamespacesNames;
+                for(int i=0; i<var.namespacesNames.length; i++) {
+                    if(var.namespacesNames[i] != namespace) newNamespacesNames ~= var.namespacesNames[i];
+                }
+                var.namespacesNames = newNamespacesNames.dup;
+                string oldname = var.name;
+                var.name = namespacesNamesToString(var.namespacesNames, var.name);
+                VarTable[var.name] = var;
+                VarTable.remove(oldname);
+                Generator.Globals[var.name] = Generator.Globals[oldname];
+                Generator.Globals.remove(oldname);
+            }
+        }
+        foreach(f; FuncTable) {
+            if(f.namespacesNames.length>0) {
+                string[] newNamespacesNames;
+                for(int i=0; i<f.namespacesNames.length; i++) {
+                    if(f.namespacesNames[i] != namespace) newNamespacesNames ~= f.namespacesNames[i];
+                }
+                f.namespacesNames = newNamespacesNames.dup;
+                string oldname = f.name;
+                f.name = namespacesNamesToString(f.namespacesNames, f.origname);
+                FuncTable[f.name] = f;
+                FuncTable.remove(oldname);
+                Generator.Functions[f.name] = Generator.Functions[oldname];
+                Generator.Functions.remove(oldname);
+            }
+        }
+        foreach(var; MacroTable) {
+            if(var.namespacesNames.length>0) {
+                string[] newNamespacesNames;
+                for(int i=0; i<var.namespacesNames.length; i++) {
+                    if(var.namespacesNames[i] != namespace) newNamespacesNames ~= var.namespacesNames[i];
+                }
+                var.namespacesNames = newNamespacesNames.dup;
+                string oldname = var.name;
+                var.name = namespacesNamesToString(var.namespacesNames, var.name);
+                MacroTable[var.name] = var;
+                MacroTable.remove(oldname);
+            }
+        }
+        foreach(var; StructTable) {
+            if(var.namespacesNames.length>0) {
+                string[] newNamespacesNames;
+                for(int i=0; i<var.namespacesNames.length; i++) {
+                    if(var.namespacesNames[i] != namespace) newNamespacesNames ~= var.namespacesNames[i];
+                }
+                var.namespacesNames = newNamespacesNames.dup;
+                string oldname = var.name;
+                var.name = namespacesNamesToString(var.namespacesNames, var.name);
+                StructTable[var.name] = var;
+                StructElements[var] = StructElements[StructTable[oldname]];
+                StructElements.remove(StructTable[oldname]);
+                StructTable.remove(oldname);
+
+                foreach(k; byKey(structsNumbers)) {
+                    if(k[0] == oldname) {
+                        structsNumbers[cast(immutable)[var.name,k[1]]] = structsNumbers[k];
+                        structsNumbers.remove(k);
+                    }
+                }
+            }
+        }
+        return null;
+    }
 }
 
 class NodeNull : Node {

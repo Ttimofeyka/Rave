@@ -1,6 +1,9 @@
 import <std/io>
 import <std/mem>
 
+using std;
+
 int main {
+    printf("Hello, world!\n");
     ret 0;
 }
