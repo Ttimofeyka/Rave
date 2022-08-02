@@ -137,6 +137,18 @@ class Parser {
         return new NodeCall(peek().line,func,parseFuncCallArgs());
     }
 
+    Node[] parseIndexs() {
+        Node[] indexs;
+
+        while(peek().type == TokType.Rarr) {
+            next();
+            indexs ~= parseExpr();
+            next();
+        }
+
+        return indexs.dup;
+    }
+
     Node parseSuffix(Node base) {
         while(peek().type == TokType.Rpar
              || peek().type == TokType.Rarr
@@ -144,11 +156,7 @@ class Parser {
         ) {
             if(peek().type == TokType.Rpar) base = parseCall(base);
             else if(peek().type == TokType.Rarr) {
-                next();
-                auto idx = to!int(peek().value);
-                next();
-                expect(TokType.Larr);
-                base = new NodeIndex(base,idx,peek().line);
+                base = new NodeIndex(base,parseIndexs(),peek().line);
             }
             else if(peek().type == TokType.Dot) {
                 next();
@@ -186,7 +194,7 @@ class Parser {
             }
             else if(t.value == "sizeof") {
                 next();
-                Node val = parseExpr();
+                NodeType val = new NodeType(parseType(),t.line);
                 next();
                 return new NodeSizeof(val,t.line);
             }
@@ -409,9 +417,26 @@ class Parser {
                 string iden = peek().value;
                 _idx++;
                 if(peek().type != TokType.Identifier) {
-                    if(peek().type == TokType.Multiply || peek().type == TokType.Rarr)  {
+                    if(peek().type == TokType.Multiply)  {
                         _idx -= 1;
                         return parseDecl(f);
+                    }
+                    else if(peek().type == TokType.Rarr) {
+                        switch(iden) {
+                            case "void":
+                            case "bool":
+                            case "int":
+                            case "short":
+                            case "char":
+                            case "cent":
+                                _idx -= 1;
+                                return parseDecl(f);
+                            default: break;
+                        }
+                        if(structs.canFind(iden)) {
+                            _idx -= 1;
+                            return parseDecl(f);
+                        }
                     }
                     else if(peek().type == TokType.Rpar) {
                         switch(iden) {

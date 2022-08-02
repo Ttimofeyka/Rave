@@ -1,7 +1,6 @@
-int b => 5;
+import <std/io>
+import <std/mem>
 
 int main {
-    int() a;
-    a = b;
-    ret a();
+    ret 0;
 }

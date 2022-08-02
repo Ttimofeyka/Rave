@@ -14,7 +14,7 @@ import llvm;
 
 Node[string] AliasTable;
 NodeFunc[string] FuncTable;
-NodeVar[string[]] VarTable;
+NodeVar[string] VarTable;
 NodeStruct[string] StructTable;
 NodeMacro[string] MacroTable;
 bool[string] ConstVars;
@@ -92,11 +92,15 @@ class LLVMGen {
             foreach(ty; f.args) {
                 types ~= Generator.GenerateType(ty);
             }
-            return LLVMFunctionType(
-                Generator.GenerateType(f.main),
-                types.ptr,
-                cast(uint)types.length,
-                false
+            return 
+            LLVMPointerType(
+                LLVMFunctionType(
+                    Generator.GenerateType(f.main),
+                    types.ptr,
+                    cast(uint)types.length,
+                    false
+                ),
+                0
             );
         }
         if(t is null) return LLVMPointerType(
@@ -144,22 +148,6 @@ class LLVMGen {
     }
 }
 
-const(string[]) cnv(string[] s) {return cast(const)s;}
-
-void clearLocals() {
-    foreach(key; byKey(VarTable)) {
-        if(key[0] == "local") VarTable.remove(key);
-    }
-}
-
-NodeVar[] getLocals() {
-    NodeVar[] locals;
-    foreach(key; byKey(VarTable)) {
-        if(key[0] == "local") locals ~= VarTable[key];
-    }
-    return locals.dup;
-}
-
 class Scope {
     LLVMValueRef[string] localscope;
     int[string] args;
@@ -167,15 +155,30 @@ class Scope {
     LLVMBasicBlockRef BlockExit;
     bool funcHasRet = false;
     Node[int] macroArgs;
+    NodeVar[string] localVars;
+    NodeVar[string] argVars;
 
-    this(string func, int[string] args) {
+    this(string func, int[string] args, NodeVar[string] argVars) {
         this.func = func;
         this.args = args.dup;
+        this.argVars = argVars.dup;
     }
 
     LLVMValueRef getWithoutLoad(string n) {
         if(!(n !in localscope)) return localscope[n];
         if(!(n !in Generator.Globals)) return Generator.Globals[n];
+        /*writeln(
+            fromStringz(
+                LLVMPrintTypeToString(
+                    LLVMTypeOf(
+                        LLVMGetParam(
+                            Generator.Functions[func],
+                            cast(uint)args[n]
+                        )
+                    )
+                )
+            )
+        );*/
         return LLVMGetParam(
             Generator.Functions[func],
             cast(uint)args[n]
@@ -191,7 +194,7 @@ class Scope {
                 toStringz("loadLocal"~n)
             );
             try {
-                LLVMSetAlignment(instr,Generator.getAlignmentOfType(VarTable[["local",n].cnv].t));
+                LLVMSetAlignment(instr,Generator.getAlignmentOfType(localVars[n].t));
             } catch(Error e) {}
             return instr;
         }
@@ -201,7 +204,7 @@ class Scope {
                 Generator.Globals[n],
                 toStringz("loadGlobal"~n)
             );
-            LLVMSetAlignment(instr,Generator.getAlignmentOfType(VarTable[["global",n].cnv].t));
+            LLVMSetAlignment(instr,Generator.getAlignmentOfType(VarTable[n].t));
             return instr;
         }
         return LLVMGetParam(
@@ -211,8 +214,9 @@ class Scope {
     }
 
     NodeVar getVar(string n) {
-        if(n.into(localscope)) return VarTable[["local",n].cnv];
-        if(n.into(Generator.Globals)) return VarTable[["global",n].cnv];
+        if(n.into(localscope)) return localVars[n];
+        if(n.into(Generator.Globals)) return VarTable[n];
+        if(n.into(args)) return argVars[n];
         Generator.error(-1,"Undefined variable \""~n~"\"!");
         assert(0);
     }
@@ -365,7 +369,7 @@ class NodeBinary : Node {
     }
 
     LLVMValueRef sum(LLVMValueRef one, LLVMValueRef two) {
-        if(LLVMTypeOf(one) != LLVMTypeOf(two)) {
+        if(LLVMGetTypeKind(LLVMTypeOf(one)) !=LLVMGetTypeKind( LLVMTypeOf(two))) {
             Generator.error(loc,"value types are incompatible!");
         }
         if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMFloatTypeKind) {
@@ -401,9 +405,6 @@ class NodeBinary : Node {
     }
 
     LLVMValueRef mul(LLVMValueRef one, LLVMValueRef two) {
-        if(LLVMTypeOf(one) != LLVMTypeOf(two)) {
-            Generator.error(loc,"value types are incompatible!");
-        }
         if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMFloatTypeKind) {
             return LLVMBuildFMul(
                 Generator.Builder,
@@ -419,9 +420,6 @@ class NodeBinary : Node {
     }
 
     LLVMValueRef div(LLVMValueRef one, LLVMValueRef two) {
-        if(LLVMTypeOf(one) != LLVMTypeOf(two)) {
-            Generator.error(loc,"value types are incompatible!");
-        }
         if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMFloatTypeKind) {
             return LLVMBuildFDiv(
                 Generator.Builder,
@@ -459,7 +457,6 @@ class NodeBinary : Node {
                 );
             }
         }
-        Generator.error(loc,"Comparing values not with the same types!");
         assert(0);
     }
 
@@ -484,18 +481,14 @@ class NodeBinary : Node {
                 );
             }
         }
-        Generator.error(loc,"Comparing values not with the same types!");
         assert(0);
     }
 
     override LLVMValueRef generate() {
-        if(operator == TokType.Plus) return sum(first.generate(),second.generate());
-        if(operator == TokType.Minus) return sub(first.generate(),second.generate());
-        if(operator == TokType.Multiply) return mul(first.generate(),second.generate());
-        if(operator == TokType.Divide) return div(first.generate(),second.generate());
+        import std.algorithm : count;
         if(operator == TokType.Equ) {
             if(NodeIden i = first.instanceof!NodeIden) {
-                if(i.name.into(ConstVars)) {
+                if(currScope.getVar(i.name).isConst) {
                     Generator.error(loc, "An attempt to change the value of a constant variable!");
                 }
                 if(i.name.into(AliasTable)) {
@@ -515,12 +508,90 @@ class NodeBinary : Node {
                     g.generate()
                 );
             }
+            else if(NodeIndex ind = first.instanceof!NodeIndex) {
+                ind.isEqu = true;
+                ind.toSet = second;
+                ind.generate();
+                return null;
+            }
         }
-        if(operator == TokType.Equal) return equal(first.generate(),second.generate(),false);
-        if(operator == TokType.Nequal) return equal(first.generate(),second.generate(),true);
-        if(operator == TokType.Less) return diff(first.generate(),second.generate(),true);
-        if(operator == TokType.More) return diff(first.generate(),second.generate(),false);
-        return null;
+
+        LLVMValueRef f = first.generate();
+        LLVMValueRef s = second.generate();
+
+        if(LLVMGetTypeKind(LLVMTypeOf(f)) != LLVMGetTypeKind(LLVMTypeOf(s))) {
+            Generator.error(loc,"Value types are incompatible!");
+        }
+        else if(LLVMTypeOf(f) != LLVMTypeOf(s)) {
+            if(LLVMGetTypeKind(LLVMTypeOf(f)) == LLVMIntegerTypeKind) {
+                int fISize = to!int(to!string(fromStringz(LLVMPrintTypeToString(LLVMTypeOf(f))))[1..$]);
+                int sISize = to!int(to!string(fromStringz(LLVMPrintTypeToString(LLVMTypeOf(s))))[1..$]);
+                if(fISize>sISize) {
+                    s = LLVMBuildIntCast(
+                        Generator.Builder,
+                        s,
+                        LLVMTypeOf(f),
+                        toStringz("intcast")
+                    );
+                }
+                else {
+                    f = LLVMBuildIntCast(
+                        Generator.Builder,
+                        f,
+                        LLVMTypeOf(s),
+                        toStringz("intcast")
+                    );
+                }
+            }
+            else if(LLVMGetTypeKind(LLVMTypeOf(f)) == LLVMFloatTypeKind) {
+                int fISize = to!int(to!string(fromStringz(LLVMPrintTypeToString(LLVMTypeOf(f))))[1..$]);
+                int sISize = to!int(to!string(fromStringz(LLVMPrintTypeToString(LLVMTypeOf(s))))[1..$]);
+                if(fISize>sISize) {
+                    s = LLVMBuildFPCast(
+                        Generator.Builder,
+                        s,
+                        LLVMTypeOf(f),
+                        toStringz("floatcast")
+                    );
+                }
+                else {
+                    f = LLVMBuildFPCast(
+                        Generator.Builder,
+                        f,
+                        LLVMTypeOf(s),
+                        toStringz("floatcast")
+                    );
+                }
+            }
+            else if(LLVMGetTypeKind(LLVMTypeOf(f)) == LLVMPointerTypeKind) {
+                if(to!string(fromStringz(LLVMPrintTypeToString(LLVMTypeOf(f)))).count('*') > to!string(fromStringz(LLVMPrintTypeToString(LLVMTypeOf(s)))).count('*')) {
+                    s = LLVMBuildPointerCast(
+                        Generator.Builder,
+                        s,
+                        LLVMTypeOf(f),
+                        toStringz("ptrcast")
+                    );
+                }
+                else {
+                    f = LLVMBuildPointerCast(
+                        Generator.Builder,
+                        f,
+                        LLVMTypeOf(s),
+                        toStringz("ptrcast")
+                    );
+                }
+            }
+        }
+
+        if(operator == TokType.Plus) return sum(f,s);
+        if(operator == TokType.Minus) return sub(f,s);
+        if(operator == TokType.Multiply) return mul(f,s);
+        if(operator == TokType.Divide) return div(f,s);
+        if(operator == TokType.Equal) return equal(f,s,false);
+        if(operator == TokType.Nequal) return equal(f,s,true);
+        if(operator == TokType.Less) return diff(f,s,true);
+        if(operator == TokType.More) return diff(f,s,false);
+        assert(0);
     }
 
     override void debugPrint() {
@@ -620,15 +691,7 @@ class NodeVar : Node {
         if(namespacesNames.length>0) {
             name = namespacesNamesToString(namespacesNames,name);
         }
-        if(!([(isGlobal ? "global" : "local"),name].cnv !in VarTable)) {
-            checkError(loc,"a variable with that name already exists on "~to!string(VarTable[[(isGlobal ? "global" : "local"),name].cnv].loc+1)~" line!");
-        }
-        VarTable[[(isGlobal ? "global" : "local"),name].cnv] = this;
-        if(isConst && isGlobal) ConstVars[name] = true;
-
-        if(TypeFunc f = t.instanceof!TypeFunc) {
-            t = new TypePointer(f);
-        }
+        if(isGlobal) VarTable[name] = this;
     }
 
     override LLVMValueRef generate() {
@@ -659,6 +722,7 @@ class NodeVar : Node {
         }
         else {
             // Local variables
+            currScope.localVars[name] = this;
             currScope.localscope[name] = LLVMBuildAlloca(
                 Generator.Builder,
                 Generator.GenerateType(t),
@@ -815,11 +879,14 @@ class NodeFunc : Node {
             );
 
             int[string] intargs;
+            NodeVar[string] argVars;
+
             for(int i=0; i<args.length; i++) {
                 intargs[args[i].name] = i;
+                argVars[args[i].name] = new NodeVar(args[i].name,null,false,true,false,[],loc,args[i].type);
             }
 
-            currScope = new Scope(name,intargs);
+            currScope = new Scope(name,intargs,argVars);
             Generator.currBB = entry;
 
             block.generate();
@@ -857,7 +924,6 @@ class NodeFunc : Node {
 			
 			Generator.Builder = null;
             currScope = null;
-            clearLocals();
         }
 
         LLVMSetGlobalDSOLocal(Generator.Functions[name]);
@@ -956,11 +1022,37 @@ class NodeCall : Node {
 
             // Generate macro-call
             Scope oldScope = currScope;
-            currScope = new Scope(f.name, null);
+            currScope = new Scope(f.name, null, null);
             for(int i=0; i<args.length; i++) {
                 currScope.macroArgs[i] = args[i];
-                //currScope.localscope[MacroTable[f.name].args[i]] = args[i].generate();
             }
+            Node[] presets;
+            presets ~= new NodeVar(
+                f.name~"::argCount",
+                new NodeInt(currScope.macroArgs.length),
+                false,
+                true,
+                false,
+                [],
+                loc,
+                new TypeAlias()
+            );
+
+            for(int i=0; i<MacroTable[f.name].args.length; i++) {
+                presets ~= new NodeVar(
+                    MacroTable[f.name].args[i],
+                    args[i],
+                    false,
+                    true,
+                    false,
+                    [],
+                    loc,
+                    new TypeAlias()
+                );
+            }
+
+            MacroTable[f.name].block.nodes = presets~MacroTable[f.name].block.nodes;
+
             MacroTable[f.name].block.generate();
             
             LLVMValueRef toret = null;
@@ -990,22 +1082,85 @@ class NodeCall : Node {
 
 class NodeIndex : Node {
     Node element;
-    int index;
+    Node toSet;
+    Node[] indexs;
     int loc;
     bool isEqu = false;
 
-    this(Node element, int index, int loc) {
+    this(Node element, Node[] indexs, int loc) {
         this.element = element;
-        this.index = index;
+        this.indexs = indexs.dup;
         this.loc = loc;
     }
 
     override void check() {element.check();}
     override LLVMValueRef generate() {
-        if(!isEqu) {
-            
+        LLVMValueRef[] genIndexs;
+        for(int i=0; i<indexs.length; i++) {
+            genIndexs ~= indexs[i].generate();
         }
-        return null;
+        if(!isEqu) {
+            if(NodeIden id = element.instanceof!NodeIden) {
+                if(currScope.getVar(id.name).t.instanceof!TypePointer) {
+                    return LLVMBuildLoad(Generator.Builder, LLVMBuildGEP(
+                        Generator.Builder,
+                        currScope.get(id.name),
+                        genIndexs.ptr,
+                        cast(uint)genIndexs.length,
+                        toStringz("gep")
+                    ), toStringz("load"));
+                }
+            }
+        }
+        else { if(NodeIden id = element.instanceof!NodeIden) {
+            if(currScope.getVar(id.name).t.instanceof!TypePointer) {
+                return LLVMBuildGEP(
+                    Generator.Builder,
+                    currScope.get(id.name),
+                    genIndexs.ptr,
+                    cast(uint)genIndexs.length,
+                    toStringz("gep")
+                );
+            }
+        }
+    }
+
+    NodeIden id = element.instanceof!NodeIden;
+
+    int currIndex = 0;
+    LLVMValueRef val = currScope.get(id.name);
+
+    // Arrays
+    if(!isEqu) {
+        genIndexs = LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),0,false)~genIndexs;
+
+        return LLVMBuildLoad(
+            Generator.Builder,
+            LLVMBuildInBoundsGEP(
+                Generator.Builder,
+                currScope.getWithoutLoad(id.name),
+                genIndexs.ptr,
+                cast(uint)genIndexs.length,
+                toStringz("gep")
+            ),
+            toStringz("load2")
+        );
+    }
+
+    genIndexs = LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),0,false)~genIndexs;
+
+    return LLVMBuildStore(
+        Generator.Builder,
+        toSet.generate(),
+        LLVMBuildInBoundsGEP(
+            Generator.Builder,
+            currScope.getWithoutLoad(id.name),
+            genIndexs.ptr,
+            cast(uint)genIndexs.length,
+            toStringz("ingep")
+        )
+    );
+
     }
 }
 
@@ -1029,6 +1184,9 @@ class NodeGet : Node {
 
     TypeStruct getStruct() {
         if(NodeIden id = base.instanceof!NodeIden) {
+            if(TypePointer p = currScope.getVar(id.name).t.instanceof!TypePointer) {
+                return p.instance.instanceof!TypeStruct;
+            }
             return currScope.getVar(id.name).t.instanceof!TypeStruct;
         }
         else {
@@ -1067,21 +1225,38 @@ class NodeGet : Node {
 
     override LLVMValueRef generate() {
         if(NodeIden id = base.instanceof!NodeIden) {
-            TypeStruct s = currScope.getVar(id.name).t.instanceof!TypeStruct;
+            LLVMValueRef var;
+            TypeStruct s;
+
+            if(TypePointer p = currScope.getVar(id.name).t.instanceof!TypePointer) {
+                var = LLVMBuildGEP(
+                    Generator.Builder,
+                    currScope.get(id.name),
+                    [LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),0,false)].ptr,
+                    1,
+                    toStringz("gep")
+                );
+                s = p.instance.instanceof!TypeStruct;
+            }
+            else {
+                s = currScope.getVar(id.name).t.instanceof!TypeStruct;
+                var = currScope.getWithoutLoad(id.name);
+            }
+            string structname = s.name;
             if(!isEqu) return LLVMBuildLoad(
                 Generator.Builder,
                 LLVMBuildStructGEP(
                     Generator.Builder,
-                    currScope.getWithoutLoad(id.name),
-                    structsNumbers[cast(immutable)[s.name,field]].number,
+                    var,
+                    structsNumbers[cast(immutable)[structname,field]].number,
                     toStringz("getStructElement"~field)
                 ),
                 toStringz("loadGEP")
             );
             return LLVMBuildStructGEP(
                     Generator.Builder,
-                    currScope.getWithoutLoad(id.name),
-                    structsNumbers[cast(immutable)[s.name,field]].number,
+                    var,
+                    structsNumbers[cast(immutable)[structname,field]].number,
                     toStringz("getStructElement"~field)
             );
         }
@@ -1132,6 +1307,7 @@ class NodeUnary : Node {
     int loc;
     TokType type;
     Node base;
+    bool isEqu = false;
 
     this(int loc, TokType type, Node base) {
         this.loc = loc;
@@ -1152,6 +1328,15 @@ class NodeUnary : Node {
                 return s.generate();
             }
             NodeIden id = base.instanceof!NodeIden;
+            if(currScope.getVar(id.name).t.instanceof!TypeArray) {
+                return LLVMBuildInBoundsGEP(
+					Generator.Builder,
+					currScope.getWithoutLoad(id.name),
+					[LLVMConstInt(LLVMInt32Type(),0,false),LLVMConstInt(LLVMInt32Type(),0,false)].ptr,
+					2,
+					toStringz("ingep")
+				);
+            }
             return currScope.getWithoutLoad(id.name);
         }
         assert(0);
@@ -1572,31 +1757,7 @@ class NodeUsing : Node {
     }
 
     override void check() {
-        foreach(v; byValue(VarTable)) {
-            if(v.namespacesNames.canFind(namespace)) {
-                string[] namespaces;
-                for(int i=0; i<v.namespacesNames.length; i++) {
-                    if(v.namespacesNames[i] != namespace) namespaces ~= v.namespacesNames[i];
-                }
-                string oldname = v.name;
-                v.name = namespacesNamesToString(v.namespacesNames,v.origname);
-                VarTable.remove([(v.isGlobal ? "global" : "local"),oldname].cnv);
-                VarTable[[(v.isGlobal ? "global" : "local"),oldname].cnv] = v;
-            }
-        }
-        foreach(v; byValue(FuncTable)) {
-            if(v.namespacesNames.canFind(namespace)) {
-                string[] namespaces;
-                for(int i=0; i<v.namespacesNames.length; i++) {
-                    if(v.namespacesNames[i] != namespace) namespaces ~= v.namespacesNames[i];
-                }
-                v.namespacesNames = namespaces.dup;
-                string oldname = v.name;
-                v.name = namespacesNamesToString(v.namespacesNames,v.origname);
-                FuncTable.remove(oldname);
-                FuncTable[oldname] = v;
-            }
-        }
+        // TODO
     }
 
     override LLVMValueRef generate() {return null;}
