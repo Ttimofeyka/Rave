@@ -12,8 +12,6 @@ import std.container : SList;
 import app : files;
 import std.conv : parse;
 
-bool[string] _imported;
-
 T instanceof(T)(Object o) if(is(T == class)) {
 	return cast(T) o;
 }
@@ -26,8 +24,9 @@ struct DeclMod {
 class Parser {
     Token[] tokens;
     int _idx = 0;
-    private Node[] _nodes;
-    private string[] structs;
+    Node[] _nodes;
+    string[] structs;
+    bool[string] _imported;
 
     private void error(string msg) {
         pragma(inline,true);
@@ -209,25 +208,6 @@ class Parser {
                 Node val = parseExpr();
                 next();
                 return new NodePtoi(val,t.line);
-            }
-            else {
-                switch(t.value) {
-                    case "bool":
-                    case "int":
-                    case "short":
-                    case "char":
-                    case "long":
-                    case "cent":
-                    case "void":
-                        _idx--;
-                        return new NodeType(parseType(),t.line);
-                    default:
-                        break;
-                }
-                if(structs.canFind(t.value)) {
-                    _idx--;
-                    return new NodeType(parseType(),t.line);
-                }
             }
             return new NodeIden(t.value,peek().line);
         }
@@ -586,7 +566,7 @@ class Parser {
     string MainFile = "";
 
     Node parseImport() {
-        import lexer.lexer, std.file, std.path;
+        import lexer.lexer, std.file, std.path, std.algorithm : canFind;
         next();
         string _file;
 
@@ -617,9 +597,12 @@ class Parser {
             else if(NodeNamespace n = nodes[i].instanceof!NodeNamespace) {
                 n.isImport = true;
             }
+            else if(NodeStruct s = nodes[i].instanceof!NodeStruct) {
+                s.isImported = true;
+            }
         }
         this._nodes ~= nodes.dup;
-        files ~= _file;
+        if(!files.canFind(_file)) files ~= _file;
         _imported[_file] = true;
         return new NodeNone();
     }

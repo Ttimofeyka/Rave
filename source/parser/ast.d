@@ -18,6 +18,7 @@ NodeVar[string] VarTable;
 NodeStruct[string] StructTable;
 NodeMacro[string] MacroTable;
 bool[string] ConstVars;
+NodeFunc[string[]] MethodTable;
 
 bool into(T, TT)(T t, TT tt) {
     pragma(inline,true);
@@ -50,9 +51,9 @@ class LLVMGen {
         LLVMInitializeAllTargetMCs();
     }
 
-    string mangle(string name, bool isFunc) {
+    string mangle(string name, bool isFunc, bool isMethod) {
         pragma(inline,true);
-        return isFunc ? "_Ravef"~to!string(name.length)~name : "_Raveg"~name;
+        return isFunc ? (isMethod ? "_Ravem"~to!string(name.length)~name : "_Ravef"~to!string(name.length)~name) : "_Raveg"~name;
     }
 
     void error(int loc,string msg) {
@@ -85,6 +86,9 @@ class LLVMGen {
             }
         }
         if(TypePointer p = t.instanceof!TypePointer) {
+            if(p.instance.instanceof!TypeVoid) {
+                return LLVMPointerType(LLVMInt8TypeInContext(Generator.Context),0);
+            }
             LLVMTypeRef a = LLVMPointerType(this.GenerateType(p.instance),0);
             return a;
         }
@@ -92,7 +96,6 @@ class LLVMGen {
             return LLVMArrayType(this.GenerateType(a.element),cast(uint)a.count);
         }
         if(TypeStruct s = t.instanceof!TypeStruct) {
-            if(!s.name.into(Generator.Structs)) return StructTable[s.name].asConstType();
             return Generator.Structs[s.name];
         }
         if(t.instanceof!TypeVoid) return LLVMVoidTypeInContext(Generator.Context);
@@ -362,7 +365,7 @@ class NodeChar : Node {
     }
 
     override LLVMValueRef generate() {
-        return LLVMConstInt(LLVMInt8Type(),to!ulong(value),false);
+        return LLVMConstInt(LLVMInt8TypeInContext(Generator.Context),to!ulong(value),false);
     }
 
     override void debugPrint() {
@@ -665,6 +668,7 @@ void structSetPredefines(Type t, LLVMValueRef var) {
     if(TypeStruct s = t.instanceof!TypeStruct) {
             if(StructTable[s.name].predefines.length>0) {
                 for(int i=0; i<StructTable[s.name].predefines.length; i++) {
+                    if(StructTable[s.name].predefines[i].value is null) continue;
                     if(StructTable[s.name].predefines[i].isStruct) {
                         NodeVar v = StructTable[s.name].predefines[i].value.instanceof!NodeVar;
                         structSetPredefines(
@@ -677,14 +681,14 @@ void structSetPredefines(Type t, LLVMValueRef var) {
                             )
                         );
                     }
-                    else LLVMBuildStore(
+                    LLVMBuildStore(
                         Generator.Builder,
                         StructTable[s.name].predefines[i].value.generate(),
                         LLVMBuildStructGEP(
                             Generator.Builder,
                             var,
                             cast(uint)i,
-                            toStringz("getStructElement")
+                            toStringz("getStructElement2")
                         )
                     );
                 }
@@ -738,7 +742,7 @@ class NodeVar : Node {
             Generator.Globals[name] = LLVMAddGlobal(
                 Generator.Module, 
                 Generator.GenerateType(t), 
-                toStringz((noMangling) ? name : Generator.mangle(name,false))
+                toStringz((noMangling) ? name : Generator.mangle(name,false,false))
             );
             if(isExtern) {
                 LLVMSetLinkage(Generator.Globals[name], LLVMExternalLinkage);
@@ -828,6 +832,7 @@ class NodeFunc : Node {
     LLVMBuilderRef builder;
     string[] namespacesNames;
     const string origname;
+    bool isMethod = false;
 
     this(string name, FuncArgSet[] args, NodeBlock block, bool isExtern, DeclMod[] mods, int loc, Type type) {
         this.name = name;
@@ -849,6 +854,9 @@ class NodeFunc : Node {
         }
         FuncTable[name] = this;
         for(int i=0; i<block.nodes.length; i++) {
+            if(NodeRet r = block.nodes[i].instanceof!NodeRet) {
+                r.parent = name;
+            }
             block.nodes[i].check();
         }
     }
@@ -863,7 +871,8 @@ class NodeFunc : Node {
 
     override LLVMValueRef generate() {
         bool vararg = false;
-        string linkName = Generator.mangle(name,true);
+        string linkName = Generator.mangle(name,true,false);
+        if(isMethod) linkName = Generator.mangle(name,true,true);
 
         if(name == "main") linkName = "main";
 
@@ -961,7 +970,7 @@ class NodeFunc : Node {
 
         LLVMVerifyFunction(Generator.Functions[name],0);
 
-        return null;
+        return Generator.Functions[name];
     }
 
     override void debugPrint() {
@@ -1021,16 +1030,16 @@ class NodeCall : Node {
         this.args = args.dup;
     }
 
-    LLVMValueRef* getParameters() {
+    LLVMValueRef[] getParameters() {
         LLVMValueRef[] params;
         for(int i=0; i<args.length; i++) {
             params ~= args[i].generate();
         }
-        return params.ptr;
+        return params.dup;
     }
 
     override LLVMValueRef generate() {
-        NodeIden f = func.instanceof!NodeIden;
+        if(NodeIden f = func.instanceof!NodeIden) {
         if(!f.name.into(FuncTable)) {
             if(!f.name.into(MacroTable)) {
                 if(currScope.has(f.name)) {
@@ -1040,7 +1049,7 @@ class NodeCall : Node {
                     return LLVMBuildCall(
                         Generator.Builder,
                         currScope.get(f.name),
-                        getParameters(),
+                        getParameters().ptr,
                         cast(uint)args.length,
                         toStringz(name)
                     );
@@ -1098,10 +1107,27 @@ class NodeCall : Node {
         return LLVMBuildCall(
             Generator.Builder,
             Generator.Functions[f.name],
-            getParameters(),
+            getParameters().ptr,
             cast(uint)args.length,
             toStringz(name)
         );
+        }
+        else if(NodeGet g = func.instanceof!NodeGet) {
+            if(NodeIden i = g.base.instanceof!NodeIden) {
+                TypeStruct s = currScope.getVar(i.name).t.instanceof!TypeStruct;
+                LLVMValueRef[] params = getParameters();
+                params = currScope.get(i.name)~params;
+                return LLVMBuildCall(
+                    Generator.Builder,
+                    Generator.Functions[MethodTable[cast(immutable)[s.name,g.field]].name],
+                    params.ptr,
+                    cast(uint)params.length,
+                    toStringz(MethodTable[cast(immutable)[s.name,g.field]].type.instanceof!TypeVoid ? "" : g.field)
+                );
+            }
+            else Generator.error(loc,"TODO!");
+        }
+        assert(0);
     }
 
     override void debugPrint() {
@@ -1140,24 +1166,46 @@ class NodeIndex : Node {
                     ), toStringz("load"));
                 }
             }
+            NodeGet g = element.instanceof!NodeGet;
+            return LLVMBuildLoad(
+                Generator.Builder,
+                LLVMBuildGEP(
+                    Generator.Builder,
+                    g.generate(),
+                    genIndexs.ptr,
+                    cast(uint)genIndexs.length,
+                    toStringz("geo")
+                ),
+                toStringz("load")
+            );
         }
         else { if(NodeIden id = element.instanceof!NodeIden) {
             if(currScope.getVar(id.name).t.instanceof!TypePointer) {
-                return LLVMBuildGEP(
+                return LLVMBuildStore(Generator.Builder, toSet.generate(), LLVMBuildGEP(
                     Generator.Builder,
                     currScope.get(id.name),
                     genIndexs.ptr,
                     cast(uint)genIndexs.length,
                     toStringz("gep")
-                );
+                ));
             }
+        }
+        else if(NodeGet g = element.instanceof!NodeGet) {
+            return LLVMBuildStore(
+                Generator.Builder,
+                toSet.generate(),
+                LLVMBuildGEP(
+                    Generator.Builder,
+                    g.generate(),
+                    genIndexs.ptr,
+                    cast(uint)genIndexs.length,
+                    toStringz("gep")
+                )
+            );
         }
     }
 
     NodeIden id = element.instanceof!NodeIden;
-
-    int currIndex = 0;
-    LLVMValueRef val = currScope.get(id.name);
 
     // Arrays
     if(!isEqu) {
@@ -1282,6 +1330,9 @@ class NodeGet : Node {
                 ),
                 toStringz("loadGEP")
             );
+            if(structsNumbers[cast(immutable)[structname,field]].var.isConst) {
+                Generator.error(loc,"An attempt to change the value of a constant variable!");
+            }
             return LLVMBuildStructGEP(
                     Generator.Builder,
                     var,
@@ -1556,6 +1607,14 @@ class NodeNamespace : Node {
                 if(!v.isExtern) v.isExtern = isImport;
                 v.generate();
             }
+            else if(NodeNamespace n = nodes[i].instanceof!NodeNamespace) {
+                if(!n.isImport) n.isImport = isImport;
+                n.generate();
+            }
+            else if(NodeStruct s = nodes[i].instanceof!NodeStruct) {
+                if(!s.isImported) s.isImported = isImport;
+                s.generate();
+            }
             else nodes[i].generate();
         }
         return null;
@@ -1600,6 +1659,9 @@ class NodeStruct : Node {
     string[] namespacesNames;
     int loc;
     string origname;
+    NodeFunc _this;
+    NodeFunc[] methods;
+    bool isImported = false;
 
     this(string name, Node[] elements, int loc) {
         this.name = name;
@@ -1648,10 +1710,45 @@ class NodeStruct : Node {
                 else if(TypeStruct ts = v.t.instanceof!TypeStruct) {
                     if(StructTable[ts.name].hasPredefines()) predefines ~= StructPredefined(i,v,true);
                 }
+                else predefines ~= StructPredefined(i,null,false);
                 values ~= Generator.GenerateType(v.t);
             }
             else {
                 NodeFunc f = elements[i].instanceof!NodeFunc;
+                if(f.name == "this") {
+
+                    if(isImported) {
+                        _this = f;
+                        _this.isExtern = true;
+                        _this.name = name;
+                        _this.check();
+                        continue;
+                    }
+
+                    _this = f;
+                    _this.isExtern = false;
+                    _this.name = name;
+
+                    _this.block.nodes = 
+                        new NodeVar("this",null,false,false,false,[],_this.loc,new TypeStruct(name)) 
+                        ~ _this.block.nodes
+                        ~ new NodeRet(new NodeIden("this",f.loc),f.loc,name);
+
+                    _this.check();
+                }
+                else {
+                    f.args = FuncArgSet("this",new TypeStruct(name))~f.args;
+                    f.name = name~"."~f.origname;
+                    f.isMethod = true;
+
+                    if(isImported) {
+                        f.isExtern = true;
+                    }
+
+                    MethodTable[cast(immutable)[name,f.origname]] = f;
+
+                    methods ~= f;
+                }
             }
         }
         return values.dup;
@@ -1661,7 +1758,11 @@ class NodeStruct : Node {
         Generator.Structs[name] = LLVMStructCreateNamed(Generator.Context,toStringz(name));
         LLVMTypeRef[] params = getParameters();
         LLVMStructSetBody(Generator.Structs[name],params.ptr,cast(uint)params.length,false);
-        StructTable[name] = this;
+        if(_this !is null) _this.generate();
+        for(int i=0; i<methods.length; i++) {
+            methods[i].check();
+            methods[i].generate();
+        }
         return null;
     }
 }
@@ -1850,6 +1951,15 @@ class NodeUsing : Node {
                 string oldname = var.name;
                 var.name = namespacesNamesToString(var.namespacesNames, var.origname);
                 StructTable[var.name] = var;
+                if(oldname.into(FuncTable)) {
+                    FuncTable[var.name] = FuncTable[oldname];
+                    Generator.Functions[var.name] = Generator.Functions[oldname];
+                }
+                foreach(s; StructTable[oldname].elements) {
+                    if(NodeFunc f = s.instanceof!NodeFunc) {
+                        // Todo
+                    }
+                }
                 //StructTable.remove(oldname);
 
                 foreach(k; byKey(structsNumbers)) {

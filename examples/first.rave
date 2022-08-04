@@ -1,10 +1,6 @@
-import <std/io>
-import <std/mem>
-import <std/net>
-
-using std;
+import <std/string>
 
 int main {
-    int* a = new(10);
+    std::string a = std::string("Hello!");
     ret 0;
 }

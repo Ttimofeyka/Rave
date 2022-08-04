@@ -39,6 +39,7 @@ class Compiler {
         structsNumbers.clear();
         ConstVars.clear();
         currScope = null;
+        MethodTable.clear();
     }
 
     void compile(string file) {

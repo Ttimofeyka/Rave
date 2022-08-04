@@ -1,0 +1,36 @@
+import <std/mem>
+
+namespace std {
+    struct string {
+        char* ptr;
+        int len;
+
+        std::string this(char* v) {
+            this.len = std::strlen(v);
+            this.ptr = std::malloc(this.len+1);
+            int i = 0;
+            while(i<this.len) {
+                this.ptr[i] = v[i];
+                i = i + 1;
+            }
+        }
+
+        int indexOf(char c) {
+            int i = 0;
+            bool a = true;
+            bool done = false;
+            char* p = this.ptr; // Здесь ошибка!
+            while(a == true) {
+                if(p[i] == c) {
+                    a = false;
+                    done = true;
+                }
+                else i = i + 1;
+                a = (i<this.len);
+            }
+            if(done == true) ret i;
+            else ret -1;
+            ret 0;
+        }
+    }
+}
