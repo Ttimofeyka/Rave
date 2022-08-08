@@ -470,7 +470,7 @@ class Parser {
         }
 
         if(peek().value == "const") {
-            if(s == "") isConst = true;
+            isConst = true;
             next();
         }
 
@@ -585,6 +585,7 @@ class Parser {
         if(!(_file !in _imported)) return new NodeNone();
         Lexer l = new Lexer(readText(_file));
         Parser p = new Parser(l.getTokens().dup);
+        p._imported = _imported.dup;
         p.parseAll();
         Node[] nodes = p.getNodes();
         for(int i=0; i<nodes.length; i++) {
@@ -604,6 +605,9 @@ class Parser {
         this._nodes ~= nodes.dup;
         if(!files.canFind(_file)) files ~= _file;
         _imported[_file] = true;
+        foreach(key; byKey(p._imported)) {
+            _imported[key] = p._imported[key];
+        }
         return new NodeNone();
     }
 

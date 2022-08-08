@@ -164,6 +164,10 @@ class LLVMGen {
         }
         assert(0);
     }
+
+    string typeToString(LLVMTypeRef t) {
+        return to!string(fromStringz(LLVMPrintTypeToString(t)));
+    }
 }
 
 class Scope {
@@ -197,6 +201,7 @@ class Scope {
                 )
             )
         );*/
+
         return LLVMGetParam(
             Generator.Functions[func],
             cast(uint)args[n]
@@ -504,6 +509,7 @@ class NodeBinary : Node {
 
     override LLVMValueRef generate() {
         import std.algorithm : count;
+
         if(operator == TokType.Equ) {
             if(NodeIden i = first.instanceof!NodeIden) {
                 if(currScope.getVar(i.name).isConst) {
@@ -542,14 +548,48 @@ class NodeBinary : Node {
             }
             else if(NodeIndex ind = first.instanceof!NodeIndex) {
                 ind.isEqu = true;
-                ind.toSet = second;
-                ind.generate();
-                return null;
+                ind.toSet = second.generate();
+                return ind.generate();
             }
         }
 
         LLVMValueRef f = first.generate();
         LLVMValueRef s = second.generate();
+        
+        switch(operator) {
+            case TokType.PluEqu:
+            case TokType.MinEqu:
+            case TokType.MulEqu:
+            case TokType.DivEqu:
+                LLVMValueRef val;
+                if(operator == TokType.PluEqu) val=sum(f,s);
+                else if(operator == TokType.MinEqu) val=sub(f,s);
+                else if(operator == TokType.MulEqu) val=mul(f,s);
+                else if(operator == TokType.DivEqu) val=div(f,s);
+                if(NodeGet ng = first.instanceof!NodeGet) {
+                    ng.isEqu = true;
+                    f = ng.generate();
+                    return LLVMBuildStore(
+                        Generator.Builder,
+                        val,
+                        f
+                    );
+                }
+                else if(NodeIndex ind = first.instanceof!NodeIndex) {
+                    ind.isEqu = true;
+                    ind.toSet = val;
+                    return ind.generate();
+                }
+                else if(NodeIden id = first.instanceof!NodeIden) {
+                    return LLVMBuildStore(
+                        Generator.Builder,
+                        val,
+                        currScope.getWithoutLoad(id.name)
+                    );
+                }
+                break;
+            default: break;
+        }
 
         if(LLVMGetTypeKind(LLVMTypeOf(f)) != LLVMGetTypeKind(LLVMTypeOf(s))) {
             Generator.error(loc,"Value types are incompatible!");
@@ -924,7 +964,7 @@ class NodeFunc : Node {
                 argVars[args[i].name] = new NodeVar(args[i].name,null,false,true,false,[],loc,args[i].type);
             }
 
-            currScope = new Scope(name,intargs,argVars);
+            currScope = new Scope(name,intargs.dup,argVars.dup);
             Generator.currBB = entry;
 
             block.generate();
@@ -1114,9 +1154,15 @@ class NodeCall : Node {
         }
         else if(NodeGet g = func.instanceof!NodeGet) {
             if(NodeIden i = g.base.instanceof!NodeIden) {
-                TypeStruct s = currScope.getVar(i.name).t.instanceof!TypeStruct;
+                TypeStruct s;
+                if(TypePointer p = currScope.getVar(i.name).t.instanceof!TypePointer) {
+                    s = p.instance.instanceof!TypeStruct;
+                }
+                else s = currScope.getVar(i.name).t.instanceof!TypeStruct;
                 LLVMValueRef[] params = getParameters();
                 params = currScope.get(i.name)~params;
+                writeln(MethodTable);
+                writeln(s.name," ",g.field);
                 return LLVMBuildCall(
                     Generator.Builder,
                     Generator.Functions[MethodTable[cast(immutable)[s.name,g.field]].name],
@@ -1137,7 +1183,7 @@ class NodeCall : Node {
 
 class NodeIndex : Node {
     Node element;
-    Node toSet;
+    LLVMValueRef toSet;
     Node[] indexs;
     int loc;
     bool isEqu = false;
@@ -1167,6 +1213,7 @@ class NodeIndex : Node {
                 }
             }
             NodeGet g = element.instanceof!NodeGet;
+            
             return LLVMBuildLoad(
                 Generator.Builder,
                 LLVMBuildGEP(
@@ -1174,14 +1221,14 @@ class NodeIndex : Node {
                     g.generate(),
                     genIndexs.ptr,
                     cast(uint)genIndexs.length,
-                    toStringz("geo")
+                    toStringz("gep")
                 ),
                 toStringz("load")
             );
         }
         else { if(NodeIden id = element.instanceof!NodeIden) {
             if(currScope.getVar(id.name).t.instanceof!TypePointer) {
-                return LLVMBuildStore(Generator.Builder, toSet.generate(), LLVMBuildGEP(
+                return LLVMBuildStore(Generator.Builder, toSet, LLVMBuildGEP(
                     Generator.Builder,
                     currScope.get(id.name),
                     genIndexs.ptr,
@@ -1191,16 +1238,17 @@ class NodeIndex : Node {
             }
         }
         else if(NodeGet g = element.instanceof!NodeGet) {
-            return LLVMBuildStore(
-                Generator.Builder,
-                toSet.generate(),
-                LLVMBuildGEP(
+            LLVMValueRef ptr = LLVMBuildGEP(
                     Generator.Builder,
                     g.generate(),
                     genIndexs.ptr,
                     cast(uint)genIndexs.length,
                     toStringz("gep")
-                )
+            );
+            return LLVMBuildStore(
+                Generator.Builder,
+                toSet,
+                ptr
             );
         }
     }
@@ -1208,9 +1256,8 @@ class NodeIndex : Node {
     NodeIden id = element.instanceof!NodeIden;
 
     // Arrays
+    genIndexs = LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),0,false)~genIndexs;
     if(!isEqu) {
-        genIndexs = LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),0,false)~genIndexs;
-
         return LLVMBuildLoad(
             Generator.Builder,
             LLVMBuildInBoundsGEP(
@@ -1223,12 +1270,9 @@ class NodeIndex : Node {
             toStringz("load2")
         );
     }
-
-    genIndexs = LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),0,false)~genIndexs;
-
     return LLVMBuildStore(
         Generator.Builder,
-        toSet.generate(),
+        toSet,
         LLVMBuildInBoundsGEP(
             Generator.Builder,
             currScope.getWithoutLoad(id.name),
@@ -1276,6 +1320,15 @@ class NodeGet : Node {
         }
     }
 
+    bool isStructGet() {
+        if(NodeIden id = base.instanceof!NodeIden) {
+            if(currScope.getVar(id.name).t.instanceof!TypeStruct) return true;
+            return false;
+        }
+        NodeGet g = base.instanceof!NodeGet;
+        return g.isStructGet();
+    }
+
     LLVMValueRef generateForParent() {
         if(NodeIden id = base.instanceof!NodeIden) {
             TypeStruct s = currScope.getVar(id.name).t.instanceof!TypeStruct;
@@ -1302,43 +1355,34 @@ class NodeGet : Node {
 
     override LLVMValueRef generate() {
         if(NodeIden id = base.instanceof!NodeIden) {
-            LLVMValueRef var;
             TypeStruct s;
+            LLVMValueRef ptr = currScope.getWithoutLoad(id.name);
 
-            if(TypePointer p = currScope.getVar(id.name).t.instanceof!TypePointer) {
-                var = LLVMBuildGEP(
-                    Generator.Builder,
-                    currScope.get(id.name),
-                    [LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),0,false)].ptr,
-                    1,
-                    toStringz("gep")
-                );
-                s = p.instance.instanceof!TypeStruct;
-            }
+            if(TypeStruct ts = currScope.getVar(id.name).t.instanceof!TypeStruct) {s = ts;}
             else {
-                s = currScope.getVar(id.name).t.instanceof!TypeStruct;
-                var = currScope.getWithoutLoad(id.name);
+                if(TypePointer p = currScope.getVar(id.name).t.instanceof!TypePointer) {
+                    if(TypeStruct ts = p.instance.instanceof!TypeStruct) {
+                        s = ts;
+                        ptr = LLVMBuildLoad(Generator.Builder,ptr,toStringz("load"));
+                    }
+                    else Generator.error(loc,"This isn't a structure!");
+                }
+                else Generator.error(loc,"This isn't a structure!");
             }
-            string structname = s.name;
-            if(!isEqu) return LLVMBuildLoad(
+
+            if(structsNumbers[cast(immutable)[s.name,field]].var.isConst) Generator.error(loc,"Attempt to change the constant element of the structure!");
+            if(isEqu) return LLVMBuildStructGEP(
                 Generator.Builder,
-                LLVMBuildStructGEP(
-                    Generator.Builder,
-                    var,
-                    structsNumbers[cast(immutable)[structname,field]].number,
-                    toStringz("getStructElement"~field)
-                ),
-                toStringz("loadGEP")
+                ptr,
+                structsNumbers[cast(immutable)[s.name,field]].number,
+                toStringz("sgep")
             );
-            if(structsNumbers[cast(immutable)[structname,field]].var.isConst) {
-                Generator.error(loc,"An attempt to change the value of a constant variable!");
-            }
-            return LLVMBuildStructGEP(
-                    Generator.Builder,
-                    var,
-                    structsNumbers[cast(immutable)[structname,field]].number,
-                    toStringz("getStructElement"~field)
-            );
+            return LLVMBuildLoad(Generator.Builder, LLVMBuildStructGEP(
+                Generator.Builder,
+                ptr,
+                structsNumbers[cast(immutable)[s.name,field]].number,
+                toStringz("sgep")
+            ), toStringz("load"));
         }
         else if(NodeGet g = base.instanceof!NodeGet) {
             g.isEqu = true;
@@ -1535,6 +1579,12 @@ class NodeWhile : Node {
     }
 
     override LLVMValueRef generate() {
+        LLVMBasicBlockRef condBlock = 
+            LLVMAppendBasicBlock(
+                Generator.Functions[currScope.func],
+                toStringz("cond")
+        );
+
         LLVMBasicBlockRef whileBlock = 
             LLVMAppendBasicBlock(
                 Generator.Functions[currScope.func],
@@ -1546,6 +1596,13 @@ class NodeWhile : Node {
             toStringz("exit")
         );
 
+        LLVMBuildBr(
+            Generator.Builder,
+            condBlock
+        );
+
+        LLVMPositionBuilderAtEnd(Generator.Builder, condBlock);
+
         LLVMBuildCondBr(
             Generator.Builder,
             condition.generate(),
@@ -1556,11 +1613,9 @@ class NodeWhile : Node {
         LLVMPositionBuilderAtEnd(Generator.Builder, whileBlock);
         _body.generate();
 
-        LLVMBuildCondBr(
+        LLVMBuildBr(
             Generator.Builder,
-            condition.generate(),
-            whileBlock,
-            currScope.BlockExit
+            condBlock
         );
 
         LLVMPositionBuilderAtEnd(Generator.Builder, currScope.BlockExit);
@@ -1737,7 +1792,7 @@ class NodeStruct : Node {
                     _this.check();
                 }
                 else {
-                    f.args = FuncArgSet("this",new TypeStruct(name))~f.args;
+                    f.args = FuncArgSet("this",new TypePointer(new TypeStruct(name)))~f.args;
                     f.name = name~"."~f.origname;
                     f.isMethod = true;
 

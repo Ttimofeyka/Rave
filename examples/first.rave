@@ -1,6 +1,8 @@
 import <std/string>
+import <std/io>
 
 int main {
-    std::string a = std::string("Hello!");
+    std::string a = std::string("A");
+    std::printf("%s\n",a.ptr);
     ret 0;
 }

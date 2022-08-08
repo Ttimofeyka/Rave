@@ -60,7 +60,7 @@ class Lexer {
                 switch(peek()) {
                     case '+': 
                         if(next() == '=') {
-                            tokens ~= new Token(TokType.DivEqu,"+=",line); _idx++;
+                            tokens ~= new Token(TokType.PluEqu,"+=",line); _idx++;
                         }
                         else tokens ~= new Token(TokType.Plus,"+",line); 
                         break;
