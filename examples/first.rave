@@ -1,8 +1,11 @@
 import <std/string>
 import <std/io>
+import <std/mem>
 
 int main {
-    std::string a = std::string("A");
-    std::printf("%s\n",a.ptr);
+    std::string a = std::string("ABCD");
+        std::printf("%s\n",a.ptr);
+        std::printf("%d\n",a.hasChar('B'));
+    a.delete();
     ret 0;
 }

@@ -1,4 +1,6 @@
 import <std/mem>
+import <std/io>
+
 namespace std {
     struct string {
         char* ptr;
@@ -16,8 +18,35 @@ namespace std {
             this.ptr[i] = '\0';
         }
 
-        void clear {
-            delete(this.ptr);
+        bool hasChar(char c) {
+            bool has = false;
+
+            int i = 0;
+            while(i<this.len) {
+                if(this.ptr[i] == c) {
+                    has = true;
+                    i = this.len;
+                }
+                i += 1;
+            }
+            ret has;
+        }
+
+        void delete {
+            std::free(this.ptr);
+        }
+
+        void set(char* a) {
+            this.delete();
+            this.len = std::strlen(a);
+            this.ptr = std::malloc(this.len+1);
+
+            int i = 0;
+            while(i<this.len) {
+                this.ptr[i] = a[i];
+                i += 1;
+            }
+            this.ptr[i] = '\0';
         }
     }
 }

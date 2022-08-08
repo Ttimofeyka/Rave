@@ -232,7 +232,8 @@ class Parser {
         const TokType[] operators = [
             TokType.Multiply,
             TokType.Minus,
-            TokType.GetPtr
+            TokType.GetPtr,
+            TokType.Ne
         ];
 
         if(operators.canFind(peek().type)) {

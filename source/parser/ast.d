@@ -836,7 +836,6 @@ class NodeIden : Node {
             Generator.error(loc,"Unknown identifier \""~name~"\"!");
             return null;
         }
-        
         return currScope.get(name);
     }
 
@@ -964,7 +963,7 @@ class NodeFunc : Node {
                 argVars[args[i].name] = new NodeVar(args[i].name,null,false,true,false,[],loc,args[i].type);
             }
 
-            currScope = new Scope(name,intargs.dup,argVars.dup);
+            currScope = new Scope(name,intargs,argVars.dup);
             Generator.currBB = entry;
 
             block.generate();
@@ -1160,9 +1159,7 @@ class NodeCall : Node {
                 }
                 else s = currScope.getVar(i.name).t.instanceof!TypeStruct;
                 LLVMValueRef[] params = getParameters();
-                params = currScope.get(i.name)~params;
-                writeln(MethodTable);
-                writeln(s.name," ",g.field);
+                params = currScope.getWithoutLoad(i.name)~params;
                 return LLVMBuildCall(
                     Generator.Builder,
                     Generator.Functions[MethodTable[cast(immutable)[s.name,g.field]].name],
@@ -1363,7 +1360,7 @@ class NodeGet : Node {
                 if(TypePointer p = currScope.getVar(id.name).t.instanceof!TypePointer) {
                     if(TypeStruct ts = p.instance.instanceof!TypeStruct) {
                         s = ts;
-                        ptr = LLVMBuildLoad(Generator.Builder,ptr,toStringz("load"));
+                       // ptr = LLVMBuildLoad(Generator.Builder,ptr,toStringz("load"));
                     }
                     else Generator.error(loc,"This isn't a structure!");
                 }
@@ -1423,7 +1420,7 @@ class NodeBool : Node {
     }
 
     override LLVMValueRef generate() {
-        return LLVMConstInt(LLVMInt1Type(),to!ulong(value),false);
+        return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),to!ulong(value),false);
     }
 }
 
@@ -1451,6 +1448,20 @@ class NodeUnary : Node {
                 s.isEqu = true;
                 return s.generate();
             }
+            else if(NodeCall call = base.instanceof!NodeCall) {
+                auto gcall = call.generate();
+                auto temp = LLVMBuildAlloca(
+                    Generator.Builder,
+                    LLVMTypeOf(gcall),
+                    toStringz("temp")
+                );
+                LLVMBuildStore(
+                    Generator.Builder,
+                    gcall,
+                    temp
+                );
+                return temp;
+            }
             NodeIden id = base.instanceof!NodeIden;
             if(currScope.getVar(id.name).t.instanceof!TypeArray) {
                 return LLVMBuildInBoundsGEP(
@@ -1462,6 +1473,13 @@ class NodeUnary : Node {
 				);
             }
             return currScope.getWithoutLoad(id.name);
+        }
+        else if(type == TokType.Ne) {
+            return LLVMBuildNeg(
+                Generator.Builder,
+                base.generate(),
+                toStringz("ne")
+            );
         }
         assert(0);
     }
@@ -1539,11 +1557,12 @@ class NodeIf : Node {
         LLVMPositionBuilderAtEnd(Generator.Builder, thenBlock);
         Generator.currBB = thenBlock;
         if(_body !is null) _body.generate();
+        LLVMBuildBr(Generator.Builder,endBlock);
 
         LLVMPositionBuilderAtEnd(Generator.Builder, elseBlock);
 		Generator.currBB = elseBlock;
         if(_else !is null) _else.generate();
-        else LLVMBuildBr(Generator.Builder,endBlock);
+        LLVMBuildBr(Generator.Builder,endBlock);
 
         LLVMPositionBuilderAtEnd(Generator.Builder, endBlock);
         Generator.currBB = endBlock;
@@ -1775,14 +1794,16 @@ class NodeStruct : Node {
                     if(isImported) {
                         _this = f;
                         _this.isExtern = true;
-                        _this.name = name;
+                        _this.name = origname;
+                        _this.namespacesNames = namespacesNames.dup;
                         _this.check();
                         continue;
                     }
 
                     _this = f;
                     _this.isExtern = false;
-                    _this.name = name;
+                    _this.name = origname;
+                    _this.namespacesNames = namespacesNames.dup;
 
                     _this.block.nodes = 
                         new NodeVar("this",null,false,false,false,[],_this.loc,new TypeStruct(name)) 
@@ -2012,7 +2033,7 @@ class NodeUsing : Node {
                 }
                 foreach(s; StructTable[oldname].elements) {
                     if(NodeFunc f = s.instanceof!NodeFunc) {
-                        // Todo
+                        MethodTable[cast(immutable)[var.name,f.origname]] = MethodTable[cast(immutable)[oldname,f.origname]];
                     }
                 }
                 //StructTable.remove(oldname);
