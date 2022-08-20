@@ -8,7 +8,7 @@
 **import** - Import a file.
 To import files near the compiler (for example, std), use the prefix and postfix < and >.
 Otherwise, put the file name in double quotes.
-You do'nt need to specify the file extension.
+You don't need to specify the file extension.
 
 Example:
 ```d
