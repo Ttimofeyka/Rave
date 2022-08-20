@@ -325,7 +325,7 @@ class Parser {
         return nodeStack.front();
     }
 
-    Node parseIf(string f = "") {
+    Node parseIf(string f = "", bool isStatic = false) {
         assert(peek().value == "if");
         int line = peek().line;
         next();
@@ -336,9 +336,9 @@ class Parser {
         if(peek().value == "else") {
             next();
             auto othr = parseStmt();
-            return new NodeIf(cond, body_, othr, line, f);
+            return new NodeIf(cond, body_, othr, line, f, isStatic);
         }
-        return new NodeIf(cond, body_, null, line, f);
+        return new NodeIf(cond, body_, null, line, f, isStatic);
     }
 
     Node parseWhile(string f = "") {
@@ -369,6 +369,11 @@ class Parser {
 
     Node parseStmt(string f = "") {
         import std.algorithm : canFind;
+        bool isStatic = false;
+        if(peek().value == "static") {
+            isStatic = true;
+            next();
+        }
         if(peek().type == TokType.Rbra) {
             return parseBlock(f);
         }
@@ -377,10 +382,10 @@ class Parser {
             return parseStmt(f);
         }
         else if(peek().type == TokType.Command) {
-            if(peek().value == "if") return parseIf(f);
+            if(peek().value == "if") return parseIf(f,isStatic);
             if(peek().value == "while") return parseWhile(f);
             if(peek().value == "break") return parseBreak();
-            if(peek().value == "ret") {
+            if(peek().value == "return") {
                 auto tok = next();
                 if(peek().type != TokType.Semicolon) {
                     auto e = parseExpr();
@@ -501,6 +506,7 @@ class Parser {
         if(peek().type == TokType.Rpar) {
             // Function with args
             FuncArgSet[] args = parseFuncArgSets();
+            if(peek().type == TokType.Lpar) next();
             if(peek().type == TokType.Rbra) next();
             if(peek().type == TokType.ShortRet) {
                 next();

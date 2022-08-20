@@ -1,5 +1,9 @@
 import <std/mem>
-import <std/io>
+
+namespace libc {
+    // Functions that are practically unnecessary in normal use and come from libc
+    extern(linkname: "strlen") int strlen(char* cstr);
+}
 
 namespace std {
     struct string {
@@ -7,7 +11,7 @@ namespace std {
         int len;
 
         std::string this(char* a) {
-            this.len = std::strlen(a);
+            this.len = libc::strlen(a);
             this.ptr = std::malloc(this.len+1);
 
             int i = 0;
@@ -18,7 +22,7 @@ namespace std {
             this.ptr[i] = '\0';
         }
 
-        bool hasChar(char c) {
+        bool has(char c) {
             bool has = false;
 
             int i = 0;
@@ -29,7 +33,7 @@ namespace std {
                 }
                 i += 1;
             }
-            ret has;
+            return has;
         }
 
         void delete {
@@ -38,7 +42,7 @@ namespace std {
 
         void set(char* a) {
             this.delete();
-            this.len = std::strlen(a);
+            this.len = libc::strlen(a);
             this.ptr = std::malloc(this.len+1);
 
             int i = 0;

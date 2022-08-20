@@ -292,8 +292,8 @@ class Lexer {
                                         tokens ~= new Token(TokType.Command,"if"); break;
                                     case "else":
                                         tokens ~= new Token(TokType.Command,"else",line); break;
-                                    case "ret":
-                                        tokens ~= new Token(TokType.Command,"ret",line); break;
+                                    case "return":
+                                        tokens ~= new Token(TokType.Command,"return",line); break;
                                     case "while":
                                         tokens ~= new Token(TokType.Command,"while",line); break;
                                     case "break":
