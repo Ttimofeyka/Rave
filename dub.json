@@ -1,9 +1,8 @@
 {
 	"authors": [
-		"Timofeyka",
-		"somerandomdev49"
+		"Ttimofeyka"
 	],
-	"copyright": "Copyright © 2022 Timofeyka, Mike Redko",
+	"copyright": "Copyright © 2022 Ttimofeyka",
 	"dependencies": {
 		"d-glob": "~>0.4.0",
 		"llvm-d": "~>3.0.0"

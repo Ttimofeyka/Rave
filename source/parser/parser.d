@@ -401,6 +401,7 @@ class Parser {
         }
         else if(peek().type == TokType.Identifier) {
                 string iden = peek().value;
+                if(iden == "debug") return parseDebug();
                 _idx++;
                 if(peek().type != TokType.Identifier) {
                     if(peek().type == TokType.Multiply)  {
@@ -662,6 +663,25 @@ class Parser {
         return new NodeUsing(namespace,loc);
     }
 
+    Node parseDebug(string f = "") {
+        // Current value - "debug"
+        next();
+        string name = "";
+
+        // debug(name) {} or debug name {}
+
+        if(peek().type == TokType.Identifier) {
+            name = peek().value; next();
+        }
+        else {
+            next(); name = peek().value; next(); next();
+        }
+
+        NodeBlock b = parseBlock(f);
+
+        return new NodeDebug(name,b);
+    }
+
     Node parseTopLevel(string s = "") {
         while(peek().type == TokType.Semicolon) {
             next();
@@ -682,6 +702,8 @@ class Parser {
         if(peek().value == "import") {
             return parseImport();
         }
+
+        if(peek().value == "debug") return parseDebug();
         
         return parseDecl(s);
     }

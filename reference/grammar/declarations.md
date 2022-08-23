@@ -26,11 +26,11 @@ int main {
     
     ...
     
-    ret 0;
+    return 0;
 }
 ```
 
-Also, they allow you to create analogs of "static classes" from D and C++:
+Also, they allow you to create equivalents of "static classes" from D and C++:
 
 ```cpp
 namespace Earth {
@@ -38,8 +38,8 @@ namespace Earth {
     int temperature;
     
     void initialize {
-        peoples = ...;
-        temperature = ...;
+        Earth::peoples = ...;
+        Earth::temperature = ...;
     }
     
     ...
@@ -84,7 +84,7 @@ Examples:
 int sum(int a, int b) => a+b;
 
 int main {
-    ret sum(1,1);
+    return sum(1,1);
 }
 ```
 
@@ -95,7 +95,7 @@ Variables must have a type before their name.
 Also, variables can be pointers to a function, having its type.
 
 Examples:
-```d
+```cpp
 int a = 0;
 char* b = "Hello, world!"
 
@@ -111,7 +111,7 @@ int func(int arg) => 0;
 int main {
     int(int) f = func;
     f(1);
-    ret 0;
+    return 0;
 }
 ```
 

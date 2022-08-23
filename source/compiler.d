@@ -4,7 +4,7 @@ import lexer.lexer;
 import lexer.tokens;
 import app : CompOpts;
 import std.file;
-import std.stdio;
+import std.stdio : writeln;
 import core.stdc.stdlib : exit;
 import parser.parser;
 import parser.ast;
@@ -18,6 +18,7 @@ class Compiler {
     private string outfile;
     private string outtype;
     private CompOpts opts;
+    bool __X86 = false;
 
     this(string outfile, string outtype, CompOpts opts) {
         this.outfile = outfile;
@@ -43,7 +44,13 @@ class Compiler {
     }
 
     void compile(string file) {
-        Lexer lex = new Lexer(readText(file));
+        string content = readText(file);
+        if(files[0] == file) {
+            if(__X86) content = "alias __X86 = true;\n"~content;
+            else content = "alias __X86_64 = true;\n"~content;
+        }
+
+        Lexer lex = new Lexer(content);
         Parser p = new Parser(lex.getTokens());
         p.MainFile = files[0];
         p.parseAll();
@@ -88,6 +95,8 @@ class Compiler {
     }
 
     void compileAll() {
+        version(X86) {__X86 = true;}
+
         if(opts.onlyObject) {
             if(!isFile(files[0])) {
                 writeln("Error: file \""~files[0]~"\" doesn't exists!");

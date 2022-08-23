@@ -403,7 +403,7 @@ class NodeBinary : Node {
     }
 
     LLVMValueRef sum(LLVMValueRef one, LLVMValueRef two) {
-        if(LLVMGetTypeKind(LLVMTypeOf(one)) !=LLVMGetTypeKind( LLVMTypeOf(two))) {
+        if(LLVMGetTypeKind(LLVMTypeOf(one)) != LLVMGetTypeKind( LLVMTypeOf(two))) {
             Generator.error(loc,"value types are incompatible!");
         }
         if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMFloatTypeKind) {
@@ -647,6 +647,8 @@ class NodeBinary : Node {
         }
 
         if(LLVMGetTypeKind(LLVMTypeOf(f)) != LLVMGetTypeKind(LLVMTypeOf(s))) {
+            writeln(Generator.typeToString(LLVMTypeOf(f)));
+            writeln(Generator.typeToString(LLVMTypeOf(s)));
             Generator.error(loc,"Value types are incompatible!");
         }
         else if(LLVMTypeOf(f) != LLVMTypeOf(s)) {
@@ -1060,7 +1062,7 @@ class NodeFunc : Node {
 
         LLVMSetGlobalDSOLocal(Generator.Functions[name]);
 
-        writeln(fromStringz(LLVMPrintModuleToString(Generator.Module)));
+        //writeln(fromStringz(LLVMPrintModuleToString(Generator.Module)));
 
         LLVMVerifyFunction(Generator.Functions[name],0);
 
@@ -2214,7 +2216,7 @@ class NodeItop : Node {
         return LLVMBuildIntToPtr(
             Generator.Builder,
             I.generate(),
-            LLVMInt32Type(),
+            LLVMPointerType(LLVMInt8TypeInContext(Generator.Context),0),
             toStringz("itop")
         );
     }
@@ -2234,7 +2236,7 @@ class NodePtoi : Node {
         return LLVMBuildPtrToInt(
             Generator.Builder,
             P.generate(),
-            LLVMPointerType(LLVMVoidTypeInContext(Generator.Context),0),
+            LLVMInt32TypeInContext(Generator.Context),
             toStringz("ptoi")
         );
     }
@@ -2317,5 +2319,26 @@ class NodeSizeof : Node {
         return LLVMSizeOf(
             LLVMTypeOf(val.generate())
         );
+    }
+}
+
+class NodeDebug : Node {
+    string idenName;
+    NodeBlock block;
+
+    this(string idenName, NodeBlock block) {
+        this.idenName = idenName;
+        this.block = block;
+    }
+
+    override void check() {/* No there */}
+
+    override LLVMValueRef generate() {
+        if(idenName.into(AliasTable)) {
+            block.check();
+            return block.generate();
+            
+        }
+        return null;
     }
 }
