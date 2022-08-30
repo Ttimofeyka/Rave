@@ -1,0 +1,7 @@
+import <std/io>
+import <std/entry>
+
+int main {
+    std::exit(2);
+    return 0;
+}

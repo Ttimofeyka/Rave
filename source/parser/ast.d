@@ -32,11 +32,17 @@ void checkError(int loc,string msg) {
 
 extern(C) void LLVMSetGlobalDSOLocal(LLVMValueRef global);
 
+struct LoopReturn {
+    NodeRet ret;
+    int loopId;
+}
+
 struct Loop {
     bool isActive;
     LLVMBasicBlockRef start;
     LLVMBasicBlockRef end;
     bool hasEnd;
+    LoopReturn[] rets;
 }
 
 class LLVMGen {
@@ -490,6 +496,25 @@ class NodeBinary : Node {
                     toStringz("fcmp")
                 );
             }
+            else if(LLVMGetTypeKind(one) == LLVMPointerTypeKind) {
+                return LLVMBuildICmp(
+                    Generator.Builder,
+                    (neq ? LLVMIntNE : LLVMIntEQ),
+                    LLVMBuildPtrToInt(
+                        Generator.Builder,
+                        onev,
+                        LLVMInt32TypeInContext(Generator.Context),
+                        toStringz("ptoi")
+                    ),
+                    LLVMBuildPtrToInt(
+                        Generator.Builder,
+                        twov,
+                        LLVMInt32TypeInContext(Generator.Context),
+                        toStringz("ptoi2")
+                    ),
+                    toStringz("pcmp")
+                );
+            }
         }
         assert(0);
     }
@@ -512,6 +537,25 @@ class NodeBinary : Node {
                     one,
                     two,
                     toStringz("fcmp")
+                );
+            }
+            else if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMPointerTypeKind) {
+                return LLVMBuildICmp(
+                    Generator.Builder,
+                    (less ? LLVMIntSLT : LLVMIntSGT),
+                    LLVMBuildPtrToInt(
+                        Generator.Builder,
+                        one,
+                        LLVMInt32TypeInContext(Generator.Context),
+                        toStringz("ptoi")
+                    ),
+                    LLVMBuildPtrToInt(
+                        Generator.Builder,
+                        two,
+                        LLVMInt32TypeInContext(Generator.Context),
+                        toStringz("ptoi2")
+                    ),
+                    toStringz("pcmp")
                 );
             }
         }
@@ -555,7 +599,7 @@ class NodeBinary : Node {
 
         if(operator == TokType.Equ) {
             if(NodeIden i = first.instanceof!NodeIden) {
-                if(currScope.getVar(i.name).isConst) {
+                if(currScope.getVar(i.name).isConst && i.name != "this") {
                     Generator.error(loc, "An attempt to change the value of a constant variable!");
                 }
                 if(isAliasIden) {
@@ -1037,7 +1081,7 @@ class NodeFunc : Node {
 				LLVMValueRef[] retValues = array(map!(x => x.value)(genRets));
 				LLVMBasicBlockRef[] retBlocks = array(map!(x => x.where)(genRets));
 
-				if(retBlocks.length == 1 || retBlocks[0] == null) {
+				if(retBlocks.length == 1 || (retBlocks.length>0 && retBlocks[0] == null)) {
 					LLVMBuildRet(Generator.Builder, retValues[0]);
 				}
 				else {
@@ -1095,6 +1139,7 @@ class NodeRet : Node {
             if(val !is null) {
                 if(Generator.ActiveLoops.length != 0) {
                     Generator.ActiveLoops[cast(int)Generator.ActiveLoops.length-1].hasEnd = true;
+                    Generator.ActiveLoops[cast(int)Generator.ActiveLoops.length-1].rets ~= LoopReturn(this,cast(int)Generator.ActiveLoops.length-1);
                 }
                 if(NodeNull n = val.instanceof!NodeNull) {
                     n.maintype = FuncTable[parent].type;
@@ -1167,6 +1212,16 @@ class NodeCall : Node {
             presets ~= new NodeVar(
                 f.name~"::argCount",
                 new NodeInt(currScope.macroArgs.length),
+                false,
+                true,
+                false,
+                [],
+                loc,
+                new TypeAlias()
+            );
+            presets ~= new NodeVar(
+                f.name~"::callLine",
+                new NodeInt(loc),
                 false,
                 true,
                 false,
@@ -1427,7 +1482,6 @@ class NodeGet : Node {
                 }
                 else Generator.error(loc,"This isn't a structure!");
             }
-
             if(structsNumbers[cast(immutable)[s.name,field]].var.isConst) Generator.error(loc,"Attempt to change the constant element of the structure!");
             if(isEqu) return LLVMBuildStructGEP(
                 Generator.Builder,
@@ -1553,6 +1607,7 @@ class NodeIf : Node {
     int loc;
     string func;
     bool isStatic = false;
+    bool[2] _hasRets;
 
     this(Node condition, Node _body, Node _else, int loc, string func, bool isStatic) {
         this.condition = condition;
@@ -1566,10 +1621,14 @@ class NodeIf : Node {
         if(_body !is null) {
             if(NodeRet r = _body.instanceof!NodeRet) {
                 r.parent = func;
+                _hasRets[0] = true;
             }
             else if(NodeBlock b = _body.instanceof!NodeBlock) {
                 foreach(n; b.nodes) {
-                    if(NodeRet r = n.instanceof!NodeRet) r.parent = func;
+                    if(NodeRet r = n.instanceof!NodeRet) {
+                        r.parent = func;
+                        _hasRets[0] = true;
+                    }
                     else if(NodeBreak br = _body.instanceof!NodeBreak) br.fromIf = true;
                 }
             }
@@ -1581,10 +1640,14 @@ class NodeIf : Node {
         if(_else !is null) {
             if(NodeRet r = _else.instanceof!NodeRet) {
                 r.parent = func;
+                _hasRets[1] = true;
             }
             else if(NodeBlock b = _else.instanceof!NodeBlock) {
                 foreach(n; b.nodes) {
-                    if(NodeRet r = n.instanceof!NodeRet) r.parent = func;
+                    if(NodeRet r = n.instanceof!NodeRet) {
+                        r.parent = func;
+                        _hasRets[1] = true;
+                    }
                 }
             }
         }
@@ -1638,6 +1701,10 @@ class NodeIf : Node {
         Generator.currBB = thenBlock;
         if(_body !is null) _body.generate();
         if(!Generator.ActiveLoops[selfNum].hasEnd) LLVMBuildBr(Generator.Builder,endBlock);
+
+        if(Generator.ActiveLoops[selfNum].rets.length>0) {
+            FuncTable[func].rets ~= Generator.ActiveLoops[selfNum].rets[0].ret;
+        }
         
         bool hasEnd1 = Generator.ActiveLoops[selfNum].hasEnd;
 
@@ -1649,6 +1716,10 @@ class NodeIf : Node {
         if(!Generator.ActiveLoops[selfNum].hasEnd) LLVMBuildBr(Generator.Builder,endBlock);
 
         bool hasEnd2 = Generator.ActiveLoops[selfNum].hasEnd;
+
+        if(Generator.ActiveLoops[selfNum].rets.length>0) {
+            FuncTable[func].rets ~= Generator.ActiveLoops[selfNum].rets[0].ret;
+        }
 
         LLVMPositionBuilderAtEnd(Generator.Builder, endBlock);
         Generator.currBB = endBlock;

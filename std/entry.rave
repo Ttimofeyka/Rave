@@ -1,0 +1,11 @@
+import <std/io>
+
+namespace std {
+    extern(linkname: "exit") void exit(int code);
+    void assert(bool cond) {
+        if(cond) {
+            std::printf("Assert was be failed!");
+            std::exit(2);
+        }
+    }
+}

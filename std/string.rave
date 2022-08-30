@@ -1,8 +1,14 @@
 import <std/mem>
+import <std/entry>
 
 namespace libc {
     // Functions that are practically unnecessary in normal use and come from libc
     extern(linkname: "strlen") int strlen(char* cstr);
+    char* btos(bool b) {
+        char* toret = "true";
+        if(b == false) toret = "false";
+        return toret;
+    }
 }
 
 namespace std {
@@ -20,6 +26,10 @@ namespace std {
                 i += 1;
             }
             this.ptr[i] = '\0';
+        }
+
+        bool isDeleted {
+            return (this.ptr == null);
         }
 
         bool has(char c) {
@@ -42,15 +52,12 @@ namespace std {
 
         void set(char* a) {
             this.delete();
-            this.len = libc::strlen(a);
-            this.ptr = std::malloc(this.len+1);
+            this = std::string(a);
+        }
 
-            int i = 0;
-            while(i<this.len) {
-                this.ptr[i] = a[i];
-                i += 1;
-            }
-            this.ptr[i] = '\0';
+        char toChar {
+            std::assert(this.len>0);
+            return this.ptr[0];
         }
     }
 }
