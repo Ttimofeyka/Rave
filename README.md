@@ -9,7 +9,7 @@ import <std/io>
 
 int main {
   std::printf("Hello, world!\n");
-  ret 0;
+  return 0;
 }
 ```
 

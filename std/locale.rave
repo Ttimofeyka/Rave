@@ -1,0 +1,11 @@
+namespace libc {
+    alias LC_CTYPE = 0;
+    alias LC_NUMERIC = 1;
+    alias LC_TIME = 2;
+    alias LC_COLLATE = 3;
+    alias LC_MONETARY = 4;
+    alias LC_MESSAGES = 5;
+    alias LC_ALL = 6;
+
+    extern(linkname: "setlocale") char* setLocale(int category, char* locale);
+}

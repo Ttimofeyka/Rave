@@ -1,0 +1,18 @@
+namespace std {
+    namespace Char {
+        extern(linkname: "isspace") bool isSpace(char c);
+        extern(linkname: "islower") bool isLower(char c);
+        extern(linkname: "isupper") bool isUpper(char c);
+        extern(linkname: "tolower") char toLower(char c);
+        extern(linkname: "toupper") char toUpper(char c);
+        extern(linkname: "isdigit") char isDigit(char c);
+    }
+    namespace Int {
+        extern(linkname: "isspace") bool isSpace(int i);
+        extern(linkname: "islower") bool isLower(int i);
+        extern(linkname: "isupper") bool isUpper(int i);
+        extern(linkname: "tolower") char toLower(int i);
+        extern(linkname: "toupper") char toUpper(int i);
+        extern(linkname: "isdigit") char isDigit(int i);
+    }
+}
