@@ -6,4 +6,9 @@ namespace std {
     extern(linkname: "memmove") void* memmove(void* dest, void* src, int n);
     extern(linkname: "memcmp") bool memcmp(void* one, void* two, int n);
     extern(linkname: "memset") void* memset(void* dest, int val);
+
+    struct vector {
+        int length;
+        // TODO
+    }
 }

@@ -27,6 +27,7 @@ class Parser {
     Node[] _nodes;
     string[] structs;
     bool[string] _imported;
+    Type[string] _aliasTypes;
 
     private void error(string msg) {
         pragma(inline,true);
@@ -56,6 +57,7 @@ class Parser {
         if(peek().type == TokType.Identifier) {
             auto t = next();
             if(t.value == "void") return new TypeVoid();
+            else if(t.value.into(_aliasTypes)) return _aliasTypes[t.value];
             return getType(t.value);
         }
         else {
@@ -418,7 +420,12 @@ class Parser {
                             case "cent":
                                 _idx -= 1;
                                 return parseDecl(f);
-                            default: break;
+                            default:
+                                if(iden.into(_aliasTypes)) {
+                                    _idx -= 1;
+                                    return parseDecl(f);
+                                }
+                                break;
                         }
                         if(structs.canFind(iden)) {
                             _idx -= 1;
@@ -462,6 +469,18 @@ class Parser {
         while(peek().type != TokType.Lbra && peek().type != TokType.Eof) nodes ~= parseStmt(f);
         if(peek().type != TokType.Eof) next();
         return new NodeBlock(nodes.dup);
+    }
+
+    Node parseAliasType() {
+        int l = peek().line;
+        next();
+        string name = peek().value;
+        next();
+        expect(TokType.Equ);
+        Type childType = parseType();
+        if(peek().type == TokType.Semicolon) next();
+        _aliasTypes[name] = childType;
+        return new NodeNone();
     }
 
     Node parseDecl(string s = "") {
@@ -616,6 +635,9 @@ class Parser {
         foreach(key; byKey(p._imported)) {
             _imported[key] = p._imported[key];
         }
+        foreach(key; byKey(p._aliasTypes)) {
+            _aliasTypes[key] = p._aliasTypes[key];
+        }
         return new NodeNone();
     }
 
@@ -704,6 +726,8 @@ class Parser {
         }
 
         if(peek().value == "debug") return parseDebug();
+
+        if(peek().value == "type") return parseAliasType();
         
         return parseDecl(s);
     }

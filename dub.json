@@ -9,8 +9,8 @@
 	},
 	"buildRequirements": ["silenceDeprecations"],
 	"libs": ["LLVM-10"],
-	"lflags-x86": ["lib/dso32.a"],
-	"lflags-x86_64": ["lib/dso.a"],
+	"lflags-linux-x86": ["lib/dso32.a"],
+	"lflags-linux-x86_64": ["lib/dso.a"],
 	"description": "Rave Programming Language",
 	"license": "MPLv3",
 	"name": "rave"

@@ -1,5 +1,4 @@
 import <std/mem>
-import <std/entry>
 
 namespace libc {
     // Functions that are practically unnecessary in normal use and come from libc
@@ -33,21 +32,32 @@ namespace std {
         }
 
         bool has(char c) {
-            bool has = false;
+            bool _has = false;
 
             int i = 0;
             while(i<this.len) {
                 if(this.ptr[i] == c) {
-                    has = true;
+                    _has = true;
                     i = this.len;
                 }
                 i += 1;
             }
-            return has;
+            return _has;
+        }
+
+        void replace(char c, char to) {
+            int i = 0;
+            while(i<this.len) {
+                if(this.ptr[i] == c) {
+                    this.ptr[i] = to;
+                }
+                i += 1;
+            }
         }
 
         void delete {
             std::free(this.ptr);
+            if(this.ptr != null) this.ptr = null;
         }
 
         void set(char* a) {

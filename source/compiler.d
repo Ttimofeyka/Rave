@@ -60,6 +60,10 @@ class Compiler {
             else content = "alias __X86_64 = true;\n"~content;
         }
 
+        if(!opts.noPrelude && file != "std/prelude.rave") {
+            content = "import <std/prelude>\n"~content;
+        }
+
         Lexer lex = new Lexer(content);
         Parser p = new Parser(lex.getTokens());
         p.MainFile = files[0];

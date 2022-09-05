@@ -1,7 +1,11 @@
 import <std/io>
-import <std/entry>
+import <std/string>
 
 int main {
-    std::exit(2);
+    std::string A = std::string("Hello!\n");
+        std::printf("%s",A.ptr);
+        A.replace('H','D');
+        std::printf("%s",A.ptr);
+    A.delete();
     return 0;
 }

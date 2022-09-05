@@ -30,7 +30,7 @@ void checkError(int loc,string msg) {
 		exit(1);
 }
 
-extern(C) void LLVMSetGlobalDSOLocal(LLVMValueRef global);
+version(linux){extern(C) void LLVMSetGlobalDSOLocal(LLVMValueRef global);}
 
 struct LoopReturn {
     NodeRet ret;
@@ -654,6 +654,15 @@ class NodeBinary : Node {
 
         LLVMValueRef f = first.generate();
         LLVMValueRef s = second.generate();
+
+        if(LLVMGetTypeKind(LLVMTypeOf(f)) == LLVMGetTypeKind(LLVMTypeOf(s)) && LLVMTypeOf(f) != LLVMTypeOf(s)) {
+            if(LLVMGetTypeKind(LLVMTypeOf(f)) == LLVMIntegerTypeKind) f = LLVMBuildIntCast(
+                Generator.Builder,
+                f,
+                LLVMTypeOf(s),
+                toStringz("IntCast")
+            );
+        }
         
         switch(operator) {
             case TokType.PluEqu:
@@ -889,7 +898,7 @@ class NodeVar : Node {
                 LLVMSetLinkage(Generator.Globals[name], LLVMExternalLinkage);
             }
             LLVMSetAlignment(Generator.Globals[name],Generator.getAlignmentOfType(t));
-            LLVMSetGlobalDSOLocal(Generator.Globals[name]);
+            version(linux) {LLVMSetGlobalDSOLocal(Generator.Globals[name]);}
             if(value !is null && !isExtern) {
                 LLVMSetInitializer(Generator.Globals[name], value.generate());
             }
@@ -1081,7 +1090,13 @@ class NodeFunc : Node {
 				LLVMValueRef[] retValues = array(map!(x => x.value)(genRets));
 				LLVMBasicBlockRef[] retBlocks = array(map!(x => x.where)(genRets));
 
-				if(retBlocks.length == 1 || (retBlocks.length>0 && retBlocks[0] == null)) {
+                if(retBlocks is null || retBlocks.length == 0) {
+                    LLVMBuildRet(
+                        Generator.Builder,
+                        LLVMConstNull(Generator.GenerateType(type))
+                    );
+                }
+				else if(retBlocks.length == 1 || (retBlocks.length>0 && retBlocks[0] == null)) {
 					LLVMBuildRet(Generator.Builder, retValues[0]);
 				}
 				else {
@@ -1104,7 +1119,7 @@ class NodeFunc : Node {
             currScope = null;
         }
 
-        LLVMSetGlobalDSOLocal(Generator.Functions[name]);
+        version(linux) {LLVMSetGlobalDSOLocal(Generator.Functions[name]);}
 
         //writeln(fromStringz(LLVMPrintModuleToString(Generator.Module)));
 
@@ -2158,7 +2173,8 @@ class NodeUsing : Node {
                 var.name = namespacesNamesToString(var.namespacesNames, var.origname);
                 VarTable[var.name] = var;
                 //VarTable.remove(oldname);
-                Generator.Globals[var.name] = Generator.Globals[oldname];
+                if(var.name.into(Generator.Globals)) Generator.Globals[var.name] = Generator.Globals[oldname];
+                else AliasTable[var.name] = AliasTable[oldname];
                 //Generator.Globals.remove(oldname);
             }
         }
