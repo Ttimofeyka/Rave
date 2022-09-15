@@ -88,6 +88,15 @@ int main {
 }
 ```
 
+Overloading of functions is possible - it is performed in the "C-style".
+
+```d
+int sum(int a, int b) => a+b;
+int sum(int a, int b, int c) => a+b+c; // sum3
+```
+
+In a normal call, you don't have to specify the number of arguments at the end of the overloaded function. However, for example, when setting a value using a pointer to a function, or passing a pointer to a function, you need to use the function name with the number of arguments at the end.
+
 ## Variables
 
 Variables must have a type before their name.
