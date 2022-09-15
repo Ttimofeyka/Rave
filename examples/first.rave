@@ -1,11 +1,17 @@
 import <std/io>
 import <std/string>
 
+int sum(int a, int b) => (a+b);
+int sum(int a, int b, int s) => (a+b+s);
+
 int main {
     std::string A = std::string("Hello!\n");
         std::printf("%s",A.ptr);
         A.replace('H','D');
         std::printf("%s",A.ptr);
     A.delete();
+
+    int a = sum(0,5);
+    int b = sum(0,5,1);
     return 0;
 }

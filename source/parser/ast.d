@@ -67,7 +67,7 @@ class LLVMGen {
 
     string mangle(string name, bool isFunc, bool isMethod) {
         pragma(inline,true);
-        return isFunc ? (isMethod ? "_Ravem"~to!string(name.length)~name : "_Ravef"~to!string(name.length)~name) : "_Raveg"~name;
+        return isFunc ? (isMethod ? "_RaveM"~to!string(name.length)~name : "_RaveF"~to!string(name.length)~name) : "_Raveg"~name;
     }
 
     void error(int loc,string msg) {
@@ -999,7 +999,8 @@ class NodeFunc : Node {
             name = namespacesNamesToString(namespacesNames,name);
         }
         if(!(name !in FuncTable)) {
-            checkError(loc,"a function with that name already exists on "~to!string(FuncTable[name].loc+1)~" line!");
+            if(args.length != FuncTable[name].args.length) name ~= to!string(args.length);
+            else checkError(loc,"a function with that name already exists on "~to!string(FuncTable[name].loc+1)~" line!");
         }
         FuncTable[name] = this;
         for(int i=0; i<block.nodes.length; i++) {
@@ -1199,7 +1200,7 @@ class NodeCall : Node {
 
     override LLVMValueRef generate() {
         if(NodeIden f = func.instanceof!NodeIden) {
-        if(!f.name.into(FuncTable)) {
+        if(!f.name.into(FuncTable) && !into(f.name~to!string(args.length),FuncTable)) {
             if(!f.name.into(MacroTable)) {
                 if(currScope.has(f.name)) {
                     LLVMTypeRef a = LLVMTypeOf(currScope.get(f.name));
@@ -1271,12 +1272,14 @@ class NodeCall : Node {
             currScope = oldScope;
             return toret;
         }
+        string rname = f.name;
+        if(into(f.name~to!string(args.length),FuncTable)) rname ~= to!string(args.length);
         string name = "CallFunc"~f.name;
-        if(FuncTable[f.name].type.instanceof!TypeVoid) name = "";
+        if(FuncTable[rname].type.instanceof!TypeVoid) name = "";
         // TODO: Fix structures there
         return LLVMBuildCall(
             Generator.Builder,
-            Generator.Functions[f.name],
+            Generator.Functions[rname],
             getParameters().ptr,
             cast(uint)args.length,
             toStringz(name)

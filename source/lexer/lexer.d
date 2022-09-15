@@ -197,10 +197,6 @@ class Lexer {
                         next();
                         tokens ~= new Token(TokType.Char,replaceAllEscapesInChar(bufferchar)~"",line);
                         break;
-                    case '@':
-                        next();
-                        isPreprocessorCommand = true;
-                        break;
                     default:
                         if(isDigit(cast(dchar)peek())) {
                             string buffernum = ""~peek();
