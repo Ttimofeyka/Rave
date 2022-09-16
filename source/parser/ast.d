@@ -54,6 +54,8 @@ class LLVMGen {
     LLVMTypeRef[string] Structs;
     Loop[int] ActiveLoops;
     LLVMBasicBlockRef currBB;
+    LLVMValueRef[string] LLVMFunctions;
+    LLVMTypeRef[string] LLVMFunctionTypes;
 
     this() {
         Context = LLVMContextCreate();
@@ -63,6 +65,13 @@ class LLVMGen {
         LLVMInitializeAllAsmPrinters();
         LLVMInitializeAllTargetInfos();
         LLVMInitializeAllTargetMCs();
+
+        LLVMTypeRef[] t1 = [LLVMPointerType(LLVMInt8TypeInContext(this.Context),0)];
+        LLVMTypeRef ft1 = LLVMFunctionType(LLVMVoidTypeInContext(this.Context),t1.ptr,1,false);
+        LLVMFunctions["va_start"] = LLVMAddFunction(this.Module,toStringz("llvm.va_start"),ft1);
+        LLVMFunctions["va_end"] = LLVMAddFunction(this.Module,toStringz("llvm.va_end"),ft1);
+        LLVMFunctionTypes["va_start"] = LLVMVoidTypeInContext(this.Context);
+        LLVMFunctionTypes["va_end"] = LLVMVoidTypeInContext(this.Context);
     }
 
     string mangle(string name, bool isFunc, bool isMethod) {
@@ -1200,7 +1209,7 @@ class NodeCall : Node {
 
     override LLVMValueRef generate() {
         if(NodeIden f = func.instanceof!NodeIden) {
-        if(!f.name.into(FuncTable) && !into(f.name~to!string(args.length),FuncTable)) {
+        if(!f.name.into(FuncTable) && !into(f.name~to!string(args.length),FuncTable) && !f.name.into(Generator.LLVMFunctions)) {
             if(!f.name.into(MacroTable)) {
                 if(currScope.has(f.name)) {
                     LLVMTypeRef a = LLVMTypeOf(currScope.get(f.name));
@@ -1272,6 +1281,22 @@ class NodeCall : Node {
             currScope = oldScope;
             return toret;
         }
+        if(f.name.into(Generator.LLVMFunctions)) {
+            if(Generator.LLVMFunctionTypes[f.name] != LLVMVoidTypeInContext(Generator.Context)) return LLVMBuildCall(
+                Generator.Builder,
+                Generator.LLVMFunctions[f.name],
+                getParameters().ptr,
+                cast(uint)args.length,
+                toStringz("CallFunc"~f.name)
+            );
+            return LLVMBuildCall(
+                Generator.Builder,
+                Generator.LLVMFunctions[f.name],
+                getParameters().ptr,
+                cast(uint)args.length,
+                toStringz("")
+            );
+        }
         string rname = f.name;
         if(into(f.name~to!string(args.length),FuncTable)) rname ~= to!string(args.length);
         string name = "CallFunc"~f.name;
@@ -1306,6 +1331,7 @@ class NodeCall : Node {
         }
         assert(0);
     }
+    
 
     override void debugPrint() {
         writeln("NodeCall()");
