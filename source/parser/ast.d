@@ -991,6 +991,7 @@ class NodeFunc : Node {
     string[] namespacesNames;
     const string origname;
     bool isMethod = false;
+    bool isVararg = false;
 
     this(string name, FuncArgSet[] args, NodeBlock block, bool isExtern, DeclMod[] mods, int loc, Type type) {
         this.name = name;
@@ -1023,13 +1024,17 @@ class NodeFunc : Node {
     LLVMTypeRef* getParameters() {
         LLVMTypeRef[] p;
         for(int i=0; i<args.length; i++) {
-            p ~= Generator.GenerateType(args[i].type);
+            if(args[i].type.instanceof!TypeVarArg) {
+                isVararg = true;
+                args = args[1..$];
+                return getParameters();
+            }
+            else p ~= Generator.GenerateType(args[i].type);
         }
         return p.ptr;
     }
 
     override LLVMValueRef generate() {
-        bool vararg = false;
         string linkName = Generator.mangle(name,true,false);
         if(isMethod) linkName = Generator.mangle(name,true,true);
 
@@ -1037,7 +1042,7 @@ class NodeFunc : Node {
 
         for(int i=0; i<mods.length; i++) {
             if(mods[i].name == "C") linkName = name;
-            else if(mods[i].name == "vararg") vararg = true;
+            else if(mods[i].name == "vararg") isVararg = true;
             else if(mods[i].name == "linkname") linkName = mods[i].value;
         }
 
@@ -1045,7 +1050,7 @@ class NodeFunc : Node {
             Generator.GenerateType(type),
             getParameters(),
             cast(uint)args.length,
-            vararg
+            isVararg
         );
 
         Generator.Functions[name] = LLVMAddFunction(
@@ -1526,7 +1531,6 @@ class NodeGet : Node {
                 }
                 else Generator.error(loc,"This isn't a structure!");
             }
-            if(structsNumbers[cast(immutable)[s.name,field]].var.isConst) Generator.error(loc,"Attempt to change the constant element of the structure!");
             if(isEqu) return LLVMBuildStructGEP(
                 Generator.Builder,
                 ptr,

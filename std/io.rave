@@ -36,13 +36,13 @@ namespace std {
         extern(linkname: "fopen") std::file::File* open(char* path, char* mode);
         extern(linkname: "fclose") int close(std::file::File* file);
         extern(linkname: "ferror") int hasError(std::file::File* file);
-        extern(linkname: "fprintf", vararg) int printf(std::file::File* file, char* str);
+        extern(linkname: "fprintf") int printf(std::file::File* file, char* str, ...);
         extern(linkname: "fflush") int flush(std::file::File* file);
-        extern(linkname: "fscanf", vararg) int scanf(std::file::File* file, char* fmt);
+        extern(linkname: "fscanf") int scanf(std::file::File* file, char* fmt, ...);
     }
 
-    extern(linkname: "printf", vararg) int printf(char* str);
-    extern(linkname: "scanf", vararg) int scanf(char* fmt);
+    extern(linkname: "printf") int printf(char* str, ...);
+    extern(linkname: "scanf") int scanf(char* fmt, ...);
     extern(linkname: "putchar") int putchar(char c);
     extern(linkname: "puts") int puts(char* s);
 }

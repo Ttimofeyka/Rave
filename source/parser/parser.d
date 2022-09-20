@@ -112,10 +112,15 @@ class Parser {
         next();
 
         while(peek().type != TokType.Lpar) {
-            auto type = parseType();
-            auto name = expect(TokType.Identifier).value;
+            if(peek().type == TokType.VarArg) {
+                args ~= FuncArgSet("...",new TypeVarArg()); _idx += 1;
+            }
+            else {
+                auto type = parseType();
+                auto name = expect(TokType.Identifier).value;
 
-            args ~= FuncArgSet(name,type);
+                args ~= FuncArgSet(name,type);
+            }
             if(peek().type == TokType.Lpar) {next(); break;}
             expect(TokType.Comma);
         }

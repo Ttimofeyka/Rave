@@ -127,3 +127,4 @@ class TypeFunc : Type {
         this.args = args;
     }
 }
+class TypeVarArg : Type {}

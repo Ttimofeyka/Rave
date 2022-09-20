@@ -46,7 +46,7 @@ enum TokType {
     Or,
     MacroArgNum,
     GetPtr,
-    Overload,
+    VarArg
 }
 
 class Token {

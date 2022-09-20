@@ -97,7 +97,17 @@ class Lexer {
                     case ']': tokens ~= new Token(TokType.Larr,"]",line); _idx++; break;
                     case ',': tokens ~= new Token(TokType.Comma,",",line); _idx++; break;
                     case ':': tokens ~= new Token(TokType.ValSel,":",line); _idx++; break;
-                    case '.': tokens ~= new Token(TokType.Dot,".",line); _idx++; break;
+                    case '.':
+                        auto n = next();
+                        if(n == '.') {
+                            n = next();
+                            if(n == '.') {
+                                tokens ~= new Token(TokType.VarArg,"...",line); _idx++; break;
+                            }
+                            writeln("Undefined operator '..' at ",line," line!"); 
+                            exit(1);
+                        }
+                        tokens ~= new Token(TokType.Dot,".",line); break;
                     case '#': 
                         isMacroArgNum = true; _idx++;
                         break;
