@@ -30,5 +30,9 @@ source/old.ast.d
 *.ll
 *.be
 bin
+./first
+./second
 first
 second
+a
+./a

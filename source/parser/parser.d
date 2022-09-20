@@ -539,10 +539,24 @@ class Parser {
                 return new NodeFunc(name,args,new NodeBlock([]),isExtern,mods,loc,type);
             }
             // {block}
-            return new NodeFunc(name,args,parseBlock(name),isExtern,mods,loc,type);
+            NodeBlock block = parseBlock(name);
+            if(peek().type == TokType.ShortRet) {
+                next();
+                Node n = parseExpr();
+                if(peek().type == TokType.Semicolon) next();
+                block.nodes ~= new NodeRet(n,peek().line,name);
+            }
+            return new NodeFunc(name,args,block,isExtern,mods,loc,type);
         }
         else if(peek().type == TokType.Rbra) {
-            return new NodeFunc(name,[],parseBlock(name),isExtern,mods,loc,type);
+            NodeBlock block = parseBlock(name);
+            if(peek().type == TokType.ShortRet) {
+                next();
+                Node n = parseExpr();
+                if(peek().type == TokType.Semicolon) next();
+                block.nodes ~= new NodeRet(n,peek().line,name);
+            }
+            return new NodeFunc(name,[],block,isExtern,mods,loc,type);
         }
         else if(peek().type == TokType.Semicolon) {
             // Var without value

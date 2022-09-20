@@ -1,10 +1,9 @@
 import <std/io>
 import <std/string>
 
-int sum(int a, int b) => (a+b);
-int sum(int a, int b, int s) => (a+b+s);
+int sum(int a, int b) {} => 2;
 
 int main {
-    std::println("Hello, world!");
-    return 0;
+    std::printf("Hello, world!\n");
+    return sum(1,1);
 }
