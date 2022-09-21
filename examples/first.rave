@@ -1,7 +1,14 @@
 import <std/io>
 import <std/string>
 
+struct A {
+    int a;
+    int b;
+}
+
 int main {
-    std::printf("Hello, world!\n");
+    std::string* A = std::string("Hello, world!");
+    A.replace('e','b');
+    std::printf("Hello, world is: %s\n",A.ptr);
     return 0;
 }

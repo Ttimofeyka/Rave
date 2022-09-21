@@ -1,3 +1,5 @@
+import <std/mem>
+
 namespace std {
     extern(linkname: "exit") void exit(int code);
     void assert(bool cond) {

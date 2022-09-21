@@ -634,6 +634,10 @@ class NodeBinary : Node {
                     );
                 }
 
+                if(Generator.typeToString(LLVMTypeOf(currScope.getWithoutLoad(i.name))) == Generator.typeToString(LLVMTypeOf(val))) {
+                    val = LLVMBuildLoad(Generator.Builder,val,toStringz("load"));
+                }
+
                 return LLVMBuildStore(
                     Generator.Builder,
                     val,
@@ -1207,7 +1211,8 @@ class NodeCall : Node {
     LLVMValueRef[] getParameters() {
         LLVMValueRef[] params;
         for(int i=0; i<args.length; i++) {
-            params ~= args[i].generate();
+            LLVMValueRef arg = args[i].generate();
+            params ~= arg;
         }
         return params.dup;
     }
@@ -1323,7 +1328,8 @@ class NodeCall : Node {
                 }
                 else s = currScope.getVar(i.name).t.instanceof!TypeStruct;
                 LLVMValueRef[] params = getParameters();
-                params = currScope.getWithoutLoad(i.name)~params;
+                params = currScope.get(i.name)~params;
+                //writeln("sname: ",s.name," gfield: ",g.field);
                 return LLVMBuildCall(
                     Generator.Builder,
                     Generator.Functions[MethodTable[cast(immutable)[s.name,g.field]].name],
@@ -1520,17 +1526,27 @@ class NodeGet : Node {
             TypeStruct s;
             LLVMValueRef ptr = currScope.getWithoutLoad(id.name);
 
+            string t = Generator.typeToString(LLVMTypeOf(ptr));
+            if(t[$-1] == '*' && t[$-2] == '*') {
+                ptr = LLVMBuildLoad(
+                    Generator.Builder,
+                    ptr,
+                    toStringz("load")
+                );
+            }
+
             if(TypeStruct ts = currScope.getVar(id.name).t.instanceof!TypeStruct) {s = ts;}
             else {
                 if(TypePointer p = currScope.getVar(id.name).t.instanceof!TypePointer) {
                     if(TypeStruct ts = p.instance.instanceof!TypeStruct) {
                         s = ts;
-                       // ptr = LLVMBuildLoad(Generator.Builder,ptr,toStringz("load"));
                     }
                     else Generator.error(loc,"This isn't a structure!");
                 }
                 else Generator.error(loc,"This isn't a structure!");
             }
+
+
             if(isEqu) return LLVMBuildStructGEP(
                 Generator.Builder,
                 ptr,
@@ -2026,10 +2042,26 @@ class NodeStruct : Node {
                     _this.name = origname;
                     _this.namespacesNames = namespacesNames.dup;
 
-                    _this.block.nodes = 
-                        new NodeVar("this",null,false,false,false,[],_this.loc,new TypeStruct(name)) 
-                        ~ _this.block.nodes
-                        ~ new NodeRet(new NodeIden("this",f.loc),f.loc,name);
+                    NodeBinary b = new NodeBinary(
+                            TokType.Equ,
+                            new NodeIden("this",_this.loc),
+                            new NodeCast(new TypePointer(new TypeStruct(name)),
+                                new NodeCall(
+                                    _this.loc,new NodeIden("std::malloc",_this.loc),
+                                    [new NodeCast(new TypeBasic("int"), new NodeSizeof(new NodeIden(name,_this.loc),_this.loc), _this.loc)]
+                                ), 
+                                _this.loc
+                            ),
+                            _this.loc
+                    );
+
+                    Node[] olds = _this.block.nodes.dup;
+                    Node[] none;
+                    _this.block.nodes = none.dup;
+
+                    _this.block.nodes ~= new NodeVar("this",null,false,false,false,[],_this.loc,new TypePointer(new TypeStruct(name)));
+                    _this.block.nodes ~= b;
+                    _this.block.nodes ~= olds.dup;
 
                     _this.check();
                 }

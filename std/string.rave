@@ -14,7 +14,7 @@ namespace std {
         char* ptr;
         int len;
 
-        std::string this(char* a) {
+        std::string* this(char* a) {
             this.len = libc::strlen(a);
             this.ptr = std::malloc(this.len+1);
 
@@ -24,7 +24,7 @@ namespace std {
                 i += 1;
             }
             this.ptr[i] = '\0';
-        }
+        } => this;
 
         bool isDeleted => (this.ptr == null);
         char toChar => this.ptr[0];
@@ -52,13 +52,13 @@ namespace std {
             }
         }
 
-        void delete {
+        void destroy {
             std::free(this.ptr);
             if(this.ptr != null) this.ptr = null;
         }
 
         void set(char* a) {
-            this.delete();
+            this.destroy();
             this = std::string(a);
         }
     }

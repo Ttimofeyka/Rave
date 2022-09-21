@@ -60,7 +60,7 @@ class Compiler {
             else content = "alias __X86_64 = true;\n"~content;
         }
 
-        if(!opts.noPrelude && file != "std/prelude.rave") {
+        if(!opts.noPrelude && file != "std/prelude.rave" && file != "std/mem.rave") {
             content = "import <std/prelude>\n"~content;
         }
 
