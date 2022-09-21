@@ -8,7 +8,10 @@ namespace std {
     extern(linkname: "memset") void* memset(void* dest, int val);
 
     struct vector {
-        int length;
+        void** items;
+        int capacity;
+        int size;
+
         // TODO
     }
 }

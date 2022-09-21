@@ -2466,7 +2466,7 @@ class NodeSizeof : Node {
 
     override LLVMValueRef generate() {
         if(NodeType ty = val.instanceof!NodeType) {
-            return LLVMSizeOf(Generator.GenerateType(ty.ty));
+            return LLVMBuildIntCast(Generator.Builder, LLVMSizeOf(Generator.GenerateType(ty.ty)), LLVMInt32TypeInContext(Generator.Context), toStringz("cast"));
         }
         if(MacroGetArg mga = val.instanceof!MacroGetArg) {
             NodeSizeof newsizeof = new NodeSizeof(currScope.macroArgs[mga.number],loc);
