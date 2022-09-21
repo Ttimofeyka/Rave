@@ -1,14 +1,8 @@
 debug __X86_64 {
     struct va_list {
-        int gp_offset;
-        int fp_offset;
+        int gp_offset = 48;
+        int fp_offset = 176;
         void* overflow_arg_area;
         void* reg_save_area;
-    }
-}
-
-debug __X86 {
-    struct va_list {
-        void* ptr;
     }
 }
