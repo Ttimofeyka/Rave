@@ -1014,7 +1014,7 @@ class NodeFunc : Node {
         }
         if(!(name !in FuncTable)) {
             if(args.length != FuncTable[name].args.length) name ~= to!string(args.length);
-            else checkError(loc,"a function with that name already exists on "~to!string(FuncTable[name].loc+1)~" line!");
+            else checkError(loc,"a function with '"~name~"' name already exists on "~to!string(FuncTable[name].loc+1)~" line!");
         }
         FuncTable[name] = this;
         for(int i=0; i<block.nodes.length; i++) {
@@ -1243,6 +1243,10 @@ class NodeCall : Node {
             for(int i=0; i<args.length; i++) {
                 currScope.macroArgs[i] = args[i];
             }
+            currScope.args = oldScope.args.dup;
+            currScope.argVars = oldScope.argVars.dup;
+            currScope.localscope = oldScope.localscope.dup;
+
             Node[] presets;
             presets ~= new NodeVar(
                 f.name~"::argCount",
@@ -2048,7 +2052,7 @@ class NodeStruct : Node {
                             new NodeCast(new TypePointer(new TypeStruct(name)),
                                 new NodeCall(
                                     _this.loc,new NodeIden("std::malloc",_this.loc),
-                                    [new NodeCast(new TypeBasic("int"), new NodeSizeof(new NodeIden(name,_this.loc),_this.loc), _this.loc)]
+                                    [new NodeCast(new TypeBasic("int"), new NodeSizeof(new NodeType(new TypeStruct(name),_this.loc),_this.loc), _this.loc)]
                                 ), 
                                 _this.loc
                             ),

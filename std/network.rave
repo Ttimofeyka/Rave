@@ -1,5 +1,5 @@
 namespace std {
-    namespace net {
+    namespace network {
         struct sockaddr {
             int sa_family;
             char[14] sa_data;

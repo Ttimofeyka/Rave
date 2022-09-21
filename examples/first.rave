@@ -8,7 +8,8 @@ struct A {
 
 int main {
     std::string* A = std::string("Hello, world!");
-    A.replace('e','b');
-    std::printf("Hello, world is: %s\n",A.ptr);
+        A.replace('e','b');
+        std::printf("A is: %s\n",A.ptr);
+    delete(A);
     return 0;
 }

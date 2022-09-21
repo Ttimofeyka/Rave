@@ -1,5 +1,3 @@
-import <std/mem>
-
 namespace libc {
     // Functions that are practically unnecessary in normal use and come from libc
     extern(linkname: "strlen") int strlen(char* cstr);

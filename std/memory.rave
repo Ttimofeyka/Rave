@@ -12,3 +12,7 @@ namespace std {
         // TODO
     }
 }
+
+macro delete {
+    std::free(cast(void*)#0);
+}
