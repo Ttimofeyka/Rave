@@ -6,8 +6,7 @@ namespace libc {
     char* btos(bool b) {
         char* toret = "true";
         if(b == false) toret = "false";
-        return toret;
-    }
+    } => toret;
 }
 
 namespace std {
