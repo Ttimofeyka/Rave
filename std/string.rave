@@ -27,9 +27,8 @@ namespace std {
             this.ptr[i] = '\0';
         }
 
-        bool isDeleted {
-            return (this.ptr == null);
-        }
+        bool isDeleted => (this.ptr == null);
+        char toChar => this.ptr[0];
 
         bool has(char c) {
             bool _has = false;
@@ -42,8 +41,7 @@ namespace std {
                 }
                 i += 1;
             }
-            return _has;
-        }
+        } => _has;
 
         void replace(char c, char to) {
             int i = 0;
@@ -63,10 +61,6 @@ namespace std {
         void set(char* a) {
             this.delete();
             this = std::string(a);
-        }
-
-        char toChar {
-            return this.ptr[0];
         }
     }
 }
