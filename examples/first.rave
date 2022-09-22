@@ -1,15 +1,8 @@
 import <std/io>
 import <std/string>
 
-struct A {
-    int a;
-    int b;
-}
+using std;
 
 int main {
-    std::string* A = std::string("Hello, world!");
-        A.replace('e','b');
-        std::printf("A is: %s\n",A.ptr);
-    delete(A);
-    return 0;
-}
+    
+} => 0;

@@ -7,12 +7,62 @@ namespace std {
     extern(linkname: "memcmp") bool memcmp(void* one, void* two, int n);
     extern(linkname: "memset") void* memset(void* dest, int val);
 
-    struct vector {
+    struct vector { // TODO(don't work)
         void** items;
         int capacity;
         int size;
 
-        // TODO
+        std::vector* this(int cap) {
+            this.capacity = cap; // (type)
+            this.size = 0;
+            this.items = cast(void**)std::malloc(sizeof(void*) * 4);
+        } => this;
+
+        void resize(int cap) {
+            std::realloc(cast(void*)this.items, sizeof(void*) * cap);
+            this.capacity = cap;
+        }
+
+        void add(void* item) {
+            if(this.capacity == this.size) {
+                this.resize(this.capacity*2);
+            }
+            this.items[this.size] = item;
+            this.size += 1;
+        }
+
+        void set(int index, void* item) {
+            if((index >= 0) && (index < this.size)) {
+                this.items[index] = item;
+            }
+        }
+
+        void* get(int index) {
+            void* toret = null;
+            if((index >= 0) && (index < this.size)) {
+                toret = this.items[index];
+            }
+        }  => toret;
+
+        void remove(int index) {
+            this.items[index] = null;
+
+            int i = index;
+            while(i<(this.size-1)) {
+                this.items[i] = this.items[i+1];
+                this.items[i+1] = null;
+                i += 1;
+            }
+            this.size -= 1;
+
+            if((this.size > 0) && (this.size == (this.capacity/4))) {
+                this.resize(this.capacity/2);
+            }
+        }
+
+        void destroy {
+            std::free(cast(void*)this.items);
+        }
     }
 }
 

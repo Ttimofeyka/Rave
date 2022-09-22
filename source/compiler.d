@@ -72,10 +72,10 @@ class Compiler {
         for(int i=0; i<n.length; i++) {
             n[i].check();
         }
-        Generator = new LLVMGen();
-        writeln("File: "~file);
+        Generator = new LLVMGen(file);
+        if(opts.printAll) writeln("File: "~file);
         for(int i=0; i<n.length; i++) {
-            writeln("\t"~n[i].classinfo.name);
+            if(opts.printAll) writeln("\t"~n[i].classinfo.name);
             n[i].generate();
         }
 

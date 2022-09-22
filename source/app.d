@@ -34,6 +34,7 @@ struct CompOpts {
 	bool onlyObject = false;
 	bool noEntry = false;
 	bool noStd = false;
+	bool printAll = false;
 }
 
 CompOpts analyzeArgs(string[] args) {
@@ -57,6 +58,10 @@ CompOpts analyzeArgs(string[] args) {
 				idx += 1;
 				outtype = args[idx];
 				idx += 1;
+			}
+			else if(args[idx] == "-print-all") {
+				idx += 1;
+				opts.printAll = true;
 			}
 			else if(args[idx] == "-emit-llvm") {
 				idx += 1;

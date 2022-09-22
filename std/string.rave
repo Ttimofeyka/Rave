@@ -61,3 +61,9 @@ namespace std {
         }
     }
 }
+
+//preoperator char* S(cstr) => std::string(cstr);
+
+macro S {
+    return std::string(#0);
+}

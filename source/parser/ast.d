@@ -56,8 +56,10 @@ class LLVMGen {
     LLVMBasicBlockRef currBB;
     LLVMValueRef[string] LLVMFunctions;
     LLVMTypeRef[string] LLVMFunctionTypes;
+    string file;
 
-    this() {
+    this(string file) {
+        this.file = file;
         Context = LLVMContextCreate();
         Module = LLVMModuleCreateWithNameInContext(toStringz("rave"),Context);
         LLVMInitializeAllTargets();
@@ -65,13 +67,6 @@ class LLVMGen {
         LLVMInitializeAllAsmPrinters();
         LLVMInitializeAllTargetInfos();
         LLVMInitializeAllTargetMCs();
-
-        LLVMTypeRef[] t1 = [LLVMPointerType(LLVMInt8TypeInContext(this.Context),0)];
-        LLVMTypeRef ft1 = LLVMFunctionType(LLVMVoidTypeInContext(this.Context),t1.ptr,1,false);
-        LLVMFunctions["va_start"] = LLVMAddFunction(this.Module,toStringz("llvm.va_start"),ft1);
-        LLVMFunctions["va_end"] = LLVMAddFunction(this.Module,toStringz("llvm.va_end"),ft1);
-        LLVMFunctionTypes["va_start"] = LLVMVoidTypeInContext(this.Context);
-        LLVMFunctionTypes["va_end"] = LLVMVoidTypeInContext(this.Context);
     }
 
     string mangle(string name, bool isFunc, bool isMethod) {
@@ -528,30 +523,61 @@ class NodeBinary : Node {
         assert(0);
     }
 
-    LLVMValueRef diff(LLVMValueRef one, LLVMValueRef two, bool less) {
+    LLVMValueRef diff(LLVMValueRef one, LLVMValueRef two, bool less, bool orequal) {
         if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMGetTypeKind(LLVMTypeOf(two))) {
             if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMIntegerTypeKind) {
-                return LLVMBuildICmp(
+                if(!orequal) return LLVMBuildICmp(
                     Generator.Builder,
                     (less ? LLVMIntSLT : LLVMIntSGT),
                     one,
                     two,
                     toStringz("icmp")
                 );
+                return LLVMBuildICmp(
+                    Generator.Builder,
+                    (less ? LLVMIntSLE : LLVMIntSGE),
+                    one,
+                    two,
+                    toStringz("icmp")
+                );
             }
             else if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMFloatTypeKind) {
-                return LLVMBuildFCmp(
+                if(!orequal) return LLVMBuildFCmp(
                     Generator.Builder,
                     (less ? LLVMRealOLT : LLVMRealOGT),
                     one,
                     two,
                     toStringz("fcmp")
                 );
+                return LLVMBuildFCmp(
+                    Generator.Builder,
+                    (less ? LLVMRealOLE : LLVMRealOGE),
+                    one,
+                    two,
+                    toStringz("fcmp")
+                );
             }
             else if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMPointerTypeKind) {
-                return LLVMBuildICmp(
+                if(!orequal) return LLVMBuildICmp(
                     Generator.Builder,
                     (less ? LLVMIntSLT : LLVMIntSGT),
+                    LLVMBuildPtrToInt(
+                        Generator.Builder,
+                        one,
+                        LLVMInt32TypeInContext(Generator.Context),
+                        toStringz("ptoi")
+                    ),
+                    LLVMBuildPtrToInt(
+                        Generator.Builder,
+                        two,
+                        LLVMInt32TypeInContext(Generator.Context),
+                        toStringz("ptoi2")
+                    ),
+                    toStringz("pcmp")
+                );
+                return LLVMBuildICmp(
+                    Generator.Builder,
+                    (less ? LLVMIntSLE : LLVMIntSGE),
                     LLVMBuildPtrToInt(
                         Generator.Builder,
                         one,
@@ -569,6 +595,15 @@ class NodeBinary : Node {
             }
         }
         assert(0);
+    }
+
+    LLVMValueRef or(LLVMValueRef one, LLVMValueRef two) {
+        return LLVMBuildOr(
+            Generator.Builder,
+            one,
+            two,
+            toStringz("or")
+        );
     }
 
     override Node comptime() {
@@ -778,14 +813,27 @@ class NodeBinary : Node {
             }
         }
 
+        LLVMValueRef and(LLVMValueRef one, LLVMValueRef two) {
+            return LLVMBuildAnd(
+                Generator.Builder,
+                one,
+                two,
+                toStringz("and")
+            );
+        }
+
         if(operator == TokType.Plus) return sum(f,s);
         if(operator == TokType.Minus) return sub(f,s);
         if(operator == TokType.Multiply) return mul(f,s);
         if(operator == TokType.Divide) return div(f,s);
         if(operator == TokType.Equal) return equal(f,s,false);
         if(operator == TokType.Nequal) return equal(f,s,true);
-        if(operator == TokType.Less) return diff(f,s,true);
-        if(operator == TokType.More) return diff(f,s,false);
+        if(operator == TokType.Less) return diff(f,s,true,false);
+        if(operator == TokType.More) return diff(f,s,false,false);
+        if(operator == TokType.LessEqual) return diff(f,s,true,true);
+        if(operator == TokType.MoreEqual) return diff(f,s,false,true);
+        if(operator == TokType.And) return and(f,s);
+        if(operator == TokType.Or) return or(f,s);
         assert(0);
     }
 
@@ -2079,11 +2127,19 @@ class NodeStruct : Node {
                     }
 
                     MethodTable[cast(immutable)[name,f.origname]] = f;
-
+                    
                     methods ~= f;
                 }
             }
         }
+        /*if(name == "va_list") {
+            LLVMTypeRef[] t1 = [LLVMPointerType(LLVMInt8TypeInContext(Generator.Context),0)];
+            LLVMTypeRef ft1 = LLVMFunctionType(LLVMVoidTypeInContext(Generator.Context),t1.ptr,1,false);
+            Generator.LLVMFunctions["va_start"] = LLVMAddFunction(Generator.Module,toStringz("llvm.va_start"),ft1);
+            Generator.LLVMFunctions["va_end"] = LLVMAddFunction(Generator.Module,toStringz("llvm.va_end"),ft1);
+            Generator.LLVMFunctionTypes["va_start"] = LLVMVoidTypeInContext(Generator.Context);
+            Generator.LLVMFunctionTypes["va_end"] = LLVMVoidTypeInContext(Generator.Context);
+        }*/
         return values.dup;
     }
 
@@ -2291,7 +2347,10 @@ class NodeUsing : Node {
                 }
                 foreach(s; StructTable[oldname].elements) {
                     if(NodeFunc f = s.instanceof!NodeFunc) {
-                        MethodTable[cast(immutable)[var.name,f.origname]] = MethodTable[cast(immutable)[oldname,f.origname]];
+                        if(f.origname != "this") MethodTable[cast(immutable)[var.name,f.origname]] = MethodTable[cast(immutable)[oldname,f.origname]];
+                        else {
+                            FuncTable[var.name] = FuncTable[oldname];
+                        }
                     }
                 }
                 //StructTable.remove(oldname);
