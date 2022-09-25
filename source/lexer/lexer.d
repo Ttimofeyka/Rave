@@ -122,15 +122,23 @@ class Lexer {
                         }
                         else tokens ~= new Token(TokType.Divide,"/",line);
                         break;
-                    case '>': 
-                        if(next() == '=') {
+                    case '>':
+                        auto rnext = next(); 
+                        if(rnext == '=') {
                             tokens ~= new Token(TokType.More,">=",line); _idx++;
+                        }
+                        else if(rnext == '>') {
+                            tokens ~= new Token(TokType.BitRight,">>",line); _idx++;
                         }
                         else tokens ~= new Token(TokType.More,">",line); 
                         break;
                     case '<': 
-                        if(next() == '=') {
+                        auto lnext = next();
+                        if(lnext == '=') {
                             tokens ~= new Token(TokType.LessEqual,"<=",line); _idx++;
+                        }
+                        else if(lnext == '<') {
+                            tokens ~= new Token(TokType.BitLeft,"<<",line); _idx++;
                         }
                         else tokens ~= new Token(TokType.Less,"<",line); 
                         break;

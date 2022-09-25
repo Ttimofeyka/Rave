@@ -1,0 +1,73 @@
+type sfWindowHandle = long;
+
+namespace EventType {
+    alias sfEvtClosed = 0;
+    alias sfEvtResized = 1;
+    alias sfEvtLostFocus = 2;
+    alias sfEvtGainedFocus = 3;     
+    alias sfEvtTextEntered = 4;          
+    alias sfEvtKeyPressed = 5;           
+    alias sfEvtKeyReleased = 6;          
+    alias sfEvtMouseWheelMoved = 7;       
+    alias sfEvtMouseWheelScrolled = 8;  
+    alias sfEvtMouseButtonPressed = 9;   
+    alias sfEvtMouseButtonReleased = 10;  
+    alias sfEvtMouseMoved = 11;         
+    alias sfEvtMouseEntered = 12;         
+    alias sfEvtMouseLeft = 13;             
+    alias sfEvtJoystickButtonPressed = 14;
+    alias sfEvtJoystickButtonReleased = 15;
+    alias sfEvtJoystickMoved = 16;
+    alias sfEvtJoystickConnected = 17;
+    alias sfEvtJoystickDisconnected = 18;
+    alias sfEvtTouchBegan = 19;        
+    alias sfEvtTouchMoved = 20;            
+    alias sfEvtTouchEnded = 21;    
+    alias sfEvtSensorChanged = 22;
+
+    alias sfEvtCount = 23;
+}
+namespace rgs {
+    struct VideoMode {
+        int width;
+        int height;
+        int bitsPerPixel;
+
+        rgs::VideoMode* this(int width, int height, int bitsPerPixel) {
+            this.width = width;
+            this.height = height;
+            this.bitsPerPixel = bitsPerPixel;
+        } => this;
+    }
+
+    struct Event {
+
+    }
+}
+
+namespace rgsi {
+    extern(linkname: "sfRenderWindow_create") void* createWindow(rgs::VideoMode* mode, char* title, int style, long* par);
+	extern(linkname: "sfRenderWindow_isOpen") bool isOpen(void* windowptr);
+}
+
+namespace rgs {
+    struct Window {
+        void* handle;
+
+        rgs::Window* this(rgs::VideoMode* mode, char* title, int style) {
+            this.handle = rgsi::createWindow(mode, title, style, 0);
+        } => this;
+
+        bool isOpen => rgsi::isOpen(this.handle);
+    }
+
+
+     
+    alias StyleNone             = 0;        ///< No border / title bar (this flag and all others are mutually exclu>
+    alias StyleTitlebar         = 1;        ///< Title bar + fixed border
+    alias StyleResize           = 2;        ///< Titlebar + resizable border + maximize button
+    alias StyleClose            = 4;        ///< Titlebar + close button
+    alias StyleFullscreen       = 8;        ///< Fullscreen mode (this flag and all others are mutually exclusive)
+    //alias StyleDefaultStyle   = sfTitlebar | sfResize | sfClose; ///< Default window style
+
+}

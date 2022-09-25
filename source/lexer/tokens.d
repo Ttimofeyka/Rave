@@ -46,7 +46,10 @@ enum TokType {
     Or,
     MacroArgNum,
     GetPtr,
-    VarArg
+    VarArg,
+
+    BitLeft,
+    BitRight
 }
 
 class Token {

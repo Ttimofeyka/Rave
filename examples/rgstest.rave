@@ -1,0 +1,30 @@
+import <std/io>
+import "rgs"
+
+int main()
+{
+	rgs::VideoMode* mode = rgs::VideoMode(800,600,32); //rgs::VideoMode(800, 600, 32);
+	std::printf("Passed init 1\n");	
+	rgs::Window* window = rgs::Window(mode, "Window", rgs::StyleClose);
+	
+	rgs::Event event;
+	
+	std::printf("Passed init2\n");		
+		
+	//window = sfRenderWindow_create(mode, "SFML window", sfResize | sfClose, null);
+	//if (!window)
+	//return 1;
+
+	//while (sfRenderWindow_isOpen(window))
+	//{
+	//	while (sfRenderWindow_pollEvent(window, &event))
+	//	{
+	//		if (event.type == sfEvtClosed)
+	//			sfRenderWindow_close(window);
+	//	}
+	//	sfRenderWindow_clear(window, sfBlack);
+	//	sfRenderWindow_display(window);
+	//}
+	//sfRenderWindow_destroy(window);*/
+	return 0;
+}

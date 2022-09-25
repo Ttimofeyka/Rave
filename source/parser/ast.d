@@ -114,6 +114,7 @@ class LLVMGen {
             return LLVMArrayType(this.GenerateType(a.element),cast(uint)a.count);
         }
         if(TypeStruct s = t.instanceof!TypeStruct) {
+            if(!s.name.into(Generator.Structs)) Generator.error(-1,"Unknown structure '"~s.name~"'!");
             return Generator.Structs[s.name];
         }
         if(t.instanceof!TypeVoid) return LLVMVoidTypeInContext(Generator.Context);
@@ -834,6 +835,18 @@ class NodeBinary : Node {
         if(operator == TokType.MoreEqual) return diff(f,s,false,true);
         if(operator == TokType.And) return and(f,s);
         if(operator == TokType.Or) return or(f,s);
+        if(operator == TokType.BitLeft) return LLVMBuildShl(
+            Generator.Builder,
+            f,
+            s,
+            toStringz("bitleft")
+        );
+        if(operator == TokType.BitRight) return LLVMBuildLShr(
+            Generator.Builder,
+            f,
+            s,
+            toStringz("bitright")
+        );
         assert(0);
     }
 
