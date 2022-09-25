@@ -125,7 +125,7 @@ class Compiler {
                 writeln("Error: file \""~files[i]~"\" doesn't exists!");
                 exit(1);
             }
-            if(files[i][$-2..$]==".a"||files[i][$-4..$]==".dll"||files[i][$-2..$]==".o") {
+            if(files[i][$-2..$]==".a"||files[i][$-4..$]==".dll"||files[i][$-2..$]==".o"||files[i][$-3..$]==".so") {
                 linkString ~= files[i]~" ";
             }
             else {
