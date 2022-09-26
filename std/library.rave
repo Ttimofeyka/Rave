@@ -3,5 +3,6 @@ namespace std {
         extern(linkname: "dlopen") void* open(char* filename, int flags);
         extern(linkname: "dlclose") int close(void* handle);
         extern(linkname: "dlsym") void* sym(void* handle, char* name);
+        extern(linkname: "dlerror") char* error();
     }
 }

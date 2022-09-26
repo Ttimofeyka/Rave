@@ -2240,6 +2240,22 @@ class NodeCast : Node {
                 toStringz("ppcast")
             );
         }
+        if(TypeFunc f = type.instanceof!TypeFunc) {
+            if(LLVMGetTypeKind(LLVMTypeOf(gval)) == LLVMIntegerTypeKind) {
+                return LLVMBuildIntToPtr(
+                    Generator.Builder,
+                    gval,
+                    Generator.GenerateType(f),
+                    toStringz("ipcast")
+                );
+            }
+            return LLVMBuildPointerCast(
+                Generator.Builder,
+                gval,
+                Generator.GenerateType(f),
+                toStringz("ppcast")
+            );
+        }
         assert(0);
     }
 }

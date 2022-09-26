@@ -36,3 +36,6 @@ first
 second
 a
 ./a
+
+std/*.o
+examples/*.o
