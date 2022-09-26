@@ -1,0 +1,7 @@
+namespace std {
+    namespace library {
+        extern(linkname: "dlopen") void* open(char* filename, int flags);
+        extern(linkname: "dlclose") int close(void* handle);
+        extern(linkname: "dlsym") void* sym(void* handle, char* name);
+    }
+}
