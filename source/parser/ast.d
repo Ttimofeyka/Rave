@@ -2332,6 +2332,7 @@ class NodeUsing : Node {
                 //Generator.Globals.remove(oldname);
             }
         }
+        // TODO
         foreach(f; FuncTable) {
             if(f.namespacesNames.length>0) {
                 string[] newNamespacesNames;
@@ -2366,10 +2367,12 @@ class NodeUsing : Node {
                 for(int i=0; i<var.namespacesNames.length; i++) {
                     if(var.namespacesNames[i] != namespace) newNamespacesNames ~= var.namespacesNames[i];
                 }
+                //writeln(var.origname,":",newNamespacesNames);
                 var.namespacesNames = newNamespacesNames.dup;
                 string oldname = var.name;
                 var.name = namespacesNamesToString(var.namespacesNames, var.origname);
                 StructTable[var.name] = var;
+                Generator.Structs[var.name] = Generator.Structs[oldname];
                 if(oldname.into(FuncTable)) {
                     FuncTable[var.name] = FuncTable[oldname];
                     Generator.Functions[var.name] = Generator.Functions[oldname];

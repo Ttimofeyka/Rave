@@ -23,6 +23,7 @@ __dummy.html
 *.lst
 
 rave
+example
 llvm.bc
 source/old.ast.d
 

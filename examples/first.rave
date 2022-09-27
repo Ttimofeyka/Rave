@@ -4,5 +4,6 @@ import <std/string>
 using std;
 
 int main {
-    
+    string* A = string("Hello");
+    std::println(A);
 } => 0;
