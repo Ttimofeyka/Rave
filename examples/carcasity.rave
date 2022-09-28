@@ -57,7 +57,8 @@ namespace rci {
 }
 
 namespace rc {
-	
+	void* libgraphics;
+    
 	void carcasityInit()
 	{
 		// Load all SFML libraries

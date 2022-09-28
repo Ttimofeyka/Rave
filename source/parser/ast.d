@@ -971,11 +971,14 @@ class NodeVar : Node {
             if(isExtern) {
                 LLVMSetLinkage(Generator.Globals[name], LLVMExternalLinkage);
             }
-            else LLVMSetLinkage(Generator.Globals[name],LLVMCommonLinkage);
+            // else LLVMSetLinkage(Generator.Globals[name],LLVMCommonLinkage);
             LLVMSetAlignment(Generator.Globals[name],Generator.getAlignmentOfType(t));
-            //version(linux) {LLVMSetGlobalDSOLocal(Generator.Globals[name]);}
+            version(linux) {LLVMSetGlobalDSOLocal(Generator.Globals[name]);}
             if(value !is null && !isExtern) {
                 LLVMSetInitializer(Generator.Globals[name], value.generate());
+            }
+            else if(!isExtern) {
+                LLVMSetInitializer(Generator.Globals[name], LLVMConstNull(Generator.GenerateType(t)));
             }
         }
         else {
@@ -1104,12 +1107,16 @@ class NodeFunc : Node {
         string linkName = Generator.mangle(name,true,false);
         if(isMethod) linkName = Generator.mangle(name,true,true);
 
+        int callconv = 0; // 0 == C
+
         if(name == "main") linkName = "main";
 
         for(int i=0; i<mods.length; i++) {
             if(mods[i].name == "C") linkName = name;
             else if(mods[i].name == "vararg") isVararg = true;
             else if(mods[i].name == "linkname") linkName = mods[i].value;
+            else if(mods[i].name == "fastcc") callconv = 1;
+            else if(mods[i].name == "coldcc") callconv = 2;
         }
 
         LLVMTypeRef functype = LLVMFunctionType(

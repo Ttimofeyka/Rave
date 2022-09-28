@@ -1,8 +1,9 @@
 import <std/io>
+import "carcasity"
 
 int main()
 {
-	//rc::carcasityInit();
+	rc::carcasityInit();
 	
 	//rc::VideoMode* mode = rc::VideoMode(800,600,32); //rgs::VideoMode(800, 600, 32);
 	//rc::RenderWindow* window = rc::RenderWindow(mode, "Window", rc::StyleClose);
@@ -27,6 +28,6 @@ int main()
 	//}
 	//sfRenderWindow_destroy(window);*/
 
-	//rc::carcasityEnd();
+	rc::carcasityEnd();
 	return 0;
 }
