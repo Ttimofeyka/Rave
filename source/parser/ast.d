@@ -1132,6 +1132,9 @@ class NodeFunc : Node {
             functype
         );
 
+        if(callconv == 1) LLVMSetFunctionCallConv(Generator.Functions[name],LLVMFastCallConv);
+        else if(callconv == 2) LLVMSetFunctionCallConv(Generator.Functions[name],LLVMColdCallConv);
+
         if(!isExtern) {
             LLVMBasicBlockRef entry = LLVMAppendBasicBlockInContext(
                 Generator.Context,
