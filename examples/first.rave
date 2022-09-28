@@ -1,9 +1,8 @@
 import <std/io>
 import <std/string>
 
-using std;
+void* a;
 
 int main {
-    string* A = string("Hello");
-    std::println(A);
+    
 } => 0;

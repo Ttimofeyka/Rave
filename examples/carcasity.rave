@@ -1,6 +1,7 @@
-type sfWindowHandle = long;
+import <std/library>
+import <std/io>
 
-namespace EventType {
+namespace EventTypeSf {
     alias sfEvtClosed = 0;
     alias sfEvtResized = 1;
     alias sfEvtLostFocus = 2;
@@ -27,38 +28,62 @@ namespace EventType {
 
     alias sfEvtCount = 23;
 }
-namespace rgs {
+namespace rc {
     struct VideoMode {
         int width;
         int height;
         int bitsPerPixel;
 
-        rgs::VideoMode* this(int width, int height, int bitsPerPixel) {
+        rc::VideoMode* this(int width, int height, int bitsPerPixel) {
             this.width = width;
             this.height = height;
             this.bitsPerPixel = bitsPerPixel;
         } => this;
     }
-
     struct Event {
-
+		int sus = 1;
     }
 }
 
-namespace rgsi {
-    extern(linkname: "sfRenderWindow_create") void* createWindow(rgs::VideoMode* mode, char* title, int style, long* par);
-	extern(linkname: "sfRenderWindow_isOpen") bool isOpen(void* windowptr);
+namespace rci {
+    long*(rc::VideoMode*, char*, int, long*) createWindow;
+    // extern(linkname: "sfRenderWindow_create") long* createRWindow(rc::VideoMode* mode, char* title, int style, long* par);
+    // void* createWindow;
+    // macro mCreateWindow {
+	//     long*(rc::VideoMode*, char*, int, long*) m = cast(long*(rc::VideoMode*, char*, int, long*))rci::createWindow;
+	//     m(#0,#1,#2,#3);
+	// }
+	// extern(linkname: "sfRenderWindow_isOpen") bool isOpen(long* windowptr);
 }
 
-namespace rgs {
-    struct Window {
-        void* handle;
+namespace rc {
+	
+	void carcasityInit()
+	{
+		// Load all SFML libraries
+	    rc::libgraphics = std::library::open("./libsfml/graphics.so",1);
+	    if (rc::libgraphics == null) {
+	        std::printf("dlopen() error: %s\n", std::library::error());
+			std::exit(1);
+	    }
 
-        rgs::Window* this(rgs::VideoMode* mode, char* title, int style) {
-            this.handle = rgsi::createWindow(mode, title, style, 0);
+	    // Load all functions
+	    rci::createWindow = cast(long*(rc::VideoMode*, char*, int, long*))std::library::sym(rc::libgraphics, "sfRenderWindow_create");
+	}
+
+	void carcasityEnd()
+	{
+		std::library::close(rc::libgraphics);
+	}
+	
+    struct RenderWindow {
+        long* handle;
+
+        rc::RenderWindow* this(rc::VideoMode* mode, char* title, int style) {
+            this.handle = rci::createWindow(mode, title, style, cast(long*)0);
         } => this;
 
-        bool isOpen => rgsi::isOpen(this.handle);
+        //bool isOpen() => rci::isOpen(this.handle);
     }
 
 

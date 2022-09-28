@@ -28,6 +28,7 @@ class Parser {
     string[] structs;
     bool[string] _imported;
     Type[string] _aliasTypes;
+    string currentFile = "";
 
     private void error(string msg) {
         pragma(inline,true);
@@ -629,6 +630,8 @@ class Parser {
         next();
 
         if(peek().type == TokType.Semicolon) next();
+
+        if(_file == currentFile) return new NodeNone();
 
         if(!(_file !in _imported)) return new NodeNone();
         Lexer l = new Lexer(readText(_file));

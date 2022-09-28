@@ -66,6 +66,7 @@ class Compiler {
 
         Lexer lex = new Lexer(content);
         Parser p = new Parser(lex.getTokens());
+        p.currentFile = file;
         p.MainFile = files[0];
         p.parseAll();
         Node[] n = p.getNodes();

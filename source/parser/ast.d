@@ -255,11 +255,11 @@ class Scope {
         );
     }
 
-    NodeVar getVar(string n) {
+    NodeVar getVar(string n, int line) {
         if(n.into(localscope)) return localVars[n];
         if(n.into(Generator.Globals)) return VarTable[n];
         if(n.into(args)) return argVars[n];
-        Generator.error(-1,"Undefined variable \""~n~"\"!");
+        Generator.error(line-1,"Undefined variable \""~n~"\"!");
         assert(0);
     }
 
@@ -644,7 +644,7 @@ class NodeBinary : Node {
 
         if(operator == TokType.Equ) {
             if(NodeIden i = first.instanceof!NodeIden) {
-                if(currScope.getVar(i.name).isConst && i.name != "this") {
+                if(currScope.getVar(i.name,loc).isConst && i.name != "this") {
                     Generator.error(loc, "An attempt to change the value of a constant variable!");
                 }
                 if(isAliasIden) {
@@ -971,8 +971,9 @@ class NodeVar : Node {
             if(isExtern) {
                 LLVMSetLinkage(Generator.Globals[name], LLVMExternalLinkage);
             }
+            else LLVMSetLinkage(Generator.Globals[name],LLVMCommonLinkage);
             LLVMSetAlignment(Generator.Globals[name],Generator.getAlignmentOfType(t));
-            version(linux) {LLVMSetGlobalDSOLocal(Generator.Globals[name]);}
+            //version(linux) {LLVMSetGlobalDSOLocal(Generator.Globals[name]);}
             if(value !is null && !isExtern) {
                 LLVMSetInitializer(Generator.Globals[name], value.generate());
             }
@@ -1388,10 +1389,10 @@ class NodeCall : Node {
         else if(NodeGet g = func.instanceof!NodeGet) {
             if(NodeIden i = g.base.instanceof!NodeIden) {
                 TypeStruct s;
-                if(TypePointer p = currScope.getVar(i.name).t.instanceof!TypePointer) {
+                if(TypePointer p = currScope.getVar(i.name,loc).t.instanceof!TypePointer) {
                     s = p.instance.instanceof!TypeStruct;
                 }
-                else s = currScope.getVar(i.name).t.instanceof!TypeStruct;
+                else s = currScope.getVar(i.name,loc).t.instanceof!TypeStruct;
                 LLVMValueRef[] params = getParameters();
                 params = currScope.get(i.name)~params;
                 //writeln("sname: ",s.name," gfield: ",g.field);
@@ -1435,7 +1436,7 @@ class NodeIndex : Node {
         }
         if(!isEqu) {
             if(NodeIden id = element.instanceof!NodeIden) {
-                if(currScope.getVar(id.name).t.instanceof!TypePointer) {
+                if(currScope.getVar(id.name,loc).t.instanceof!TypePointer) {
                     return LLVMBuildLoad(Generator.Builder, LLVMBuildGEP(
                         Generator.Builder,
                         currScope.get(id.name),
@@ -1460,7 +1461,7 @@ class NodeIndex : Node {
             );
         }
         else { if(NodeIden id = element.instanceof!NodeIden) {
-            if(currScope.getVar(id.name).t.instanceof!TypePointer) {
+            if(currScope.getVar(id.name,loc).t.instanceof!TypePointer) {
                 return LLVMBuildStore(Generator.Builder, toSet, LLVMBuildGEP(
                     Generator.Builder,
                     currScope.get(id.name),
@@ -1538,10 +1539,10 @@ class NodeGet : Node {
 
     TypeStruct getStruct() {
         if(NodeIden id = base.instanceof!NodeIden) {
-            if(TypePointer p = currScope.getVar(id.name).t.instanceof!TypePointer) {
+            if(TypePointer p = currScope.getVar(id.name,loc).t.instanceof!TypePointer) {
                 return p.instance.instanceof!TypeStruct;
             }
-            return currScope.getVar(id.name).t.instanceof!TypeStruct;
+            return currScope.getVar(id.name,loc).t.instanceof!TypeStruct;
         }
         else {
             NodeGet g = base.instanceof!NodeGet;
@@ -1555,7 +1556,7 @@ class NodeGet : Node {
 
     bool isStructGet() {
         if(NodeIden id = base.instanceof!NodeIden) {
-            if(currScope.getVar(id.name).t.instanceof!TypeStruct) return true;
+            if(currScope.getVar(id.name,loc).t.instanceof!TypeStruct) return true;
             return false;
         }
         NodeGet g = base.instanceof!NodeGet;
@@ -1564,7 +1565,7 @@ class NodeGet : Node {
 
     LLVMValueRef generateForParent() {
         if(NodeIden id = base.instanceof!NodeIden) {
-            TypeStruct s = currScope.getVar(id.name).t.instanceof!TypeStruct;
+            TypeStruct s = currScope.getVar(id.name,loc).t.instanceof!TypeStruct;
             return LLVMBuildStructGEP(
                 Generator.Builder,
                 currScope.getWithoutLoad(id.name),
@@ -1600,9 +1601,9 @@ class NodeGet : Node {
                 );
             }
 
-            if(TypeStruct ts = currScope.getVar(id.name).t.instanceof!TypeStruct) {s = ts;}
+            if(TypeStruct ts = currScope.getVar(id.name,loc).t.instanceof!TypeStruct) {s = ts;}
             else {
-                if(TypePointer p = currScope.getVar(id.name).t.instanceof!TypePointer) {
+                if(TypePointer p = currScope.getVar(id.name,loc).t.instanceof!TypePointer) {
                     if(TypeStruct ts = p.instance.instanceof!TypeStruct) {
                         s = ts;
                     }
@@ -1707,7 +1708,7 @@ class NodeUnary : Node {
                 return temp;
             }
             NodeIden id = base.instanceof!NodeIden;
-            if(currScope.getVar(id.name).t.instanceof!TypeArray) {
+            if(currScope.getVar(id.name,loc).t.instanceof!TypeArray) {
                 return LLVMBuildInBoundsGEP(
 					Generator.Builder,
 					currScope.getWithoutLoad(id.name),
@@ -1980,7 +1981,9 @@ class NodeNamespace : Node {
                 f.generate();
             }
             else if(NodeVar v = nodes[i].instanceof!NodeVar) {
-                if(!v.isExtern) v.isExtern = isImport;
+                if(!v.isExtern) {
+                    v.isExtern = isImport;
+                }
                 v.generate();
             }
             else if(NodeNamespace n = nodes[i].instanceof!NodeNamespace) {

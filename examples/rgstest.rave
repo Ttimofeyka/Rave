@@ -1,15 +1,15 @@
 import <std/io>
-import "rgs"
 
 int main()
 {
-	rgs::VideoMode* mode = rgs::VideoMode(800,600,32); //rgs::VideoMode(800, 600, 32);
-	std::printf("Passed init 1\n");	
-	rgs::Window* window = rgs::Window(mode, "Window", rgs::StyleClose);
+	//rc::carcasityInit();
 	
-	rgs::Event event;
+	//rc::VideoMode* mode = rc::VideoMode(800,600,32); //rgs::VideoMode(800, 600, 32);
+	//rc::RenderWindow* window = rc::RenderWindow(mode, "Window", rc::StyleClose);
 	
-	std::printf("Passed init2\n");		
+	//rc::Event event;
+	
+	//std::printf("Passed init");		
 		
 	//window = sfRenderWindow_create(mode, "SFML window", sfResize | sfClose, null);
 	//if (!window)
@@ -26,5 +26,7 @@ int main()
 	//	sfRenderWindow_display(window);
 	//}
 	//sfRenderWindow_destroy(window);*/
+
+	//rc::carcasityEnd();
 	return 0;
 }
