@@ -1,0 +1,72 @@
+import <std/io>
+
+import "countries"
+import "army"
+import "taxes"
+import "med"
+
+void ex(Country* cntr) {
+    std::free(cast(void*)cntr);
+    std::exit(1);
+}
+
+void medEdit(Country* cntr) {
+    std::system("clear");
+    char n;
+    std::printf("1 - Изменить численность мед.персонала.\n2 - Изменить среднюю зарплату.\nПосле изменения вы будете переброшены обратно.\n");
+    std::scanf("%c",&n);
+
+    Med* m = cntr.med;
+    
+    if(n == '1') {
+        int num;
+        std::system("clear");
+        std::printf("Текущая численность: %d\nНовая: ",m.count);
+        std::scanf("%d",&num);
+        m.count = num;
+        cntr.newmed = m;
+    }
+}
+
+void doAll(Country* cntr) {
+    std::system("clear");
+    cntr.goMonth();
+
+    std::printf("\n\nДля изменения Министерства Здравоохранения напишите 1.\n");
+    std::printf("Для изменения Министерства Обороны напишите 2.\n");
+    std::printf("Для перехода к новому месяцу напишите +, для выхода из игры напишите -.\n");
+
+    char oper;
+    std::scanf("%c",&oper);
+
+    if(oper == '+') doAll(cntr);
+    if(oper == '-') ex(cntr);
+    if(oper == '1') {medEdit(cntr);}
+}
+
+int main {
+    Taxe** taxes = cast(Taxe**)std::malloc(sizeof(Taxe)*2);
+    taxes[0] = Taxe(TaxeType::VAT,10.0);
+    taxes[1] = Taxe(TaxeType::ENTREP,2.0);
+
+    Country* cntr = Country(
+        9.9,
+        100.0,
+        2.0,
+        1.0001,
+        Army(1000,400.0),
+        taxes,
+        Med(6.5,14000,380.0)
+    );
+
+    cntr.debug();
+
+    std::printf("\nНапишите + для переключения на новый месяц и что-то другое для выхода из игры.\n");
+    char c;
+    std::scanf("%c",&c);
+    if(c == '+') doAll(cntr);
+
+    delete(cntr);
+
+    return 0;
+}

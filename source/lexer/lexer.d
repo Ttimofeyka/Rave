@@ -43,6 +43,7 @@ class Lexer {
             buffer ~= peek();
             next();
         }
+        _idx -= 1;
         return cast(char)(buffer.to!int(8))~"";
     }
 
@@ -190,8 +191,29 @@ class Lexer {
                                     _idx += 1;
                                     bufferstr ~= "\r";
                                 }
+                                else if(text[_idx+1] == 'x') {
+                                    _idx += 1;
+                                    string s = "";
+                                    _idx += 1;
+                                    s ~= text[_idx];
+                                    _idx += 1;
+                                    s ~= text[_idx];
+                                    bufferstr ~= to!string(s.to!int(16));
+                                }
+                                else if(text[_idx+1] == 'u') {
+                                    _idx += 1;
+                                    string s ="";
+                                    _idx += 1;
+                                    s ~= text[_idx];
+                                    _idx += 1;
+                                    s ~= text[_idx];
+                                    _idx += 1;
+                                    s ~= text[_idx];
+                                    _idx += 1;
+                                    s ~= text[_idx];
+                                    bufferstr ~= to!string(s.to!int(16));
+                                }
                                 else {
-                                    writeln("Lexer error on ",line+1," line: use '\\' without a needed symbol!");
                                     exit(1);
                                 }
                             }

@@ -1,0 +1,21 @@
+namespace TaxeType {
+    alias VAT = 0;
+    alias ENTREP = 1;
+}
+
+struct Taxe {
+    int type;
+    float size;
+
+    Taxe* this(int type, float size) {
+        this.type = type;
+        this.size = size;
+    } => this;
+
+    float go(float peoples) {
+        float toret;
+        if(this.type == TaxeType::VAT) toret = this.size * (peoples * 1000000) * 0.1;
+        if(this.type == TaxeType::ENTREP) toret = this.size * (peoples * 1000000) * 0.01;
+        return toret;
+    }
+}

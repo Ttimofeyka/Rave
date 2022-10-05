@@ -62,4 +62,14 @@ namespace std {
     extern(linkname: "scanf") int scanf(char* fmt, ...);
     extern(linkname: "putchar") int putchar(char c);
     extern(linkname: "puts") int puts(char* s);
+
+    alias black = "\033[30m";
+    alias red = "\033[31m";
+    alias green = "\033[32m";
+    alias yellow = "\033[33m";
+    alias blue = "\033[34m";
+    alias purpure = "\033[35m";
+    alias cyan = "\033[36m";
+    alias white = "\033[37m";
+    alias reset = "\033[0m";
 }

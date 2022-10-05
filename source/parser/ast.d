@@ -75,7 +75,7 @@ class LLVMGen {
     }
 
     void error(int loc,string msg) {
-        writeln("\033[0;31mError on "~to!string(loc+1)~" line: " ~ msg ~ "\033[0;0m");
+        writeln("\033[0;31mError on "~to!string(loc)~" line: " ~ msg ~ "\033[0;0m");
 		exit(1);
     }
 
@@ -220,7 +220,9 @@ class Scope {
                 )
             )
         );*/
-
+        if(!n.into(args)) {
+            Generator.error(-1,"Undefined argument '"~n~"'!");
+        }
         return LLVMGetParam(
             Generator.Functions[func],
             cast(uint)args[n]
@@ -331,9 +333,9 @@ class NodeInt : Node {
 }
 
 class NodeFloat : Node {
-    private double value;
+    private float value;
 
-    this(double value) {
+    this(float value) {
         this.value = value;
     }
 
@@ -749,9 +751,27 @@ class NodeBinary : Node {
         }
 
         if(LLVMGetTypeKind(LLVMTypeOf(f)) != LLVMGetTypeKind(LLVMTypeOf(s))) {
-            writeln(Generator.typeToString(LLVMTypeOf(f)));
-            writeln(Generator.typeToString(LLVMTypeOf(s)));
-            Generator.error(loc,"Value types are incompatible!");
+            auto kone = LLVMGetTypeKind(LLVMTypeOf(f));
+            auto ktwo = LLVMGetTypeKind(LLVMTypeOf(s));
+            if(kone == LLVMFloatTypeKind && ktwo == LLVMIntegerTypeKind) s = LLVMBuildSIToFP(
+                Generator.Builder,
+                s,
+                LLVMTypeOf(f),
+                toStringz("BinItoF")
+            );
+            else if(kone == LLVMIntegerTypeKind && ktwo == LLVMFloatTypeKind) {
+                f = LLVMBuildSIToFP(
+                    Generator.Builder,
+                    f,
+                    LLVMTypeOf(s),
+                    toStringz("BinItoF")
+                );
+            }
+            else {
+                writeln(Generator.typeToString(LLVMTypeOf(f)));
+                writeln(Generator.typeToString(LLVMTypeOf(s)));
+                Generator.error(loc,"Value types are incompatible!");
+            }
         }
         else if(LLVMTypeOf(f) != LLVMTypeOf(s)) {
             if(LLVMGetTypeKind(LLVMTypeOf(f)) == LLVMIntegerTypeKind) {
@@ -1368,6 +1388,9 @@ class NodeCall : Node {
             return toret;
         }
         if(f.name.into(Generator.LLVMFunctions)) {
+            if(FuncTable[f.name].args.length != args.length) {
+                //Generator.error(loc,"The number of arguments in the call does not match the signature!");
+            }
             if(Generator.LLVMFunctionTypes[f.name] != LLVMVoidTypeInContext(Generator.Context)) return LLVMBuildCall(
                 Generator.Builder,
                 Generator.LLVMFunctions[f.name],
@@ -1387,7 +1410,10 @@ class NodeCall : Node {
         if(into(f.name~to!string(args.length),FuncTable)) rname ~= to!string(args.length);
         string name = "CallFunc"~f.name;
         if(FuncTable[rname].type.instanceof!TypeVoid) name = "";
-        // TODO: Fix structures there
+        if(FuncTable[rname].args.length != args.length) {
+            //Generator.error(loc,"The number of arguments in the call does not match the signature!");
+        }
+        // TODO: Fix structures there (needed?)
         return LLVMBuildCall(
             Generator.Builder,
             Generator.Functions[rname],
@@ -1414,7 +1440,40 @@ class NodeCall : Node {
                     toStringz(MethodTable[cast(immutable)[s.name,g.field]].type.instanceof!TypeVoid ? "" : g.field)
                 );
             }
-            else Generator.error(loc,"TODO!");
+            else if(NodeIndex ni = g.base.instanceof!NodeIndex) {
+                auto val = ni.generate();
+                string sname = Generator.typeToString(LLVMTypeOf(val))[1..$-1];
+                LLVMValueRef[] params = getParameters();
+                params = val~params;
+                
+                return LLVMBuildCall(
+                    Generator.Builder,
+                    Generator.Functions[MethodTable[cast(immutable)[sname,g.field]].name],
+                    params.ptr,
+                    cast(uint)params.length,
+                    toStringz(MethodTable[cast(immutable)[sname,g.field]].type.instanceof!TypeVoid ? "" : g.field)
+                );
+
+                //Generator.error(loc,"TODO!");
+            }
+            else if(NodeGet ng = g.base.instanceof!NodeGet) {
+                auto val = ng.generate();
+                string sname = Generator.typeToString(LLVMTypeOf(val))[1..$-1];
+                LLVMValueRef[] params = getParameters();
+                params = val~params;
+                
+                return LLVMBuildCall(
+                    Generator.Builder,
+                    Generator.Functions[MethodTable[cast(immutable)[sname,g.field]].name],
+                    params.ptr,
+                    cast(uint)params.length,
+                    toStringz(MethodTable[cast(immutable)[sname,g.field]].type.instanceof!TypeVoid ? "" : g.field)
+                );
+            }
+            else {
+                writeln(g.base);
+                Generator.error(loc,"TODO!");
+            }
         }
         assert(0);
     }
@@ -1557,7 +1616,7 @@ class NodeGet : Node {
         else {
             NodeGet g = base.instanceof!NodeGet;
             TypeStruct prestruct = g.getStruct();
-
+            writeln("prestruct: ",prestruct.name," field:",g.field);
             StructMember member = structsNumbers[cast(immutable)[prestruct.name,g.field]];
             NodeVar parentvar = member.var;
             return parentvar.t.instanceof!TypeStruct;
@@ -1647,6 +1706,8 @@ class NodeGet : Node {
                 structsNumbers[cast(immutable)[s.name,field]].number,
                 toStringz("getStructElement"~field)
             );
+
+            writeln(loc);
 
             return LLVMBuildLoad(
                 Generator.Builder,

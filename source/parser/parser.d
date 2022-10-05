@@ -637,6 +637,7 @@ class Parser {
         Lexer l = new Lexer(readText(_file));
         Parser p = new Parser(l.getTokens().dup);
         p._imported = _imported.dup;
+        p.MainFile = MainFile;
         p.parseAll();
         Node[] nodes = p.getNodes();
         for(int i=0; i<nodes.length; i++) {
