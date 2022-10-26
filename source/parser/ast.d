@@ -20,6 +20,14 @@ NodeMacro[string] MacroTable;
 bool[string] ConstVars;
 NodeFunc[string[]] MethodTable;
 
+int countOf(string s, char c) {
+    int a = 0;
+    for(int i=0; i<s.length; i++) {
+        if(s[i] == c) a += i;
+    }
+    return a;
+}
+
 bool into(T, TT)(T t, TT tt) {
     pragma(inline,true);
     return !(t !in tt);
@@ -1606,6 +1614,19 @@ class NodeGet : Node {
     // A, B, C, D
     // ((test),test2),(test3)),test4
 
+    TypeStruct getDownStruct(TypePointer p) {
+        Type s = p.instance;
+        while(true) {
+            if(s.instanceof!TypeStruct) return s.instanceof!TypeStruct;
+            else if(TypePointer tp = s.instanceof!TypePointer) {
+                s = tp.instance;
+            }
+            else if(TypeArray ta = s.instanceof!TypeArray) {
+                s = ta.element;
+            }
+        }
+    }
+
     TypeStruct getStruct() {
         if(NodeIden id = base.instanceof!NodeIden) {
             if(TypePointer p = currScope.getVar(id.name,loc).t.instanceof!TypePointer) {
@@ -1616,10 +1637,17 @@ class NodeGet : Node {
         else {
             NodeGet g = base.instanceof!NodeGet;
             TypeStruct prestruct = g.getStruct();
-            writeln("prestruct: ",prestruct.name," field:",g.field);
             StructMember member = structsNumbers[cast(immutable)[prestruct.name,g.field]];
             NodeVar parentvar = member.var;
-            return parentvar.t.instanceof!TypeStruct;
+
+            TypeStruct ts;
+
+            if(TypePointer tp = parentvar.t.instanceof!TypePointer) {
+                ts = getDownStruct(tp);
+            }
+            else ts = parentvar.t.instanceof!TypeStruct;
+
+            return ts;
         }
     }
 
@@ -1681,7 +1709,9 @@ class NodeGet : Node {
                 else Generator.error(loc,"This isn't a structure!");
             }
 
-
+            if(!(cast(immutable)[s.name,field].into(structsNumbers))) {
+                Generator.error(loc,"Element "~field~" does not exist!");
+            }
             if(isEqu) return LLVMBuildStructGEP(
                 Generator.Builder,
                 ptr,
@@ -1699,15 +1729,24 @@ class NodeGet : Node {
             g.isEqu = true;
 
             TypeStruct s = getStruct();
+
+            LLVMValueRef gg = g.generate();
+
+            if(Generator.typeToString(LLVMTypeOf(gg)).countOf('*') != 1) {
+                gg = LLVMBuildLoad(
+                    Generator.Builder,
+                    gg,
+                    toStringz("load")
+                );
+            }
             
             if(isEqu) return LLVMBuildStructGEP(
                 Generator.Builder,
-                g.generate(),
+                //g.generate(),
+                gg,
                 structsNumbers[cast(immutable)[s.name,field]].number,
                 toStringz("getStructElement"~field)
             );
-
-            writeln(loc);
 
             return LLVMBuildLoad(
                 Generator.Builder,

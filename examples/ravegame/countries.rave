@@ -1,6 +1,5 @@
 import <std/io>
 
-import "army"
 import "taxes"
 import "med"
 
@@ -9,7 +8,6 @@ struct Country {
     float budget; // In millions
     float influence; // In millions
     float peoplesGrowth;
-    Army* army;
     Taxe** taxes;
     Med* med;
 
@@ -17,31 +15,23 @@ struct Country {
     float befP;
 
     Med* newmed;
-    Army* newarmy;
 
-    Country* this(float peoples, float budget, float influence, float peoplesGrowth, Army* army, Taxe** taxes, Med* med) {
+    Country* this(float peoples, float budget, float influence, float peoplesGrowth, Taxe** taxes, Med* med) {
         this.peoples = peoples;
         this.budget = budget;
-        this.influence = influence;
-        this.army = army;
         this.peoplesGrowth = peoplesGrowth;
         this.influence = 2.0;
         this.taxes = taxes;
         this.med = med;
         this.newmed = Med(med.level,med.count,med.salary);
-        this.newarmy = Army(army.count,army.salary);
     } => this;
 
     void goMonth {
         Med* nm = this.newmed;
-        Army* am = this.newarmy;
 
         this.med.level = nm.level;
         this.med.count = nm.count;
         this.med.salary = nm.salary;
-
-        this.army.count = am.count;
-        this.army.salary = am.salary;
 
         float before = this.budget;
         float beforeP = this.peoples;
@@ -54,8 +44,6 @@ struct Country {
         this.budget += (this.taxes[1].go(this.peoples) * 0.000001);
 
         // Army
-        this.budget -= (this.army.go()*0.000001);
-        std::printf("%.3f\n",cast(double)(this.army.go()*0.000001));
 
         // Medicine
         this.peoples = (this.peoples * this.peoplesGrowth);
@@ -83,7 +71,6 @@ struct Country {
         std::printf("\n");
         // ...
         this.med.debug(this.peoples-beforeP);
-        this.army.debug();
     }
 
     void back {
@@ -108,7 +95,6 @@ struct Country {
         std::printf("\n");
         // ...
         this.med.debug(this.peoples-this.befP);
-        this.army.debug();
     }
 
     void debug {
