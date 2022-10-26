@@ -11,6 +11,7 @@ import parser.ast;
 import std.container : SList;
 import app : files;
 import std.conv : parse;
+import llvm.types;
 
 T instanceof(T)(Object o) if(is(T == class)) {
 	return cast(T) o;
@@ -19,6 +20,27 @@ T instanceof(T)(Object o) if(is(T == class)) {
 struct DeclMod {
     string name;
     string value;
+}
+
+class MultiNode : Node {
+    Node[] nodes;
+
+    this(Node[] nodes) {
+        this.nodes = nodes.dup;
+    }
+
+    override void check() {
+        for(int i=0; i<nodes.length; i++) {
+            nodes[i].check();
+        }
+    }
+
+    override LLVMValueRef generate() {
+        for(int i=0; i<nodes.length; i++) {
+            nodes[i].generate();
+        }
+        return null;
+    }
 }
 
 class Parser {
@@ -491,6 +513,28 @@ class Parser {
         return new NodeNone();
     }
 
+    Node parseMultiAlias(string s, DeclMod[] mods , int loc) {
+        Node[] nodes;
+
+        // Current token - alias
+        next(); // Skip alias
+        string n = (peek().value == "{" ? "" : peek().value);
+        next(); if(peek().value == "{") next();
+
+        int i = _idx;
+        while(i<tokens.length) {
+            if(peek().value == "}") break;
+            string name = peek().value;
+            if(n != "") name = n~"::"~name;
+            next(); next(); // Skip name and =
+            Node expr = parseExpr();
+            if(peek().type == TokType.Semicolon) next();
+            nodes ~= new NodeVar(name,expr,false,false,(s == ""), mods, loc, new TypeAlias());
+        }
+        if(peek().value == "}") next();
+        return new MultiNode(nodes.dup);
+    }
+
     Node parseDecl(string s = "") {
         DeclMod[] mods;
         int loc;
@@ -506,6 +550,10 @@ class Parser {
         if(peek().value == "const") {
             isConst = true;
             next();
+        }
+
+        if(peek().value == "alias") {
+            if(tokens[_idx+1].value == "{" || tokens[_idx+2].value == "{") return parseMultiAlias(s,mods.dup,loc);
         }
 
         if(peek().type == TokType.Rpar) {

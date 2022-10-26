@@ -300,6 +300,7 @@ class Node
     LLVMValueRef generate() {
         writeln("Error: calling generate() method of Node!");
         exit(1);
+        assert(0); // Compability
     }
 
     void debugPrint() {
@@ -1682,6 +1683,7 @@ class NodeGet : Node {
             }
             ng = ng.base.instanceof!NodeGet;
         }
+        assert(0); // Compability
     }
 
     override LLVMValueRef generate() {

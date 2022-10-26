@@ -1,6 +1,12 @@
 import <std/io>
 import <std/string>
 
+alias A {
+    a = 5;
+}
+
 int main {
     
-} => 0;
+} => A::a;
+
+// int() = {} => 0;
