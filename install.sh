@@ -48,7 +48,7 @@ i_dmd ()
             failure DMD
         fi
     else
-        if sudo apt install dmd ; then
+        if curl -fsS https://dlang.org/install.sh | bash -s dmd ; then
             success DMD
         else
             failure DMD
