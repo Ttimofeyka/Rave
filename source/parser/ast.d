@@ -1761,7 +1761,7 @@ class NodeGet : Node {
                 toStringz("loadGEP")
             );
         }
-        exit(1);
+        assert(0);
     }
 }
 
