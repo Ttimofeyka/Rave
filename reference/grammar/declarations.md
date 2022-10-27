@@ -124,6 +124,24 @@ int main {
 }
 ```
 
+### Aliases
+
+Alias is a variable that has a value only in the form of a node. That is, when you create it, it is not generated, but its value is substituted instead of its name.
+
+You can change them(but necessarily outside of the functions!).
+
+```cpp
+alias a = 0;
+
+macro A {
+    a = #0; // In macro(!)
+}
+
+int main {
+    A(100); // a = 100
+} => a;
+```
+
 ## Structures
 
 Structures are types.

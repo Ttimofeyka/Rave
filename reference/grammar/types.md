@@ -33,3 +33,13 @@ Examples:
 - std::string
 - etc.
 
+# Creating new types
+
+In fact, these are just "aliases" for existing types. But they can be used for abbreviations.
+
+Examples:
+
+```cpp
+type intptr = int*;
+type any = void*;
+```

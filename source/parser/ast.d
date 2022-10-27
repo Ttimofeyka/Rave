@@ -659,12 +659,7 @@ class NodeBinary : Node {
                     Generator.error(loc, "An attempt to change the value of a constant variable!");
                 }
                 if(isAliasIden) {
-                    if(NodeBinary b = second.instanceof!NodeBinary) {
-                        b.isStatic = true;
-                        b.comptime();
-                        AliasTable[i.name] = b;
-                    }
-                    else AliasTable[i.name] = second;
+                    AliasTable[i.name] = second;
                     return null;
                 }
 
