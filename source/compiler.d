@@ -31,6 +31,7 @@ class Compiler {
         else if(outtype.indexOf("i686") != -1) {
             if(!opts.noEntry) linkString = linkString~"rt/linux/i686/crt1.o ";
             if(!opts.noStd) linkString = linkString~"rt/linux/i686/libc.a ";
+            __X86 = true;
         }
         else if(outtype.indexOf("aarch64") != -1) {
             if(!opts.noEntry) linkString = linkString~"rt/linux/aarch64/crt1.o ";

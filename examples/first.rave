@@ -1,12 +1,12 @@
 import <std/io>
-import <std/string>
+import <std/threads>
 
-alias A {
-    a = 5;
-}
+int a(void* b) {
+    std::printf("Hello, world!\n");
+} => 0;
 
 int main {
-    
-} => A::a;
-
-// int() = {} => 0;
+    long thread;
+    std::threads::create(&thread,a,null);
+    std::threads::start(thread);
+} => 0;

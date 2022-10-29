@@ -1313,6 +1313,25 @@ class NodeCall : Node {
         return params.dup;
     }
 
+    LLVMValueRef[] getNewParameters(FuncArgSet[] a) {
+        LLVMValueRef[] params;
+        for(int i=0; i<args.length; i++) {
+            LLVMValueRef arg = args[i].generate();
+            if(LLVMTypeOf(arg) == LLVMPointerType(LLVMVoidTypeInContext(Generator.Context),0)) {
+                if(TypePointer p = a[i].type.instanceof!TypePointer) {
+                    if(p.instance != new TypeVoid()) arg = LLVMBuildPointerCast(
+                        Generator.Builder,
+                        arg,
+                        Generator.GenerateType(a[i].type),
+                        toStringz("ptop")
+                    );
+                }
+            }
+            params ~= arg;
+        }
+        return params.dup;
+    }
+
     override LLVMValueRef generate() {
         if(NodeIden f = func.instanceof!NodeIden) {
         if(!f.name.into(FuncTable) && !into(f.name~to!string(args.length),FuncTable) && !f.name.into(Generator.LLVMFunctions)) {
@@ -1392,20 +1411,22 @@ class NodeCall : Node {
             return toret;
         }
         if(f.name.into(Generator.LLVMFunctions)) {
-            if(FuncTable[f.name].args.length != args.length) {
-                //Generator.error(loc,"The number of arguments in the call does not match the signature!");
+            if(FuncTable[f.name].args.length != args.length && FuncTable[f.name].isVararg != true) {
+                Generator.error(loc,"The number of arguments in the call does not match the signature!");
+                exit(1);
+                assert(0);
             }
             if(Generator.LLVMFunctionTypes[f.name] != LLVMVoidTypeInContext(Generator.Context)) return LLVMBuildCall(
                 Generator.Builder,
                 Generator.LLVMFunctions[f.name],
-                getParameters().ptr,
+                getNewParameters(FuncTable[f.name].args).ptr,
                 cast(uint)args.length,
                 toStringz("CallFunc"~f.name)
             );
             return LLVMBuildCall(
                 Generator.Builder,
                 Generator.LLVMFunctions[f.name],
-                getParameters().ptr,
+                getNewParameters(FuncTable[f.name].args).ptr,
                 cast(uint)args.length,
                 toStringz("")
             );
@@ -1414,10 +1435,14 @@ class NodeCall : Node {
         if(into(f.name~to!string(args.length),FuncTable)) rname ~= to!string(args.length);
         string name = "CallFunc"~f.name;
         if(FuncTable[rname].type.instanceof!TypeVoid) name = "";
-        if(FuncTable[rname].args.length != args.length) {
-            //Generator.error(loc,"The number of arguments in the call does not match the signature!");
+        if(FuncTable[rname].args.length != args.length && FuncTable[rname].isVararg != true) {
+            Generator.error(
+                loc,
+                "The number of arguments in the call("~to!string(args.length)~") does not match the signature("~to!string(FuncTable[rname].args.length)~"!"
+            );
+            exit(1);
+            assert(0);
         }
-        // TODO: Fix structures there (needed?)
         return LLVMBuildCall(
             Generator.Builder,
             Generator.Functions[rname],

@@ -1,0 +1,14 @@
+namespace libc {
+    extern(linkname: "thrd_join") int thrd_join(long thrd, int* unk);
+}
+
+namespace std {
+    namespace threads {
+        extern(linkname: "thrd_create") int create(long* thrd, int(void*) start, void* unk);
+        int* start(long thrd) {
+            int* r;
+            libc::thrd_join(thrd,r);
+        } => r;
+        extern(linkname: "thrd_detach") int remove(long thrd);
+    }
+}
