@@ -24,3 +24,4 @@ The characters are enclosed in single quotes (").
 ##### [Commands](grammar/commands.md)
 ##### [Declarations](grammar/declarations.md)
 ##### [Types](grammar/types.md)
+##### [Operators](grammar/operators.md)
