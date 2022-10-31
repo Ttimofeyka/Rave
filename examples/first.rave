@@ -3,6 +3,8 @@ import <std/threads>
 
 int a(void* b) {
     std::printf("Hello, world!\n");
+    std::threads::exit();
+    std::printf("Hello, world!\n");
 } => 0;
 
 int main {

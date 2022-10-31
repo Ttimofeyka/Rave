@@ -189,8 +189,10 @@ class Parser {
             }
             else if(peek().type == TokType.Dot) {
                 next();
+                bool isPtr = (peek().type == TokType.GetPtr);
+                if(isPtr) next();
                 string field = expect(TokType.Identifier).value;
-                base = new NodeGet(base,field,peek().type == TokType.Equ,peek().line);
+                base = new NodeGet(base,field,(peek().type == TokType.Equ || isPtr),peek().line);
             }
         }
 
@@ -260,9 +262,9 @@ class Parser {
     Node parsePrefix() {
         import std.algorithm : canFind;
         const TokType[] operators = [
+            TokType.GetPtr,
             TokType.Multiply,
             TokType.Minus,
-            TokType.GetPtr,
             TokType.Ne
         ];
 

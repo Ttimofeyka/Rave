@@ -1781,6 +1781,9 @@ class NodeGet : Node {
                 toStringz("loadGEP")
             );
         }
+        else if(NodeUnary u = base.instanceof!NodeUnary) {
+            writeln(field);
+        }
         assert(0);
     }
 }
@@ -1856,6 +1859,13 @@ class NodeUnary : Node {
                 Generator.Builder,
                 base.generate(),
                 toStringz("ne")
+            );
+        }
+        else if(type == TokType.Multiply) {
+            return LLVMBuildLoad(
+                Generator.Builder,
+                base.generate(),
+                toStringz("load")
             );
         }
         assert(0);

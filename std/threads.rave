@@ -10,5 +10,26 @@ namespace std {
             libc::thrd_join(thrd,r);
         } => r;
         extern(linkname: "thrd_detach") int remove(long thrd);
+        extern(linkname: "thrd_exit") void exit();
+    }
+
+    struct thread {
+        long id;
+
+        void remove {
+            std::threads::remove(this.id);
+        }
+
+        void exit {
+            std::threads::exit();
+        }
+
+        void start {
+            std::threads::start(this.id);
+        }
+
+        std::thread* this(int(void*) start) {
+            std::threads::create(this.&id,start,null);
+        } => this;
     }
 }
