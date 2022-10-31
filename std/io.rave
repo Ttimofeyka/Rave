@@ -1,41 +1,42 @@
 import <std/arg>
 import <std/string>
 
-namespace libc {
+namespace libc { 
     struct File {
-            int flags;
-            char* rpos;
-            char* rend;
-            int(void*) close;
-            char* wend;
-            char* wpos;
-            char* mustbezero_1;
-            char* wbase;
-            int(void*,char*,int) read;
-            int(void*,char*,int) write;
-            int(void*,int,int) seek;
-            char* buff;
-            int buffSize;
-            void* prev;
-            void* next;
-            int fd;
-            int pipePid;
-            long lockCount;
-            int mode;
-            int lock;
-            int lbf;
-            void* cookie;
-            int off;
-            char* readSBuff;
-            void* mustbezero_2;
-            char* shend;
-            int shlim;
-            int shcnt;
-            void* prevLocked;
-            void* nextLocked;
-            void* locale;
+	    int flags;
+	    char* rpos;
+        char* rend;
+	    int(libc::File*) close;
+	    char* wend;
+        char* wpos;
+	    char* mustbezero_1;
+	    char* wbase;
+	    int(libc::File*, char*, int) read;
+	    int(libc::File*, char*, int) write;
+	    long(libc::File*, long, int) seek;
+	    char* buf;
+	    int buf_size;
+	    libc::File* prev;
+        libc::File* next;
+	    int fd;
+	    int pipe_pid;
+	    long lockcount;
+	    short dummy3;
+	    char mode;
+	    char lbf;
+	    int lock;
+	    int waiters;
+	    void* cookie;
+	    long off;
+	    char* getln_buf;
+	    void* mustbezero_2;
+	    char* shend;
+	    long shlim;
+        long shcnt;
     }
+}
 
+namespace libc {
     extern(linkname: "fopen") libc::File* fopen(char* path, char* mode);
     extern(linkname: "fclose") int close(libc::File* file);
     extern(linkname: "ferror") int hasError(libc::File* file);
