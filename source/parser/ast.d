@@ -1456,7 +1456,7 @@ class NodeCall : Node {
         if(FuncTable[rname].args.length != args.length && FuncTable[rname].isVararg != true) {
             Generator.error(
                 loc,
-                "The number of arguments in the call("~to!string(args.length)~") does not match the signature("~to!string(FuncTable[rname].args.length)~"!"
+                "The number of arguments in the call("~to!string(args.length)~") does not match the signature("~to!string(FuncTable[rname].args.length)~")!"
             );
             exit(1);
             assert(0);
