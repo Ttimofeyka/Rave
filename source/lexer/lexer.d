@@ -98,6 +98,7 @@ class Lexer {
                     case ']': tokens ~= new Token(TokType.Larr,"]",line); _idx++; break;
                     case ',': tokens ~= new Token(TokType.Comma,",",line); _idx++; break;
                     case ':': tokens ~= new Token(TokType.ValSel,":",line); _idx++; break;
+                    case '%': tokens ~= new Token(TokType.Rem,"%",line); _idx++; break;
                     case '.':
                         auto n = next();
                         if(n == '.') {

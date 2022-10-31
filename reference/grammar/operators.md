@@ -13,6 +13,8 @@ int main {
     int c = 3 * 7;
     int d = 6 / 2;
 
+    int e = (a % 2);
+
     a -= b;
     c += d;
 } => (a+b-c-d);
@@ -55,6 +57,17 @@ int main {
     int a = 0;
     int b = 2;
 
-    bool c = (a == b);
+    bool c = (a >= b) && (b != 0);
+} => 0;
+```
+
+
+## Bitwise operators
+
+Examples:
+```d
+int main {
+    int a = 2 << 2;
+    int b = 16 >> 3;
 } => 0;
 ```

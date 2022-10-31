@@ -48,6 +48,8 @@ enum TokType {
     GetPtr,
     VarArg,
 
+    Rem,
+
     BitLeft,
     BitRight
 }

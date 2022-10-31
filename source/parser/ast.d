@@ -751,6 +751,24 @@ class NodeBinary : Node {
                     );
                 }
                 break;
+            case TokType.Rem:
+                if(LLVMGetTypeKind(LLVMTypeOf(f)) == LLVMFloatTypeKind) {
+                    return LLVMBuildFRem(
+                        Generator.Builder,
+                        f, 
+                        (LLVMGetTypeKind(LLVMTypeOf(s)) == LLVMFloatTypeKind ? s : LLVMBuildSIToFP(Generator.Builder,s,LLVMTypeOf(f),toStringz("sitofp"))),
+                        toStringz("fr")
+                    );
+                }
+                else if(LLVMGetTypeKind(LLVMTypeOf(f)) == LLVMIntegerTypeKind) {
+                    return LLVMBuildSRem(
+                        Generator.Builder,
+                        f,
+                        (LLVMGetTypeKind(LLVMTypeOf(s)) == LLVMIntegerTypeKind ? s : LLVMBuildFPToSI(Generator.Builder,s,LLVMTypeOf(f),toStringz("fptosi"))),
+                        toStringz("sr")
+                    );
+                }
+                break;
             default: break;
         }
 
