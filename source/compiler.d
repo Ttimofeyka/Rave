@@ -25,17 +25,17 @@ class Compiler {
         this.outtype = outtype;
         this.opts = opts;
         if(outtype.indexOf("x86_64") != -1) {
-            if(!opts.noEntry) linkString = linkString~"rt/linux/x86_64/crt1.o ";
-            if(!opts.noStd) linkString = linkString~"rt/linux/x86_64/libc.a ";
+            if(!opts.noEntry) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/x86_64/crt1.o ";
+            if(!opts.noStd) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/x86_64/libc.a ";
         }
         else if(outtype.indexOf("i686") != -1) {
-            if(!opts.noEntry) linkString = linkString~"rt/linux/i686/crt1.o ";
-            if(!opts.noStd) linkString = linkString~"rt/linux/i686/libc.a ";
+            if(!opts.noEntry) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/i686/crt1.o ";
+            if(!opts.noStd) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/i686/libc.a ";
             __X86 = true;
         }
         else if(outtype.indexOf("aarch64") != -1) {
-            if(!opts.noEntry) linkString = linkString~"rt/linux/aarch64/crt1.o ";
-            if(!opts.noStd) linkString = linkString~"rt/linux/aarch64/libc.a ";
+            if(!opts.noEntry) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/aarch64/crt1.o ";
+            if(!opts.noStd) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/aarch64/libc.a ";
         }
     }
 

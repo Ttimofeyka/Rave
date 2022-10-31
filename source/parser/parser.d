@@ -672,7 +672,7 @@ class Parser {
 
         if(peek().type == TokType.Less) {
             // Global
-            _file = getGlobalFile()~".rave";
+            _file = thisExePath()[0..$-4]~getGlobalFile()~".rave";
         }
         else {
             // Local

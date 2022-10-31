@@ -1335,6 +1335,19 @@ class NodeCall : Node {
         LLVMValueRef[] params;
         for(int i=0; i<args.length; i++) {
             LLVMValueRef arg = args[i].generate();
+            if(LLVMTypeOf(arg) == LLVMInt32TypeInContext(Generator.Context)) {
+                if(TypeBasic b = a[i].type.instanceof!TypeBasic) {
+                    if(b.type != BasicType.Int) {
+                        // More or less
+                        arg = LLVMBuildIntCast(
+                            Generator.Builder,
+                            arg,
+                            Generator.GenerateType(a[i].type),
+                            toStringz("itoi")
+                        );
+                    }
+                }
+            }
             if(LLVMTypeOf(arg) == LLVMPointerType(LLVMVoidTypeInContext(Generator.Context),0)) {
                 if(TypePointer p = a[i].type.instanceof!TypePointer) {
                     if(p.instance != new TypeVoid()) arg = LLVMBuildPointerCast(

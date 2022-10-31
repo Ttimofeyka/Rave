@@ -21,7 +21,7 @@ class Lexer {
     
     private char next() {
         pragma(inline,true);
-        _idx++;
+        _idx += 1;
         return text[_idx];
     }
     
@@ -244,7 +244,7 @@ class Lexer {
                             if(next() == 'x') {
                                 buffernum ~= "x";
                                 next();
-                                while(isDigit(cast(dchar)peek())) {
+                                while(isDigit(cast(dchar)peek()) || peek() == 'F') {
                                     buffernum ~= ""~peek();
                                     _idx += 1;
                                 }
