@@ -33,3 +33,10 @@ namespace std {
         } => this;
     }
 }
+
+// Minimal example:
+// int a(void* b) => 0;
+// int main {
+//     std::thread* thrd = std::thread(a);
+//     thrd.start();
+// } => 0;
