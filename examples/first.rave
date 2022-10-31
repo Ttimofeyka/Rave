@@ -3,7 +3,5 @@ import <std/io>
 int main {
     std::File* file = std::File("A.txt");
 
-    file.open("w");
-        file.printf("A\n");
-    file.close();
+    file.create();
 } => 0;

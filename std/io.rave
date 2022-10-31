@@ -91,8 +91,12 @@ namespace std {
 
         char getc => libc::fgetc(this.cFile);
         char* gets(char* s, int size) => libc::fgets(s,size,this.cFile);
-        
         int hasError => libc::hasError(this.cFile);
+
+        void create {
+            this.open("w");
+            this.close();
+        }
     }
 
     extern(linkname: "printf") int printf(char* str, ...);
