@@ -25,6 +25,9 @@ version(linux) {
 	version(X86) {
 		outtype = "linux-i686";
 	}
+	version(AArch64) {
+		outtype = "aarch64";
+	}
 }
 
 struct CompOpts {
