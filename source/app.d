@@ -8,21 +8,22 @@ import llvm;
 
 string[] files;
 string outfile;
+string outtype;
 
 version(Win64) {
-	string outtype = "win64";
+	outtype = "win64";
 }
 
 version(Win32) {
-	string outtype = "win32";
+	outtype = "win32";
 }
 
 version(linux) {
 	version(X86_64) {
-		string outtype = "linux-x86_64";
+		outtype = "linux-x86_64";
 	}
 	version(X86) {
-		string outtype = "linux-i686";
+		outtype = "linux-i686";
 	}
 }
 
