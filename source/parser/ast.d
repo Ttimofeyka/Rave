@@ -38,7 +38,10 @@ void checkError(int loc,string msg) {
 		exit(1);
 }
 
-version(linux){extern(C) void LLVMSetGlobalDSOLocal(LLVMValueRef global);}
+version(linux){
+	version(X86) {extern(C) void LLVMSetGlobalDSOLocal(LLVMValueRef global);}
+	version(X86_64) {extern(C) void LLVMSetGlobalDSOLocal(LLVMValueRef global);}
+}
 
 struct LoopReturn {
     NodeRet ret;
@@ -1015,7 +1018,10 @@ class NodeVar : Node {
             }
             // else LLVMSetLinkage(Generator.Globals[name],LLVMCommonLinkage);
             LLVMSetAlignment(Generator.Globals[name],Generator.getAlignmentOfType(t));
-            version(linux) {LLVMSetGlobalDSOLocal(Generator.Globals[name]);}
+            version(linux) {
+		    version(X86) {LLVMSetGlobalDSOLocal(Generator.Globals[name]);}
+		    version(X86_64) {LLVMSetGlobalDSOLocal(Generator.Globals[name]);}
+	    }
             if(value !is null && !isExtern) {
                 LLVMSetInitializer(Generator.Globals[name], value.generate());
             }
