@@ -18,7 +18,6 @@ class Compiler {
     private string outfile;
     private string outtype;
     private CompOpts opts;
-    bool __X86 = false;
 
     this(string outfile, string outtype, CompOpts opts) {
         this.outfile = outfile;
@@ -31,11 +30,14 @@ class Compiler {
         else if(outtype.indexOf("i686") != -1) {
             if(!opts.noEntry) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/i686/crt1.o ";
             if(!opts.noStd) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/i686/libc.a ";
-            __X86 = true;
         }
         else if(outtype.indexOf("aarch64") != -1) {
             if(!opts.noEntry) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/aarch64/crt1.o ";
             if(!opts.noStd) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/aarch64/libc.a ";
+        }
+        else if(outtype.indexOf("mips64") != -1) {
+            if(!opts.noEntry) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/mips64/crt1.o ";
+            if(!opts.noStd) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/mips64/libc.a ";
         }
     }
 
@@ -56,10 +58,12 @@ class Compiler {
 
     void compile(string file) {
         string content = readText(file);
-        if(files[0] == file) {
-            if(__X86) content = "alias __X86 = true;\n"~content;
-            else content = "alias __X86_64 = true;\n"~content;
-        }
+        //if(files[0] == file) {
+            if(outtype.indexOf("i686") != -1) content = "__aliasp __RAVE_X86 = true;\n"~content;
+            else if(outtype.indexOf("x86_64") != -1) content = "__aliasp __RAVE_X86_64 = true;\n"~content;
+            else if(outtype.indexOf("aarch64") != -1) content = "__aliasp __RAVE_AARCH64 = true;\n"~content;
+            else if(outtype.indexOf("mips") != -1) content = "__aliasp __RAVE_MIPS = true;\n"~content;
+        //}
 
         if(!opts.noPrelude && file != "std/prelude.rave" && file != "std/memory.rave") {
             content = "import <std/prelude>\n import <std/memory>\n"~content;

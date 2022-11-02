@@ -92,7 +92,7 @@ class LLVMGen {
 		exit(1);
     }
 
-    LLVMTypeRef GenerateType(Type t) {
+    LLVMTypeRef GenerateType(Type t, int loc = -1) {
         if(t.instanceof!TypeAlias) return null;
         if(t.instanceof!TypeBasic) {
             TypeBasic b = cast(TypeBasic)t;
@@ -127,19 +127,19 @@ class LLVMGen {
             return LLVMArrayType(this.GenerateType(a.element),cast(uint)a.count);
         }
         if(TypeStruct s = t.instanceof!TypeStruct) {
-            if(!s.name.into(Generator.Structs)) Generator.error(-1,"Unknown structure '"~s.name~"'!");
+            if(!s.name.into(Generator.Structs)) Generator.error(loc,"Unknown structure '"~s.name~"'!");
             return Generator.Structs[s.name];
         }
         if(t.instanceof!TypeVoid) return LLVMVoidTypeInContext(Generator.Context);
         if(TypeFunc f = t.instanceof!TypeFunc) {
             LLVMTypeRef[] types;
             foreach(ty; f.args) {
-                types ~= Generator.GenerateType(ty);
+                types ~= Generator.GenerateType(ty,loc);
             }
             return 
             LLVMPointerType(
                 LLVMFunctionType(
-                    Generator.GenerateType(f.main),
+                    Generator.GenerateType(f.main,loc),
                     types.ptr,
                     cast(uint)types.length,
                     false
@@ -148,7 +148,7 @@ class LLVMGen {
             );
         }
         if(TypeFuncArg fa = t.instanceof!TypeFuncArg) {
-            return this.GenerateType(fa.type);
+            return this.GenerateType(fa.type,loc);
         }
         if(t is null) return LLVMPointerType(
             LLVMInt8TypeInContext(Generator.Context),
@@ -1019,7 +1019,7 @@ class NodeVar : Node {
             }
             Generator.Globals[name] = LLVMAddGlobal(
                 Generator.Module, 
-                Generator.GenerateType(t), 
+                Generator.GenerateType(t,loc), 
                 toStringz((noMangling) ? name : Generator.mangle(name,false,false))
             );
             if(isExtern) {
@@ -1035,7 +1035,7 @@ class NodeVar : Node {
                 LLVMSetInitializer(Generator.Globals[name], value.generate());
             }
             else if(!isExtern) {
-                LLVMSetInitializer(Generator.Globals[name], LLVMConstNull(Generator.GenerateType(t)));
+                LLVMSetInitializer(Generator.Globals[name], LLVMConstNull(Generator.GenerateType(t,loc)));
             }
         }
         else {
@@ -1043,7 +1043,7 @@ class NodeVar : Node {
             currScope.localVars[name] = this;
             currScope.localscope[name] = LLVMBuildAlloca(
                 Generator.Builder,
-                Generator.GenerateType(t),
+                Generator.GenerateType(t,loc),
                 toStringz(name)
             );
 
@@ -1155,7 +1155,7 @@ class NodeFunc : Node {
                 args = args[1..$];
                 return getParameters();
             }
-            else p ~= Generator.GenerateType(args[i].type);
+            else p ~= Generator.GenerateType(args[i].type,loc);
         }
         return p.ptr;
     }

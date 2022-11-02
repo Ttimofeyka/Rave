@@ -51,6 +51,7 @@ class Parser {
     bool[string] _imported;
     Type[string] _aliasTypes;
     string currentFile = "";
+    Node[string] _aliasPredefines;
 
     private void error(string msg) {
         pragma(inline,true);
@@ -717,6 +718,7 @@ class Parser {
         Parser p = new Parser(l.getTokens().dup);
         p._imported = _imported.dup;
         p.MainFile = MainFile;
+        p._aliasPredefines = _aliasPredefines.dup;
         p.parseAll();
         Node[] nodes = p.getNodes();
         for(int i=0; i<nodes.length; i++) {
@@ -732,6 +734,11 @@ class Parser {
             else if(NodeStruct s = nodes[i].instanceof!NodeStruct) {
                 s.isImported = true;
             }
+            else if(NodeBlock b = nodes[i].instanceof!NodeBlock) {
+                for(int j=0; j<b.nodes.length; j++) {
+                    if(NodeStruct s = b.nodes[j].instanceof!NodeStruct) s.isImported = true;
+                }
+            }
         }
         this._nodes ~= nodes.dup;
         if(!files.canFind(_file)) files ~= _file;
@@ -741,6 +748,9 @@ class Parser {
         }
         foreach(key; byKey(p._aliasTypes)) {
             _aliasTypes[key] = p._aliasTypes[key];
+        }
+        foreach(key; byKey(p._aliasPredefines)) {
+            _aliasPredefines[key] = p._aliasPredefines[key];
         }
         return new NodeNone();
     }
@@ -802,7 +812,6 @@ class Parser {
         else {
             next(); name = peek().value; next(); next();
         }
-
         NodeBlock b = parseBlock(f);
 
         return new NodeDebug(name,b);
@@ -831,7 +840,29 @@ class Parser {
 
         if(peek().value == "debug") return parseDebug();
 
+        if(peek().value == "__debugp") {
+            next();
+            string name = peek().value;
+            next();
+            next();
+            Node a = parseTopLevel();
+            if(peek().type == TokType.Lbra) next();
+            if(name.into(_aliasPredefines)) return a;
+            return new NodeNone();
+        }
+
         if(peek().value == "type") return parseAliasType();
+
+        if(peek().value == "__aliasp") {
+            next();
+            string name = peek().value;
+            next();
+            if(peek().type == TokType.Equ) next();
+            Node expr = parseExpr();
+            next();
+            _aliasPredefines[name] = expr;
+            return new NodeNone();
+        }
         
         return parseDecl(s);
     }
