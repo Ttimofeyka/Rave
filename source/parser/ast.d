@@ -19,6 +19,7 @@ NodeStruct[string] StructTable;
 NodeMacro[string] MacroTable;
 bool[string] ConstVars;
 NodeFunc[string[]] MethodTable;
+NodeLambda[string] LambdaTable;
 
 int countOf(string s, char c) {
     int a = 0;
@@ -68,6 +69,7 @@ class LLVMGen {
     LLVMValueRef[string] LLVMFunctions;
     LLVMTypeRef[string] LLVMFunctionTypes;
     string file;
+    long countOfLambdas;
 
     this(string file) {
         this.file = file;
@@ -144,6 +146,9 @@ class LLVMGen {
                 ),
                 0
             );
+        }
+        if(TypeFuncArg fa = t.instanceof!TypeFuncArg) {
+            return this.GenerateType(fa.type);
         }
         if(t is null) return LLVMPointerType(
             LLVMInt8TypeInContext(Generator.Context),
@@ -262,8 +267,12 @@ class Scope {
             LLVMSetAlignment(instr,Generator.getAlignmentOfType(VarTable[n].t));
             return instr;
         }
-        return LLVMGetParam(
+        if(func.into(Generator.Functions)) return LLVMGetParam(
             Generator.Functions[func],
+            cast(uint)args[n]
+        );
+        else return LLVMGetParam(
+            LambdaTable[func].f,
             cast(uint)args[n]
         );
     }
@@ -1308,6 +1317,19 @@ class NodeRet : Node {
                 return retval;
             }
             else ret = LLVMBuildBr(Generator.Builder,FuncTable[parent].exitBlock);
+        }
+        else if(parent == "lambda"~to!string(Generator.countOfLambdas-1)) {
+            if(val !is null) {
+                if(Generator.ActiveLoops.length != 0) {
+                    Generator.ActiveLoops[cast(int)Generator.ActiveLoops.length-1].hasEnd = true;
+                    Generator.ActiveLoops[cast(int)Generator.ActiveLoops.length-1].rets ~= LoopReturn(this,cast(int)Generator.ActiveLoops.length-1);
+                }
+                LLVMValueRef retval = val.generate();
+                LambdaTable[parent].genRets ~= RetGenStmt(Generator.currBB,retval);
+			    ret = LLVMBuildBr(Generator.Builder, LambdaTable[parent].exitBlock);
+                return retval;
+            }
+            else ret = LLVMBuildBr(Generator.Builder,LambdaTable[parent].exitBlock);
         }
         else {
             return val.generate();
@@ -2769,5 +2791,137 @@ class NodeDebug : Node {
             
         }
         return null;
+    }
+}
+
+class NodeLambda : Node {
+    // Example: int() test = int() {return 0;};
+    int loc;
+
+    NodeRet[] rets;
+    RetGenStmt[] genRets;
+    LLVMBasicBlockRef exitBlock;
+    LLVMBuilderRef builder;
+
+    TypeFunc typ;
+    Type type;
+    NodeBlock block;
+
+    LLVMValueRef f;
+
+    this(int loc, TypeFunc type, NodeBlock block) {
+        this.loc = loc;
+        this.typ = type;
+        this.block = block;
+    }
+
+    LLVMTypeRef[] generateTypes() {
+        LLVMTypeRef[] ts;
+        for(int i=0; i<typ.args.length; i++) {
+            ts ~= Generator.GenerateType(typ.args[i]);
+        }
+        return ts.dup;
+    }
+
+    override LLVMValueRef generate() {
+        type = typ.main;
+        LambdaTable["lambda"~to!string(Generator.countOfLambdas)] = this;
+        LLVMTypeRef t = LLVMFunctionType(
+            Generator.GenerateType(typ.main),
+            generateTypes().ptr,
+            cast(uint)typ.args.length,
+            false
+        );
+
+        Generator.countOfLambdas += 1;
+
+        f = LLVMAddFunction(
+            Generator.Module,
+            toStringz("_RaveL"~to!string(Generator.countOfLambdas-1)),
+            t
+        );
+
+            LLVMBasicBlockRef entry = LLVMAppendBasicBlockInContext(
+                Generator.Context,
+                f,
+                toStringz("entry")
+            );
+            
+            exitBlock = LLVMAppendBasicBlockInContext(
+                Generator.Context,
+                f,
+                toStringz("exit")
+            );
+
+            LLVMBuilderRef oldBuilder = Generator.Builder;
+            auto oldLoops = Generator.ActiveLoops;
+
+            builder = LLVMCreateBuilder();
+            Generator.Builder = builder;
+
+            LLVMPositionBuilderAtEnd(
+                Generator.Builder,
+                entry
+            );
+
+            int[string] intargs;
+            NodeVar[string] argVars;
+
+            for(int i=0; i<typ.args.length; i++) {
+                intargs[typ.args[i].name] = i;
+                argVars[typ.args[i].name] = new NodeVar(typ.args[i].name,null,false,true,false,[],loc,typ.args[i].type);
+            }
+
+            Scope oldScope = currScope;
+
+            currScope = new Scope("lambda"~to!string(Generator.countOfLambdas-1),intargs.dup,argVars.dup);
+            LLVMBasicBlockRef oldCurrBB = Generator.currBB;
+            Generator.currBB = entry;
+
+            block.generate();
+
+            if(type.instanceof!TypeVoid && !currScope.funcHasRet) LLVMBuildBr(
+                Generator.Builder,
+                exitBlock
+            );
+
+            LLVMMoveBasicBlockAfter(exitBlock, LLVMGetLastBasicBlock(f));
+            LLVMPositionBuilderAtEnd(Generator.Builder, exitBlock);
+
+            if(!type.instanceof!TypeVoid) {
+				LLVMValueRef[] retValues = array(map!(x => x.value)(genRets));
+				LLVMBasicBlockRef[] retBlocks = array(map!(x => x.where)(genRets));
+
+                if(retBlocks is null || retBlocks.length == 0) {
+                    LLVMBuildRet(
+                        Generator.Builder,
+                        LLVMConstNull(Generator.GenerateType(type))
+                    );
+                }
+				else if(retBlocks.length == 1 || (retBlocks.length>0 && retBlocks[0] == null)) {
+					LLVMBuildRet(Generator.Builder, retValues[0]);
+				}
+				else {
+					auto phi = LLVMBuildPhi(Generator.Builder, Generator.GenerateType(type), "retval");
+					LLVMAddIncoming(
+						phi,
+						retValues.ptr,
+						retBlocks.ptr,
+						cast(uint)genRets.length
+					);
+
+					LLVMBuildRet(Generator.Builder, phi);
+				}
+			}
+			else {
+                LLVMBuildRetVoid(Generator.Builder);
+            }
+
+            currScope = oldScope;
+            Generator.ActiveLoops = oldLoops;
+            Generator.Builder = oldBuilder;
+            Generator.currBB = oldCurrBB;
+
+        return f;
     }
 }

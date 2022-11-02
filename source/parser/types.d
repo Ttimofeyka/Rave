@@ -118,11 +118,20 @@ class TypeStruct : Type {
 
     this(string name) {this.name = name;}
 }
+class TypeFuncArg : Type {
+    Type type;
+    string name;
+
+    this(Type type, string name) {
+        this.type = type;
+        this.name = name;
+    }
+}
 class TypeFunc : Type {
     Type main;
-    Type[] args;
+    TypeFuncArg[] args;
 
-    this(Type main, Type[] args) {
+    this(Type main, TypeFuncArg[] args) {
         this.main = main;
         this.args = args;
     }

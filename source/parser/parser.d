@@ -89,11 +89,14 @@ class Parser {
         return null;
     }
 
-    Type[] getFuncTypeArgs() {
-        Type[] buff;
+    TypeFuncArg[] getFuncTypeArgs() {
+        TypeFuncArg[] buff;
 
         while(peek().type != TokType.Lpar) {
-            buff ~= parseType();
+            Type t = parseType();
+            string name = "";
+            if(peek().type == TokType.Identifier) {name = peek().value; next();}
+            buff ~= new TypeFuncArg(t,name);
             if(peek().type == TokType.Comma) next();
         }
 
@@ -121,7 +124,7 @@ class Parser {
             }
             else if(peek().type == TokType.Rpar) {
                 next();
-                Type[] types = getFuncTypeArgs().dup;
+                TypeFuncArg[] types = getFuncTypeArgs().dup;
                 t = new TypeFunc(t,types.dup);
             }
         }
@@ -199,6 +202,8 @@ class Parser {
         return base;
     }
 
+    long lambdas = 0;
+
     Node parseAtom() {
         import std.algorithm : canFind;
         auto t = next();
@@ -240,6 +245,24 @@ class Parser {
                 Node val = parseExpr();
                 next();
                 return new NodePtoi(val,t.line);
+            }
+            else if(t.value == "void" || t.value == "bool" || t.value == "char" || t.value == "short" || t.value == "int" || t.value == "long" || t.value == "cent") {
+                // Lambda
+                _idx -= 1;
+                int loc = peek().line;
+                Type tt = parseType();
+                lambdas += 1;
+                if(peek().type == TokType.ShortRet) {
+                    next(); Node val = parseExpr();
+                    return new NodeLambda(loc,tt.instanceof!TypeFunc,new NodeBlock([new NodeRet(val,loc,"lambda"~to!string(lambdas-1))]));
+                }
+                NodeBlock b = parseBlock("lambda"~to!string(lambdas));
+                if(peek().type == TokType.ShortRet) {
+                    next(); Node val = parseExpr();
+                    b.nodes ~= new NodeRet(val,loc,"lambda"~to!string(lambdas-1));
+                }
+                //expect(TokType.Semicolon,peek().line);
+                return new NodeLambda(loc,tt.instanceof!TypeFunc,b);
             }
             return new NodeIden(t.value,peek().line);
         }
@@ -536,6 +559,11 @@ class Parser {
         }
         if(peek().value == "}") next();
         return new MultiNode(nodes.dup);
+    }
+
+    Node parseLambda() {
+        // Current token - {
+        return null;
     }
 
     Node parseDecl(string s = "") {
