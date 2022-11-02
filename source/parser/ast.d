@@ -23,7 +23,7 @@ NodeFunc[string[]] MethodTable;
 int countOf(string s, char c) {
     int a = 0;
     for(int i=0; i<s.length; i++) {
-        if(s[i] == c) a += i;
+        if(s[i] == c) a += 1;
     }
     return a;
 }
@@ -1785,7 +1785,7 @@ class NodeGet : Node {
 
             LLVMValueRef gg = g.generate();
 
-            if(Generator.typeToString(LLVMTypeOf(gg)).countOf('*') != 1) {
+            if(Generator.typeToString(LLVMTypeOf(gg)).countOf('*') > 1) {
                 gg = LLVMBuildLoad(
                     Generator.Builder,
                     gg,

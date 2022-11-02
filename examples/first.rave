@@ -1,7 +1,14 @@
 import <std/io>
 
-int main {
-    std::File* file = std::File("A.txt");
+struct B {
+    int c;
+}
 
-    file.create();
+struct A {
+    B b;
+}
+
+int main {
+    A a;
+    a.b.c = 5;
 } => 0;
