@@ -1,14 +1,26 @@
 import <std/io>
 
-struct B {
-    int c;
+struct Color {
+    int a; int b; int c;
+
+    Color* this(int a, int b, int c) {
+        this.a = a;
+        this.b = b;
+        this.c = c;
+    } => this;
 }
 
-struct A {
-    B b;
+struct Baza {
+    Color* clr;
+    int d;
+
+    Baza* this(Color* clr, int d) {
+        this.clr = clr;
+        this.d = d;
+    } => this;
 }
 
 int main {
-    A a;
-    a.b.c = 5;
+    Baza* baza = Baza(Color(0,255,0),255);
+    std::printf("%d %d %d\n",baza.clr.a,baza.clr.b,baza.clr.c);
 } => 0;

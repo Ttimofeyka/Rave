@@ -1811,7 +1811,7 @@ class NodeGet : Node {
                 Generator.Builder,
                 LLVMBuildStructGEP(
                     Generator.Builder,
-                    g.generate(),
+                    gg,
                     structsNumbers[cast(immutable)[s.name,field]].number,
                     toStringz("getStructElement"~field)
                 ),
