@@ -23,4 +23,6 @@ struct Baza {
 int main {
     Baza* baza = Baza(Color(0,255,0),255);
     std::printf("%d %d %d\n",baza.clr.a,baza.clr.b,baza.clr.c);
+
+    int() function;
 } => 0;

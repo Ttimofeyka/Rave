@@ -244,7 +244,7 @@ class Lexer {
                             if(next() == 'x') {
                                 buffernum ~= "x";
                                 next();
-                                while(isDigit(cast(dchar)peek()) || peek() == 'F') {
+                                while(isDigit(cast(dchar)peek()) || peek() == 'A' || peek() == 'B' || peek() == 'C' || peek() == 'D' || peek() == 'E' || peek() == 'F') {
                                     buffernum ~= ""~peek();
                                     _idx += 1;
                                 }

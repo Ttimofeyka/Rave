@@ -118,11 +118,11 @@ class Compiler {
                 writeln("Error: file \""~files[0]~"\" doesn't exists!");
                 exit(1);
             }
+            compile(files[0]);
             if(opts.emit_llvm) {
                 char* err;
                 LLVMPrintModuleToFile(Generator.Module, toStringz(files[0]~".ll"), &err);
             }
-            compile(files[0]);
             return;
         }
         string[] toRemove;
