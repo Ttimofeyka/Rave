@@ -117,18 +117,6 @@ class Compiler {
     void compileAll() {
         version(X86) {__X86 = true;}
 
-        if(opts.onlyObject) {
-            if(!isFile(files[0])) {
-                writeln("Error: file \""~files[0]~"\" doesn't exists!");
-                exit(1);
-            }
-            compile(files[0]);
-            if(opts.emit_llvm) {
-                char* err;
-                LLVMPrintModuleToFile(Generator.Module, toStringz(files[0]~".ll"), &err);
-            }
-            return;
-        }
         string[] toRemove;
         for(int i=0; i<files.length; i++) {
             if(!isFile(files[i])) {
@@ -157,6 +145,7 @@ class Compiler {
             }
         }
         if(outfile == "") outfile = "a";
+        if(opts.onlyObject) linkString ~= " -r ";
         linkString ~= " "~opts.linkparams;
         writeln(linkString~" -o "~outfile);
         auto l = executeShell(linkString~" -o "~outfile);

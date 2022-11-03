@@ -40,8 +40,8 @@ void checkError(int loc,string msg) {
 }
 
 version(linux){
-	version(X86) {extern(C) void LLVMSetGlobalDSOLocal(LLVMValueRef global);}
-	version(X86_64) {extern(C) void LLVMSetGlobalDSOLocal(LLVMValueRef global);}
+	//version(X86) {extern(C) void LLVMSetGlobalDSOLocal(LLVMValueRef global);}
+	//version(X86_64) {extern(C) void LLVMSetGlobalDSOLocal(LLVMValueRef global);}
 }
 
 struct LoopReturn {
@@ -56,6 +56,8 @@ struct Loop {
     bool hasEnd;
     LoopReturn[] rets;
 }
+
+extern(C) LLVMBuilderRef LLVMCreateBuilderInContext(LLVMContextRef context);
 
 class LLVMGen {
     LLVMModuleRef Module;
@@ -1028,9 +1030,9 @@ class NodeVar : Node {
             // else LLVMSetLinkage(Generator.Globals[name],LLVMCommonLinkage);
             LLVMSetAlignment(Generator.Globals[name],Generator.getAlignmentOfType(t));
             version(linux) {
-		    version(X86) {LLVMSetGlobalDSOLocal(Generator.Globals[name]);}
-		    version(X86_64) {LLVMSetGlobalDSOLocal(Generator.Globals[name]);}
-	    }
+		        //version(X86) {LLVMSetGlobalDSOLocal(Generator.Globals[name]);}
+		        //version(X86_64) {LLVMSetGlobalDSOLocal(Generator.Globals[name]);}
+	        }
             if(value !is null && !isExtern) {
                 LLVMSetInitializer(Generator.Globals[name], value.generate());
             }
@@ -1205,7 +1207,7 @@ class NodeFunc : Node {
                 toStringz("exit")
             );
 
-            builder = LLVMCreateBuilder();
+            builder = LLVMCreateBuilderInContext(Generator.Context);
             Generator.Builder = builder;
 
             LLVMPositionBuilderAtEnd(
@@ -1267,7 +1269,7 @@ class NodeFunc : Node {
             currScope = null;
         }
 
-        version(linux) {LLVMSetGlobalDSOLocal(Generator.Functions[name]);}
+        //version(linux) {LLVMSetGlobalDSOLocal(Generator.Functions[name]);}
 
         //writeln(fromStringz(LLVMPrintModuleToString(Generator.Module)));
 
@@ -2856,7 +2858,7 @@ class NodeLambda : Node {
             LLVMBuilderRef oldBuilder = Generator.Builder;
             auto oldLoops = Generator.ActiveLoops;
 
-            builder = LLVMCreateBuilder();
+            builder = LLVMCreateBuilderInContext(Generator.Context);
             Generator.Builder = builder;
 
             LLVMPositionBuilderAtEnd(
