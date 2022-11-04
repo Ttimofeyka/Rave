@@ -44,53 +44,23 @@ CompOpts analyzeArgs(string[] args) {
 	int idx = 0;
 	CompOpts opts;
 	while(idx<args.length) {
-			if(args[idx] == "-o") {
-				idx += 1;
-				outfile = args[idx];
-				idx += 1;
-			}
-			else if(args[idx] == "-noprelude") {
-				opts.noPrelude = true;
-				idx += 1;
-			}
-			else if(args[idx] == "-debug") {
-				opts.debugMode = true;
-				idx += 1;
-			}
-			else if(args[idx] == "-type") {
-				idx += 1;
-				outtype = args[idx];
-				idx += 1;
-			}
-			else if(args[idx] == "-print-all") {
-				idx += 1;
-				opts.printAll = true;
-			}
-			else if(args[idx] == "-emit-llvm") {
-				idx += 1;
-				opts.emit_llvm = true;
-			}
-			else if(args[idx] == "-l") {
-				idx += 1;
-				opts.linkparams ~= "-l"~args[idx];
-				idx += 1;
-			}
-			else if(args[idx] == "-c") {
-				idx += 1;
-				opts.onlyObject = true;
-			}
-			else if(args[idx] == "-noentry") {
-				idx += 1;
-				opts.noEntry = true;
-			}
-			else if(args[idx] == "-nostd") {
-				idx += 1;
-				opts.noStd = true;
-			}
-			else {
-				files ~= args[idx];
-				idx += 1;
-			}
+		string currCommand = args[idx];
+		switch(currCommand) {
+			case "-o": case "--out": outfile = args[idx+1]; idx += 1; break;
+			case "-np": case "--noPrelude": opts.noPrelude = true; break;
+			case "-d": case "--debug": opts.debugMode = true; break;
+			case "-t": case "--type": outtype = args[idx+1]; idx += 1; break;
+			case "-pa": case "--printAll": opts.printAll = true; break;
+			case "-el": case "--emit-llvm":
+			case "-emit-llvm": // Compatible with the same option from clang
+				opts.emit_llvm = true; break;
+			case "-l": case "--library": opts.linkparams ~= "-l"~args[idx+1]; idx += 1; break;
+			case "-c": opts.onlyObject = true; break;
+			case "-ne": case "--noEntry": opts.noEntry = true; break;
+			case "-ns": case "--noStd": opts.noStd = true; break;
+			default: files ~= args[idx]; break;
+		}
+		idx += 1;
 	}
 	return opts;
 }

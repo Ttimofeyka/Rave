@@ -438,6 +438,28 @@ class NodeBinary : Node {
         this.loc = line;
     }
 
+    LLVMValueRef mathOperation(LLVMValueRef one, LLVMValueRef two) {
+        if(LLVMGetTypeKind(LLVMTypeOf(one)) != LLVMGetTypeKind( LLVMTypeOf(two))) {
+            Generator.error(loc,"value types are incompatible!");
+        }
+        if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMFloatTypeKind) {
+            switch(operator) {
+                case TokType.Plus: return LLVMBuildFAdd(Generator.Builder, one, two, toStringz("fadd"));
+                case TokType.Minus: return LLVMBuildFSub(Generator.Builder, one, two, toStringz("fsub"));
+                case TokType.Multiply: return LLVMBuildFMul(Generator.Builder, one, two, toStringz("fmul"));
+                case TokType.Divide: return LLVMBuildFDiv(Generator.Builder, one, two, toStringz("fdiv"));
+                default: assert(0);
+            }
+        }
+        switch(operator) {
+            case TokType.Plus: return LLVMBuildAdd(Generator.Builder, one, two, toStringz("add"));
+            case TokType.Minus: return LLVMBuildSub(Generator.Builder, one, two, toStringz("sub"));
+            case TokType.Multiply: return LLVMBuildMul(Generator.Builder, one, two, toStringz("mul"));
+            case TokType.Divide: return LLVMBuildSDiv(Generator.Builder, one, two, toStringz("div"));
+            default: assert(0);
+        }
+    }
+
     LLVMValueRef sum(LLVMValueRef one, LLVMValueRef two) {
         if(LLVMGetTypeKind(LLVMTypeOf(one)) != LLVMGetTypeKind( LLVMTypeOf(two))) {
             Generator.error(loc,"value types are incompatible!");
@@ -870,39 +892,21 @@ class NodeBinary : Node {
             }
         }
 
-        LLVMValueRef and(LLVMValueRef one, LLVMValueRef two) {
-            return LLVMBuildAnd(
-                Generator.Builder,
-                one,
-                two,
-                toStringz("and")
-            );
+        switch(operator) {
+            case TokType.Plus: case TokType.Minus:
+            case TokType.Multiply: case TokType.Divide: return mathOperation(f,s);
+            case TokType.Equal: return equal(f,s,false);
+            case TokType.Nequal: return equal(f,s,true);
+            case TokType.Less: return diff(f,s,true,false);
+            case TokType.More: return diff(f,s,false,false);
+            case TokType.LessEqual: return diff(f,s,true,true);
+            case TokType.MoreEqual: return diff(f,s,false,true);
+            case TokType.And: return LLVMBuildAnd(Generator.Builder,f,s,toStringz("and"));
+            case TokType.Or: return LLVMBuildOr(Generator.Builder,f,s,toStringz("or"));
+            case TokType.BitLeft: return LLVMBuildShl(Generator.Builder,f,s,toStringz("bitleft"));
+            case TokType.BitRight: return LLVMBuildLShr(Generator.Builder,f,s,toStringz("bitright"));
+            default: assert(0);
         }
-
-        if(operator == TokType.Plus) return sum(f,s);
-        if(operator == TokType.Minus) return sub(f,s);
-        if(operator == TokType.Multiply) return mul(f,s);
-        if(operator == TokType.Divide) return div(f,s);
-        if(operator == TokType.Equal) return equal(f,s,false);
-        if(operator == TokType.Nequal) return equal(f,s,true);
-        if(operator == TokType.Less) return diff(f,s,true,false);
-        if(operator == TokType.More) return diff(f,s,false,false);
-        if(operator == TokType.LessEqual) return diff(f,s,true,true);
-        if(operator == TokType.MoreEqual) return diff(f,s,false,true);
-        if(operator == TokType.And) return and(f,s);
-        if(operator == TokType.Or) return or(f,s);
-        if(operator == TokType.BitLeft) return LLVMBuildShl(
-            Generator.Builder,
-            f,
-            s,
-            toStringz("bitleft")
-        );
-        if(operator == TokType.BitRight) return LLVMBuildLShr(
-            Generator.Builder,
-            f,
-            s,
-            toStringz("bitright")
-        );
         assert(0);
     }
 

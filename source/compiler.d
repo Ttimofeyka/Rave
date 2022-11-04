@@ -123,8 +123,12 @@ class Compiler {
                 writeln("Error: file \""~files[i]~"\" doesn't exists!");
                 exit(1);
             }
-            if(files[i][$-2..$]==".a"||files[i][$-4..$]==".dll"||files[i][$-2..$]==".o"||files[i][$-3..$]==".so") {
-                linkString ~= files[i]~" ";
+            if((files[i].length>2 && (files[i][$-2..$]==".a" || files[i][$-2..$]==".o"))
+                ||
+                (files[i].length>4 && (files[i][$-4..$]==".dll" || files[i][$-4..$]==".obj"))
+                ||
+                (files.length>3 && files[i][$-3..$]==".so")) {
+                    linkString ~= files[i]~" ";
             }
             else {
                 version(linux) {

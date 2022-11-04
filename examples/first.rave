@@ -1,5 +1,5 @@
 import <std/io>
 
 int main {
-    int(int,int) function = int(int a, int b) => (a+b);
-} => function(1,1);
+
+} => (6/2*3);

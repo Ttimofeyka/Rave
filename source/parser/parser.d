@@ -333,7 +333,7 @@ class Parser {
 		nodeStack.insertFront(parseBasic());
 		nodeStackSize += 1;
 
-        while(peek().type in operators)
+        while(peek().type.into(operators))
 		{
 			if(operatorStack.empty) {
 				operatorStack.insertFront(next());
@@ -343,6 +343,7 @@ class Parser {
 				auto tok = next();
 				auto t = tok.type;
 				int prec = operators[t];
+                if(operatorStackSize > 0) writeln(operatorStack.front().type);
 				while(operatorStackSize > 0 && prec <= operators[operatorStack.front.type]) {
 					// push the operator onto the nodeStack
 					assert(nodeStackSize >= 2);
