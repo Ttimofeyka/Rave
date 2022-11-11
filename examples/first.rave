@@ -1,3 +1,7 @@
+/*
+Test
+*/
+
 import <std/io>
 
 struct B {

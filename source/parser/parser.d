@@ -321,6 +321,11 @@ class Parser {
             next();
             return new NodeArray(t.line,values);
         }
+        if(t.type == TokType.Builtin) {
+            next();
+            writeln(t.value);
+            assert(0);
+        }
         error("Expected a number, true/false, char, variable or expression. Got: "~to!string(t.type)~" on "~to!string(peek().line+1)~" line.");
         return null;
     }

@@ -131,6 +131,15 @@ class Lexer {
                             tokens ~= new Token(TokType.DivEqu,"/=",line);
                             _idx += 1;
                         }
+                        else if(divnext == '*') {
+                            _idx += 1;
+                            while(text[_idx] != '*' && text[_idx+1] != '/') {
+                                _idx += 1;
+                                if(_idx+1 >= text.length) break;
+                            }
+                            // Current char - '*'
+                            next(); next();
+                        }
                         else tokens ~= new Token(TokType.Divide,"/",line);
                         break;
                     case '>':

@@ -38,6 +38,7 @@ struct CompOpts {
 	bool noEntry = false;
 	bool noStd = false;
 	bool printAll = false;
+	int optimizeLevel = 0;
 }
 
 CompOpts analyzeArgs(string[] args) {
@@ -58,6 +59,9 @@ CompOpts analyzeArgs(string[] args) {
 			case "-c": opts.onlyObject = true; break;
 			case "-ne": case "--noEntry": opts.noEntry = true; break;
 			case "-ns": case "--noStd": opts.noStd = true; break;
+			case "-ol": case "--optimization-level":
+			case "-O": // Compatible with the same option from clang
+				opts.optimizeLevel = to!int(args[idx+1]); idx += 1; break;
 			default: files ~= args[idx]; break;
 		}
 		idx += 1;
@@ -68,7 +72,7 @@ CompOpts analyzeArgs(string[] args) {
 void main(string[] args)
 {
 	if(args.length==1) {
-		writeln("Error: files to compile didn't found!");
+		writeln("No compilation files were found!");
 		exit(1);
 	}
 	CompOpts o = analyzeArgs(args[1..$]);
