@@ -84,6 +84,27 @@ class Parser {
             else if(t.value.into(_aliasTypes)) return _aliasTypes[t.value];
             return getType(t.value);
         }
+        else if(peek().type == TokType.MacroArgNum) {
+            next();
+            return new TypeMacroArg(to!int(tokens[_idx-1].value));
+        }
+        else if(peek().type == TokType.Builtin) {
+            string name = peek().value;
+            int loc = peek().line;
+            next();
+            Node[] args;
+            next();
+            while(peek().type != TokType.Lpar) {
+                if(peek().type == TokType.MacroArgNum) {
+                    args ~= new MacroGetArg(to!int(peek().value),loc);
+                    next(); 
+                }
+                else args ~= parseExpr();
+                if(peek().type == TokType.Comma) next();
+            }
+            next();
+            return new TypeBuiltin(name,args);
+        }
         else {
             error("Expected a typename on "~to!string(peek().line+1)~" line!");
         }
@@ -156,10 +177,25 @@ class Parser {
     }
 
     Node[] parseFuncCallArgs() {
+        import std.algorithm : canFind;
         next(); // skip (
         Node[] args;
         while(peek().type != TokType.Lpar) {
-            args ~= parseExpr();
+            switch(peek().value) {
+                case "int":
+                case "short":
+                case "long":
+                case "cent":
+                case "char":
+                case "bool":
+                    args ~= new NodeType(parseType(),-1);
+                    next();
+                    break;
+                default:
+                    if(canFind(structs,peek().value)) {args ~= new NodeType(new TypeStruct(peek().value),-1); next();}
+                    else args ~= parseExpr();
+                    break;
+            }
             if(peek().type == TokType.Comma) next();
         }
         next(); // skip )
@@ -277,7 +313,13 @@ class Parser {
             return e;
         }
         if(t.type == TokType.Rarr) {
-            return null; // TODO: CONST ARRAY
+            Node[] values;
+            while(peek().type != TokType.Larr) {
+                values ~= parseExpr();
+                if(peek().type == TokType.Comma) next();
+            }
+            next();
+            return new NodeArray(t.line,values);
         }
         error("Expected a number, true/false, char, variable or expression. Got: "~to!string(t.type)~" on "~to!string(peek().line+1)~" line.");
         return null;
@@ -760,14 +802,20 @@ class Parser {
         int loc = peek().line;
         next();
         string name = peek().value;
-        next(); // current token = {
+        next(); // current token = { or :
+        string _exs = "";
+        if(peek().type == TokType.ValSel) {
+            next();
+            _exs = peek().value;
+            next();
+        }
         expect(TokType.Rbra); // skip {
         Node[] nodes;
         Node currNode;
         while((currNode = parseTopLevel(name)) !is null) nodes ~= currNode;
         expect(TokType.Lbra); // skip }
         structs ~= name;
-        return new NodeStruct(name,nodes,loc);
+        return new NodeStruct(name,nodes,loc,_exs);
     }
     
     Node parseMacro() {

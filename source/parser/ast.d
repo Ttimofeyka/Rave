@@ -138,8 +138,7 @@ class LLVMGen {
             foreach(ty; f.args) {
                 types ~= Generator.GenerateType(ty,loc);
             }
-            return 
-            LLVMPointerType(
+            return LLVMPointerType(
                 LLVMFunctionType(
                     Generator.GenerateType(f.main,loc),
                     types.ptr,
@@ -151,6 +150,17 @@ class LLVMGen {
         }
         if(TypeFuncArg fa = t.instanceof!TypeFuncArg) {
             return this.GenerateType(fa.type,loc);
+        }
+        if(TypeMacroArg ma = t.instanceof!TypeMacroArg) {
+            if(NodeType nt = currScope.macroArgs[ma.num].instanceof!NodeType) return this.GenerateType(nt.ty,loc);
+            if(NodeIden ni = currScope.macroArgs[ma.num].instanceof!NodeIden) {
+                if(!ni.name.into(Generator.Structs)) Generator.error(loc,"Unknown structure '"~ni.name~"'!");
+                return Generator.Structs[ni.name];
+            }
+        }
+        if(TypeBuiltin tb = t.instanceof!TypeBuiltin) {
+            NodeBuiltin nb = new NodeBuiltin(tb.name,tb.args.dup,loc); nb.generate();
+            return this.GenerateType(nb.ty,loc);
         }
         if(t is null) return LLVMPointerType(
             LLVMInt8TypeInContext(Generator.Context),
@@ -1591,7 +1601,17 @@ class NodeIndex : Node {
         this.loc = loc;
     }
 
-    override void check() {element.check();}
+    LLVMValueRef getFor(int l, LLVMValueRef v) {
+        LLVMValueRef temp = v;
+        for(int i=0; i<l; i++) {
+            v = LLVMBuildExtractValue(Generator.Builder,v,cast(uint)i,toStringz("getFor"));
+        }
+        return v;
+    }
+
+    override void check() {
+        element.check();
+    }
     override LLVMValueRef generate() {
         LLVMValueRef[] genIndexs;
         for(int i=0; i<indexs.length; i++) {
@@ -1608,6 +1628,22 @@ class NodeIndex : Node {
                         toStringz("gep")
                     ), toStringz("load"));
                 }
+                if(currScope.getVar(id.name,loc).t.instanceof!TypeArray) {
+                    LLVMValueRef currVal = currScope.get(id.name);
+                    foreach(n; indexs) {
+                        if(NodeInt i = n.instanceof!NodeInt) {
+                            currVal = LLVMBuildExtractValue(
+                                Generator.Builder,
+                                currVal,
+                                cast(uint)i.value,
+                                toStringz("extval")
+                            );
+                        }
+                        else assert(0);
+                    }
+                    return currVal;
+                }
+                writeln(currScope.getVar(id.name,loc).t);
             }
             NodeGet g = element.instanceof!NodeGet;
             
@@ -1632,6 +1668,24 @@ class NodeIndex : Node {
                     cast(uint)genIndexs.length,
                     toStringz("gep")
                 ));
+            }
+            else {
+                TypeArray ta = currScope.getVar(id.name,loc).t.instanceof!TypeArray;
+                LLVMValueRef _ptr = LLVMBuildInBoundsGEP(
+					Generator.Builder,
+					currScope.getWithoutLoad(id.name),
+					[LLVMConstInt(LLVMInt32Type(),0,false),LLVMConstInt(LLVMInt32Type(),0,false)].ptr,
+					2,
+					toStringz("ingep")
+				);
+                LLVMBuildStore(Generator.Builder, toSet, LLVMBuildGEP(
+                    Generator.Builder,
+                    LLVMBuildPointerCast(Generator.Builder,_ptr,Generator.GenerateType(new TypePointer(ta.element),loc),toStringz("bitcast")),
+                    genIndexs.ptr,
+                    cast(uint)genIndexs.length,
+                    toStringz("gep")
+                ));
+                return null;
             }
         }
         else if(NodeGet g = element.instanceof!NodeGet) {
@@ -1799,6 +1853,9 @@ class NodeGet : Node {
             if(!(cast(immutable)[s.name,field].into(structsNumbers))) {
                 Generator.error(loc,"Element "~field~" does not exist!");
             }
+
+            //writeln(s.name," ",field," ",Generator.typeToString(LLVMTypeOf(ptr)));
+
             if(isEqu) return LLVMBuildStructGEP(
                 Generator.Builder,
                 ptr,
@@ -1845,6 +1902,10 @@ class NodeGet : Node {
                 ),
                 toStringz("loadGEP")
             );
+        }
+        else if(NodeIndex ind = base.instanceof!NodeIndex) {
+            ind.isEqu = true;
+            writeln(field);
         }
         else if(NodeUnary u = base.instanceof!NodeUnary) {
             writeln(field);
@@ -1908,14 +1969,20 @@ class NodeUnary : Node {
                 return temp;
             }
             NodeIden id = base.instanceof!NodeIden;
-            if(currScope.getVar(id.name,loc).t.instanceof!TypeArray) {
-                return LLVMBuildInBoundsGEP(
+            if(TypeArray ta = currScope.getVar(id.name,loc).t.instanceof!TypeArray) {
+                LLVMValueRef ptr = LLVMBuildInBoundsGEP(
 					Generator.Builder,
 					currScope.getWithoutLoad(id.name),
 					[LLVMConstInt(LLVMInt32Type(),0,false),LLVMConstInt(LLVMInt32Type(),0,false)].ptr,
 					2,
 					toStringz("ingep")
 				);
+                return LLVMBuildPointerCast(
+                    Generator.Builder,
+                    ptr,
+                    Generator.GenerateType(new TypePointer(ta.element),loc),
+                    toStringz("bitcast")
+                );
             }
             return currScope.getWithoutLoad(id.name);
         }
@@ -2248,12 +2315,14 @@ class NodeStruct : Node {
     NodeFunc _this;
     NodeFunc[] methods;
     bool isImported = false;
+    string _extends;
 
-    this(string name, Node[] elements, int loc) {
+    this(string name, Node[] elements, int loc, string _exs) {
         this.name = name;
         this.elements = elements.dup;
         this.loc = loc;
         this.origname = name;
+        this._extends = _exs;
     }
 
     LLVMTypeRef asConstType() {
@@ -2267,6 +2336,12 @@ class NodeStruct : Node {
         }
         if(!(name !in StructTable)) {
             checkError(loc,"a struct with that name already exists on "~to!string(StructTable[name].loc+1)~" line!");
+        }
+        if(_extends != "") {
+            NodeStruct _s = StructTable[_extends];
+            elements ~= _s.elements;
+            methods ~= _s.methods;
+            predefines ~= _s.predefines;
         }
         StructTable[name] = this;
     }
@@ -2465,6 +2540,25 @@ class NodeCast : Node {
                 Generator.GenerateType(f),
                 toStringz("ppcast")
             );
+        }
+        if(TypeStruct s = type.instanceof!TypeStruct) {
+            return LLVMBuildBitCast(
+                Generator.Builder,
+                gval,
+                Generator.GenerateType(s),
+                toStringz("structcast")
+            );
+        }
+        if(TypeMacroArg ma = type.instanceof!TypeMacroArg) {
+            NodeType nt = currScope.macroArgs[ma.num].instanceof!NodeType;
+            this.type = nt.ty;
+            return this.generate();
+        }
+        if(TypeBuiltin b = type.instanceof!TypeBuiltin) {
+            NodeBuiltin nb = new NodeBuiltin(b.name,b.args.dup,loc);
+            nb.generate();
+            this.type = nb.ty;
+            return this.generate();
         }
         assert(0);
     }
@@ -2929,5 +3023,73 @@ class NodeLambda : Node {
             Generator.currBB = oldCurrBB;
 
         return f;
+    }
+}
+
+class NodeArray : Node {
+    int loc;
+    Node[] values;
+    private LLVMTypeRef _type;
+
+    this(int loc, Node[] values) {
+        this.loc = loc;
+        this.values = values.dup;
+    }
+
+    private LLVMValueRef[] getValues() {
+        LLVMValueRef[] buff;
+        for(int i=0; i<values.length; i++) {
+            if(i != 0) buff ~= values[i].generate();
+            else {
+                LLVMValueRef v = values[i].generate();
+                buff ~= v;
+                this._type = LLVMTypeOf(v);
+            }
+        }
+        return buff.dup;
+    }
+
+    override LLVMValueRef generate() {
+        LLVMValueRef[] values = getValues();
+        return LLVMConstArray(_type,values.ptr,cast(uint)values.length);
+    }
+}
+
+class NodeBuiltin : Node {
+    string name;
+    Node[] args;
+    int loc;
+    Type ty;
+
+    this(string name, Node[] args, int loc) {
+        this.name = name;
+        this.args = args.dup;
+        this.loc = loc;
+    }
+
+    NodeType asType(int n) {
+        if(NodeType nt = args[n].instanceof!NodeType) return nt;
+        if(MacroGetArg mga = args[n].instanceof!MacroGetArg) {
+            if(NodeIden ni = currScope.macroArgs[mga.number].instanceof!NodeIden) {
+                return new NodeType(new TypeStruct(ni.name),loc);
+            }
+            return currScope.macroArgs[mga.number].instanceof!NodeType;
+        }
+        assert(0);
+    }
+
+    override void check() {}
+
+    override LLVMValueRef generate() {
+        switch(name) {
+            case "previousType":
+                Type prType = asType(0).ty;
+                if(TypeArray ta = prType.instanceof!TypeArray) this.ty = ta.element;
+                if(TypePointer tp = prType.instanceof!TypePointer) this.ty = tp.instance;
+                else this.ty = prType;
+                break;
+            default: break;
+        }
+        return null;
     }
 }

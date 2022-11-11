@@ -99,6 +99,15 @@ class Lexer {
                     case ',': tokens ~= new Token(TokType.Comma,",",line); _idx++; break;
                     case ':': tokens ~= new Token(TokType.ValSel,":",line); _idx++; break;
                     case '%': tokens ~= new Token(TokType.Rem,"%",line); _idx++; break;
+                    case '@':
+                        string bbuff = "";
+                        next();
+                        while(!isNumeric(to!string(peek())) && peek() != '.' && peek() != '+' && peek() != '-' && peek() != '*' && peek() != '/' && peek() != '=' && peek() != '(') {
+                            bbuff ~= peek();
+                            next();
+                        }
+                        tokens ~= new Token(TokType.Builtin,bbuff,line);
+                        break;
                     case '.':
                         auto n = next();
                         if(n == '.') {
@@ -280,7 +289,6 @@ class Lexer {
                                 && peek() != '-'
                                 && peek() != '*'
                                 && peek() != '/'
-                                && peek() != '@'
                                 && peek() != '('
                                 && peek() != ')'
                                 && peek() != '{'

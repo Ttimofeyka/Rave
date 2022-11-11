@@ -69,3 +69,7 @@ namespace std {
 macro delete {
     std::free(cast(void*)#0);
 }
+
+macro new {
+    return cast(@previousType(#0)*)std::malloc(sizeof(#0));
+}

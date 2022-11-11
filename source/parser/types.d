@@ -4,6 +4,7 @@ import std.string;
 import std.array;
 import std.conv : to;
 import std.ascii : isAlpha;
+import parser.ast : Node;
 
 enum BasicType {
     Bool,
@@ -137,3 +138,5 @@ class TypeFunc : Type {
     }
 }
 class TypeVarArg : Type {}
+class TypeMacroArg : Type { int num; this(int num) {this.num = num;} }
+class TypeBuiltin : Type { string name; Node[] args; this(string name, Node[] args) {this.name = name; this.args = args.dup;} }

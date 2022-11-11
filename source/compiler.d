@@ -13,32 +13,39 @@ import std.string;
 import std.process;
 import app : files;
 
+string hasAnyone(string str, string[] strs) {
+    for(int i=0; i<strs.length; i++) {
+        if(str.indexOf(strs[i]) != -1) return strs[i];
+    }
+    return "";
+}
+
 class Compiler {
     private string linkString = "ld.lld ";
     private string outfile;
     private string outtype;
     private CompOpts opts;
 
+    private void error(string msg) {
+        pragma(inline,true);
+		writeln("\033[0;31mError: " ~ msg ~ "\033[0;0m");
+		exit(1);
+	}
+
     this(string outfile, string outtype, CompOpts opts) {
         this.outfile = outfile;
         this.outtype = outtype;
         this.opts = opts;
-        if(outtype.indexOf("x86_64") != -1) {
-            if(!opts.noEntry) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/x86_64/crt1.o ";
-            if(!opts.noStd) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/x86_64/libc.a ";
+
+        void addLibs(string platform) {
+            if(!opts.noEntry) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/"~platform~"/crt1.o ";
+            if(!opts.noStd) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/"~platform~"/libc.a ";
         }
-        else if(outtype.indexOf("i686") != -1) {
-            if(!opts.noEntry) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/i686/crt1.o ";
-            if(!opts.noStd) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/i686/libc.a ";
-        }
-        else if(outtype.indexOf("aarch64") != -1) {
-            if(!opts.noEntry) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/aarch64/crt1.o ";
-            if(!opts.noStd) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/aarch64/libc.a ";
-        }
-        else if(outtype.indexOf("mips64") != -1) {
-            if(!opts.noEntry) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/mips64/crt1.o ";
-            if(!opts.noStd) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/mips64/libc.a ";
-        }
+
+        string p = hasAnyone(outtype,["x86_64","i686","aarch64","mips64"]);
+
+        if(p != "") addLibs(p);
+        else error("unknown platform!");
     }
 
     void clearAll() {
@@ -58,12 +65,11 @@ class Compiler {
 
     void compile(string file) {
         string content = readText(file);
-        //if(files[0] == file) {
-            if(outtype.indexOf("i686") != -1) content = "__aliasp __RAVE_X86 = true;\n"~content;
-            else if(outtype.indexOf("x86_64") != -1) content = "__aliasp __RAVE_X86_64 = true;\n"~content;
-            else if(outtype.indexOf("aarch64") != -1) content = "__aliasp __RAVE_AARCH64 = true;\n"~content;
-            else if(outtype.indexOf("mips") != -1) content = "__aliasp __RAVE_MIPS = true;\n"~content;
-        //}
+
+        if(outtype.indexOf("i686") != -1) content = "__aliasp __RAVE_X86 = true;\n"~content;
+        else if(outtype.indexOf("x86_64") != -1) content = "__aliasp __RAVE_X86_64 = true;\n"~content;
+        else if(outtype.indexOf("aarch64") != -1) content = "__aliasp __RAVE_AARCH64 = true;\n"~content;
+        else if(outtype.indexOf("mips") != -1) content = "__aliasp __RAVE_MIPS = true;\n"~content;
 
         if(!opts.noPrelude && file != "std/prelude.rave" && file != "std/memory.rave") {
             content = "import <std/prelude>\n import <std/memory>\n"~content;

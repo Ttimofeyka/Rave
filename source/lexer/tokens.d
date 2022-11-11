@@ -51,7 +51,9 @@ enum TokType {
     Rem,
 
     BitLeft,
-    BitRight
+    BitRight,
+
+    Builtin,
 }
 
 class Token {

@@ -1,5 +1,15 @@
 import <std/io>
 
-int main {
+struct B {
+    int value;
+}
 
-} => (6/2*3);
+struct A : B {
+    char* name;
+} 
+
+int main {
+    B* b = new(B);
+    b.value = 1235;
+    std::printf("%d\n",b.value);
+} => 0;
