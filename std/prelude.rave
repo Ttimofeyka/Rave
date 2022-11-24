@@ -1,7 +1,7 @@
 namespace std {
     extern(linkname: "exit") void exit(int code);
     void assert(bool cond) {
-        if(cond) {
+        if(!cond) {
             std::exit(2);
         }
     }

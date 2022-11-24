@@ -12,6 +12,31 @@ macro delete {
     std::free(cast(void*)#0);
 }
 
-macro new {
-    return cast(@previousType(#0)*)std::malloc(sizeof(#0));
+namespace std {
+    struct vector {
+        int element;
+        void** data;
+        int length;
+        bool isInitialized = false;
+
+        std::vector* this(int size) {
+            this.element = size;
+            this.length = 0;
+        } => this;
+
+        void add(void* el) {
+            this.length += 1;
+
+            if(this.isInitialized == false) {this.data = cast(void**)std::malloc(this.element); this.isInitialized = true;}
+            else this.data = cast(void**)std::realloc(cast(void*)this.data,(this.length)*this.element);
+
+            this.data[this.length-1] = el;
+        }
+
+        void* get(int index) => this.data[index];
+
+        void destroy {
+            std::free(cast(void*)this.data);
+        }
+    }
 }

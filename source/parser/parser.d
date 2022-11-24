@@ -391,7 +391,7 @@ class Parser {
 				auto tok = next();
 				auto t = tok.type;
 				int prec = operators[t];
-                if(operatorStackSize > 0) writeln(operatorStack.front().type);
+                //if(operatorStackSize > 0) writeln(operatorStack.front().type);
 				while(operatorStackSize > 0 && prec <= operators[operatorStack.front.type]) {
 					// push the operator onto the nodeStack
 					assert(nodeStackSize >= 2);

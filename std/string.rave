@@ -16,14 +16,15 @@ namespace std {
 
         std::string* this(char* a) {
             this.len = libc::strlen(a);
-            this.ptr = std::malloc(this.len+1);
+            //this.ptr = std::malloc(this.len+1);
+            this.ptr = std::malloc(this.len);
 
             int i = 0;
             while(i<this.len) {
                 this.ptr[i] = a[i];
                 i += 1;
             }
-            this.ptr[i] = '\0';
+            //this.ptr[i] = '\0';
         } => this;
 
         bool isDeleted => (this.ptr == null);
@@ -52,14 +53,33 @@ namespace std {
             }
         }
 
+        char* c {
+            char* temp = std::malloc(this.len+1);
+            int i = 0;
+            while(i<this.len) {temp[i] = this.ptr[i]; i += 1;}
+            temp[i] = '\0';
+            return temp;
+        }
+
         void destroy {
             std::free(this.ptr);
             if(this.ptr != null) this.ptr = null;
         }
+
+        int indexOf(char c) {
+            int i = 0;
+            int needed = -1;
+            while(i<this.len) {if(this.ptr[i] == c) {needed = i; i = this.len;} i += 1;}
+        } => needed;
+
+        void appendChar(char c) {
+            this.len += 1;
+            this.ptr = cast(char*)std::realloc(cast(void*)this.ptr,this.len+1);
+            this.ptr[this.len-1] = c;
+            this.ptr[this.len] = '\0';
+        }
     }
 }
-
-//preoperator char* S(cstr) => std::string(cstr);
 
 macro S {
     return std::string(#0);
