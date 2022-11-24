@@ -1,13 +1,23 @@
 import <std/io>
 
 int A(vararg args) {
-    
-} => cast(int)args.vars[1].value;
+    int toret = 0;
+
+    int i = 0;
+    while(i<args.length) {
+        if(sizeof(int) == args.vars[i].size) {
+            toret += cast(int)args.vars[i].value;
+        }
+        i += 1;
+    }
+} => toret;
 
 int main {
     vararg args;
 
-    args.length = 1;
+    args.length = 2;
     args.vars[0].value = cast(void*)5;
+    args.vars[0].size = sizeof(int);
     args.vars[1].value = cast(void*)7;
+    args.vars[1].size = sizeof(int);
 } => A(args);

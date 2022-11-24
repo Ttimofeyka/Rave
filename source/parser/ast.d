@@ -39,11 +39,6 @@ void checkError(int loc,string msg) {
 		exit(1);
 }
 
-version(linux){
-	//version(X86) {extern(C) void LLVMSetGlobalDSOLocal(LLVMValueRef global);}
-	//version(X86_64) {extern(C) void LLVMSetGlobalDSOLocal(LLVMValueRef global);}
-}
-
 struct LoopReturn {
     NodeRet ret;
     int loopId;

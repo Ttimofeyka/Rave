@@ -10,6 +10,7 @@ namespace std {
 
 struct any {
     int size;
+    bool isPtr = false;
     void* value;
 }
 

@@ -91,12 +91,15 @@ class Compiler {
             n[i].generate();
         }
 
-        LLVMPassManagerRef pm = LLVMCreatePassManager();
+        if(opts.optimizeLevel > 0) {
+            LLVMPassManagerRef pm = LLVMCreatePassManager();
 
-        LLVMPassManagerBuilderRef pmb = LLVMPassManagerBuilderCreate();
-        LLVMPassManagerBuilderSetOptLevel(pmb,opts.optimizeLevel);
-        LLVMPassManagerBuilderPopulateModulePassManager(pmb,pm);
-        LLVMRunPassManager(pm,Generator.Module);
+            LLVMPassManagerBuilderRef pmb = LLVMPassManagerBuilderCreate();
+            LLVMPassManagerBuilderSetOptLevel(pmb,opts.optimizeLevel);
+            LLVMPassManagerBuilderPopulateModulePassManager(pmb,pm);
+
+            LLVMRunPassManager(pm,Generator.Module);
+        }
 
         char* errors;
         LLVMTargetRef target;
