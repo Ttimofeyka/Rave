@@ -218,27 +218,6 @@ class Parser {
         return indexs.dup;
     }
 
-    Node parseSuffix(Node base) {
-        while(peek().type == TokType.Rpar
-             || peek().type == TokType.Rarr
-             || peek().type == TokType.Dot
-        ) {
-            if(peek().type == TokType.Rpar) base = parseCall(base);
-            else if(peek().type == TokType.Rarr) {
-                base = new NodeIndex(base,parseIndexs(),peek().line);
-            }
-            else if(peek().type == TokType.Dot) {
-                next();
-                bool isPtr = (peek().type == TokType.GetPtr);
-                if(isPtr) next();
-                string field = expect(TokType.Identifier).value;
-                base = new NodeGet(base,field,(peek().type == TokType.Equ || isPtr),peek().line);
-            }
-        }
-
-        return base;
-    }
-
     long lambdas = 0;
 
     Node parseAtom() {
@@ -344,6 +323,28 @@ class Parser {
             return new NodeUnary(tok.line, tok.type, parsePrefix());
         }
         return parseAtom();
+    }
+
+
+    Node parseSuffix(Node base) {
+        while(peek().type == TokType.Rpar
+             || peek().type == TokType.Rarr
+             || peek().type == TokType.Dot
+        ) {
+            if(peek().type == TokType.Rpar) base = parseCall(base);
+            else if(peek().type == TokType.Rarr) {
+                base = new NodeIndex(base,parseIndexs(),peek().line);
+            }
+            else if(peek().type == TokType.Dot) {
+                next();
+                bool isPtr = (peek().type == TokType.GetPtr);
+                if(isPtr) next();
+                string field = expect(TokType.Identifier).value;
+                base = new NodeGet(base,field,(peek().type == TokType.Equ || isPtr),peek().line);
+            }
+        }
+
+        return base;
     }
 
     Node parseBasic() {

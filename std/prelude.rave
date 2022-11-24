@@ -13,7 +13,7 @@ struct any {
     void* value;
 }
 
-struct varargs {
-    any* vars;
+struct vararg {
+    any[256] vars;
     int length;
 }

@@ -1,19 +1,13 @@
-/*
-Test
-*/
-
 import <std/io>
 
-struct B {
-    int value;
-}
-
-struct A : B {
-    char* name;
-} 
+int A(vararg args) {
+    
+} => cast(int)args.vars[1].value;
 
 int main {
-    B* b = new(B);
-    b.value = 1235;
-    std::printf("%d\n",b.value);
-} => 0;
+    vararg args;
+
+    args.length = 1;
+    args.vars[0].value = cast(void*)5;
+    args.vars[1].value = cast(void*)7;
+} => A(args);

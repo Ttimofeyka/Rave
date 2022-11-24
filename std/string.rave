@@ -1,3 +1,5 @@
+import <std/memory>
+
 namespace libc {
     // Functions that are practically unnecessary in normal use and come from libc
     extern(linkname: "strlen") int strlen(char* cstr);
@@ -53,11 +55,6 @@ namespace std {
         void destroy {
             std::free(this.ptr);
             if(this.ptr != null) this.ptr = null;
-        }
-
-        void set(char* a) {
-            this.destroy();
-            this = std::string(a);
         }
     }
 }
