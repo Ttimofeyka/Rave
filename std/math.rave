@@ -2,4 +2,5 @@ namespace math {
     alias PI = 3.14159265358979323846;
 
     extern(linkname: "lroundf") long round(float f);
+    extern(linkname: "powf") float pow(float one, float two);
 }
