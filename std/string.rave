@@ -11,33 +11,33 @@ namespace libc {
 
 namespace std {
     struct string {
-        char* ptr;
-        int len;
+        char* data;
+        int length;
 
         std::string* this(char* a) {
-            this.len = libc::strlen(a);
-            //this.ptr = std::malloc(this.len+1);
-            this.ptr = std::malloc(this.len);
+            this.length = libc::strlen(a);
+            //this.data = std::malloc(this.length+1);
+            this.data = std::malloc(this.length);
 
             int i = 0;
-            while(i<this.len) {
-                this.ptr[i] = a[i];
+            while(i<this.length) {
+                this.data[i] = a[i];
                 i += 1;
             }
-            //this.ptr[i] = '\0';
+            //this.data[i] = '\0';
         } => this;
 
-        bool isDeleted => (this.ptr == null);
-        char toChar => this.ptr[0];
+        bool isDeleted => (this.data == null);
+        char toChar => this.data[0];
 
         bool has(char c) {
             bool _has = false;
 
             int i = 0;
-            while(i<this.len) {
-                if(this.ptr[i] == c) {
+            while(i<this.length) {
+                if(this.data[i] == c) {
                     _has = true;
-                    i = this.len;
+                    i = this.length;
                 }
                 i += 1;
             }
@@ -45,38 +45,53 @@ namespace std {
 
         void replace(char c, char to) {
             int i = 0;
-            while(i<this.len) {
-                if(this.ptr[i] == c) {
-                    this.ptr[i] = to;
+            while(i<this.length) {
+                if(this.data[i] == c) {
+                    this.data[i] = to;
                 }
                 i += 1;
             }
         }
 
         char* c {
-            char* temp = std::malloc(this.len+1);
+            char* temp = std::malloc(this.length+1);
             int i = 0;
-            while(i<this.len) {temp[i] = this.ptr[i]; i += 1;}
+            while(i<this.length) {temp[i] = this.data[i]; i += 1;}
             temp[i] = '\0';
             return temp;
         }
 
         void destroy {
-            std::free(this.ptr);
-            if(this.ptr != null) this.ptr = null;
+            std::free(this.data);
+            if(this.data != null) this.data = null;
         }
 
         int indexOf(char c) {
             int i = 0;
             int needed = -1;
-            while(i<this.len) {if(this.ptr[i] == c) {needed = i; i = this.len;} i += 1;}
+            while(i<this.length) {if(this.data[i] == c) {needed = i; i = this.length;} i += 1;}
         } => needed;
 
-        void appendChar(char c) {
-            this.len += 1;
-            this.ptr = cast(char*)std::realloc(cast(void*)this.ptr,this.len+1);
-            this.ptr[this.len-1] = c;
-            this.ptr[this.len] = '\0';
+        void append(char c) {
+            this.length += 1;
+            this.data = std::realloc(this.data,this.length);
+            this.data[this.length-1] = c;
+        }
+
+        void append(std::string* str) {
+            int i = 0;
+            while(i<str.length) {
+                this.append(str.data[i]);
+                i += 1;
+            }
+        }
+
+        void append(char* cstr) {
+            int i = 0;
+            while(cstr[i] != '\0') {
+                this.append(cstr[i]);
+                i += 1;
+            }
         }
     }
 }

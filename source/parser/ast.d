@@ -79,9 +79,15 @@ class LLVMGen {
         LLVMInitializeAllTargetMCs();
     }
 
-    string mangle(string name, bool isFunc, bool isMethod) {
+    string mangle(string name, bool isFunc, bool isMethod, FuncArgSet[] args = null) {
         pragma(inline,true);
-        return isFunc ? (isMethod ? "_RaveM"~to!string(name.length)~name : "_RaveF"~to!string(name.length)~name) : "_Raveg"~name;
+        if(isFunc) {
+            string toAdd = "";
+            //if(args !is null) toAdd = typesToString(args);
+            if(isMethod) return "_RaveM"~to!string(name.length)~name~toAdd;
+            return "_RaveF"~to!string(name.length)~name~toAdd;
+        }
+        return "_Raveg"~name;
     }
 
     void error(int loc,string msg) {
@@ -121,7 +127,6 @@ class LLVMGen {
             return a;
         }
         if(TypeArray a = t.instanceof!TypeArray) {
-            //return LLVMVectorType(this.GenerateType(a.element),cast(uint)a.count);
             return LLVMArrayType(this.GenerateType(a.element),cast(uint)a.count);
         }
         if(TypeStruct s = t.instanceof!TypeStruct) {
@@ -163,6 +168,30 @@ class LLVMGen {
             0
         );
         assert(0);
+    }
+    
+    LLVMTypeKind GenerateTypeKind(Type t) {
+        if(t.instanceof!TypeAlias) return -1;
+        if(TypeBasic tb = t.instanceof!TypeBasic) {
+            switch(tb.type) {
+                case BasicType.Int:
+                case BasicType.Long:
+                case BasicType.Cent:
+                case BasicType.Char:
+                case BasicType.Bool:
+                    return LLVMIntegerTypeKind;
+                case BasicType.Float:
+                    return LLVMFloatTypeKind;
+                default: return LLVMDoubleTypeKind;
+            }
+        }
+        if(TypePointer tp = t.instanceof!TypePointer) {
+            if(tp.instance.instanceof!TypeStruct) return LLVMStructTypeKind;
+            return LLVMPointerTypeKind;
+        }
+        if(TypeStruct ts = t.instanceof!TypeStruct) return LLVMStructTypeKind;
+        if(TypeFunc tf = t.instanceof!TypeFunc) return LLVMFunctionTypeKind;
+        return -1;
     }
 
     uint getAlignmentOfType(Type t) {
@@ -767,21 +796,11 @@ class NodeBinary : Node {
                     val = LLVMBuildLoad(Generator.Builder,val,toStringz("load764_1_"));
                 }
 
-                if(LLVMTypeOf(val) != LLVMTypeOf(g.generate())
-                   && LLVMTypeOf(val) == LLVMPointerType(LLVMInt8TypeInContext(Generator.Context),0)) {
-                    val = LLVMBuildBitCast(
-                        Generator.Builder,
-                        val,
-                        LLVMTypeOf(g.generate()),
-                        toStringz("bitcast")
-                    );
-                }
-
                 g.isMustBePtr = true;
 
                 return LLVMBuildStore(
                     Generator.Builder,
-                    second.generate(),
+                    val,
                     g.generate()
                 );
             }
@@ -1185,6 +1204,102 @@ string namespacesNamesToString(string[] namespacesNames,string n) {
     return ret;
 }
 
+string typesToString(FuncArgSet[] args) {
+    string data = "[";
+    for(int i=0; i<args.length; i++) {
+        Type t = args[i].type;
+        if(TypeBasic tb = t.instanceof!TypeBasic) {
+            switch(tb.type) {
+                case BasicType.Float: data ~= "_f"; break;
+                case BasicType.Double: data ~= "_d"; break;
+                case BasicType.Int: data ~= "_i"; break;
+                case BasicType.Cent: data ~= "_t"; break;
+                case BasicType.Char: data ~= "_c"; break;
+                case BasicType.Long: data ~= "_l"; break;
+                default: data ~= "_b"; break;
+            }
+        }
+        else if(TypePointer tp = t.instanceof!TypePointer) {
+            if(TypeStruct ts = tp.instance.instanceof!TypeStruct) {
+                //data ~= "_ps-"~ts.name;
+                data ~= "_s-"~ts.name;
+            }
+            else data ~= "_p";
+        }
+        else if(TypeArray ta = t.instanceof!TypeArray) {
+            data ~= "_a";
+        }
+        else if(TypeStruct ts = t.instanceof!TypeStruct) {
+            data ~= "_s-"~ts.name;
+        }
+        else if(TypeFunc tf = t.instanceof!TypeFunc) {
+            data ~= "_func";
+        }
+    }
+    return data ~ "]";
+}
+
+string typesToString(Type[] args) {
+    string data = "[";
+    for(int i=0; i<args.length; i++) {
+        Type t = args[i];
+        if(TypeBasic tb = t.instanceof!TypeBasic) {
+            switch(tb.type) {
+                case BasicType.Float: data ~= "_f"; break;
+                case BasicType.Double: data ~= "_d"; break;
+                case BasicType.Int: data ~= "_i"; break;
+                case BasicType.Cent: data ~= "_t"; break;
+                case BasicType.Char: data ~= "_c"; break;
+                case BasicType.Long: data ~= "_l"; break;
+                default: data ~= "_b"; break;
+            }
+        }
+        else if(TypePointer tp = t.instanceof!TypePointer) {
+            if(TypeStruct ts = tp.instance.instanceof!TypeStruct) {
+                //data ~= "_ps-"~ts.name;
+                data ~= "_s-"~ts.name;
+            }
+            else data ~= "_p";
+        }
+        else if(TypeArray ta = t.instanceof!TypeArray) {
+            data ~= "_a";
+        }
+        else if(TypeStruct ts = t.instanceof!TypeStruct) {
+            data ~= "_s-"~ts.name;
+        }
+        else if(TypeFunc tf = t.instanceof!TypeFunc) {
+            data ~= "_func";
+        }
+    }
+    return data ~ "]";
+}
+
+Type[] stringToTypes(string args) {
+    Type[] data;
+    args = args[1..$-1];
+
+    string[] _types = args.split("_");
+
+    for(int i=0; i<_types.length; i++) {
+        switch(_types[i]) {
+            case "i": data ~= new TypeBasic("int"); break;
+            case "b": data ~= new TypeBasic("bool"); break;
+            case "l": data ~= new TypeBasic("long"); break;
+            case "f": data ~= new TypeBasic("float"); break;
+            case "d": data ~= new TypeBasic("double"); break;
+            case "t": data ~= new TypeBasic("cent"); break;
+            case "func": data ~= new TypeFunc(null,null); break;
+            case "p": data ~= new TypePointer(null); break;
+            default:
+                if(_types[i][0] == 's') data ~= new TypeStruct(_types[i][2..$]);
+                //else data ~= new TypePointer(new TypeStruct(_types[i][3..$]));
+                break;
+        }
+    }
+
+    return data.dup;
+}
+
 class NodeFunc : Node {
     string name;
     FuncArgSet[] args;
@@ -1217,9 +1332,12 @@ class NodeFunc : Node {
         if(namespacesNames.length>0) {
             name = namespacesNamesToString(namespacesNames,name);
         }
+        string toAdd = typesToString(args);
         if(!(name !in FuncTable)) {
-            if(args.length != FuncTable[name].args.length) name ~= to!string(args.length);
-            else checkError(loc,"a function with '"~name~"' name already exists on "~to!string(FuncTable[name].loc+1)~" line!");
+            if(typesToString(FuncTable[name].args) == toAdd) checkError(loc,"a function with '"~name~"' name already exists on "~to!string(FuncTable[name].loc+1)~" line!");
+            else {
+                name ~= toAdd;
+            }
         }
         FuncTable[name] = this;
         for(int i=0; i<block.nodes.length; i++) {
@@ -1251,8 +1369,8 @@ class NodeFunc : Node {
     }
 
     override LLVMValueRef generate() {
-        string linkName = Generator.mangle(name,true,false);
-        if(isMethod) linkName = Generator.mangle(name,true,true);
+        string linkName = Generator.mangle(name,true,false,args);
+        if(isMethod) linkName = Generator.mangle(name,true,true,args);
 
         int callconv = 0; // 0 == C
 
@@ -1466,34 +1584,35 @@ class NodeCall : Node {
         return params.dup;
     }
 
-    LLVMValueRef[] getNewParameters(FuncArgSet[] a) {
-        LLVMValueRef[] params;
-        for(int i=0; i<args.length; i++) {
-            LLVMValueRef arg = args[i].generate();
-            if(LLVMTypeOf(arg) == LLVMInt32TypeInContext(Generator.Context)) {
-                if(TypeBasic b = a[i].type.instanceof!TypeBasic) {
-                    if(b.type != BasicType.Int) {
-                        // More or less
-                        arg = LLVMBuildIntCast(
-                            Generator.Builder,
-                            arg,
-                            Generator.GenerateType(a[i].type),
-                            toStringz("itoi")
-                        );
-                    }
+    Type[] parametersToTypes(LLVMValueRef[] params) {
+        Type[] types;
+
+        for(int i=0; i<params.length; i++) {
+            LLVMTypeRef t = LLVMTypeOf(params[i]);
+            if(LLVMGetTypeKind(t) == LLVMPointerTypeKind) {
+                if(LLVMGetTypeKind(LLVMGetElementType(t)) == LLVMStructTypeKind) {
+                    types ~= new TypeStruct(cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(t))));
                 }
-                else if(TypePointer tp = a[i].type.instanceof!TypePointer) {
-                    if(tp.instance == new TypeVoid()) arg = LLVMBuildIntToPtr(Generator.Builder,arg,Generator.GenerateType(new TypePointer(new TypeVoid())),toStringz("itp"));
-                }
+                else types ~= new TypePointer(null);
             }
-            params ~= arg;
+            else if(LLVMGetTypeKind(t) == LLVMIntegerTypeKind) {
+                if(t == LLVMInt32TypeInContext(Generator.Context)) types ~= new TypeBasic("int");
+                else if(t == LLVMInt64TypeInContext(Generator.Context)) types ~= new TypeBasic("long");
+                else if(t == LLVMInt16TypeInContext(Generator.Context)) types ~= new TypeBasic("short");
+                else if(t == LLVMInt8TypeInContext(Generator.Context)) types ~= new TypeBasic("char");
+                else if(t == LLVMInt1TypeInContext(Generator.Context)) types ~= new TypeBasic("bool");
+                else types ~= new TypeBasic("cent");
+            }
+            else if(LLVMGetTypeKind(t) == LLVMStructTypeKind) types ~= new TypeStruct(cast(string)fromStringz(LLVMGetStructName(t)));
+            else if(LLVMGetTypeKind(t) == LLVMArrayTypeKind) types ~= new TypeArray(0,null);
         }
-        return params.dup;
+
+        return types.dup;
     }
 
     override LLVMValueRef generate() {
         if(NodeIden f = func.instanceof!NodeIden) {
-        if(!f.name.into(FuncTable) && !into(f.name~to!string(args.length),FuncTable) && !f.name.into(Generator.LLVMFunctions)) {
+        if(!f.name.into(FuncTable) && !into(f.name~to!string(args.length),FuncTable) && !f.name.into(Generator.LLVMFunctions) && !into(f.name~typesToString(parametersToTypes(getParameters())),FuncTable)) {
             if(!f.name.into(MacroTable)) {
                 if(currScope.has(f.name)) {
                     LLVMTypeRef a = LLVMTypeOf(currScope.get(f.name));
@@ -1591,9 +1710,10 @@ class NodeCall : Node {
             );
         }
         string rname = f.name;
-        if(into(f.name~to!string(args.length),FuncTable)) rname ~= to!string(args.length);
+        if(into(f.name~typesToString(parametersToTypes(getParameters())),FuncTable)) rname ~= typesToString(parametersToTypes(getParameters()));
         string name = "CallFunc"~f.name;
         if(FuncTable[rname].type.instanceof!TypeVoid) name = "";
+        //writeln("Name: ",rname," with ",typesToString(parametersToTypes(getParameters())));
         if(FuncTable[rname].args.length != args.length && FuncTable[rname].isVararg != true) {
             Generator.error(
                 loc,
@@ -1621,6 +1741,15 @@ class NodeCall : Node {
                 //writeln(s.name," ",g.field);
                 params = currScope.get(i.name)~params;
                 //writeln("sname: ",s.name," gfield: ",g.field);
+                if(cast(immutable)[s.name,g.field~typesToString(s~parametersToTypes(getParameters()))].into(MethodTable)) {
+                    return LLVMBuildCall(
+                        Generator.Builder,
+                        Generator.Functions[MethodTable[cast(immutable)[s.name,g.field~typesToString(s~parametersToTypes(getParameters()))]].name],
+                        params.ptr,
+                        cast(uint)params.length,
+                        toStringz(MethodTable[cast(immutable)[s.name,g.field~typesToString(s~parametersToTypes(getParameters()))]].type.instanceof!TypeVoid ? "" : g.field)
+                    );
+                }
                 return LLVMBuildCall(
                     Generator.Builder,
                     Generator.Functions[MethodTable[cast(immutable)[s.name,g.field]].name],
@@ -1708,8 +1837,9 @@ class NodeIndex : Node {
             return LLVMBuildLoad(Generator.Builder,index,toStringz("load1684_"));
         }
         if(NodeGet get = element.instanceof!NodeGet) {
+            get.isMustBePtr = true;
             LLVMValueRef ptr = get.generate();
-            if(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMArrayTypeKind) {get.isMustBePtr = true; ptr = get.generate();}
+            if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) != LLVMArrayTypeKind) {ptr = LLVMBuildLoad(Generator.Builder,ptr,toStringz("load1852_"));}
             LLVMValueRef index = Generator.byIndex(ptr,generateIndexs());
 
             if(isMustBePtr) return index;
@@ -2293,7 +2423,15 @@ class NodeStruct : Node {
                         f.isExtern = true;
                     }
 
-                    MethodTable[cast(immutable)[name,f.origname]] = f;
+                    if(cast(immutable)[name,f.origname].into(MethodTable)) {
+                        // Maybe overload?
+                        if(typesToString(MethodTable[cast(immutable)[name,f.origname]].args) != typesToString(f.args)) {
+                            // Overload
+                            MethodTable[cast(immutable)[name,f.origname~typesToString(f.args)]] = f;
+                        }
+                        else Generator.error(loc," method '"~f.origname~"' has already been declared on "~to!string(MethodTable[cast(immutable)[name,f.origname]].loc)~" line!");
+                    }
+                    else MethodTable[cast(immutable)[name,f.origname]] = f;
                     
                     methods ~= f;
                 }
@@ -2505,7 +2643,6 @@ class NodeUsing : Node {
                 //Generator.Globals.remove(oldname);
             }
         }
-        // TODO
         foreach(f; FuncTable) {
             if(f.namespacesNames.length>0) {
                 string[] newNamespacesNames;
@@ -2515,6 +2652,7 @@ class NodeUsing : Node {
                 f.namespacesNames = newNamespacesNames.dup;
                 string oldname = f.name;
                 f.name = namespacesNamesToString(f.namespacesNames, f.origname);
+                if(oldname[$-1] == ']') f.name ~= typesToString(f.args);
                 FuncTable[f.name] = f;
                 //FuncTable.remove(oldname);
                 Generator.Functions[f.name] = Generator.Functions[oldname];
@@ -2552,7 +2690,26 @@ class NodeUsing : Node {
                 }
                 foreach(s; StructTable[oldname].elements) {
                     if(NodeFunc f = s.instanceof!NodeFunc) {
-                        if(f.origname != "this") MethodTable[cast(immutable)[var.name,f.origname]] = MethodTable[cast(immutable)[oldname,f.origname]];
+                        if(f.origname != "this") {
+                            string withArgs = f.origname~typesToString(f.args);
+                            if(cast(immutable)[oldname,withArgs].into(MethodTable)) {
+                                for(int i=0; i<f.args.length; i++) {
+                                    if(TypeStruct ts = f.args[i].type.instanceof!TypeStruct) {
+                                        if(ts.name == oldname) ts.name = var.name;
+                                        f.args[i].type = ts;
+                                    }
+                                    else if(TypePointer tp = f.args[i].type.instanceof!TypePointer) {
+                                        if(TypeStruct ts = tp.instance.instanceof!TypeStruct) {
+                                            if(ts.name == oldname) ts.name = var.name;
+                                            tp.instance = ts;
+                                        }
+                                        f.args[i].type = tp;
+                                    }
+                                }
+                                MethodTable[cast(immutable)[var.name,f.origname~typesToString(f.args)]] = MethodTable[cast(immutable)[oldname,withArgs]];
+                            }
+                            else MethodTable[cast(immutable)[var.name,f.origname]] = MethodTable[cast(immutable)[oldname,f.origname]];
+                        }
                         else {
                             FuncTable[var.name] = FuncTable[oldname];
                         }
