@@ -656,6 +656,7 @@ class Parser {
         }
 
         auto type = parseType();
+        if(peek().value == "operator") return parseOperatorOverload(type,s);
         loc = peek().line;
         name = peek().value;
         next();
@@ -870,6 +871,43 @@ class Parser {
         NodeBlock b = parseBlock(f);
 
         return new NodeDebug(name,b);
+    }
+
+    Node parseOperatorOverload(Type tt, string s = "") {
+        next();
+        string name = s~"("~peek().value~")";
+        next();
+
+        FuncArgSet[] args;
+
+        if(peek().type == TokType.Rpar) next();
+
+        while(peek().type != TokType.Lpar) {
+            Type t = parseType();
+            args ~= FuncArgSet(peek().value,t);
+            next();
+            if(peek().type == TokType.Comma) next();
+        }
+        next();
+
+        if(peek().type == TokType.ShortRet) {
+            NodeBlock nb = new NodeBlock([]);
+            next();
+            nb.nodes ~= new NodeRet(parseExpr(),peek().line,name);
+            if(peek().type == TokType.Semicolon) next();
+
+            return new NodeFunc(name,args.dup,nb,false,[],peek().line,tt);
+        }
+        else {
+            // Rbra
+            next();
+            NodeBlock nb = parseBlock();
+            if(peek().type == TokType.ShortRet) {
+                next();
+                nb.nodes ~= new NodeRet(parseExpr(),peek().line,name);
+            }
+            return new NodeFunc(name,args.dup,nb,false,[],peek().line,tt);
+        }
     }
 
     Node parseTopLevel(string s = "") {

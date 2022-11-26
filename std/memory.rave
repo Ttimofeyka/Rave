@@ -7,7 +7,6 @@ namespace std {
     extern(linkname: "memcmp") bool memcmp(void* one, void* two, int n);
     extern(linkname: "memset") void* memset(void* dest, int val);
     extern(linkname: "calloc") void* calloc(int num, int size);
-
 }
 
 macro delete {
@@ -43,8 +42,24 @@ namespace std {
 
         void* get(int index) => this.data[index];
 
+        int find(void* el) {
+            int i = 0;
+            int toret = 0;
+
+            while(i<this.length) {
+                if(this.data[i] == el) {
+                    toret = i;
+                    i = this.length;
+                }
+                i += 1;
+            }
+
+            if(i >= this.length && toret == 0) toret = -1;
+        } => toret;
+
         void destroy {
             std::free(cast(void*)this.data);
+            std::free(cast(void*)this);
         }
     }
 }

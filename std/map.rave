@@ -8,9 +8,8 @@ namespace std {
         int capacity;
         int length;
 
-        std::map* this(int size) {
-            this.size = size;
-            this.length = 0;
+        std::map* this {
+            this.size = 1;
             this.capacity = this.size * 2;
             this.keys = cast(void**)std::calloc(this.capacity,sizeof(void*));
             this.values = cast(void**)std::calloc(this.capacity,sizeof(void*));
@@ -25,9 +24,9 @@ namespace std {
         } => i;
 
         void set(void* key, void* value) {
-            this.length += 1;
+            this.size += 1;
 
-            if(this.length*this.size > this.capacity) {
+            if(this.size > this.capacity) {
                 this.capacity = this.capacity * 2;
                 this.keys = cast(void**)std::realloc(this.capacity,sizeof(void*));
                 this.values = cast(void**)std::realloc(this.capacity,sizeof(void*));
@@ -46,7 +45,7 @@ namespace std {
         } => val;
 
         void remove(void* key) {
-            this.length -= 1;
+            this.size -= 1;
 
             int i = this.getIndex(key);
             int l = sizeof(void**) / sizeof(void*);

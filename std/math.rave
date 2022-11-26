@@ -1,6 +1,27 @@
-namespace math {
-    alias PI = 3.14159265358979323846;
+namespace std {
+    namespace math {
+        alias PI = 3.14159265358979323846;
 
-    extern(linkname: "lroundf") long round(float f);
-    extern(linkname: "powf") float pow(float one, float two);
+        extern(linkname: "lroundf") long round(float f);
+        extern(linkname: "acosf") float acos(float f);
+        extern(linkname: "acoshf") float acosh(float f);
+        extern(linkname: "asinf") float asin(float f);
+        extern(linkname: "asinhf") float asinh(float f);
+        extern(linkname: "atanf") float atan(float f);
+        extern(linkname: "atanhf") float atanh(float f);
+        extern(linkname: "cbrtf") float cbrt(float f);
+        extern(linkname: "ceilf") float ceil(float f);
+        extern(linkname: "cosf") float cos(float f);
+        extern(linkname: "coshf") float cosh(float f);
+        extern(linkname: "erff") float erf(float f);
+        extern(linkname: "exp2") float exp2(float f);
+        extern(linkname: "floor") float floor(float f);
+        extern(linkname: "fminf") float fmin(float f);
+        extern(linkname: "fmaxf") float fmax(float f);
+        extern(linkname: "fmodf") float fmod(float f);
+        extern(linkname: "sinf") float sin(float f);
+        extern(linkname: "sqrtf") float sqrt(float f);
+        extern(linkname: "powf") float pow(float f1, float f2);
+        extern(linkname: "truncf") float trunc(float f);
+    }
 }

@@ -93,6 +93,50 @@ namespace std {
             }
         }
 
+        std::string* operator+(std::string* one, std::string* two) {
+            std::string* third = std::string(one.c());
+            third.append(two);
+        } => third;
+
+        bool compare(std::string* another) {
+            bool isEqual = true;
+            if(this.length != another.length) {
+                isEqual = false;
+            }
+            else {
+                int i = 0;
+                while(i<another.length) {
+                    if(this.data[i] != another.data[i]) isEqual = false;
+                    i += 1;
+                }
+            }
+        } => isEqual;
+
+        bool compare(char* another) {
+            bool isEqual = true;
+            int len = libc::strlen(another);
+
+            if(this.length != len) {
+                isEqual = false;
+            }
+            else {
+                int i = 0;
+                while(i<len) {
+                    if(this.data[i] != another[i]) isEqual = false;
+                    i += 1;
+                }
+            }    
+        } => isEqual;
+
+        bool operator==(std::string* one, std::string* two) => one.compare(two);
+        bool operator==(std::string* one, char* two) => one.compare(two);
+        bool operator!=(std::string* one, std::string* two) => !(one.compare(two));
+        bool operator!=(std::string* one, char* two) => !(one.compare(two));
+
+        void operator=(std::string** one, char* two) {
+            one[0] = std::string(two);
+        }
+
         void destroy {
             std::free(this.data);
             std::free(this);

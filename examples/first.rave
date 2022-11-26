@@ -4,15 +4,6 @@ import <std/map>
 using std;
 
 int main {
-    map* map = map(sizeof(int));
-
-    map.set("jam",10);
-    map.set("jamal",15);
-
-    int s = map.get("jam");
-    int y = map.get("jamal");
-
-    printf("%d\n%d\n",s,y);
-
-    map.destroy();
+    string* a = "Hello, world!\n";
+    printf(a);
 } => 0;
