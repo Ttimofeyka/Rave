@@ -15,14 +15,12 @@ macro delete {
 
 namespace std {
     struct vector {
-        int element;
         void** data;
         int length;
         bool isInitialized = false;
         int capacity;
 
-        std::vector* this(int size) {
-            this.element = size;
+        std::vector* this {
             this.length = 0;
             this.capacity = 1;
         } => this;
@@ -34,8 +32,8 @@ namespace std {
                 this.capacity = this.capacity * 2;
             }
 
-            if(this.isInitialized == false) {this.data = cast(void**)std::malloc(this.element); this.isInitialized = true;}
-            else this.data = cast(void**)std::realloc(cast(void*)this.data,(this.capacity));
+            if(this.isInitialized == false) {this.data = cast(void**)std::malloc(sizeof(char)); this.isInitialized = true;}
+            else this.data = cast(void**)std::realloc(cast(void*)this.data,(this.capacity)*sizeof(char));
 
             this.data[this.length-1] = el;
         }

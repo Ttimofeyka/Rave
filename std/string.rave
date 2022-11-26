@@ -10,6 +10,7 @@ namespace libc {
 }
 
 namespace std {
+    extern(linkname: "sscanf") int format(char* buff, char* fmt);
     struct string {
         char* data;
         int length;
