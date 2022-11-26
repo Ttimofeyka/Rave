@@ -6,6 +6,8 @@ namespace std {
     extern(linkname: "memmove") void* memmove(void* dest, void* src, int n);
     extern(linkname: "memcmp") bool memcmp(void* one, void* two, int n);
     extern(linkname: "memset") void* memset(void* dest, int val);
+    extern(linkname: "calloc") void* calloc(int num, int size);
+
 }
 
 macro delete {
@@ -18,17 +20,23 @@ namespace std {
         void** data;
         int length;
         bool isInitialized = false;
+        int capacity;
 
         std::vector* this(int size) {
             this.element = size;
             this.length = 0;
+            this.capacity = 1;
         } => this;
 
         void add(void* el) {
             this.length += 1;
 
+            if(this.length == this.capacity) {
+                this.capacity = this.capacity * 2;
+            }
+
             if(this.isInitialized == false) {this.data = cast(void**)std::malloc(this.element); this.isInitialized = true;}
-            else this.data = cast(void**)std::realloc(cast(void*)this.data,(this.length)*this.element);
+            else this.data = cast(void**)std::realloc(cast(void*)this.data,(this.capacity));
 
             this.data[this.length-1] = el;
         }

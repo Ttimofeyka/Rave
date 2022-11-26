@@ -367,8 +367,8 @@ class Parser {
             TokType.Nequal: -80,
             TokType.Less: -70,
             TokType.More: -70,
-            TokType.Or: -50,
-            TokType.And: -50,
+            TokType.Or: -85,
+            TokType.And: -85,
             TokType.BitLeft: -51,
             TokType.BitRight: -51
         ];

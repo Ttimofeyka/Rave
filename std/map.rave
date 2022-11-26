@@ -1,0 +1,64 @@
+import <std/memory>
+
+namespace std {
+    struct map {
+        int size;
+        void** keys;
+        void** values;
+        int capacity;
+        int length;
+
+        std::map* this(int size) {
+            this.size = size;
+            this.length = 0;
+            this.capacity = this.size * 2;
+            this.keys = cast(void**)std::calloc(this.capacity,sizeof(void*));
+            this.values = cast(void**)std::calloc(this.capacity,sizeof(void*));
+        } => this;
+
+        int getIndex(void* key) {
+            int i = (cast(int)key) % this.size;
+
+            while(this.keys[i] != null && this.keys[i] != key) {
+                i = (i+1) % this.size;
+            }
+        } => i;
+
+        void set(void* key, void* value) {
+            this.length += 1;
+
+            if(this.length*this.size > this.capacity) {
+                this.capacity = this.capacity * 2;
+                this.keys = cast(void**)std::realloc(this.capacity,sizeof(void*));
+                this.values = cast(void**)std::realloc(this.capacity,sizeof(void*));
+            }
+
+            int i = this.getIndex(key);
+            this.keys[i] = key;
+            this.values[i] = value;
+        }
+
+        void* get(void* key) {
+            int index = this.getIndex(key);
+            void* val;
+            if(index == -1) val = null; 
+            else val = this.values[this.getIndex(key)];
+        } => val;
+
+        void remove(void* key) {
+            this.length -= 1;
+
+            int i = this.getIndex(key);
+            int l = sizeof(void**) / sizeof(void*);
+
+            this.keys[i] = this.keys[l-1];
+            this.values[i] = this.values[l-1];
+        }
+
+        void destroy {
+            std::free(this.keys);
+            std::free(this.values);
+            std::free(this);
+        }
+    }
+}

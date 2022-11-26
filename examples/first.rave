@@ -1,10 +1,18 @@
 import <std/io>
+import <std/map>
 
 using std;
 
 int main {
-    string* str = string("Hello, world");
-    printf("String: %s\n",str.c());
-    str.append(" and children!");
-    printf("String: %s\n",str.c());
+    map* map = map(sizeof(int));
+
+    map.set("jam",10);
+    map.set("jamal",15);
+
+    int s = map.get("jam");
+    int y = map.get("jamal");
+
+    printf("%d\n%d\n",s,y);
+
+    map.destroy();
 } => 0;
