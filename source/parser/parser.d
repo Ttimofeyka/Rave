@@ -30,12 +30,14 @@ class MultiNode : Node {
     }
 
     override void check() {
+        pragma(inline,true);
         for(int i=0; i<nodes.length; i++) {
             nodes[i].check();
         }
     }
 
     override LLVMValueRef generate() {
+        pragma(inline,true);
         for(int i=0; i<nodes.length; i++) {
             nodes[i].generate();
         }
@@ -203,6 +205,7 @@ class Parser {
     }
 
     Node parseCall(Node func) {
+        pragma(inline,true);
         return new NodeCall(peek().line,func,parseFuncCallArgs());
     }
 
@@ -302,8 +305,20 @@ class Parser {
         }
         if(t.type == TokType.Builtin) {
             next();
-            writeln(t.value);
-            assert(0);
+            string name = t.value;
+
+            Node[] args;
+            while(peek().type != TokType.Lpar) {
+                if(canFind(structs,peek().value) || peek().value == "int" || peek().value == "short" || peek().value == "long" ||
+                   peek().value == "bool" || peek().value == "char" || peek().value == "cent") {
+                    args ~= new NodeType(parseType(),peek().line);
+                }
+                else args ~= parseExpr();
+                if(peek().type == TokType.Comma) next();
+            }
+            next();
+            
+            return new NodeBuiltin(name,args.dup,t.line);
         }
         error("Expected a number, true/false, char, variable or expression. Got: "~to!string(t.type)~" on "~to!string(peek().line+1)~" line.");
         return null;

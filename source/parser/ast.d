@@ -3266,6 +3266,9 @@ class NodeBuiltin : Node {
                 if(TypePointer tp = prType.instanceof!TypePointer) this.ty = tp.instance;
                 else this.ty = prType;
                 break;
+            case "va_arg":
+                // First - va_list, second - type
+                return LLVMBuildVAArg(Generator.Builder,args[0].generate(),Generator.GenerateType(asType(1).ty),toStringz("builtInVaArg"));
             default: break;
         }
         return null;

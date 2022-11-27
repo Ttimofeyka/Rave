@@ -29,6 +29,8 @@ __debugp __RAVE_MIPS {
 
 extern(linkname:"llvm.va_start") void __builtin_va_start(void* va);
 extern(linkname:"llvm.va_end") void __builtin_va_end(void* va);
+extern(linkname:"llvm.va_copy") void __builtin_va_copy(void* dest, void* src);
 
 void va_start(va_list* va) {__builtin_va_start(cast(void*)va);}
 void va_end(va_list* va) {__builtin_va_end(cast(void*)va);}
+void va_copy(va_list* dest, va_list* copy) {__builtin_va_copy(cast(void*)dest,cast(void*)copy);}
