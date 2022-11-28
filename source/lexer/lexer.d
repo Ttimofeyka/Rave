@@ -133,7 +133,7 @@ class Lexer {
                         }
                         else if(divnext == '*') {
                             _idx += 1;
-                            while(text[_idx] != '*' && text[_idx+1] != '/') {
+                            while(text[_idx] != '*' || text[_idx+1] != '/') {
                                 _idx += 1;
                                 if(_idx+1 >= text.length) break;
                             }

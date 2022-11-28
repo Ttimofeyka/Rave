@@ -927,8 +927,6 @@ class NodeBinary : Node {
 
         isStatic = isAliasIden;
 
-        // TODO
-
         if(isStatic) {
             if(operator != TokType.Plus && operator != TokType.Minus
              &&operator != TokType.Multiply) return null;
@@ -1699,6 +1697,7 @@ class NodeCall : Node {
             }
         }
         else for(int i=0; i<args.length; i++) {
+            if(args[i].instanceof!NodeType) continue;
             LLVMValueRef arg = args[i].generate();
             params ~= arg;
         }
@@ -2481,6 +2480,60 @@ class NodeStruct : Node {
         return false;
     }
 
+    void addMethod(NodeFunc f) {
+                if(f.name == origname~"(+)" || f.name == origname~"(==)" || f.name == origname~"(!=)" || f.name == origname~"(=)") {
+                    f.isMethod = true;
+                    if(isImported) f.isExtern = true;
+
+                    TokType oper;
+                    switch(f.name[$-3..$]) {
+                        case "(+)": 
+                            oper = TokType.Plus; f.name = name~"(+)";
+                            break;
+                        case "(=)":
+                            oper = TokType.Equ; f.name = name~"(=)";
+                            break;
+                        case "==)": 
+                            oper = TokType.Equal; f.name = name~"(==)";
+                            break;
+                        case "!=)": 
+                            oper = TokType.Nequal; f.name = name~"(!=)";
+                            break;
+                        default: break;
+                    }
+
+                    f.name = f.name ~ typesToString(f.args);
+
+                    operators[oper][typesToString(f.args)] = f;
+                    methods ~= f;
+                    f.check();
+                    f.generate();
+                }
+                else {
+                    f.args = FuncArgSet("this",new TypePointer(new TypeStruct(name)))~f.args;
+                    f.name = name~"."~f.origname;
+                    f.isMethod = true;
+
+                    if(isImported) {
+                        f.isExtern = true;
+                    }
+
+                    if(cast(immutable)[name,f.origname].into(MethodTable)) {
+                        // Maybe overload?
+                        if(typesToString(MethodTable[cast(immutable)[name,f.origname]].args) != typesToString(f.args)) {
+                            // Overload
+                            MethodTable[cast(immutable)[name,f.origname~typesToString(f.args)]] = f;
+                        }
+                        else Generator.error(loc," method '"~f.origname~"' has already been declared on "~to!string(MethodTable[cast(immutable)[name,f.origname]].loc)~" line!");
+                    }
+                    else MethodTable[cast(immutable)[name,f.origname]] = f;
+                    
+                    methods ~= f;
+                    f.check();
+                    f.generate();
+                }
+    }
+
     LLVMTypeRef[] getParameters() {
         LLVMTypeRef[] values;
         for(int i=0; i<elements.length; i++) {
@@ -2712,6 +2765,7 @@ class NodeCast : Node {
         if(TypeBuiltin b = type.instanceof!TypeBuiltin) {
             NodeBuiltin nb = new NodeBuiltin(b.name,b.args.dup,loc);
             nb.generate();
+
             this.type = nb.ty;
             return this.generate();
         }
@@ -3085,9 +3139,11 @@ class NodeLambda : Node {
     Type type;
     NodeBlock block;
 
+    string name;
+
     LLVMValueRef f;
 
-    this(int loc, TypeFunc type, NodeBlock block) {
+    this(int loc, TypeFunc type, NodeBlock block, string name = "") {
         this.loc = loc;
         this.typ = type;
         this.block = block;
@@ -3233,6 +3289,8 @@ class NodeArray : Node {
     }
 }
 
+NodeFunc[string] toAddInStructs;
+
 class NodeBuiltin : Node {
     string name;
     Node[] args;
@@ -3256,21 +3314,50 @@ class NodeBuiltin : Node {
         assert(0);
     }
 
+    string asStringIden(int n) {
+        if(NodeIden id = args[n].instanceof!NodeIden) return id.name;
+        assert(0);
+    }
+
     override void check() {}
 
     override LLVMValueRef generate() {
         switch(name) {
-            case "previousType":
+            case "baseType":
                 Type prType = asType(0).ty;
                 if(TypeArray ta = prType.instanceof!TypeArray) this.ty = ta.element;
-                if(TypePointer tp = prType.instanceof!TypePointer) this.ty = tp.instance;
+                else if(TypePointer tp = prType.instanceof!TypePointer) this.ty = tp.instance;
                 else this.ty = prType;
+                break;
+            case "addMethod":
+                if(!asStringIden(0).into(StructTable)) {
+                    toAddInStructs[asStringIden(0)] = args[1].instanceof!NodeFunc;
+                }
+                else StructTable[asStringIden(0)].addMethod(args[1].instanceof!NodeFunc);
                 break;
             case "va_arg":
                 // First - va_list, second - type
                 return LLVMBuildVAArg(Generator.Builder,args[0].generate(),Generator.GenerateType(asType(1).ty),toStringz("builtInVaArg"));
             default: break;
         }
+        return null;
+    }
+}
+
+class NodeFor : Node { // TODO
+    int loc;
+    
+    NodeVar var;
+    NodeBinary[] condAndAfter;
+    NodeBlock block;
+
+    this(NodeVar var, NodeBinary[] arr, NodeBlock bl) {
+        this.var = var;
+        this.condAndAfter = arr.dup;
+        this.block = bl;
+    }
+
+    override LLVMValueRef generate() {
         return null;
     }
 }

@@ -8,6 +8,7 @@ namespace std {
     extern(linkname: "system") int system(char* cmd);
 }
 
+/*
 struct any {
     int size;
     bool isPtr = false;
@@ -18,3 +19,4 @@ struct vararg {
     any[256] data;
     int length;
 }
+*/

@@ -1,0 +1,52 @@
+import <std/memory>
+
+namespace std {
+    struct vector {
+        void** data;
+        int length;
+        bool isInitialized = false;
+        int capacity;
+        int size;
+
+        std::vector* this(int size) {
+            this.length = 0;
+            this.capacity = 1;
+            this.size = size;
+        } => this;
+
+        void add(void* el) {
+            this.length += 1;
+
+            if(this.length == this.capacity) {
+                this.capacity = this.capacity * this.size;
+            }
+
+            if(this.isInitialized == false) {this.data = cast(void**)std::malloc(this.capacity); this.isInitialized = true;}
+            else this.data = cast(void**)std::realloc(cast(void*)this.data,(this.capacity));
+
+            this.data[this.length-1] = el;
+        }
+
+        void* get(int index) => this.data[index];
+
+        int find(void* el) {
+            int i = 0;
+            int toret = 0;
+
+            while(i<this.length) {
+                if(this.data[i] == el) {
+                    toret = i;
+                    i = this.length;
+                }
+                i += 1;
+            }
+
+            if(i >= this.length && toret == 0) toret = -1;
+        } => toret;
+
+        void destroy {
+            std::free(this.data);
+            std::free(this);
+        }
+    }
+}
