@@ -16,7 +16,7 @@ namespace std {
         int length;
         int capacity;
 
-        std::string* this(char* a) {
+        std::string this(char* a) {
             this.length = libc::strlen(a);
             this.capacity = this.length*2;
             this.data = std::malloc(this.capacity);
@@ -78,7 +78,7 @@ namespace std {
             this.data[this.length-1] = c;
         }
 
-        void append(std::string* str) {
+        void append(std::string str) {
             int i = 0;
             while(i<str.length) {
                 this.append(str.data[i]);
@@ -94,12 +94,12 @@ namespace std {
             }
         }
 
-        std::string* operator+(std::string* one, std::string* two) {
-            std::string* third = std::string(one.c());
+        std::string operator+(std::string one, std::string two) {
+            std::string third = std::string(one.c());
             third.append(two);
         } => third;
 
-        bool compare(std::string* another) {
+        bool compare(std::string another) {
             bool isEqual = true;
             if(this.length != another.length) {
                 isEqual = false;
@@ -129,12 +129,12 @@ namespace std {
             }    
         } => isEqual;
 
-        bool operator==(std::string* one, std::string* two) => one.compare(two);
-        bool operator==(std::string* one, char* two) => one.compare(two);
-        bool operator!=(std::string* one, std::string* two) => !(one.compare(two));
-        bool operator!=(std::string* one, char* two) => !(one.compare(two));
+        bool operator==(std::string one, std::string two) => one.compare(two);
+        bool operator==(std::string one, char* two) => one.compare(two);
+        bool operator!=(std::string one, std::string two) => !(one.compare(two));
+        bool operator!=(std::string one, char* two) => !(one.compare(two));
 
-        void operator=(std::string** one, char* two) {
+        void operator=(std::string* one, char* two) {
             one[0] = std::string(two);
         }
 

@@ -3,6 +3,5 @@ import <std/io>
 using std;
 
 int main {
-    string* a = "Hello, world!\n";
-    printf(a);
+    string a = "Hello, world!\n";    
 } => 0;

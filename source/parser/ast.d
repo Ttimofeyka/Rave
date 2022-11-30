@@ -859,13 +859,13 @@ class NodeBinary : Node {
 
                 LLVMValueRef val = second.generate();
                 LLVMTypeRef ty = LLVMTypeOf(currScope.get(i.name));
-
-                if(LLVMGetTypeKind(ty) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVMGetElementType(ty)) == LLVMStructTypeKind) {
-                    string structName = cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(ty)));
-
+                if(LLVMGetTypeKind(ty) == LLVMStructTypeKind
+                || (LLVMGetTypeKind(ty) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVMGetElementType(ty)) == LLVMStructTypeKind)) {
+                    string structName;
+                    if(LLVMGetTypeKind(ty) == LLVMPointerTypeKind) structName = cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(ty)));
+                    else structName = cast(string)fromStringz(LLVMGetStructName(ty));
                     if(TokType.Equ.into(StructTable[structName].operators)) {
                         Type[] types; types ~= llvmTypeToType(LLVMTypeOf(currScope.getWithoutLoad(i.name))); types ~= llvmTypeToType(LLVMTypeOf(val));
-                        
                         if(typesToString(types).into(StructTable[structName].operators[TokType.Equ])) {
                             return LLVMBuildCall(
                                 Generator.Builder,
@@ -1289,6 +1289,7 @@ class NodeVar : Node {
 class NodeIden : Node {
     string name;
     int loc;
+    bool isMustBePtr = false;
 
     this(string name, int loc) {
         this.name = name;
@@ -1302,6 +1303,7 @@ class NodeIden : Node {
             Generator.error(loc,"Unknown identifier \""~name~"\"!");
             return null;
         }
+        if(isMustBePtr) return currScope.getWithoutLoad(name);
         return currScope.get(name);
     }
 
@@ -1688,10 +1690,24 @@ class NodeCall : Node {
         if(fas !is null && !fas.empty) {
             int offset = 0;
             if(fas[0].name == "this") offset = 1;
-            for(int i = 0+offset; i<fas.length; i++) {
-                LLVMValueRef arg = args[i-offset].generate();
+            for(int i = 0; i<fas.length; i++) {
+                LLVMValueRef arg = args[i].generate();
                 if(TypePointer tp = fas[i].type.instanceof!TypePointer) {
-                    if(tp.instance.instanceof!TypeVoid) arg = new NodeCast(new TypePointer(new TypeVoid()),args[i-offset],loc).generate();
+                    if(tp.instance.instanceof!TypeVoid) arg = new NodeCast(new TypePointer(new TypeVoid()),args[i],loc).generate();
+                    else if(LLVMGetTypeKind(LLVMTypeOf(arg)) != LLVMPointerTypeKind) {
+                        if(NodeIden id = args[i].instanceof!NodeIden) {
+                            id.isMustBePtr = true;
+                            arg = id.generate();
+                        }
+                        else if(NodeGet ng = args[i].instanceof!NodeGet) {
+                            ng.isMustBePtr = true;
+                            arg = ng.generate();
+                        }
+                        else if(NodeIndex ind = args[i].instanceof!NodeIndex) {
+                            ind.isMustBePtr = true;
+                            arg = ind.generate();
+                        }
+                    }
                 }
                 params ~= arg;
             }
@@ -1857,17 +1873,18 @@ class NodeCall : Node {
                     s = p.instance.instanceof!TypeStruct;
                 }
                 else s = currScope.getVar(i.name,loc).t.instanceof!TypeStruct;
+                this.args = new NodeIden(i.name,loc)~this.args;
                 LLVMValueRef[] params = getParameters(MethodTable[cast(immutable)[s.name,g.field]].args);
                 //writeln(s.name," ",g.field);
-                params = currScope.get(i.name)~params;
+                //params = currScope.get(i.name)~params;
                 //writeln("sname: ",s.name," gfield: ",g.field);
-                if(cast(immutable)[s.name,g.field~typesToString(s~parametersToTypes(getParameters()))].into(MethodTable)) {
+                if(cast(immutable)[s.name,g.field~typesToString(parametersToTypes(params))].into(MethodTable)) {
                     return LLVMBuildCall(
                         Generator.Builder,
-                        Generator.Functions[MethodTable[cast(immutable)[s.name,g.field~typesToString(s~parametersToTypes(getParameters()))]].name],
+                        Generator.Functions[MethodTable[cast(immutable)[s.name,g.field~typesToString(parametersToTypes(getParameters()))]].name],
                         params.ptr,
                         cast(uint)params.length,
-                        toStringz(MethodTable[cast(immutable)[s.name,g.field~typesToString(s~parametersToTypes(getParameters()))]].type.instanceof!TypeVoid ? "" : g.field)
+                        toStringz(MethodTable[cast(immutable)[s.name,g.field~typesToString(parametersToTypes(getParameters()))]].type.instanceof!TypeVoid ? "" : g.field)
                     );
                 }
                 return LLVMBuildCall(
@@ -2551,7 +2568,6 @@ class NodeStruct : Node {
             else {
                 NodeFunc f = elements[i].instanceof!NodeFunc;
                 if(f.name == "this") {
-
                     if(isImported) {
                         _this = f;
                         _this.isExtern = true;
@@ -2562,11 +2578,14 @@ class NodeStruct : Node {
                     }
 
                     _this = f;
+                    _this.type = f.type;
                     _this.isExtern = false;
                     _this.name = origname;
                     _this.namespacesNames = namespacesNames.dup;
 
-                    NodeBinary b = new NodeBinary(
+                    Node[] toAdd;
+
+                    if(!f.type.instanceof!TypeStruct)  toAdd ~= new NodeBinary(
                             TokType.Equ,
                             new NodeIden("this",_this.loc),
                             new NodeCast(new TypePointer(new TypeStruct(name)),
@@ -2580,11 +2599,10 @@ class NodeStruct : Node {
                     );
 
                     Node[] olds = _this.block.nodes.dup;
-                    Node[] none;
-                    _this.block.nodes = none.dup;
+                    _this.block.nodes = [];
 
-                    _this.block.nodes ~= new NodeVar("this",null,false,false,false,[],_this.loc,new TypePointer(new TypeStruct(name)));
-                    _this.block.nodes ~= b;
+                    _this.block.nodes ~= new NodeVar("this",null,false,false,false,[],_this.loc,f.type);
+                    _this.block.nodes ~= toAdd.dup;
                     _this.block.nodes ~= olds.dup;
 
                     _this.check();
@@ -2616,7 +2634,9 @@ class NodeStruct : Node {
                     methods ~= f;
                 }
                 else {
-                    f.args = FuncArgSet("this",new TypePointer(new TypeStruct(name)))~f.args;
+                    Type outType = _this.type;
+                    if(outType.instanceof!TypeStruct) outType = new TypePointer(outType);
+                    f.args = FuncArgSet("this",outType)~f.args;
                     f.name = name~"."~f.origname;
                     f.isMethod = true;
 
@@ -2725,6 +2745,11 @@ class NodeCast : Node {
                     Generator.GenerateType(p),
                     toStringz("ipcast")
                 );
+            }
+            if(LLVMGetTypeKind(LLVMTypeOf(gval)) == LLVMStructTypeKind) {
+                if(NodeIden id = val.instanceof!NodeIden) {id.isMustBePtr = true; gval = id.generate();}
+                else if(NodeGet ng = val.instanceof!NodeGet) {ng.isMustBePtr = true; gval = ng.generate();}
+                else if(NodeIndex ind = val.instanceof!NodeIndex) {ind.isMustBePtr = true; gval = ind.generate();}
             }
             return LLVMBuildPointerCast(
                 Generator.Builder,
@@ -2853,7 +2878,8 @@ class NodeUsing : Node {
                 }
                 f.namespacesNames = newNamespacesNames.dup;
                 string oldname = f.name;
-                f.name = namespacesNamesToString(f.namespacesNames, f.origname);
+                if(f.origname == "this") f.name = namespacesNamesToString(f.namespacesNames, f.name);
+                else f.name = namespacesNamesToString(f.namespacesNames, f.origname);
                 if(oldname[$-1] == ']') f.name ~= typesToString(f.args);
                 FuncTable[f.name] = f;
                 //FuncTable.remove(oldname);
@@ -2868,7 +2894,6 @@ class NodeUsing : Node {
                     if(var.namespacesNames[i] != namespace) newNamespacesNames ~= var.namespacesNames[i];
                 }
                 var.namespacesNames = newNamespacesNames.dup;
-                string oldname = var.name;
                 var.name = namespacesNamesToString(var.namespacesNames, var.origname);
                 MacroTable[var.name] = var;
                 //MacroTable.remove(oldname);
