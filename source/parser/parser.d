@@ -815,60 +815,62 @@ class Parser {
     Node parseImport() {
         import lexer.lexer, std.file, std.path, std.algorithm : canFind;
         next();
-        string _file;
+        string[] _files;
 
-        if(peek().type == TokType.Less) {
-            // Global
-            _file = thisExePath()[0..$-4]~getGlobalFile()~".rave";
+        while(peek().type == TokType.Less || peek().type == TokType.String) {
+            if(peek().type == TokType.Less) {
+                // Global
+                _files ~= thisExePath()[0..$-4]~getGlobalFile()~".rave";
+            }
+            else {
+                // Local
+                _files ~= dirName(MainFile)~"/"~peek().value~".rave";
+            }
+            next();
         }
-        else {
-            // Local
-            _file = dirName(MainFile)~"/"~peek().value~".rave";
-        }
-        next();
-
         if(peek().type == TokType.Semicolon) next();
 
-        if(_file == currentFile) return new NodeNone();
-
-        if(!(_file !in _imported)) return new NodeNone();
-        Lexer l = new Lexer(readText(_file));
-        Parser p = new Parser(l.getTokens().dup);
-        p._imported = _imported.dup;
-        p.MainFile = MainFile;
-        p._aliasPredefines = _aliasPredefines.dup;
-        p.parseAll();
-        Node[] nodes = p.getNodes();
-        for(int i=0; i<nodes.length; i++) {
-            if(NodeVar v = nodes[i].instanceof!NodeVar) {
-                v.isExtern = true;
-            }
-            else if(NodeFunc f = nodes[i].instanceof!NodeFunc) {
-                f.isExtern = true;
-            }
-            else if(NodeNamespace n = nodes[i].instanceof!NodeNamespace) {
-                n.isImport = true;
-            }
-            else if(NodeStruct s = nodes[i].instanceof!NodeStruct) {
-                s.isImported = true;
-            }
-            else if(NodeBlock b = nodes[i].instanceof!NodeBlock) {
-                for(int j=0; j<b.nodes.length; j++) {
-                    if(NodeStruct s = b.nodes[j].instanceof!NodeStruct) s.isImported = true;
+        foreach(_file; _files) {
+            if(_file != currentFile && !_file.into(_imported)) {
+                Lexer l = new Lexer(readText(_file));
+                Parser p = new Parser(l.getTokens().dup);
+                p._imported = _imported.dup;
+                p.MainFile = MainFile;
+                p._aliasPredefines = _aliasPredefines.dup;
+                p.parseAll();
+                Node[] nodes = p.getNodes();
+                for(int i=0; i<nodes.length; i++) {
+                    if(NodeVar v = nodes[i].instanceof!NodeVar) {
+                        v.isExtern = true;
+                    }
+                    else if(NodeFunc f = nodes[i].instanceof!NodeFunc) {
+                        f.isExtern = true;
+                    }
+                    else if(NodeNamespace n = nodes[i].instanceof!NodeNamespace) {
+                        n.isImport = true;
+                    }
+                    else if(NodeStruct s = nodes[i].instanceof!NodeStruct) {
+                        s.isImported = true;
+                    }
+                    else if(NodeBlock b = nodes[i].instanceof!NodeBlock) {
+                        for(int j=0; j<b.nodes.length; j++) {
+                            if(NodeStruct s = b.nodes[j].instanceof!NodeStruct) s.isImported = true;
+                        }
+                    }
                 }
-            }
-        }
-        this._nodes ~= nodes.dup;
-        if(!files.canFind(_file)) files ~= _file;
-        _imported[_file] = true;
-        foreach(key; byKey(p._imported)) {
-            _imported[key] = p._imported[key];
-        }
-        foreach(key; byKey(p._aliasTypes)) {
-            _aliasTypes[key] = p._aliasTypes[key];
-        }
-        foreach(key; byKey(p._aliasPredefines)) {
-            _aliasPredefines[key] = p._aliasPredefines[key];
+                this._nodes ~= nodes.dup;
+                if(!files.canFind(_file)) files ~= _file;
+                _imported[_file] = true;
+                foreach(key; byKey(p._imported)) {
+                    _imported[key] = p._imported[key];
+                }
+                foreach(key; byKey(p._aliasTypes)) {
+                    _aliasTypes[key] = p._aliasTypes[key];
+                }
+                foreach(key; byKey(p._aliasPredefines)) {
+                    _aliasPredefines[key] = p._aliasPredefines[key];
+                }
+            } 
         }
         return new NodeNone();
     }
