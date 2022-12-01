@@ -2045,6 +2045,25 @@ class NodeGet : Node {
                 toStringz("sgep1745_")
             ), toStringz("load1745_"));
         }
+        if(NodeGet ng = base.instanceof!NodeGet) {
+            ng.isMustBePtr = true;
+
+            LLVMValueRef ptr = checkStructure(ng.generate());
+            string structName = cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(ptr))));
+
+            if(isMustBePtr) return LLVMBuildStructGEP(
+                Generator.Builder,
+                ptr,
+                cast(uint)structsNumbers[cast(immutable)[structName,field]].number,
+                toStringz("sgep1739_")
+            );
+            return LLVMBuildLoad(Generator.Builder,LLVMBuildStructGEP(
+                Generator.Builder,
+                ptr,
+                cast(uint)structsNumbers[cast(immutable)[structName,field]].number,
+                toStringz("sgep1745_")
+            ), toStringz("load1745_"));
+        }
         writeln("Base: ",base);
         assert(0);
     }
