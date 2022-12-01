@@ -2568,24 +2568,24 @@ class NodeStruct : Node {
             else {
                 NodeFunc f = elements[i].instanceof!NodeFunc;
                 if(f.name == "this") {
+                    _this = f;
+                    _this.name = origname;
+                    _this.type = f.type;
+                    _this.namespacesNames = namespacesNames.dup;
                     if(isImported) {
-                        _this = f;
                         _this.isExtern = true;
-                        _this.name = origname;
-                        _this.namespacesNames = namespacesNames.dup;
                         _this.check();
                         continue;
                     }
 
-                    _this = f;
-                    _this.type = f.type;
                     _this.isExtern = false;
-                    _this.name = origname;
-                    _this.namespacesNames = namespacesNames.dup;
 
                     Node[] toAdd;
 
-                    if(!f.type.instanceof!TypeStruct)  toAdd ~= new NodeBinary(
+                    if(!f.type.instanceof!TypeStruct) {
+                        NodeIden id = f.rets[$-1].val.instanceof!NodeIden;
+
+                        if(id !is null && id.name == "this") toAdd ~= new NodeBinary(
                             TokType.Equ,
                             new NodeIden("this",_this.loc),
                             new NodeCast(new TypePointer(new TypeStruct(name)),
@@ -2596,7 +2596,8 @@ class NodeStruct : Node {
                                 _this.loc
                             ),
                             _this.loc
-                    );
+                        );
+                    }
 
                     Node[] olds = _this.block.nodes.dup;
                     _this.block.nodes = [];
