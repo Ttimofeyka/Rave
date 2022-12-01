@@ -2582,10 +2582,8 @@ class NodeStruct : Node {
 
                     Node[] toAdd;
 
-                    if(!f.type.instanceof!TypeStruct) {
-                        NodeIden id = f.rets[$-1].val.instanceof!NodeIden;
-
-                        if(id !is null && id.name == "this") toAdd ~= new NodeBinary(
+                    if(!f.type.instanceof!TypeStruct && !canFind(f.mods,DeclMod("noNew",""))) {
+                        toAdd ~= new NodeBinary(
                             TokType.Equ,
                             new NodeIden("this",_this.loc),
                             new NodeCast(new TypePointer(new TypeStruct(name)),
