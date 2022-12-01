@@ -131,6 +131,7 @@ class Compiler {
     }
 
     void compileAll() {
+        import std.path : dirName;
         version(X86) {__X86 = true;}
 
         string[] toRemove;
@@ -165,13 +166,16 @@ class Compiler {
             }
         }
         if(outfile == "") outfile = "a";
+        else {
+            outfile = dirName(files[0])~"/"~outfile;
+        }
         if(opts.onlyObject) linkString ~= " -r ";
         linkString ~= " "~opts.linkparams;
         writeln(linkString~" -o "~outfile);
         auto l = executeShell(linkString~" -o "~outfile);
         if(l.status != 0) writeln("Linking error: "~l.output);
         for(int i=0; i<toRemove.length; i++) {
-            remove(toRemove[i]);
+            if(toRemove[i] != outfile) remove(toRemove[i]);
         }
     }
 }
