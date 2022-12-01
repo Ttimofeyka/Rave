@@ -387,7 +387,9 @@ class Parser {
             TokType.Or: -85,
             TokType.And: -85,
             TokType.BitLeft: -51,
-            TokType.BitRight: -51
+            TokType.BitRight: -51,
+            TokType.MoreEqual: -70,
+            TokType.LessEqual: -70
         ];
 
         SList!Token operatorStack;
