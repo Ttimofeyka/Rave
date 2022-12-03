@@ -2021,10 +2021,18 @@ class NodeGet : Node {
         return ptr;
     }
 
+    void checkIn(string struc) {
+        if(!into(struc,StructTable)) {
+            Generator.error(loc, "Structure "~struc~" doesn't exist!");
+        }
+        if(!into(cast(immutable)[struc,field],structsNumbers)) Generator.error(loc,"Structure "~struc~" doesn't contain element "~field~"!");
+    }
+
     override LLVMValueRef generate() {
         if(NodeIden id = base.instanceof!NodeIden) {
             LLVMValueRef ptr = checkStructure(currScope.getWithoutLoad(id.name));
             string structName = cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(ptr))));
+            checkIn(structName);
 
             if(isMustBePtr) return LLVMBuildStructGEP(
                 Generator.Builder,
@@ -2044,6 +2052,7 @@ class NodeGet : Node {
 
             LLVMValueRef ptr = checkStructure(ind.generate());
             string structName = cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(ptr))));
+            checkIn(structName);
 
             if(isMustBePtr) return LLVMBuildStructGEP(
                 Generator.Builder,
@@ -2063,6 +2072,7 @@ class NodeGet : Node {
 
             LLVMValueRef ptr = checkStructure(ng.generate());
             string structName = cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(ptr))));
+            checkIn(structName);
 
             if(isMustBePtr) return LLVMBuildStructGEP(
                 Generator.Builder,
@@ -2108,6 +2118,22 @@ class NodeUnary : Node {
         this.loc = loc;
         this.type = type;
         this.base = base;
+    }
+
+    LLVMValueRef generatePtr() {
+        if(NodeIden id = base.instanceof!NodeIden) {
+            id.isMustBePtr = true;
+            return id.generate();
+        }
+        if(NodeIndex ind = base.instanceof!NodeIndex) {
+            ind.isMustBePtr = true;
+            return ind.generate();
+        }
+        if(NodeGet ng = base.instanceof!NodeGet) {
+            ng.isMustBePtr = true;
+            return ng.generate();
+        }
+        assert(0);
     }
 
     override void check() {base.check();}
@@ -2167,6 +2193,43 @@ class NodeUnary : Node {
                 base.generate(),
                 toStringz("load1958_")
             );
+        }
+        else if(type == TokType.Destructor) {
+            LLVMValueRef val = generatePtr();
+            bool isPtr = false;
+
+            if(LLVMGetTypeKind(LLVMTypeOf(val)) != LLVMPointerTypeKind && LLVMGetTypeKind(LLVMTypeOf(val)) != LLVMStructTypeKind) {
+                Generator.error(loc,"the attempt to call the destructor isn't in the structure!");
+            }
+
+            if(LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMPointerTypeKind) {
+                if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(val))) == LLVMPointerTypeKind) {
+                    if(LLVMGetTypeKind(LLVMGetElementType(LLVMGetElementType(LLVMTypeOf(val)))) == LLVMArrayTypeKind) {
+                        val = LLVMBuildLoad(Generator.Builder,val,toStringz("load2207_"));
+                        isPtr = true;
+                    }
+                }
+            }
+
+            string struc = cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(val))));
+            
+            Node newBase = base;
+
+            if(!isPtr) {
+                if(NodeIden id = newBase.instanceof!NodeIden) {
+                    id.isMustBePtr = true;
+                }
+                else if(NodeIndex ind = newBase.instanceof!NodeIndex) {
+                    ind.isMustBePtr = true;
+                }
+                else if(NodeGet ng = newBase.instanceof!NodeGet) {
+                    ng.isMustBePtr = true;
+                }
+            }
+            if(StructTable[struc]._destructor is null) {
+                return new NodeCall(loc,new NodeIden("std::free",loc),[newBase]).generate();
+            }
+            return new NodeCall(loc,new NodeIden(StructTable[struc]._destructor.name,loc),[newBase]).generate();
         }
         assert(0);
     }
@@ -2481,6 +2544,7 @@ class NodeStruct : Node {
     int loc;
     string origname;
     NodeFunc _this;
+    NodeFunc _destructor;
     NodeFunc[] methods;
     bool isImported = false;
     string _extends;
@@ -2629,14 +2693,34 @@ class NodeStruct : Node {
                         );
                     }
 
-                    Node[] olds = _this.block.nodes.dup;
-                    _this.block.nodes = [];
-
-                    _this.block.nodes ~= new NodeVar("this",null,false,false,false,[],_this.loc,f.type);
-                    _this.block.nodes ~= toAdd.dup;
-                    _this.block.nodes ~= olds.dup;
+                    _this.block.nodes = new NodeVar("this",null,false,false,false,[],_this.loc,f.type)~toAdd~_this.block.nodes;
 
                     _this.check();
+                }
+                else if(f.name == "~this") {
+                    _destructor = f;
+                    _destructor.name = "~"~origname;
+                    _destructor.type = f.type;
+                    _destructor.namespacesNames = namespacesNames.dup;
+
+                    if(isImported) {
+                        _destructor.isExtern = true;
+                        _destructor.check();
+                        continue;
+                    }
+
+                    Type outType = _this.type;
+                    if(outType.instanceof!TypeStruct) outType = new TypePointer(outType);
+
+                    _destructor.args = [FuncArgSet("this",outType)];
+                    
+                    _destructor.block.nodes = _destructor.block.nodes ~ new NodeCall(
+                            _destructor.loc,
+                            new NodeIden("std::free",_destructor.loc),
+                            [new NodeIden("this",_destructor.loc)]
+                    );
+                    
+                    _destructor.check();
                 }
                 else if(f.name == origname~"(+)" || f.name == origname~"(==)" || f.name == origname~"(!=)" || f.name == origname~"(=)") {
                     f.isMethod = true;
@@ -2705,6 +2789,7 @@ class NodeStruct : Node {
         LLVMTypeRef[] params = getParameters();
         LLVMStructSetBody(Generator.Structs[name],params.ptr,cast(uint)params.length,false);
         if(_this !is null) _this.generate();
+        if(_destructor !is null) _destructor.generate();
         for(int i=0; i<methods.length; i++) {
             methods[i].check();
             methods[i].generate();

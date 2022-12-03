@@ -332,7 +332,8 @@ class Parser {
             TokType.GetPtr,
             TokType.Multiply,
             TokType.Minus,
-            TokType.Ne
+            TokType.Ne,
+            TokType.Destructor,
         ];
 
         if(operators.canFind(peek().type)) {

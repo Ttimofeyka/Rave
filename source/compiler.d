@@ -21,7 +21,7 @@ string hasAnyone(string str, string[] strs) {
 }
 
 class Compiler {
-    private string linkString = "ld.lld ";
+    private string linkString = "clang ";
     private string outfile;
     private string outtype;
     private CompOpts opts;
@@ -38,8 +38,8 @@ class Compiler {
         this.opts = opts;
 
         void addLibs(string platform) {
-            if(!opts.noEntry) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/"~platform~"/crt1.o ";
-            if(!opts.noStd) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/"~platform~"/libc.a ";
+            //if(!opts.noEntry) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/"~platform~"/crt1.o ";
+            //if(!opts.noStd) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/"~platform~"/libc.a ";
         }
 
         string p = hasAnyone(outtype,["x86_64","i686","aarch64","mips64"]);

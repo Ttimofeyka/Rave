@@ -1,7 +1,18 @@
-import <std/io>
 
-using std;
+
+struct A {
+    int val;
+
+    A this(int val) {
+        this.val = val;
+    } => this;
+
+    void ~this {
+        
+    }
+}
 
 int main {
-    string a = "Hello, world!\n";    
+    A a = A(10);
+    ~a;
 } => 0;

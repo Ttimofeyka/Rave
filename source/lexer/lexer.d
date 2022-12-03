@@ -122,6 +122,14 @@ class Lexer {
                     case '#': 
                         isMacroArgNum = true; _idx++;
                         break;
+                    case '~':
+                        // Destructor call or "~this"?
+                        auto n = next();
+                        if(n == 't') {
+                            // "~this"
+                            tokens ~= new Token(TokType.Identifier,"~this",line); _idx += 4;
+                        }
+                        else tokens ~= new Token(TokType.Destructor,"~",line); break;
                     case '/':
                         auto divnext = next();
                         if(divnext == '/') {
@@ -313,6 +321,7 @@ class Lexer {
                                 && peek() != '.'
                                 && peek() != '&'
                                 && peek() != '#'
+                                && peek() != '~'
                             ) {
                                 if(peek() == ':' && text[_idx+1] == ':') {
                                     bufferiden ~= "::";
