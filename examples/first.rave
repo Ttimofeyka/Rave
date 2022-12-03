@@ -1,9 +1,7 @@
-
-
 struct A {
     int val;
 
-    A this(int val) {
+    A* this(int val) {
         this.val = val;
     } => this;
 
@@ -13,6 +11,6 @@ struct A {
 }
 
 int main {
-    A a = A(10);
+    A* a = A(10);
     ~a;
 } => 0;

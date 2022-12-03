@@ -1694,6 +1694,9 @@ class NodeCall : Node {
                 LLVMValueRef arg = args[i].generate();
                 if(TypePointer tp = fas[i].type.instanceof!TypePointer) {
                     if(tp.instance.instanceof!TypeVoid) arg = new NodeCast(new TypePointer(new TypeVoid()),args[i],loc).generate();
+                    if(tp.instance.instanceof!TypeStruct && LLVMGetTypeKind(LLVMTypeOf(arg)) == LLVMPointerTypeKind) {
+                        if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(arg))) == LLVMPointerTypeKind) arg = LLVMBuildLoad(Generator.Builder,arg,toStringz("load1698_"));
+                    }
                     else if(LLVMGetTypeKind(LLVMTypeOf(arg)) != LLVMPointerTypeKind) {
                         if(NodeIden id = args[i].instanceof!NodeIden) {
                             id.isMustBePtr = true;
@@ -2196,7 +2199,6 @@ class NodeUnary : Node {
         }
         else if(type == TokType.Destructor) {
             LLVMValueRef val = generatePtr();
-            bool isPtr = false;
 
             if(LLVMGetTypeKind(LLVMTypeOf(val)) != LLVMPointerTypeKind && LLVMGetTypeKind(LLVMTypeOf(val)) != LLVMStructTypeKind) {
                 Generator.error(loc,"the attempt to call the destructor isn't in the structure!");
@@ -2204,32 +2206,18 @@ class NodeUnary : Node {
 
             if(LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMPointerTypeKind) {
                 if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(val))) == LLVMPointerTypeKind) {
-                    if(LLVMGetTypeKind(LLVMGetElementType(LLVMGetElementType(LLVMTypeOf(val)))) == LLVMArrayTypeKind) {
+                    if(LLVMGetTypeKind(LLVMGetElementType(LLVMGetElementType(LLVMTypeOf(val)))) == LLVMStructTypeKind) {
                         val = LLVMBuildLoad(Generator.Builder,val,toStringz("load2207_"));
-                        isPtr = true;
                     }
                 }
             }
 
             string struc = cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(val))));
-            
-            Node newBase = base;
 
-            if(!isPtr) {
-                if(NodeIden id = newBase.instanceof!NodeIden) {
-                    id.isMustBePtr = true;
-                }
-                else if(NodeIndex ind = newBase.instanceof!NodeIndex) {
-                    ind.isMustBePtr = true;
-                }
-                else if(NodeGet ng = newBase.instanceof!NodeGet) {
-                    ng.isMustBePtr = true;
-                }
-            }
             if(StructTable[struc]._destructor is null) {
-                return new NodeCall(loc,new NodeIden("std::free",loc),[newBase]).generate();
+                return new NodeCall(loc,new NodeIden("std::free",loc),[base]).generate();
             }
-            return new NodeCall(loc,new NodeIden(StructTable[struc]._destructor.name,loc),[newBase]).generate();
+            return new NodeCall(loc,new NodeIden(StructTable[struc]._destructor.name,loc),[base]).generate();
         }
         assert(0);
     }
@@ -2714,7 +2702,7 @@ class NodeStruct : Node {
 
                     _destructor.args = [FuncArgSet("this",outType)];
                     
-                    _destructor.block.nodes = _destructor.block.nodes ~ new NodeCall(
+                    if(!_this.type.instanceof!TypeStruct) _destructor.block.nodes = _destructor.block.nodes ~ new NodeCall(
                             _destructor.loc,
                             new NodeIden("std::free",_destructor.loc),
                             [new NodeIden("this",_destructor.loc)]
