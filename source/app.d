@@ -55,7 +55,7 @@ CompOpts analyzeArgs(string[] args) {
 			case "-el": case "--emit-llvm":
 			case "-emit-llvm": // Compatible with the same option from clang
 				opts.emit_llvm = true; break;
-			case "-l": case "--library": opts.linkparams ~= "-l"~args[idx+1]; idx += 1; break;
+			case "-l": case "--library": opts.linkparams ~= "-l"~args[idx+1]~" "; idx += 1; break;
 			case "-c": opts.onlyObject = true; break;
 			case "-ne": case "--noEntry": opts.noEntry = true; break;
 			case "-ns": case "--noStd": opts.noStd = true; break;

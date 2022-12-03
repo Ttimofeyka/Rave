@@ -1968,6 +1968,19 @@ class NodeIndex : Node {
     override LLVMValueRef generate() {
         if(NodeIden id = element.instanceof!NodeIden) {
             LLVMValueRef ptr = currScope.get(id.name);
+            if(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMArrayTypeKind && LLVMGetTypeKind(LLVMTypeOf(currScope.getWithoutLoad(id.name))) == LLVMArrayTypeKind) {
+                // Argument
+                if(isMustBePtr) {
+                    assert(0);
+                }
+                if(indexs.length > 1) assert(0); // because TODO
+                return LLVMBuildExtractValue(
+                    Generator.Builder,
+                    ptr,
+                    cast(uint)(indexs[0].instanceof!NodeInt.value),
+                    toStringz("extval")
+                );
+            }
             LLVMValueRef index = Generator.byIndex(ptr,generateIndexs());
 
             if(isMustBePtr) return index;
