@@ -138,9 +138,8 @@ namespace std {
             one[0] = std::string(two);
         }
 
-        void destroy {
+        void ~this {
             std::free(this.data);
-            std::free(this);
         }
     }
 }

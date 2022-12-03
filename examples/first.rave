@@ -1,16 +1,7 @@
-struct A {
-    int val;
+import <std/gc>
 
-    A* this(int val) {
-        this.val = val;
-    } => this;
+int main(int argc, char** argv) {
+    std::GC* gc = std::GC(cast(void*)&argc);
 
-    void ~this {
-        
-    }
-}
-
-int main {
-    A* a = A(10);
-    ~a;
+    gc.stop();
 } => 0;

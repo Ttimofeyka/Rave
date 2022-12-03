@@ -17,6 +17,6 @@ $webclient.DownloadFile("https://s3.us-west-2.amazonaws.com/downloads.dlang.org/
 
 .\$pwd\dlang_installer.exe
 
-echo "Done! Write 'dub build' in folder with Rave!"
+echo "Done! Write 'dub build' in folder with Rave."
 
 Start-Sleep -Seconds 3

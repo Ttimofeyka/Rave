@@ -56,6 +56,9 @@ enum TokType {
     Builtin,
 
     Destructor,
+
+    BitOr,
+    BitAnd,
 }
 
 class Token {

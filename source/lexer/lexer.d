@@ -47,10 +47,13 @@ class Lexer {
         return cast(char)(buffer.to!int(8))~"";
     }
 
-    this(string text) {
+    this(string text, int offset) {
         import core.stdc.stdlib : exit;
         this.text = text~"\n";
         bool isPreprocessorCommand = false;
+
+        this.line = 0 - offset;
+
         while(_idx<text.length) {
             if(text[_idx] == '\n') {
                 _idx++;
@@ -89,6 +92,7 @@ class Lexer {
                             tokens ~= new Token(TokType.Or,"||",line);
                             _idx++;
                         }
+                        else tokens ~= new Token(TokType.BitOr,"|",line);
                         break;
                     case '(': tokens ~= new Token(TokType.Rpar,"(",line); _idx++; break;
                     case ')': tokens ~= new Token(TokType.Lpar,")",line); _idx++; break;
@@ -127,7 +131,21 @@ class Lexer {
                         auto n = next();
                         if(n == 't') {
                             // "~this"
-                            tokens ~= new Token(TokType.Identifier,"~this",line); _idx += 4;
+                            n = next();
+                            if(n == 'h') {
+                                n = next();
+                                if(n == 'i') {
+                                    n = next();
+                                    if(n == 's') {
+                                        n = next();
+                                        if(n != '.') tokens ~= new Token(TokType.Identifier,"~this",line);
+                                        else {tokens ~= new Token(TokType.Destructor,"~",line); _idx -= 4;}
+                                    }
+                                    else {tokens ~= new Token(TokType.Destructor,"~",line); _idx -= 3;}
+                                }
+                                else {tokens ~= new Token(TokType.Destructor,"~",line); _idx -= 2;}
+                            }
+                            else {tokens ~= new Token(TokType.Destructor,"~",line); _idx -= 1;}
                         }
                         else tokens ~= new Token(TokType.Destructor,"~",line); break;
                     case '/':

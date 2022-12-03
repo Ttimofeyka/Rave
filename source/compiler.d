@@ -66,17 +66,19 @@ class Compiler {
     void compile(string file) {
         string content = readText(file);
 
+        int offset = 1;
+
         if(outtype.indexOf("i686") != -1) content = "__aliasp __RAVE_X86 = true;\n"~content;
         else if(outtype.indexOf("x86_64") != -1) content = "__aliasp __RAVE_X86_64 = true;\n"~content;
         else if(outtype.indexOf("aarch64") != -1) content = "__aliasp __RAVE_AARCH64 = true;\n"~content;
         else if(outtype.indexOf("mips") != -1) content = "__aliasp __RAVE_MIPS = true;\n"~content;
 
         if(!opts.noPrelude && file != "std/prelude.rave" && file != "std/memory.rave") {
-            content = "import <std/prelude>\n import <std/memory>\n"~content;
+            content = "import <std/prelude> <std/memory>\n"~content;
         }
 
-        Lexer lex = new Lexer(content);
-        Parser p = new Parser(lex.getTokens());
+        Lexer lex = new Lexer(content,offset);
+        Parser p = new Parser(lex.getTokens(),offset);
         p.currentFile = file;
         p.MainFile = files[0];
         p.parseAll();

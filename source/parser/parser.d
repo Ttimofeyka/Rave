@@ -54,6 +54,7 @@ class Parser {
     Type[string] _aliasTypes;
     string currentFile = "";
     Node[string] _aliasPredefines;
+    int offset;
 
     private void error(string msg) {
         pragma(inline,true);
@@ -338,6 +339,13 @@ class Parser {
 
         if(operators.canFind(peek().type)) {
             auto tok = next();
+            auto tok2 = next();
+            auto tok3 = next();
+            if(tok3.value == "[" || tok3.value == ".") {
+                _idx -= 2;
+                return new NodeUnary(-1,tok.type,parseSuffix(parseAtom()));
+            }
+            else _idx -= 2;
             return new NodeUnary(tok.line, tok.type, parsePrefix());
         }
         return parseAtom();
@@ -563,6 +571,7 @@ class Parser {
         }
         else if(peek().type == TokType.Identifier) {
                 string iden = peek().value;
+                if(iden == "volatile") return parseDecl(f);
                 if(iden == "debug") return parseDebug();
                 _idx++;
                 if(peek().type != TokType.Identifier) {
@@ -578,6 +587,7 @@ class Parser {
                             case "short":
                             case "char":
                             case "cent":
+                            case "volatile":
                                 _idx -= 1;
                                 return parseDecl(f);
                             default:
@@ -600,6 +610,7 @@ class Parser {
                             case "short":
                             case "char":
                             case "cent":
+                            case "volatile":
                                 _idx -= 1;
                                 return parseDecl(f);
                             default: break;
@@ -693,6 +704,12 @@ class Parser {
         string name;
         bool isExtern = false;
         bool isConst = false;
+        bool isVolatile = false;
+
+        if(peek().value == "volatile") {
+            isVolatile = true;
+            next();
+        }
 
         if(peek().value == "extern") {
             isExtern = true;
@@ -770,7 +787,7 @@ class Parser {
         else if(peek().type == TokType.Semicolon) {
             // Var without value
             next();
-            return new NodeVar(name,null,isExtern,isConst,(s==""),mods,loc,type);
+            return new NodeVar(name,null,isExtern,isConst,(s==""),mods,loc,type,isVolatile);
         }
         else if(peek().type == TokType.ShortRet) {
             next();
@@ -783,7 +800,7 @@ class Parser {
             next();
             auto e = parseExpr();
             if(peek().type != TokType.Lpar) expect(TokType.Semicolon);
-            return new NodeVar(name,e,isExtern,isConst,(s==""),mods,loc,type);
+            return new NodeVar(name,e,isExtern,isConst,(s==""),mods,loc,type,isVolatile);
         }
         return new NodeFunc(name,[],parseBlock(name), isExtern, mods, loc, type);
     }
@@ -835,8 +852,8 @@ class Parser {
 
         foreach(_file; _files) {
             if(_file != currentFile && !_file.into(_imported)) {
-                Lexer l = new Lexer(readText(_file));
-                Parser p = new Parser(l.getTokens().dup);
+                Lexer l = new Lexer(readText(_file),offset);
+                Parser p = new Parser(l.getTokens().dup,offset);
                 p._imported = _imported.dup;
                 p.MainFile = MainFile;
                 p._aliasPredefines = _aliasPredefines.dup;
@@ -1072,5 +1089,5 @@ class Parser {
         return this._nodes.dup;
     }
     
-    this(Token[] t) {this.tokens = t;}
+    this(Token[] t, int offset) {this.tokens = t; this.offset = offset;}
 }
