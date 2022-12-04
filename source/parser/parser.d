@@ -970,15 +970,17 @@ class Parser {
 
         FuncArgSet[] args;
 
-        if(peek().type == TokType.Rpar) next();
-
-        while(peek().type != TokType.Lpar) {
-            Type t = parseType();
-            args ~= FuncArgSet(peek().value,t);
+        if(peek().type == TokType.Rpar) {
             next();
-            if(peek().type == TokType.Comma) next();
+
+            while(peek().type != TokType.Lpar) {
+                Type t = parseType();
+                args ~= FuncArgSet(peek().value,t);
+                next();
+                if(peek().type == TokType.Comma) next();
+            }
+            next();
         }
-        next();
 
         if(peek().type == TokType.ShortRet) {
             NodeBlock nb = new NodeBlock([]);

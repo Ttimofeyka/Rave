@@ -896,10 +896,6 @@ class NodeBinary : Node {
                     );
                 }
 
-                /*writeln("Val: ",fromStringz(LLVMPrintValueToString(val)));
-                writeln("Ptr: ",fromStringz(LLVMPrintValueToString(currScope.getWithoutLoad(i.name))));
-                writeln("Loc: ",loc);*/
-
                 return LLVMBuildStore(
                     Generator.Builder,
                     val,
@@ -1708,6 +1704,7 @@ class NodeCall : Node {
         if(fas !is null && !fas.empty) {
             int offset = 0;
             if(fas[0].name == "this") offset = 1;
+            // TODO: Fix bug
             for(int i = 0; i<fas.length; i++) {
                 if(i == args.length) break;
                 LLVMValueRef arg = args[i].generate();
@@ -1944,10 +1941,10 @@ class NodeCall : Node {
                 if(cast(immutable)[s.name,g.field~typesToString(parametersToTypes(params))].into(MethodTable)) {
                     return LLVMBuildCall(
                         Generator.Builder,
-                        Generator.Functions[MethodTable[cast(immutable)[s.name,g.field~typesToString(parametersToTypes(getParameters()))]].name],
+                        Generator.Functions[MethodTable[cast(immutable)[s.name,g.field~typesToString(parametersToTypes(params))]].name],
                         params.ptr,
                         cast(uint)params.length,
-                        toStringz(MethodTable[cast(immutable)[s.name,g.field~typesToString(parametersToTypes(getParameters()))]].type.instanceof!TypeVoid ? "" : g.field)
+                        toStringz(MethodTable[cast(immutable)[s.name,g.field~typesToString(parametersToTypes(params))]].type.instanceof!TypeVoid ? "" : g.field)
                     );
                 }
                 return LLVMBuildCall(
@@ -1971,8 +1968,6 @@ class NodeCall : Node {
                     cast(uint)params.length,
                     toStringz(MethodTable[cast(immutable)[sname,g.field]].type.instanceof!TypeVoid ? "" : g.field)
                 );
-
-                //Generator.error(loc,"TODO!");
             }
             else if(NodeGet ng = g.base.instanceof!NodeGet) {
                 auto val = ng.generate();
@@ -2023,6 +2018,7 @@ class NodeIndex : Node {
     }
 
     LLVMValueRef[] generateIndexs() {
+        pragma(inline,true);
         LLVMValueRef[] _indexs;
 
         foreach(Node ind; indexs) {
@@ -2037,16 +2033,9 @@ class NodeIndex : Node {
             LLVMValueRef ptr = currScope.get(id.name,loc);
             if(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMArrayTypeKind && LLVMGetTypeKind(LLVMTypeOf(currScope.getWithoutLoad(id.name,loc))) == LLVMArrayTypeKind) {
                 // Argument
-                if(isMustBePtr) {
-                    assert(0);
-                }
-                if(indexs.length > 1) assert(0); // because TODO
-                return LLVMBuildExtractValue(
-                    Generator.Builder,
-                    ptr,
-                    cast(uint)(indexs[0].instanceof!NodeInt.value),
-                    toStringz("extval")
-                );
+                LLVMValueRef copyVal = LLVMBuildAlloca(Generator.Builder,LLVMTypeOf(ptr),toStringz("copyVal_"));
+                LLVMBuildStore(Generator.Builder,ptr,copyVal);
+                ptr = copyVal;
             }
             LLVMValueRef index = Generator.byIndex(ptr,generateIndexs());
 
@@ -2292,6 +2281,12 @@ class NodeUnary : Node {
             string struc = cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(val))));
 
             if(StructTable[struc]._destructor is null) {
+                if(NodeIden id = base.instanceof!NodeIden) {
+                    writeln(id.name);
+                    if(!into(id.name,currScope.localVars) && !currScope.localVars[id.name].t.instanceof!TypeStruct) return new NodeCall(loc,new NodeIden("std::free",loc),[base]).generate();
+                    else return null;
+                }
+                // TODO
                 return new NodeCall(loc,new NodeIden("std::free",loc),[base]).generate();
             }
             return new NodeCall(loc,new NodeIden(StructTable[struc]._destructor.name,loc),[base]).generate();
@@ -2768,16 +2763,16 @@ class NodeStruct : Node {
                     _destructor.type = f.type;
                     _destructor.namespacesNames = namespacesNames.dup;
 
+                    Type outType = _this.type;
+                    if(outType.instanceof!TypeStruct) outType = new TypePointer(outType);
+
+                    _destructor.args = [FuncArgSet("this",outType)];
+
                     if(isImported) {
                         _destructor.isExtern = true;
                         _destructor.check();
                         continue;
                     }
-
-                    Type outType = _this.type;
-                    if(outType.instanceof!TypeStruct) outType = new TypePointer(outType);
-
-                    _destructor.args = [FuncArgSet("this",outType)];
                     
                     if(!_this.type.instanceof!TypeStruct) _destructor.block.nodes = _destructor.block.nodes ~ new NodeCall(
                             _destructor.loc,
@@ -2838,14 +2833,6 @@ class NodeStruct : Node {
                 }
             }
         }
-        /*if(name == "va_list") {
-            LLVMTypeRef[] t1 = [LLVMPointerType(LLVMInt8TypeInContext(Generator.Context),0)];
-            LLVMTypeRef ft1 = LLVMFunctionType(LLVMVoidTypeInContext(Generator.Context),t1.ptr,1,false);
-            Generator.LLVMFunctions["va_start"] = LLVMAddFunction(Generator.Module,toStringz("llvm.va_start"),ft1);
-            Generator.LLVMFunctions["va_end"] = LLVMAddFunction(Generator.Module,toStringz("llvm.va_end"),ft1);
-            Generator.LLVMFunctionTypes["va_start"] = LLVMVoidTypeInContext(Generator.Context);
-            Generator.LLVMFunctionTypes["va_end"] = LLVMVoidTypeInContext(Generator.Context);
-        }*/
         return values.dup;
     }
 

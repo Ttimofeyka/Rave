@@ -1,4 +1,4 @@
-import <std/memory>
+import <std/memory> <std/vector>
 
 namespace libc {
     // Functions that are practically unnecessary in normal use and come from libc
@@ -7,6 +7,7 @@ namespace libc {
         char* toret = "true";
         if(b == false) toret = "false";
     } => toret;
+    extern(linkname: "strstr") char* strstr(char* src, char* substr);
 }
 
 namespace std {
@@ -59,6 +60,17 @@ namespace std {
             int needed = -1;
             while(i<this.length) {if(this.data[i] == c) {needed = i; i = this.length;} i += 1;}
         } => needed;
+
+        int indexOf(char* s) {
+            char* _c = this.c();
+            char* p = libc::strstr(_c,s);
+
+            int index = 0;
+            if(p == null) index = 1;
+            else index = (cast(int)p)-(cast(int)_c);
+        } => index;
+
+        int indexOf(std::string s) => this.indexOf(s.c());
 
         void append(char c) {
             this.length += 1;
