@@ -19,6 +19,7 @@ namespace std {
         std::string this(char* a) {
             this.length = libc::strlen(a);
             this.capacity = this.length*2;
+            if(this.capacity == 0) this.capacity = 1;
             this.data = std::malloc(this.capacity);
 
             int i = 0;
@@ -44,20 +45,6 @@ namespace std {
                 i += 1;
             }
         } => _has;
-
-        void replace(char c, char to) {
-            int i = 0;
-            while(i<this.length) {
-                if(this.data[i] == c) {
-                    this.data[i] = to;
-                }
-                i += 1;
-            }
-        }
-
-        void replace(std::string s, std::string to) {
-            
-        }
 
         char* c {
             char* temp = std::malloc(this.length+1);
@@ -97,6 +84,25 @@ namespace std {
                 i += 1;
             }
         }
+
+        std::string copy {
+            std::string cp = std::string("");
+
+            int i = 0;
+            cp.append(*this);
+        } => cp;
+
+        std::string replace(char c, char to) {
+            std::string temp = this.copy();
+
+            int i = 0;
+            while(i<this.length) {
+                if(this.data[i] == c) {
+                    temp.data[i] = to;
+                }
+                i += 1;
+            }
+        } => temp;
 
         std::string operator+(std::string one, std::string two) {
             std::string third = std::string(one.c());
@@ -141,6 +147,16 @@ namespace std {
         void operator=(std::string* one, char* two) {
             one[0] = std::string(two);
         }
+
+        std::string substring(int from, int to) {
+            std::string temp = "";
+
+            int i = from;
+            while(i<to) {
+                temp.append(this.data[i]);
+                i += 1;
+            }
+        } => temp;
 
         void ~this {
             std::free(this.data);
