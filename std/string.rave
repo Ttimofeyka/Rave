@@ -55,6 +55,10 @@ namespace std {
             }
         }
 
+        void replace(std::string s, std::string to) {
+            
+        }
+
         char* c {
             char* temp = std::malloc(this.length+1);
             int i = 0;

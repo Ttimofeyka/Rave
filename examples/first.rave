@@ -1,7 +1,5 @@
-import <std/gc>
+import <std/io>
 
 int main(int argc, char** argv) {
-    std::GC* gc = std::GC(cast(void*)&argc);
-
-    gc.stop();
+    
 } => 0;

@@ -293,13 +293,13 @@ class Scope {
         );
     }
 
-    LLVMValueRef get(string n) {
+    LLVMValueRef get(string n, int loc = -1) {
         if(!(n !in AliasTable)) return AliasTable[n].generate();
         if(!(n !in localscope)) {
             auto instr = LLVMBuildLoad(
                 Generator.Builder,
                 localscope[n],
-                toStringz("loadLocal"~n)
+                toStringz("loadLocal"~n~to!string(loc)~"_")
             );
             try {
                 LLVMSetAlignment(instr,Generator.getAlignmentOfType(localVars[n].t));
@@ -310,7 +310,7 @@ class Scope {
             auto instr = LLVMBuildLoad(
                 Generator.Builder,
                 Generator.Globals[n],
-                toStringz("loadGlobal"~n)
+                toStringz("loadGlobal"~n~to!string(loc)~"_")
             );
             LLVMSetAlignment(instr,Generator.getAlignmentOfType(VarTable[n].t));
             return instr;
@@ -866,7 +866,7 @@ class NodeBinary : Node {
                 }
 
                 LLVMValueRef val = second.generate();
-                LLVMTypeRef ty = LLVMTypeOf(currScope.get(i.name));
+                LLVMTypeRef ty = LLVMTypeOf(currScope.get(i.name,loc));
                 if(LLVMGetTypeKind(ty) == LLVMStructTypeKind
                 || (LLVMGetTypeKind(ty) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVMGetElementType(ty)) == LLVMStructTypeKind)) {
                     string structName;
@@ -1322,7 +1322,7 @@ class NodeIden : Node {
             return null;
         }
         if(isMustBePtr) return currScope.getWithoutLoad(name,loc);
-        return currScope.get(name);
+        return currScope.get(name,loc);
     }
 
     override void debugPrint() {
@@ -1720,6 +1720,22 @@ class NodeCall : Node {
                     if(tp.instance.instanceof!TypeStruct && LLVMGetTypeKind(LLVMTypeOf(arg)) == LLVMPointerTypeKind) {
                         if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(arg))) == LLVMPointerTypeKind) arg = LLVMBuildLoad(Generator.Builder,arg,toStringz("load1698_"));
                     }
+                    else if(tp.instance.instanceof!TypeStruct && LLVMGetTypeKind(LLVMTypeOf(arg)) != LLVMPointerTypeKind) {
+                        if(LLVMGetTypeKind(LLVMTypeOf(arg)) != LLVMPointerTypeKind) {
+                            if(NodeIden id = args[i].instanceof!NodeIden) {
+                                id.isMustBePtr = true;
+                                arg = id.generate();
+                            }
+                            else if(NodeIndex ind = args[i].instanceof!NodeIndex) {
+                                ind.isMustBePtr = true;
+                                arg = ind.generate();
+                            }
+                            else if(NodeGet ng = args[i].instanceof!NodeGet) {
+                                ng.isMustBePtr = true;
+                                arg = ng.generate();
+                            }
+                        }
+                    }
                 }
                 params ~= arg;
             }
@@ -1763,13 +1779,13 @@ class NodeCall : Node {
         if(!f.name.into(FuncTable) && !into(f.name~to!string(args.length),FuncTable) && !f.name.into(Generator.LLVMFunctions) && !into(f.name~typesToString(parametersToTypes(getParameters())),FuncTable)) {
             if(!f.name.into(MacroTable)) {
                 if(currScope.has(f.name)) {
-                    LLVMTypeRef a = LLVMTypeOf(currScope.get(f.name));
+                    LLVMTypeRef a = LLVMTypeOf(currScope.get(f.name,loc));
                     NodeVar nv = currScope.getVar(f.name,loc);
                     TypeFunc tf = nv.t.instanceof!TypeFunc;
                     string name = "CallVar"~f.name;
                     return LLVMBuildCall(
                         Generator.Builder,
-                        currScope.get(f.name),
+                        currScope.get(f.name,loc),
                         getParameters().ptr,
                         cast(uint)args.length,
                         toStringz(tf.main.instanceof!TypeVoid ? "" : name)
@@ -2018,7 +2034,7 @@ class NodeIndex : Node {
 
     override LLVMValueRef generate() {
         if(NodeIden id = element.instanceof!NodeIden) {
-            LLVMValueRef ptr = currScope.get(id.name);
+            LLVMValueRef ptr = currScope.get(id.name,loc);
             if(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMArrayTypeKind && LLVMGetTypeKind(LLVMTypeOf(currScope.getWithoutLoad(id.name,loc))) == LLVMArrayTypeKind) {
                 // Argument
                 if(isMustBePtr) {
@@ -2849,14 +2865,17 @@ class NodeStruct : Node {
                 _destructor.check();
             }
             else {
-                Type outType = _this.type;
-                if(outType.instanceof!TypeStruct) outType = new TypePointer(outType);
+                Type outType;
+                if(_this !is null) {
+                    outType = _this.type;
+                    if(outType.instanceof!TypeStruct) outType = new TypePointer(outType);
 
-                _destructor.args = [FuncArgSet("this",outType)];
+                    _destructor.args = [FuncArgSet("this",outType)];
                     
-                _destructor.check();
+                    _destructor.check();
+                    _destructor.generate();
+                }
             }
-            _destructor.generate();
         }
 
         for(int i=0; i<methods.length; i++) {
