@@ -1705,9 +1705,14 @@ class NodeCall : Node {
             int offset = 0;
             if(fas[0].name == "this") offset = 1;
             // TODO: Fix bug
+
+            //writeln("Args:");
+            //for(int i=0; i<args.length; i++) {writeln("Arg: ",args[i]); if(NodeIden id = args[i].instanceof!NodeIden) writeln("\t",id.name);}
+
             for(int i = 0; i<fas.length; i++) {
                 if(i == args.length) break;
                 LLVMValueRef arg = args[i].generate();
+
                 if(TypePointer tp = fas[i].type.instanceof!TypePointer) {
                     if(tp.instance.instanceof!TypeVoid) {
                         if(LLVMGetTypeKind(LLVMTypeOf(arg)) == LLVMPointerTypeKind) {

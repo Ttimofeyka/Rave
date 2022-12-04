@@ -195,7 +195,7 @@ class Parser {
                     break;
                 default:
                     if(canFind(structs,peek().value)) {args ~= new NodeType(new TypeStruct(peek().value),-1); next();}
-                    else args ~= parseExpr();
+                    else {args ~= parseExpr();}
                     break;
             }
             if(peek().type == TokType.Comma) next();
@@ -366,7 +366,12 @@ class Parser {
                 bool isPtr = (peek().type == TokType.GetPtr);
                 if(isPtr) next();
                 string field = expect(TokType.Identifier).value;
-                base = new NodeGet(base,field,(peek().type == TokType.Equ || isPtr),peek().line);
+                if(peek().type == TokType.Rpar) {
+                    //writeln("Before: ",peek().value);
+                    base = new NodeCall(peek().line,new NodeGet(base,field,false,peek().line),parseFuncCallArgs());
+                    //writeln("After: ",peek().value);
+                }
+                else base = new NodeGet(base,field,(peek().type == TokType.Equ || isPtr),peek().line);
             }
         }
 

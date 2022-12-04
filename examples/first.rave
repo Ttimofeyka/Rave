@@ -2,8 +2,5 @@ import <std/io>
 
 int main(int argc, char** argv) {
     std::string A = "Hello, world!\n";
-    std::string B = "world";
-    int index = A.indexOf("world");
-    std::printf("%d\n",A.indexOf("world"));
     ~A;
 } => 0;
