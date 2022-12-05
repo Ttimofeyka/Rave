@@ -1,6 +1,7 @@
 import <std/io>
 
-int main(int argc, char** argv) {
+int main {
     std::string A = "Hello, world!\n";
-    ~A;
+    std::string B = "world";
+    std::printf(A.lol(100,200,300));
 } => 0;

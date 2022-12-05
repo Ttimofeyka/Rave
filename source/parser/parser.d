@@ -181,7 +181,7 @@ class Parser {
 
     Node[] parseFuncCallArgs() {
         import std.algorithm : canFind;
-        next(); // skip (
+        if(peek().type == TokType.Rpar) next(); // skip (
         Node[] args;
         while(peek().type != TokType.Lpar) {
             switch(peek().value) {
@@ -194,7 +194,7 @@ class Parser {
                     args ~= new NodeType(parseType(),peek().line);
                     break;
                 default:
-                    if(canFind(structs,peek().value)) {args ~= new NodeType(new TypeStruct(peek().value),-1); next();}
+                    if(canFind(structs,peek().value)) args ~= new NodeType(parseType(),peek().line);
                     else {args ~= parseExpr();}
                     break;
             }
@@ -367,9 +367,7 @@ class Parser {
                 if(isPtr) next();
                 string field = expect(TokType.Identifier).value;
                 if(peek().type == TokType.Rpar) {
-                    //writeln("Before: ",peek().value);
-                    base = new NodeCall(peek().line,new NodeGet(base,field,false,peek().line),parseFuncCallArgs());
-                    //writeln("After: ",peek().value);
+                    base = parseCall(new NodeGet(base,field,(isPtr),peek().line));
                 }
                 else base = new NodeGet(base,field,(peek().type == TokType.Equ || isPtr),peek().line);
             }
@@ -624,6 +622,9 @@ class Parser {
                             _idx -= 1;
                             return parseDecl(f);
                         }
+                        Node e = parseCall(new NodeIden(iden,peek().line));
+                        if(peek().type == TokType.Semicolon) next();
+                        return e;
                     }
                     _idx -= 1;
                     auto e = parseExpr();

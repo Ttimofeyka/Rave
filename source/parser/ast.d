@@ -1698,13 +1698,28 @@ class NodeCall : Node {
         this.args = args.dup;
     }
 
+    LLVMValueRef[] getPredParameters() {
+        LLVMValueRef[] params;
+
+        for(int i=0; i<args.length; i++) {
+            if(NodeCall nc = args[i].instanceof!NodeCall) {
+                if(NodeIden id = nc.func.instanceof!NodeIden) {
+                    LLVMTypeRef t = LLVMTypeOf(currScope.get(id.name,loc));
+                    params ~= LLVMConstNull(t);
+                }
+            }
+            else params ~= args[i].generate();
+        }
+
+        return params;
+    }
+
     LLVMValueRef[] getParameters(FuncArgSet[] fas = null) {
         LLVMValueRef[] params;
 
         if(fas !is null && !fas.empty) {
             int offset = 0;
             if(fas[0].name == "this") offset = 1;
-            // TODO: Fix bug
 
             //writeln("Args:");
             //for(int i=0; i<args.length; i++) {writeln("Arg: ",args[i]); if(NodeIden id = args[i].instanceof!NodeIden) writeln("\t",id.name);}
@@ -1794,7 +1809,6 @@ class NodeCall : Node {
                     );
                 }
                 Generator.error(loc,"Unknown macro or function '"~f.name~"'!");
-                exit(1);
             }
 
             // Generate macro-call
@@ -1861,23 +1875,27 @@ class NodeCall : Node {
                 exit(1);
                 assert(0);
             }
+            LLVMValueRef[] params = getParameters(FuncTable[f.name].args);
+
             if(Generator.LLVMFunctionTypes[f.name] != LLVMVoidTypeInContext(Generator.Context)) return LLVMBuildCall(
                 Generator.Builder,
                 Generator.LLVMFunctions[f.name],
-                getParameters(FuncTable[f.name].args).ptr,
-                cast(uint)args.length,
+                params.ptr,
+                cast(uint)params.length,
                 toStringz("CallFunc"~f.name)
             );
             return LLVMBuildCall(
                 Generator.Builder,
                 Generator.LLVMFunctions[f.name],
-                getParameters(FuncTable[f.name].args).ptr,
-                cast(uint)args.length,
+                params.ptr,
+                cast(uint)params.length,
                 toStringz("")
             );
         }
         string rname = f.name;
-        if(into(f.name~typesToString(parametersToTypes(getParameters())),FuncTable)) rname ~= typesToString(parametersToTypes(getParameters()));
+        LLVMValueRef[] params = getPredParameters();
+        if(into(f.name~typesToString(parametersToTypes(params)),FuncTable)) rname ~= typesToString(parametersToTypes(getParameters()));
+        else params = getParameters(FuncTable[rname].args);
         string name = "CallFunc"~f.name;
         if(FuncTable[rname].type.instanceof!TypeVoid) name = "";
         //writeln("Name: ",rname," with ",typesToString(parametersToTypes(getParameters())));
@@ -1892,10 +1910,11 @@ class NodeCall : Node {
         if(rname !in Generator.Functions) {
             Generator.error(loc,"Function '"~rname~"' does not exist!");
         }
+
         return LLVMBuildCall(
             Generator.Builder,
             Generator.Functions[rname],
-            getParameters(FuncTable[rname].args).ptr,
+            params.ptr,
             cast(uint)args.length,
             toStringz(name)
         );
@@ -1931,6 +1950,7 @@ class NodeCall : Node {
                     _toCall = LLVMBuildLoad(Generator.Builder,Generator.byIndex(g.generate(),[LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),structsNumbers[cast(immutable)[s.name,g.field]].number,false)]),toStringz("A"));
                 }
                 else params = getParameters(MethodTable[cast(immutable)[s.name,g.field]].args);
+
                 //writeln(s.name," ",g.field);
                 //params = currScope.get(i.name)~params;
                 //writeln("sname: ",s.name," gfield: ",g.field);
@@ -1964,6 +1984,7 @@ class NodeCall : Node {
                 auto val = ni.generate();
                 string sname = Generator.typeToString(LLVMTypeOf(val))[1..$-1];
                 LLVMValueRef[] params = getParameters(MethodTable[cast(immutable)[sname,g.field]].args);
+                
                 params = val~params;
                 
                 return LLVMBuildCall(
@@ -1980,6 +2001,7 @@ class NodeCall : Node {
                 if(LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMStructTypeKind) sname = cast(string)fromStringz(LLVMGetStructName(LLVMTypeOf(val)));
                 else sname = cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(val))));
                 LLVMValueRef[] params = getParameters(MethodTable[cast(immutable)[sname,g.field]].args);
+
                 params = val~params;
                 
                 return LLVMBuildCall(
