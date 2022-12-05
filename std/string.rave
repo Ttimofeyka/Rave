@@ -173,8 +173,6 @@ namespace std {
         void ~this {
             std::free(this.data);
         }
-
-        char* lol(int one, int two, int three) => null;
     }
 }
 

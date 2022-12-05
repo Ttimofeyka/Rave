@@ -1,7 +1,5 @@
 import <std/io>
 
 int main {
-    std::string A = "Hello, world!\n";
-    std::string B = "world";
-    std::printf(A.lol(100,200,300));
+
 } => 0;

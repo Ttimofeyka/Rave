@@ -22,6 +22,7 @@ NodeFunc[string[]] MethodTable;
 NodeLambda[string] LambdaTable;
 
 int countOf(string s, char c) {
+    pragma(inline,true);
     int a = 0;
     for(int i=0; i<s.length; i++) {
         if(s[i] == c) a += 1;
@@ -35,6 +36,7 @@ bool into(T, TT)(T t, TT tt) {
 }
 
 void checkError(int loc,string msg) {
+    pragma(inline,true);
         writeln("\033[0;31mError on "~to!string(loc+1)~" line: " ~ msg ~ "\033[0;0m");
 		exit(1);
 }
@@ -91,11 +93,13 @@ class LLVMGen {
     }
 
     void error(int loc,string msg) {
+        pragma(inline,true);
         writeln("\033[0;31mError on "~to!string(loc)~" line: " ~ msg ~ "\033[0;0m");
 		exit(1);
     }
 
     LLVMTypeRef GenerateType(Type t, int loc = -1) {
+        pragma(inline,true);
         if(t.instanceof!TypeAlias) return null;
         if(t.instanceof!TypeBasic) {
             TypeBasic b = cast(TypeBasic)t;
@@ -171,6 +175,7 @@ class LLVMGen {
     }
     
     LLVMTypeKind GenerateTypeKind(Type t) {
+        pragma(inline,true);
         if(t.instanceof!TypeAlias) return -1;
         if(TypeBasic tb = t.instanceof!TypeBasic) {
             switch(tb.type) {
@@ -195,6 +200,7 @@ class LLVMGen {
     }
 
     uint getAlignmentOfType(Type t) {
+        pragma(inline,true);
         if(TypeBasic bt = t.instanceof!TypeBasic) {
             switch(bt.type) {
                 case BasicType.Bool:
@@ -238,10 +244,12 @@ class LLVMGen {
     }
 
     string typeToString(LLVMTypeRef t) {
+        pragma(inline,true);
         return to!string(fromStringz(LLVMPrintTypeToString(t)));
     }
 
     LLVMValueRef byIndex(LLVMValueRef val, LLVMValueRef[] indexs) {
+        pragma(inline,true);
         if(LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMArrayTypeKind) {
             return byIndex(LLVMBuildGEP(Generator.Builder,val,[LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),0,false)].ptr,2,toStringz("gep222_")),indexs);
         }
@@ -270,6 +278,7 @@ class Scope {
     }
 
     LLVMValueRef getWithoutLoad(string n, int loc = -1) {
+        pragma(inline,true);
         if(!(n !in localscope)) return localscope[n];
         if(!(n !in Generator.Globals)) return Generator.Globals[n];
         /*writeln(
@@ -294,6 +303,7 @@ class Scope {
     }
 
     LLVMValueRef get(string n, int loc = -1) {
+        pragma(inline,true);
         if(!(n !in AliasTable)) return AliasTable[n].generate();
         if(!(n !in localscope)) {
             auto instr = LLVMBuildLoad(
@@ -326,6 +336,7 @@ class Scope {
     }
 
     NodeVar getVar(string n, int line) {
+        pragma(inline,true);
         if(n.into(localscope)) return localVars[n];
         if(n.into(Generator.Globals)) return VarTable[n];
         if(n.into(args)) return argVars[n];
@@ -334,6 +345,7 @@ class Scope {
     }
 
     bool has(string n) {
+        pragma(inline,true);
         return !(n !in AliasTable) || !(n !in localscope) || !(n !in Generator.Globals) || !(n !in args);
     }
 }
@@ -3097,12 +3109,13 @@ class NodeUsing : Node {
                 f.namespacesNames = newNamespacesNames.dup;
                 string oldname = f.name;
                 if(f.origname == "this") f.name = namespacesNamesToString(f.namespacesNames, f.name);
+                else if(indexOf(f.origname,'~') != -1) {
+                    f.name = namespacesNamesToString(f.namespacesNames,f.origname);
+                }
                 else f.name = namespacesNamesToString(f.namespacesNames, f.origname);
                 if(oldname[$-1] == ']') f.name ~= typesToString(f.args);
                 FuncTable[f.name] = f;
-                //FuncTable.remove(oldname);
-                Generator.Functions[f.name] = Generator.Functions[oldname];
-                //Generator.Functions.remove(oldname);
+                if(into(f.name,Generator.Functions)) Generator.Functions[f.name] = Generator.Functions[oldname];
             }
         }
         foreach(var; MacroTable) {
@@ -3139,7 +3152,7 @@ class NodeUsing : Node {
                             // Operator overload
                             // Don't need a rename
                         }
-                        else if(f.origname != "this") {
+                        else if(f.origname != "this" && f.origname != "~this") {
                             string withArgs = f.origname~typesToString(f.args);
                             if(cast(immutable)[oldname,withArgs].into(MethodTable)) {
                                 for(int i=0; i<f.args.length; i++) {
