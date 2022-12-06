@@ -256,11 +256,6 @@ class LLVMGen {
         if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(val))) == LLVMArrayTypeKind) {
             val = LLVMBuildPointerCast(Generator.Builder,val,LLVMPointerType(LLVMGetElementType(LLVMGetElementType(LLVMTypeOf(val))),0),toStringz("ptrcast"));
         }
-        writeln("Begin");
-        writeln(Generator.typeToString(LLVMTypeOf(val)));
-        for(int i=0; i<indexs.length; i++) {
-            writeln(Generator.typeToString(LLVMTypeOf(indexs[i])));
-        }
         if(indexs.length > 1) {
             LLVMValueRef oneGep = LLVMBuildGEP(Generator.Builder,val,[indexs[0]].ptr,1,toStringz("gep225_"));
             indexs = indexs[1..$];
