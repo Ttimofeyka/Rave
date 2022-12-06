@@ -12,6 +12,7 @@ import llvm;
 import std.string;
 import std.process;
 import app : files;
+import std.datetime, std.datetime.stopwatch;
 
 string hasAnyone(string str, string[] strs) {
     for(int i=0; i<strs.length; i++) {
@@ -25,6 +26,9 @@ class Compiler {
     private string outfile;
     private string outtype;
     private CompOpts opts;
+    int lexTime = 0;
+    int parseTime = 0;
+    int generateTime = 0;
 
     private void error(string msg) {
         pragma(inline,true);
@@ -77,7 +81,14 @@ class Compiler {
             content = "import <std/prelude> <std/memory>\n"~content;
         }
 
+        auto startT = MonoTime.currTime;
         Lexer lex = new Lexer(content,offset);
+        auto endT = MonoTime.currTime;
+        auto dur = endT - startT;
+        lexTime += dur.total!"msecs";
+
+        startT = MonoTime.currTime;
+
         Parser p = new Parser(lex.getTokens(),offset);
         p.currentFile = file;
         p.MainFile = files[0];
@@ -86,6 +97,12 @@ class Compiler {
         for(int i=0; i<n.length; i++) {
             n[i].check();
         }
+
+        endT = MonoTime.currTime;
+        dur = endT - startT;
+        parseTime += dur.total!"msecs";
+
+        startT = MonoTime.currTime;
         Generator = new LLVMGen(file);
         if(opts.printAll) writeln("File: "~file);
         for(int i=0; i<n.length; i++) {
@@ -125,6 +142,10 @@ class Compiler {
 		char* file_ptr = cast(char*)toStringz(file.replace(".rave",".o"));
 
         LLVMTargetMachineEmitToFile(machine,Generator.Module,file_ptr, LLVMObjectFile, &errors);
+
+        endT = MonoTime.currTime;
+        dur = endT - startT;
+        generateTime += dur.total!"msecs";
     
         //char* m = LLVMPrintModuleToString(Generator.Module);
         //writeln("Module: \n",fromStringz(m));
@@ -173,11 +194,12 @@ class Compiler {
         }
         if(opts.onlyObject) linkString ~= " -r ";
         linkString ~= " "~opts.linkparams;
-        writeln(linkString~" -o "~outfile);
+        //writeln(linkString~" -o "~outfile);
         auto l = executeShell(linkString~" -o "~outfile);
         if(l.status != 0) writeln("Linking error: "~l.output);
         for(int i=0; i<toRemove.length; i++) {
             if(toRemove[i] != outfile) remove(toRemove[i]);
         }
+        writeln("Time spent by the lexer: ",lexTime," ms\nTime spent by parser: ",parseTime," ms\nTime spent by code generator: ",generateTime," ms");
     }
 }

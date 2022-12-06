@@ -258,8 +258,7 @@ class LLVMGen {
         }
         if(indexs.length > 1) {
             LLVMValueRef oneGep = LLVMBuildGEP(Generator.Builder,val,[indexs[0]].ptr,1,toStringz("gep225_"));
-            indexs = indexs[1..$];
-            return byIndex(oneGep,indexs);
+            return byIndex(oneGep,indexs[1..$]);
         }
         return LLVMBuildGEP(Generator.Builder,val,indexs.ptr,cast(uint)indexs.length,toStringz("gep225_"));
         assert(0);

@@ -2,7 +2,7 @@ import <std/io>
 
 
 char** split(char* inputValue) {
-    char** output = cast(char**)std::malloc(sizeof(char[128][128]));
+    char[256][256] output;
     int i = 0;
     int pi = 0;
     int stringNum;
@@ -21,12 +21,11 @@ char** split(char* inputValue) {
         i+=1;
         pi+=1;
     }
-    return output;
-}
+} => cast(char**)&output;
 
 
 
-int main {
+void main {
     std::printf("TC v10\n");
     while(true) {
         char[128] input;
@@ -36,5 +35,4 @@ int main {
         std::printf("\n");
         split(&input);
     }
-    return 0;
 }
