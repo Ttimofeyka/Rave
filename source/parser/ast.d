@@ -256,7 +256,6 @@ class LLVMGen {
         if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(val))) == LLVMArrayTypeKind) {
             val = LLVMBuildPointerCast(Generator.Builder,val,LLVMPointerType(LLVMGetElementType(LLVMGetElementType(LLVMTypeOf(val))),0),toStringz("ptrcast"));
         }
-        writeln(Generator.typeToString(LLVMTypeOf(val))," ",indexs.length);
         return LLVMBuildGEP(Generator.Builder,val,indexs.ptr,cast(uint)indexs.length,toStringz("gep225_"));
         assert(0);
     }
@@ -2076,6 +2075,12 @@ class NodeIndex : Node {
                 LLVMValueRef copyVal = LLVMBuildAlloca(Generator.Builder,LLVMTypeOf(ptr),toStringz("copyVal_"));
                 LLVMBuildStore(Generator.Builder,ptr,copyVal);
                 ptr = copyVal;
+            }
+            else if(LLVMGetTypeKind(LLVMTypeOf(ptr)) != LLVMPointerTypeKind) ptr = currScope.getWithoutLoad(id.name,loc);
+            //writeln("Indexc: ",indexs.length);
+            for(int i=0; i<indexs.length; i++) {
+                if(indexs[i].instanceof!NodeInt) writeln("NodeInt ",indexs[i].instanceof!NodeInt.value);
+                else writeln("Else ",indexs[i]);
             }
             LLVMValueRef index = Generator.byIndex(ptr,generateIndexs());
 

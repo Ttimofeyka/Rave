@@ -1,5 +1,6 @@
 import <std/io>
 
 int main {
-
+    int[128][128] A;
+    A[0][0] = 5;
 } => 0;
