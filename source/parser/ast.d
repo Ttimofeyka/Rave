@@ -579,70 +579,10 @@ class NodeBinary : Node {
         }
     }
 
-    LLVMValueRef sum(LLVMValueRef one, LLVMValueRef two) {
-        if(LLVMGetTypeKind(LLVMTypeOf(one)) != LLVMGetTypeKind( LLVMTypeOf(two))) {
-            Generator.error(loc,"value types are incompatible!");
-        }
-        if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMFloatTypeKind) {
-            return LLVMBuildFAdd(
-                Generator.Builder,
-                one, two,
-                toStringz("FloatSum")
-            );
-        }
-        return LLVMBuildAdd(
-            Generator.Builder,
-            one, two,
-            toStringz("Sum")
-        );
-    }
-
-    LLVMValueRef sub(LLVMValueRef one, LLVMValueRef two) {
-        if(LLVMTypeOf(one) != LLVMTypeOf(two)) {
-            Generator.error(loc,"value types are incompatible!");
-        }
-        if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMFloatTypeKind) {
-            return LLVMBuildFSub(
-                Generator.Builder,
-                one, two,
-                toStringz("FloatSub")
-            );
-        }
-        return LLVMBuildSub(
-            Generator.Builder,
-            one, two,
-            toStringz("Sub")
-        );
-    }
-
-    LLVMValueRef mul(LLVMValueRef one, LLVMValueRef two) {
-        if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMFloatTypeKind) {
-            return LLVMBuildFMul(
-                Generator.Builder,
-                one, two,
-                toStringz("FloatMul")
-            );
-        }
-        return LLVMBuildMul(
-            Generator.Builder,
-            one, two,
-            toStringz("Mul")
-        );
-    }
-
-    LLVMValueRef div(LLVMValueRef one, LLVMValueRef two) {
-        if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMFloatTypeKind) {
-            return LLVMBuildFDiv(
-                Generator.Builder,
-                one, two,
-                toStringz("FloatDiv")
-            );
-        }
-        return LLVMBuildSDiv(
-            Generator.Builder,
-            one, two,
-            toStringz("Div")
-        );
+    string getStructName(LLVMTypeRef t) {
+        pragma(inline,true);
+        if(LLVMGetTypeKind(t) == LLVMStructTypeKind) return cast(string)fromStringz(LLVMGetStructName(t));
+        return cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(t)));
     }
 
     LLVMValueRef equal(LLVMValueRef onev, LLVMValueRef twov, bool neq) {
@@ -658,12 +598,13 @@ class NodeBinary : Node {
 
         string structName = "";
         bool isOperatorOverload = false;
-        if(LLVMGetTypeKind(one) == LLVMPointerTypeKind && fromStringz(LLVMGetStructName(LLVMGetElementType(one))).into(StructTable)) {
-            structName = cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(one)));
+        
+        if((LLVMGetTypeKind(one) == LLVMPointerTypeKind || LLVMGetTypeKind(one) == LLVMStructTypeKind) && getStructName(one).into(StructTable)) {
+            structName = getStructName(one);
             isOperatorOverload = true;
         }
-        else if(LLVMGetTypeKind(two) == LLVMPointerTypeKind && fromStringz(LLVMGetStructName(LLVMGetElementType(two))).into(StructTable)) {
-            structName = cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(two)));
+        else if((LLVMGetTypeKind(two) == LLVMPointerTypeKind || LLVMGetTypeKind(two) == LLVMStructTypeKind) && getStructName(two).into(StructTable)) {
+            structName = getStructName(two);
             isOperatorOverload = true;
         }
         
@@ -702,6 +643,13 @@ class NodeBinary : Node {
                     }
                 }
             }
+        }
+
+        if(one == LLVMPointerType(two,0)) {
+            onev = LLVMBuildLoad(Generator.Builder,onev,toStringz("load651_"));
+        }
+        else if(two == LLVMPointerType(one,0)) {
+            twov = LLVMBuildLoad(Generator.Builder,twov,toStringz("load654_"));
         }
         
         if(LLVMGetTypeKind(one) == LLVMGetTypeKind(two) && one != two) {
@@ -977,10 +925,11 @@ class NodeBinary : Node {
             case TokType.MulEqu:
             case TokType.DivEqu:
                 LLVMValueRef val;
-                if(operator == TokType.PluEqu) val=sum(f,s);
-                else if(operator == TokType.MinEqu) val=sub(f,s);
-                else if(operator == TokType.MulEqu) val=mul(f,s);
-                else if(operator == TokType.DivEqu) val=div(f,s);
+                if(operator == TokType.PluEqu) operator = TokType.Plus;
+                else if(operator == TokType.MinEqu) operator = TokType.Minus;
+                else if(operator == TokType.MulEqu) operator = TokType.Multiply;
+                else if(operator == TokType.DivEqu) operator = TokType.Divide;
+                val = mathOperation(f,s);
                 if(NodeGet ng = first.instanceof!NodeGet) {
                     ng.isMustBePtr = true;
                     f = ng.generate();
@@ -1285,6 +1234,7 @@ class NodeVar : Node {
             else if(!isExtern) {
                 LLVMSetInitializer(Generator.Globals[name], LLVMConstNull(Generator.GenerateType(t,loc)));
             }
+            return null;
         }
         else {
             // Local variables
@@ -1307,8 +1257,9 @@ class NodeVar : Node {
             if(value !is null) {
                 new NodeBinary(TokType.Equ,new NodeIden(name,loc),value,loc).generate();
             }
+
+            return currScope.localscope[name];
         }
-        return null;
     }
 
     override void debugPrint() {
@@ -1489,6 +1440,9 @@ class NodeFunc : Node {
             else {
                 name ~= toAdd;
             }
+        }
+        if(type.instanceof!TypeArray) {
+            checkError(loc,"it's impossible to return an array!");
         }
         FuncTable[name] = this;
         for(int i=0; i<block.nodes.length; i++) {
@@ -2654,6 +2608,7 @@ class NodeStruct : Node {
     string origname;
     NodeFunc _this;
     NodeFunc _destructor;
+    NodeFunc _with;
     NodeFunc[] methods;
     bool isImported = false;
     string _extends;
@@ -2857,6 +2812,24 @@ class NodeStruct : Node {
                     operators[oper][typesToString(f.args)] = f;
                     methods ~= f;
                 }
+                else if(f.name == "~with") {
+                    f.isMethod = true;
+
+                    f.name = "~with."~name;
+
+                    Type outType = _this.type;
+                    if(outType.instanceof!TypeStruct) outType = new TypePointer(outType);
+
+                    f.args = [FuncArgSet("this",outType)];
+
+                    _with = f;
+
+                    if(isImported) {
+                        _with.isExtern = true;
+                        _with.check();
+                        continue;
+                    }
+                }
                 else {
                     Type outType = _this.type;
                     if(outType.instanceof!TypeStruct) outType = new TypePointer(outType);
@@ -2890,7 +2863,6 @@ class NodeStruct : Node {
         LLVMTypeRef[] params = getParameters();
         LLVMStructSetBody(Generator.Structs[name],params.ptr,cast(uint)params.length,false);
         if(_this !is null) _this.generate();
-
         if(_destructor !is null) _destructor.generate();
         else {
             _destructor = new NodeFunc("~"~origname,[],new NodeBlock([new NodeCall(loc,new NodeIden("std::free",loc),[new NodeIden("this",loc)])]),false,[],loc,new TypeVoid());
@@ -2918,6 +2890,9 @@ class NodeStruct : Node {
             methods[i].check();
             methods[i].generate();
         }
+
+        if(_with !is null) _with.generate();
+
         return null;
     }
 }
@@ -3162,7 +3137,7 @@ class NodeUsing : Node {
                             // Operator overload
                             // Don't need a rename
                         }
-                        else if(f.origname != "this" && f.origname != "~this") {
+                        else if(f.origname != "this" && f.origname != "~this" && f.origname != "~with") {
                             string withArgs = f.origname~typesToString(f.args);
                             if(cast(immutable)[oldname,withArgs].into(MethodTable)) {
                                 for(int i=0; i<f.args.length; i++) {
@@ -3610,20 +3585,87 @@ class NodeBuiltin : Node {
     }
 }
 
-class NodeFor : Node { // TODO
+class NodeFor : Node {
     int loc;
     
     NodeVar var;
     NodeBinary[] condAndAfter;
     NodeBlock block;
+    string f;
 
-    this(NodeVar var, NodeBinary[] arr, NodeBlock bl) {
+    this(NodeVar var, NodeBinary[] arr, NodeBlock bl, string f, int loc) {
         this.var = var;
         this.condAndAfter = arr.dup;
         this.block = bl;
+        this.f = f;
+        this.loc = loc;
     }
 
     override LLVMValueRef generate() {
-        return null;
+        var.isGlobal = false;
+        var.generate();
+        block.nodes = block.nodes ~ condAndAfter[1];
+        return new NodeWhile(condAndAfter[0],block,loc,f).generate();
+    }
+}
+
+class NodeSwitch : Node {
+    int loc;
+
+    Node[] expressions;
+    NodeBlock[] blocks;
+} // TODO
+
+class NodeWith : Node {
+    int loc;
+    Node expr;
+    NodeBlock bl;
+
+    this(int loc, Node expr, NodeBlock bl) {
+        this.loc = loc;
+        this.expr = expr;
+        this.bl = bl;
+    }
+
+    string getVarFromBottom() {
+        Node curr = expr;
+
+        while(!curr.instanceof!NodeIden) {
+            if(NodeGet ng = curr.instanceof!NodeGet) curr = ng.base;
+            else if(NodeIndex ind = curr.instanceof!NodeIndex) curr = ind.element;
+            else if(NodeCall nc = curr.instanceof!NodeCall) curr = nc.func;
+        }
+
+        return curr.instanceof!NodeIden.name;
+    }
+
+    override LLVMValueRef generate() {
+        expr.check();
+        LLVMValueRef val = expr.generate();
+        bl.generate();
+        string structName = "";
+
+        if(LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMVoidTypeKind || LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMIntegerTypeKind || LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMFloatTypeKind) val = currScope.getWithoutLoad(getVarFromBottom());
+
+        if(LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(val))) == LLVMPointerTypeKind) {
+            val = LLVMBuildLoad(Generator.Builder,val,toStringz("load3612_"));
+        }
+
+        if(LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMStructTypeKind) structName = cast(string)fromStringz(LLVMGetStructName(LLVMTypeOf(val)));
+        else structName = cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(val))));
+
+        if(StructTable[structName]._with !is null) return LLVMBuildCall(
+            Generator.Builder,
+            Generator.Functions[StructTable[structName]._with.name],
+            [val].ptr, 1,
+            toStringz("")
+        );
+
+        return LLVMBuildCall(
+            Generator.Builder,
+            Generator.Functions[StructTable[structName]._destructor.name],
+            [val].ptr, 1,
+            toStringz("")
+        );
     }
 }

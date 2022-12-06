@@ -55,7 +55,7 @@ namespace std {
         libc::File* cFile;
         char* name;
 
-        std::File* this(char* name) {
+        std::File this(char* name) {
             this.name = name;
         } => this;
 
@@ -95,6 +95,10 @@ namespace std {
 
         void create {
             this.open("w");
+            this.close();
+        }
+
+        void ~with {
             this.close();
         }
     }

@@ -536,7 +536,37 @@ class Parser {
         }
         next();
 
-        return new NodeFor(var,condAndAfter,parseBlock(f));
+        return new NodeFor(var,condAndAfter,parseBlock(f),f,peek().line);
+    }
+
+    Node parseWith(string f = "") {
+        import std.algorithm : canFind;
+
+        // Current token - "with"
+        next();
+        
+        Node _structure;
+        // Current token - "("
+        next();
+        if(canFind(structs,peek().value)) { // Decl
+            Type t = parseType();
+            string name = peek().value;
+
+            next();
+
+            Node val = null;
+            if(peek().value == "=") {
+                next();
+                val = parseExpr();
+            }
+
+            _structure = new NodeVar(name,val,false,false,false,[],peek().line,t);
+        }
+        else _structure = parseExpr();
+
+        if(peek().value == ")") next();
+
+        return new NodeWith(peek().line, _structure, parseBlock(f));
     }
 
     Node parseStmt(string f = "") {
@@ -558,6 +588,7 @@ class Parser {
             if(peek().value == "while") return parseWhile(f);
             if(peek().value == "for") return parseFor(f);
             if(peek().value == "break") return parseBreak();
+            if(peek().value == "with") return parseWith(f);
             if(peek().value == "return") {
                 auto tok = next();
                 if(peek().type != TokType.Semicolon) {
@@ -751,8 +782,12 @@ class Parser {
 
         auto type = parseType();
         if(peek().value == "operator") return parseOperatorOverload(type,s);
+        if(peek().value == "~" && tokens[_idx+1].value == "with") {
+            next(); // Current token = "with"
+            name = "~with";
+        }
+        else name = peek().value;
         loc = peek().line;
-        name = peek().value;
         next();
 
         if(peek().type == TokType.Rpar) {

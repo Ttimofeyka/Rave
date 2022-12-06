@@ -373,6 +373,8 @@ class Lexer {
                                         tokens ~= new Token(TokType.Command,"if"); break;
                                     case "else":
                                         tokens ~= new Token(TokType.Command,"else",line); break;
+                                    case "for":
+                                        tokens ~= new Token(TokType.Command,"for",line); break;
                                     case "return":
                                         tokens ~= new Token(TokType.Command,"return",line); break;
                                     case "while":
@@ -383,6 +385,8 @@ class Lexer {
                                         tokens ~= new Token(TokType.Command,"continue",line); break;
                                     case "namespace":
                                         tokens ~= new Token(TokType.Command,"namespace",line); break;
+                                    case "with":
+                                        tokens ~= new Token(TokType.Command,"with",line); break;
                                     default:
                                         tokens ~= new Token(TokType.Identifier,bufferiden,line); break;
                                 }

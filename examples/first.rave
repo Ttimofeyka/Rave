@@ -1,38 +1,8 @@
 import <std/io>
 
-
-char** split(char* inputValue) {
-    char[256][256] output;
-    int i = 0;
-    int pi = 0;
-    int stringNum;
-    bool active = true;
-    while(active) {
-        if(i == 127) {
-            active=false;
-        }
-        if(inputValue[i] != ' ') {          // чекаем пробел ли
-            output[pi][i] = inputValue[i];  // 
-        }
-        else {
-            stringNum+=1;
-            pi=0;
-        }
-        i+=1;
-        pi+=1;
-    }
-} => cast(char**)&output;
-
-
-
 void main {
-    std::printf("TC v10\n");
-    while(true) {
-        char[128] input;
-        std::printf(" TC CONSOLE > ");
-        std::scanf("%s", &input);
-        std::printf(&input);
-        std::printf("\n");
-        split(&input);
+    std::File f = std::File("hello.txt");
+    with(f.open("w")) {
+
     }
 }

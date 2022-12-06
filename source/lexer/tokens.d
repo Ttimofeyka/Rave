@@ -59,6 +59,8 @@ enum TokType {
 
     BitOr,
     BitAnd,
+
+    None,
 }
 
 class Token {
