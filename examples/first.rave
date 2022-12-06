@@ -1,6 +1,40 @@
 import <std/io>
 
+
+char** split(char* inputValue) {
+    char** output = cast(char**)std::malloc(sizeof(char[128][128]));
+    int i = 0;
+    int pi = 0;
+    int stringNum;
+    bool active = true;
+    while(active) {
+        if(i == 127) {
+            active=false;
+        }
+        if(inputValue[i] != ' ') {          // чекаем пробел ли
+            output[pi][i] = inputValue[i];  // 
+        }
+        else {
+            stringNum+=1;
+            pi=0;
+        }
+        i+=1;
+        pi+=1;
+    }
+    return output;
+}
+
+
+
 int main {
-    int[128][128] A;
-    A[0][0] = 5;
-} => 0;
+    std::printf("TC v10\n");
+    while(true) {
+        char[128] input;
+        std::printf(" TC CONSOLE > ");
+        std::scanf("%s", &input);
+        std::printf(&input);
+        std::printf("\n");
+        split(&input);
+    }
+    return 0;
+}
