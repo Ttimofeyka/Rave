@@ -256,6 +256,9 @@ class LLVMGen {
         if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(val))) == LLVMArrayTypeKind) {
             val = LLVMBuildPointerCast(Generator.Builder,val,LLVMPointerType(LLVMGetElementType(LLVMGetElementType(LLVMTypeOf(val))),0),toStringz("ptrcast"));
         }
+        if(LLVMGetTypeKind(LLVMTypeOf(val)) != LLVMPointerTypeKind) {
+            error(-1,"Bug! '"~typeToString(LLVMTypeOf(val))~"' isn't a pointer in byIndex!");
+        }
         return LLVMBuildGEP(Generator.Builder,val,indexs.ptr,cast(uint)indexs.length,toStringz("gep225_"));
         assert(0);
     }
