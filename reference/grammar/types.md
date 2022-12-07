@@ -33,6 +33,15 @@ Examples:
 - std::string
 - etc.
 
+## Function-Pointers
+
+Examples:
+
+- void()
+- int(int,int)
+- float(std::string,char*)
+- etc.
+
 # Creating new types
 
 In fact, these are just "aliases" for existing types. But they can be used for abbreviations.

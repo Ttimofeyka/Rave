@@ -51,6 +51,7 @@ struct Loop {
     LLVMBasicBlockRef start;
     LLVMBasicBlockRef end;
     bool hasEnd;
+    bool isIf;
     LoopReturn[] rets;
 }
 
@@ -262,6 +263,15 @@ class LLVMGen {
         }
         return LLVMBuildGEP(Generator.Builder,val,indexs.ptr,cast(uint)indexs.length,toStringz("gep225_"));
         assert(0);
+    }
+
+    void addAttribute(string name, LLVMAttributeIndex index, LLVMValueRef ptr) {
+        int id = LLVMGetEnumAttributeKindForName(toStringz(name),cast(int)(name.length));
+        if(id == 0) {
+            error(-1,"Unknown attribute '"~name~"'!");
+        }
+        LLVMAttributeRef attr = LLVMCreateEnumAttribute(Generator.Context,id,0);
+        LLVMAddAttributeAtIndex(ptr,index,attr);
     }
 }
 
@@ -1416,8 +1426,10 @@ class NodeFunc : Node {
     LLVMBuilderRef builder;
     string[] namespacesNames;
     const string origname;
+
     bool isMethod = false;
     bool isVararg = false;
+    bool isInline = false;
 
     this(string name, FuncArgSet[] args, NodeBlock block, bool isExtern, DeclMod[] mods, int loc, Type type) {
         this.name = name;
@@ -1442,7 +1454,7 @@ class NodeFunc : Node {
             }
         }
         if(type.instanceof!TypeArray) {
-            checkError(loc,"it's impossible to return an array!");
+            //checkError(loc,"it's impossible to return an array!");
         }
         FuncTable[name] = this;
         for(int i=0; i<block.nodes.length; i++) {
@@ -1487,6 +1499,7 @@ class NodeFunc : Node {
             else if(mods[i].name == "linkname") linkName = mods[i].value;
             else if(mods[i].name == "fastcc") callconv = 1;
             else if(mods[i].name == "coldcc") callconv = 2;
+            else if(mods[i].name == "inline") isInline = true;
         }
 
         LLVMTypeRef* parametersG = getParameters();
@@ -1506,6 +1519,10 @@ class NodeFunc : Node {
 
         if(callconv == 1) LLVMSetFunctionCallConv(Generator.Functions[name],LLVMFastCallConv);
         else if(callconv == 2) LLVMSetFunctionCallConv(Generator.Functions[name],LLVMColdCallConv);
+
+        Generator.addAttribute("nocf_check",LLVMAttributeFunctionIndex,Generator.Functions[name]);
+
+        if(isInline) Generator.addAttribute("alwaysinline",LLVMAttributeFunctionIndex,Generator.Functions[name]);
 
         if(!isExtern) {
             LLVMBasicBlockRef entry = LLVMAppendBasicBlockInContext(
@@ -1581,8 +1598,6 @@ class NodeFunc : Node {
 			Generator.Builder = null;
             currScope = null;
         }
-
-        //version(linux) {LLVMSetGlobalDSOLocal(Generator.Functions[name]);}
 
         //writeln(fromStringz(LLVMPrintModuleToString(Generator.Module)));
 
@@ -2054,6 +2069,13 @@ class NodeIndex : Node {
             if(isMustBePtr) return index;
             return LLVMBuildLoad(Generator.Builder,index,toStringz("load1691_"));
         }
+        if(NodeCall nc = element.instanceof!NodeCall) {
+            LLVMValueRef vr = nc.generate();
+
+            LLVMValueRef index = Generator.byIndex(vr,generateIndexs());
+            if(isMustBePtr) return index;
+            return LLVMBuildLoad(Generator.Builder,index,toStringz("load2062_"));
+        }
         writeln("Base: ",element);
         assert(0);
     }
@@ -2327,11 +2349,7 @@ class NodeIf : Node {
                         r.parent = func;
                         _hasRets[0] = true;
                     }
-                    else if(NodeBreak br = _body.instanceof!NodeBreak) br.fromIf = true;
                 }
-            }
-            else if(NodeBreak br = _body.instanceof!NodeBreak) {
-                br.fromIf = true;
             }
         }
 
@@ -2393,7 +2411,7 @@ class NodeIf : Node {
 		);
 
         int selfNum = cast(int)Generator.ActiveLoops.length;
-        Generator.ActiveLoops[selfNum] = Loop(true,thenBlock,endBlock,false);
+        Generator.ActiveLoops[selfNum] = Loop(true,thenBlock,endBlock,false,true);
 
         LLVMPositionBuilderAtEnd(Generator.Builder, thenBlock);
         Generator.currBB = thenBlock;
@@ -2406,7 +2424,7 @@ class NodeIf : Node {
         
         bool hasEnd1 = Generator.ActiveLoops[selfNum].hasEnd;
 
-        Generator.ActiveLoops[selfNum] = Loop(true,elseBlock,endBlock,false);
+        Generator.ActiveLoops[selfNum] = Loop(true,elseBlock,endBlock,false,true);
 
         LLVMPositionBuilderAtEnd(Generator.Builder, elseBlock);
 		Generator.currBB = elseBlock;
@@ -2494,7 +2512,7 @@ class NodeWhile : Node {
 
         LLVMPositionBuilderAtEnd(Generator.Builder, whileBlock);
         int selfNumber = cast(int)Generator.ActiveLoops.length;
-        Generator.ActiveLoops[selfNumber] = Loop(true,condBlock,currScope.BlockExit,false);
+        Generator.ActiveLoops[selfNumber] = Loop(true,condBlock,currScope.BlockExit,false,false);
         
         _body.generate();
         if(!Generator.ActiveLoops[selfNumber].hasEnd) LLVMBuildBr(
@@ -2510,18 +2528,58 @@ class NodeWhile : Node {
 
 class NodeBreak : Node {
     int loc;
-    bool fromIf = false;
 
     this(int loc) {this.loc = loc;}
 
+    int getWhileLoop() {
+        int i = cast(int)Generator.ActiveLoops.length-1;
+
+        while((i>=0) && Generator.ActiveLoops[i].isIf) i -= 1;
+
+        return i;
+    }
+
     override void check() {}
     override LLVMValueRef generate() {
+        if(Generator.ActiveLoops.length == 0) Generator.error(loc,"Attempt to call 'break' out of the loop!");
+        int id = getWhileLoop();
+
+        Generator.ActiveLoops[cast(int)Generator.ActiveLoops.length-1].hasEnd = true;
+
         LLVMBuildBr(
             Generator.Builder,
-            Generator.ActiveLoops[cast(int)Generator.ActiveLoops.length-1].end
+            Generator.ActiveLoops[id].end
         );
-        if(fromIf) return null;
+        return null;
+    }
+}
+
+class NodeContinue : Node {
+    int loc;
+
+    this(int loc) {this.loc = loc;}
+
+    int getWhileLoop() {
+        int i = cast(int)Generator.ActiveLoops.length-1;
+
+        while((i>=0) && Generator.ActiveLoops[i].isIf) {
+            i -= 1;
+        }
+
+        return i;
+    }
+
+    override void check() {}
+    override LLVMValueRef generate() {
+        if(Generator.ActiveLoops.length == 0) Generator.error(loc,"Attempt to call 'continue' out of the loop!");
+        int id = getWhileLoop();
+
         Generator.ActiveLoops[cast(int)Generator.ActiveLoops.length-1].hasEnd = true;
+
+        LLVMBuildBr(
+            Generator.Builder,
+            Generator.ActiveLoops[id].start
+        );
         return null;
     }
 }
@@ -2831,8 +2889,11 @@ class NodeStruct : Node {
                     }
                 }
                 else {
-                    Type outType = _this.type;
-                    if(outType.instanceof!TypeStruct) outType = new TypePointer(outType);
+                    Type outType = new TypePointer(new TypeStruct(name));
+                    if(_this !is null) {
+                        outType = _this.type;
+                        if(outType.instanceof!TypeStruct) outType = new TypePointer(outType);
+                    }
                     f.args = FuncArgSet("this",outType)~f.args;
                     f.name = name~"."~f.origname;
                     f.isMethod = true;

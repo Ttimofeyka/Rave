@@ -1,0 +1,17 @@
+import <std/io>
+
+namespace libc {
+    extern(linkname: "__errno_location") int* _errno();
+    int errno => libc::_errno()[0];
+}
+
+namespace std {
+    struct Error { // TODO
+        void* val;
+        char* msg;
+
+        void catch {
+            std::printf("%s\n",this.msg);
+        }
+    }
+}

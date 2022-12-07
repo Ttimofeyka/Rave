@@ -20,7 +20,6 @@ The characters are enclosed in single quotes (").
 
 ## Grammar
 
-##### [General](grammar/general.md)
 ##### [Commands](grammar/commands.md)
 ##### [Declarations](grammar/declarations.md)
 ##### [Types](grammar/types.md)
