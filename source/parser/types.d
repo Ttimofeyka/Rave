@@ -47,7 +47,12 @@ Type getType(string name) {
     }
 }
 
-class Type {}
+class Type {
+    override string toString()
+    {
+        return "SimpleType";
+    }
+}
 
 class TypeBasic : Type {
     BasicType type;
@@ -100,6 +105,11 @@ class TypePointer : Type {
     Type instance;
 
     this(Type instance) {this.instance = instance;}
+
+    override string toString()
+    {
+        return instance.toString()~"*";
+    }
 }
 
 class TypeArray : Type {
@@ -110,14 +120,29 @@ class TypeArray : Type {
         this.count = count;
         this.element = element;
     }
+
+    override string toString()
+    {
+        return element.toString()~"["~to!string(count)~"]";
+    }
 }
 
 class TypeAlias : Type {}
-class TypeVoid : Type {}
+class TypeVoid : Type {
+    override string toString()
+    {
+        return "void";
+    }
+}
 class TypeStruct : Type {
     string name;
 
     this(string name) {this.name = name;}
+
+    override string toString()
+    {
+        return name;
+    }
 }
 class TypeFuncArg : Type {
     Type type;
@@ -136,7 +161,40 @@ class TypeFunc : Type {
         this.main = main;
         this.args = args;
     }
+
+    override string toString()
+    {
+        return "NotImplemented";
+    }
 }
 class TypeVarArg : Type {}
 class TypeMacroArg : Type { int num; this(int num) {this.num = num;} }
 class TypeBuiltin : Type { string name; Node[] args; this(string name, Node[] args) {this.name = name; this.args = args.dup;} }
+class TypeTemplate : Type {
+    Type[] types;
+    TypeStruct main;
+    string strArgs;
+
+    this(TypeStruct main, Type[] types, string strArgs) {
+        this.types = types.dup;
+        this.main = main;
+        this.strArgs = strArgs;
+    }
+
+    override string toString()
+    {
+        return main.name~strArgs;
+    }
+}
+class TypeTemplatePart : Type {
+    string name;
+
+    this(string name) {
+        this.name = name;
+    }
+
+    override string toString()
+    {
+        return name;
+    }
+}

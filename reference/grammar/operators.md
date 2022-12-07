@@ -71,3 +71,46 @@ int main {
     int b = 16 >> 3;
 } => 0;
 ```
+
+## Flow Control Operator
+
+The 'with' operator allows you to automatically release structures (of any kind - pointers or not) by calling their destructor after the end of the block. It can be overloaded like any other operator.
+
+Examples:
+```d
+import <std/io>
+
+struct A {
+    A this => this;
+
+    void test {
+
+    }
+
+    void ~with {
+        std::printf("Called by with!");
+    }
+}
+
+void main {
+    with(A a = A()) {
+        /*
+        After this block, '~with' or the destructor will be automatically called.
+        Please note that after this block, the variable will be "deleted" from the public access.
+        To avoid this, it is enough to pass only the name of the variable, and not its declaration.
+        */
+    }
+
+    A b = A();
+    with(b) {
+        // After this block, the variable is not removed from public access.
+    }
+
+    A c = A();
+    with(c.test()) {
+        /*
+        The compiler is able to automatically get the structure that you passed, even if you pass a method call. Please note that if your method has the type of a third-party structure, then the structure received from the method will be used in 'with', and not the root one.
+        */
+    }
+}
+```

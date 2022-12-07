@@ -17,6 +17,14 @@ T instanceof(T)(Object o) if(is(T == class)) {
 	return cast(T) o;
 }
 
+static void removeAt(T)(ref T[] arr, size_t index)
+{
+    foreach (i, ref item; arr[index .. $ - 1])
+        item = arr[i + 1];
+    arr = arr[0 .. $ - 1];
+    arr.assumeSafeAppend();
+}
+
 struct DeclMod {
     string name;
     string value;
@@ -50,6 +58,7 @@ class Parser {
     int _idx = 0;
     Node[] _nodes;
     string[] structs;
+    string[] _templateNames;
     bool[string] _imported;
     Type[string] _aliasTypes;
     string currentFile = "";
@@ -81,10 +90,13 @@ class Parser {
     }
 
     private Type parseTypeAtom() {
+        import std.algorithm : canFind;
+        
         if(peek().type == TokType.Identifier) {
             auto t = next();
             if(t.value == "void") return new TypeVoid();
             else if(t.value.into(_aliasTypes)) return _aliasTypes[t.value];
+            else if(_templateNames.canFind(t.value)) return new TypeTemplatePart(t.value);
             return getType(t.value);
         }
         else if(peek().type == TokType.MacroArgNum) {
@@ -132,7 +144,7 @@ class Parser {
 
     Type parseType() {
         auto t = parseTypeAtom();
-        while(peek().type == TokType.Multiply || peek().type == TokType.Rarr || peek().type == TokType.Rpar) {
+        while(peek().type == TokType.Multiply || peek().type == TokType.Rarr || peek().type == TokType.Rpar || peek().type == TokType.Less) {
             if(peek().type == TokType.Multiply) {
                 next();
                 t = new TypePointer(t);
@@ -151,6 +163,21 @@ class Parser {
                 next();
                 TypeFuncArg[] types = getFuncTypeArgs().dup;
                 t = new TypeFunc(t,types.dup);
+            }
+            else if(peek().type == TokType.Less) {
+                // Template
+                // Just return TypeTemplate with TypeStruct and types
+                Type[] types;
+                string strArgs = "<";
+
+                next(); // Skip <
+                while(peek().type != TokType.More) {Type _cT = parseType(); types ~= _cT; strArgs ~= _cT.toString()~",";}
+                next(); // Skip >
+
+                strArgs =  strArgs[0..$-1]~">";
+
+                assert(t.instanceof!TypeStruct);
+                t = new TypeTemplate(t.instanceof!TypeStruct,types,strArgs);
             }
         }
         return t;
@@ -194,7 +221,7 @@ class Parser {
                     args ~= new NodeType(parseType(),peek().line);
                     break;
                 default:
-                    if(canFind(structs,peek().value)) args ~= new NodeType(parseType(),peek().line);
+                    if(canFind(structs,peek().value) || canFind(_templateNames,peek().value)) args ~= new NodeType(parseType(),peek().line);
                     else {args ~= parseExpr();}
                     break;
             }
@@ -310,7 +337,7 @@ class Parser {
             Node[] args;
             while(peek().type != TokType.Lpar) {
                 if(canFind(structs,peek().value) || peek().value == "int" || peek().value == "short" || peek().value == "long" ||
-                   peek().value == "bool" || peek().value == "char" || peek().value == "cent") {
+                   peek().value == "bool" || peek().value == "char" || peek().value == "cent" || canFind(_templateNames,peek().value)) {
                     if(tokens[_idx+1].type == TokType.Identifier || tokens[_idx+1].type == TokType.Rpar || tokens[_idx+1].type == TokType.ShortRet) {
                         args ~= parseLambda();
                     }
@@ -516,7 +543,7 @@ class Parser {
         NodeBinary[] condAndAfter;
 
         while(peek().type != TokType.Lpar) {
-            if(peek().value == "bool" || peek().value == "short" || peek().value == "int" || peek().value == "long" || peek().value == "cent" || canFind(structs,peek().value)) {
+            if(peek().value == "bool" || peek().value == "short" || peek().value == "int" || peek().value == "long" || peek().value == "cent" || canFind(structs,peek().value) || canFind(_templateNames,peek().value)) {
                 // Var
                 Type t = parseType();
                 string name = peek().value;
@@ -548,7 +575,7 @@ class Parser {
         Node _structure;
         // Current token - "("
         next();
-        if(canFind(structs,peek().value)) { // Decl
+        if(canFind(structs,peek().value) || canFind(_templateNames,peek().value)) { // Decl
             Type t = parseType();
             string name = peek().value;
 
@@ -582,6 +609,9 @@ class Parser {
         else if(peek().type == TokType.Semicolon) {
             next();
             return parseStmt(f);
+        }
+        else if(peek().type == TokType.Identifier && tokens[_idx+1].type == TokType.Less) {
+            return parseDecl(f);
         }
         else if(peek().type == TokType.Command) {
             if(peek().value == "if") return parseIf(f,isStatic);
@@ -631,7 +661,7 @@ class Parser {
                                 }
                                 break;
                         }
-                        if(structs.canFind(iden)) {
+                        if(structs.canFind(iden) || _templateNames.canFind(iden)) {
                             _idx -= 1;
                             return parseDecl(f);
                         }
@@ -649,7 +679,7 @@ class Parser {
                                 return parseDecl(f);
                             default: break;
                         }
-                        if(structs.canFind(iden)) {
+                        if(structs.canFind(iden) || _templateNames.canFind(iden)) {
                             _idx -= 1;
                             return parseDecl(f);
                         }
@@ -937,10 +967,26 @@ class Parser {
     }
 
     Node parseStruct() {
+        import std.algorithm : canFind;
+
         int loc = peek().line;
         next();
         string name = peek().value;
-        next(); // current token = { or :
+        next(); // current token = { or : or <
+
+        string[] templateNames;
+        if(peek().type == TokType.Less) {
+            // Structure has a template
+            next();
+            while(peek().type != TokType.More) {
+                templateNames ~= peek().value;
+                _templateNames ~= peek().value;
+                next();
+                if(peek().type == TokType.Comma) next();
+            }
+            next();
+        }
+
         string _exs = "";
         if(peek().type == TokType.ValSel) {
             next();
@@ -952,8 +998,11 @@ class Parser {
         Node currNode;
         while((currNode = parseTopLevel(name)) !is null) nodes ~= currNode;
         expect(TokType.Lbra); // skip }
+
+        _templateNames = [];
+
         structs ~= name;
-        return new NodeStruct(name,nodes,loc,_exs);
+        return new NodeStruct(name,nodes,loc,_exs,templateNames);
     }
     
     Node parseMacro() {
@@ -1099,7 +1148,7 @@ class Parser {
             Node[] args;
             while(peek().type != TokType.Lpar) {
                 if(canFind(structs,peek().value) || peek().value == "int" || peek().value == "short" || peek().value == "long" ||
-                   peek().value == "bool" || peek().value == "char" || peek().value == "cent") {
+                   peek().value == "bool" || peek().value == "char" || peek().value == "cent" || canFind(_templateNames,peek().value)) {
                     if(tokens[_idx+1].type == TokType.Rpar || tokens[_idx+1].type == TokType.ShortRet) {
                         args ~= parseLambda();
                     }

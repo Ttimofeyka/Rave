@@ -70,6 +70,7 @@ class LLVMGen {
     LLVMTypeRef[string] LLVMFunctionTypes;
     string file;
     long countOfLambdas;
+    Type[string] toReplace;
 
     this(string file) {
         this.file = file;
@@ -135,7 +136,9 @@ class LLVMGen {
             return LLVMArrayType(this.GenerateType(a.element),cast(uint)a.count);
         }
         if(TypeStruct s = t.instanceof!TypeStruct) {
-            if(!s.name.into(Generator.Structs)) Generator.error(loc,"Unknown structure '"~s.name~"'!");
+            if(!s.name.into(Generator.Structs)) {
+                Generator.error(loc,"Unknown structure '"~s.name~"'!");
+            }
             return Generator.Structs[s.name];
         }
         if(t.instanceof!TypeVoid) return LLVMVoidTypeInContext(Generator.Context);
@@ -172,6 +175,18 @@ class LLVMGen {
             LLVMInt8TypeInContext(Generator.Context),
             0
         );
+        if(TypeTemplate tt = t.instanceof!TypeTemplate) {
+            if(tt.main.name.into(StructTable) && !(tt.main.name~tt.strArgs).into(StructTable)) {
+                if((tt.main.name~tt.strArgs).into(toReplace)) return GenerateType(toReplace[tt.main.name~tt.strArgs],loc);
+                StructTable[tt.main.name].generateWithTypes(tt.types,tt.strArgs);
+            }
+            if((tt.main.name~tt.strArgs).into(toReplace)) return GenerateType(toReplace[tt.main.name~tt.strArgs],loc);
+            //writeln(tt.main.name," ",tt.strArgs," ",toReplace);
+            return GenerateType(new TypeStruct(tt.main.name~tt.strArgs),loc);
+        }
+        if(TypeTemplatePart ttp = t.instanceof!TypeTemplatePart) {
+            return GenerateType(toReplace[ttp.name],loc);
+        }
         assert(0);
     }
     
@@ -239,6 +254,12 @@ class LLVMGen {
             return getAlignmentOfType(f.main);
         }
         else if(TypeVoid v = t.instanceof!TypeVoid) {
+            return 0;
+        }
+        else if(TypeTemplate tp = t.instanceof!TypeTemplate) {
+            return 0;
+        }
+        else if(TypeTemplatePart ttp = t.instanceof!TypeTemplatePart) {
             return 0;
         }
         assert(0);
@@ -2672,12 +2693,17 @@ class NodeStruct : Node {
     string _extends;
     NodeFunc[string][TokType] operators;
 
-    this(string name, Node[] elements, int loc, string _exs) {
+    string[] templateNames;
+    Node[] oldElements;
+
+    this(string name, Node[] elements, int loc, string _exs, string[] templateNames) {
         this.name = name;
         this.elements = elements.dup;
+        this.oldElements = elements.dup;
         this.loc = loc;
         this.origname = name;
         this._extends = _exs;
+        this.templateNames = templateNames.dup;
     }
 
     LLVMTypeRef asConstType() {
@@ -2778,7 +2804,7 @@ class NodeStruct : Node {
                     predefines ~= StructPredefined(i,v.value,false);
                 }
                 else if(TypeStruct ts = v.t.instanceof!TypeStruct) {
-                    if(StructTable[ts.name].hasPredefines()) predefines ~= StructPredefined(i,v,true);
+                    if(!(ts.name !in StructTable) && StructTable[ts.name].hasPredefines()) predefines ~= StructPredefined(i,v,true);
                 }
                 else predefines ~= StructPredefined(i,null,false);
                 values ~= Generator.GenerateType(v.t);
@@ -2920,6 +2946,8 @@ class NodeStruct : Node {
     }
 
     override LLVMValueRef generate() {
+        if(templateNames.length > 0) return null;
+
         Generator.Structs[name] = LLVMStructCreateNamed(Generator.Context,toStringz(name));
         LLVMTypeRef[] params = getParameters();
         LLVMStructSetBody(Generator.Structs[name],params.ptr,cast(uint)params.length,false);
@@ -2954,6 +2982,25 @@ class NodeStruct : Node {
 
         if(_with !is null) _with.generate();
 
+        return null;
+    }
+
+    LLVMValueRef generateWithTypes(Type[] types, string _argsName) {
+        string _types = "<";
+        for(int i=0; i<types.length; i++) {
+            Generator.toReplace[templateNames[i]] = types[i];
+            _types ~= templateNames[i]~",";
+        }
+        _types = _types[0..$-1]~">"; 
+
+        Generator.toReplace[name~_types] = new TypeStruct(name~_argsName);
+
+        NodeStruct ns = new NodeStruct(name~_argsName,oldElements.dup,loc,_extends,[]);
+
+        ns.check();
+        ns.generate();
+
+        Generator.toReplace.clear();
         return null;
     }
 }
