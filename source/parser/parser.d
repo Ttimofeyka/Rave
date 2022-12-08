@@ -59,6 +59,7 @@ class Parser {
     Node[] _nodes;
     string[] structs;
     string[] _templateNames;
+    string[] _templateNamesF;
     bool[string] _imported;
     Type[string] _aliasTypes;
     string currentFile = "";
@@ -661,7 +662,7 @@ class Parser {
                                 }
                                 break;
                         }
-                        if(structs.canFind(iden) || _templateNames.canFind(iden)) {
+                        if(structs.canFind(iden) || _templateNames.canFind(iden) || _templateNamesF.canFind(iden)) {
                             _idx -= 1;
                             return parseDecl(f);
                         }
@@ -679,7 +680,7 @@ class Parser {
                                 return parseDecl(f);
                             default: break;
                         }
-                        if(structs.canFind(iden) || _templateNames.canFind(iden)) {
+                        if(structs.canFind(iden) || _templateNames.canFind(iden) || _templateNamesF.canFind(iden)) {
                             _idx -= 1;
                             return parseDecl(f);
                         }
@@ -818,7 +819,22 @@ class Parser {
         }
         else name = peek().value;
         loc = peek().line;
+
         next();
+        
+        string[] _templates;
+
+        if(peek().type == TokType.Less) {
+            // Template there
+            next();
+            while(peek().type != TokType.More) {
+                _templates ~= peek().value;
+                _templateNamesF ~= peek().value;
+                next();
+                if(peek().type == TokType.Comma) next();
+            }
+            next();
+        }
 
         if(peek().type == TokType.Rpar) {
             // Function with args
@@ -829,11 +845,13 @@ class Parser {
                 next();
                 Node expr = parseExpr();
                 if(peek().type != TokType.Lpar) expect(TokType.Semicolon);
-                return new NodeFunc(name,args,new NodeBlock([new NodeRet(expr,loc,name)]),isExtern,mods,loc,type);
+                _templateNamesF = [];
+                return new NodeFunc(name,args,new NodeBlock([new NodeRet(expr,loc,name)]),isExtern,mods,loc,type,_templates);
             }
             else if(peek().type == TokType.Semicolon) {
                 next();
-                return new NodeFunc(name,args,new NodeBlock([]),isExtern,mods,loc,type);
+                _templateNamesF = [];
+                return new NodeFunc(name,args,new NodeBlock([]),isExtern,mods,loc,type,_templates);
             }
             // {block}
             NodeBlock block = parseBlock(name);
@@ -843,7 +861,8 @@ class Parser {
                 if(peek().type == TokType.Semicolon) next();
                 block.nodes ~= new NodeRet(n,peek().line,name);
             }
-            return new NodeFunc(name,args,block,isExtern,mods,loc,type);
+            _templateNamesF = [];
+            return new NodeFunc(name,args,block,isExtern,mods,loc,type,_templates);
         }
         else if(peek().type == TokType.Rbra) {
             NodeBlock block = parseBlock(name);
@@ -853,7 +872,8 @@ class Parser {
                 if(peek().type == TokType.Semicolon) next();
                 block.nodes ~= new NodeRet(n,peek().line,name);
             }
-            return new NodeFunc(name,[],block,isExtern,mods,loc,type);
+            _templateNamesF = [];
+            return new NodeFunc(name,[],block,isExtern,mods,loc,type,_templates);
         }
         else if(peek().type == TokType.Semicolon) {
             // Var without value
@@ -864,7 +884,8 @@ class Parser {
             next();
             Node expr = parseExpr();
             if(peek().type != TokType.Lpar) expect(TokType.Semicolon);
-            return new NodeFunc(name,[],new NodeBlock([new NodeRet(expr,loc,name)]),isExtern,mods,loc,type);
+            _templateNamesF = [];
+            return new NodeFunc(name,[],new NodeBlock([new NodeRet(expr,loc,name)]),isExtern,mods,loc,type,_templates);
         }
         else if(peek().type == TokType.Equ) {
             // Var with value
@@ -873,7 +894,9 @@ class Parser {
             if(peek().type != TokType.Lpar) expect(TokType.Semicolon);
             return new NodeVar(name,e,isExtern,isConst,(s==""),mods,loc,type,isVolatile);
         }
-        return new NodeFunc(name,[],parseBlock(name), isExtern, mods, loc, type);
+        NodeBlock _b = parseBlock(name);
+        _templateNamesF = [];
+        return new NodeFunc(name, [], _b, isExtern, mods, loc, type, _templates);
     }
 
     Node parseNamespace() {
@@ -1078,7 +1101,7 @@ class Parser {
             nb.nodes ~= new NodeRet(parseExpr(),peek().line,name);
             if(peek().type == TokType.Semicolon) next();
 
-            return new NodeFunc(name,args.dup,nb,false,[],peek().line,tt);
+            return new NodeFunc(name,args.dup,nb,false,[],peek().line,tt,[]);
         }
         else {
             // Rbra
@@ -1088,7 +1111,7 @@ class Parser {
                 next();
                 nb.nodes ~= new NodeRet(parseExpr(),peek().line,name);
             }
-            return new NodeFunc(name,args.dup,nb,false,[],peek().line,tt);
+            return new NodeFunc(name,args.dup,nb,false,[],peek().line,tt,[]);
         }
     }
 

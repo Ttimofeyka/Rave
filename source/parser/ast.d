@@ -176,11 +176,11 @@ class LLVMGen {
             0
         );
         if(TypeTemplate tt = t.instanceof!TypeTemplate) {
-            if(tt.main.name.into(StructTable) && !(tt.main.name~tt.strArgs).into(StructTable)) {
-                if((tt.main.name~tt.strArgs).into(toReplace)) return GenerateType(toReplace[tt.main.name~tt.strArgs],loc);
-                StructTable[tt.main.name].generateWithTypes(tt.types,tt.strArgs);
-            }
             if((tt.main.name~tt.strArgs).into(toReplace)) return GenerateType(toReplace[tt.main.name~tt.strArgs],loc);
+            if(tt.main.name.into(StructTable) && !(tt.main.name~tt.strArgs).into(StructTable)) {
+                StructTable[tt.main.name].generateWithTypes(tt.types,tt.strArgs);
+                return Generator.Structs[tt.main.name~tt.strArgs];
+            }
             //writeln(tt.main.name," ",tt.strArgs," ",toReplace);
             return GenerateType(new TypeStruct(tt.main.name~tt.strArgs),loc);
         }
@@ -1273,9 +1273,10 @@ class NodeVar : Node {
                 if(mods[i].name == "volatile") isVolatile = true;
             }
             currScope.localVars[name] = this;
+            LLVMTypeRef _t = Generator.GenerateType(t,loc);
             currScope.localscope[name] = LLVMBuildAlloca(
                 Generator.Builder,
-                Generator.GenerateType(t,loc),
+                _t,
                 toStringz(name)
             );
             if(isVolatile) {
@@ -1452,7 +1453,9 @@ class NodeFunc : Node {
     bool isVararg = false;
     bool isInline = false;
 
-    this(string name, FuncArgSet[] args, NodeBlock block, bool isExtern, DeclMod[] mods, int loc, Type type) {
+    string[] templateNames;
+
+    this(string name, FuncArgSet[] args, NodeBlock block, bool isExtern, DeclMod[] mods, int loc, Type type, string[] templateNames) {
         this.name = name;
         this.origname = name;
         this.args = args;
@@ -1461,6 +1464,7 @@ class NodeFunc : Node {
         this.mods = mods.dup;
         this.loc = loc;
         this.type = type;
+        this.templateNames = templateNames;
     }
 
     override void check() {
@@ -1541,7 +1545,7 @@ class NodeFunc : Node {
         if(callconv == 1) LLVMSetFunctionCallConv(Generator.Functions[name],LLVMFastCallConv);
         else if(callconv == 2) LLVMSetFunctionCallConv(Generator.Functions[name],LLVMColdCallConv);
 
-        Generator.addAttribute("nocf_check",LLVMAttributeFunctionIndex,Generator.Functions[name]);
+        //Generator.addAttribute("nocf_check",LLVMAttributeFunctionIndex,Generator.Functions[name]);
 
         if(isInline) Generator.addAttribute("alwaysinline",LLVMAttributeFunctionIndex,Generator.Functions[name]);
 
@@ -1620,7 +1624,7 @@ class NodeFunc : Node {
             currScope = null;
         }
 
-        //writeln(fromStringz(LLVMPrintModuleToString(Generator.Module)));
+        //writeln("Start: \n",fromStringz(LLVMPrintModuleToString(Generator.Module)),"\nEnd.");
 
         LLVMVerifyFunction(Generator.Functions[name],0);
 
@@ -2329,10 +2333,11 @@ class NodeUnary : Node {
             if(StructTable[struc]._destructor is null) {
                 if(NodeIden id = base.instanceof!NodeIden) {
                     writeln(id.name);
-                    if(!into(id.name,currScope.localVars) && !currScope.localVars[id.name].t.instanceof!TypeStruct) return new NodeCall(loc,new NodeIden("std::free",loc),[base]).generate();
+                    if(!into(id.name,currScope.localVars) && !currScope.localVars[id.name].t.instanceof!TypeStruct) {
+                        return new NodeCall(loc,new NodeIden("std::free",loc),[base]).generate();
+                    }
                     else return null;
                 }
-                // TODO
                 return new NodeCall(loc,new NodeIden("std::free",loc),[base]).generate();
             }
             return new NodeCall(loc,new NodeIden(StructTable[struc]._destructor.name,loc),[base]).generate();
@@ -2731,7 +2736,7 @@ class NodeStruct : Node {
         for(int i=0; i<elements.length; i++) {
             if(NodeVar v = elements[i].instanceof!NodeVar) {
                 if(TypeStruct s = v.t.instanceof!TypeStruct) {
-                    if(StructTable[s.name].hasPredefines()) return true;
+                    if(s.name != name && StructTable[s.name].hasPredefines()) return true;
                 }
                 else {
                     if(v.value !is null) return true;
@@ -2825,8 +2830,7 @@ class NodeStruct : Node {
                     _this.isExtern = false;
 
                     Node[] toAdd;
-
-                    if(!f.type.instanceof!TypeStruct && !canFind(f.mods,DeclMod("noNew",""))) {
+                    if((!f.type.instanceof!TypeStruct && !f.type.instanceof!TypeTemplate) && !canFind(f.mods,DeclMod("noNew",""))) {
                         toAdd ~= new NodeBinary(
                             TokType.Equ,
                             new NodeIden("this",_this.loc),
@@ -2951,19 +2955,21 @@ class NodeStruct : Node {
         Generator.Structs[name] = LLVMStructCreateNamed(Generator.Context,toStringz(name));
         LLVMTypeRef[] params = getParameters();
         LLVMStructSetBody(Generator.Structs[name],params.ptr,cast(uint)params.length,false);
+
         if(_this !is null) _this.generate();
         if(_destructor !is null) _destructor.generate();
         else {
-            _destructor = new NodeFunc("~"~origname,[],new NodeBlock([new NodeCall(loc,new NodeIden("std::free",loc),[new NodeIden("this",loc)])]),false,[],loc,new TypeVoid());
+            _destructor = new NodeFunc("~"~origname,[],new NodeBlock([new NodeCall(loc,new NodeIden("std::free",loc),[new NodeIden("this",loc)])]),false,[],loc,new TypeVoid(),[]);
             _destructor.namespacesNames = namespacesNames.dup;
 
-            if(isImported) {
-                _destructor.isExtern = true;
-                _destructor.check();
-            }
-            else {
-                Type outType;
-                if(_this !is null) {
+            if(_this !is null && _this.type.instanceof!TypePointer) {
+
+                if(isImported) {
+                    _destructor.isExtern = true;
+                    _destructor.check();
+                }
+                else {
+                    Type outType;
                     outType = _this.type;
                     if(outType.instanceof!TypeStruct) outType = new TypePointer(outType);
 
@@ -2997,8 +3003,14 @@ class NodeStruct : Node {
 
         NodeStruct ns = new NodeStruct(name~_argsName,oldElements.dup,loc,_extends,[]);
 
+        Scope oldScope = currScope;
+        LLVMBuilderRef oldBuilder = Generator.Builder;
+
         ns.check();
         ns.generate();
+
+        currScope = oldScope;
+        Generator.Builder = oldBuilder;
 
         Generator.toReplace.clear();
         return null;
