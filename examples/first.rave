@@ -1,13 +1,5 @@
 import <std/io>
 
-struct Vector<T> {
-    T* data;
-    int capacity;
-    int size;
-
-    Vector<T> this => this;
-}
-
 void main {
-    Vector<int> f = Vector<int>();
+    
 }
