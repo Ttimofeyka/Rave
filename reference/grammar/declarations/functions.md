@@ -23,6 +23,10 @@ int sum(int a, int b) => a+b;
 float sum(float a, float b) => a+b;
 ```
 
+## Parameters
+
+###### [Parameters](declarations/funcvarparams.md)
+
 ## Methods
 
 ##### [Structures](declarations/structures.md)
