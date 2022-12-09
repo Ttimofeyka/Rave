@@ -1717,6 +1717,16 @@ class NodeCall : Node {
                     LLVMTypeRef t = LLVMTypeOf(currScope.get(id.name,loc));
                     params ~= LLVMConstNull(t);
                 }
+                else if(NodeGet ng = nc.func.instanceof!NodeGet) {
+                    NodeGet _ng = ng;
+                    _ng.isMustBePtr = true;
+                    LLVMTypeRef t = LLVMTypeOf(_ng.generate());
+                    if(LLVMGetTypeKind(t) == LLVMPointerTypeKind) t = LLVMGetElementType(t);
+                    if(LLVMGetTypeKind(t) == LLVMFunctionTypeKind)t = LLVMGetReturnType(t);
+                    
+                    params ~= LLVMConstNull(t);
+                }
+                else {writeln(nc.func); assert(0);}
             }
             else params ~= args[i].generate();
         }
@@ -1762,6 +1772,12 @@ class NodeCall : Node {
                                 arg = ng.generate();
                             }
                         }
+                    }
+
+                    if(LLVMGetTypeKind(LLVMTypeOf(arg)) != LLVMPointerTypeKind) {
+                        if(NodeIden id = args[i].instanceof!NodeIden) {id.isMustBePtr = true; arg = id.generate();}
+                        else if(NodeGet ng = args[i].instanceof!NodeGet) {ng.isMustBePtr = true; arg = ng.generate();}
+                        else if(NodeIndex ind = args[i].instanceof!NodeIndex) {ind.isMustBePtr = true; arg = ind.generate();}
                     }
                 }
                 params ~= arg;
@@ -1936,6 +1952,21 @@ class NodeCall : Node {
                     s = p.instance.instanceof!TypeStruct;
                 }
                 else s = currScope.getVar(i.name,loc).t.instanceof!TypeStruct;
+
+                if(s is null) {
+                    // Template
+                    LLVMValueRef v = currScope.getWithoutLoad(i.name,loc);
+
+                    if(LLVMGetTypeKind(LLVMTypeOf(v)) == LLVMStructTypeKind) s = new TypeStruct(cast(string)fromStringz(LLVMGetStructName(LLVMTypeOf(v))));
+                    else if(LLVMGetTypeKind(LLVMTypeOf(v)) == LLVMPointerTypeKind) {
+                        if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(v))) == LLVMStructTypeKind) {
+                            s = new TypeStruct(cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(v)))));
+                        }
+                        else if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(v))) == LLVMPointerTypeKind) {
+                            s = new TypeStruct(cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(LLVMGetElementType(LLVMTypeOf(v))))));
+                        }
+                    }
+                }
                 this.args = new NodeIden(i.name,loc)~this.args;
 
                 LLVMValueRef _toCall = null;
@@ -2856,7 +2887,7 @@ class NodeStruct : Node {
                     _destructor.namespacesNames = namespacesNames.dup;
 
                     Type outType = _this.type;
-                    if(outType.instanceof!TypeStruct) outType = new TypePointer(outType);
+                    if(outType.instanceof!TypeStruct || outType.instanceof!TypeTemplate) outType = new TypePointer(outType);
 
                     _destructor.args = [FuncArgSet("this",outType)];
 
@@ -2866,7 +2897,7 @@ class NodeStruct : Node {
                         continue;
                     }
                     
-                    if(!_this.type.instanceof!TypeStruct) _destructor.block.nodes = _destructor.block.nodes ~ new NodeCall(
+                    if(!_this.type.instanceof!TypeStruct && !_this.type.instanceof!TypeTemplate) _destructor.block.nodes = _destructor.block.nodes ~ new NodeCall(
                             _destructor.loc,
                             new NodeIden("std::free",_destructor.loc),
                             [new NodeIden("this",_destructor.loc)]
@@ -2906,7 +2937,7 @@ class NodeStruct : Node {
                     f.name = "~with."~name;
 
                     Type outType = _this.type;
-                    if(outType.instanceof!TypeStruct) outType = new TypePointer(outType);
+                    if(outType.instanceof!TypeStruct || outType.instanceof!TypeTemplate) outType = new TypePointer(outType);
 
                     f.args = [FuncArgSet("this",outType)];
 
@@ -2922,7 +2953,7 @@ class NodeStruct : Node {
                     Type outType = new TypePointer(new TypeStruct(name));
                     if(_this !is null) {
                         outType = _this.type;
-                        if(outType.instanceof!TypeStruct) outType = new TypePointer(outType);
+                        if(outType.instanceof!TypeStruct || outType.instanceof!TypeTemplate) outType = new TypePointer(outType);
                     }
                     f.args = FuncArgSet("this",outType)~f.args;
                     f.name = name~"."~f.origname;
@@ -3761,7 +3792,13 @@ class NodeWith : Node {
 
     override LLVMValueRef generate() {
         expr.check();
-        LLVMValueRef val = expr.generate();
+        LLVMValueRef val;
+
+        if(NodeIden id = expr.instanceof!NodeIden) {id.isMustBePtr = true; val = id.generate();}
+        else if(NodeGet ng = expr.instanceof!NodeGet) {ng.isMustBePtr = true; val = ng.generate();}
+        else if(NodeIndex ind = expr.instanceof!NodeIndex) {ind.isMustBePtr = true; val = ind.generate();}
+        else val = expr.generate();
+
         bl.generate();
         string structName = "";
 

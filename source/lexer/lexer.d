@@ -173,9 +173,7 @@ class Lexer {
                         if(rnext == '=') {
                             tokens ~= new Token(TokType.More,">=",line); _idx++;
                         }
-                        else if(rnext == '>') {
-                            tokens ~= new Token(TokType.BitRight,">>",line); _idx++;
-                        }
+                        else if(rnext == '>') {tokens ~= new Token(TokType.BitRight,">>",line); _idx++;}
                         else tokens ~= new Token(TokType.More,">",line); 
                         break;
                     case '<': 

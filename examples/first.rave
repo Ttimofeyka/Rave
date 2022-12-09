@@ -1,5 +1,8 @@
-import <std/io>
+import <std/io> <std/vector>
 
 void main {
-    
+    vector<int> v = vector<int>();
+
+    v.add(10);
+    std::printf("%d\n",v.get(0));
 }

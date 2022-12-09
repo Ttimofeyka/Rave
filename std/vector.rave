@@ -1,52 +1,54 @@
 import <std/memory>
 
-namespace std {
-    struct vector {
-        void** data;
-        int length;
-        bool isInitialized = false;
-        int capacity;
-        int size;
+struct vector<T> {
+    T* data;
+    int capacity;
+    int length;
+    bool isInitialized = false;
+    int capacity;
 
-        std::vector* this(int size) {
-            this.length = 0;
-            this.capacity = 1;
-            this.size = size;
-        } => this;
+    vector<T> this {
+        this.length = 0;
+        this.capacity = sizeof(T);
+    } => this;
 
-        void add(void* el) {
-            this.length += 1;
+    void add(T el) {
+        this.length += 1;
 
-            if(this.length == this.capacity) {
-                this.capacity = this.capacity * this.size;
-            }
-
-            if(this.isInitialized == false) {this.data = cast(void**)std::malloc(this.capacity); this.isInitialized = true;}
-            else this.data = cast(void**)std::realloc(cast(void*)this.data,(this.capacity));
-
-            this.data[this.length-1] = el;
+        if(this.length == this.capacity) {
+            this.capacity = this.capacity * sizeof(T);
         }
 
-        void* get(int index) => this.data[index];
-
-        int find(void* el) {
-            int i = 0;
-            int toret = 0;
-
-            while(i<this.length) {
-                if(this.data[i] == el) {
-                    toret = i;
-                    i = this.length;
-                }
-                i += 1;
-            }
-
-            if(i >= this.length && toret == 0) toret = -1;
-        } => toret;
-
-        void destroy {
-            std::free(this.data);
-            std::free(this);
+        if(this.isInitialized == false) {
+            this.data = cast(T*)std::malloc(this.capacity); 
+            this.isInitialized = true;
         }
+        else this.data = cast(T*)std::realloc(cast(void*)this.data,(this.capacity));
+
+        this.data[this.length-1] = el;
+    }
+
+    T get(int index) => this.data[index];
+
+    int indexOf(T el) {
+        int i = 0;
+        int toret = 0;
+
+        while(i<this.length) {
+            if(this.data[i] == el) {
+                toret = i;
+                i = this.length;
+            }
+            i += 1;
+        }
+
+        if(i >= this.length && toret == 0) toret = -1;
+    } => toret;
+
+    void ~this {
+        if(this.data == cast(T*)null) {
+
+        }
+        std::free(this.data);
     }
 }

@@ -311,6 +311,33 @@ class Parser {
                 //expect(TokType.Semicolon,peek().line);
                 return new NodeLambda(loc,tt.instanceof!TypeFunc,b);
             }
+            else if(peek().value == "<") {
+                Node parseTemplateUses() {
+                    // Call of constructor
+                    string name = t.value;
+
+                    while(peek().type != TokType.More) {
+                        name ~= peek().value;
+                        next();
+
+                        if(peek().type == TokType.Comma) next();
+                    }
+                    name ~= peek().value; next();
+
+                    return parseCall(new NodeIden(name,t.line));
+                }
+                switch(tokens[_idx+1].value) {
+                    case "bool":
+                    case "char":
+                    case "short":
+                    case "int":
+                    case "long":
+                    case "cent":
+                        return parseTemplateUses();
+                    default:
+                        if(structs.canFind(tokens[_idx+1].value) || _templateNames.canFind(tokens[_idx+1].value) || _templateNamesF.canFind(tokens[_idx+1].value)) return parseTemplateUses();
+                }
+            }
             return new NodeIden(t.value,peek().line);
         }
         if(t.type == TokType.MacroArgNum) {
