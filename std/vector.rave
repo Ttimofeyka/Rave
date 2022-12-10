@@ -1,54 +1,15 @@
 import <std/memory>
 
-struct vector<T> {
-    T* data;
-    int capacity;
-    int length;
-    bool isInitialized = false;
-    int capacity;
+namespace std {
+    struct vector<T> {
+        T* data;
+        int capacity;
+        int current;
 
-    vector<T> this {
-        this.length = 0;
-        this.capacity = sizeof(T);
-    } => this;
-
-    void add(T el) {
-        this.length += 1;
-
-        if(this.length == this.capacity) {
-            this.capacity = this.capacity * sizeof(T);
-        }
-
-        if(this.isInitialized == false) {
-            this.data = cast(T*)std::malloc(this.capacity); 
-            this.isInitialized = true;
-        }
-        else this.data = cast(T*)std::realloc(cast(void*)this.data,(this.capacity));
-
-        this.data[this.length-1] = el;
-    }
-
-    T get(int index) => this.data[index];
-
-    int indexOf(T el) {
-        int i = 0;
-        int toret = 0;
-
-        while(i<this.length) {
-            if(this.data[i] == el) {
-                toret = i;
-                i = this.length;
-            }
-            i += 1;
-        }
-
-        if(i >= this.length && toret == 0) toret = -1;
-    } => toret;
-
-    void ~this {
-        if(this.data == cast(T*)null) {
-
-        }
-        std::free(this.data);
+        std::vector<T> this {
+            this.data = new(T[1]);
+            this.capacity = 1;
+            this.current = 0;
+        } => this;
     }
 }

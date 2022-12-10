@@ -5,6 +5,7 @@ import std.array;
 import std.conv : to;
 import std.ascii : isAlpha;
 import parser.ast : Node;
+import std.stdio;
 
 enum BasicType {
     Bool,
@@ -179,6 +180,15 @@ class TypeTemplate : Type {
         this.types = types.dup;
         this.main = main;
         this.strArgs = strArgs;
+
+        if(this.strArgs == "") {
+            this.strArgs ~= "<";
+            for(int i=0; i<types.length; i++) {
+                this.strArgs ~= types[i].toString();
+                this.strArgs ~= ",";
+            }
+            this.strArgs = this.strArgs[0..$-1]~">";
+        }
     }
 
     override string toString()

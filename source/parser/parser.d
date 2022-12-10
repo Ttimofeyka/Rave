@@ -168,17 +168,19 @@ class Parser {
             else if(peek().type == TokType.Less) {
                 // Template
                 // Just return TypeTemplate with TypeStruct and types
-                Type[] types;
-                string strArgs = "<";
 
-                next(); // Skip <
-                while(peek().type != TokType.More) {Type _cT = parseType(); types ~= _cT; strArgs ~= _cT.toString()~",";}
-                next(); // Skip >
+                string name = t.toString();
+                next();
 
-                strArgs =  strArgs[0..$-1]~">";
+                Type[] _types;
 
-                assert(t.instanceof!TypeStruct);
-                t = new TypeTemplate(t.instanceof!TypeStruct,types,strArgs);
+                while(peek().type != TokType.More) {
+                    _types ~= parseType();
+                    if(peek().type == TokType.Comma) next();
+                }
+                next();
+
+                t = new TypeTemplate(new TypeStruct(name),_types,"");
             }
         }
         return t;
@@ -320,7 +322,7 @@ class Parser {
                         name ~= peek().value;
                         next();
 
-                        if(peek().type == TokType.Comma) next();
+                        if(peek().type == TokType.Comma) {name ~= ","; next();}
                     }
                     name ~= peek().value; next();
 
@@ -886,7 +888,9 @@ class Parser {
                 next();
                 Node n = parseExpr();
                 if(peek().type == TokType.Semicolon) next();
-                block.nodes ~= new NodeRet(n,peek().line,name);
+
+                if(type.instanceof!TypeVoid) block.nodes ~= n;
+                else block.nodes ~= new NodeRet(n,peek().line,name);
             }
             _templateNamesF = [];
             return new NodeFunc(name,args,block,isExtern,mods,loc,type,_templates);
@@ -897,7 +901,9 @@ class Parser {
                 next();
                 Node n = parseExpr();
                 if(peek().type == TokType.Semicolon) next();
-                block.nodes ~= new NodeRet(n,peek().line,name);
+
+                if(type.instanceof!TypeVoid) block.nodes ~= n;
+                else block.nodes ~= new NodeRet(n,peek().line,name);
             }
             _templateNamesF = [];
             return new NodeFunc(name,[],block,isExtern,mods,loc,type,_templates);
@@ -912,7 +918,9 @@ class Parser {
             Node expr = parseExpr();
             if(peek().type != TokType.Lpar) expect(TokType.Semicolon);
             _templateNamesF = [];
-            return new NodeFunc(name,[],new NodeBlock([new NodeRet(expr,loc,name)]),isExtern,mods,loc,type,_templates);
+
+            if(!type.instanceof!TypeVoid) return new NodeFunc(name,[],new NodeBlock([new NodeRet(expr,loc,name)]),isExtern,mods,loc,type,_templates);
+            return new NodeFunc(name,[],new NodeBlock([expr]),isExtern,mods,loc,type,_templates);
         }
         else if(peek().type == TokType.Equ) {
             // Var with value
@@ -1106,7 +1114,12 @@ class Parser {
     Node parseOperatorOverload(Type tt, string s = "") {
         next();
         string name = s~"("~peek().value~")";
+        Token _t = peek();
         next();
+        if(peek().type != TokType.Rpar) {
+            name = s~"("~_t.value~peek().value~")";
+            next();
+        }
 
         FuncArgSet[] args;
 
