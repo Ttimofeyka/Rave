@@ -4,12 +4,71 @@ namespace std {
     struct vector<T> {
         T* data;
         int capacity;
-        int current;
+        int length;
 
         std::vector<T> this {
-            this.data = new(T[1]);
+            this.data = new(T);
             this.capacity = 1;
-            this.current = 0;
+            this.length = 0;
         } => this;
+
+        void add(T value) {
+            if(this.length == this.capacity) {
+                this.data = cast(T*)std::realloc(this.data, 2 * this.capacity * sizeof(T));
+                this.capacity = this.capacity * 2;
+            }
+
+            this.data[this.length] = value;
+            this.length += 1;
+        }
+
+        void assign(std::vector<T> of) {
+            for(int i=0; i<of.length; i+=1) {
+                this.add(of.data[i]);
+            }
+        }
+
+        void set(int index, T value) {
+            this.data[index] = value;
+        }
+
+        std::vector<T> copy {
+            std::vector<T> buffer = std::vector<T>();
+            
+            for(int i=0; i<this.length; i+=1) {
+                buffer.add(this.data[i]);
+            }
+        } => buffer;
+
+        T operator[](std::vector<T>* v, int index) => v.data[index];
+        
+        std::vector<T> operator+(std::vector<T> one, std::vector<T> two) {
+            std::vector<T> cp = one.copy();
+            cp.assign(two);
+        } => cp;
+
+        bool operator==(std::vector<T> one, std::vector<T> two) {
+            bool toret = true;
+
+            if(one.length != two.length) {
+                toret = false;
+            }
+            else {
+                bool active = true;
+                int i = 0;
+
+                while((i<two.length) && active) {
+                    if(one.data[i] != two.data[i]) {
+                        toret = false;
+                        active = false;
+                    }
+                    i += 1;
+                }
+            }
+        } => toret;
+
+        void ~this {
+            std::free(this.data);
+        }
     }
 }

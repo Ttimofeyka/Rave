@@ -11,16 +11,16 @@ namespace std {
     extern(linkname: "llvm.eh.sjlj.setjmp") int setjmp(char* buff);
 
     struct pair<T,TT> {
-        T one;
-        TT two;
+        T first;
+        TT second;
 
-        std::pair<T,TT> this(T one, TT two) {
-            this.one = one;
-            this.two = two;
+        std::pair<T,TT> this(T first, TT second) {
+            this.first = first;
+            this.second = second;
         } => this;
 
-        bool operator==(std::pair<T,TT> f, std::pair<T,TT> s) => (f.one == s.one) && (f.two == f.two);
-        bool operator!=(std::pair<T,TT> f, std::pair<T,TT> s) => (f.one != s.one) && (f.two != s.two);
+        bool operator==(std::pair<T,TT> f, std::pair<T,TT> s) => (f.first == s.first) && (f.second == s.second);
+        bool operator!=(std::pair<T,TT> f, std::pair<T,TT> s) => !(f == s);
     }
 }
 

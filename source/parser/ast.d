@@ -679,7 +679,9 @@ class NodeBinary : Node {
                     //writeln(StructTable[structName].operators[TokType.Equal]);
                     if(typesToString(_types).into(StructTable[structName].operators[TokType.Equal]) || "[]".into(StructTable[structName].operators[TokType.Equal])) {
                         NodeFunc fn;
-                        if("[]".into(StructTable[structName].operators[TokType.Equal])) fn = StructTable[structName].operators[TokType.Nequal]["[]"];
+                        if("[]".into(StructTable[structName].operators[TokType.Equal])) {
+                            fn = StructTable[structName].operators[TokType.Equal]["[]"];
+                        }
                         else fn = StructTable[structName].operators[TokType.Equal][typesToString(_types)];
                         LLVMValueRef[] vals = [onev,twov];
 
@@ -1640,6 +1642,17 @@ class NodeFunc : Node {
             LLVMPositionBuilderAtEnd(Generator.Builder, exitBlock);
 
             if(!type.instanceof!TypeVoid) {
+                RetGenStmt[] _newrets;
+                for(int i=0; i<genRets.length; i++) {
+                    if((i+1)<genRets.length && (fromStringz(LLVMGetBasicBlockName(genRets[i+1].where)) == fromStringz(LLVMGetBasicBlockName(genRets[i].where)))) {
+                        if(fromStringz(LLVMGetValueName(genRets[i+1].value)) != fromStringz(LLVMGetValueName(genRets[i].value))) {
+                            _newrets ~= genRets[i];
+                        }
+                    }
+                    else _newrets ~= genRets[i];
+                }
+                genRets = _newrets.dup;
+
 				LLVMValueRef[] retValues = array(map!(x => x.value)(genRets));
 				LLVMBasicBlockRef[] retBlocks = array(map!(x => x.where)(genRets));
 
@@ -1672,7 +1685,6 @@ class NodeFunc : Node {
         }
 
         //writeln("Start: \n",fromStringz(LLVMPrintModuleToString(Generator.Module)),"\nEnd.");
-
         LLVMVerifyFunction(Generator.Functions[name],0);
 
         return Generator.Functions[name];
@@ -1984,6 +1996,7 @@ class NodeCall : Node {
         if(FuncTable[rname].type.instanceof!TypeVoid) name = "";
         //writeln("Name: ",rname," with ",typesToString(parametersToTypes(getParameters())));
         if(FuncTable[rname].args.length != args.length && FuncTable[rname].isVararg != true) {
+            //writeln(rname," ",FuncTable[rname].args);
             Generator.error(
                 loc,
                 "The number of arguments in the call("~to!string(args.length)~") does not match the signature("~to!string(FuncTable[rname].args.length)~")!"
@@ -2814,18 +2827,18 @@ class NodeStruct : Node {
     bool isImported = false;
     string _extends;
     NodeFunc[string][TokType] operators;
+    Node[] _oldElements;
 
     string[] templateNames;
-    Node[] oldElements;
 
     this(string name, Node[] elements, int loc, string _exs, string[] templateNames) {
         this.name = name;
         this.elements = elements.dup;
-        this.oldElements = elements.dup;
         this.loc = loc;
         this.origname = name;
         this._extends = _exs;
         this.templateNames = templateNames.dup;
+        this._oldElements = elements.dup;
     }
 
     LLVMTypeRef asConstType() {
@@ -2939,6 +2952,9 @@ class NodeStruct : Node {
                     _this.type = f.type;
                     _this.namespacesNames = namespacesNames.dup;
                     _this.isTemplatePart = isLinkOnce;
+
+                    if(_this.args.length>0 && _this.args[0].name == "this") _this.args = _this.args[1..$];
+
                     if(isImported) {
                         _this.isExtern = true;
                         _this.check();
@@ -2977,6 +2993,7 @@ class NodeStruct : Node {
                     Type outType = _this.type;
                     if(outType.instanceof!TypeStruct || outType.instanceof!TypeTemplate) outType = new TypePointer(outType);
 
+                    if(_destructor.args.length>0 && _destructor.args[0].name == "this") _destructor.args = _destructor.args[1..$];
                     _destructor.args = [FuncArgSet("this",outType)];
 
                     if(isImported) {
@@ -3015,6 +3032,9 @@ class NodeStruct : Node {
                         case "[])":
                             oper = TokType.Rbra; f.name = name~"([])";
                             break;
+                        case "]=)":
+                            oper = TokType.Lbra; f.name = name~"([]=)";
+                            break;
                         default: break;
                     }
 
@@ -3049,6 +3069,7 @@ class NodeStruct : Node {
                         outType = _this.type;
                         if(outType.instanceof!TypeStruct || outType.instanceof!TypeTemplate) outType = new TypePointer(outType);
                     }
+                    if(f.args.length>0 && f.args[0].name == "this") f.args = f.args[1..$];
                     f.args = FuncArgSet("this",outType)~f.args;
                     f.name = name~"."~f.origname;
                     f.isMethod = true;
@@ -3121,13 +3142,13 @@ class NodeStruct : Node {
     }
 
     LLVMValueRef generateWithTypes(Type[] types, string _argsName) {
-        writeln(name,_argsName);
+        //writeln(name,_argsName);
         for(int i=0; i<types.length; i++) {
             if(TypeTemplate tp = types[i].instanceof!TypeTemplate) {
                 if(!into(tp.main.name~tp.strArgs,StructTable)) {
-                    //writeln("A");
+                    //writeln("Start!");
                     StructTable[tp.main.name].generateWithTypes(tp.types.dup,tp.strArgs);
-                    //writeln("A2");
+                    //writeln("End!");
                 }
             }
         }
@@ -3142,7 +3163,7 @@ class NodeStruct : Node {
 
         Generator.toReplace[name~_types] = new TypeStruct(name~_argsName);
 
-        NodeStruct ns = new NodeStruct(name~_argsName,oldElements.dup,loc,_extends,[]);
+        NodeStruct ns = new NodeStruct(name~_argsName,_oldElements.dup,loc,_extends,[]);
 
         Scope oldScope = currScope;
         LLVMBuilderRef oldBuilder = Generator.Builder;

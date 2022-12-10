@@ -325,7 +325,6 @@ class Parser {
                         if(peek().type == TokType.Comma) {name ~= ","; next();}
                     }
                     name ~= peek().value; next();
-
                     return parseCall(new NodeIden(name,t.line));
                 }
                 switch(tokens[_idx+1].value) {
@@ -1117,8 +1116,13 @@ class Parser {
         Token _t = peek();
         next();
         if(peek().type != TokType.Rpar) {
-            name = s~"("~_t.value~peek().value~")";
+            Token _t2 = peek();
+            name = s~"("~_t.value~_t2.value~")";
             next();
+            if(peek().type != TokType.Rpar) {
+                name = s~"("~_t.value~_t2.value~peek().value~")";
+                next();
+            }
         }
 
         FuncArgSet[] args;
