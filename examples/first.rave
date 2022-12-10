@@ -1,5 +1,10 @@
 import <std/io> <std/vector>
 
 void main {
-    std::vector<std::vector<int>> A = std::vector<std::vector<int>>();
+    //std::vector<std::vector<int>> A = std::vector<std::vector<int>>();
+    std::pair<int,int> p = std::pair<int,int>(10,10);
+    std::pair<int,int> p2 = std::pair<int,int>(10,15);
+    std::pair<int,int> p3 = p+p2;
+
+    std::printf("%d %d\n",p3.first,p3.second);
 }

@@ -325,6 +325,7 @@ class Parser {
                         if(peek().type == TokType.Comma) {name ~= ","; next();}
                     }
                     name ~= peek().value; next();
+                    writeln("END: ",peek().value);
                     return parseCall(new NodeIden(name,t.line));
                 }
                 switch(tokens[_idx+1].value) {

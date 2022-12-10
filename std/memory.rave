@@ -21,6 +21,11 @@ namespace std {
 
         bool operator==(std::pair<T,TT> f, std::pair<T,TT> s) => (f.first == s.first) && (f.second == s.second);
         bool operator!=(std::pair<T,TT> f, std::pair<T,TT> s) => !(f == s);
+        std::pair<T,TT> operator+(std::pair<T,TT> f, std::pair<T,TT> s) {
+            std::pair<T,TT> copy = std::pair<T,TT>(f.first,f.second);
+            copy.first += s.first;
+            copy.second += s.second;
+        } => copy;
     }
 }
 
