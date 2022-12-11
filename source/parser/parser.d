@@ -97,7 +97,7 @@ class Parser {
             auto t = next();
             if(t.value == "void") return new TypeVoid();
             else if(t.value.into(_aliasTypes)) return _aliasTypes[t.value];
-            else if(_templateNames.canFind(t.value)) return new TypeTemplatePart(t.value);
+            else if(_templateNames.canFind(t.value)) return new TypeStruct(t.value);
             return getType(t.value);
         }
         else if(peek().type == TokType.MacroArgNum) {
@@ -167,8 +167,6 @@ class Parser {
             }
             else if(peek().type == TokType.Less) {
                 // Template
-                // Just return TypeTemplate with TypeStruct and types
-
                 string name = t.toString();
                 next();
 
@@ -180,7 +178,12 @@ class Parser {
                 }
                 next();
 
-                t = new TypeTemplate(new TypeStruct(name),_types,"");
+                string _sTypes = "";
+                for(int i=0; i<_types.length; i++) {
+                    _sTypes ~= _types[i].toString();
+                }
+
+                t = new TypeStruct(name~"<"~_sTypes~">",_types);
             }
         }
         return t;
@@ -313,19 +316,17 @@ class Parser {
                 //expect(TokType.Semicolon,peek().line);
                 return new NodeLambda(loc,tt.instanceof!TypeFunc,b);
             }
-            else if(peek().value == "<") {
-                Node parseTemplateUses() {
+            else if(peek().type == TokType.Less) {
+                Node parseTemplate(string s) {
                     // Call of constructor
-                    string name = t.value;
+                    string name = s~"<";
 
+                    if(peek().type == TokType.Less) next();
                     while(peek().type != TokType.More) {
-                        name ~= peek().value;
-                        next();
-
+                        name ~= parseType().toString();
                         if(peek().type == TokType.Comma) {name ~= ","; next();}
                     }
                     name ~= peek().value; next();
-                    writeln("END: ",peek().value);
                     return parseCall(new NodeIden(name,t.line));
                 }
                 switch(tokens[_idx+1].value) {
@@ -335,9 +336,14 @@ class Parser {
                     case "int":
                     case "long":
                     case "cent":
-                        return parseTemplateUses();
+                        _idx -= 1;
+                        Type _t = parseType();
+                        if(peek().type == TokType.Semicolon || peek().type == TokType.More) next();
+                        if(peek().type == TokType.Semicolon) next();
+                        if(_t.instanceof!TypeFunc) return parseCall(new NodeIden(_t.instanceof!TypeFunc.main.instanceof!TypeStruct.name,peek().line));
+                        else return parseCall(new NodeIden(_t.instanceof!TypeStruct.name,peek().line));
                     default:
-                        if(structs.canFind(tokens[_idx+1].value) || _templateNames.canFind(tokens[_idx+1].value) || _templateNamesF.canFind(tokens[_idx+1].value)) return parseTemplateUses();
+                        if(structs.canFind(tokens[_idx+1].value) || _templateNames.canFind(tokens[_idx+1].value) || _templateNamesF.canFind(tokens[_idx+1].value)) return parseTemplate(t.value);
                 }
             }
             return new NodeIden(t.value,peek().line);

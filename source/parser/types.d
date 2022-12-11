@@ -137,8 +137,10 @@ class TypeVoid : Type {
 }
 class TypeStruct : Type {
     string name;
+    Type[] types;
 
     this(string name) {this.name = name;}
+    this(string name, Type[] types) {this.name = name; this.types = types.dup;}
 
     override string toString()
     {
@@ -171,40 +173,3 @@ class TypeFunc : Type {
 class TypeVarArg : Type {}
 class TypeMacroArg : Type { int num; this(int num) {this.num = num;} }
 class TypeBuiltin : Type { string name; Node[] args; this(string name, Node[] args) {this.name = name; this.args = args.dup;} }
-class TypeTemplate : Type {
-    Type[] types;
-    TypeStruct main;
-    string strArgs;
-
-    this(TypeStruct main, Type[] types, string strArgs) {
-        this.types = types.dup;
-        this.main = main;
-        this.strArgs = strArgs;
-
-        if(this.strArgs == "") {
-            this.strArgs ~= "<";
-            for(int i=0; i<types.length; i++) {
-                this.strArgs ~= types[i].toString();
-                this.strArgs ~= ",";
-            }
-            this.strArgs = this.strArgs[0..$-1]~">";
-        }
-    }
-
-    override string toString()
-    {
-        return main.name~strArgs;
-    }
-}
-class TypeTemplatePart : Type {
-    string name;
-
-    this(string name) {
-        this.name = name;
-    }
-
-    override string toString()
-    {
-        return name;
-    }
-}
