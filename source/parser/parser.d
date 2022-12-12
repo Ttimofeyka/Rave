@@ -336,12 +336,7 @@ class Parser {
                     case "int":
                     case "long":
                     case "cent":
-                        _idx -= 1;
-                        Type _t = parseType();
-                        if(peek().type == TokType.Semicolon || peek().type == TokType.More) next();
-                        if(peek().type == TokType.Semicolon) next();
-                        if(_t.instanceof!TypeFunc) return parseCall(new NodeIden(_t.instanceof!TypeFunc.main.instanceof!TypeStruct.name,peek().line));
-                        else return parseCall(new NodeIden(_t.instanceof!TypeStruct.name,peek().line));
+                        return parseTemplate(t.value);
                     default:
                         if(structs.canFind(tokens[_idx+1].value) || _templateNames.canFind(tokens[_idx+1].value) || _templateNamesF.canFind(tokens[_idx+1].value)) return parseTemplate(t.value);
                 }
