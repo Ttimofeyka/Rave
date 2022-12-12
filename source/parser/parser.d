@@ -317,28 +317,25 @@ class Parser {
                 return new NodeLambda(loc,tt.instanceof!TypeFunc,b);
             }
             else if(peek().type == TokType.Less) {
-                Node parseTemplate(string s) {
-                    // Call of constructor
-                    string name = s~"<";
-
-                    if(peek().type == TokType.Less) next();
-                    while(peek().type != TokType.More) {
-                        name ~= parseType().toString();
-                        if(peek().type == TokType.Comma) {name ~= ","; next();}
-                    }
-                    name ~= peek().value; next();
-                    return parseCall(new NodeIden(name,t.line));
+                bool isBasicType(string s) {
+                    return (s == "bool") || (s == "char") || (s == "short")
+                    || (s == "void") || (s == "int") || (s == "cent") || (s == "long");
                 }
-                switch(tokens[_idx+1].value) {
-                    case "bool":
-                    case "char":
-                    case "short":
-                    case "int":
-                    case "long":
-                    case "cent":
-                        return parseTemplate(t.value);
-                    default:
-                        if(structs.canFind(tokens[_idx+1].value) || _templateNames.canFind(tokens[_idx+1].value) || _templateNamesF.canFind(tokens[_idx+1].value)) return parseTemplate(t.value);
+                if(isBasicType(tokens[_idx+1].value) || tokens[_idx+2].type == TokType.Less) {
+                    next();
+                    string all = t.value~"<";
+
+                    int countOfL = 0;
+                    while(countOfL != -1) {
+                        all ~= peek().value;
+
+                        if(peek().type == TokType.Less) countOfL += 1;
+                        else if(peek().type == TokType.More) countOfL -= 1;
+
+                        next();
+                    }
+                    if(peek().type == TokType.More) next();
+                    return parseCall(new NodeIden(all,peek().line));
                 }
             }
             return new NodeIden(t.value,peek().line);
@@ -1020,6 +1017,7 @@ class Parser {
                 foreach(key; byKey(p._aliasPredefines)) {
                     _aliasPredefines[key] = p._aliasPredefines[key];
                 }
+                structs ~= p.structs;
             } 
         }
         return new NodeNone();

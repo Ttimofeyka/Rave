@@ -1,7 +1,5 @@
 import <std/io> <std/vector>
 
 void main {
-    std::vector<int> A = std::vector<int>();
-    std::vector<char> B = std::vector<char>();
-    std::vector<std::vector<int>> C = std::vector<std::vector<int>>();
+    
 }
