@@ -43,6 +43,7 @@ struct CompOpts {
 	bool printAll = false;
 	int optimizeLevel = 0;
         bool isPIE = false;
+        bool noPIE = false;
 }
 
 CompOpts analyzeArgs(string[] args) {
@@ -64,6 +65,7 @@ CompOpts analyzeArgs(string[] args) {
 			case "-c": opts.onlyObject = true; break;
 			case "-ne": case "--noEntry": opts.noEntry = true; break;
 			case "-ns": case "--noStd": opts.noStd = true; break;
+                        case "-np": opts.noPIE = true; break;
 			case "-ol": case "--optimization-level":
 			case "-O": // Compatible with the same option from clang
 				opts.optimizeLevel = to!int(args[idx+1]); idx += 1; break;
