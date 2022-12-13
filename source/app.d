@@ -42,6 +42,7 @@ struct CompOpts {
 	bool noStd = false;
 	bool printAll = false;
 	int optimizeLevel = 0;
+        bool isPIE = false;
 }
 
 CompOpts analyzeArgs(string[] args) {
@@ -58,6 +59,7 @@ CompOpts analyzeArgs(string[] args) {
 			case "-el": case "--emit-llvm":
 			case "-emit-llvm": // Compatible with the same option from clang
 				opts.emit_llvm = true; break;
+                        case "-fPIE": opts.isPIE = true; break;
 			case "-l": case "--library": opts.linkparams ~= "-l"~args[idx+1]~" "; idx += 1; break;
 			case "-c": opts.onlyObject = true; break;
 			case "-ne": case "--noEntry": opts.noEntry = true; break;
