@@ -88,8 +88,13 @@ class Lexer {
                         else tokens ~= new Token(TokType.GetPtr,"&",line);
                         break;
                     case '|':
-                        if(next()=='|') {
+                        char _n = next();
+                        if(_n =='|') {
                             tokens ~= new Token(TokType.Or,"||",line);
+                            _idx++;
+                        }
+                        else if(_n == '.') {
+                            tokens ~= new Token(TokType.BitXor,"|.",line);
                             _idx++;
                         }
                         else tokens ~= new Token(TokType.BitOr,"|",line);
@@ -173,7 +178,7 @@ class Lexer {
                         if(rnext == '=') {
                             tokens ~= new Token(TokType.More,">=",line); _idx++;
                         }
-                        //else if(rnext == '>') {tokens ~= new Token(TokType.BitRight,">>",line); _idx++;}
+                        else if(rnext == '.') {tokens ~= new Token(TokType.BitRight,">>",line); _idx++;}
                         else tokens ~= new Token(TokType.More,">",line); 
                         break;
                     case '<': 
@@ -181,7 +186,7 @@ class Lexer {
                         if(lnext == '=') {
                             tokens ~= new Token(TokType.LessEqual,"<=",line); _idx++;
                         }
-                        else if(lnext == '<') {
+                        else if(lnext == '.') {
                             tokens ~= new Token(TokType.BitLeft,"<<",line); _idx++;
                         }
                         else tokens ~= new Token(TokType.Less,"<",line); 
@@ -198,9 +203,13 @@ class Lexer {
                             tokens ~= new Token(TokType.Equ,"=",line);
                         }
                         break;
-                    case '!': 
-                        if(next() == '=') {
+                    case '!':
+                        char _n = next();
+                        if(_n == '=') {
                             tokens ~= new Token(TokType.Nequal,"!=",line); _idx++;
+                        }
+                        else if(_n == '.') {
+                            tokens ~= new Token(TokType.BitXor,"!!",line); _idx++;
                         }
                         else tokens ~= new Token(TokType.Ne,"!",line); 
                         break;

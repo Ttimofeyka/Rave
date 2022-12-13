@@ -8,6 +8,8 @@ namespace libc {
         if(b == false) toret = "false";
     } => toret;
     extern(linkname: "strstr") char* strstr(char* src, char* substr);
+    extern(linkname: "snprintf") int cformatn(char* str, int size, char* fmt, ...);
+    extern(linkname: "sprintf") int cformat(char* str, char* fmt, ...);
 }
 
 namespace std {
@@ -28,7 +30,6 @@ namespace std {
                 this.data[i] = a[i];
                 i += 1;
             }
-            //this.data[i] = '\0';
         } => this;
 
         bool isDeleted => (this.data == null);

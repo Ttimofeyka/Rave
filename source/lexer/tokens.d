@@ -52,6 +52,8 @@ enum TokType {
 
     BitLeft,
     BitRight,
+    BitXor,
+    BitNot,
 
     Builtin,
 

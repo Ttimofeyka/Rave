@@ -1,0 +1,17 @@
+import <std/time>
+
+namespace libc {
+    extern(linkname: "srand") void srand(int seed);
+    extern(linkname: "rand") int rand();
+}
+
+namespace std {
+    int randomInt(int min, int max) {
+        int result = 0;
+
+        long t = libc::time(null);
+        libc::srand(cast(int)t);
+
+        result = libc::rand();
+    } => (result % ((max+1)-min))+min;
+}

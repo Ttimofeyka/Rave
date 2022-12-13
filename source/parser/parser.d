@@ -321,7 +321,7 @@ class Parser {
                     return (s == "bool") || (s == "char") || (s == "short")
                     || (s == "void") || (s == "int") || (s == "cent") || (s == "long");
                 }
-                if(isBasicType(tokens[_idx+1].value) || tokens[_idx+2].type == TokType.Less) {
+                if(isBasicType(tokens[_idx+1].value) || tokens[_idx+2].type == TokType.Less || tokens[_idx+2].type == TokType.More || tokens[_idx+2].type == TokType.Multiply || tokens[_idx+2].type == TokType.Rarr) {
                     next();
                     string all = t.value~"<";
 
@@ -456,7 +456,9 @@ class Parser {
             TokType.BitLeft: -51,
             TokType.BitRight: -51,
             TokType.MoreEqual: -70,
-            TokType.LessEqual: -70
+            TokType.LessEqual: -70,
+            TokType.BitXor: -51,
+            TokType.BitNot: -51
         ];
 
         SList!Token operatorStack;

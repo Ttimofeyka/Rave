@@ -2,7 +2,7 @@ import <std/io>
 
 namespace libc {
     extern(linkname: "__errno_location") int* _errno();
-    int errno => libc::_errno()[0];
+    (inline) int errno => libc::_errno()[0];
 }
 
 namespace std {

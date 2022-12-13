@@ -67,8 +67,8 @@ int main {
 Examples:
 ```d
 int main {
-    int a = 2 << 2;
-    int b = 16 >> 3;
+    int a = 2 <. 2;
+    int b = 16 >. 3;
 } => 0;
 ```
 

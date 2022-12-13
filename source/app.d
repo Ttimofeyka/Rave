@@ -27,6 +27,9 @@ version(linux) {
 	version(AArch64) {
 		string outtype = "aarch64";
 	}
+	else version(ARM) {
+		string outtype = "armv7";
+	}
 }
 
 struct CompOpts {

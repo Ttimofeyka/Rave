@@ -354,10 +354,16 @@ class Scope {
             LLVMSetAlignment(instr,Generator.getAlignmentOfType(VarTable[n].t));
             return instr;
         }
-        if(func.into(Generator.Functions)) return LLVMGetParam(
-            Generator.Functions[func],
-            cast(uint)args[n]
-        );
+        if(func.into(Generator.Functions)) {
+            if(!n.into(args)) {
+                if(n.into(Generator.Functions)) return Generator.Functions[n];
+                assert(0);
+            }
+            return LLVMGetParam(
+                Generator.Functions[func],
+                cast(uint)args[n]
+            );
+        }
         else return LLVMGetParam(
             LambdaTable[func].f,
             cast(uint)args[n]
@@ -1135,6 +1141,7 @@ class NodeBinary : Node {
             case TokType.MoreEqual: return diff(f,s,false,true);
             case TokType.And: case TokType.BitAnd: return LLVMBuildAnd(Generator.Builder,f,s,toStringz("and"));
             case TokType.Or: case TokType.BitOr: return LLVMBuildOr(Generator.Builder,f,s,toStringz("or"));
+            case TokType.BitXor: return LLVMBuildXor(Generator.Builder,f,s,toStringz("bitxor"));
             case TokType.BitLeft: return LLVMBuildShl(Generator.Builder,f,s,toStringz("bitleft"));
             case TokType.BitRight: return LLVMBuildLShr(Generator.Builder,f,s,toStringz("bitright"));
             default: assert(0);
@@ -1529,6 +1536,8 @@ class NodeFunc : Node {
     }
 
     LLVMTypeRef* getParameters() {
+        if(!templateNames.empty) writeln(name," ",templateNames);
+
         LLVMTypeRef[] p;
         for(int i=0; i<args.length; i++) {
             if(args[i].type.instanceof!TypeVarArg) {
@@ -1549,6 +1558,7 @@ class NodeFunc : Node {
     }
 
     override LLVMValueRef generate() {
+        if(!templateNames.empty) return null;
         string linkName = Generator.mangle(name,true,false,args);
         if(isMethod) linkName = Generator.mangle(name,true,true,args);
 
@@ -1586,12 +1596,13 @@ class NodeFunc : Node {
         //Generator.addAttribute("nocf_check",LLVMAttributeFunctionIndex,Generator.Functions[name]);
 
         if(isInline) Generator.addAttribute("alwaysinline",LLVMAttributeFunctionIndex,Generator.Functions[name]);
-        if(isTemplatePart) {
+        if(isTemplatePart || !templateNames.empty) {
             LLVMComdatRef cmr = LLVMGetOrInsertComdat(Generator.Module,toStringz(name));
             LLVMSetComdatSelectionKind(cmr,LLVMAnyComdatSelectionKind);
 
             LLVMSetComdat(Generator.Functions[name],cmr);
             LLVMSetLinkage(Generator.Functions[name],LLVMLinkOnceODRLinkage);
+            isExtern = false;
         }
 
         if(!isExtern) {
@@ -1683,6 +1694,11 @@ class NodeFunc : Node {
         LLVMVerifyFunction(Generator.Functions[name],0);
 
         return Generator.Functions[name];
+    }
+
+    LLVMValueRef generateWithTemplate(Type[] _types, string _all) {
+        writeln(_types," ",_all);
+        assert(0);
     }
 
     override void debugPrint() {
@@ -1802,6 +1818,12 @@ class NodeCall : Node {
                 if(i == args.length) break;
                 LLVMValueRef arg = args[i].generate();
 
+                if(arg is null) {
+                    // Is template-func
+                    // TODO
+                    assert(0);
+                }
+
                 if(TypePointer tp = fas[i].type.instanceof!TypePointer) {
                     if(tp.instance.instanceof!TypeVoid) {
                         if(LLVMGetTypeKind(LLVMTypeOf(arg)) == LLVMPointerTypeKind) {
@@ -1832,7 +1854,7 @@ class NodeCall : Node {
                         if(NodeIden id = args[i].instanceof!NodeIden) {id.isMustBePtr = true; arg = id.generate();}
                         else if(NodeGet ng = args[i].instanceof!NodeGet) {ng.isMustBePtr = true; arg = ng.generate();}
                         else if(NodeIndex ind = args[i].instanceof!NodeIndex) {ind.isMustBePtr = true; arg = ind.generate();}
-                    
+
                         if(LLVMGetTypeKind(LLVMTypeOf(arg)) != LLVMPointerTypeKind) {
                             // Create local copy
                             LLVMValueRef temp = LLVMBuildAlloca(Generator.Builder,LLVMTypeOf(arg),toStringz("temp_"));
@@ -1883,7 +1905,6 @@ class NodeCall : Node {
         if(!f.name.into(FuncTable) && !into(f.name~to!string(args.length),FuncTable) && !f.name.into(Generator.LLVMFunctions) && !into(f.name~typesToString(parametersToTypes(getParameters())),FuncTable)) {
             if(!f.name.into(MacroTable)) {
                 if(currScope.has(f.name)) {
-                    LLVMTypeRef a = LLVMTypeOf(currScope.get(f.name,loc));
                     NodeVar nv = currScope.getVar(f.name,loc);
                     TypeFunc tf = nv.t.instanceof!TypeFunc;
                     string name = "CallVar"~f.name;
@@ -2110,6 +2131,7 @@ class NodeCall : Node {
                 );
             }
             else if(NodeGet ng = g.base.instanceof!NodeGet) {
+                ng.isMustBePtr = true;
                 auto val = ng.generate();
                 string sname = "";
                 if(LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMStructTypeKind) sname = cast(string)fromStringz(LLVMGetStructName(LLVMTypeOf(val)));
@@ -2828,7 +2850,6 @@ class NodeStruct : Node {
     string _extends;
     NodeFunc[string][TokType] operators;
     Node[] _oldElements;
-
     string[] templateNames;
 
     this(string name, Node[] elements, int loc, string _exs, string[] templateNames) {

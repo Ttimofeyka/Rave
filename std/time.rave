@@ -1,0 +1,24 @@
+namespace std {
+    struct time {
+        int sec;
+        int min;
+        int hour;
+        int mday;
+        int month;
+        int year;
+        int wday;
+        int yday;
+        int isdst;
+        long gmtoff;
+        char* zone;
+    }
+}
+
+namespace libc {
+    extern(linkname: "time") long time(void* n);
+    extern(linkname: "localtime") std::time* localtime(long* t);
+}
+
+namespace std {
+    (inline) std::time getLocalTime {long _t = libc::time(null);} => libc::localtime(&_t)[0];
+}

@@ -1,0 +1,17 @@
+namespace openssl {
+    struct SHA_CTX {
+        long h0;
+        long h1;
+        long h2;
+        long h3;
+        long h4;
+        long Nl;
+        long Nh;
+        long[16] data;
+        int num;
+    }
+    extern(linkname: "SHA1") char* SHA1(char* d, int n, char* md);
+    extern(linkname: "SHA1_Init") int SHA1_Init(openssl::SHA_CTX* c);
+    extern(linkname: "SHA1_Update") int SHA1_Update(openssl::SHA_CTX* c, void* data, int len);
+    extern(linkname: "SHA1_Final") int SHA1_Final(char* md, openssl::SHA_CTX* c);
+}
