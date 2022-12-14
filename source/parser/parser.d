@@ -627,7 +627,7 @@ class Parser {
     }
 
     Node parseAsm(string f) {
-        
+        return null;
     }
 
     Node parseStmt(string f = "") {
