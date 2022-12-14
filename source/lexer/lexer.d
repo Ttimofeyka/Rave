@@ -377,23 +377,16 @@ class Lexer {
                                 }
                                 else switch(toLower(bufferiden)) {
                                     case "if":
-                                        tokens ~= new Token(TokType.Command,"if"); break;
                                     case "else":
-                                        tokens ~= new Token(TokType.Command,"else",line); break;
                                     case "for":
-                                        tokens ~= new Token(TokType.Command,"for",line); break;
                                     case "return":
-                                        tokens ~= new Token(TokType.Command,"return",line); break;
                                     case "while":
-                                        tokens ~= new Token(TokType.Command,"while",line); break;
                                     case "break":
-                                        tokens ~= new Token(TokType.Command,"break",line); break;
                                     case "continue":
-                                        tokens ~= new Token(TokType.Command,"continue",line); break;
                                     case "namespace":
-                                        tokens ~= new Token(TokType.Command,"namespace",line); break;
                                     case "with":
-                                        tokens ~= new Token(TokType.Command,"with",line); break;
+                                    case "asm":
+                                        tokens ~= new Token(TokType.Command,toLower(bufferiden)); break;
                                     default:
                                         tokens ~= new Token(TokType.Identifier,bufferiden,line); break;
                                 }

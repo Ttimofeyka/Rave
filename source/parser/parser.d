@@ -626,6 +626,10 @@ class Parser {
         return new NodeWith(peek().line, _structure, parseBlock(f));
     }
 
+    Node parseAsm(string f) {
+        
+    }
+
     Node parseStmt(string f = "") {
         import std.algorithm : canFind;
         bool isStatic = false;
@@ -649,6 +653,7 @@ class Parser {
             if(peek().value == "for") return parseFor(f);
             if(peek().value == "break") return parseBreak();
             if(peek().value == "with") return parseWith(f);
+            if(peek().value == "asm") return parseAsm(f);
             if(peek().value == "return") {
                 auto tok = next();
                 if(peek().type != TokType.Semicolon) {

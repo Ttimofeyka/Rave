@@ -299,6 +299,7 @@ class Scope {
     Node[int] macroArgs;
     NodeVar[string] localVars;
     NodeVar[string] argVars;
+    bool isPure;
 
     this(string func, int[string] args, NodeVar[string] argVars) {
         this.func = func;
@@ -310,18 +311,6 @@ class Scope {
         pragma(inline,true);
         if(!(n !in localscope)) return localscope[n];
         if(!(n !in Generator.Globals)) return Generator.Globals[n];
-        /*writeln(
-            fromStringz(
-                LLVMPrintTypeToString(
-                    LLVMTypeOf(
-                        LLVMGetParam(
-                            Generator.Functions[func],
-                            cast(uint)args[n]
-                        )
-                    )
-                )
-            )
-        );*/
         if(!n.into(args)) {
             Generator.error(loc,"Undefined argument '"~n~"'!");
         }
@@ -933,6 +922,10 @@ class NodeBinary : Node {
                     );
                 }
 
+                if(currScope.isPure && i.name.into(VarTable)) {
+                    Generator.error(loc,"An attempt to change the global variable '"~i.name~"' in a pure function '"~currScope.func~"'!");
+                }
+
                 return LLVMBuildStore(
                     Generator.Builder,
                     val,
@@ -947,6 +940,10 @@ class NodeBinary : Node {
                 }
 
                 g.isMustBePtr = true;
+                
+                if(NodeIden id = g.base.instanceof!NodeIden) if(id.name.into(VarTable) && currScope.isPure) {
+                    Generator.error(loc,"An attempt to change the global variable '"~id.name~"' in a pure function '"~currScope.func~"'!");
+                }
 
                 return LLVMBuildStore(
                     Generator.Builder,
@@ -956,6 +953,10 @@ class NodeBinary : Node {
             }
             else if(NodeIndex ind = first.instanceof!NodeIndex) {
                 ind.isMustBePtr = true;
+
+                if(NodeIden id = ind.element.instanceof!NodeIden) if(id.name.into(VarTable) && currScope.isPure) {
+                    Generator.error(loc,"An attempt to change the global variable '"~id.name~"' in a pure function '"~currScope.func~"'!");
+                }
 
                 LLVMValueRef ptr = ind.generate();
                 LLVMValueRef val = second.generate();
@@ -1497,6 +1498,7 @@ class NodeFunc : Node {
     bool isVararg = false;
     bool isInline = false;
     bool isTemplatePart = false;
+    bool isPure = false;
 
     string[] templateNames;
 
@@ -1565,14 +1567,17 @@ class NodeFunc : Node {
         int callconv = 0; // 0 == C
 
         if(name == "main") linkName = "main";
-
         for(int i=0; i<mods.length; i++) {
-            if(mods[i].name == "C") linkName = name;
-            else if(mods[i].name == "vararg") isVararg = true;
-            else if(mods[i].name == "linkname") linkName = mods[i].value;
-            else if(mods[i].name == "fastcc") callconv = 1;
-            else if(mods[i].name == "coldcc") callconv = 2;
-            else if(mods[i].name == "inline") isInline = true;
+            switch(mods[i].name) {
+                case "C": case "c": linkName = name; break;
+                case "vararg": isVararg = true; break;
+                case "fastcc": callconv = 1; break;
+                case "coldcc": callconv = 2; break;
+                case "inline": isInline = true; break;
+                case "linkname": linkName = mods[i].value; break;
+                case "pure": isPure = true; break;
+                default: break;
+            }
         }
 
         LLVMTypeRef* parametersG = getParameters();
@@ -1592,8 +1597,6 @@ class NodeFunc : Node {
 
         if(callconv == 1) LLVMSetFunctionCallConv(Generator.Functions[name],LLVMFastCallConv);
         else if(callconv == 2) LLVMSetFunctionCallConv(Generator.Functions[name],LLVMColdCallConv);
-
-        //Generator.addAttribute("nocf_check",LLVMAttributeFunctionIndex,Generator.Functions[name]);
 
         if(isInline) Generator.addAttribute("alwaysinline",LLVMAttributeFunctionIndex,Generator.Functions[name]);
         if(isTemplatePart || !templateNames.empty) {
@@ -1635,6 +1638,7 @@ class NodeFunc : Node {
             }
 
             currScope = new Scope(name,intargs,argVars.dup);
+            currScope.isPure = isPure;
             Generator.currBB = entry;
 
             block.generate();
@@ -2059,6 +2063,28 @@ class NodeCall : Node {
                 LLVMValueRef _toCall = null;
                 NodeVar v = null;
                 TypeFunc t = null;
+
+                if(s is null || g.field.into(FuncTable)) {
+                    // Just call function as method of value
+                    if(args.length != FuncTable[g.field].args.length) {
+                        Generator.error(
+                            loc,
+                            "The number of arguments in the call of function '"~FuncTable[g.field].name~"'("~to!string(args.length)~") does not match the signature("~to!string(FuncTable[g.field].args.length)~")!"
+                        );
+                        exit(1);
+                        assert(0);
+                    }
+
+                    LLVMValueRef[] params = getParameters(FuncTable[g.field].args);
+
+                    return LLVMBuildCall(
+                        Generator.Builder,
+                        Generator.Functions[FuncTable[g.field].name],
+                        params.ptr,
+                        cast(uint)params.length,
+                        toStringz(FuncTable[g.field].type.instanceof!TypeVoid ? "" : "call")
+                    );
+                }
 
                 LLVMValueRef[] params;
                 if(!into(s.name,StructTable) && s.name.indexOf('<') != -1) {
@@ -3980,5 +4006,17 @@ class NodeWith : Node {
             [val].ptr, 1,
             toStringz("")
         );
+    }
+}
+
+class NodeAsm : Node {
+    Node[] arguments;
+
+    this(Node[] arguments) {
+        this.arguments = arguments.dup;
+    }
+
+    override LLVMValueRef generate() {
+        return null; // TODO
     }
 }

@@ -23,6 +23,19 @@ int sum(int a, int b) => a+b;
 float sum(float a, float b) => a+b;
 ```
 
+You can call a global function as a method from a variable:
+
+```d
+int inc(int a) => a+1;
+
+void main {
+    int foo = 0;
+
+    foo = foo.inc();
+}
+```
+Thanks to this, you can not use methods at all.
+
 ## Parameters
 
 ###### [Parameters](declarations/funcvarparams.md)
