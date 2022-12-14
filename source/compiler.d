@@ -44,6 +44,7 @@ class Compiler {
         void addLibs(string platform) {
             //if(!opts.noEntry) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/"~platform~"/crt1.o ";
             //if(!opts.noStd) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/"~platform~"/libc.a ";
+            if(opts.isPIE) linkString = linkString~"-fPIE ";
         }
 
         string p = hasAnyone(outtype,["x86_64","i686","aarch64","mips64"]);
