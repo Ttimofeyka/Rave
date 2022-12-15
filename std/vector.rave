@@ -57,7 +57,7 @@ namespace std {
             this.length -= 1;
         }
 
-        void removeLast {
+        (inline) void removeLast {
             this.remove(this.length-1);
         }
 
