@@ -57,6 +57,10 @@ namespace std {
             this.length -= 1;
         }
 
+        void removeLast {
+            this.remove(this.length-1);
+        }
+
         void ~this {
             std::free(this.data);
         }
