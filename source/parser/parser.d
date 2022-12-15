@@ -30,6 +30,12 @@ struct DeclMod {
     string value;
 }
 
+long hexToLong(string s) {
+    import core.stdc.stdlib;
+	long v = strtoul(toStringz(s), null, 16);
+	return v;
+}
+
 class MultiNode : Node {
     Node[] nodes;
 
@@ -261,7 +267,7 @@ class Parser {
         auto t = next();
         if(t.type == TokType.Number) return new NodeInt(to!ulong(t.value));
         if(t.type == TokType.FloatNumber) return new NodeFloat(to!double(t.value));
-        if(t.type == TokType.HexNumber) return new NodeInt(parse!ulong(t.value,16));
+        if(t.type == TokType.HexNumber) return new NodeInt(hexToLong(t.value));
         if(t.type == TokType.True) return new NodeBool(true);
         if(t.type == TokType.False) return new NodeBool(false);
         if(t.type == TokType.String) return new NodeString(t.value);
@@ -297,6 +303,12 @@ class Parser {
                 Node val = parseExpr();
                 next();
                 return new NodePtoi(val,t.line);
+            }
+            else if(t.value == "asm") {
+                next();
+                string s = peek().value;
+                next();
+                return new NodeAsm(s);
             }
             else if(t.value == "void" || t.value == "bool" || t.value == "char" || t.value == "short" || t.value == "int" || t.value == "long" || t.value == "cent") {
                 // Lambda
@@ -646,6 +658,12 @@ class Parser {
         }
         else if(peek().type == TokType.Identifier && tokens[_idx+1].type == TokType.Less) {
             return parseDecl(f);
+        }
+        else if(peek().value == "asm") {
+            next(); next();
+            string s = peek().value; next();
+            next(); next();
+            return new NodeAsm(s);
         }
         else if(peek().type == TokType.Command) {
             if(peek().value == "if") return parseIf(f,isStatic);

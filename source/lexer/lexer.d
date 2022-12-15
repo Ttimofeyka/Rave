@@ -385,7 +385,6 @@ class Lexer {
                                     case "continue":
                                     case "namespace":
                                     case "with":
-                                    case "asm":
                                         tokens ~= new Token(TokType.Command,toLower(bufferiden)); break;
                                     default:
                                         tokens ~= new Token(TokType.Identifier,bufferiden,line); break;

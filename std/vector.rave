@@ -50,6 +50,13 @@ namespace std {
             cp.assign(two);
         } => cp;
 
+        void remove(int index) {
+            for(int i=index; i<this.length; i+=1) {
+                if((i+1) < this.length) this.data[i] = this.data[i+1];
+            }
+            this.length -= 1;
+        }
+
         void ~this {
             std::free(this.data);
         }

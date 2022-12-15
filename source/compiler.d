@@ -41,16 +41,9 @@ class Compiler {
         this.outtype = outtype;
         this.opts = opts;
 
-        void addLibs(string platform) {
-            //if(!opts.noEntry) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/"~platform~"/crt1.o ";
-            //if(!opts.noStd) linkString = linkString~thisExePath()[0..$-4]~"rt/linux/"~platform~"/libc.a ";
-            if(opts.isPIE) linkString = linkString~"-fPIE ";
-        }
-
-        string p = hasAnyone(outtype,["x86_64","i686","aarch64","mips64"]);
-
-        if(p != "") addLibs(p);
-        else error("unknown platform!");
+        if(opts.isPIE) linkString = linkString~"-fPIE ";
+        if(opts.noStd) linkString = linkString~"-nostdlib ";
+        if(opts.noEntry) linkString = linkString~"--no-entry ";
     }
 
     void clearAll() {
@@ -196,6 +189,9 @@ class Compiler {
         if(opts.onlyObject) linkString ~= " -r ";
         linkString ~= " "~opts.linkparams;
         //writeln(linkString~" -o "~outfile);
+
+        if(outtype != "") linkString = linkString~"-target "~outtype~" ";
+
         auto l = executeShell(linkString~" -o "~outfile);
         if(l.status != 0) writeln("Linking error: "~l.output);
         for(int i=0; i<toRemove.length; i++) {

@@ -42,8 +42,8 @@ struct CompOpts {
 	bool noStd = false;
 	bool printAll = false;
 	int optimizeLevel = 0;
-        bool isPIE = false;
-        bool noPIE = false;
+    bool isPIE = false;
+    bool noPIE = false;
 }
 
 CompOpts analyzeArgs(string[] args) {

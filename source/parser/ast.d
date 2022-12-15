@@ -310,7 +310,12 @@ class Scope {
     LLVMValueRef getWithoutLoad(string n, int loc = -1) {
         pragma(inline,true);
         if(!(n !in localscope)) return localscope[n];
-        if(!(n !in Generator.Globals)) return Generator.Globals[n];
+        if(!(n !in Generator.Globals)) {
+            if(isPure && !getVar(n,loc).isConst && !getVar(n,loc).t.instanceof!TypeAlias) {
+                Generator.error(loc,"attempt to access a global variable inside a pure function!");
+            }
+            return Generator.Globals[n];
+        }
         if(!n.into(args)) {
             Generator.error(loc,"Undefined argument '"~n~"'!");
         }
@@ -318,6 +323,23 @@ class Scope {
             Generator.Functions[func],
             cast(uint)args[n]
         );
+    }
+
+    void hasChanged(string n) {
+        NodeVar v;
+        if(n.into(localVars)) {
+            v = localVars[n].instanceof!NodeVar;
+            v.isChanged = true;
+            localVars[n] = v;
+        }
+        if(n.into(Generator.Globals)) {
+            VarTable[n].isChanged = true;
+        }
+        if(n.into(argVars)) {
+            v = argVars[n].instanceof!NodeVar;
+            v.isChanged = true;
+            argVars[n] = v;
+        }
     }
 
     LLVMValueRef get(string n, int loc = -1) {
@@ -335,6 +357,9 @@ class Scope {
             return instr;
         }
         if(!(n !in Generator.Globals)) {
+            if(isPure && !getVar(n,loc).isConst && !getVar(n,loc).t.instanceof!TypeAlias) {
+                Generator.error(loc,"attempt to access a global variable inside a pure function!");
+            }
             auto instr = LLVMBuildLoad(
                 Generator.Builder,
                 Generator.Globals[n],
@@ -548,19 +573,6 @@ class NodeBinary : Node {
         else if(Generator.typeToString(LLVMTypeOf(two))[0..$-1] == Generator.typeToString(LLVMTypeOf(one)) && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(two))) != LLVMStructTypeKind) {
             two = LLVMBuildLoad(Generator.Builder,two,toStringz("load1389_"));
         }
-
-        /*if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMStructTypeKind) {
-            LLVMValueRef temp = LLVMBuildAlloca(Generator.Builder,LLVMTypeOf(one),toStringz("temp_"));
-            LLVMBuildStore(Generator.Builder,one,temp);
-            one = temp;
-        }
-        if(LLVMGetTypeKind(LLVMTypeOf(two)) == LLVMStructTypeKind) {
-            LLVMValueRef temp = LLVMBuildAlloca(Generator.Builder,LLVMTypeOf(two),toStringz("temp_"));
-            LLVMBuildStore(Generator.Builder,two,temp);
-            two = temp;
-        }
-
-        writeln(Generator.typeToString(LLVMTypeOf(one)));*/
 
         if((LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMPointerTypeKind && fromStringz(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(one)))).into(Generator.Structs))
          || (LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMStructTypeKind && fromStringz(LLVMGetStructName(LLVMTypeOf(one))).into(Generator.Structs))) {
@@ -883,9 +895,10 @@ class NodeBinary : Node {
 
         if(operator == TokType.Equ) {
             if(NodeIden i = first.instanceof!NodeIden) {
-                if(currScope.getVar(i.name,loc).isConst && i.name != "this") {
+                if(currScope.getVar(i.name,loc).isConst && i.name != "this" && currScope.getVar(i.name,loc).isChanged) {
                     Generator.error(loc, "An attempt to change the value of a constant variable!");
                 }
+                if(!currScope.getVar(i.name,loc).isChanged) currScope.hasChanged(i.name);
                 if(isAliasIden) {
                     AliasTable[i.name] = second;
                     return null;
@@ -922,9 +935,9 @@ class NodeBinary : Node {
                     );
                 }
 
-                if(currScope.isPure && i.name.into(VarTable)) {
+                /*if(currScope.isPure && i.name.into(VarTable)) {
                     Generator.error(loc,"An attempt to change the global variable '"~i.name~"' in a pure function '"~currScope.func~"'!");
-                }
+                }*/
 
                 return LLVMBuildStore(
                     Generator.Builder,
@@ -1233,6 +1246,8 @@ class NodeVar : Node {
     bool isGlobal;
     const string origname;
     bool isVolatile;
+
+    bool isChanged = false;
 
     this(string name, Node value, bool isExt, bool isConst, bool isGlobal, DeclMod[] mods, int loc, Type t, bool isVolatile = false) {
         this.name = name;
@@ -3903,6 +3918,29 @@ class NodeBuiltin : Node {
                 }
                 else StructTable[asStringIden(0)].addMethod(args[1].instanceof!NodeFunc);
                 break;
+            case "isNumeric":
+                Type isNType = asType(0).ty;
+                if(isNType.toString().into(Generator.toReplace)) isNType = Generator.toReplace[isNType.toString()];
+                if(isNType.instanceof!TypeBasic) {
+                    string s = isNType.toString();
+                    if(s == "bool" || s == "char" || s == "int" || s == "short" || s == "long" || s == "cent") {
+                        return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false);
+                    }
+                }
+                return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),0,false);
+            case "isPointer":
+                Type isPType = asType(0).ty;
+                if(isPType.toString().into(Generator.toReplace)) isPType = Generator.toReplace[isPType.toString()];
+                if(isPType.instanceof!TypePointer) return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false);
+                return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),0,false);
+            case "isEquals":
+                Type isEqType = asType(0).ty;
+                Type isEqType2 = asType(1).ty;
+                if(isEqType.toString().into(Generator.toReplace)) isEqType = Generator.toReplace[isEqType.toString()];
+                if(isEqType2.toString().into(Generator.toReplace)) isEqType2 = Generator.toReplace[isEqType2.toString()];
+                if(isEqType.toString() == isEqType2.toString()) return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false);
+                return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),0,false);
+
             case "va_arg":
                 // First - va_list, second - type
                 return LLVMBuildVAArg(Generator.Builder,args[0].generate(),Generator.GenerateType(asType(1).ty),toStringz("builtInVaArg"));
@@ -4010,13 +4048,23 @@ class NodeWith : Node {
 }
 
 class NodeAsm : Node {
-    Node[] arguments;
+    string line;
 
-    this(Node[] arguments) {
-        this.arguments = arguments.dup;
+    this(string line) {
+        this.line = line;
     }
 
     override LLVMValueRef generate() {
-        return null; // TODO
+        LLVMTypeRef[] ts;
+        return LLVMGetInlineAsm(
+            LLVMFunctionType(LLVMVoidTypeInContext(Generator.Context),ts.ptr,0,false),
+            cast(char*)toStringz(line),
+            line.length,
+            cast(char*)toStringz(""),
+            "".length,
+            false,
+            false,
+            LLVMInlineAsmDialectIntel
+        );
     }
 }
