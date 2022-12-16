@@ -15,7 +15,7 @@ int main {
 
 ## Requirements
 
-* `llvm-10` (including dev libs)
+* `llvm-11` (including dev libs and clang-11)
 * dub and dmd compiler
 
 ## Building/Running
