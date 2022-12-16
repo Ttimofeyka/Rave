@@ -12,7 +12,7 @@ if [ -f "/etc/arch-release" ]; then
     ARCH=1
     echo \[ Rave Installer \] Arch Linux detected, switching to ARCH mode.
 fi
-if command -v termux-setup-storage then
+if [ command -v termux-setup-storage ]; then
     TERMUX=1
     echo \[ Rave Installer \] Termux detected, switching to TERMUX mode.
 fi
