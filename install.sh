@@ -8,11 +8,13 @@
 
 ARCH=0
 TERMUX=0
+
+ISTERMUX="${TERMUX_VERSION:-no}"
 if [ -f "/etc/arch-release" ]; then
     ARCH=1
     echo \[ Rave Installer \] Arch Linux detected, switching to ARCH mode.
 fi
-if [ -z "$TERMUX_VERSION" ]; then
+if [ ISTERMUX -ne "no" ]; then
     TERMUX=1
     echo \[ Rave Installer \] Termux detected, switching to TERMUX mode.
 fi
