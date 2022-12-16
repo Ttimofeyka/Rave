@@ -1,15 +1,5 @@
-import <std/io> <std/vector>
+import <std/io>
 
 void main {
-    std::vector<int> v = std::vector<int>();
-    v.add(100);
-    v.add(200);
-    v.add(300);
-    for(int i=0; i<v.length; i+=1) {
-        std::printf("%d %d\n",i,v.data[i]);
-    }
-    v.remove(2);
-    for(int i=0; i<v.length; i+=1) {
-        std::printf("%d %d\n",i,v.data[i]);
-    }
+    
 }

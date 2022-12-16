@@ -24,16 +24,16 @@ success ()
     echo \[ Rave Installer \] Successfully installed $1.
 }
 
-i_llvm10 ()
+i_llvm11 ()
 {
-    echo \[ Rave Installer \] Installing LLVM-10
+    echo \[ Rave Installer \] Installing LLVM-11
     if [ "$ARCH" -eq 1 ]; then
-        echo \[ Rave Installer \] LLVM-10 is unavailable in Arch Linux repos. Build it by yourself.
+        echo \[ Rave Installer \] LLVM-11 is unavailable in Arch Linux repos. Build it by yourself.
     else
-        if sudo apt install llvm-10 lldb-10 llvm-10-dev libllvm10 llvm-10-runtime ; then
-            success LLVM-10
+        if sudo apt install llvm-11 lldb-11 llvm-11-dev libllvm11 llvm-11-runtime clang-11 ; then
+            success LLVM-11
         else
-            failure LLVM-10
+            failure LLVM-11
         fi
     fi
 }
@@ -56,7 +56,7 @@ i_dmd ()
     fi
 }
 
-i_llvm10
+i_llvm11
 i_dmd
 
 echo \[ Rave Installer \] Done.

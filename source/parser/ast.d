@@ -144,8 +144,7 @@ class LLVMGen {
                     // Not-generated template
                     string originalStructure = s.name[0..s.name.indexOf('<')];
                     if(originalStructure.into(StructTable)) {
-                        LLVMTypeRef _gT = StructTable[originalStructure].generateWithTemplate(s.name[s.name.indexOf('<')..$],s.types);
-                        return _gT;
+                        return StructTable[originalStructure].generateWithTemplate(s.name[s.name.indexOf('<')..$],s.types);
                     }
                 }
                 Generator.error(loc,"Unknown structure '"~s.name~"'!");
@@ -1598,7 +1597,7 @@ class NodeFunc : Node {
         LLVMTypeRef* parametersG = getParameters();
 
         LLVMTypeRef functype = LLVMFunctionType(
-            Generator.GenerateType(type),
+            Generator.GenerateType(type,loc),
             parametersG,
             cast(uint)args.length,
             isVararg
@@ -1684,14 +1683,14 @@ class NodeFunc : Node {
                 if(retBlocks is null || retBlocks.length == 0) {
                     LLVMBuildRet(
                         Generator.Builder,
-                        LLVMConstNull(Generator.GenerateType(type))
+                        LLVMConstNull(Generator.GenerateType(type,loc))
                     );
                 }
 				else if(retBlocks.length == 1 || (retBlocks.length>0 && retBlocks[0] == null)) {
 					LLVMBuildRet(Generator.Builder, retValues[0]);
 				}
 				else {
-					auto phi = LLVMBuildPhi(Generator.Builder, Generator.GenerateType(type), "retval");
+					auto phi = LLVMBuildPhi(Generator.Builder, Generator.GenerateType(type,loc), "retval");
 					LLVMAddIncoming(
 						phi,
 						retValues.ptr,
@@ -2042,7 +2041,10 @@ class NodeCall : Node {
         if(rname !in Generator.Functions) {
             Generator.error(loc,"Function '"~rname~"' does not exist!");
         }
-
+        if(fromStringz(LLVMPrintValueToString(Generator.Functions[rname])).indexOf("llvm.") != -1) {
+            LLVMBuildAlloca(Generator.Builder,LLVMInt1TypeInContext(Generator.Context),toStringz("fix"));
+            // This is necessary to solve a bug with LLVM-11
+        }
         return LLVMBuildCall(
             Generator.Builder,
             Generator.Functions[rname],
@@ -2662,7 +2664,7 @@ class NodeIf : Node {
 
         if(hasEnd1 && hasEnd2) {
             if(Generator.ActiveLoops.length == 0) {
-                LLVMBuildRet(Generator.Builder,LLVMConstNull(Generator.GenerateType(FuncTable[func].type)));
+                LLVMBuildRet(Generator.Builder,LLVMConstNull(Generator.GenerateType(FuncTable[func].type,loc)));
                 return null;
             }
         }
@@ -3005,7 +3007,7 @@ class NodeStruct : Node {
                     if(!(ts.name !in StructTable) && StructTable[ts.name].hasPredefines()) predefines ~= StructPredefined(i,v,true);
                 }
                 else predefines ~= StructPredefined(i,null,false);
-                values ~= Generator.GenerateType(v.t);
+                values ~= Generator.GenerateType(v.t,loc);
             }
             else {
                 NodeFunc f = elements[i].instanceof!NodeFunc;
@@ -3216,6 +3218,9 @@ class NodeStruct : Node {
         string _fn = "<";
         
         for(int i=0; i<_types.length; i++) {
+            if(TypeStruct _ts = _types[i].instanceof!TypeStruct) if(!_ts.name.into(StructTable) && !_ts.types.empty) {
+                Generator.GenerateType(_ts,loc);
+            }
             Generator.toReplace[templateNames[i]] = _types[i];
             _fn ~= templateNames[i]~",";
         }
@@ -3260,14 +3265,14 @@ class NodeCast : Node {
                     return LLVMBuildSIToFP(
                         Generator.Builder,
                         gval,
-                        Generator.GenerateType(type),
+                        Generator.GenerateType(type,loc),
                         toStringz("ifcast")
                     );
                 }
                 return LLVMBuildIntCast(
                     Generator.Builder,
                     gval,
-                    Generator.GenerateType(type),
+                    Generator.GenerateType(type,loc),
                     toStringz("iicast")
                 );
             }
@@ -3276,7 +3281,7 @@ class NodeCast : Node {
                 return LLVMBuildPtrToInt(
                     Generator.Builder,
                     gval,
-                    Generator.GenerateType(b),
+                    Generator.GenerateType(b,loc),
                     toStringz("picast")
                 );
             }
@@ -3284,13 +3289,13 @@ class NodeCast : Node {
             if(b.isFloat()) return LLVMBuildFPCast(
                 Generator.Builder,
                 gval,
-                Generator.GenerateType(type),
+                Generator.GenerateType(type,loc),
                 toStringz("ffcast")
             );
             return LLVMBuildFPToSI(
                 Generator.Builder,
                 gval,
-                Generator.GenerateType(type),
+                Generator.GenerateType(type,loc),
                 toStringz("ficast")
             );
         }
@@ -3299,7 +3304,7 @@ class NodeCast : Node {
                 return LLVMBuildIntToPtr(
                     Generator.Builder,
                     gval,
-                    Generator.GenerateType(p),
+                    Generator.GenerateType(p,loc),
                     toStringz("ipcast")
                 );
             }
@@ -3311,7 +3316,7 @@ class NodeCast : Node {
             return LLVMBuildPointerCast(
                 Generator.Builder,
                 gval,
-                Generator.GenerateType(type),
+                Generator.GenerateType(type,loc),
                 toStringz("ppcast")
             );
         }

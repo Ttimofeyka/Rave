@@ -1,5 +1,3 @@
-import <std/memory>
-
 namespace std {
     struct vector<T> {
         T* data;

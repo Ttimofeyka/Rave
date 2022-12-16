@@ -8,7 +8,7 @@
 		"llvm-d": "~>3.0.0"
 	},
 	"buildRequirements": ["silenceDeprecations"],
-	"libs": ["LLVM-10"],
+	"libs": ["LLVM-11"],
 	"description": "Rave Programming Language",
 	"license": "MPLv3",
 	"name": "rave"
