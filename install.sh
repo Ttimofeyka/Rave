@@ -12,7 +12,7 @@ if [ -f "/etc/arch-release" ]; then
     ARCH=1
     echo \[ Rave Installer \] Arch Linux detected, switching to ARCH mode.
 fi
-if [ echo $PREFIX | grep -o "com.termux" ]; then
+if [ ps -ef|grep -c com.termux -gt 0 ]; then
     TERMUX=1
     echo \[ Rave Installer \] Termux detected, switching to TERMUX mode.
 fi
