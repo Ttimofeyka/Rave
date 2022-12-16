@@ -22,7 +22,7 @@ string hasAnyone(string str, string[] strs) {
 }
 
 class Compiler {
-    private string linkString = "clang-11 ";
+    private string linkString = "clang ";
     private string outfile;
     private string outtype;
     private CompOpts opts;
