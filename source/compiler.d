@@ -13,6 +13,7 @@ import std.string;
 import std.process;
 import app : files;
 import std.datetime, std.datetime.stopwatch;
+import std.json;
 
 string hasAnyone(string str, string[] strs) {
     for(int i=0; i<strs.length; i++) {
@@ -26,6 +27,7 @@ class Compiler {
     private string outfile;
     private string outtype;
     private CompOpts opts;
+    private JSONValue options;
     int lexTime = 0;
     int parseTime = 0;
     int generateTime = 0;
@@ -40,6 +42,9 @@ class Compiler {
         this.outfile = outfile;
         this.outtype = outtype;
         this.opts = opts;
+        this.options = parseJSON(readText("options.json"));
+        
+        if(options.object["clang-version"].str != "default") this.linkString = "clang-"~options.object["clang-version"].str~" ";
 
         if(opts.isPIE) linkString = linkString~"-fPIE ";
         if(opts.noStd) linkString = linkString~"-nostdlib ";

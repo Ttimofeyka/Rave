@@ -7,16 +7,15 @@ Rave is a statically typed, compiled, procedural, general-purpose programming la
 ```nasm
 import <std/io>
 
-int main {
+void main {
   std::printf("Hello, world!\n");
-  return 0;
 }
 ```
 
 ## Requirements
 
-* `llvm-11` (including dev libs and clang-11)
-* dub and dmd compiler
+* `llvm-11` (including dev-libs and clang-11)
+* dub and dmd(or ldc/gdc) compiler
 
 ## Building/Running
 
