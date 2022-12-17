@@ -1,5 +1,15 @@
 import <std/io>
 
+(@isNumeric(T)) T max<T>(T one, T two) {
+    T retval = one;
+    if(two > one) retval = two;
+} => retval;
+
+(@isNumeric(T)) T jam<T> {
+    max<int>(10,10);
+} => 0;
+
 void main {
-    
+    int A = max<int>(10,10);
+    jam<int>();
 }

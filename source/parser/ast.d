@@ -1561,10 +1561,13 @@ class NodeFunc : Node {
             }
             else if(args[i].type.instanceof!TypeStruct) {
                 //p ~= Generator.GenerateType(new TypePointer(args[i].type),loc);
-                string oldname = args[i].name;
-                args[i].name = "_RaveStructArgument";
-                block.nodes = new NodeVar(oldname,new NodeIden(args[i].name,loc),false,false,false,[],loc,args[i].type) ~ block.nodes;
-                p ~= Generator.GenerateType(args[i].type,loc);
+                if(!args[i].type.instanceof!TypeStruct.name.into(Generator.toReplace)) {
+                    string oldname = args[i].name;
+                    args[i].name = "_RaveStructArgument";
+                    block.nodes = new NodeVar(oldname,new NodeIden(args[i].name,loc),false,false,false,[],loc,args[i].type) ~ block.nodes;
+                    p ~= Generator.GenerateType(args[i].type,loc);
+                }
+                else p ~= Generator.GenerateType(args[i].type,loc);
             }
             else p ~= Generator.GenerateType(args[i].type,loc);
         }
@@ -1581,6 +1584,8 @@ class NodeFunc : Node {
 
         int callconv = 0; // 0 == C
 
+        NodeBuiltin[string] _builtins;
+
         if(name == "main") linkName = "main";
         for(int i=0; i<mods.length; i++) {
             switch(mods[i].name) {
@@ -1591,14 +1596,21 @@ class NodeFunc : Node {
                 case "inline": isInline = true; break;
                 case "linkname": linkName = mods[i].value; break;
                 case "pure": isPure = true; break;
-                default: break;
+                default: if(mods[i].name[0] == '@') _builtins[mods[i].name[1..$]] = mods[i]._genValue.instanceof!NodeBuiltin; break;
             }
         }
 
         auto oldReplace = Generator.toReplace.dup;
+        Generator.toReplace.clear();
         if(isTemplate) {
             for(int i=0; i<templateNames.length; i++) {
                 Generator.toReplace[templateNames[i]] = _templateTypes[i];
+            }
+        }
+
+        foreach(k; byKey(_builtins)) {
+            if(_builtins[k].generate() != LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false)) {
+                Generator.error(loc,"The '"~k~"' builtin failed when generating the function '"~name~"'!");
             }
         }
 
@@ -1727,6 +1739,7 @@ class NodeFunc : Node {
         auto builder = Generator.Builder;
         auto currBB = Generator.currBB;
         auto _scope = currScope;
+
 
         NodeFunc _f = new NodeFunc(_all,args.dup,block,false,mods.dup,loc,type,templateNames.dup);
         _f.isTemplate = true;
@@ -2561,7 +2574,6 @@ class NodeUnary : Node {
 
             if(StructTable[struc]._destructor is null) {
                 if(NodeIden id = base.instanceof!NodeIden) {
-                    writeln(id.name);
                     if(!into(id.name,currScope.localVars) && !currScope.localVars[id.name].t.instanceof!TypeStruct) {
                         return new NodeCall(loc,new NodeIden("std::free",loc),[base]).generate();
                     }
@@ -3936,6 +3948,10 @@ class NodeBuiltin : Node {
             }
             return currScope.macroArgs[mga.number].instanceof!NodeType;
         }
+        if(NodeIden id = args[n].instanceof!NodeIden) {
+            if(id.name.into(Generator.toReplace)) return new NodeType(Generator.toReplace[id.name],loc);
+            return new NodeType(new TypeBasic(id.name),loc);
+        }
         assert(0);
     }
 
@@ -3963,6 +3979,7 @@ class NodeBuiltin : Node {
             case "isNumeric":
                 Type isNType = asType(0).ty;
                 if(isNType.toString().into(Generator.toReplace)) isNType = Generator.toReplace[isNType.toString()];
+                if(isNType.toString().into(Generator.toReplace) && Generator.toReplace[isNType.toString()].toString() == isNType.toString()) return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false);
                 if(isNType.instanceof!TypeBasic) {
                     string s = isNType.toString();
                     if(s == "bool" || s == "char" || s == "int" || s == "short" || s == "long" || s == "cent") {

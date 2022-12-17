@@ -28,6 +28,7 @@ static void removeAt(T)(ref T[] arr, size_t index)
 struct DeclMod {
     string name;
     string value;
+    Node _genValue;
 }
 
 long hexToLong(string s) {
@@ -128,7 +129,7 @@ class Parser {
             return new TypeBuiltin(name,args);
         }
         else {
-            error("Expected a typename on "~to!string(peek().line+1)~" line!");
+            error("Expected a typename on "~to!string(peek().line)~" line!");
         }
         return null;
     }
@@ -190,6 +191,11 @@ class Parser {
                 }
 
                 t = new TypeStruct(name~"<"~_sTypes~">",_types);
+
+                if(peek().type == TokType.Rpar) {
+                    // Call
+                    t = new TypeCall(t.instanceof!TypeStruct.name,parseFuncCallArgs());
+                }
             }
         }
         return t;
@@ -333,7 +339,7 @@ class Parser {
                     return (s == "bool") || (s == "char") || (s == "short")
                     || (s == "void") || (s == "int") || (s == "cent") || (s == "long");
                 }
-                if(isBasicType(tokens[_idx+1].value) || tokens[_idx+2].type == TokType.Less || tokens[_idx+2].type == TokType.More || tokens[_idx+2].type == TokType.Multiply || tokens[_idx+2].type == TokType.Rarr) {
+                if(tokens[_idx+1].type == TokType.More || isBasicType(tokens[_idx+1].value) || tokens[_idx+2].type == TokType.Less || tokens[_idx+2].type == TokType.More || tokens[_idx+2].type == TokType.Multiply || tokens[_idx+2].type == TokType.Rarr) {
                     next();
                     string all = t.value~"<";
 
@@ -819,6 +825,28 @@ class Parser {
         return new NodeLambda(loc,tt.instanceof!TypeFunc,b,name);
     }
 
+    Node parseBuiltin(string s = "") {
+        import std.algorithm : canFind;
+
+        string name = peek().value;
+        next(); next();
+        Node[] args;
+        while(peek().type != TokType.Lpar) {
+            if(canFind(structs,peek().value) || peek().value == "int" || peek().value == "short" || peek().value == "long" ||
+                peek().value == "bool" || peek().value == "char" || peek().value == "cent" || canFind(_templateNames,peek().value)) {
+                if(tokens[_idx+1].type == TokType.Identifier || tokens[_idx+1].type == TokType.Rpar || tokens[_idx+1].type == TokType.ShortRet) {
+                    args ~= parseLambda();
+                }
+                else args ~= new NodeType(parseType(),peek().line);
+            }
+            else args ~= parseExpr();
+            if(peek().type == TokType.Comma) next();
+        }
+        next();
+            
+        return new NodeBuiltin(name,args.dup,peek().line);
+    }
+
     Node parseDecl(string s = "") {
         DeclMod[] mods;
         int loc;
@@ -850,6 +878,12 @@ class Parser {
             // Decl have mods
             next();
             while(peek().type != TokType.Lpar) {
+                if(peek().type == TokType.Builtin) {
+                    NodeBuiltin nb = parseBuiltin().instanceof!NodeBuiltin;
+                    mods ~= DeclMod("@"~nb.name,"",nb);
+                    if(peek().type == TokType.Comma) next();
+                    continue;
+                }
                 auto nam = expect(TokType.Identifier).value;
                 string value = "";
                 if(peek().type == TokType.ValSel) {
@@ -864,7 +898,14 @@ class Parser {
             next(); // Skip lpar
         }
 
+        int IDX = _idx;
         auto type = parseType();
+        if(TypeCall tc = type.instanceof!TypeCall) {
+            _idx = IDX;
+            Node n = parseAtom();
+            if(peek().type == TokType.Semicolon) next();
+            return n;
+        }
         if(peek().value == "operator") return parseOperatorOverload(type,s);
         if(peek().value == "~" && tokens[_idx+1].value == "with") {
             next(); // Current token = "with"
