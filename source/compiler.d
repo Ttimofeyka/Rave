@@ -23,7 +23,7 @@ string hasAnyone(string str, string[] strs) {
 }
 
 class Compiler {
-    private string linkString = "clang ";
+    private string linkString;
     private string outfile;
     private string outtype;
     private CompOpts opts;
@@ -44,7 +44,7 @@ class Compiler {
         this.opts = opts;
         this.options = parseJSON(readText("options.json"));
         
-        if(options.object["compiler"].str != "clang") this.linkString = options.object["compiler"].str~" ";
+        this.linkString = options.object["compiler"].str~" ";
 
         if(opts.isPIE) linkString = linkString~"-fPIE ";
         if(opts.noStd) linkString = linkString~"-nostdlib ";
@@ -196,6 +196,12 @@ class Compiler {
         //writeln(linkString~" -o "~outfile);
 
         if(outtype != "") linkString = linkString~"-target "~outtype~" ";
+
+        if(!_libraries.empty) {
+            for(int i=0; i<_libraries.length; i++) {
+                linkString = linkString~"-l"~_libraries[i]~" ";
+            }
+        }
 
         auto l = executeShell(linkString~" -o "~outfile);
         if(l.status != 0) writeln("Linking error: "~l.output);

@@ -20,6 +20,7 @@ NodeMacro[string] MacroTable;
 bool[string] ConstVars;
 NodeFunc[string[]] MethodTable;
 NodeLambda[string] LambdaTable;
+string[] _libraries;
 
 int countOf(string s, char c) {
     pragma(inline,true);
@@ -244,10 +245,7 @@ class LLVMGen {
             return getAlignmentOfType(arr.element);
         }
         else if(TypeStruct s = t.instanceof!TypeStruct) {
-            if(!s.name.into(StructTable)) return 0;
-            if(StructTable[s.name].elements.length == 0) return 1;
-            if(NodeVar v = StructTable[s.name].elements[0].instanceof!NodeVar) return getAlignmentOfType(v.t);
-            return 4;
+            return 8;
         }
         else if(TypeFunc f = t.instanceof!TypeFunc) {
             return getAlignmentOfType(f.main);
@@ -1513,8 +1511,10 @@ class NodeFunc : Node {
     bool isInline = false;
     bool isTemplatePart = false;
     bool isPure = false;
+    bool isTemplate = false;
 
     string[] templateNames;
+    Type[] _templateTypes;
 
     this(string name, FuncArgSet[] args, NodeBlock block, bool isExtern, DeclMod[] mods, int loc, Type type, string[] templateNames) {
         this.name = name;
@@ -1552,8 +1552,6 @@ class NodeFunc : Node {
     }
 
     LLVMTypeRef* getParameters() {
-        if(!templateNames.empty) writeln(name," ",templateNames);
-
         LLVMTypeRef[] p;
         for(int i=0; i<args.length; i++) {
             if(args[i].type.instanceof!TypeVarArg) {
@@ -1574,7 +1572,10 @@ class NodeFunc : Node {
     }
 
     override LLVMValueRef generate() {
-        if(!templateNames.empty) return null;
+        if(!templateNames.empty && !isTemplate) {
+            isExtern = false;
+            return null;
+        }
         string linkName = Generator.mangle(name,true,false,args);
         if(isMethod) linkName = Generator.mangle(name,true,true,args);
 
@@ -1591,6 +1592,13 @@ class NodeFunc : Node {
                 case "linkname": linkName = mods[i].value; break;
                 case "pure": isPure = true; break;
                 default: break;
+            }
+        }
+
+        auto oldReplace = Generator.toReplace.dup;
+        if(isTemplate) {
+            for(int i=0; i<templateNames.length; i++) {
+                Generator.toReplace[templateNames[i]] = _templateTypes[i];
             }
         }
 
@@ -1613,7 +1621,7 @@ class NodeFunc : Node {
         else if(callconv == 2) LLVMSetFunctionCallConv(Generator.Functions[name],LLVMColdCallConv);
 
         if(isInline) Generator.addAttribute("alwaysinline",LLVMAttributeFunctionIndex,Generator.Functions[name]);
-        if(isTemplatePart || !templateNames.empty) {
+        if(isTemplatePart || isTemplate) {
             LLVMComdatRef cmr = LLVMGetOrInsertComdat(Generator.Module,toStringz(name));
             LLVMSetComdatSelectionKind(cmr,LLVMAnyComdatSelectionKind);
 
@@ -1707,16 +1715,31 @@ class NodeFunc : Node {
 			Generator.Builder = null;
             currScope = null;
         }
-
-        //writeln("Start: \n",fromStringz(LLVMPrintModuleToString(Generator.Module)),"\nEnd.");
+        if(isTemplate) Generator.toReplace = oldReplace.dup;
+        //writeln(fromStringz(LLVMPrintValueToString(Generator.Functions[name])));
         LLVMVerifyFunction(Generator.Functions[name],0);
 
         return Generator.Functions[name];
     }
 
     LLVMValueRef generateWithTemplate(Type[] _types, string _all) {
-        writeln(_types," ",_all);
-        assert(0);
+        auto activeLoops = Generator.ActiveLoops.dup;
+        auto builder = Generator.Builder;
+        auto currBB = Generator.currBB;
+        auto _scope = currScope;
+
+        NodeFunc _f = new NodeFunc(_all,args.dup,block,false,mods.dup,loc,type,templateNames.dup);
+        _f.isTemplate = true;
+        _f.check();
+        _f._templateTypes = _types.dup;
+        LLVMValueRef v = _f.generate();
+
+        Generator.ActiveLoops = activeLoops.dup;
+        Generator.Builder = builder;
+        Generator.currBB = currBB;
+        currScope = _scope;
+
+        return v;
     }
 
     override void debugPrint() {
@@ -1919,6 +1942,8 @@ class NodeCall : Node {
     }
 
     override LLVMValueRef generate() {
+        import lexer.lexer : Lexer;
+
         if(NodeIden f = func.instanceof!NodeIden) {
         if(!f.name.into(FuncTable) && !into(f.name~to!string(args.length),FuncTable) && !f.name.into(Generator.LLVMFunctions) && !into(f.name~typesToString(parametersToTypes(getParameters())),FuncTable)) {
             if(!f.name.into(MacroTable)) {
@@ -1936,6 +1961,15 @@ class NodeCall : Node {
                 }
                 if(f.name.into(Generator.toReplace)) {
                     f.name = Generator.toReplace[f.name].toString();
+                    return generate();
+                }
+                if(f.name.indexOf('<') != -1) {
+                    if(!f.name[0..f.name.indexOf('<')].into(FuncTable)) Generator.error(loc,"Unknown macro or function '"~f.name~"'!");
+                    
+                    // Template function
+                    Lexer l = new Lexer(f.name,1);
+                    Parser p = new Parser(l.getTokens(),1);
+                    FuncTable[f.name[0..f.name.indexOf('<')]].generateWithTemplate(p.parseType().instanceof!TypeStruct.types,f.name);
                     return generate();
                 }
                 Generator.error(loc,"Unknown macro or function '"~f.name~"'!");
@@ -3209,6 +3243,9 @@ class NodeStruct : Node {
         auto builder = Generator.Builder;
         auto currBB = Generator.currBB;
         auto _scope = currScope;
+        auto toReplace = Generator.toReplace.dup;
+
+        Generator.toReplace.clear();
 
         Node[] _elementsBefore = elements.dup;
         
@@ -3235,7 +3272,7 @@ class NodeStruct : Node {
         Generator.Builder = builder;
         Generator.currBB = currBB;
         currScope = _scope;
-        Generator.toReplace.clear();
+        Generator.toReplace = toReplace.dup;
         
         elements = _elementsBefore;
         //LLVMPositionBuilderAtEnd(Generator.Builder,currBB);
@@ -3949,6 +3986,13 @@ class NodeBuiltin : Node {
             case "va_arg":
                 // First - va_list, second - type
                 return LLVMBuildVAArg(Generator.Builder,args[0].generate(),Generator.GenerateType(asType(1).ty),toStringz("builtInVaArg"));
+            case "addLibrary":
+                for(int i=0; i<args.length; i++) {
+                    if(!canFind(_libraries,args[i].instanceof!NodeString.value)) {
+                        _libraries ~= args[i].instanceof!NodeString.value;
+                    }
+                }
+                break;
             default: break;
         }
         return null;

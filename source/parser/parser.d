@@ -736,6 +736,7 @@ class Parser {
                             _idx -= 1;
                             return parseDecl(f);
                         }
+
                         Node e = parseCall(new NodeIden(iden,peek().line));
                         if(peek().type == TokType.Semicolon) next();
                         return e;
