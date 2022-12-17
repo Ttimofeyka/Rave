@@ -44,7 +44,7 @@ class Compiler {
         this.opts = opts;
         this.options = parseJSON(readText("options.json"));
         
-        if(options.object["clang-version"].str != "default") this.linkString = "clang-"~options.object["clang-version"].str~" ";
+        if(options.object["compiler"].str != "clang") this.linkString = options.object["compiler"].str~" ";
 
         if(opts.isPIE) linkString = linkString~"-fPIE ";
         if(opts.noStd) linkString = linkString~"-nostdlib ";
