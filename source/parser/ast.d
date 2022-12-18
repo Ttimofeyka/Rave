@@ -103,6 +103,10 @@ class LLVMGen {
 
     LLVMTypeRef GenerateType(Type t, int loc = -1) {
         pragma(inline,true);
+        if(t is null) return LLVMPointerType(
+            LLVMInt8TypeInContext(Generator.Context),
+            0
+        );
         if(t.instanceof!TypeAlias) return null;
         if(t.instanceof!TypeBasic) {
             TypeBasic b = cast(TypeBasic)t;
@@ -182,10 +186,6 @@ class LLVMGen {
             NodeBuiltin nb = new NodeBuiltin(tb.name,tb.args.dup,loc); nb.generate();
             return this.GenerateType(nb.ty,loc);
         }
-        if(t is null) return LLVMPointerType(
-            LLVMInt8TypeInContext(Generator.Context),
-            0
-        );
         assert(0);
     }
     
@@ -1601,8 +1601,8 @@ class NodeFunc : Node {
         }
 
         auto oldReplace = Generator.toReplace.dup;
-        Generator.toReplace.clear();
         if(isTemplate) {
+            Generator.toReplace.clear();
             for(int i=0; i<templateNames.length; i++) {
                 Generator.toReplace[templateNames[i]] = _templateTypes[i];
             }

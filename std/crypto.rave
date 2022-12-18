@@ -1,3 +1,5 @@
+@addLibrary("ssl","crypto");
+
 namespace openssl {
     struct SHA_CTX {
         long h0;
