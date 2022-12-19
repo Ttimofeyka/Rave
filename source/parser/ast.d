@@ -3386,12 +3386,9 @@ class NodeCast : Node {
             );
         }
         if(TypeStruct s = type.instanceof!TypeStruct) {
-            return LLVMBuildBitCast(
-                Generator.Builder,
-                gval,
-                Generator.GenerateType(s),
-                toStringz("structcast")
-            );
+            LLVMValueRef ptrGval = LLVMBuildAlloca(Generator.Builder,LLVMTypeOf(gval),toStringz("temp_"));
+            LLVMBuildStore(Generator.Builder,gval,ptrGval);
+            return LLVMBuildLoad(Generator.Builder,LLVMBuildBitCast(Generator.Builder,ptrGval,LLVMPointerType(Generator.GenerateType(s,loc),0),toStringz("tempf_")),toStringz("load_"));
         }
         if(TypeMacroArg ma = type.instanceof!TypeMacroArg) {
             NodeType nt = currScope.macroArgs[ma.num].instanceof!NodeType;

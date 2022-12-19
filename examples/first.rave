@@ -1,5 +1,5 @@
 import <std/io>
 
 void main {
-    
+    int[10] A;
 }
