@@ -11,6 +11,8 @@ namespace libc {
     extern(linkname: "snprintf") int cformatn(char* str, int size, char* fmt, ...);
     extern(linkname: "sprintf") int cformat(char* str, char* fmt, ...);
     extern(linkname: "strtok") char* strtok(char* str, char* chars);
+    extern(linkname: "strtol") long strtol(char* str, char** end, int base);
+    (inline) bool isWhitespace(char c) => ((c == ' ') || (c == '\n')) || ((c == '\r') || (c == '\t'));
 }
 
 namespace std {
@@ -34,7 +36,6 @@ namespace std {
         } => this;
 
         bool isDeleted => (this.data == null);
-        char toChar => this.data[0];
 
         bool has(char c) {
             bool _has = false;
@@ -54,8 +55,12 @@ namespace std {
             int i = 0;
             while(i<this.length) {temp[i] = this.data[i]; i += 1;}
             temp[i] = '\0';
-            return temp;
-        }
+        } => temp;
+
+        (inline) char toChar => this.data[0];
+        (inline) long toLong => libc::strtol(this.c(),cast(char**)null,10);
+        (inline) int toInt => cast(int)this.toLong();
+
 
         int indexOf(char c) {
             int i = 0;
@@ -184,6 +189,28 @@ namespace std {
 
             std::free(_c);
         } => parts;
+
+        std::string ltrim {
+            char* _c = this.c();
+
+            while(libc::isWhitespace(_c[0])) _c = cast(char*)((cast(int)_c) + 1);
+
+            std::string _s = std::string(_c);
+        } => _s;
+
+        std::string rtrim {
+            char* _c = this.c();
+
+            int i = libc::strlen(_c)-1;
+            while(libc::isWhitespace(_c[i])) i -= 1;
+            _c[i+1] = '\0';
+
+            std::string _s = std::string(_c);
+        } => _s;
+
+        std::string trim {
+            std::string _l = this.ltrim();
+        } => _l.rtrim();
 
         std::vector<std::string> splitByChars(std::string chars) => this.splitByChars(chars.c());
 

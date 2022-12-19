@@ -627,7 +627,10 @@ class NodeBinary : Node {
             }
         }
 
-        if(LLVMGetTypeKind(LLVMTypeOf(one)) != LLVMGetTypeKind( LLVMTypeOf(two))) {
+        if(LLVMGetTypeKind(LLVMTypeOf(one)) != LLVMGetTypeKind(LLVMTypeOf(two))) {
+            if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMPointerTypeKind && LLVMGetElementType(LLVMTypeOf(one)) == LLVMTypeOf(two)) {
+                one = LLVMBuildLoad(Generator.Builder,one,toStringz("load632_"));
+            }
             Generator.error(loc,"value types are incompatible!");
         }
         if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMFloatTypeKind) {
@@ -996,7 +999,7 @@ class NodeBinary : Node {
         if(Generator.typeToString(LLVMTypeOf(f))[0..$-1] == Generator.typeToString(LLVMTypeOf(s))) {
             f = LLVMBuildLoad(Generator.Builder,f,toStringz("load1389_"));
         }
-        else if(Generator.typeToString(LLVMTypeOf(s))[0..$-1] == Generator.typeToString(LLVMTypeOf(f))) {
+        if(Generator.typeToString(LLVMTypeOf(s))[0..$-1] == Generator.typeToString(LLVMTypeOf(f))) {
             s = LLVMBuildLoad(Generator.Builder,s,toStringz("load1389_"));
         }
 
@@ -1040,7 +1043,7 @@ class NodeBinary : Node {
                         currScope.getWithoutLoad(id.name,loc)
                     );
                 }
-                break;
+                else assert(0);
             case TokType.Rem:
                 if(LLVMGetTypeKind(LLVMTypeOf(f)) == LLVMFloatTypeKind) {
                     return LLVMBuildFRem(
@@ -1548,13 +1551,13 @@ class NodeFunc : Node {
     this(string name, FuncArgSet[] args, NodeBlock block, bool isExtern, DeclMod[] mods, int loc, Type type, string[] templateNames) {
         this.name = name;
         this.origname = name;
-        this.args = args;
-        this.block = block;
+        this.args = args.dup;
+        this.block = new NodeBlock(block.nodes.dup);
         this.isExtern = isExtern;
         this.mods = mods.dup;
         this.loc = loc;
         this.type = type;
-        this.templateNames = templateNames;
+        this.templateNames = templateNames.dup;
     }
 
     override void check() {
@@ -1892,7 +1895,20 @@ class NodeCall : Node {
 
         if(fas !is null && !fas.empty) {
             int offset = 0;
-            if(fas[0].name == "this") offset = 1;
+            if(fas[0].name == "this") {
+                offset = 1;
+                if(args.length >= 2) {
+                    if(NodeIden t1 = args[0].instanceof!NodeIden) {
+                        if(NodeIden t2 = args[1].instanceof!NodeIden) {
+                            if(t1.name == t2.name) {
+                                if(fas.length >= 2 && fas[0].name != fas[1].name) {
+                                    args = args[1..$];
+                                }
+                            }
+                        }
+                    }
+                }
+            }
 
             //writeln("Args:");
             //for(int i=0; i<args.length; i++) {writeln("Arg: ",args[i]); if(NodeIden id = args[i].instanceof!NodeIden) writeln("\t",id.name);}
@@ -3120,7 +3136,6 @@ class NodeStruct : Node {
                     }
 
                     _this.block.nodes = new NodeVar("this",null,false,false,false,[],_this.loc,f.type)~toAdd~_this.block.nodes;
-
                     _this.check();
                 }
                 else if(f.origname == "~this") {
@@ -3209,7 +3224,7 @@ class NodeStruct : Node {
                         outType = _this.type;
                         if(outType.instanceof!TypeStruct) outType = new TypePointer(outType);
                     }
-                    f.args = FuncArgSet("this",outType)~f.args;
+                    if((f.args.length > 0 && f.args[0].name != "this") || f.args.length == 0) f.args = FuncArgSet("this",outType)~f.args;
                     f.name = name~"."~f.origname;
                     f.isMethod = true;
 
@@ -3288,7 +3303,17 @@ class NodeStruct : Node {
 
         Generator.toReplace.clear();
 
-        Node[] _elementsBefore = elements.dup;
+        Node[] _elementsBefore;
+
+        for(int i=0; i<elements.length; i++) {
+            if(NodeFunc f = elements[i].instanceof!NodeFunc) {
+                if(f.name.indexOf('<') != -1) {
+                    f.name = f.origname;
+                    if(f.args.length > 0 && f.args[0].name == "this") f.args = f.args[1..$];
+                }
+            }
+            _elementsBefore ~= elements[i];
+        }
         
         NodeStruct _struct = new NodeStruct(name~typesS,elements.dup,loc,"",[]);
         _struct.check();
@@ -3314,7 +3339,7 @@ class NodeStruct : Node {
         currScope = _scope;
         Generator.toReplace = toReplace.dup;
         
-        elements = _elementsBefore;
+        elements = _elementsBefore.dup;
         //LLVMPositionBuilderAtEnd(Generator.Builder,currBB);
 
         return Generator.Structs[_struct.name];

@@ -5,7 +5,7 @@ namespace std {
         extern(linkname: "isupper") bool isUpper(char c);
         extern(linkname: "tolower") char toLower(char c);
         extern(linkname: "toupper") char toUpper(char c);
-        extern(linkname: "isdigit") char isDigit(char c);
+        (inline) bool isDigit(char c) => (c == '0') || (c == '1') || (c == '2') || (c == '3') || (c == '4') || (c == '5') || (c == '6') || (c == '7') || (c == '8') || (c == '9');
         extern(linkname: "strchr") char charInChars(char* chars, char c);
     }
 }

@@ -17,7 +17,7 @@ namespace std {
             }
 
             this.data[this.length] = value;
-            this.length += 1;
+            this.length = this.length + 1;
         }
 
         void assign(std::vector<T> of) {
@@ -52,7 +52,7 @@ namespace std {
             for(int i=index; i<this.length; i+=1) {
                 if((i+1) < this.length) this.data[i] = this.data[i+1];
             }
-            this.length -= 1;
+            this.length = this.length - 1;
         }
 
         (inline) void removeLast {
