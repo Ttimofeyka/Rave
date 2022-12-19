@@ -186,3 +186,6 @@ class TypeCall : Type {
         return "FuncCall";
     }
 }
+class TypeAuto : Type {
+    this() {}
+}

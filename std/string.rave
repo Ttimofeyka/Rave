@@ -1,4 +1,4 @@
-import <std/memory>
+import <std/vector>
 
 namespace libc {
     // Functions that are practically unnecessary in normal use and come from libc
@@ -10,6 +10,7 @@ namespace libc {
     extern(linkname: "strstr") char* strstr(char* src, char* substr);
     extern(linkname: "snprintf") int cformatn(char* str, int size, char* fmt, ...);
     extern(linkname: "sprintf") int cformat(char* str, char* fmt, ...);
+    extern(linkname: "strtok") char* strtok(char* str, char* chars);
 }
 
 namespace std {
@@ -156,7 +157,6 @@ namespace std {
         bool operator==(std::string one, char* two) => one.compare(two);
         bool operator!=(std::string one, std::string two) => !(one.compare(two));
         bool operator!=(std::string one, char* two) => !(one.compare(two));
-
         void operator=(std::string* one, char* two) {
             one[0] = std::string(two);
         }
@@ -170,6 +170,20 @@ namespace std {
                 i += 1;
             }
         } => temp;
+
+        std::vector<std::string> split(char* chars) {
+            std::vector<std::string> parts = std::vector<std::string>();
+
+            char* _c = this.c();
+            char* _cp = libc::strtok(_c,chars);
+
+            while(_cp != null) {
+                parts.add(std::string(_cp));
+                _cp = libc::strtok(null,chars);
+            }
+
+            std::free(_c);
+        } => parts;
 
         void ~this {
             std::free(this.data);

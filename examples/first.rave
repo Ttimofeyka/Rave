@@ -1,5 +1,10 @@
 import <std/io>
 
 void main {
-    int[10] A;
+    std::string str = "Hello, world!";
+    std::vector<std::string> strs = str.split(" ");
+
+    for(int i=0; i<strs.length; i+=1) {
+        std::printf("Part %d: '%s'\n",i,strs.data[i]);
+    }
 }

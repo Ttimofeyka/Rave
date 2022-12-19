@@ -38,7 +38,7 @@ bool into(T, TT)(T t, TT tt) {
 
 void checkError(int loc,string msg) {
     pragma(inline,true);
-        writeln("\033[0;31mError on "~to!string(loc+1)~" line: " ~ msg ~ "\033[0;0m");
+        writeln("\033[0;31mError on "~to!string(loc)~" line: " ~ msg ~ "\033[0;0m");
 		exit(1);
 }
 
@@ -97,7 +97,7 @@ class LLVMGen {
 
     void error(int loc,string msg) {
         pragma(inline,true);
-        writeln("\033[0;31mError on "~to!string(loc)~" line: " ~ msg ~ "\033[0;0m");
+        writeln("\033[0;31mError in '",file,"' file on "~to!string(loc)~" line: " ~ msg ~ "\033[0;0m");
 		exit(1);
     }
 
@@ -253,6 +253,7 @@ class LLVMGen {
         else if(TypeVoid v = t.instanceof!TypeVoid) {
             return 0;
         }
+        else if(TypeAuto ta = t.instanceof!TypeAuto) return 0;
         assert(0);
     }
 
@@ -1301,21 +1302,32 @@ class NodeVar : Node {
                 if(mods[i].name == "C") noMangling = true;
                 if(mods[i].name == "volatile") isVolatile = true;
             }
-            Generator.Globals[name] = LLVMAddGlobal(
+            if(t.instanceof!TypeAuto && value is null) Generator.error(loc,"using 'auto' without an explicit value is prohibited!");
+            if(!t.instanceof!TypeAuto) Generator.Globals[name] = LLVMAddGlobal(
                 Generator.Module, 
                 Generator.GenerateType(t,loc), 
                 toStringz((noMangling) ? name : Generator.mangle(name,false,false))
             );
+            else {
+                LLVMValueRef val = value.generate();
+                Generator.Globals[name] = LLVMAddGlobal(
+                    Generator.Module,
+                    LLVMTypeOf(val),
+                    toStringz((noMangling) ? name : Generator.mangle(name,false,false))
+                );
+                t = llvmTypeToType(LLVMTypeOf(val));
+                LLVMSetInitializer(Generator.Globals[name],val);
+                LLVMSetAlignment(Generator.Globals[name],Generator.getAlignmentOfType(t));
+                if(isVolatile) LLVMSetVolatile(Generator.Globals[name],true);
+                return null;
+            }
+
             if(isExtern) {
                 LLVMSetLinkage(Generator.Globals[name], LLVMExternalLinkage);
             }
             if(isVolatile) LLVMSetVolatile(Generator.Globals[name],true);
             // else LLVMSetLinkage(Generator.Globals[name],LLVMCommonLinkage);
             LLVMSetAlignment(Generator.Globals[name],Generator.getAlignmentOfType(t));
-            version(linux) {
-		        //version(X86) {LLVMSetGlobalDSOLocal(Generator.Globals[name]);}
-		        //version(X86_64) {LLVMSetGlobalDSOLocal(Generator.Globals[name]);}
-	        }
             if(value !is null && !isExtern) {
                 LLVMSetInitializer(Generator.Globals[name], value.generate());
             }
@@ -4016,28 +4028,36 @@ class NodeBuiltin : Node {
 class NodeFor : Node {
     int loc;
     
-    NodeVar var;
-    NodeBinary[] condAndAfter;
+    Node[] _Sets;
+    NodeBinary _Condition;
+    Node[] _Afters;
     NodeBlock block;
     string f;
 
-    this(NodeVar var, NodeBinary[] arr, NodeBlock bl, string f, int loc) {
-        this.var = var;
-        this.condAndAfter = arr.dup;
-        this.block = bl;
+    this(Node[] _Sets, NodeBinary _Condition, Node[] _Afters, NodeBlock block, string f, int loc) {
+        this._Sets = _Sets.dup;
+        this._Condition = _Condition;
+        this._Afters = _Afters.dup;
         this.f = f;
         this.loc = loc;
+        this.block = block;
     }
 
     override LLVMValueRef generate() {
-        var.isGlobal = false;
-        var.generate();
-        block.nodes = block.nodes ~ condAndAfter[1];
+        auto oldLocalVars = currScope.localVars.dup;
+        auto oldLocalScope = currScope.localscope.dup;
 
-        LLVMValueRef toret = new NodeWhile(condAndAfter[0],block,loc,f).generate();
+        for(int i=0; i<_Sets.length; i++) {
+            _Sets[i].check();
+            _Sets[i].generate();
+        }
 
-        currScope.localscope.remove(var.name);
-        currScope.localVars.remove(var.name);
+        block.nodes ~= _Afters;
+
+        LLVMValueRef toret = new NodeWhile(_Condition,block,loc,f).generate();
+
+        currScope.localscope = oldLocalScope;
+        currScope.localVars = oldLocalVars;
 
         return toret;
     }

@@ -103,6 +103,7 @@ class Parser {
         if(peek().type == TokType.Identifier) {
             auto t = next();
             if(t.value == "void") return new TypeVoid();
+            else if(t.value == "auto") return new TypeAuto();
             else if(t.value.into(_aliasTypes)) return _aliasTypes[t.value];
             else if(_templateNames.canFind(t.value)) return new TypeStruct(t.value);
             return getType(t.value);
@@ -587,31 +588,48 @@ class Parser {
         next();
         next(); // Skip (
 
-        NodeVar var;
-        NodeBinary[] condAndAfter;
+        Node[] before;
+        NodeBinary cond;
+        Node[] after;
+
+        int curr = 0;
 
         while(peek().type != TokType.Lpar) {
-            if(peek().value == "bool" || peek().value == "short" || peek().value == "int" || peek().value == "long" || peek().value == "cent" || canFind(structs,peek().value) || canFind(_templateNames,peek().value)) {
-                // Var
-                Type t = parseType();
-                string name = peek().value;
-                Node value;
+            if(peek().type == TokType.Semicolon) {
+                curr += 1;
                 next();
-                if(peek().value == "=") {
-                    next();
-                    value = parseExpr();
+            }
+            if(peek().type == TokType.Comma) next();
+            
+            if(curr == 0) {
+                if(tokens[_idx+1].value == "=") {
+                    // Not a decl, put value into variable
+                    before ~= parseExpr();
                 }
-                var = new NodeVar(name,value,false,false,false,[],peek().line,t);
+                else {
+                    // Decl
+                    Type _t = parseType();
+                    string name = peek().value;
+                    next();
+                    if(peek().type == TokType.Equ) {
+                        next();
+                        Node val = parseExpr();
+                        before ~= new NodeVar(name,val,false,false,false,[],peek().line,_t);
+                        if(peek().type != TokType.Semicolon && peek().type != TokType.Comma) curr += 1;
+                    }
+                    else before ~= new NodeVar(name,null,false,false,false,[],peek().line,_t);
+                }
+            }
+            else if(curr == 1) {
+                cond = parseExpr().instanceof!NodeBinary;
             }
             else {
-                condAndAfter ~= parseExpr().instanceof!NodeBinary;
+                after ~= parseExpr();
             }
-
-            if(peek().value == ";") next();
         }
         next();
 
-        return new NodeFor(var,condAndAfter,parseBlock(f),f,peek().line);
+        return new NodeFor(before,cond,after,parseBlock(f),f,peek().line);
     }
 
     Node parseWith(string f = "") {
