@@ -10,17 +10,17 @@ namespace std {
     extern(linkname: "llvm.frameaddress.p0i8") void* frameAddress(int level);
     extern(linkname: "llvm.eh.sjlj.setjmp") int setjmp(char* buff);
 
-    struct pair<T,TT> {
-        T first;
-        TT second;
+    struct pair<F,S> {
+        F first;
+        S second;
 
-        std::pair<T,TT> this(T first, TT second) {
+        std::pair<F,S> this(F first, S second) {
             this.first = first;
             this.second = second;
         } => this;
 
-        bool operator==(std::pair<T,TT> f, std::pair<T,TT> s) => (f.first == s.first) && (f.second == s.second);
-        bool operator!=(std::pair<T,TT> f, std::pair<T,TT> s) => !(f == s);
+        bool operator==(std::pair<F,S> f, std::pair<F,S> s) => (f.first == s.first) && (f.second == s.second);
+        bool operator!=(std::pair<F,S> f, std::pair<F,S> s) => !(f == s);
     }
 }
 

@@ -171,7 +171,7 @@ namespace std {
             }
         } => temp;
 
-        std::vector<std::string> split(char* chars) {
+        std::vector<std::string> splitByChars(char* chars) {
             std::vector<std::string> parts = std::vector<std::string>();
 
             char* _c = this.c();
@@ -184,6 +184,8 @@ namespace std {
 
             std::free(_c);
         } => parts;
+
+        std::vector<std::string> splitByChars(std::string chars) => this.splitByChars(chars.c());
 
         void ~this {
             std::free(this.data);
