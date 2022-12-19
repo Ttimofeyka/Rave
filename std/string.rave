@@ -68,7 +68,7 @@ namespace std {
             char* p = libc::strstr(_c,s);
 
             int index = 0;
-            if(p == null) index = 1;
+            if(p == null) index = -1;
             else index = (cast(int)p)-(cast(int)_c);
         } => index;
 

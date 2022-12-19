@@ -188,8 +188,9 @@ class Parser {
 
                 string _sTypes = "";
                 for(int i=0; i<_types.length; i++) {
-                    _sTypes ~= _types[i].toString();
+                    _sTypes ~= _types[i].toString()~",";
                 }
+                _sTypes = _sTypes[0..$-1];
 
                 t = new TypeStruct(name~"<"~_sTypes~">",_types);
 
@@ -600,7 +601,7 @@ class Parser {
                 next();
             }
             if(peek().type == TokType.Comma) next();
-            
+
             if(curr == 0) {
                 if(tokens[_idx+1].value == "=") {
                     // Not a decl, put value into variable

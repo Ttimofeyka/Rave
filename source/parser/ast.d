@@ -557,10 +557,16 @@ class NodeBinary : Node {
             return new TypeBasic("double");
         }
         else if(LLVMGetTypeKind(t) == LLVMPointerTypeKind) {
-            if(LLVMGetTypeKind(LLVMGetElementType(t)) == LLVMStructTypeKind) return new TypeStruct(cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(t))));
+            if(LLVMGetTypeKind(LLVMGetElementType(t)) == LLVMStructTypeKind) {
+                string name = cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(t)));
+                return new TypeStruct((name.indexOf('<') == -1) ? name : name[0..name.indexOf('<')]);
+            }
             return new TypePointer(null);
         }
-        else if(LLVMGetTypeKind(t) == LLVMStructTypeKind) return new TypeStruct(cast(string)fromStringz(LLVMGetStructName(t)));
+        else if(LLVMGetTypeKind(t) == LLVMStructTypeKind) {
+            string name = cast(string)fromStringz(LLVMGetStructName(t));
+            return new TypeStruct((name.indexOf('<') == -1) ? name : name[0..name.indexOf('<')]);
+        }
         return null;
     }
 
@@ -675,7 +681,6 @@ class NodeBinary : Node {
             if(operator == TokType.Equal) {
                 if(TokType.Equal.into(StructTable[structName].operators)) {
                     Type[] _types; _types ~= llvmTypeToType(one); _types ~= llvmTypeToType(two);
-                    //writeln(StructTable[structName].operators[TokType.Equal]);
                     if(typesToString(_types).into(StructTable[structName].operators[TokType.Equal]) || "[]".into(StructTable[structName].operators[TokType.Equal])) {
                         NodeFunc fn;
                         if("[]".into(StructTable[structName].operators[TokType.Equal])) {
@@ -1293,6 +1298,7 @@ class NodeVar : Node {
             AliasTable[name] = value;
             return null;
         }
+        if(t.instanceof!TypeAuto && value is null) Generator.error(loc,"using 'auto' without an explicit value is prohibited!");
         if(currScope is null) {
             // Global variable
             // Only const-values
@@ -1302,7 +1308,6 @@ class NodeVar : Node {
                 if(mods[i].name == "C") noMangling = true;
                 if(mods[i].name == "volatile") isVolatile = true;
             }
-            if(t.instanceof!TypeAuto && value is null) Generator.error(loc,"using 'auto' without an explicit value is prohibited!");
             if(!t.instanceof!TypeAuto) Generator.Globals[name] = LLVMAddGlobal(
                 Generator.Module, 
                 Generator.GenerateType(t,loc), 
@@ -1342,10 +1347,21 @@ class NodeVar : Node {
                 if(mods[i].name == "volatile") isVolatile = true;
             }
             currScope.localVars[name] = this;
-            LLVMTypeRef _t = Generator.GenerateType(t,loc);
+
+            if(t.instanceof!TypeAuto) {
+                LLVMValueRef val = value.generate();
+                currScope.localscope[name] = LLVMBuildAlloca(Generator.Builder,LLVMTypeOf(val),toStringz(name));
+                t = llvmTypeToType(LLVMTypeOf(val));
+                LLVMSetAlignment(currScope.localscope[name],Generator.getAlignmentOfType(t));
+
+                LLVMBuildStore(Generator.Builder,val,currScope.localscope[name]);
+
+                return currScope.localscope[name];
+            }
+
             currScope.localscope[name] = LLVMBuildAlloca(
                 Generator.Builder,
-                _t,
+                Generator.GenerateType(t,loc),
                 toStringz(name)
             );
             if(isVolatile) {
@@ -1424,8 +1440,8 @@ string typesToString(FuncArgSet[] args) {
         }
         else if(TypePointer tp = t.instanceof!TypePointer) {
             if(TypeStruct ts = tp.instance.instanceof!TypeStruct) {
-                //data ~= "_ps-"~ts.name;
-                data ~= "_s-"~ts.name;
+                if(ts.name.indexOf('<') == -1) data ~= "_s-"~ts.name;
+                else data ~= "_s-"~ts.name[0..ts.name.indexOf('<')];
             }
             else data ~= "_p";
         }
@@ -1433,7 +1449,8 @@ string typesToString(FuncArgSet[] args) {
             data ~= "_a";
         }
         else if(TypeStruct ts = t.instanceof!TypeStruct) {
-            data ~= "_s-"~ts.name;
+            if(ts.name.indexOf('<') == -1) data ~= "_s-"~ts.name;
+            else data ~= "_s-"~ts.name[0..ts.name.indexOf('<')];
         }
         else if(TypeFunc tf = t.instanceof!TypeFunc) {
             data ~= "_func";
@@ -3290,7 +3307,6 @@ class NodeStruct : Node {
 
         _struct.isTemplated = true;
         _struct.generate();
-        _struct.isTemplated = false;
 
         Generator.ActiveLoops = activeLoops;
         Generator.Builder = builder;
@@ -3531,7 +3547,7 @@ class NodeUsing : Node {
                 string oldname = var.name;
                 var.name = namespacesNamesToString(var.namespacesNames, var.origname);
                 StructTable[var.name] = var;
-                Generator.Structs[var.name] = Generator.Structs[oldname];
+                if(var.name.into(Generator.Structs)) Generator.Structs[var.name] = Generator.Structs[oldname];
                 if(oldname.into(FuncTable)) {
                     FuncTable[var.name] = FuncTable[oldname];
                     Generator.Functions[var.name] = Generator.Functions[oldname];
@@ -3560,10 +3576,12 @@ class NodeUsing : Node {
                                 }
                                 MethodTable[cast(immutable)[var.name,f.origname~typesToString(f.args)]] = MethodTable[cast(immutable)[oldname,withArgs]];
                             }
-                            else MethodTable[cast(immutable)[var.name,f.origname]] = MethodTable[cast(immutable)[oldname,f.origname]];
+                            else if(cast(immutable)[oldname,f.origname].into(MethodTable)) {
+                                MethodTable[cast(immutable)[var.name,f.origname]] = MethodTable[cast(immutable)[oldname,f.origname]];
+                            }
                         }
                         else {
-                            FuncTable[var.name] = FuncTable[oldname];
+                            if(var.name.into(FuncTable)) FuncTable[var.name] = FuncTable[oldname];
                         }
                     }
                 }
