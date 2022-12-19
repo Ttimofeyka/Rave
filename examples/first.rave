@@ -1,4 +1,4 @@
-import <std/io> <std/json>
+import <std/io> <std/json> <std/map>
 
 void main {
     char* str = "{\"data\": 10}";
@@ -14,4 +14,5 @@ void main {
     }
 
     std::printf("Parsing...\n");
+    std::map<int,int> m;
 }

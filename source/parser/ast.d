@@ -3301,6 +3301,12 @@ class NodeStruct : Node {
         auto _scope = currScope;
         auto toReplace = Generator.toReplace.dup;
 
+        for(int i=0; i<_types.length; i++) {
+            if(_types[i].toString().into(Generator.toReplace)) {
+                _types[i] = Generator.toReplace[_types[i].toString()];
+            }
+        }
+
         Generator.toReplace.clear();
 
         Node[] _elementsBefore;
