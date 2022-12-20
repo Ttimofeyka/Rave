@@ -14,5 +14,6 @@ void main {
     }
 
     std::printf("Parsing...\n");
-    std::map<int,int> m;
+
+    std::map<int,int> m = std::map<int,int>();
 }

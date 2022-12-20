@@ -4,5 +4,15 @@ namespace std {
     struct map<K,V> {
         std::vector<K> keys;
         std::vector<V> values;
+
+        std::map<K,V> this {
+            this.keys = std::vector<K>();
+            this.values = std::vector<V>();
+        } => this;
+
+        void add(K key, V value) {
+            this.keys.add(key);
+            this.values.add(value);
+        }
     }
 }

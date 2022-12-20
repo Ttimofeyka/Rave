@@ -142,6 +142,14 @@ class TypeStruct : Type {
     this(string name) {this.name = name;}
     this(string name, Type[] types) {this.name = name; this.types = types.dup;}
 
+    void updateByTypes() {
+        this.name = this.name[0..this.name.indexOf('<')]~"<";
+        for(int i=0; i<types.length; i++) {
+            this.name ~= types[i].toString()~",";
+        }
+        this.name = this.name[0..$-1]~">";
+    }
+
     override string toString()
     {
         return name;

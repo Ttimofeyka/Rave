@@ -1954,9 +1954,9 @@ class NodeCall : Node {
                         else if(NodeGet ng = args[i].instanceof!NodeGet) {ng.isMustBePtr = true; arg = ng.generate();}
                         else if(NodeIndex ind = args[i].instanceof!NodeIndex) {ind.isMustBePtr = true; arg = ind.generate();}
 
-                        if(LLVMGetTypeKind(LLVMTypeOf(arg)) != LLVMPointerTypeKind) {
+                        if(LLVMGetTypeKind(LLVMTypeOf(arg)) != LLVMPointerTypeKind && (fas[i].name != "this" || LLVMGetTypeKind(LLVMTypeOf(arg)) == LLVMStructTypeKind)) {
                             // Create local copy
-                            LLVMValueRef temp = LLVMBuildAlloca(Generator.Builder,LLVMTypeOf(arg),toStringz("temp_"));
+                            LLVMValueRef temp = LLVMBuildAlloca(Generator.Builder,LLVMTypeOf(arg),toStringz("tempArg_"));
                             LLVMBuildStore(Generator.Builder,arg,temp);
                             arg = temp;
                         }
@@ -2022,7 +2022,32 @@ class NodeCall : Node {
                     return generate();
                 }
                 if(f.name.indexOf('<') != -1) {
-                    if(!f.name[0..f.name.indexOf('<')].into(FuncTable)) Generator.error(loc,"Unknown macro or function '"~f.name~"'!");
+                    if(!f.name[0..f.name.indexOf('<')].into(FuncTable)) {
+                        Lexer l = new Lexer(f.name,1);
+                        Parser p = new Parser(l.getTokens(),1);
+                        TypeStruct _t = p.parseType().instanceof!TypeStruct;
+
+                        bool _replaced = false;
+                        for(int i=0; i<_t.types.length; i++) {
+                            if(_t.types[i].toString().into(Generator.toReplace)) {
+                                _t.types[i] = Generator.toReplace[_t.types[i].toString()];
+                                _replaced = true;
+                            }
+                        }
+
+                        if(_replaced) {
+                            _t.updateByTypes();
+                            f.name = _t.name;
+                            if(_t.name.into(FuncTable)) {
+                                return generate();
+                            }
+                            else if(f.name[0..f.name.indexOf('<')].into(FuncTable)) {
+                                FuncTable[f.name[0..f.name.indexOf('<')]].generateWithTemplate(_t.types,f.name);
+                                return generate();
+                            }
+                        }
+                        Generator.error(loc,"Unknown macro or function '"~f.name~"'!");
+                    }
                     
                     // Template function
                     Lexer l = new Lexer(f.name,1);
@@ -2697,6 +2722,9 @@ class NodeIf : Node {
             comptime();
             return null;
         }
+        if(NodeBuiltin _c = condition.instanceof!NodeBuiltin) {
+            if(_c.generate() != LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false)) return null;
+        }
         LLVMBasicBlockRef thenBlock =
 			LLVMAppendBasicBlockInContext(
                 Generator.Context,
@@ -3311,19 +3339,6 @@ class NodeStruct : Node {
 
         Node[] _elementsBefore;
 
-        for(int i=0; i<elements.length; i++) {
-            if(NodeFunc f = elements[i].instanceof!NodeFunc) {
-                if(f.name.indexOf('<') != -1) {
-                    f.name = f.origname;
-                    if(f.args.length > 0 && f.args[0].name == "this") f.args = f.args[1..$];
-                }
-            }
-            _elementsBefore ~= elements[i];
-        }
-        
-        NodeStruct _struct = new NodeStruct(name~typesS,elements.dup,loc,"",[]);
-        _struct.check();
-
         string _fn = "<";
         
         for(int i=0; i<_types.length; i++) {
@@ -3335,6 +3350,35 @@ class NodeStruct : Node {
         }
 
         Generator.toReplace[name~_fn[0..$-1]~">"] = new TypeStruct(name~typesS);
+
+        for(int i=0; i<elements.length; i++) {
+            if(NodeFunc f = elements[i].instanceof!NodeFunc) {
+                if(f.name.indexOf('<') != -1) {
+                    f.name = f.origname;
+                    if(f.args.length > 0 && f.args[0].name == "this") f.args = f.args[1..$];
+                }
+            }
+            else if(NodeVar nv = elements[i].instanceof!NodeVar) {
+                if(TypeStruct ts = nv.t.instanceof!TypeStruct) {
+                    if(ts.name.indexOf('<') != -1) {
+                        bool _needUpdate = false;
+                        for(int j=0; j<ts.types.length; j++) {
+                            if(TypeStruct _ts = ts.types[j].instanceof!TypeStruct) {
+                                if(_ts.name.into(Generator.toReplace)) {
+                                    ts.types[j] = Generator.toReplace[_ts.name];
+                                    _needUpdate = true;
+                                }
+                            }
+                        }
+                        if(_needUpdate) ts.updateByTypes();
+                    }
+                }
+            }
+            _elementsBefore ~= elements[i];
+        }
+        
+        NodeStruct _struct = new NodeStruct(name~typesS,elements.dup,loc,"",[]);
+        _struct.check();
 
         _struct.isTemplated = true;
         _struct.generate();
