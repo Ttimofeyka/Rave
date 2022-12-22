@@ -69,7 +69,12 @@ CompOpts analyzeArgs(string[] args) {
 			case "-ol": case "--optimization-level":
 			case "-O": // Compatible with the same option from clang
 				opts.optimizeLevel = to!int(args[idx+1]); idx += 1; break;
-			default: files ~= args[idx]; break;
+			default:
+				if(currCommand[0] == '-') {
+					opts.linkparams ~= currCommand~" "; idx += 1;
+				}
+				else files ~= args[idx]; 
+				break;
 		}
 		idx += 1;
 	}
