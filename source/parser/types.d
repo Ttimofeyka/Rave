@@ -6,6 +6,7 @@ import std.conv : to;
 import std.ascii : isAlpha;
 import parser.ast : Node;
 import std.stdio;
+import parser.parser : instanceof;
 
 enum BasicType {
     Bool,
@@ -49,6 +50,8 @@ Type getType(string name) {
 }
 
 class Type {
+    Type copy() {assert(0);}
+
     override string toString()
     {
         return "SimpleType";
@@ -90,6 +93,10 @@ class TypeBasic : Type {
             default: break;
         }
     }
+    
+    override Type copy() {
+        return new TypeBasic(this.value);
+    }
 
     bool isFloat() {
         pragma(inline,true);
@@ -107,6 +114,10 @@ class TypePointer : Type {
 
     this(Type instance) {this.instance = instance;}
 
+    override Type copy() {
+        return new TypePointer(instance.copy());
+    }
+
     override string toString()
     {
         return instance.toString()~"*";
@@ -122,14 +133,26 @@ class TypeArray : Type {
         this.element = element;
     }
 
+    override Type copy() {
+        return new TypeArray(this.count,this.element.copy());
+    }
+
     override string toString()
     {
         return element.toString()~"["~to!string(count)~"]";
     }
 }
 
-class TypeAlias : Type {}
+class TypeAlias : Type {
+    override Type copy() {
+        return new TypeAlias();
+    }
+}
 class TypeVoid : Type {
+    override Type copy() {
+        return new TypeVoid();
+    }
+
     override string toString()
     {
         return "void";
@@ -141,6 +164,14 @@ class TypeStruct : Type {
 
     this(string name) {this.name = name;}
     this(string name, Type[] types) {this.name = name; this.types = types.dup;}
+
+    override Type copy() {
+        Type[] _types;
+        for(int i=0; i<types.length; i++) {
+            _types ~= types[i].copy();
+        }
+        return new TypeStruct(name,_types);
+    }
 
     void updateByTypes() {
         this.name = this.name[0..this.name.indexOf('<')]~"<";
@@ -159,6 +190,10 @@ class TypeFuncArg : Type {
     Type type;
     string name;
 
+    override Type copy() {
+        return new TypeFuncArg(type.copy(),name);
+    }
+
     this(Type type, string name) {
         this.type = type;
         this.name = name;
@@ -167,6 +202,16 @@ class TypeFuncArg : Type {
 class TypeFunc : Type {
     Type main;
     TypeFuncArg[] args;
+
+    override Type copy() {
+        TypeFuncArg[] _copied;
+
+        for(int i=0; i<args.length; i++) {
+            _copied ~= args[i].copy().instanceof!TypeFuncArg;
+        }
+
+        return new TypeFunc(main.copy(),_copied.dup);
+    }
 
     this(Type main, TypeFuncArg[] args) {
         this.main = main;
@@ -195,5 +240,9 @@ class TypeCall : Type {
     }
 }
 class TypeAuto : Type {
+    override Type copy() {
+        return new TypeAuto();
+    }
+
     this() {}
 }

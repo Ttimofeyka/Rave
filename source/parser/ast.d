@@ -101,6 +101,59 @@ class LLVMGen {
 		exit(1);
     }
 
+    Type getTrueStructType(TypeStruct ts) {
+        if(ts.name.into(Generator.toReplace)) {
+            Type _t = Generator.toReplace[ts.name];
+            while(_t.toString().into(Generator.toReplace)) _t = Generator.toReplace[_t.toString()];
+            return _t;
+        }
+        return ts;
+    }
+
+    Type[] getTrueTypeList(Type _t) {
+        Type[] _list;
+
+        while(_t.instanceof!TypePointer || _t.instanceof!TypeArray) {
+            _list ~= _t;
+
+            if(TypePointer _tp = _t.instanceof!TypePointer) {
+                _t = _tp.instance;
+            }
+            else if(TypeArray _ta = _t.instanceof!TypeArray) {
+                _t = _ta.element;
+            }
+        }
+
+        _list ~= _t;
+        return _list;
+    }
+
+    Type setByTypeList(Type[] _list) {
+        Type[] list = _list.dup;
+
+        if(list.length == 1) {
+            if(list[0].instanceof!TypeStruct) return getTrueStructType(list[0].instanceof!TypeStruct);
+            return list[0];
+        }
+
+        if(TypeStruct _ts = list[$-1].instanceof!TypeStruct) list[$-1] = getTrueStructType(_ts);
+
+        for(int i=(cast(int)list.length)-1; i>0; i--) {
+            if(TypePointer _tp = list[i-1].instanceof!TypePointer) {
+                _tp.instance = list[i];
+                list[i-1] = _tp;
+            }
+            else if(TypeArray _ta = list[i-1].instanceof!TypeArray) {
+                _ta.element = list[i];
+                list[i-1] = _ta;
+            }
+        }
+
+        return list[0];
+    }
+
+    bool slowMode = false;
+
     LLVMTypeRef GenerateType(Type t, int loc = -1) {
         pragma(inline,true);
         if(t is null) return LLVMPointerType(
@@ -147,9 +200,17 @@ class LLVMGen {
                 }
                 if(s.name.indexOf('<') != -1) {
                     // Not-generated template
-                    string originalStructure = s.name[0..s.name.indexOf('<')];
+                    TypeStruct _s = s.copy().instanceof!TypeStruct;
+                    for(int i=0; i<_s.types.length; i++) {
+                        _s.types[i] = setByTypeList(getTrueTypeList(_s.types[i]));
+                    }
+                    _s.updateByTypes();
+
+                    if(_s.name.into(Generator.Structs)) return Generator.Structs[_s.name];
+
+                    string originalStructure = _s.name[0.._s.name.indexOf('<')];
                     if(originalStructure.into(StructTable)) {
-                        return StructTable[originalStructure].generateWithTemplate(s.name[s.name.indexOf('<')..$],s.types);
+                        return StructTable[originalStructure].generateWithTemplate(_s.name[_s.name.indexOf('<')..$],_s.types);
                     }
                 }
                 Generator.error(loc,"Unknown structure '"~s.name~"'!");
@@ -1548,6 +1609,8 @@ class NodeFunc : Node {
     string[] templateNames;
     Type[] _templateTypes;
 
+    LLVMTypeRef[] genParamTypes;
+
     this(string name, FuncArgSet[] args, NodeBlock block, bool isExtern, DeclMod[] mods, int loc, Type type, string[] templateNames) {
         this.name = name;
         this.origname = name;
@@ -1603,6 +1666,7 @@ class NodeFunc : Node {
             }
             else p ~= Generator.GenerateType(args[i].type,loc);
         }
+        this.genParamTypes = p.dup;
         return p.ptr;
     }
 
@@ -1761,6 +1825,7 @@ class NodeFunc : Node {
         }
         if(isTemplate) Generator.toReplace = oldReplace.dup;
         //writeln(fromStringz(LLVMPrintValueToString(Generator.Functions[name])));
+        //writeln("MODULE(!!!!!!!!!\n!!!!!!\n!!!!!!\n!!!!!!\n!!!!): ",fromStringz(LLVMPrintModuleToString(Generator.Module)),"\nEnd.");
         LLVMVerifyFunction(Generator.Functions[name],0);
 
         return Generator.Functions[name];
@@ -1890,6 +1955,32 @@ class NodeCall : Node {
         return params;
     }
 
+    NodeFunc calledFunc = null;
+    int _offset = 0;
+
+    LLVMValueRef[] correctByLLVM(LLVMValueRef[] _tC) {
+        pragma(inline,true);
+        if(calledFunc is null) return _tC;
+
+        LLVMValueRef[] corrected = _tC.dup;
+        LLVMTypeRef[] _types = calledFunc.genParamTypes;
+
+        for(int i=0; i<corrected.length; i++) {
+            if(LLVMTypeOf(corrected[i]) != _types[i+_offset]) {
+                if(LLVMTypeOf(corrected[i]) == LLVMPointerType(_types[i+_offset],0)) {
+                    corrected[i] = LLVMBuildLoad(Generator.Builder,corrected[i],toStringz("load_"));
+                }
+                else if(_types[i] == LLVMPointerType(LLVMTypeOf(corrected[i]),0)) {
+                    LLVMValueRef v = LLVMBuildAlloca(Generator.Builder,LLVMTypeOf(corrected[i]),toStringz("temp_"));
+                    LLVMBuildStore(Generator.Builder,corrected[i],v);
+                    corrected[i] = v;
+                }
+            }
+        }
+
+        return corrected.dup;
+    }
+
     LLVMValueRef[] getParameters(FuncArgSet[] fas = null) {
         LLVMValueRef[] params;
 
@@ -1910,16 +2001,11 @@ class NodeCall : Node {
                 }
             }
 
-            //writeln("Args:");
-            //for(int i=0; i<args.length; i++) {writeln("Arg: ",args[i]); if(NodeIden id = args[i].instanceof!NodeIden) writeln("\t",id.name);}
-
             for(int i = 0; i<fas.length; i++) {
                 if(i == args.length) break;
                 LLVMValueRef arg = args[i].generate();
 
                 if(arg is null) {
-                    // Is template-func
-                    // TODO
                     assert(0);
                 }
 
@@ -1953,7 +2039,7 @@ class NodeCall : Node {
                         if(NodeIden id = args[i].instanceof!NodeIden) {id.isMustBePtr = true; arg = id.generate();}
                         else if(NodeGet ng = args[i].instanceof!NodeGet) {ng.isMustBePtr = true; arg = ng.generate();}
                         else if(NodeIndex ind = args[i].instanceof!NodeIndex) {ind.isMustBePtr = true; arg = ind.generate();}
-
+                        
                         if(LLVMGetTypeKind(LLVMTypeOf(arg)) != LLVMPointerTypeKind && (fas[i].name != "this" || LLVMGetTypeKind(LLVMTypeOf(arg)) == LLVMStructTypeKind)) {
                             // Create local copy
                             LLVMValueRef temp = LLVMBuildAlloca(Generator.Builder,LLVMTypeOf(arg),toStringz("tempArg_"));
@@ -1970,7 +2056,8 @@ class NodeCall : Node {
             LLVMValueRef arg = args[i].generate();
             params ~= arg;
         }
-        return params.dup;
+        
+        return correctByLLVM(params);
     }
 
     Type[] parametersToTypes(LLVMValueRef[] params) {
@@ -2037,13 +2124,13 @@ class NodeCall : Node {
 
                         if(_replaced) {
                             _t.updateByTypes();
-                            f.name = _t.name;
+                            NodeCall nc = new NodeCall(loc,new NodeIden(_t.name,f.loc),args.dup);
                             if(_t.name.into(FuncTable)) {
-                                return generate();
+                                return nc.generate();
                             }
-                            else if(f.name[0..f.name.indexOf('<')].into(FuncTable)) {
-                                FuncTable[f.name[0..f.name.indexOf('<')]].generateWithTemplate(_t.types,f.name);
-                                return generate();
+                            else if(_t.name[0.._t.name.indexOf('<')].into(FuncTable)) {
+                                FuncTable[_t.name[0.._t.name.indexOf('<')]].generateWithTemplate(_t.types,_t.name);
+                                return nc.generate();
                             }
                         }
                         Generator.error(loc,"Unknown macro or function '"~f.name~"'!");
@@ -2122,6 +2209,7 @@ class NodeCall : Node {
                 exit(1);
                 assert(0);
             }
+            calledFunc = FuncTable[f.name];
             LLVMValueRef[] params = getParameters(FuncTable[f.name].args);
 
             if(Generator.LLVMFunctionTypes[f.name] != LLVMVoidTypeInContext(Generator.Context)) return LLVMBuildCall(
@@ -2141,8 +2229,20 @@ class NodeCall : Node {
         }
         string rname = f.name;
         LLVMValueRef[] params = getPredParameters();
-        if(into(f.name~typesToString(parametersToTypes(params)),FuncTable)) rname ~= typesToString(parametersToTypes(getParameters()));
-        else params = getParameters(FuncTable[rname].args);
+        if(into(f.name~typesToString(parametersToTypes(params)),FuncTable)) {
+            rname ~= typesToString(parametersToTypes(params));
+            if(rname !in Generator.Functions) {
+                Generator.error(loc,"Function '"~rname~"' does not exist!");
+            }
+            calledFunc = FuncTable[rname];
+        }
+        else {
+            if(rname !in Generator.Functions) {
+                Generator.error(loc,"Function '"~rname~"' does not exist!");
+            }
+            calledFunc = FuncTable[rname];
+            params = getParameters(FuncTable[rname].args);
+        }
         string name = "CallFunc"~f.name;
         if(FuncTable[rname].type.instanceof!TypeVoid) name = "";
         //writeln("Name: ",rname," with ",typesToString(parametersToTypes(getParameters())));
@@ -2154,9 +2254,6 @@ class NodeCall : Node {
             );
             exit(1);
             assert(0);
-        }
-        if(rname !in Generator.Functions) {
-            Generator.error(loc,"Function '"~rname~"' does not exist!");
         }
         if(fromStringz(LLVMPrintValueToString(Generator.Functions[rname])).indexOf("llvm.") != -1) {
             LLVMBuildAlloca(Generator.Builder,LLVMInt1TypeInContext(Generator.Context),toStringz("fix"));
@@ -2209,6 +2306,7 @@ class NodeCall : Node {
                         assert(0);
                     }
 
+                    calledFunc = FuncTable[g.field];
                     LLVMValueRef[] params = getParameters(FuncTable[g.field].args);
 
                     return LLVMBuildCall(
@@ -2240,11 +2338,15 @@ class NodeCall : Node {
 
                     if(args.length < 2) args = [];
                     else args = args[1..$];
+
                     params = getParameters(_args);
                     g.isMustBePtr = true;
                     _toCall = LLVMBuildLoad(Generator.Builder,Generator.byIndex(g.generate(),[LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),structsNumbers[cast(immutable)[s.name,g.field]].number,false)]),toStringz("A"));
                 }
-                else params = getParameters(MethodTable[cast(immutable)[s.name,g.field]].args);
+                else {
+                    calledFunc = MethodTable[cast(immutable)[s.name,g.field]];
+                    params = getParameters(MethodTable[cast(immutable)[s.name,g.field]].args);
+                }
 
                 //writeln(s.name," ",g.field);
                 //params = currScope.get(i.name)~params;
@@ -2259,6 +2361,8 @@ class NodeCall : Node {
                     );
                 }
                 if(cast(immutable)[s.name,g.field~typesToString(parametersToTypes(params))].into(MethodTable)) {
+                    calledFunc = MethodTable[cast(immutable)[s.name,g.field~typesToString(parametersToTypes(params))]];
+                    params = getParameters(MethodTable[cast(immutable)[s.name,g.field~typesToString(parametersToTypes(params))]].args);
                     return LLVMBuildCall(
                         Generator.Builder,
                         Generator.Functions[MethodTable[cast(immutable)[s.name,g.field~typesToString(parametersToTypes(params))]].name],
@@ -2278,6 +2382,8 @@ class NodeCall : Node {
             else if(NodeIndex ni = g.base.instanceof!NodeIndex) {
                 auto val = ni.generate();
                 string sname = Generator.typeToString(LLVMTypeOf(val))[1..$-1];
+
+                calledFunc = MethodTable[cast(immutable)[sname,g.field]];
                 LLVMValueRef[] params = getParameters(MethodTable[cast(immutable)[sname,g.field]].args);
                 
                 params = val~params;
@@ -2296,7 +2402,11 @@ class NodeCall : Node {
                 string sname = "";
                 if(LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMStructTypeKind) sname = cast(string)fromStringz(LLVMGetStructName(LLVMTypeOf(val)));
                 else sname = cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(val))));
+                
+                calledFunc = MethodTable[cast(immutable)[sname,g.field]];
+                _offset = 1;
                 LLVMValueRef[] params = getParameters(MethodTable[cast(immutable)[sname,g.field]].args);
+                _offset = 0;
 
                 params = val~params;
                 
@@ -3321,6 +3431,21 @@ class NodeStruct : Node {
         return null;
     }
 
+    Node[] copyElements() {
+        Node[] _nodes;
+
+        for(int i=0; i<elements.length; i++) {
+            if(NodeFunc nf = elements[i].instanceof!NodeFunc) {
+                _nodes ~= new NodeFunc(nf.name,nf.args.dup,new NodeBlock(nf.block.nodes.dup),nf.isExtern,nf.mods.dup,nf.loc,nf.type.copy(),nf.templateNames.dup);
+            }
+            else if(NodeVar nv = elements[i].instanceof!NodeVar) {
+                _nodes ~= new NodeVar(nv.name,nv.value,nv.isExtern,nv.isConst,nv.isGlobal,nv.mods.dup,nv.loc,nv.t.copy(),nv.isVolatile);
+            }
+        }
+
+        return _nodes;
+    }
+
     LLVMTypeRef generateWithTemplate(string typesS, Type[] _types) {
         // Save all global-variables
         auto activeLoops = Generator.ActiveLoops.dup;
@@ -3329,58 +3454,27 @@ class NodeStruct : Node {
         auto _scope = currScope;
         auto toReplace = Generator.toReplace.dup;
 
-        for(int i=0; i<_types.length; i++) {
-            if(_types[i].toString().into(Generator.toReplace)) {
-                _types[i] = Generator.toReplace[_types[i].toString()];
-            }
-        }
-
-        Generator.toReplace.clear();
-
-        Node[] _elementsBefore;
-
         string _fn = "<";
         
         for(int i=0; i<_types.length; i++) {
+            ///writeln("Structure: ",name,", Type: ",templateNames[i],", replaced: ",_types[i]);
             if(TypeStruct _ts = _types[i].instanceof!TypeStruct) if(!_ts.name.into(StructTable) && !_ts.types.empty) {
+                //writeln("\t??? Replacing structure = ",_ts.name);
                 Generator.GenerateType(_ts,loc);
+                //writeln("\t!!!");
             }
+            //writeln("End.");
+            //writeln("Set ",templateNames[i]," to ",_types[i].toString());
             Generator.toReplace[templateNames[i]] = _types[i];
             _fn ~= templateNames[i]~",";
         }
 
         Generator.toReplace[name~_fn[0..$-1]~">"] = new TypeStruct(name~typesS);
-
-        for(int i=0; i<elements.length; i++) {
-            if(NodeFunc f = elements[i].instanceof!NodeFunc) {
-                if(f.name.indexOf('<') != -1) {
-                    f.name = f.origname;
-                    if(f.args.length > 0 && f.args[0].name == "this") f.args = f.args[1..$];
-                }
-            }
-            else if(NodeVar nv = elements[i].instanceof!NodeVar) {
-                if(TypeStruct ts = nv.t.instanceof!TypeStruct) {
-                    if(ts.name.indexOf('<') != -1) {
-                        bool _needUpdate = false;
-                        for(int j=0; j<ts.types.length; j++) {
-                            if(TypeStruct _ts = ts.types[j].instanceof!TypeStruct) {
-                                if(_ts.name.into(Generator.toReplace)) {
-                                    ts.types[j] = Generator.toReplace[_ts.name];
-                                    _needUpdate = true;
-                                }
-                            }
-                        }
-                        if(_needUpdate) ts.updateByTypes();
-                    }
-                }
-            }
-            _elementsBefore ~= elements[i];
-        }
         
-        NodeStruct _struct = new NodeStruct(name~typesS,elements.dup,loc,"",[]);
-        _struct.check();
-
+        NodeStruct _struct = new NodeStruct(name~typesS,copyElements().dup,loc,"",[]);
         _struct.isTemplated = true;
+        
+        _struct.check();
         _struct.generate();
 
         Generator.ActiveLoops = activeLoops;
@@ -3388,9 +3482,6 @@ class NodeStruct : Node {
         Generator.currBB = currBB;
         currScope = _scope;
         Generator.toReplace = toReplace.dup;
-        
-        elements = _elementsBefore.dup;
-        //LLVMPositionBuilderAtEnd(Generator.Builder,currBB);
 
         return Generator.Structs[_struct.name];
     }

@@ -1,19 +1,5 @@
-import <std/io> <std/json> <std/map>
+import <std/map>
 
 void main {
-    char* str = "{\"data\": 10}";
     
-    auto tokens = std::json::tokenize(str);
-    for(int i=0; i<tokens.length; i+=1) {
-        std::printf("Type: '%d', ",tokens.data[i].type);
-        if(tokens.data[i].type == std::json::Integer) std::printf("value: '%d'\n",cast(long)tokens.data[i].value);
-        else if(tokens.data[i].type == std::json::String) {
-            std::printf("value: '%s'\n",tokens.data[i].value);
-        }
-        else std::printf("value: '%s'\n",tokens.data[i].value);
-    }
-
-    std::printf("Parsing...\n");
-
-    std::map<int,int> m = std::map<int,int>();
 }
