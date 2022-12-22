@@ -1,4 +1,4 @@
-import <std/map>
+import <std/map> <std/json>
 
 void main {
     

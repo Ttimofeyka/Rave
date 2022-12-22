@@ -1960,10 +1960,12 @@ class NodeCall : Node {
 
     LLVMValueRef[] correctByLLVM(LLVMValueRef[] _tC) {
         pragma(inline,true);
-        if(calledFunc is null) return _tC;
+        if(calledFunc is null || _tC.length == 0) return _tC;
 
         LLVMValueRef[] corrected = _tC.dup;
         LLVMTypeRef[] _types = calledFunc.genParamTypes;
+
+        if(_types.length == 0) return _tC;
 
         for(int i=0; i<corrected.length; i++) {
             if(LLVMTypeOf(corrected[i]) != _types[i+_offset]) {
