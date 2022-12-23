@@ -3960,15 +3960,13 @@ class NodeDebug : Node {
     override LLVMValueRef generate() {
         if(idenName.into(AliasTable)) {
             block.check();
-            return block.generate();
-            
+            return block.generate(); 
         }
         return null;
     }
 }
 
 class NodeLambda : Node {
-    // Example: int() test = int() {return 0;};
     int loc;
 
     NodeRet[] rets;

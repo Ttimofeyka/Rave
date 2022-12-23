@@ -193,7 +193,6 @@ class Compiler {
         }
         if(opts.onlyObject) linkString ~= " -r ";
         linkString ~= " "~opts.linkparams;
-        //writeln(linkString~" -o "~outfile);
 
         if(outtype != "") linkString = linkString~"-target "~outtype~" ";
 
@@ -204,7 +203,7 @@ class Compiler {
         }
 
         auto l = executeShell(linkString~" -o "~outfile);
-        if(l.status != 0) writeln("Linking error: "~l.output);
+        if(l.status != 0) writeln("Linking error: "~l.output~"\nLinking string: '"~linkString~" -o "~outfile~"'");
         for(int i=0; i<toRemove.length; i++) {
             if(toRemove[i] != outfile) remove(toRemove[i]);
         }
