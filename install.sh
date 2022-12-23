@@ -32,7 +32,7 @@ i_llvm11 ()
     if [ "$ARCH" -eq 1 ]; then
         if sudo pacman -S llvm-11-libs clang10 ; then
             rm options.json
-            echo -e -n "{\n    \"compiler\": \"clang-10\"\n}"
+            echo -e -n "{\n    \"compiler\": \"clang-10\"\n}" > options.json
             success LLVM-11
         else
             failure LLVM-11
