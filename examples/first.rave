@@ -1,5 +1,13 @@
-import <std/map> <std/json>
+import <std/io>
 
 void main {
-    
+    std::file f = std::file("test.txt");
+
+    std::printf("Exists? %d\n",f.exists());
+
+    with(f.open("w")) {
+        f.printf("Hello, world!\n");
+    }
+
+    std::printf("Exists? %d\n",f.exists());
 }

@@ -1,47 +1,17 @@
-import <std/arg>
-import <std/string>
+import <std/arg> <std/string>
 
-namespace libc { 
+namespace libc {
     struct File {
-	    int flags;
-	    char* rpos;
-        char* rend;
-	    int(libc::File*) close;
-	    char* wend;
-        char* wpos;
-	    char* mustbezero_1;
-	    char* wbase;
-	    int(libc::File*, char*, int) read;
-	    int(libc::File*, char*, int) write;
-	    long(libc::File*, long, int) seek;
-	    char* buf;
-	    int buf_size;
-	    libc::File* prev;
-        libc::File* next;
-	    int fd;
-	    int pipe_pid;
-	    long lockcount;
-	    short dummy3;
-	    char mode;
-	    char lbf;
-	    int lock;
-	    int waiters;
-	    void* cookie;
-	    long off;
-	    char* getln_buf;
-	    void* mustbezero_2;
-	    char* shend;
-	    long shlim;
-        long shcnt;
+	    void* __builtInLibc;
     }
 }
 
 namespace libc {
     extern(linkname: "fopen") libc::File* fopen(char* path, char* mode);
-    extern(linkname: "fclose") int close(libc::File* file);
-    extern(linkname: "ferror") int hasError(libc::File* file);
+    extern(linkname: "fclose") int fclose(libc::File* file);
+    extern(linkname: "ferror") int fhasError(libc::File* file);
     extern(linkname: "fprintf") int fprintf(libc::File* file, char* str, ...);
-    extern(linkname: "fflush") int flush(libc::File* file);
+    extern(linkname: "fflush") int fflush(libc::File* file);
     extern(linkname: "fscanf") int fscanf(libc::File* file, char* fmt, ...);
     extern(linkname: "remove") int fremove(char* name);
     extern(linkname: "rename") int frename(char* from, char* to);
@@ -51,50 +21,88 @@ namespace libc {
 }
 
 namespace std {
-    struct File {
-        libc::File* cFile;
+    struct file {
+        libc::File* _file;
         char* name;
+        bool isOpen;
 
-        std::File this(char* name) {
-            this.name = name;
-        } => this;
+        std::file this(char* name) {this.name = name; this.isOpen = false;} => this;
 
         void open(char* mode) {
-            this.cFile = libc::fopen(this.name,mode);
+            this._file = libc::fopen(this.name,mode);
+            this.isOpen = true;
         }
 
-        int close => libc::close(this.cFile);
+        void close {
+            if(this.isOpen) {
+                libc::fclose(this._file);
+                this.isOpen = false;
+            }
+        }
+
+        void rename(char* to) {
+            libc::frename(this.name,to);
+            this.name = to;
+        }
 
         void remove {
             libc::fremove(this.name);
         }
 
-        void rename(char* to) {
-            libc::frename(this.name,to);
-        }
-
-        (vararg) int scanf(char* fmt) {
+        (vararg,inline) int scanf(char* fmt) {
             va_list list;
 
             va_start(&list);
-                int toret = libc::fscanf(this.cFile,fmt);
+                int toret = libc::fscanf(this._file,fmt);
             va_end(&list);
         } => toret;
 
-        (vararg) int printf(char* fmt) {
+        (vararg,inline) int scanf(std::string fmt) {
             va_list list;
 
             va_start(&list);
-                int toret = libc::fprintf(this.cFile,fmt);
+                int toret = libc::fscanf(this._file,fmt.c());
             va_end(&list);
         } => toret;
 
-        char getc => libc::fgetc(this.cFile);
-        char* gets(char* s, int size) => libc::fgets(s,size,this.cFile);
-        int hasError => libc::hasError(this.cFile);
+        (vararg,inline) int printf(char* fmt) {
+            va_list list;
 
-        void create {
-            this.open("w");
+            va_start(&list);
+                int toret = libc::fprintf(this._file,fmt);
+            va_end(&list);
+        } => toret;
+
+        (vararg,inline) int printf(std::string fmt) {
+            va_list list;
+
+            va_start(&list);
+                int toret = libc::fprintf(this._file,fmt.c());
+            va_end(&list);
+        } => toret;
+
+        char getc => libc::fgetc(this._file);
+
+        char* gets(char* buffer, int n) => libc::fgets(buffer,n,this._file);
+
+        bool isEof => cast(bool)libc::feof(this._file);
+
+        bool hasError => cast(bool)libc::fhasError(this._file);
+
+        bool exists {
+            bool toret = true;
+            if(this.isOpen == false) {
+                libc::File* f = libc::fopen(this.name,"r");
+                if(f == cast(libc::File*)null) {
+                    toret = false;
+                }
+                else this.close();
+            }
+        } => toret;
+        
+        int flush => libc::fflush(this._file);
+
+        void ~this {
             this.close();
         }
 

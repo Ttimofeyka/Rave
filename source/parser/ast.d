@@ -376,6 +376,7 @@ class Scope {
             return Generator.Globals[n];
         }
         if(!n.into(args)) {
+            writeln(loc);
             Generator.error(loc,"Undefined argument '"~n~"'!");
         }
         return LLVMGetParam(
@@ -2373,6 +2374,13 @@ class NodeCall : Node {
                         toStringz(MethodTable[cast(immutable)[s.name,g.field~typesToString(parametersToTypes(params))]].type.instanceof!TypeVoid ? "" : g.field)
                     );
                 }
+                if(!MethodTable[cast(immutable)[s.name,g.field]].name.into(Generator.Functions)) {
+                    writeln(MethodTable[cast(immutable)[s.name,g.field]].name);
+                    foreach(k; byKey(Generator.Functions)) {
+                        if(k.indexOf(s.name) != -1) writeln(k);
+                    }
+                }
+                // PRINTLN
                 return LLVMBuildCall(
                     Generator.Builder,
                     Generator.Functions[MethodTable[cast(immutable)[s.name,g.field]].name],
@@ -3398,9 +3406,12 @@ class NodeStruct : Node {
         LLVMTypeRef[] params = getParameters(isTemplated);
         LLVMStructSetBody(Generator.Structs[name],params.ptr,cast(uint)params.length,false);
 
-        if(_this !is null) _this.generate();
-        if(_destructor !is null) _destructor.generate();
-        else {
+        NodeFunc[] _listOfMethods;
+        for(int i=0; i<elements.length; i++) {
+            if(elements[i].instanceof!NodeFunc) _listOfMethods ~= elements[i].instanceof!NodeFunc;
+        }
+
+        if(_destructor is null) {
             _destructor = new NodeFunc("~"~origname,[],new NodeBlock([new NodeCall(loc,new NodeIden("std::free",loc),[new NodeIden("this",loc)])]),false,[],loc,new TypeVoid(),[]);
             _destructor.namespacesNames = namespacesNames.dup;
 
@@ -3423,12 +3434,10 @@ class NodeStruct : Node {
             }
         }
 
-        for(int i=0; i<methods.length; i++) {
-            methods[i].check();
-            methods[i].generate();
+        for(int i=0; i<_listOfMethods.length; i++) {
+            if(_listOfMethods[i].origname != "this" && _listOfMethods[i].origname != "~this" && _listOfMethods[i].origname != "~with") _listOfMethods[i].check();
+            _listOfMethods[i].generate();
         }
-
-        if(_with !is null) _with.generate();
 
         return null;
     }
