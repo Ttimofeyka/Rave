@@ -2136,6 +2136,10 @@ class NodeCall : Node {
                                 return nc.generate();
                             }
                         }
+                        else if(f.name[0..f.name.indexOf('<')].into(StructTable)) {
+                            StructTable[f.name[0..f.name.indexOf('<')]].generateWithTemplate(f.name[f.name.indexOf('<')..$],_t.types.dup);
+                            return generate();
+                        }
                         Generator.error(loc,"Unknown macro or function '"~f.name~"'!");
                     }
                     
