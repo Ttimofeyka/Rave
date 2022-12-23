@@ -30,7 +30,9 @@ i_llvm11 ()
 {
     echo \[ Rave Installer \] Installing LLVM-11
     if [ "$ARCH" -eq 1 ]; then
-        if sudo pacman -S llvm-11-libs ; then
+        if sudo pacman -S llvm-11-libs clang10 ; then
+            rm options.json
+            echo -e -n "{\n    \"compiler\": \"clang-10\"\n}"
             success LLVM-11
         else
             failure LLVM-11
