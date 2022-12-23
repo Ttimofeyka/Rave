@@ -8,7 +8,6 @@
 
 ARCH=0
 
-ISTERMUX="${TERMUX_VERSION:-no}"
 if [ -f "/etc/arch-release" ]; then
     ARCH=1
     echo \[ Rave Installer \] Arch Linux detected, switching to ARCH mode.
