@@ -9,8 +9,9 @@ namespace std {
     int randomInt(int min, int max) {
         int result = 0;
 
-        long t = libc::time(null);
-        libc::srand(cast(int)t);
+        std::timeSpec ts;
+        libc::clockGetTime(std::RealTime,&ts);
+        libc::srand(cast(int)ts.nsec);
 
         result = libc::rand();
     } => (result % ((max+1)-min))+min;

@@ -341,7 +341,7 @@ class Parser {
                     return (s == "bool") || (s == "char") || (s == "short")
                     || (s == "void") || (s == "int") || (s == "cent") || (s == "long");
                 }
-                if(tokens[_idx+1].type == TokType.More || isBasicType(tokens[_idx+1].value) || tokens[_idx+2].type == TokType.Less || tokens[_idx+2].type == TokType.More || tokens[_idx+2].type == TokType.Multiply || tokens[_idx+2].type == TokType.Rarr) {
+                if(tokens[_idx+1].type == TokType.More || isBasicType(tokens[_idx+1].value) || tokens[_idx+2].type == TokType.Less || tokens[_idx+2].type == TokType.More || tokens[_idx+2].type == TokType.Comma || tokens[_idx+2].type == TokType.Multiply || tokens[_idx+2].type == TokType.Rarr) {
                     next();
                     string all = t.value~"<";
 

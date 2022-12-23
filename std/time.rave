@@ -12,11 +12,19 @@ namespace std {
         long gmtoff;
         char* zone;
     }
+
+    struct timeSpec {
+        long sec;
+        long nsec;
+    }
+
+    alias RealTime = 0;
 }
 
 namespace libc {
     extern(linkname: "time") long time(void* n);
     extern(linkname: "localtime") std::time* localtime(long* t);
+    extern(linkname: "clock_gettime") int clockGetTime(int id, std::timeSpec* tp);
 }
 
 namespace std {

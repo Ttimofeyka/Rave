@@ -1,18 +1,123 @@
-import <std/vector>
+import <std/vector> <std/io>
 
 namespace std {
     struct map<K,V> {
-        std::vector<K> keys;
-        std::vector<V> values;
+        std::vector<std::pair<K,V>> first;
+        std::vector<std::pair<K,V>> second;
+        std::vector<std::pair<K,V>> third;
+        int length;
 
-        std::map<K,V> this {
-            this.keys = std::vector<K>();
-            this.values = std::vector<V>();
+        std::map<K,V>* this {
+            this.first = std::vector<std::pair<K,V>>();
+            this.second = std::vector<std::pair<K,V>>();
+            this.third = std::vector<std::pair<K,V>>();
+            this.length = 0;
         } => this;
 
         void add(K key, V value) {
-            this.keys.add(key);
-            this.values.add(value);
+            int _hash = (cast(int)key) % 3;
+
+            if(_hash == 0) {
+                this.first.add(std::pair<K,V>(key,value));
+            }
+            else if(_hash == 1) {
+                this.second.add(std::pair<K,V>(key,value));
+            }
+            else {
+                this.third.add(std::pair<K,V>(key,value));
+            }
         }
+
+        void set(K key, V newvalue) {
+            int _hash = (cast(int)key) % 3;
+
+            if(_hash == 0) {
+                for(int i=0; i<this.first.length; i+=1) {
+                    if(this.first.data[i].first == key) {
+                        this.first.data[i].second = newvalue;
+                        break;
+                    }
+                }
+            }
+            else if(_hash == 1) {
+                for(int i=0; i<this.second.length; i+=1) {
+                    if(this.second.data[i].first == key) {
+                        this.second.data[i].second = newvalue;
+                        break;
+                    }
+                }
+            }
+            else {
+                for(int i=0; i<this.third.length; i+=1) {
+                    if(this.third.data[i].first == key) {
+                        this.third.data[i].second = newvalue;
+                        break;
+                    }
+                }
+            }
+        }
+
+        bool has(K key) {
+            bool complete = false;
+            int _hash = (cast(int)key) % 3;
+
+            if(_hash == 0) {
+                for(int i=0; i<this.first.length; i+=1) {
+                    if(this.first.data[i].first == key) {
+                        complete = true;
+                        break;
+                    }
+                }
+            }
+            else if(_hash == 1) {
+                for(int i=0; i<this.second.length; i+=1) {
+                    if(this.second.data[i].first == key) {
+                        complete = true;
+                        break;
+                    }
+                }
+            }
+            else {
+                for(int i=0; i<this.third.length; i+=1) {
+                    if(this.third.data[i].first == key) {
+                        complete = true;
+                        break;
+                    }
+                }
+            }
+        } => complete;
+
+        V get(K key) {
+            V toret = cast(V)null;
+            int _hash = (cast(int)key) % 3;
+
+            if(_hash == 0) {
+                // First vector
+                for(int i=0; i<this.first.length; i+=1) {
+                    if(this.first.data[i].first == key) {
+                        toret = this.first.data[i].second;
+                        break;
+                    }
+                }
+            }
+            else if(_hash == 1) {
+                // Second vector
+                for(int i=0; i<this.second.length; i+=1) {
+                    if(this.second.data[i].first == key) {
+                        toret = this.second.data[i].second;
+                        break;
+                    }
+                }
+            }
+            else {
+                // Third vector
+                for(int i=0; i<this.third.length; i+=1) {
+                    if(this.third.data[i].first == key) {
+                        toret = this.third.data[i].second;
+                        break;
+                    }
+                }
+            }
+        } => toret;
     }
 }
