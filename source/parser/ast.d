@@ -4369,3 +4369,14 @@ class NodeAsm : Node {
         );
     }
 }
+
+class NodeMixin : Node { // TODO
+    int loc;
+
+    Node[] _strings;
+
+    this(int loc, Node[] _strings) {
+        this.loc = loc;
+        this._strings = _strings.dup;
+    }
+}
