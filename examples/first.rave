@@ -1,11 +1,5 @@
-import <std/io> <std/map>
+import <std/io>
 
 void main {
-    auto A = std::map<char*,int>();
-
-    A.add("jamal",10);
-    A.add("hello",20);
-    A.add("world",30);
-
-    std::printf("jamal = %d, hello = %d, world = %d\n",A.get("jamal"),A.get("hello"),A.get("world"));
+    cstring jam = "Hello, world!";
 }

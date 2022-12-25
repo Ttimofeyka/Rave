@@ -246,3 +246,16 @@ class TypeAuto : Type {
 
     this() {}
 }
+class TypeConst : Type {
+    Type instance;
+
+    this(Type instance) {
+        this.instance = instance;
+    }
+
+    override Type copy() {
+        return new TypeConst(this.instance.copy());
+    }
+
+    override string toString() {return "const("~instance.toString()~")";}
+}

@@ -102,11 +102,20 @@ class Parser {
         
         if(peek().type == TokType.Identifier) {
             auto t = next();
-            if(t.value == "void") return new TypeVoid();
-            else if(t.value == "auto") return new TypeAuto();
-            else if(t.value.into(_aliasTypes)) return _aliasTypes[t.value];
-            else if(_templateNames.canFind(t.value)) return new TypeStruct(t.value);
-            return getType(t.value);
+            switch(t.value) {
+                case "void": return new TypeVoid();
+                case "auto": return new TypeAuto();
+                case "const":
+                    if(peek().type == TokType.Rpar) next();
+                        Type _t = parseType();
+                    if(peek().type == TokType.Lpar) next();
+                    return new TypeConst(_t);
+                case "cstring": return new TypePointer(new TypeConst(new TypeBasic("char")));
+                default:
+                    if(t.value.into(_aliasTypes)) return _aliasTypes[t.value];
+                    else if(_templateNames.canFind(t.value)) return new TypeStruct(t.value);
+                    return getType(t.value);
+            }
         }
         else if(peek().type == TokType.MacroArgNum) {
             next();
@@ -432,7 +441,9 @@ class Parser {
              || peek().type == TokType.Rarr
              || peek().type == TokType.Dot
         ) {
-            if(peek().type == TokType.Rpar) base = parseCall(base);
+            if(peek().type == TokType.Rpar) {
+                base = parseCall(base);
+            }
             else if(peek().type == TokType.Rarr) {
                 base = new NodeIndex(base,parseIndexs(),peek().line);
             }
@@ -730,6 +741,7 @@ class Parser {
                             case "char":
                             case "cent":
                             case "volatile":
+                            case "const":
                                 _idx -= 1;
                                 return parseDecl(f);
                             default:
@@ -753,6 +765,7 @@ class Parser {
                             case "char":
                             case "cent":
                             case "volatile":
+                            case "const":
                                 _idx -= 1;
                                 return parseDecl(f);
                             default: break;
@@ -871,7 +884,6 @@ class Parser {
         int loc;
         string name;
         bool isExtern = false;
-        bool isConst = false;
         bool isVolatile = false;
 
         if(peek().value == "volatile") {
@@ -881,11 +893,6 @@ class Parser {
 
         if(peek().value == "extern") {
             isExtern = true;
-            next();
-        }
-
-        if(peek().value == "const") {
-            isConst = true;
             next();
         }
 
@@ -995,7 +1002,7 @@ class Parser {
         else if(peek().type == TokType.Semicolon) {
             // Var without value
             next();
-            return new NodeVar(name,null,isExtern,isConst,(s==""),mods,loc,type,isVolatile);
+            return new NodeVar(name,null,isExtern,type.instanceof!TypeConst ? true : false,(s==""),mods,loc,type,isVolatile);
         }
         else if(peek().type == TokType.ShortRet) {
             next();
@@ -1011,7 +1018,7 @@ class Parser {
             next();
             auto e = parseExpr();
             if(peek().type != TokType.Lpar) expect(TokType.Semicolon);
-            return new NodeVar(name,e,isExtern,isConst,(s==""),mods,loc,type,isVolatile);
+            return new NodeVar(name,e,isExtern,type.instanceof!TypeConst ? true : false,(s==""),mods,loc,type,isVolatile);
         }
         NodeBlock _b = parseBlock(name);
         _templateNamesF = [];
