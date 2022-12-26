@@ -69,6 +69,8 @@ CompOpts analyzeArgs(string[] args) {
 			case "-ol": case "--optimization-level":
 			case "-O": // Compatible with the same option from clang
 				opts.optimizeLevel = to!int(args[idx+1]); idx += 1; break;
+			case "-shared":
+				opts.linkparams ~= "-shared "; break;
 			default:
 				if(currCommand[0] == '-') {
 					opts.linkparams ~= currCommand~" "; idx += 1;
