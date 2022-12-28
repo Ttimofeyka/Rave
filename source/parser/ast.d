@@ -2480,6 +2480,24 @@ class NodeIndex : Node {
         return _indexs;
     }
 
+    bool isElementConst(Type _t) {
+        Type currT = _t;
+
+        while(currT.instanceof!TypeConst) currT = currT.instanceof!TypeConst.instance;
+
+        if(TypePointer tp = currT.instanceof!TypePointer) {
+            if(tp.instance.instanceof!TypeConst) return true;
+            return false;
+        }
+
+        if(TypeArray ta = currT.instanceof!TypeArray) {
+            if(ta.element.instanceof!TypeConst) return true;
+            return false;
+        }
+
+        return false;
+    }
+
     override LLVMValueRef generate() {
         if(NodeIden id = element.instanceof!NodeIden) {
             Type _t = currScope.getVar(id.name,loc).t;
@@ -2489,6 +2507,9 @@ class NodeIndex : Node {
             }
             else if(TypeArray ta = _t.instanceof!TypeArray) {
                 if(ta.element.instanceof!TypeConst) elementIsConst = true;
+            }
+            else if(TypeConst tc = _t.instanceof!TypeConst) {
+                elementIsConst = isElementConst(tc.instance);
             }
 
             LLVMValueRef ptr = currScope.get(id.name,loc);
