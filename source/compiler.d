@@ -13,7 +13,7 @@ import std.string;
 import std.process;
 import app : files;
 import std.datetime, std.datetime.stopwatch;
-import std.json;
+import std.json, std.file, std.path;
 
 string hasAnyone(string str, string[] strs) {
     for(int i=0; i<strs.length; i++) {
@@ -42,8 +42,11 @@ class Compiler {
         this.outfile = outfile;
         this.outtype = outtype;
         this.opts = opts;
-        this.options = parseJSON(readText("options.json"));
-        
+        try {
+            this.options = parseJSON(readText(dirName(thisExePath())~"/options.json"));
+        } catch(Error e) {
+            write(dirName(thisExePath())~"/options.json","{\n\t\"compiler\": \"clang-11\"\n}");
+        }
         this.linkString = options.object["compiler"].str~" ";
 
         if(opts.isPIE) linkString = linkString~"-fPIE ";
