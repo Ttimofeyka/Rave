@@ -10,6 +10,6 @@
 	"buildRequirements": ["silenceDeprecations"],
 	"libs": ["LLVM-11"],
 	"description": "Rave Programming Language",
-	"license": "MPLv3",
+	"license": "LGPL-3.0-or-later",
 	"name": "rave"
 }

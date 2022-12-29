@@ -1,3 +1,5 @@
+// Licensed by LGPL-3.0-or-later
+
 module parser.types;
 
 import std.string;

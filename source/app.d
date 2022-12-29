@@ -1,3 +1,5 @@
+// Licensed by LGPL-3.0-or-later
+
 import std.stdio;
 import lexer.lexer;
 import std.conv : to;

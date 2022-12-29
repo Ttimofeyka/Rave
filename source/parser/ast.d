@@ -1,3 +1,5 @@
+// Licensed by LGPL-3.0-or-later
+
 module parser.ast;
 
 import std.array;
