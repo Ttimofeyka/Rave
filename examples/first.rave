@@ -1,5 +1,7 @@
 import <std/io>
 
 void main {
-    cstring jam = "Hello, world!";
+    std::string A = "";
+    A = A.fromInt(10000);
+    std::printf("%s\n",A.c());
 }
