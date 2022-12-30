@@ -1,7 +1,6 @@
 import <std/io>
 
 void main {
-    std::string A = "";
-    A = A.fromInt(10000);
-    std::printf("%s\n",A.c());
+    std::string a = a.fromNumber(2023);
+    std::printf("Hello, new %s!\n",a.c());
 }

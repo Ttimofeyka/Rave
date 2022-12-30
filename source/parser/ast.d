@@ -74,9 +74,11 @@ class LLVMGen {
     string file;
     long countOfLambdas;
     Type[string] toReplace;
+    int optLevel;
 
-    this(string file) {
+    this(string file, int optLevel) {
         this.file = file;
+        this.optLevel = optLevel;
         Context = LLVMContextCreate();
         Module = LLVMModuleCreateWithNameInContext(toStringz("rave"),Context);
         LLVMInitializeAllTargets();
@@ -153,8 +155,6 @@ class LLVMGen {
 
         return list[0];
     }
-
-    bool slowMode = false;
 
     LLVMTypeRef GenerateType(Type t, int loc = -1) {
         pragma(inline,true);
@@ -2269,7 +2269,8 @@ class NodeCall : Node {
             assert(0);
         }
         if(fromStringz(LLVMPrintValueToString(Generator.Functions[rname])).indexOf("llvm.") != -1) {
-            LLVMBuildAlloca(Generator.Builder,LLVMInt1TypeInContext(Generator.Context),toStringz("fix"));
+            LLVMValueRef _v = LLVMBuildAlloca(Generator.Builder,LLVMInt1TypeInContext(Generator.Context),toStringz("fix"));
+            if(Generator.optLevel > 0) LLVMBuildCall(Generator.Builder,Generator.Functions["std::dontuse::_void"],[_v].ptr,1,toStringz(""));
             // This is necessary to solve a bug with LLVM-11
         }
         return LLVMBuildCall(

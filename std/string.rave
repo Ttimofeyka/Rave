@@ -17,24 +17,27 @@ namespace libc {
 
 namespace std {
     extern(linkname: "sscanf") int format(char* buff, char* fmt);
-    (inline) int _lengthOfInt(int x) {
+    (inline) int _lengthOfNumber(long x) {
         int len = 1;
 
-        if (x >= 1000000000) len = 10;
-        if (x >= 100000000)  len = 9;
-        if (x >= 10000000)   len = 8;
-        if (x >= 1000000)    len = 7;
-        if (x >= 100000)     len = 6;
-        if (x >= 10000)      len = 5;
-        if (x >= 1000)       len = 4;
-        if (x >= 100)        len = 3;
-        if (x >= 10)         len = 2;
+        if(x >= 1000000000000) len = 13;
+        else if(x >= 100000000000) len = 12;
+        else if(x >= 10000000000) len = 11;
+        else if(x >= 1000000000) len = 10;
+        else if(x >= 100000000) len = 9;
+        else if(x >= 10000000) len = 8;
+        else if(x >= 1000000) len = 7;
+        else if(x >= 100000) len = 6;
+        else if(x >= 10000) len = 5;
+        else if(x >= 1000) len = 4;
+        else if(x >= 100) len = 3;
+        else if(x >= 10) len = 2;
     } => len;
-    (inline) int lengthOfInt(int x) {
+    (inline) int lengthOfNumber(long x) {
         int len = 0;
 
-        if(x<0) len = std::_lengthOfInt(-x)+1;
-        else len = std::_lengthOfInt(x);
+        if(x<0) len = std::_lengthOfNumber(-x)+1;
+        else len = std::_lengthOfNumber(x);
     } => len;
 
     struct string {
@@ -81,10 +84,14 @@ namespace std {
         (inline) long toLong => libc::strtol(this.c(),cast(char**)null,10);
         (inline) int toInt => cast(int)this.toLong();
 
-        (inline) std::string fromInt(int n) {
-            char* buf = std::malloc(std::lengthOfInt(n)+2);
+        (inline) std::string fromNumber(long n) {
+            char* buf = std::malloc(std::lengthOfNumber(n)+2);
             libc::cformat(buf,"%d",n);
         } => std::string(buf);
+        (inline) std::string fromNumber(int n) => this.fromNumber(cast(long)n);
+        (inline) std::string fromNumber(short n) => this.fromNumber(cast(long)n);
+        (inline) std::string fromNumber(char n) => this.fromNumber(cast(long)n);
+        (inline) std::string fromNumber(bool n) => this.fromNumber(cast(long)n);
 
         int indexOf(char c) {
             int i = 0;

@@ -107,7 +107,7 @@ class Compiler {
         parseTime += dur.total!"msecs";
 
         startT = MonoTime.currTime;
-        Generator = new LLVMGen(file);
+        Generator = new LLVMGen(file,opts.optimizeLevel);
         if(opts.printAll) writeln("File: "~file);
         for(int i=0; i<n.length; i++) {
             if(opts.printAll) writeln("\t"~n[i].classinfo.name);
@@ -120,7 +120,6 @@ class Compiler {
             LLVMPassManagerBuilderRef pmb = LLVMPassManagerBuilderCreate();
             LLVMPassManagerBuilderSetOptLevel(pmb,opts.optimizeLevel);
             LLVMPassManagerBuilderPopulateModulePassManager(pmb,pm);
-
             LLVMRunPassManager(pm,Generator.Module);
         }
 
@@ -144,9 +143,7 @@ class Compiler {
     	LLVMSetDataLayout(Generator.Module, datalayout_str);
     	LLVMDisposeMessage(datalayout_str);
 		char* file_ptr = cast(char*)toStringz(file.replace(".rave",".o"));
-
         LLVMTargetMachineEmitToFile(machine,Generator.Module,file_ptr, LLVMObjectFile, &errors);
-
         endT = MonoTime.currTime;
         dur = endT - startT;
         generateTime += dur.total!"msecs";

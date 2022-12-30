@@ -6,4 +6,8 @@ namespace std {
         }
     }
     extern(linkname: "system") int system(char* cmd);
+
+    namespace dontuse {
+        (inline) void _void(bool* b) {} // Just... ignore it?
+    }
 }
