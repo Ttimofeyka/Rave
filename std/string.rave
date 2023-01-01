@@ -149,6 +149,21 @@ namespace std {
             cp.append(*this);
         } => cp;
 
+        std::string via(char c) {
+            std::string _cp = this.copy();
+            _cp.append(c);
+        } => _cp;
+
+        std::string via(std::string s) {
+            std::string _cp = this.copy();
+            _cp.append(s);
+        } => _cp;
+
+        std::string via(char* s) {
+            std::string _cp = this.copy();
+            _cp.append(s);
+        } => _cp;
+
         std::string replace(char c, char to) {
             std::string temp = this.copy();
 
