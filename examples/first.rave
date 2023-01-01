@@ -1,5 +1,3 @@
-import <std/string> <std/conv>
-
 void main {
-    
+    float a = -1.0;
 }

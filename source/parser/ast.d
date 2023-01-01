@@ -2790,11 +2790,19 @@ class NodeUnary : Node {
 
     override void check() {base.check();}
     override LLVMValueRef generate() {
-        if(type == TokType.Minus) return LLVMBuildNeg(
-            Generator.Builder,
-            base.generate(),
-            toStringz("neg")
-        );
+        if(type == TokType.Minus) {
+            LLVMValueRef bs = base.generate();
+            if(LLVMGetTypeKind(LLVMTypeOf(bs)) == LLVMIntegerTypeKind) return LLVMBuildNeg(
+                Generator.Builder,
+                bs,
+                toStringz("neg")
+            );
+            return LLVMBuildFNeg(
+                Generator.Builder,
+                bs,
+                toStringz("fneg")
+            );
+        }
         else if(type == TokType.GetPtr) {
             if(NodeGet s = base.instanceof!NodeGet) {
                 s.isMustBePtr = true;
