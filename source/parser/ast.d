@@ -502,12 +502,25 @@ class NodeNone : Node {}
 class NodeInt : Node {
     ulong value;
     BasicType ty;
+    Type _isVarVal = null;
 
     this(ulong value) {
         this.value = value;
     }
 
     override LLVMValueRef generate() {
+        if(_isVarVal.instanceof!TypeBasic) {
+            ty = _isVarVal.instanceof!TypeBasic.type;
+            switch(ty) {
+                case BasicType.Bool: return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),value,false);
+                case BasicType.Char: return LLVMConstInt(LLVMInt8TypeInContext(Generator.Context),value,false);
+                case BasicType.Short: return LLVMConstInt(LLVMInt16TypeInContext(Generator.Context),value,false);
+                case BasicType.Int: return LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),value,false);
+                case BasicType.Long: return LLVMConstInt(LLVMInt64TypeInContext(Generator.Context),value,false);
+                case BasicType.Cent: return LLVMConstInt(LLVMInt128TypeInContext(Generator.Context),value,false);
+                default: break;
+            }
+        }
         if(value < int.max) {
             ty = BasicType.Int;
             return LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),value,false);
@@ -1377,11 +1390,17 @@ class NodeVar : Node {
                 if(mods[i].name == "C") noMangling = true;
                 if(mods[i].name == "volatile") isVolatile = true;
             }
-            if(!t.instanceof!TypeAuto) Generator.Globals[name] = LLVMAddGlobal(
-                Generator.Module, 
-                Generator.GenerateType(t,loc), 
-                toStringz((noMangling) ? name : Generator.mangle(name,false,false))
-            );
+            if(!t.instanceof!TypeAuto) {
+                if(NodeInt ni = value.instanceof!NodeInt) {
+                    ni._isVarVal = t;
+                    value = ni;
+                }
+                Generator.Globals[name] = LLVMAddGlobal(
+                    Generator.Module, 
+                    Generator.GenerateType(t,loc), 
+                    toStringz((noMangling) ? name : Generator.mangle(name,false,false))
+                );
+            }
             else {
                 LLVMValueRef val = value.generate();
                 Generator.Globals[name] = LLVMAddGlobal(
@@ -1426,6 +1445,11 @@ class NodeVar : Node {
                 LLVMBuildStore(Generator.Builder,val,currScope.localscope[name]);
 
                 return currScope.localscope[name];
+            }
+
+            if(NodeInt ni = value.instanceof!NodeInt) {
+                ni._isVarVal = t;
+                value = ni;
             }
 
             currScope.localscope[name] = LLVMBuildAlloca(
@@ -2333,12 +2357,16 @@ class NodeCall : Node {
                 }
 
                 LLVMValueRef[] params;
+                if(s.name.into(Generator.toReplace)) {
+                    s = Generator.toReplace[s.name].instanceof!TypeStruct;
+                }
                 if(!into(s.name,StructTable) && s.name.indexOf('<') != -1) {
                     s = Generator.toReplace[s.name].instanceof!TypeStruct;
                 }
 
                 if(!into(cast(immutable)[s.name,g.field],MethodTable)) {
                     if(!cast(immutable)[s.name,g.field].into(structsNumbers)) {
+                        writeln(s.name.into(Generator.toReplace));
                         Generator.error(loc,"Structure '"~s.name~"' doesn't contain method '"~g.field~"'!");
                     }
                     v = StructTable[s.name].elements[structsNumbers[cast(immutable)[s.name,g.field]].number].instanceof!NodeVar;
@@ -2439,12 +2467,38 @@ class NodeCall : Node {
                     toStringz(MethodTable[cast(immutable)[sname,g.field]].type.instanceof!TypeVoid ? "" : g.field)
                 );
             }
+            else if(NodeCast nc = g.base.instanceof!NodeCast) {
+                LLVMValueRef v = nc.generate();
+                if(LLVMGetTypeKind(LLVMTypeOf(v)) == LLVMStructTypeKind) {
+                    LLVMValueRef temp = LLVMBuildAlloca(Generator.Builder,LLVMTypeOf(v),toStringz("temp_"));
+                    LLVMBuildStore(Generator.Builder,v,temp);
+                    v = temp;
+                }
+
+                if(!(nc.type.instanceof!TypeStruct)) {
+                    Generator.error(loc,"Type '"~nc.type.toString()~"' is not a structure!");
+                }
+                string sname = nc.type.instanceof!TypeStruct.name;
+                calledFunc = MethodTable[cast(immutable)[sname,g.field]];
+                _offset = 1;
+                LLVMValueRef[] params = getParameters(MethodTable[cast(immutable)[sname,g.field]].args);
+                _offset = 0;
+
+                params = v~params;
+                return LLVMBuildCall(
+                    Generator.Builder,
+                    Generator.Functions[MethodTable[cast(immutable)[sname,g.field]].name],
+                    params.ptr,
+                    cast(uint)params.length,
+                    toStringz(MethodTable[cast(immutable)[sname,g.field]].type.instanceof!TypeVoid ? "" : g.field)
+                );
+            }
             else {
-                writeln(g.base);
+                writeln(g.base,"1");
                 Generator.error(loc,"TODO!");
             }
         }
-        writeln(func);
+        writeln(func,"2");
         Generator.error(loc,"TODO!");
         assert(0);
     }
@@ -2889,9 +2943,11 @@ class NodeIf : Node {
             comptime();
             return null;
         }
-        if(NodeBuiltin _c = condition.instanceof!NodeBuiltin) {
-            if(_c.generate() != LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false)) return null;
-        }
+        //if(NodeBuiltin _c = condition.instanceof!NodeBuiltin) {
+        //    if(_c.generate() != LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false)) {
+        //        _body = null;
+        //    }
+        //}
         LLVMBasicBlockRef thenBlock =
 			LLVMAppendBasicBlockInContext(
                 Generator.Context,
@@ -3587,6 +3643,18 @@ class NodeCast : Node {
                 );
             }
 
+            if(LLVMGetTypeKind(LLVMTypeOf(gval)) == LLVMStructTypeKind) {
+                LLVMValueRef _temp = LLVMBuildAlloca(Generator.Builder,LLVMTypeOf(gval),toStringz("temp_"));
+                LLVMBuildStore(Generator.Builder,gval,_temp);
+                if(b.isFloat()) return LLVMBuildSIToFP(
+                    Generator.Builder,
+                    LLVMBuildPtrToInt(Generator.Builder,_temp,LLVMInt32TypeInContext(Generator.Context),toStringz("ptoi")),
+                    Generator.GenerateType(type,loc),
+                    toStringz("sfcast")
+                );
+                return LLVMBuildPtrToInt(Generator.Builder,_temp,LLVMInt32TypeInContext(Generator.Context),toStringz("ptoi"));
+            }
+
             if(b.isFloat()) return LLVMBuildFPCast(
                 Generator.Builder,
                 gval,
@@ -3638,6 +3706,7 @@ class NodeCast : Node {
             );
         }
         if(TypeStruct s = type.instanceof!TypeStruct) {
+            if(s.name.into(Generator.toReplace)) return new NodeCast(Generator.toReplace[s.name],val,loc).generate();
             LLVMValueRef ptrGval = LLVMBuildAlloca(Generator.Builder,LLVMTypeOf(gval),toStringz("temp_"));
             LLVMBuildStore(Generator.Builder,gval,ptrGval);
             return LLVMBuildLoad(Generator.Builder,LLVMBuildBitCast(Generator.Builder,ptrGval,LLVMPointerType(Generator.GenerateType(s,loc),0),toStringz("tempf_")),toStringz("load_"));
@@ -4215,11 +4284,12 @@ class NodeBuiltin : Node {
         switch(name) {
             case "baseType":
                 Type prType = asType(0).ty;
+                if(prType.toString().into(Generator.toReplace)) prType = Generator.toReplace[prType.toString()];
                 if(TypeArray ta = prType.instanceof!TypeArray) this.ty = ta.element;
                 else if(TypePointer tp = prType.instanceof!TypePointer) this.ty = tp.instance;
                 else this.ty = prType;
                 break;
-            case "addMethod":
+            case "addMethod": // Deprecated
                 if(!asStringIden(0).into(StructTable)) {
                     toAddInStructs[asStringIden(0)] = args[1].instanceof!NodeFunc;
                 }
@@ -4231,15 +4301,25 @@ class NodeBuiltin : Node {
                 if(isNType.toString().into(Generator.toReplace) && Generator.toReplace[isNType.toString()].toString() == isNType.toString()) return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false);
                 if(isNType.instanceof!TypeBasic) {
                     string s = isNType.toString();
-                    if(s == "bool" || s == "char" || s == "int" || s == "short" || s == "long" || s == "cent") {
+                    if(s == "bool" || s == "char" || s == "int" || s == "short" || s == "long" || s == "cent" || s == "float" || s == "double") {
                         return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false);
                     }
                 }
+                return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),0,false);
+            case "isFloat":
+                Type isNType = asType(0).ty;
+                if(isNType.toString().into(Generator.toReplace)) isNType = Generator.toReplace[isNType.toString()];
+                if(isNType.toString() == "float" || isNType.toString() == "double") return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false);
                 return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),0,false);
             case "isPointer":
                 Type isPType = asType(0).ty;
                 if(isPType.toString().into(Generator.toReplace)) isPType = Generator.toReplace[isPType.toString()];
                 if(isPType.instanceof!TypePointer) return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false);
+                return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),0,false);
+            case "isStructure":
+                Type isSType = asType(0).ty;
+                if(isSType.toString().into(Generator.toReplace)) isSType = Generator.toReplace[isSType.toString()];
+                if(isSType.toString().into(StructTable) || isSType.toString().into(Generator.Structs)) return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false);
                 return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),0,false);
             case "isEquals":
                 Type isEqType = asType(0).ty;
@@ -4248,7 +4328,6 @@ class NodeBuiltin : Node {
                 if(isEqType2.toString().into(Generator.toReplace)) isEqType2 = Generator.toReplace[isEqType2.toString()];
                 if(isEqType.toString() == isEqType2.toString()) return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false);
                 return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),0,false);
-
             case "va_arg":
                 return LLVMBuildVAArg(Generator.Builder,args[0].generate(),Generator.GenerateType(asType(1).ty),toStringz("builtInVaArg"));
             case "addLibrary":

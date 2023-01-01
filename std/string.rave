@@ -46,15 +46,22 @@ namespace std {
         int capacity;
 
         std::string this(char* a) {
-            this.length = libc::strlen(a);
-            this.capacity = this.length*2;
-            if(this.capacity == 0) this.capacity = 1;
-            this.data = std::malloc(this.capacity);
+            if(a != null) {
+                this.length = libc::strlen(a);
+                this.capacity = this.length*2;
+                if(this.capacity == 0) this.capacity = 1;
+                this.data = std::malloc(this.capacity);
 
-            int i = 0;
-            while(i<this.length) {
-                this.data[i] = a[i];
-                i += 1;
+                int i = 0;
+                while(i<this.length) {
+                    this.data[i] = a[i];
+                    i += 1;
+                }
+            }
+            else {
+                this.length = 0;
+                this.capacity = 1;
+                this.data = std::malloc(this.capacity);
             }
         } => this;
 
@@ -243,7 +250,7 @@ namespace std {
             std::string _l = this.ltrim();
         } => _l.rtrim();
 
-        std::vector<std::string> splitByChars(std::string chars) => this.splitByChars(chars.c());
+        (inline) std::vector<std::string> splitByChars(std::string chars) => this.splitByChars(chars.c());
 
         void ~this {
             std::free(this.data);

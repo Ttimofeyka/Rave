@@ -6,12 +6,10 @@ namespace libc {
 }
 
 namespace std {
-    struct Error { // TODO
-        void* val;
-        char* msg;
-
-        void catch {
-            std::printf("%s\n",this.msg);
+    namespace error {
+        void abortWith(char* msg) {
+            std::printf(msg);
+            std::exit(0);
         }
     }
 }

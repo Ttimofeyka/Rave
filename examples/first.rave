@@ -1,6 +1,5 @@
-import <std/io>
+import <std/string> <std/conv>
 
 void main {
-    std::string a = a.fromNumber(2023);
-    std::printf("Hello, new %s!\n",a.c());
+    
 }
