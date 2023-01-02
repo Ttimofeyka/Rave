@@ -93,7 +93,7 @@ class Compiler {
 
         startT = MonoTime.currTime;
 
-        Parser p = new Parser(lex.getTokens(),offset);
+        Parser p = new Parser(lex.getTokens(),offset,file);
         p.currentFile = file;
         p.MainFile = files[0];
         p.parseAll();

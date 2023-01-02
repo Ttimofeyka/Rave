@@ -1,5 +1,10 @@
-import <std/string>
+import <std/string> <std/io>
+
+bool d => true;
 
 void main {
     float a = -1.0;
+    if(!d()) {
+        std::printf("Jamal!\n");
+    }
 }

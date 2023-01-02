@@ -74,10 +74,11 @@ class Parser {
     string currentFile = "";
     Node[string] _aliasPredefines;
     int offset;
+    string _file;
 
     private void error(string msg) {
         pragma(inline,true);
-		writeln("\033[0;31mError: " ~ msg ~ "\033[0;0m");
+		writeln("\033[0;31mError in '"~_file~"' file: " ~ msg ~ "\033[0;0m");
 		exit(1);
 	}
 
@@ -694,7 +695,7 @@ class Parser {
             next();
             return parseStmt(f);
         }
-        else if(peek().type == TokType.Identifier && tokens[_idx+1].type == TokType.Less) {
+        else if(peek().type == TokType.Identifier && (tokens[_idx+1].type == TokType.Less)) {
             return parseDecl(f);
         }
         else if(peek().value == "asm") {
@@ -728,6 +729,9 @@ class Parser {
                 string iden = peek().value;
                 if(iden == "volatile") return parseDecl(f);
                 if(iden == "debug") return parseDebug();
+                if(tokens[_idx+1].type == TokType.Rarr && tokens[_idx+4].type != TokType.Equ && tokens[_idx+4].type != TokType.Lpar && tokens[_idx+4].type != TokType.Rpar) {
+                    if(tokens[_idx+2].type == TokType.Number && tokens[_idx+3].type == TokType.Larr) return parseDecl(f);
+                }
                 _idx++;
                 if(peek().type != TokType.Identifier) {
                     if(peek().type == TokType.Multiply)  {
@@ -1075,7 +1079,7 @@ class Parser {
         foreach(_file; _files) {
             if(_file != currentFile && !_file.into(_imported)) {
                 Lexer l = new Lexer(readText(_file),offset);
-                Parser p = new Parser(l.getTokens().dup,offset);
+                Parser p = new Parser(l.getTokens().dup,offset,_file);
                 p._imported = _imported.dup;
                 p.MainFile = MainFile;
                 p._aliasPredefines = _aliasPredefines.dup;
@@ -1343,5 +1347,5 @@ class Parser {
         return this._nodes.dup;
     }
     
-    this(Token[] t, int offset) {this.tokens = t; this.offset = offset;}
+    this(Token[] t, int offset, string _file) {this.tokens = t; this.offset = offset; this._file = _file;}
 }

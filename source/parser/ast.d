@@ -1953,6 +1953,7 @@ class NodeCall : Node {
     int loc;
     Node func;
     Node[] args;
+    bool _inverted = false;
 
     this(int loc, Node func, Node[] args) {
         this.loc = loc;
@@ -2144,7 +2145,7 @@ class NodeCall : Node {
                 if(f.name.indexOf('<') != -1) {
                     if(!f.name[0..f.name.indexOf('<')].into(FuncTable)) {
                         Lexer l = new Lexer(f.name,1);
-                        Parser p = new Parser(l.getTokens(),1);
+                        Parser p = new Parser(l.getTokens(),1,"(builtin)");
                         TypeStruct _t = p.parseType().instanceof!TypeStruct;
 
                         bool _replaced = false;
@@ -2175,7 +2176,7 @@ class NodeCall : Node {
                     
                     // Template function
                     Lexer l = new Lexer(f.name,1);
-                    Parser p = new Parser(l.getTokens(),1);
+                    Parser p = new Parser(l.getTokens(),1,"(builtin)");
                     FuncTable[f.name[0..f.name.indexOf('<')]].generateWithTemplate(p.parseType().instanceof!TypeStruct.types,f.name);
                     return generate();
                 }
@@ -2249,21 +2250,27 @@ class NodeCall : Node {
             calledFunc = FuncTable[f.name];
             LLVMValueRef[] params = getParameters(FuncTable[f.name].args);
 
-            if(Generator.LLVMFunctionTypes[f.name] != LLVMVoidTypeInContext(Generator.Context)) return LLVMBuildCall(
+            LLVMValueRef _val;
+
+            if(Generator.LLVMFunctionTypes[f.name] != LLVMVoidTypeInContext(Generator.Context)) _val = LLVMBuildCall(
                 Generator.Builder,
                 Generator.LLVMFunctions[f.name],
                 params.ptr,
                 cast(uint)params.length,
                 toStringz("CallFunc"~f.name)
             );
-            return LLVMBuildCall(
+            _val = LLVMBuildCall(
                 Generator.Builder,
                 Generator.LLVMFunctions[f.name],
                 params.ptr,
                 cast(uint)params.length,
                 toStringz("")
             );
+            if(_inverted) _val = LLVMBuildNot(Generator.Builder,_val,toStringz("not_"));
+            return _val;
         }
+        LLVMValueRef _val;
+
         string rname = f.name;
         LLVMValueRef[] params = getPredParameters();
         if(into(f.name~typesToString(parametersToTypes(params)),FuncTable)) {
@@ -2297,15 +2304,18 @@ class NodeCall : Node {
             if(Generator.optLevel > 0) LLVMBuildCall(Generator.Builder,Generator.Functions["std::dontuse::_void"],[_v].ptr,1,toStringz(""));
             // This is necessary to solve a bug with LLVM-11
         }
-        return LLVMBuildCall(
+        _val = LLVMBuildCall(
             Generator.Builder,
             Generator.Functions[rname],
             params.ptr,
             cast(uint)args.length,
             toStringz(name)
         );
+        if(_inverted) _val = LLVMBuildNot(Generator.Builder,_val,toStringz("not_"));
+        return _val;
         }
         else if(NodeGet g = func.instanceof!NodeGet) {
+            LLVMValueRef _val;
             if(NodeIden i = g.base.instanceof!NodeIden) {
                 TypeStruct s;
                 if(TypePointer p = currScope.getVar(i.name,loc).t.instanceof!TypePointer) {
@@ -2347,13 +2357,14 @@ class NodeCall : Node {
                     calledFunc = FuncTable[g.field];
                     LLVMValueRef[] params = getParameters(FuncTable[g.field].args);
 
-                    return LLVMBuildCall(
+                    _val = LLVMBuildCall(
                         Generator.Builder,
                         Generator.Functions[FuncTable[g.field].name],
                         params.ptr,
                         cast(uint)params.length,
                         toStringz(FuncTable[g.field].type.instanceof!TypeVoid ? "" : "call")
                     );
+                    if(_inverted) _val = LLVMBuildNot(Generator.Builder,_val,toStringz("not_"));
                 }
 
                 LLVMValueRef[] params;
@@ -2394,39 +2405,38 @@ class NodeCall : Node {
                 //params = currScope.get(i.name)~params;
                 //writeln("sname: ",s.name," gfield: ",g.field);
                 if(_toCall !is null) {
-                    return LLVMBuildCall(
+                    _val = LLVMBuildCall(
                         Generator.Builder,
                         _toCall,
                         params.ptr,
                         cast(uint)params.length,
                         toStringz(t.main.instanceof!TypeVoid ? "" : "call")
                     );
+                    if(_inverted) _val = LLVMBuildNot(Generator.Builder,_val,toStringz("not_"));
+                    return _val;
                 }
                 if(cast(immutable)[s.name,g.field~typesToString(parametersToTypes(params))].into(MethodTable)) {
                     calledFunc = MethodTable[cast(immutable)[s.name,g.field~typesToString(parametersToTypes(params))]];
                     params = getParameters(MethodTable[cast(immutable)[s.name,g.field~typesToString(parametersToTypes(params))]].args);
-                    return LLVMBuildCall(
+                    _val = LLVMBuildCall(
                         Generator.Builder,
                         Generator.Functions[MethodTable[cast(immutable)[s.name,g.field~typesToString(parametersToTypes(params))]].name],
                         params.ptr,
                         cast(uint)params.length,
                         toStringz(MethodTable[cast(immutable)[s.name,g.field~typesToString(parametersToTypes(params))]].type.instanceof!TypeVoid ? "" : g.field)
                     );
+                    if(_inverted) _val = LLVMBuildNot(Generator.Builder,_val,toStringz("not_"));
+                    return _val;
                 }
-                if(!MethodTable[cast(immutable)[s.name,g.field]].name.into(Generator.Functions)) {
-                    writeln(MethodTable[cast(immutable)[s.name,g.field]].name);
-                    foreach(k; byKey(Generator.Functions)) {
-                        if(k.indexOf(s.name) != -1) writeln(k);
-                    }
-                }
-                // PRINTLN
-                return LLVMBuildCall(
+                _val = LLVMBuildCall(
                     Generator.Builder,
                     Generator.Functions[MethodTable[cast(immutable)[s.name,g.field]].name],
                     params.ptr,
                     cast(uint)params.length,
                     toStringz(MethodTable[cast(immutable)[s.name,g.field]].type.instanceof!TypeVoid ? "" : g.field)
                 );
+                if(_inverted) _val = LLVMBuildNot(Generator.Builder,_val,toStringz("not_"));
+                return _val;
             }
             else if(NodeIndex ni = g.base.instanceof!NodeIndex) {
                 auto val = ni.generate();
@@ -2437,13 +2447,15 @@ class NodeCall : Node {
                 
                 params = val~params;
                 
-                return LLVMBuildCall(
+                _val = LLVMBuildCall(
                     Generator.Builder,
                     Generator.Functions[MethodTable[cast(immutable)[sname,g.field]].name],
                     params.ptr,
                     cast(uint)params.length,
                     toStringz(MethodTable[cast(immutable)[sname,g.field]].type.instanceof!TypeVoid ? "" : g.field)
                 );
+                if(_inverted) _val = LLVMBuildNot(Generator.Builder,_val,toStringz("not_"));
+                return _val;
             }
             else if(NodeGet ng = g.base.instanceof!NodeGet) {
                 ng.isMustBePtr = true;
@@ -2459,13 +2471,15 @@ class NodeCall : Node {
 
                 params = val~params;
                 
-                return LLVMBuildCall(
+                _val = LLVMBuildCall(
                     Generator.Builder,
                     Generator.Functions[MethodTable[cast(immutable)[sname,g.field]].name],
                     params.ptr,
                     cast(uint)params.length,
                     toStringz(MethodTable[cast(immutable)[sname,g.field]].type.instanceof!TypeVoid ? "" : g.field)
                 );
+                if(_inverted) _val = LLVMBuildNot(Generator.Builder,_val,toStringz("not_"));
+                return _val;
             }
             else if(NodeCast nc = g.base.instanceof!NodeCast) {
                 LLVMValueRef v = nc.generate();
@@ -2485,18 +2499,25 @@ class NodeCall : Node {
                 _offset = 0;
 
                 params = v~params;
-                return LLVMBuildCall(
+                _val = LLVMBuildCall(
                     Generator.Builder,
                     Generator.Functions[MethodTable[cast(immutable)[sname,g.field]].name],
                     params.ptr,
                     cast(uint)params.length,
                     toStringz(MethodTable[cast(immutable)[sname,g.field]].type.instanceof!TypeVoid ? "" : g.field)
                 );
+                if(_inverted) _val = LLVMBuildNot(Generator.Builder,_val,toStringz("not_"));
+                return _val;
             }
             else {
                 writeln(g.base,"1");
                 Generator.error(loc,"TODO!");
             }
+        }
+        else if(NodeUnary un = func.instanceof!NodeUnary) {
+            NodeCall nc = new NodeCall(loc,un.base,args.dup);
+            if(un.type == TokType.Ne) nc._inverted = true;
+            return nc.generate();
         }
         writeln(func,"2");
         Generator.error(loc,"TODO!");
