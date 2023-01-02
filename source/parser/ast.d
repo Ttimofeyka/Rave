@@ -2878,11 +2878,7 @@ class NodeUnary : Node {
             return currScope.getWithoutLoad(id.name);
         }
         else if(type == TokType.Ne) {
-            return LLVMBuildNeg(
-                Generator.Builder,
-                base.generate(),
-                toStringz("ne")
-            );
+            return LLVMBuildNot(Generator.Builder,base.generate(),toStringz("not_"));
         }
         else if(type == TokType.Multiply) {
             return LLVMBuildLoad(
