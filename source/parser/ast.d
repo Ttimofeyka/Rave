@@ -1019,6 +1019,9 @@ class NodeBinary : Node {
                         toStringz("bitcast")
                     );
                 }
+                else if(LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMGetTypeKind(ty) && LLVMGetTypeKind(ty) == LLVMIntegerTypeKind && LLVMTypeOf(val) != ty) {
+                    val = LLVMBuildIntCast(Generator.Builder,val,ty,toStringz("intc_"));
+                }
 
                 return LLVMBuildStore(
                     Generator.Builder,
@@ -1046,10 +1049,16 @@ class NodeBinary : Node {
                     Generator.error(loc, "An attempt to change the constant element!");
                 }
 
+                if(LLVMGetElementType(LLVMTypeOf(_g)) != LLVMTypeOf(val) && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(_g))) == LLVMGetTypeKind(LLVMTypeOf(val))) {
+                    if(LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMIntegerTypeKind) {
+                        val = LLVMBuildIntCast(Generator.Builder,val,LLVMGetElementType(LLVMTypeOf(_g)),toStringz("intc_"));
+                    }
+                }
+
                 return LLVMBuildStore(
                     Generator.Builder,
                     val,
-                    g.generate()
+                    _g
                 );
             }
             else if(NodeIndex ind = first.instanceof!NodeIndex) {
@@ -1057,9 +1066,16 @@ class NodeBinary : Node {
 
                 LLVMValueRef ptr = ind.generate();
                 if(ind.elementIsConst) Generator.error(loc, "An attempt to change the constant element!");
+                
                 LLVMValueRef val = second.generate();
 
                 if(LLVMTypeOf(ptr) == LLVMPointerType(LLVMPointerType(LLVMTypeOf(val),0),0)) ptr = LLVMBuildLoad(Generator.Builder,ptr,toStringz("load784_"));
+
+                if(LLVMGetElementType(LLVMTypeOf(ptr)) != LLVMTypeOf(val) && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) == LLVMGetTypeKind(LLVMTypeOf(val))) {
+                    if(LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMIntegerTypeKind) {
+                        val = LLVMBuildIntCast(Generator.Builder,val,LLVMGetElementType(LLVMTypeOf(ptr)),toStringz("intc_"));
+                    }
+                }
 
                 return LLVMBuildStore(Generator.Builder,val,ptr);
             }

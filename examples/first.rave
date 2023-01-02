@@ -3,8 +3,7 @@ import <std/string> <std/io>
 bool d => true;
 
 void main {
-    float a = -1.0;
-    if(!d()) {
-        std::printf("Jamal!\n");
-    }
+    char a;
+    int b = 0;
+    a = b;
 }
