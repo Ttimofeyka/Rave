@@ -30,6 +30,21 @@ namespace std {
             this.data[index] = value;
         }
 
+        int indexOf(T value) {
+            int index = -1;
+            bool done = false;
+
+            for(int i=0; i<this.length; i+=1) {
+                if(this.data[i] == value) {
+                    index = i;
+                    done = true;
+                    break;
+                }
+            }
+
+            if(done == false) index = -1;
+        } => index;
+
         std::vector<T> copy {
             std::vector<T> buffer;
             buffer.data = cast(T*)std::malloc(sizeof(std::vector<T>));

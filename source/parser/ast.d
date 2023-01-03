@@ -712,7 +712,7 @@ class NodeBinary : Node {
             }
             Generator.error(loc,"value types are incompatible!");
         }
-        if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMFloatTypeKind) {
+        if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMFloatTypeKind || LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMDoubleTypeKind) {
             switch(operator) {
                 case TokType.Plus: return LLVMBuildFAdd(Generator.Builder, one, two, toStringz("fadd"));
                 case TokType.Minus: return LLVMBuildFSub(Generator.Builder, one, two, toStringz("fsub"));
@@ -814,7 +814,7 @@ class NodeBinary : Node {
             if(LLVMGetTypeKind(one) == LLVMIntegerTypeKind) {
                 onev = LLVMBuildIntCast(Generator.Builder,onev,two,toStringz("intcast693_"));
             }
-            else if(LLVMGetTypeKind(one) == LLVMFloatTypeKind) {
+            else if(LLVMGetTypeKind(one) == LLVMFloatTypeKind || LLVMGetTypeKind(one) == LLVMDoubleTypeKind) {
                 onev = LLVMBuildFPCast(Generator.Builder,onev,two,toStringz("fpcast696_"));
             }
         }
@@ -829,7 +829,7 @@ class NodeBinary : Node {
                     toStringz("icmp")
                 );
             }
-            else if(LLVMGetTypeKind(one) == LLVMFloatTypeKind) {
+            else if(LLVMGetTypeKind(one) == LLVMFloatTypeKind || LLVMGetTypeKind(one) == LLVMDoubleTypeKind) {
                 return LLVMBuildFCmp(
                     Generator.Builder,
                     (neq ? LLVMRealOEQ : LLVMRealONE),
@@ -887,7 +887,7 @@ class NodeBinary : Node {
                     toStringz("icmp")
                 );
             }
-            else if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMFloatTypeKind) {
+            else if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMFloatTypeKind || LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMDoubleTypeKind) {
                 if(!orequal) return LLVMBuildFCmp(
                     Generator.Builder,
                     (less ? LLVMRealOLT : LLVMRealOGT),
