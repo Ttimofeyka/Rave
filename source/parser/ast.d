@@ -1715,7 +1715,7 @@ class NodeFunc : Node {
                 //p ~= Generator.GenerateType(new TypePointer(args[i].type),loc);
                 if(!args[i].type.instanceof!TypeStruct.name.into(Generator.toReplace)) {
                     string oldname = args[i].name;
-                    args[i].name = "_RaveStructArgument";
+                    args[i].name = "_RaveStructArgument"~oldname;
                     block.nodes = new NodeVar(oldname,new NodeIden(args[i].name,loc),false,false,false,[],loc,args[i].type) ~ block.nodes;
                     p ~= Generator.GenerateType(args[i].type,loc);
                 }
