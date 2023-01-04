@@ -1,7 +1,9 @@
-void jam(int a) {
-    a = 0;
-}
+alias Jamal = 5;
+
+int jam(int a) {
+    
+} => a+1;
 
 void main {
-    
+    int b = jam(Jamal);
 }

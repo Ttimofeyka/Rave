@@ -1028,6 +1028,9 @@ class NodeBinary : Node {
                 else if(LLVMGetTypeKind(ty) == LLVMFloatTypeKind && LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMDoubleTypeKind) {
                     val = LLVMBuildFPCast(Generator.Builder,val,ty,toStringz("floatc_"));
                 }
+                else if(ty != LLVMTypeOf(val)) {
+                    Generator.error(loc,"The variable '"~i.name~"' is incompatible with value type!");
+                }
 
                 return LLVMBuildStore(
                     Generator.Builder,
