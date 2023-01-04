@@ -1,3 +1,7 @@
+alias Jamal = 0x00E1;
+
+void jam(int a) {}
+
 void main {
-    
+    jam(Jamal || Jamal);
 }

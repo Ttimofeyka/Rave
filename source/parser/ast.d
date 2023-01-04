@@ -1022,6 +1022,12 @@ class NodeBinary : Node {
                 else if(LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMGetTypeKind(ty) && LLVMGetTypeKind(ty) == LLVMIntegerTypeKind && LLVMTypeOf(val) != ty) {
                     val = LLVMBuildIntCast(Generator.Builder,val,ty,toStringz("intc_"));
                 }
+                else if(LLVMGetTypeKind(ty) == LLVMDoubleTypeKind && LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMFloatTypeKind) {
+                    val = LLVMBuildFPCast(Generator.Builder,val,ty,toStringz("floatc_"));
+                }
+                else if(LLVMGetTypeKind(ty) == LLVMFloatTypeKind && LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMDoubleTypeKind) {
+                    val = LLVMBuildFPCast(Generator.Builder,val,ty,toStringz("floatc_"));
+                }
 
                 return LLVMBuildStore(
                     Generator.Builder,
@@ -1080,8 +1086,6 @@ class NodeBinary : Node {
                 return LLVMBuildStore(Generator.Builder,val,ptr);
             }
         }
-
-        isStatic = isAliasIden;
 
         if(isStatic) {
             if(operator != TokType.Plus && operator != TokType.Minus
@@ -1163,19 +1167,25 @@ class NodeBinary : Node {
         if(LLVMGetTypeKind(LLVMTypeOf(f)) != LLVMGetTypeKind(LLVMTypeOf(s))) {
             auto kone = LLVMGetTypeKind(LLVMTypeOf(f));
             auto ktwo = LLVMGetTypeKind(LLVMTypeOf(s));
-            if(kone == LLVMFloatTypeKind && ktwo == LLVMIntegerTypeKind) s = LLVMBuildSIToFP(
+            if((kone == LLVMFloatTypeKind || kone == LLVMDoubleTypeKind) && ktwo == LLVMIntegerTypeKind) s = LLVMBuildSIToFP(
                 Generator.Builder,
                 s,
                 LLVMTypeOf(f),
                 toStringz("BinItoF")
             );
-            else if(kone == LLVMIntegerTypeKind && ktwo == LLVMFloatTypeKind) {
+            else if(kone == LLVMIntegerTypeKind && (ktwo == LLVMFloatTypeKind || ktwo == LLVMDoubleTypeKind)) {
                 f = LLVMBuildSIToFP(
                     Generator.Builder,
                     f,
                     LLVMTypeOf(s),
                     toStringz("BinItoF")
                 );
+            }
+            else if(kone == LLVMFloatTypeKind && ktwo == LLVMDoubleTypeKind) {
+                f = LLVMBuildFPCast(Generator.Builder,f,LLVMTypeOf(s),toStringz("BinFtoD"));
+            }
+            else if(kone == LLVMDoubleTypeKind && ktwo == LLVMFloatTypeKind) {
+                s = LLVMBuildFPCast(Generator.Builder,s,LLVMTypeOf(f),toStringz("BinFtoD"));
             }
             else {
                 writeln(Generator.typeToString(LLVMTypeOf(f)));
@@ -2055,9 +2065,7 @@ class NodeCall : Node {
                 if(i == args.length) break;
                 LLVMValueRef arg = args[i].generate();
 
-                if(arg is null) {
-                    assert(0);
-                }
+                if(arg is null) continue;
 
                 if(TypePointer tp = fas[i].type.instanceof!TypePointer) {
                     if(tp.instance.instanceof!TypeVoid) {
@@ -2111,9 +2119,11 @@ class NodeCall : Node {
     }
 
     Type[] parametersToTypes(LLVMValueRef[] params) {
+        if(params is null) return [];
         Type[] types;
 
         for(int i=0; i<params.length; i++) {
+            if(params[i] is null) continue;
             LLVMTypeRef t = LLVMTypeOf(params[i]);
             if(LLVMGetTypeKind(t) == LLVMPointerTypeKind) {
                 if(LLVMGetTypeKind(LLVMGetElementType(t)) == LLVMStructTypeKind) {
