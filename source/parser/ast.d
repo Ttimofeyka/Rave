@@ -1721,6 +1721,12 @@ class NodeFunc : Node {
                 }
                 else p ~= Generator.GenerateType(args[i].type,loc);
             }
+            else if(!args[i].type.instanceof!TypePointer && !args[i].type.instanceof!TypeConst) {
+                string oldname = args[i].name;
+                args[i].name = "_RaveTempVariable"~oldname;
+                block.nodes = new NodeVar(oldname,new NodeIden(args[i].name,loc),false,false,false,[],loc,args[i].type,false) ~ block.nodes;
+                p ~= Generator.GenerateType(args[i].type,loc);
+            }
             else p ~= Generator.GenerateType(args[i].type,loc);
         }
         this.genParamTypes = p.dup;
@@ -1893,7 +1899,6 @@ class NodeFunc : Node {
         auto builder = Generator.Builder;
         auto currBB = Generator.currBB;
         auto _scope = currScope;
-
 
         NodeFunc _f = new NodeFunc(_all,args.dup,block,false,mods.dup,loc,type,templateNames.dup);
         _f.isTemplate = true;
