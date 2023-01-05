@@ -1029,7 +1029,7 @@ class NodeBinary : Node {
                     val = LLVMBuildFPCast(Generator.Builder,val,ty,toStringz("floatc_"));
                 }
                 else if(ty != LLVMTypeOf(val)) {
-                    Generator.error(loc,"The variable '"~i.name~"' is incompatible with value type!");
+                    Generator.error(loc,"The variable '"~i.name~"' with type '"~Generator.typeToString(ty)~"' is incompatible with value type '"~Generator.typeToString(LLVMTypeOf(val))~"'!");
                 }
 
                 return LLVMBuildStore(
@@ -1272,7 +1272,7 @@ class NodeBinary : Node {
             case TokType.BitXor: return LLVMBuildXor(Generator.Builder,f,s,toStringz("bitxor"));
             case TokType.BitLeft: return LLVMBuildShl(Generator.Builder,f,s,toStringz("bitleft"));
             case TokType.BitRight: return LLVMBuildLShr(Generator.Builder,f,s,toStringz("bitright"));
-            default: assert(0);
+            default: writeln(operator); assert(0);
         }
         assert(0);
     }
@@ -4278,6 +4278,7 @@ class NodeArray : Node {
     int loc;
     Node[] values;
     private LLVMTypeRef _type;
+    bool isConst = true;
 
     this(int loc, Node[] values) {
         this.loc = loc;
@@ -4293,13 +4294,19 @@ class NodeArray : Node {
                 buff ~= v;
                 this._type = LLVMTypeOf(v);
             }
+            if(!LLVMIsConstant(buff[buff.length-1])) isConst = false;
         }
         return buff.dup;
     }
 
     override LLVMValueRef generate() {
         LLVMValueRef[] values = getValues();
-        return LLVMConstArray(_type,values.ptr,cast(uint)values.length);
+        if(isConst) return LLVMConstArray(_type,values.ptr,cast(uint)values.length);
+        LLVMValueRef arr = LLVMBuildAlloca(Generator.Builder,LLVMArrayType(_type,cast(uint)values.length),toStringz("temp_"));
+        for(int i=0; i<values.length; i++) {
+            LLVMBuildStore(Generator.Builder, values[i], Generator.byIndex(arr,[LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),cast(ulong)i,false)]));
+        }
+        return LLVMBuildLoad(Generator.Builder,arr,toStringz("load_"));
     }
 }
 
