@@ -381,7 +381,7 @@ class Scope {
         }
         if(!n.into(args)) {
             writeln(loc);
-            Generator.error(loc,"Undefined argument '"~n~"'!");
+            Generator.error(loc,"Undefined identifier '"~n~"'!");
         }
         return LLVMGetParam(
             Generator.Functions[func],
@@ -2411,7 +2411,6 @@ class NodeCall : Node {
 
                 if(!into(cast(immutable)[s.name,g.field],MethodTable)) {
                     if(!cast(immutable)[s.name,g.field].into(structsNumbers)) {
-                        writeln(s.name.into(Generator.toReplace));
                         Generator.error(loc,"Structure '"~s.name~"' doesn't contain method '"~g.field~"'!");
                     }
                     v = StructTable[s.name].elements[structsNumbers[cast(immutable)[s.name,g.field]].number].instanceof!NodeVar;
