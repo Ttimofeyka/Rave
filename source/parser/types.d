@@ -12,7 +12,6 @@ import parser.parser : instanceof;
 
 enum BasicType {
     Bool,
-    //Byte,
     Char,
     Short,
     Int,
@@ -24,7 +23,8 @@ enum BasicType {
     Ushort,
     Uint,
     Ulong,
-    Uchar
+    Uchar,
+    Ucent,
 }
 
 
@@ -34,6 +34,7 @@ Type getType(string name) {
         case "bool": return new TypeBasic("bool");
         case "char": return new TypeBasic("char");
         case "int": return new TypeBasic("int");
+        case "wchar":
         case "short": return new TypeBasic("short");
         case "long": return new TypeBasic("long");
         case "float": return new TypeBasic("float");
@@ -42,9 +43,11 @@ Type getType(string name) {
 
         case "ubool": return new TypeBasic("ubool");
         case "uint": return new TypeBasic("uint");
+        case "uwchar":
         case "ushort": return new TypeBasic("ushort");
         case "ulong": return new TypeBasic("ulong");
         case "uchar": return new TypeBasic("uchar");
+        case "ucent": return new TypeBasic("ucent");
 
         case "alias": return new TypeAlias();
         default: return new TypeStruct(name);
@@ -71,6 +74,7 @@ class TypeBasic : Type {
                 type = BasicType.Int; break;
             case "bool":
                 type = BasicType.Bool; break;
+            case "wchar":
             case "short":
                 type = BasicType.Short; break;
             case "long":
@@ -86,12 +90,15 @@ class TypeBasic : Type {
 
             case "uint":
                 type = BasicType.Uint; break;
+            case "uwchar":
             case "ushort":
                 type = BasicType.Ushort; break;
             case "ulong":
                 type = BasicType.Ulong; break;
             case "uchar":
                 type = BasicType.Uchar; break;
+            case "ucent":
+                type = BasicType.Ucent; break;
             default: break;
         }
     }

@@ -1,9 +1,5 @@
-alias Jamal = 5;
-
-int jam(int a) {
-    
-} => a+1;
+import <std/io>
 
 void main {
-    int b = jam(Jamal);
+    
 }

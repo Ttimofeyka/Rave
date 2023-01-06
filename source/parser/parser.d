@@ -15,6 +15,8 @@ import app : files;
 import std.conv : parse;
 import llvm.types;
 
+string[] types = ["void","bool", "char", "uchar", "wchar", "uwchar", "short", "ushort", "int", "uint", "long", "ulong", "cent", "ucent"];
+
 T instanceof(T)(Object o) if(is(T == class)) {
 	return cast(T) o;
 }
@@ -113,7 +115,6 @@ class Parser {
                         Type _t = parseType();
                     if(peek().type == TokType.Lpar) next();
                     return new TypeConst(_t);
-                case "cstring": return new TypePointer(new TypeConst(new TypeBasic("char")));
                 default:
                     if(t.value.into(_aliasTypes)) return _aliasTypes[t.value];
                     else if(_templateNames.canFind(t.value)) return new TypeStruct(t.value);
@@ -290,7 +291,7 @@ class Parser {
         if(t.type == TokType.HexNumber) return new NodeInt(hexToLong(t.value));
         if(t.type == TokType.True) return new NodeBool(true);
         if(t.type == TokType.False) return new NodeBool(false);
-        if(t.type == TokType.String) return new NodeString(t.value);
+        if(t.type == TokType.String) return new NodeString(t.value,false);
         if(t.type == TokType.Char) return new NodeChar(to!char(t.value));
         if(t.type == TokType.Identifier) {
             if(t.value == "cast") {
@@ -329,6 +330,10 @@ class Parser {
                 string s = peek().value;
                 next();
                 return new NodeAsm(s);
+            }
+            else if(t.value.toLower() == "w" && peek().type == TokType.String) {
+                next();
+                return new NodeString(tokens[_idx-1].value,true);
             }
             else if(t.value == "void" || t.value == "bool" || t.value == "char" || t.value == "short" || t.value == "int" || t.value == "long" || t.value == "cent") {
                 // Lambda

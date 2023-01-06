@@ -349,6 +349,8 @@ class Lexer {
                                 && peek() != '&'
                                 && peek() != '#'
                                 && peek() != '~'
+                                && peek() != '"'
+                                && peek() != '\''
                             ) {
                                 if(peek() == ':' && text[_idx+1] == ':') {
                                     bufferiden ~= "::";

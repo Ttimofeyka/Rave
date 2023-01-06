@@ -561,13 +561,23 @@ class NodeFloat : Node {
 
 class NodeString : Node {
     private string value;
+    bool isWide = false;
 
-    this(string value) {
+    this(string value, bool isWide) {
         this.value = value;
+        this.isWide = isWide;
     }
 
     override LLVMValueRef generate() {
-        LLVMValueRef globalstr = LLVMAddGlobal(
+        LLVMValueRef globalstr;
+        if(isWide) {
+            globalstr = LLVMAddGlobal(
+                Generator.Module,
+                LLVMArrayType(LLVMInt16TypeInContext(Generator.Context),cast(uint)value.length+1),
+                toStringz("_wstr")
+            );
+        }
+        else globalstr = LLVMAddGlobal(
             Generator.Module,
             LLVMArrayType(LLVMInt8TypeInContext(Generator.Context),cast(uint)value.length+1),
             toStringz("_str")
@@ -575,7 +585,8 @@ class NodeString : Node {
         LLVMSetGlobalConstant(globalstr, true);
         LLVMSetUnnamedAddr(globalstr, true);
         LLVMSetLinkage(globalstr, LLVMPrivateLinkage);
-        LLVMSetAlignment(globalstr, 1);
+        if(!isWide) LLVMSetAlignment(globalstr, 1);
+        else LLVMSetAlignment(globalstr, 2);
         LLVMSetInitializer(globalstr, LLVMConstStringInContext(Generator.Context, toStringz(value), cast(uint)value.length, false));
         return LLVMConstInBoundsGEP(
             globalstr,

@@ -18,6 +18,7 @@ namespace libc {
     extern(linkname: "feof") int feof(libc::File* file);
     extern(linkname: "fgetc") char fgetc(libc::File* file);
     extern(linkname: "fgets") char* fgets(char* s, int size, libc::File* file);
+    extern(linkname: "fread") int fread(void* buffer, int size, int n, libc::File* file);
 }
 
 namespace std {
@@ -80,6 +81,8 @@ namespace std {
                 int toret = libc::fprintf(this._file,fmt.c());
             va_end(&list);
         } => toret;
+
+        int read(void* buffer, int size, int n) => libc::fread(buffer, size, n, this._file);
 
         char getc => libc::fgetc(this._file);
 
