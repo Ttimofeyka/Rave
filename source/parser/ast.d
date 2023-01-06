@@ -986,6 +986,19 @@ class NodeBinary : Node {
     override LLVMValueRef generate() {
         import std.algorithm : count;
 
+        if(operator == TokType.PluEqu || operator == TokType.MinEqu || operator == TokType.MulEqu || operator == TokType.DivEqu) {
+            TokType baseOperator;
+            switch(operator) {
+                case TokType.PluEqu: baseOperator = TokType.Plus; break;
+                case TokType.MinEqu: baseOperator = TokType.Minus; break;
+                case TokType.MulEqu: baseOperator = TokType.Multiply; break;
+                default: baseOperator = TokType.Divide; break;
+            }
+            NodeBinary b = new NodeBinary(TokType.Equ,first,new NodeBinary(baseOperator,first,second,loc),loc);
+            b.check();
+            return b.generate();
+        }
+
         bool isAliasIden = false;
         if(NodeIden i = first.instanceof!NodeIden) {isAliasIden = i.name.into(AliasTable);}
 
@@ -1126,37 +1139,6 @@ class NodeBinary : Node {
         }
         
         switch(operator) {
-            case TokType.PluEqu:
-            case TokType.MinEqu:
-            case TokType.MulEqu:
-            case TokType.DivEqu:
-                LLVMValueRef val;
-                if(operator == TokType.PluEqu) operator = TokType.Plus;
-                else if(operator == TokType.MinEqu) operator = TokType.Minus;
-                else if(operator == TokType.MulEqu) operator = TokType.Multiply;
-                else if(operator == TokType.DivEqu) operator = TokType.Divide;
-                val = mathOperation(f,s);
-                if(NodeGet ng = first.instanceof!NodeGet) {
-                    ng.isMustBePtr = true;
-                    f = ng.generate();
-                    return LLVMBuildStore(
-                        Generator.Builder,
-                        val,
-                        f
-                    );
-                }
-                else if(NodeIndex ind = first.instanceof!NodeIndex) {
-                    ind.isMustBePtr = true;
-                    return LLVMBuildStore(Generator.Builder,val,ind.generate());
-                }
-                else if(NodeIden id = first.instanceof!NodeIden) {
-                    return LLVMBuildStore(
-                        Generator.Builder,
-                        val,
-                        currScope.getWithoutLoad(id.name,loc)
-                    );
-                }
-                else assert(0);
             case TokType.Rem:
                 if(LLVMGetTypeKind(LLVMTypeOf(f)) == LLVMFloatTypeKind) {
                     return LLVMBuildFRem(
