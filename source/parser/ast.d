@@ -60,6 +60,33 @@ struct Loop {
 
 extern(C) LLVMBuilderRef LLVMCreateBuilderInContext(LLVMContextRef context);
 
+Type llvmTypeToType(LLVMTypeRef t) {
+        if(LLVMGetTypeKind(t) == LLVMIntegerTypeKind) {
+            if(t == LLVMInt32TypeInContext(Generator.Context)) return new TypeBasic("int");
+            if(t == LLVMInt64TypeInContext(Generator.Context)) return new TypeBasic("long");
+            if(t == LLVMInt16TypeInContext(Generator.Context)) return new TypeBasic("short");
+            if(t == LLVMInt8TypeInContext(Generator.Context)) return new TypeBasic("char");
+            if(t == LLVMInt1TypeInContext(Generator.Context)) return new TypeBasic("bool");
+            return new TypeBasic("cent");
+        }
+        else if(LLVMGetTypeKind(t) == LLVMFloatTypeKind) {
+            if(t == LLVMFloatTypeInContext(Generator.Context)) return new TypeBasic("float");
+            return new TypeBasic("double");
+        }
+        else if(LLVMGetTypeKind(t) == LLVMPointerTypeKind) {
+            if(LLVMGetTypeKind(LLVMGetElementType(t)) == LLVMStructTypeKind) return new TypeStruct(cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(t))));
+            return new TypePointer(llvmTypeToType(LLVMGetElementType(t)));
+        }
+        else if(LLVMGetTypeKind(t) == LLVMArrayTypeKind) {
+            return new TypeArray(cast(int)LLVMGetArrayLength(t),llvmTypeToType(LLVMGetElementType(t)));
+        }
+        else if(LLVMGetTypeKind(t) == LLVMStructTypeKind) return new TypeStruct(cast(string)fromStringz(LLVMGetStructName(t)));
+        else if(LLVMGetTypeKind(t) == LLVMFunctionTypeKind) {
+            return new TypeStruct(Generator.typeToString(t)[2..Generator.typeToString(t).lastIndexOf('"')]);
+        }
+        assert(0);
+}
+
 class LLVMGen {
     LLVMModuleRef Module;
     LLVMContextRef Context;
@@ -75,6 +102,7 @@ class LLVMGen {
     long countOfLambdas;
     Type[string] toReplace;
     int optLevel;
+    int currentBuiltinArg = 0;
 
     this(string file, int optLevel) {
         this.file = file;
@@ -246,7 +274,7 @@ class LLVMGen {
             }
         }
         if(TypeBuiltin tb = t.instanceof!TypeBuiltin) {
-            NodeBuiltin nb = new NodeBuiltin(tb.name,tb.args.dup,loc); nb.generate();
+            NodeBuiltin nb = new NodeBuiltin(tb.name,tb.args.dup,loc,tb.block); nb.generate();
             return this.GenerateType(nb.ty,loc);
         }
         if(TypeConst tc = t.instanceof!TypeConst) return this.GenerateType(tc.instance,loc);
@@ -363,6 +391,7 @@ class Scope {
     NodeVar[string] localVars;
     NodeVar[string] argVars;
     bool isPure;
+    Node lastCTIfCond;
 
     this(string func, int[string] args, NodeVar[string] argVars) {
         this.func = func;
@@ -494,7 +523,7 @@ class Node
 
     void check() {}
 
-    Node comptime() {return null;}
+    Node comptime() {return this;}
 }
 
 class NodeNone : Node {}
@@ -605,13 +634,15 @@ class NodeString : Node {
 
 class NodeChar : Node {
     private char value;
+    bool isWide = false;
 
     this(char value) {
         this.value = value;
     }
 
     override LLVMValueRef generate() {
-        return LLVMConstInt(LLVMInt8TypeInContext(Generator.Context),to!ulong(value),false);
+        if(!isWide) return LLVMConstInt(LLVMInt8TypeInContext(Generator.Context),to!ulong(value),false);
+        return LLVMConstInt(LLVMInt16TypeInContext(Generator.Context),to!ulong(value),false);
     }
 
     override void debugPrint() {
@@ -959,28 +990,104 @@ class NodeBinary : Node {
             b.isStatic = true;
         }
 
+        if(operator == TokType.Equ) {
+            AliasTable[first.instanceof!NodeIden.name] = second.comptime();
+            return AliasTable[first.instanceof!NodeIden.name];
+        }
+
+        if(operator == TokType.PluEqu || operator == TokType.MinEqu || operator == TokType.MulEqu || operator == TokType.DivEqu) {
+            TokType baseOperator;
+            switch(operator) {
+                case TokType.PluEqu: baseOperator = TokType.Plus; break;
+                case TokType.MinEqu: baseOperator = TokType.Minus; break;
+                case TokType.MulEqu: baseOperator = TokType.Multiply; break;
+                default: baseOperator = TokType.Divide; break;
+            }
+            return new NodeBinary(TokType.Equ,first,new NodeBinary(baseOperator,first,second,loc),loc).comptime();
+        }
+
+        Node _first = first;
+        while(_first.instanceof!NodeIden) {
+            NodeIden id = _first.instanceof!NodeIden;
+            _first = id.comptime();
+        }
+        Node _second = second;
+        while(_second.instanceof!NodeIden) {
+            NodeIden id = _second.instanceof!NodeIden;
+            _second = id.comptime();
+        }
+        _first = _first.comptime();
+        _second = _second.comptime();
+
         NodeInt[] asInts() {
-            return [first.comptime().instanceof!NodeInt,second.comptime().instanceof!NodeInt];
+            return [_first.instanceof!NodeInt,_second.instanceof!NodeInt];
+        }
+        NodeFloat[] asFloats() {
+            return [_first.instanceof!NodeFloat,_second.instanceof!NodeFloat];
+        }
+        Type[] asTypes() {
+            Type[] _types;
+            if(_first.instanceof!NodeBuiltin) {
+                _first.comptime();
+                _types ~= _first.instanceof!NodeBuiltin.ty;
+            }
+            else _types ~= _first.comptime().instanceof!NodeType.ty;
+            if(_second.instanceof!NodeBuiltin) {
+                _second.comptime();
+                _types ~= _second.instanceof!NodeBuiltin.ty;
+            }
+            else _types ~= _second.comptime().instanceof!NodeType.ty;
+            return _types.dup;
         }
 
-        string getName() {
-            NodeIden temp = first.instanceof!NodeIden;
-            return temp.name;
+        if(_first.instanceof!NodeInt && _second.instanceof!NodeFloat) {
+            _first = new NodeFloat(cast(float)_first.instanceof!NodeInt.value);
+        }
+        else if(_second.instanceof!NodeInt && _first.instanceof!NodeFloat) {
+            _second = new NodeFloat(cast(float)_second.instanceof!NodeInt.value);
         }
 
-        if(operator == TokType.Plus) return new NodeInt(asInts()[0].value+asInts()[1].value);
-        if(operator == TokType.Minus) return new NodeInt(asInts()[0].value-asInts()[1].value);
-        if(operator == TokType.Multiply) return new NodeInt(asInts()[0].value*asInts()[1].value);
-        if(operator == TokType.PluEqu) {
-            AliasTable[getName()] = new NodeInt(asInts()[0].value+asInts()[1].value);
+        if(_first.instanceof!NodeInt) {
+            NodeInt[] ints = asInts();
+            switch(operator) {
+                case TokType.Plus: return new NodeInt(ints[0].value + ints[1].value);
+                case TokType.Minus: return new NodeInt(ints[0].value - ints[1].value);
+                case TokType.Multiply: return new NodeInt(ints[0].value * ints[1].value);
+                case TokType.Divide: return new NodeInt(ints[0].value / ints[1].value);
+                case TokType.Equal: return new NodeBool(ints[0].value == ints[1].value);
+                case TokType.Nequal: return new NodeBool(ints[0].value != ints[1].value);
+                case TokType.More: return new NodeBool(ints[0].value > ints[1].value);
+                case TokType.Less: return new NodeBool(ints[0].value < ints[1].value);
+                case TokType.LessEqual: return new NodeBool(ints[0].value <= ints[1].value);
+                case TokType.MoreEqual: return new NodeBool(ints[0].value >= ints[1].value);
+                default: break;
+            }
         }
-        if(operator == TokType.MinEqu) {
-            AliasTable[getName()] = new NodeInt(asInts()[0].value-asInts()[1].value);
+        else if(_first.instanceof!NodeFloat) {
+            NodeFloat[] floats = asFloats();
+            switch(operator) {
+                case TokType.Plus: return new NodeFloat(floats[0].value + floats[1].value);
+                case TokType.Minus: return new NodeFloat(floats[0].value - floats[1].value);
+                case TokType.Multiply: return new NodeFloat(floats[0].value * floats[1].value);
+                case TokType.Divide: return new NodeFloat(floats[0].value / floats[1].value);
+                case TokType.Equal: return new NodeBool(floats[0].value == floats[1].value);
+                case TokType.Nequal: return new NodeBool(floats[0].value != floats[1].value);
+                case TokType.More: return new NodeBool(floats[0].value > floats[1].value);
+                case TokType.Less: return new NodeBool(floats[0].value < floats[1].value);
+                case TokType.LessEqual: return new NodeBool(floats[0].value <= floats[1].value);
+                case TokType.MoreEqual: return new NodeBool(floats[0].value >= floats[1].value);
+                default: break;
+            }
         }
-        if(operator == TokType.Multiply) {
-            AliasTable[getName()] = new NodeInt(asInts()[0].value*asInts()[1].value);
+        else if(_first.instanceof!NodeType) {
+            Type[] types = asTypes();
+            switch(operator) {
+                case TokType.Equal: return new NodeBool(types[0].toString() == types[1].toString());
+                case TokType.Nequal: return new NodeBool(types[0].toString() != types[1].toString());
+                default: break;
+            }
         }
-        return null;
+        assert(0);
     }
 
     override LLVMValueRef generate() {
@@ -1299,6 +1406,17 @@ class NodeBlock : Node {
         }
     }
 
+    void setFuncName(string f) {
+        foreach(n; nodes) {
+            if(NodeWhile nw = n.instanceof!NodeWhile) {
+                nw.func = f;
+            }
+            else if(NodeFor nf = n.instanceof!NodeFor) {
+                nf.f = f;
+            }
+        }
+    }
+
     override void debugPrint() {
         writeln("NodeBlock {");
         for(int i=0; i<nodes.length; i++) {
@@ -1367,27 +1485,6 @@ class NodeVar : Node {
         this.t = t;
         this.isGlobal = isGlobal;
         this.isVolatile = isVolatile;
-    }
-
-    Type llvmTypeToType(LLVMTypeRef t) {
-        if(LLVMGetTypeKind(t) == LLVMIntegerTypeKind) {
-            if(t == LLVMInt32TypeInContext(Generator.Context)) return new TypeBasic("int");
-            if(t == LLVMInt64TypeInContext(Generator.Context)) return new TypeBasic("long");
-            if(t == LLVMInt16TypeInContext(Generator.Context)) return new TypeBasic("short");
-            if(t == LLVMInt8TypeInContext(Generator.Context)) return new TypeBasic("char");
-            if(t == LLVMInt1TypeInContext(Generator.Context)) return new TypeBasic("bool");
-            return new TypeBasic("cent");
-        }
-        else if(LLVMGetTypeKind(t) == LLVMFloatTypeKind) {
-            if(t == LLVMFloatTypeInContext(Generator.Context)) return new TypeBasic("float");
-            return new TypeBasic("double");
-        }
-        else if(LLVMGetTypeKind(t) == LLVMPointerTypeKind) {
-            if(LLVMGetTypeKind(LLVMGetElementType(t)) == LLVMStructTypeKind) return new TypeStruct(cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(t))));
-            return new TypePointer(null);
-        }
-        else if(LLVMGetTypeKind(t) == LLVMStructTypeKind) return new TypeStruct(cast(string)fromStringz(LLVMGetStructName(t)));
-        return null;
     }
 
     override void check() {
@@ -1518,6 +1615,14 @@ class NodeIden : Node {
         }
         if(isMustBePtr) return currScope.getWithoutLoad(name,loc);
         return currScope.get(name,loc);
+    }
+
+    override Node comptime() {
+        if(name !in AliasTable) {
+            Generator.error(loc,"Unknown alias \""~name~"\"!");
+            return null;
+        }
+        return AliasTable[name];
     }
 
     override void debugPrint() {
@@ -1658,6 +1763,8 @@ class NodeFunc : Node {
     bool isTemplatePart = false;
     bool isPure = false;
     bool isTemplate = false;
+    bool isCtargs = false;
+    bool isCtargsPart = false;
 
     string[] templateNames;
     Type[] _templateTypes;
@@ -1751,6 +1858,9 @@ class NodeFunc : Node {
                 case "inline": isInline = true; break;
                 case "linkname": linkName = mods[i].value; break;
                 case "pure": isPure = true; break;
+                case "ctargs":
+                    isCtargs = true;
+                    return null;
                 default: if(mods[i].name[0] == '@') _builtins[mods[i].name[1..$]] = mods[i]._genValue.instanceof!NodeBuiltin; break;
             }
         }
@@ -1788,7 +1898,7 @@ class NodeFunc : Node {
         else if(callconv == 2) LLVMSetFunctionCallConv(Generator.Functions[name],LLVMColdCallConv);
 
         if(isInline) Generator.addAttribute("alwaysinline",LLVMAttributeFunctionIndex,Generator.Functions[name]);
-        if(isTemplatePart || isTemplate) {
+        if(isTemplatePart || isTemplate || isCtargsPart) {
             LLVMComdatRef cmr = LLVMGetOrInsertComdat(Generator.Module,toStringz(name));
             LLVMSetComdatSelectionKind(cmr,LLVMAnyComdatSelectionKind);
 
@@ -1883,8 +1993,7 @@ class NodeFunc : Node {
             currScope = null;
         }
         if(isTemplate) Generator.toReplace = oldReplace.dup;
-        //writeln(fromStringz(LLVMPrintValueToString(Generator.Functions[name])));
-        //writeln("MODULE(!!!!!!!!!\n!!!!!!\n!!!!!!\n!!!!!!\n!!!!): ",fromStringz(LLVMPrintModuleToString(Generator.Module)),"\nEnd.");
+        // writeln(fromStringz(LLVMPrintValueToString(Generator.Functions[name])));
         LLVMVerifyFunction(Generator.Functions[name],0);
 
         return Generator.Functions[name];
@@ -1908,6 +2017,38 @@ class NodeFunc : Node {
         currScope = _scope;
 
         return v;
+    }
+
+    string generateWithCtargs(LLVMTypeRef[] args) {
+        FuncArgSet[] newargs;
+        for(int i=0; i<args.length; i++) {
+            Type t = llvmTypeToType(args[i]);
+            newargs ~= FuncArgSet("_RaveArg"~to!string(i),t);
+        }
+        
+        auto activeLoops = Generator.ActiveLoops.dup;
+        auto builder = Generator.Builder;
+        auto currBB = Generator.currBB;
+        auto _scope = currScope;
+
+        DeclMod[] _mods;
+        for(int i=0; i<mods.length; i++) {
+            if(mods[i].name != "ctargs") _mods ~= mods[i];
+        }
+        
+        NodeFunc _f = new NodeFunc(name~typesToString(newargs.dup),newargs.dup,block,false,_mods.dup,loc,type,[]);
+        _f.args = newargs.dup;
+        _f.isCtargsPart = true;
+        string _n = _f.name;
+        _f.check();
+        _f.generate();
+
+        Generator.ActiveLoops = activeLoops.dup;
+        Generator.Builder = builder;
+        Generator.currBB = currBB;
+        currScope = _scope;
+
+        return _n;
     }
 
     override void debugPrint() {
@@ -2042,8 +2183,13 @@ class NodeCall : Node {
         return corrected.dup;
     }
 
-    LLVMValueRef[] getParameters(FuncArgSet[] fas = null) {
+    LLVMValueRef[] getParameters(bool isVararg, FuncArgSet[] fas = null) {
         LLVMValueRef[] params;
+
+        if(isVararg) {
+            for(int i=0; i<args.length; i++) params ~= args[i].generate();
+            return params;
+        }
 
         if(fas !is null && !fas.empty) {
             int offset = 0;
@@ -2140,6 +2286,8 @@ class NodeCall : Node {
                 else if(t == LLVMInt1TypeInContext(Generator.Context)) types ~= new TypeBasic("bool");
                 else types ~= new TypeBasic("cent");
             }
+            else if(LLVMGetTypeKind(t) == LLVMFloatTypeKind) types ~= new TypeBasic("float");
+            else if(LLVMGetTypeKind(t) == LLVMDoubleTypeKind) types ~= new TypeBasic("double");
             else if(LLVMGetTypeKind(t) == LLVMStructTypeKind) types ~= new TypeStruct(cast(string)fromStringz(LLVMGetStructName(t)));
             else if(LLVMGetTypeKind(t) == LLVMArrayTypeKind) types ~= new TypeArray(0,null);
         }
@@ -2147,11 +2295,16 @@ class NodeCall : Node {
         return types.dup;
     }
 
+    override Node comptime() {
+        Generator.error(loc,"Attempt to call a function during compilation!");
+        return null;
+    }
+
     override LLVMValueRef generate() {
         import lexer.lexer : Lexer;
 
         if(NodeIden f = func.instanceof!NodeIden) {
-        if(!f.name.into(FuncTable) && !into(f.name~to!string(args.length),FuncTable) && !f.name.into(Generator.LLVMFunctions) && !into(f.name~typesToString(parametersToTypes(getParameters())),FuncTable)) {
+        if(!f.name.into(FuncTable) && !into(f.name~to!string(args.length),FuncTable) && !f.name.into(Generator.LLVMFunctions) && !into(f.name~typesToString(parametersToTypes(getPredParameters())),FuncTable)) {
             if(!f.name.into(MacroTable)) {
                 if(currScope.has(f.name)) {
                     NodeVar nv = currScope.getVar(f.name,loc);
@@ -2160,7 +2313,7 @@ class NodeCall : Node {
                     return LLVMBuildCall(
                         Generator.Builder,
                         currScope.get(f.name,loc),
-                        getParameters().ptr,
+                        getParameters(false).ptr,
                         cast(uint)args.length,
                         toStringz(tf.main.instanceof!TypeVoid ? "" : name)
                     );
@@ -2275,7 +2428,7 @@ class NodeCall : Node {
                 assert(0);
             }
             calledFunc = FuncTable[f.name];
-            LLVMValueRef[] params = getParameters(FuncTable[f.name].args);
+            LLVMValueRef[] params = getParameters(FuncTable[f.name].isVararg,FuncTable[f.name].args);
 
             LLVMValueRef _val;
 
@@ -2309,16 +2462,26 @@ class NodeCall : Node {
         }
         else {
             if(rname !in Generator.Functions) {
-                Generator.error(loc,"Function '"~rname~"' does not exist!");
+                if(rname !in FuncTable) Generator.error(loc,"Function '"~rname~"' does not exist!");
+                if(FuncTable[rname].isCtargs == true) {
+                    LLVMValueRef[] vars = getPredParameters();
+                    if(!(rname~typesToString(parametersToTypes(vars))).into(FuncTable)) {
+                        LLVMTypeRef[] types;
+                        for(int i=0; i<vars.length; i++) {
+                            types ~= LLVMTypeOf(vars[i]);
+                        }
+                        string _newname = FuncTable[rname].generateWithCtargs(types.dup);
+                        rname = _newname;
+                    }
+                    else rname = rname~typesToString(parametersToTypes(vars));
+                }
             }
             calledFunc = FuncTable[rname];
-            params = getParameters(FuncTable[rname].args);
+            params = getParameters(FuncTable[rname].isVararg, FuncTable[rname].args);
         }
         string name = "CallFunc"~f.name;
         if(FuncTable[rname].type.instanceof!TypeVoid) name = "";
-        //writeln("Name: ",rname," with ",typesToString(parametersToTypes(getParameters())));
         if(FuncTable[rname].args.length != args.length && FuncTable[rname].isVararg != true) {
-            //writeln(rname," ",FuncTable[rname].args);
             Generator.error(
                 loc,
                 "The number of arguments in the call("~to!string(args.length)~") does not match the signature("~to!string(FuncTable[rname].args.length)~")!"
@@ -2382,7 +2545,7 @@ class NodeCall : Node {
                     }
 
                     calledFunc = FuncTable[g.field];
-                    LLVMValueRef[] params = getParameters(FuncTable[g.field].args);
+                    LLVMValueRef[] params = getParameters(FuncTable[g.field].isVararg, FuncTable[g.field].args);
 
                     _val = LLVMBuildCall(
                         Generator.Builder,
@@ -2399,6 +2562,7 @@ class NodeCall : Node {
                     s = Generator.toReplace[s.name].instanceof!TypeStruct;
                 }
                 if(!into(s.name,StructTable) && s.name.indexOf('<') != -1) {
+                    writeln(s.name," ",Generator.toReplace);
                     s = Generator.toReplace[s.name].instanceof!TypeStruct;
                 }
 
@@ -2418,18 +2582,15 @@ class NodeCall : Node {
                     if(args.length < 2) args = [];
                     else args = args[1..$];
 
-                    params = getParameters(_args);
+                    params = getParameters(false,_args);
                     g.isMustBePtr = true;
                     _toCall = LLVMBuildLoad(Generator.Builder,Generator.byIndex(g.generate(),[LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),structsNumbers[cast(immutable)[s.name,g.field]].number,false)]),toStringz("A"));
                 }
                 else {
                     calledFunc = MethodTable[cast(immutable)[s.name,g.field]];
-                    params = getParameters(MethodTable[cast(immutable)[s.name,g.field]].args);
+                    params = getParameters(MethodTable[cast(immutable)[s.name,g.field]].isVararg, MethodTable[cast(immutable)[s.name,g.field]].args);
                 }
 
-                //writeln(s.name," ",g.field);
-                //params = currScope.get(i.name)~params;
-                //writeln("sname: ",s.name," gfield: ",g.field);
                 if(_toCall !is null) {
                     _val = LLVMBuildCall(
                         Generator.Builder,
@@ -2443,7 +2604,7 @@ class NodeCall : Node {
                 }
                 if(cast(immutable)[s.name,g.field~typesToString(parametersToTypes(params))].into(MethodTable)) {
                     calledFunc = MethodTable[cast(immutable)[s.name,g.field~typesToString(parametersToTypes(params))]];
-                    params = getParameters(MethodTable[cast(immutable)[s.name,g.field~typesToString(parametersToTypes(params))]].args);
+                    params = getParameters(MethodTable[cast(immutable)[s.name,g.field~typesToString(parametersToTypes(params))]].isVararg, MethodTable[cast(immutable)[s.name,g.field~typesToString(parametersToTypes(params))]].args);
                     _val = LLVMBuildCall(
                         Generator.Builder,
                         Generator.Functions[MethodTable[cast(immutable)[s.name,g.field~typesToString(parametersToTypes(params))]].name],
@@ -2469,7 +2630,7 @@ class NodeCall : Node {
                 string sname = Generator.typeToString(LLVMTypeOf(val))[1..$-1];
 
                 calledFunc = MethodTable[cast(immutable)[sname,g.field]];
-                LLVMValueRef[] params = getParameters(MethodTable[cast(immutable)[sname,g.field]].args);
+                LLVMValueRef[] params = getParameters(MethodTable[cast(immutable)[sname,g.field]].isVararg, MethodTable[cast(immutable)[sname,g.field]].args);
                 
                 params = val~params;
                 
@@ -2492,7 +2653,7 @@ class NodeCall : Node {
                 
                 calledFunc = MethodTable[cast(immutable)[sname,g.field]];
                 _offset = 1;
-                LLVMValueRef[] params = getParameters(MethodTable[cast(immutable)[sname,g.field]].args);
+                LLVMValueRef[] params = getParameters(MethodTable[cast(immutable)[sname,g.field]].isVararg, MethodTable[cast(immutable)[sname,g.field]].args);
                 _offset = 0;
 
                 params = val~params;
@@ -2521,7 +2682,39 @@ class NodeCall : Node {
                 string sname = nc.type.instanceof!TypeStruct.name;
                 calledFunc = MethodTable[cast(immutable)[sname,g.field]];
                 _offset = 1;
-                LLVMValueRef[] params = getParameters(MethodTable[cast(immutable)[sname,g.field]].args);
+                LLVMValueRef[] params = getParameters(MethodTable[cast(immutable)[sname,g.field]].isVararg, MethodTable[cast(immutable)[sname,g.field]].args);
+                _offset = 0;
+
+                params = v~params;
+                _val = LLVMBuildCall(
+                    Generator.Builder,
+                    Generator.Functions[MethodTable[cast(immutable)[sname,g.field]].name],
+                    params.ptr,
+                    cast(uint)params.length,
+                    toStringz(MethodTable[cast(immutable)[sname,g.field]].type.instanceof!TypeVoid ? "" : g.field)
+                );
+                if(_inverted) _val = LLVMBuildNot(Generator.Builder,_val,toStringz("not_"));
+                return _val;
+            }
+            else if(NodeBuiltin nb = g.base.instanceof!NodeBuiltin) {
+                LLVMValueRef v = nb.generate();
+                string sname = "";
+
+                if(LLVMGetTypeKind(LLVMTypeOf(v)) == LLVMStructTypeKind) {
+                    sname = cast(string)fromStringz(LLVMGetStructName(LLVMTypeOf(v)));
+                    LLVMValueRef temp = LLVMBuildAlloca(Generator.Builder,LLVMTypeOf(v),toStringz("temp_"));
+                    LLVMBuildStore(Generator.Builder,v,temp);
+                    v = temp;
+                }
+                else {
+                    sname = cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(v))));
+                }
+                if(!sname.into(StructTable)) {
+                    Generator.error(loc,"Type is not a structure!");
+                }
+                calledFunc = MethodTable[cast(immutable)[sname,g.field]];
+                _offset = 1;
+                LLVMValueRef[] params = getParameters(MethodTable[cast(immutable)[sname,g.field]].isVararg, MethodTable[cast(immutable)[sname,g.field]].args);
                 _offset = 0;
 
                 params = v~params;
@@ -2786,6 +2979,27 @@ class NodeGet : Node {
                 toStringz("sgep1745_")
             ), toStringz("load1745_"));
         }
+        if(NodeBuiltin nb = base.instanceof!NodeBuiltin) {
+            LLVMValueRef v = nb.generate();
+            
+            string structName;
+            if(v is null) {
+                Generator.error(loc, "The built-in function '"~nb.name~"' does not return values!");
+            }
+            
+            LLVMValueRef ptr = checkStructure(v);
+            structName = cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(ptr))));
+            LLVMValueRef f = checkIn(structName);
+            
+            if(f !is null) return f;
+
+            if(isMustBePtr) return LLVMBuildStructGEP(
+                Generator.Builder, ptr, cast(uint)structsNumbers[cast(immutable)[structName,field]].number, toStringz("sgep1760_")
+            );
+            return LLVMBuildLoad(Generator.Builder, LLVMBuildStructGEP(
+                Generator.Builder, ptr, cast(uint)structsNumbers[cast(immutable)[structName,field]].number, toStringz("sgep1760_")
+            ), toStringz("load1760_"));
+        }
         writeln("Base: ",base);
         assert(0);
     }
@@ -2927,6 +3141,12 @@ class NodeUnary : Node {
         }
         assert(0);
     }
+
+    override Node comptime() {
+        if(type == TokType.Ne) return new NodeBool(!base.comptime().instanceof!NodeBool.value);
+        else Generator.error(loc,"Using the unary operator '"~to!string(type)~" during compilation is not supported!");
+        assert(0);
+    }
 }
 
 class NodeIf : Node {
@@ -2994,11 +3214,12 @@ class NodeIf : Node {
             comptime();
             return null;
         }
-        //if(NodeBuiltin _c = condition.instanceof!NodeBuiltin) {
-        //    if(_c.generate() != LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false)) {
-        //        _body = null;
-        //    }
-        //}
+        if(NodeBuiltin _c = condition.instanceof!NodeBuiltin) {
+            if(_c.generate() != LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false)) {
+                _body = null;
+            }
+            else _else = null;
+        }
         LLVMBasicBlockRef thenBlock =
 			LLVMAppendBasicBlockInContext(
                 Generator.Context,
@@ -3287,6 +3508,7 @@ class NodeStruct : Node {
     NodeFunc[string][TokType] operators;
     Node[] _oldElements;
     string[] templateNames;
+    bool noCompile = false;
 
     this(string name, Node[] elements, int loc, string _exs, string[] templateNames) {
         this.name = name;
@@ -3299,9 +3521,18 @@ class NodeStruct : Node {
     }
 
     LLVMTypeRef asConstType() {
-        writeln("CONST: ",name);
         LLVMTypeRef[] types = getParameters(false);
         return LLVMStructType(types.ptr, cast(uint)types.length, false);
+    }
+
+    int getSize() {
+        int allSize = 0;
+        for(int i=0; i<elements.length; i+=1) {
+            if(NodeVar nv = elements[i].instanceof!NodeVar) {
+                allSize += nv.t.getSize();
+            }
+        }
+        return allSize;
     }
 
     override void check() {
@@ -3309,7 +3540,9 @@ class NodeStruct : Node {
             name = namespacesNamesToString(namespacesNames,name);
         }
         if(!(name !in StructTable)) {
-            checkError(loc,"a struct with that name already exists on "~to!string(StructTable[name].loc+1)~" line!");
+            //checkError(loc,"a struct with that name('"~name~"') already exists on "~to!string(StructTable[name].loc+1)~" line!");
+            noCompile = true;
+            return;
         }
         if(_extends != "") {
             NodeStruct _s = StructTable[_extends];
@@ -3404,6 +3637,7 @@ class NodeStruct : Node {
             }
             else {
                 NodeFunc f = elements[i].instanceof!NodeFunc;
+                if(f.isCtargs) continue;
                 if(f.origname == "this") {
                     _this = f;
                     _this.name = origname;
@@ -3554,7 +3788,7 @@ class NodeStruct : Node {
     bool isTemplated = false;
 
     override LLVMValueRef generate() {
-        if(templateNames.length > 0) return null;
+        if(templateNames.length > 0 || noCompile) return null;
 
         Generator.Structs[name] = LLVMStructCreateNamed(Generator.Context,toStringz(name));
         LLVMTypeRef[] params = getParameters(isTemplated);
@@ -3665,9 +3899,13 @@ class NodeCast : Node {
 
     override void check() {val.check();}
     override LLVMValueRef generate() {
-        LLVMValueRef gval = val.generate();
+        LLVMValueRef gval;
 
         if(TypeBasic b = type.instanceof!TypeBasic) {
+            if(b.type == BasicType.Bool && b.toString() != "bool") {
+                return new NodeCast(new TypeStruct(b.toString()),val,loc).generate();
+            }
+            gval = val.generate();
             if(LLVMGetTypeKind(LLVMTypeOf(gval)) == LLVMIntegerTypeKind) {
                 if(b.isFloat()) {
                     return LLVMBuildSIToFP(
@@ -3686,12 +3924,13 @@ class NodeCast : Node {
             }
 
             if(LLVMGetTypeKind(LLVMTypeOf(gval)) == LLVMPointerTypeKind) {
-                return LLVMBuildPtrToInt(
+                if(!b.isFloat()) return LLVMBuildPtrToInt(
                     Generator.Builder,
                     gval,
                     Generator.GenerateType(b,loc),
                     toStringz("picast")
                 );
+                return LLVMBuildLoad(Generator.Builder,LLVMBuildPointerCast(Generator.Builder,gval,LLVMPointerType(Generator.GenerateType(type,loc),0),toStringz("ptrc_")),toStringz("load_"));
             }
 
             if(LLVMGetTypeKind(LLVMTypeOf(gval)) == LLVMStructTypeKind) {
@@ -3719,6 +3958,7 @@ class NodeCast : Node {
                 toStringz("ficast")
             );
         }
+        gval = val.generate();
         if(TypePointer p = type.instanceof!TypePointer) {
             if(LLVMGetTypeKind(LLVMTypeOf(gval)) == LLVMIntegerTypeKind) {
                 return LLVMBuildIntToPtr(
@@ -3768,7 +4008,7 @@ class NodeCast : Node {
             return this.generate();
         }
         if(TypeBuiltin b = type.instanceof!TypeBuiltin) {
-            NodeBuiltin nb = new NodeBuiltin(b.name,b.args.dup,loc);
+            NodeBuiltin nb = new NodeBuiltin(b.name,b.args.dup,loc,b.block);
             nb.generate();
 
             this.type = nb.ty;
@@ -3877,18 +4117,15 @@ class NodeUsing : Node {
                 var.namespacesNames = newNamespacesNames.dup;
                 var.name = namespacesNamesToString(var.namespacesNames, var.origname);
                 MacroTable[var.name] = var;
-                //MacroTable.remove(oldname);
             }
         }
-        foreach(var; StructTable) {
+        foreach(varr; StructTable) {
+            NodeStruct var = new NodeStruct(varr.name, varr.elements.dup, varr.loc, varr._extends, varr.templateNames.dup);
             if(var.namespacesNames.length>0) {
-                string[] newNamespacesNames;
-                for(int i=0; i<var.namespacesNames.length; i++) {
-                    if(var.namespacesNames[i] != namespace) newNamespacesNames ~= var.namespacesNames[i];
+                for(int i=0; i<varr.namespacesNames.length; i++) {
+                    if(varr.namespacesNames[i] != namespace) var.namespacesNames ~= varr.namespacesNames[i];
                 }
-                //writeln(var.origname,":",newNamespacesNames);
-                var.namespacesNames = newNamespacesNames.dup;
-                string oldname = var.name;
+                string oldname = varr.name;
                 var.name = namespacesNamesToString(var.namespacesNames, var.origname);
                 StructTable[var.name] = var;
                 if(var.name.into(Generator.Structs)) Generator.Structs[var.name] = Generator.Structs[oldname];
@@ -4309,11 +4546,13 @@ class NodeBuiltin : Node {
     Node[] args;
     int loc;
     Type ty;
+    NodeBlock block;
 
-    this(string name, Node[] args, int loc) {
+    this(string name, Node[] args, int loc, NodeBlock block) {
         this.name = name;
         this.args = args.dup;
         this.loc = loc;
+        this.block = block;
     }
 
     NodeType asType(int n) {
@@ -4325,8 +4564,26 @@ class NodeBuiltin : Node {
             return currScope.macroArgs[mga.number].instanceof!NodeType;
         }
         if(NodeIden id = args[n].instanceof!NodeIden) {
-            if(id.name.into(Generator.toReplace)) return new NodeType(Generator.toReplace[id.name],loc);
+            if(id.name.into(Generator.toReplace)) {
+                Type _t = Generator.toReplace[id.name];
+                while(_t.toString().into(Generator.toReplace)) {
+                    _t = Generator.toReplace[_t.toString()];
+                }
+                return new NodeType(_t,loc);
+            }
+            if(id.name == "void") return new NodeType(new TypeVoid(),loc);
+            if(id.name != "bool" && id.name != "char" && id.name != "uchar"
+            && id.name != "ushort" && id.name != "short" && id.name != "wchar"
+            && id.name != "uwchar" && id.name != "uint" && id.name != "int"
+            && id.name != "long" && id.name != "ulong" && id.name != "cent"
+            && id.name != "ucent" && id.name != "float" && id.name != "double") {
+                return new NodeType(new TypeStruct(id.name),loc);
+            }
             return new NodeType(new TypeBasic(id.name),loc);
+        }
+        if(NodeBuiltin b = args[n].instanceof!NodeBuiltin) {
+            b.generate();
+            return new NodeType(b.ty.copy(),loc);
         }
         assert(0);
     }
@@ -4342,7 +4599,6 @@ class NodeBuiltin : Node {
         switch(name) {
             case "baseType":
                 Type prType = asType(0).ty;
-                if(prType.toString().into(Generator.toReplace)) prType = Generator.toReplace[prType.toString()];
                 if(TypeArray ta = prType.instanceof!TypeArray) this.ty = ta.element;
                 else if(TypePointer tp = prType.instanceof!TypePointer) this.ty = tp.instance;
                 else this.ty = prType;
@@ -4355,8 +4611,6 @@ class NodeBuiltin : Node {
                 break;
             case "isNumeric":
                 Type isNType = asType(0).ty;
-                if(isNType.toString().into(Generator.toReplace)) isNType = Generator.toReplace[isNType.toString()];
-                if(isNType.toString().into(Generator.toReplace) && Generator.toReplace[isNType.toString()].toString() == isNType.toString()) return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false);
                 if(isNType.instanceof!TypeBasic) {
                     string s = isNType.toString();
                     if(s == "bool" || s == "char" || s == "int" || s == "short" || s == "long" || s == "cent" || s == "float" || s == "double") {
@@ -4366,25 +4620,25 @@ class NodeBuiltin : Node {
                 return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),0,false);
             case "isFloat":
                 Type isNType = asType(0).ty;
-                if(isNType.toString().into(Generator.toReplace)) isNType = Generator.toReplace[isNType.toString()];
                 if(isNType.toString() == "float" || isNType.toString() == "double") return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false);
                 return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),0,false);
             case "isPointer":
                 Type isPType = asType(0).ty;
-                if(isPType.toString().into(Generator.toReplace)) isPType = Generator.toReplace[isPType.toString()];
                 if(isPType.instanceof!TypePointer) return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false);
                 return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),0,false);
             case "isStructure":
                 Type isSType = asType(0).ty;
-                if(isSType.toString().into(Generator.toReplace)) isSType = Generator.toReplace[isSType.toString()];
-                if(isSType.toString().into(StructTable) || isSType.toString().into(Generator.Structs)) return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false);
+                if(isSType.instanceof!TypeStruct) return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false);
                 return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),0,false);
-            case "isEquals":
+            case "typesIsEquals":
                 Type isEqType = asType(0).ty;
                 Type isEqType2 = asType(1).ty;
-                if(isEqType.toString().into(Generator.toReplace)) isEqType = Generator.toReplace[isEqType.toString()];
-                if(isEqType2.toString().into(Generator.toReplace)) isEqType2 = Generator.toReplace[isEqType2.toString()];
                 if(isEqType.toString() == isEqType2.toString()) return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false);
+                return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),0,false);
+            case "typesIsNequals":
+                Type isEqType = asType(0).ty;
+                Type isEqType2 = asType(1).ty;
+                if(isEqType.toString() != isEqType2.toString()) return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false);
                 return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),0,false);
             case "va_arg":
                 return LLVMBuildVAArg(Generator.Builder,args[0].generate(),Generator.GenerateType(asType(1).ty),toStringz("builtInVaArg"));
@@ -4398,6 +4652,80 @@ class NodeBuiltin : Node {
             case "isConstType":
                 if(asType(0).ty.instanceof!TypeConst) return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false);
                 return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),0,false);
+            case "getArg":
+                Type getArgType = asType(0).ty;
+                int getArgNum = cast(int)args[1].instanceof!NodeInt.value;
+                return new NodeCast(getArgType,new NodeIden("_RaveArg"~to!string(getArgNum),loc),loc).generate();
+            case "getArgType":
+                int getArgNum = cast(int)args[0].instanceof!NodeInt.value;
+                ty = currScope.getVar("_RaveArg"~to!string(getArgNum),loc).t;
+                if(TypeBasic tb = ty.instanceof!TypeBasic) {
+                    if(ty.toString() != "bool" && tb.type == BasicType.Bool) ty = new TypeStruct(ty.toString());
+                }
+                return null;
+            case "getCurrArg":
+                Type getArgType = asType(0).ty;
+                int getArgNum = Generator.currentBuiltinArg;
+                return new NodeCast(getArgType,new NodeIden("_RaveArg"~to!string(getArgNum),loc),loc).generate();
+            case "getCurrArgType":
+                int getArgNum = Generator.currentBuiltinArg;
+                this.ty = currScope.getVar("_RaveArg"~to!string(getArgNum),loc).t;
+                return null;
+            case "typeToString":
+                Type typeToStr = asType(0).ty;
+                return new NodeString(typeToStr.toString(),false).generate();
+            case "skipArg":
+                Generator.currentBuiltinArg += 1;
+                break;
+            case "foreachArgs":
+                for(int i=Generator.currentBuiltinArg; i<FuncTable[currScope.func].args.length; i++) {
+                    block.generate();
+                    Generator.currentBuiltinArg += 1;
+                }
+                break;
+            case "if":
+                Node cond = args[0];
+                if(NodeBinary nb = args[0].instanceof!NodeBinary) nb.isStatic = true;
+                currScope.lastCTIfCond = cond;
+                NodeIf _if = new NodeIf(cond, block, null, loc, currScope.func, true);
+                _if.comptime();
+                break;
+            case "else":
+                Node cond = currScope.lastCTIfCond;
+                NodeIf _if = new NodeIf(new NodeUnary(loc,TokType.Ne,cond),block,null,loc,currScope.func,true);
+                _if.comptime();
+                break;
+            case "sizeof":
+                Type t = asType(0).ty;
+                return LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),cast(ulong)t.getSize(),false);
+            case "callWithArgs":
+                Node[] nodes;
+                for(int i=Generator.currentBuiltinArg; i<FuncTable[currScope.func].args.length; i++) {
+                    nodes ~= new NodeIden("_RaveArg"~to!string(i),loc);
+                }
+                for(int i=1; i<args.length; i++) nodes ~= args[i];
+                return new NodeCall(loc,args[0],nodes.dup).generate();
+            default: break;
+        }
+        return null;
+    }
+
+    override Node comptime() {
+        switch(name) {
+            case "typeToString":
+                Type typeToStr = asType(0).ty;
+                return new NodeString(typeToStr.toString(),false);
+            case "typesIsEquals":
+                Type one = asType(0).ty;
+                Type two = asType(1).ty;
+                return new NodeBool(one.toString() == two.toString());
+            case "typesIsNequals":
+                Type one = asType(0).ty;
+                Type two = asType(1).ty;
+                return new NodeBool(one.toString() != two.toString());
+            case "sizeof":
+                Type t = asType(0).ty;
+                return new NodeInt(cast(ulong)t.getSize());
             default: break;
         }
         return null;

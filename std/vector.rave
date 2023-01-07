@@ -3,6 +3,7 @@ namespace std {
         T* data;
         int capacity;
         int length;
+        bool isInitialized = false;
 
         std::vector<T> this {
             this.data = new(T);

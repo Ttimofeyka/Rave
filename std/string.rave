@@ -99,6 +99,14 @@ namespace std {
         (inline) std::string fromNumber(short n) => this.fromNumber(cast(long)n);
         (inline) std::string fromNumber(char n) => this.fromNumber(cast(long)n);
         (inline) std::string fromNumber(bool n) => this.fromNumber(cast(long)n);
+        (inline) std::string fromFloat(float n) {
+            char* buf = std::malloc(128);
+            libc::cformat(buf,"%f",cast(double)n);
+        } => std::string(buf);
+        (inline) std::string fromDouble(double n) {
+            char* buf = std::malloc(128);
+            libc::cformat(buf,"%f",n);
+        } => std::string(buf);
 
         int indexOf(char c) {
             int i = 0;
@@ -135,11 +143,7 @@ namespace std {
         }
 
         void append(char* cstr) {
-            int i = 0;
-            while(cstr[i] != '\0') {
-                this.append(cstr[i]);
-                i += 1;
-            }
+            this.append(std::string(cstr));
         }
 
         std::string copy {
@@ -271,6 +275,55 @@ namespace std {
             std::free(this.data);
         }
     }
+
+    (ctargs) std::string sprint {
+        std::string result = "";
+        auto v = std::vector<std::argument>();
+
+        @foreachArgs() {
+            if(@typesIsNequals(@getCurrArgType(),float)) {
+                if(@typesIsNequals(@getCurrArgType(),double)) v.add(std::argument(@getCurrArg(void*), @typeToString(@getCurrArgType())));
+                else {
+                    double d = @getCurrArg(double);
+                    v.add(std::argument(cast(void*)&d, "double"));
+                }
+            }
+            else {
+                double f = @getCurrArg(double);
+                v.add(std::argument(cast(void*)&f, "double"));
+            }
+        };
+
+        for(int i=0; i<v.length; i+=1) {
+            if(v.data[i].type == "char*") {
+                result.append(std::string(v.data[i].value));
+            }
+            else if(v.data[i].type == "std::string") {
+                std::string s = cast(std::string)v.data[i].value;
+                result.append(s);
+            }
+            else if(v.data[i].type == "std::string*") {
+                std::string* s = cast(std::string*)v.data[i].value;
+                result.append(s);
+            }
+            else if((v.data[i].type == "float") || (v.data[i].type == "double")) {
+                double* d = cast(double*)v.data[i].value;
+                result.append(result.fromDouble(d[0]));
+            }
+            else if((v.data[i].type == "long" || v.data[i].type == "int") || v.data[i].type == "short") {
+                long l = cast(long)v.data[i].value;
+                result.append(result.fromNumber(l));
+            }
+            else if(v.data[i].type == "bool") {
+                bool b = cast(bool)v.data[i].value;
+                if(b) result.append(std::string("true"));
+                else result.append(std::string("false"));
+            }
+            else if(v.data[i].type == "char") {
+                result.append(cast(char)(v.data[i].value));
+            }
+        }
+    } => result;
 }
 
 macro S {

@@ -34,3 +34,15 @@ extern(linkname:"llvm.va_copy") void __builtin_va_copy(void* dest, void* src);
 (inline) void va_start(va_list* va) {__builtin_va_start(cast(void*)va);}
 (inline) void va_end(va_list* va) {__builtin_va_end(cast(void*)va);}
 (inline) void va_copy(va_list* dest, va_list* copy) {__builtin_va_copy(cast(void*)dest,cast(void*)copy);}
+
+namespace std {
+    struct argument {
+        void* value;
+        char* type;
+
+        std::argument this(void* value, char* type) {
+            this.value = value;
+            this.type = type;
+        } => this;
+    }
+}

@@ -7,6 +7,12 @@ import std.array;
 import std.conv : to;
 import std.ascii : isAlpha;
 import parser.ast : Node;
+import parser.ast : NodeBlock;
+import parser.ast : StructTable;
+import parser.ast : Generator;
+import parser.ast : into;
+import parser.parser : Parser;
+import lexer.lexer : Lexer;
 import std.stdio;
 import parser.parser : instanceof;
 
@@ -26,8 +32,6 @@ enum BasicType {
     Uchar,
     Ucent,
 }
-
-
 
 Type getType(string name) {
     switch(name) {
@@ -56,6 +60,10 @@ Type getType(string name) {
 
 class Type {
     Type copy() {assert(0);}
+
+    int getSize() {
+        return 0;
+    }
 
     override string toString()
     {
@@ -107,6 +115,26 @@ class TypeBasic : Type {
         return new TypeBasic(this.value);
     }
 
+    override int getSize() {
+        switch(type) {
+            case BasicType.Bool: return 1;
+            case BasicType.Uchar:
+            case BasicType.Char: return 8;
+            case BasicType.Ushort:
+            case BasicType.Short: return 16;
+            case BasicType.Uint:
+            case BasicType.Float:
+            case BasicType.Int: return 32;
+            case BasicType.Ulong:
+            case BasicType.Double:
+            case BasicType.Long: return 64;
+            case BasicType.Ucent:
+            case BasicType.Cent: return 128;
+            default: break;
+        }
+        return 0;
+    }
+
     bool isFloat() {
         pragma(inline,true);
         return (type == BasicType.Float || type == BasicType.Double);
@@ -125,6 +153,10 @@ class TypePointer : Type {
 
     override Type copy() {
         return new TypePointer(instance.copy());
+    }
+
+    override int getSize() {
+        return 8;
     }
 
     override string toString()
@@ -146,6 +178,10 @@ class TypeArray : Type {
         return new TypeArray(this.count,this.element.copy());
     }
 
+    override int getSize() {
+        return element.getSize() * count;
+    }
+
     override string toString()
     {
         return element.toString()~"["~to!string(count)~"]";
@@ -160,6 +196,10 @@ class TypeAlias : Type {
 class TypeVoid : Type {
     override Type copy() {
         return new TypeVoid();
+    }
+
+    override int getSize() {
+        return 0;
     }
 
     override string toString()
@@ -188,6 +228,18 @@ class TypeStruct : Type {
             this.name ~= types[i].toString()~",";
         }
         this.name = this.name[0..$-1]~">";
+    }
+
+    override int getSize() {
+        Type t = this;
+        while(t.toString().into(Generator.toReplace)) t = Generator.toReplace[t.toString()];
+        if(TypeStruct ts = t.instanceof!TypeStruct) {
+            if(ts.types !is null && !ts.name.into(StructTable)) {
+                StructTable[ts.name].generateWithTemplate(ts.name[ts.name.indexOf('<')..$],ts.types.dup);
+            }
+            return StructTable[ts.name].getSize();
+        }
+        return t.getSize();
     }
 
     override string toString()
@@ -227,6 +279,10 @@ class TypeFunc : Type {
         this.args = args;
     }
 
+    override int getSize() {
+        return 8;
+    }
+
     override string toString()
     {
         return "NotImplemented";
@@ -234,7 +290,16 @@ class TypeFunc : Type {
 }
 class TypeVarArg : Type {}
 class TypeMacroArg : Type { int num; this(int num) {this.num = num;} }
-class TypeBuiltin : Type { string name; Node[] args; this(string name, Node[] args) {this.name = name; this.args = args.dup;} }
+class TypeBuiltin : Type { 
+    string name;
+    Node[] args;
+    NodeBlock block;
+
+    this(string name, Node[] args, NodeBlock block) {
+        this.name = name; this.args = args.dup;
+        this.block = block;
+    }
+}
 class TypeCall : Type {
     string name;
     Node[] args;
@@ -264,6 +329,10 @@ class TypeConst : Type {
 
     override Type copy() {
         return new TypeConst(this.instance.copy());
+    }
+
+    override int getSize() {
+        return instance.getSize();
     }
 
     override string toString() {return "const("~instance.toString()~")";}

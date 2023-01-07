@@ -1,7 +1,6 @@
 import <std/io>
+using std;
 
 void main {
-    int a = 0;
-    a += 1;
-    std::printf("%d\n",a);
+    println("Hello, world!");
 }

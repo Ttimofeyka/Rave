@@ -113,11 +113,16 @@ class Lexer {
                     case '@':
                         string bbuff = "";
                         next();
-                        while(!isNumeric(to!string(peek())) && peek() != '.' && peek() != '+' && peek() != '-' && peek() != '*' && peek() != '/' && peek() != '=' && peek() != '(') {
+                        while(!isNumeric(to!string(peek())) && peek() != '.' && peek() != '+' && peek() != '-' && peek() != '*' && peek() != '/' && peek() != '=' && peek() != '(' && peek() != '{') {
                             bbuff ~= peek();
                             next();
                         }
-                        tokens ~= new Token(TokType.Builtin,bbuff,line);
+                        if(peek() == '{') {
+                            tokens ~= new Token(TokType.Builtin,bbuff,line);
+                            tokens ~= new Token(TokType.Rpar,")",line);
+                            tokens ~= new Token(TokType.Lpar,"(",line);
+                        }
+                        else tokens ~= new Token(TokType.Builtin,bbuff,line);
                         break;
                     case '.':
                         auto n = next();
