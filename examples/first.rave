@@ -1,6 +1,5 @@
-import <std/io>
-using std;
+import <std/io> <std/algorithm>
 
 void main {
-    println("Hello, world!");
+    
 }

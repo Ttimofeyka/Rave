@@ -6,10 +6,24 @@ namespace libc {
 }
 
 namespace std {
-    namespace error {
-        void abortWith(char* msg) {
-            std::printf(msg);
-            std::exit(0);
+    struct error<T> {
+        char* message = null;
+        T value;
+        
+        std::error<T> this => this;
+        std::error<T> this(T value) {
+            this.value = value;
+        } => this;
+
+        void catch {
+            if(this.message != null) {
+                std::printf("%s",this.message);
+                std::exit(1);
+            }
+        }
+        
+        void catch(void(char*) catcher) {
+            if(this.message != null) catcher(this.message);
         }
     }
 }

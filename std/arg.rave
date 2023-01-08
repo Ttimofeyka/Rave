@@ -1,13 +1,22 @@
-__debugp __RAVE_X86_64 {
+@if(__RAVE_PLATFORM == "X86_64") {
     struct va_list {
-        int gp_offset = 48;
-        int fp_offset = 176;
+        int gp_offset;
+        int fp_offset;
         void* overflow_arg_area;
         void* reg_save_area;
     }
 }
+@if(
+    (__RAVE_PLATFORM == "X86") || (__RAVE_PLATFORM == "MIPS") ||
+    (__RAVE_PLATFORM == "MIPS64") || (__RAVE_PLATFORM == "UNKNOWN") ||
+    (__RAVE_PLATFORM == "POWERPC64") || (__RAVE_PLATFORM == "SPARC") ||
+    (__RAVE_PLATFORM == "SPARCV9") || (__RAVE_PLATFORM == "WASM")) {
 
-__debugp __RAVE_AARCH64 {
+    struct va_list {
+        void* __ap;
+    }
+}
+@if(__RAVE_PLATFORM == "AARCH64") {
     struct va_list {
         void* __stack;
         void* __gr_top;
@@ -16,15 +25,22 @@ __debugp __RAVE_AARCH64 {
         int __vr_offs;
     }
 }
-
-__debugp __RAVE_X86 {
+@if(__RAVE_PLATFORM == "POWERPC") {
     struct va_list {
-        void* __ap;
+        char f;
+        char s;
+        short t;
+        char* _f;
+        char* s;
     }
 }
-
-__debugp __RAVE_MIPS {
-    struct va_list { void* v; }
+@if(__RAVE_PLATFORM == "S390X") {
+    struct va_list {
+        long f;
+        long s;
+        char* t;
+        char*_f;
+    }
 }
 
 extern(linkname:"llvm.va_start") void __builtin_va_start(void* va);

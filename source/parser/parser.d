@@ -242,6 +242,32 @@ class Parser {
         return args.dup;
     }
 
+    bool isDefinedLambda(bool retidx = true) {
+        int idx = _idx; // Type
+        if(tokens[_idx+1].type != TokType.Rpar) return false;
+        _idx += 1;
+
+        int countOfRpars = 1;
+        while(tokens[_idx].type != TokType.Lpar) {
+            _idx += 1;
+            if(peek().type == TokType.Lpar) {
+                countOfRpars -= 1;
+                if(countOfRpars == 0) break;
+                _idx += 1;
+            }
+            else if(peek().type == TokType.Rpar) {
+                countOfRpars += 1;
+            }
+        }
+        next();
+        if(peek().type == TokType.Rbra || peek().type == TokType.ShortRet) {
+            if(retidx) _idx = idx;
+            return true;
+        }
+        if(retidx) _idx = idx;
+        return false;
+    }
+
     Node[] parseFuncCallArgs() {
         import std.algorithm : canFind;
         if(peek().type == TokType.Rpar) next(); // skip (
@@ -254,6 +280,11 @@ class Parser {
                 case "cent":
                 case "char":
                 case "bool":
+                    if(isDefinedLambda()) {
+                        NodeLambda nl = parseLambda().instanceof!NodeLambda;
+                        args ~= nl;
+                        break;
+                    }
                     args ~= new NodeType(parseType(),peek().line);
                     break;
                 default:
@@ -318,9 +349,11 @@ class Parser {
             }
             else if(t.value == "itop") {
                 next();
+                Type type = parseType();
+                next();
                 Node val = parseExpr();
                 next();
-                return new NodeItop(val,t.line);
+                return new NodeItop(val,type,t.line);
             }
             else if(t.value == "ptoi") {
                 next();
@@ -898,14 +931,15 @@ class Parser {
         next(); next();
         Node[] args;
         while(peek().type != TokType.Lpar) {
-            if(canFind(structs,peek().value) || peek().value == "int" || peek().value == "short" || peek().value == "long" ||
-                peek().value == "bool" || peek().value == "char" || peek().value == "cent" || canFind(_templateNames,peek().value)) {
+            if(canFind(structs,peek().value) || canFind(types,peek().value) || canFind(_templateNames,peek().value)) {
                 if(tokens[_idx+1].type == TokType.Identifier || tokens[_idx+1].type == TokType.Rpar || tokens[_idx+1].type == TokType.ShortRet) {
                     args ~= parseLambda();
                 }
                 else args ~= new NodeType(parseType(),peek().line);
             }
-            else args ~= parseExpr();
+            else {
+                args ~= parseExpr();
+            }
             if(peek().type == TokType.Comma) next();
         }
         next();
@@ -1109,50 +1143,7 @@ class Parser {
         }
         if(peek().type == TokType.Semicolon) next();
 
-        foreach(_file; _files) {
-            if(_file != currentFile && !_file.into(_imported)) {
-                Lexer l = new Lexer(readText(_file),offset);
-                Parser p = new Parser(l.getTokens().dup,offset,_file);
-                p._imported = _imported.dup;
-                p.MainFile = MainFile;
-                p._aliasPredefines = _aliasPredefines.dup;
-                p.parseAll();
-                Node[] nodes = p.getNodes();
-                for(int i=0; i<nodes.length; i++) {
-                    if(NodeVar v = nodes[i].instanceof!NodeVar) {
-                        v.isExtern = true;
-                    }
-                    else if(NodeFunc f = nodes[i].instanceof!NodeFunc) {
-                        f.isExtern = true;
-                    }
-                    else if(NodeNamespace n = nodes[i].instanceof!NodeNamespace) {
-                        n.isImport = true;
-                    }
-                    else if(NodeStruct s = nodes[i].instanceof!NodeStruct) {
-                        s.isImported = true;
-                    }
-                    else if(NodeBlock b = nodes[i].instanceof!NodeBlock) {
-                        for(int j=0; j<b.nodes.length; j++) {
-                            if(NodeStruct s = b.nodes[j].instanceof!NodeStruct) s.isImported = true;
-                        }
-                    }
-                }
-                this._nodes ~= nodes.dup;
-                if(!files.canFind(_file)) files ~= _file;
-                _imported[_file] = true;
-                foreach(key; byKey(p._imported)) {
-                    _imported[key] = p._imported[key];
-                }
-                foreach(key; byKey(p._aliasTypes)) {
-                    _aliasTypes[key] = p._aliasTypes[key];
-                }
-                foreach(key; byKey(p._aliasPredefines)) {
-                    _aliasPredefines[key] = p._aliasPredefines[key];
-                }
-                structs ~= p.structs;
-            } 
-        }
-        return new NodeNone();
+        return new NodeImport(_files.dup,peek().line);
     }
 
     Node parseStruct() {
@@ -1346,26 +1337,29 @@ class Parser {
 
             Node[] args;
             while(peek().type != TokType.Lpar) {
-                if(canFind(structs,peek().value) || peek().value == "int" || peek().value == "short" || peek().value == "long" ||
-                   peek().value == "bool" || peek().value == "char" || peek().value == "cent" || canFind(_templateNames,peek().value)) {
+                if(canFind(structs,peek().value) || canFind(types,peek().value) || canFind(_templateNames,peek().value)) {
                     if(tokens[_idx+1].type == TokType.Rpar || tokens[_idx+1].type == TokType.ShortRet) {
                         args ~= parseLambda();
                     }
                     else if(tokens[_idx+1].type == TokType.Identifier) {
-                        // Func
                         args ~= parseDecl("");
                     }
                     else args ~= new NodeType(parseType(),peek().line);
                 }
-                else args ~= parseExpr(s);
+                else {
+                    args ~= parseExpr(s);
+                }
                 if(peek().type == TokType.Comma) next();
             }
             next();
-            NodeBlock block;
+            NodeBlock block = new NodeBlock([]);
             if(peek().type == TokType.Rbra) {
-                block = parseBlock(s);
+                next();
+                while(peek().type != TokType.Lbra) {
+                    block.nodes ~= parseTopLevel(s);
+                }
+                next();
             }
-            else block = new NodeBlock([]);
             
             return new NodeBuiltin(name,args.dup,t.line,block);
         }

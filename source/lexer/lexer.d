@@ -31,7 +31,9 @@ class Lexer {
         string newchar = 
             str.replace("\\n","\n")
             .replace("\\r","\r")
-            .replace("\\t","\t");
+            .replace("\\t","\t")
+            .replace("\\\"","\"")
+            .replace("\\'","'");
         if(newchar[0] == '\\') {
             return cast(char)(str[1..$]).to!int(8);
         }

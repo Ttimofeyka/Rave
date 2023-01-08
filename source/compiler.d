@@ -16,6 +16,7 @@ import std.process;
 import app : files;
 import std.datetime, std.datetime.stopwatch;
 import std.json, std.file, std.path;
+import std.algorithm : canFind;
 
 string hasAnyone(string str, string[] strs) {
     for(int i=0; i<strs.length; i++) {
@@ -33,6 +34,7 @@ class Compiler {
     int lexTime = 0;
     int parseTime = 0;
     int generateTime = 0;
+    string[] toImport;
 
     private void error(string msg) {
         pragma(inline,true);
@@ -69,17 +71,35 @@ class Compiler {
         ConstVars.clear();
         currScope = null;
         MethodTable.clear();
+        _importedFiles = [];
+        condStack = [];
     }
 
     void compile(string file) {
         string content = readText(file);
 
         int offset = 1;
+        string oldContent = content;
+        
+        if(outtype.indexOf("i686") != -1 || outtype.indexOf("i386") != -1) content = "alias __RAVE_PLATFORM = \"X86\"; ";
+        else if(outtype.indexOf("x86_64") != -1) content = "alias __RAVE_PLATFORM = \"X86_64\"; ";
+        else if(outtype.indexOf("aarch64") != -1) content = "alias __RAVE_PLATFORM = \"AARCH64\"; ";
+        else if(outtype.indexOf("mips64") != -1) content = "alias __RAVE_PLATFORM = \"MIPS64\"; ";
+        else if(outtype.indexOf("mips") != -1) content = "alias __RAVE_PLATFORM = \"MIPS\"; ";
+        else if(outtype.indexOf("powerpc64") != -1) content = "alias __RAVE_PLATFORM = \"POWERPC64\"; ";
+        else if(outtype.indexOf("powerpc") != -1) content = "alias __RAVE_PLATFORM = \"POWERPC\"; ";
+        else if(outtype.indexOf("sparcv9") != -1) content = "alias __RAVE_PLATFORM = \"SPARCV9\"; ";
+        else if(outtype.indexOf("sparc") != -1) content = "alias __RAVE_PLATFORM = \"SPARC\"; ";
+        else if(outtype.indexOf("s390x") != -1) content = "alias __RAVE_PLATFORM = \"S390X\"; ";
+        else if(outtype.indexOf("wasm") != -1) content = "alias __RAVE_PLATFORM = \"WASM\"; ";
+        else content = "alias __RAVE_PLATFORM = \"UNKNOWN\"; ";
 
-        if(outtype.indexOf("i686") != -1) content = "__aliasp __RAVE_X86 = true;\n"~content;
-        else if(outtype.indexOf("x86_64") != -1) content = "__aliasp __RAVE_X86_64 = true;\n"~content;
-        else if(outtype.indexOf("aarch64") != -1) content = "__aliasp __RAVE_AARCH64 = true;\n"~content;
-        else if(outtype.indexOf("mips") != -1) content = "__aliasp __RAVE_MIPS = true;\n"~content;
+        if(outtype.indexOf("windows") != -1) content = `alias __RAVE_OS = "WINDOWS"; `~content;
+        else if(outtype.indexOf("linux") != -1) content = `alias __RAVE_OS = "LINUX"; `~content;
+        else if(outtype.indexOf("darwin") != -1 || outtype.indexOf("macos") != -1) content = `alias __RAVE_OS = "DARWIN"; `~content;
+        else content = `alias __RAVE_OS = "UNKNOWN"; `~content;
+
+        content = content~"\n"~oldContent;
 
         if(!opts.noPrelude && file != "std/prelude.rave" && file != "std/memory.rave") {
             content = "import <std/prelude> <std/memory>\n"~content;
@@ -114,6 +134,14 @@ class Compiler {
             n[i].generate();
         }
 
+        if(_importedFiles.length > 0) {
+            foreach(k; _importedFiles) {
+                if(!canFind(toImport,k)) {
+                    toImport ~= k;
+                }
+            }
+        }
+
         if(opts.optimizeLevel > 0) {
             LLVMPassManagerRef pm = LLVMCreatePassManager();
 
@@ -143,13 +171,12 @@ class Compiler {
     	LLVMSetDataLayout(Generator.Module, datalayout_str);
     	LLVMDisposeMessage(datalayout_str);
 		char* file_ptr = cast(char*)toStringz(file.replace(".rave",".o"));
+        //char* m = LLVMPrintModuleToString(Generator.Module);
+        //writeln("Module: \n",fromStringz(m));
         LLVMTargetMachineEmitToFile(machine,Generator.Module,file_ptr, LLVMObjectFile, &errors);
         endT = MonoTime.currTime;
         dur = endT - startT;
         generateTime += dur.total!"msecs";
-    
-        //char* m = LLVMPrintModuleToString(Generator.Module);
-        //writeln("Module: \n",fromStringz(m));
 
         clearAll();
     }
@@ -172,21 +199,35 @@ class Compiler {
                     linkString ~= files[i]~" ";
             }
             else {
-                version(linux) {
                     compile(files[i]);
-                    /*if(i==0) {
-                        if(opts.emit_llvm) {
-                            char* err;
-                            LLVMPrintModuleToFile(Generator.Module, toStringz(outfile~".ll"), &err);
-                        }
-                    }*/
                     if(opts.emit_llvm) {
                             char* err;
                             LLVMPrintModuleToFile(Generator.Module, toStringz(files[i]~".ll"), &err);
                     }
                     linkString ~= files[i].replace(".rave",".o ");
                     toRemove ~= files[i].replace(".rave",".o");
-                }
+            }
+        }
+        for(int i=0; i<toImport.length; i++) {
+            if(!isFile(toImport[i])) {
+                writeln("Error: file \""~toImport[i]~"\" doesn't exists!");
+                exit(1);
+            }
+            if((toImport[i].length>2 && (toImport[i][$-2..$]==".a" || toImport[i][$-2..$]==".o"))
+                ||
+                (toImport[i].length>4 && (toImport[i][$-4..$]==".dll" || toImport[i][$-4..$]==".obj"))
+                ||
+                (files.length>3 && toImport[i][$-3..$]==".so")) {
+                    linkString ~= toImport[i]~" ";
+            }
+            else {
+                    compile(toImport[i]);
+                    if(opts.emit_llvm) {
+                            char* err;
+                            LLVMPrintModuleToFile(Generator.Module, toStringz(toImport[i]~".ll"), &err);
+                    }
+                    linkString ~= toImport[i].replace(".rave",".o ");
+                    toRemove ~= toImport[i].replace(".rave",".o");
             }
         }
         if(outfile == "") outfile = "a";
@@ -203,9 +244,14 @@ class Compiler {
                 linkString = linkString~"-l"~_libraries[i]~" ";
             }
         }
-
         auto l = executeShell(linkString~" -o "~outfile);
-        if(l.status != 0) writeln("Linking error: "~l.output~"\nLinking string: '"~linkString~" -o "~outfile~"'");
+        if(l.status != 0) {
+            writeln("Linking error: "~l.output~"\nLinking string: '"~linkString~" -o "~outfile~"'");
+            for(int i=0; i<toRemove.length; i++) {
+                if(toRemove[i] != outfile) remove(toRemove[i]);
+            }
+            exit(l.status);
+        }
         for(int i=0; i<toRemove.length; i++) {
             if(toRemove[i] != outfile) remove(toRemove[i]);
         }

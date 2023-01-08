@@ -1,41 +1,9 @@
-@addLibrary("pthread");
-
-namespace libc {
-    struct pthread {}
-    struct pthread_attr {}
-
-    namespace pthread {
-        extern(linkname: "pthread_create") int create(libc::pthread* thr, libc::pthread_attr* attr, void*(void*) start, void* arg);
-        (inline) int create(libc::pthread* thr, libc::pthread_attr* attr, void*(void*) start) => libc::pthread::create(thr,attr,start,null);
-        extern(linkname: "pthread_join") int join(libc::pthread thr, void** data);
-        extern(linkname: "pthread_exit") void exit(void* val);
-        extern(linkname: "pthread_cancel") void stop(libc::pthread* thr);
-        extern(linkname: "pthread_testcancel") void checkStop();
-        extern(linkname: "pthread_detach") int detach(libc::pthread* thr);
-    }
-    namespace pthread_attr {
-        extern(linkname: "pthread_attr_init") int init(libc::pthread_attr* attr);
-    }
-}
-
-namespace std {
-    struct thread {
-        libc::pthread thr;
-        void*(void*) function;
-
-        std::thread this(void*(void*) function) {this.function = function;} => this;
-
-        int start => libc::pthread::create(this.&thr, cast(libc::pthread_attr*)null, this.function, cast(void*)null);
-
-        (inline) int join(void** data) => libc::pthread::join(this.thr,data);
-
-        (inline) void stop {libc::pthread::stop(this.&thr);}
-        
-        (inline) void detach {libc::pthread::detach(this.&thr);}
-    }
-
-    namespace thread {
-        (inline) void exit(void* val) {libc::pthread::exit(val);}
-        (inline) void checkStop {libc::pthread::checkStop();}
+@if((__RAVE_OS == "LINUX") && (__RAVE_PLATFORM == "X86_64")) {
+    import <std/sysc>
+    
+    namespace libc {
+        namespace thread {
+            //int create(long ul, long ul2, int* ip, int* ip2, long ul3) => libc::syscall(56, ul, ul2, ip, ip2, ul3);
+        }
     }
 }

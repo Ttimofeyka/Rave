@@ -4,6 +4,10 @@ namespace libc {
     struct File {
 	    void* __builtInLibc;
     }
+
+    alias SeekSet = 0;
+    alias SeekCurr = 1;
+    alias SeekEnd = 2;
 }
 
 namespace libc {
@@ -19,6 +23,8 @@ namespace libc {
     extern(linkname: "fgetc") char fgetc(libc::File* file);
     extern(linkname: "fgets") char* fgets(char* s, int size, libc::File* file);
     extern(linkname: "fread") int fread(void* buffer, int size, int n, libc::File* file);
+    extern(linkname: "fseek") int fseek(libc::File* stream, int offset, int origin);
+    extern(linkname: "ftell") int ftell(libc::File* stream);
 }
 
 namespace std {
@@ -36,7 +42,9 @@ namespace std {
 
     (ctargs, inline) void print {
         std::string s = @callWithArgs(std::sprint);
-        std::printf("%s",s.c());
+        char* buffer = s.c();
+        std::printf("%s",buffer);
+        std::free(buffer);
     }
 
     (ctargs, inline) void println {
@@ -100,10 +108,6 @@ namespace std {
             va_end(&list);
         } => toret;
 
-        (ctargs,inline) void print {
-            
-        }
-
         int read(void* buffer, int size, int n) => libc::fread(buffer, size, n, this._file);
 
         char getc => libc::fgetc(this._file);
@@ -134,6 +138,27 @@ namespace std {
         void ~with {
             this.close();
         }
+
+        std::string readText {
+            bool needToClose = false;
+            if(this.isOpen == false) {
+                this.open("rb");
+                needToClose = true;
+            }
+
+            libc::fseek(this._file, 0, libc::SeekEnd);
+            int size = libc::ftell(this._file);
+            libc::fseek(this._file, 0, libc::SeekSet);
+
+            char* content = std::malloc(size+1);
+            this.read(content,@sizeOf(char),size);
+            content[size] = '\0';
+
+            std::string result = content;
+            std::free(content);
+
+            if(needToClose) this.close();
+        } => result;
     }
 
     namespace ansi {

@@ -1,1 +1,18 @@
-import <std/string> <std/io>
+import <std/string>
+
+namespace std {
+    Out fromTo<In,Out>(In n) {
+        Out t;
+
+        @if(@typesIsEquals(In,Out)) {
+            t = n;
+        };
+        @else {
+            @if(@isNumeric(In)) {
+                @if(@isNumeric(Out)) {
+                    t = cast(Out)n;
+                };
+            };
+        };
+    } => t;
+}
