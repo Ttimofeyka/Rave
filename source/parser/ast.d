@@ -401,7 +401,7 @@ class LLVMGen {
     }
 }
 
-Node[] condStack;
+Node[int] condStack;
 
 class Scope {
     LLVMValueRef[string] localscope;
@@ -4745,12 +4745,24 @@ class NodeBuiltin : Node {
     Type ty;
     NodeBlock block;
     bool isImport = false;
+    int CTId = 0;
 
     this(string name, Node[] args, int loc, NodeBlock block) {
         this.name = name;
         this.args = args.dup;
         this.loc = loc;
         this.block = block;
+    }
+
+    override void check() {
+        if(block !is null && !block.nodes.empty) {
+            for(int i=0; i<block.nodes.length; i++) {
+                if(NodeBuiltin nb = block.nodes[i].instanceof!NodeBuiltin) {
+                    nb.CTId += 1;
+                    nb.check();
+                }
+            }
+        }
     }
 
     NodeType asType(int n) {
@@ -4835,8 +4847,6 @@ class NodeBuiltin : Node {
         assert(0);
     }
 
-    override void check() {}
-
     override LLVMValueRef generate() {
         name = name.strip();
         switch(name) {
@@ -4918,7 +4928,7 @@ class NodeBuiltin : Node {
             case "if":
                 Node cond = args[0];
                 if(NodeBinary nb = args[0].instanceof!NodeBinary) nb.isStatic = true;
-                condStack ~= cond;
+                condStack[CTId] = cond;
                 if(isImport) for(int i=0; i<block.nodes.length; i++) {
                     if(NodeBuiltin nb = block.nodes[i].instanceof!NodeBuiltin) nb.isImport = true;
                     else if(NodeNamespace nn = block.nodes[i].instanceof!NodeNamespace) nn.isImport = true;
@@ -4930,7 +4940,7 @@ class NodeBuiltin : Node {
                 _if.comptime();
                 return null;
             case "else":
-                Node cond = condStack[condStack.length-1];
+                Node cond = condStack[CTId];
                 if(isImport) for(int i=0; i<block.nodes.length; i++) {
                     if(NodeBuiltin nb = block.nodes[i].instanceof!NodeBuiltin) nb.isImport = true;
                     else if(NodeNamespace nn = block.nodes[i].instanceof!NodeNamespace) nn.isImport = true;
@@ -4938,9 +4948,8 @@ class NodeBuiltin : Node {
                     else if(NodeVar nv = block.nodes[i].instanceof!NodeVar) nv.isExtern = true;
                     else if(NodeStruct ns = block.nodes[i].instanceof!NodeStruct) ns.isImported = true;
                 }
-                NodeIf _if = new NodeIf(new NodeUnary(loc,TokType.Ne,cond),block,null,loc,currScope.func,true);
+                NodeIf _if = new NodeIf(new NodeUnary(loc,TokType.Ne,cond),block,null,loc,(currScope is null ? "" : currScope.func),true);
                 _if.comptime();
-                condStack = condStack[0..$-1];
                 return null;
             case "sizeOf":
                 Type t = asType(0).ty;

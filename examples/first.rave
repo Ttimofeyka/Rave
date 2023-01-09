@@ -1,4 +1,4 @@
-import <std/io>
+import <std/io> <std/threads>
 
 void main {
     

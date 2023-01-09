@@ -1,9 +1,12 @@
-@if((__RAVE_OS == "LINUX") && (__RAVE_PLATFORM == "X86_64")) {
+@if((__RAVE_OS == "LINUX")) {
     import <std/sysc>
     
     namespace libc {
         namespace thread {
-            //int create(long ul, long ul2, int* ip, int* ip2, long ul3) => libc::syscall(56, ul, ul2, ip, ip2, ul3);
+            int create(long ul, long ul2, int* ip, int* ip2, long ul3) => libc::syscall(56, ul, ul2, ip, ip2, ul3);
         }
     }
+}
+@else {
+    @warning("Threads are not supported on your platform.");
 }

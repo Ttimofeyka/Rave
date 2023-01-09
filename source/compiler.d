@@ -72,7 +72,7 @@ class Compiler {
         currScope = null;
         MethodTable.clear();
         _importedFiles = [];
-        condStack = [];
+        condStack.clear();
     }
 
     void compile(string file) {
