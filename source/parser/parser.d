@@ -268,6 +268,24 @@ class Parser {
         return false;
     }
 
+    bool commaAfterCall() {
+        int idx = _idx;
+
+        // Peek() == (
+        next();
+        int countOfRpars = 1;
+
+        while(countOfRpars != 0) {
+            if(peek().type == TokType.Rpar) countOfRpars += 1;
+            else if(peek().type == TokType.Lpar) countOfRpars -= 1;
+            next();
+        }
+        bool result = false;
+        if(peek().type == TokType.Comma) result = true;
+        _idx = idx;
+        return result;
+    }
+
     Node[] parseFuncCallArgs() {
         import std.algorithm : canFind;
         if(peek().type == TokType.Rpar) next(); // skip (
@@ -280,6 +298,13 @@ class Parser {
                 case "cent":
                 case "char":
                 case "bool":
+                case "uint":
+                case "ushort":
+                case "ulong":
+                case "ucent":
+                case "uchar":
+                case "wchar":
+                case "uwchar":
                     if(isDefinedLambda()) {
                         NodeLambda nl = parseLambda().instanceof!NodeLambda;
                         args ~= nl;
@@ -289,7 +314,9 @@ class Parser {
                     break;
                 default:
                     if(canFind(structs,peek().value) || canFind(_templateNames,peek().value)) args ~= new NodeType(parseType(),peek().line);
-                    else {args ~= parseExpr();}
+                    else {
+                        args ~= parseExpr();
+                    }
                     break;
             }
             if(peek().type == TokType.Comma) next();
@@ -363,9 +390,21 @@ class Parser {
             }
             else if(t.value == "asm") {
                 next();
+                Type tt = new TypeVoid();
+                if(peek().type != TokType.String) {
+                    tt = parseType();
+                    if(peek().type == TokType.Comma) next();
+                }
                 string s = peek().value;
                 next();
-                return new NodeAsm(s);
+                string adds = "";
+                if(peek().type == TokType.Comma) {
+                    next();
+                    adds = peek().value;
+                    next();
+                }
+                if(peek().type == TokType.Lpar) next();
+                return new NodeAsm(s,true,tt,adds);
             }
             else if(t.value.toLower() == "w" && peek().type == TokType.String) {
                 next();
@@ -416,6 +455,10 @@ class Parser {
                     return parseCall(new NodeIden(all,peek().line));
                 }
             }
+            /*else if(peek().type == TokType.Rpar) {
+                // FuncCall
+                return parseCall(new NodeIden(t.value,t.line));
+            }*/
             return new NodeIden(t.value,peek().line);
         }
         if(t.type == TokType.MacroArgNum) {
@@ -735,7 +778,7 @@ class Parser {
     }
 
     Node parseAsm(string f) {
-        return null;
+        assert(0);
     }
 
     Node parseStmt(string f = "") {
@@ -757,9 +800,22 @@ class Parser {
         }
         else if(peek().value == "asm") {
             next(); next();
-            string s = peek().value; next();
-            next(); next();
-            return new NodeAsm(s);
+            Type tt = new TypeVoid();
+            if(peek().type != TokType.String) {
+                tt = parseType();
+                if(peek().type == TokType.Comma) next();
+            }
+            string s = peek().value;
+            next();
+            string adds = "";
+            if(peek().type == TokType.Comma) {
+                next();
+                adds = peek().value;
+                next();
+            }
+            if(peek().type == TokType.Lpar) next();
+            if(peek().type == TokType.Semicolon) next();
+            return new NodeAsm(s,true,tt,adds);
         }
         else if(peek().type == TokType.Command) {
             if(peek().value == "if") return parseIf(f,isStatic);
@@ -837,7 +893,6 @@ class Parser {
                             _idx -= 1;
                             return parseDecl(f);
                         }
-
                         Node e = parseCall(new NodeIden(iden,peek().line));
                         if(peek().type == TokType.Semicolon) next();
                         return e;
@@ -853,6 +908,7 @@ class Parser {
                 return parseDecl(f);
         }
         else if(peek().type == TokType.Eof) return null;
+        else if(peek().type == TokType.Rpar) return parseDecl(f);
         auto e = parseExpr();
         if(peek().type == TokType.Builtin) return e;
         if(peek().value == "}") next();

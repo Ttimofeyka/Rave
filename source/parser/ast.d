@@ -89,7 +89,8 @@ Type llvmTypeToType(LLVMTypeRef t) {
         }
         else if(LLVMGetTypeKind(t) == LLVMStructTypeKind) return new TypeStruct(cast(string)fromStringz(LLVMGetStructName(t)));
         else if(LLVMGetTypeKind(t) == LLVMFunctionTypeKind) {
-            return new TypeStruct(Generator.typeToString(t)[2..Generator.typeToString(t).lastIndexOf('"')]);
+            string ownType = Generator.typeToString(t)[0..Generator.typeToString(t).lastIndexOf('(')].strip();
+            return getType(ownType);
         }
         assert(0);
 }
@@ -428,8 +429,18 @@ class Scope {
             }
             return Generator.Globals[n];
         }
+        if(currScope.has("this")) {
+            Type _t = currScope.getVar("this",loc).t;
+            if(TypePointer tp = _t.instanceof!TypePointer) _t = tp.instance;
+            TypeStruct ts = _t.instanceof!TypeStruct;
+
+            if(ts.name.into(StructTable)) {
+                if(cast(immutable)[ts.name,n].into(structsNumbers)) {
+                    return new NodeGet(new NodeIden("this",loc),n,true,loc).generate();
+                }
+            }
+        }
         if(!n.into(args)) {
-            writeln(loc);
             Generator.error(loc,"Undefined identifier '"~n~"'!");
         }
         return LLVMGetParam(
@@ -481,6 +492,17 @@ class Scope {
             LLVMSetAlignment(instr,Generator.getAlignmentOfType(VarTable[n].t));
             return instr;
         }
+        if(currScope.has("this")) {
+            Type _t = currScope.getVar("this",loc).t;
+            if(TypePointer tp = _t.instanceof!TypePointer) _t = tp.instance;
+            TypeStruct ts = _t.instanceof!TypeStruct;
+
+            if(ts.name.into(StructTable)) {
+                if(cast(immutable)[ts.name,n].into(structsNumbers)) {
+                    return new NodeGet(new NodeIden("this",loc),n,false,loc).generate();
+                }
+            }
+        }
         if(func.into(Generator.Functions)) {
             if(!n.into(args)) {
                 if(n.into(Generator.Functions)) return Generator.Functions[n];
@@ -502,6 +524,17 @@ class Scope {
         if(n.into(localscope)) return localVars[n];
         if(n.into(Generator.Globals)) return VarTable[n];
         if(n.into(args)) return argVars[n];
+        if(currScope.has("this")) {
+            Type _t = currScope.getVar("this",line).t;
+            if(TypePointer tp = _t.instanceof!TypePointer) _t = tp.instance;
+            TypeStruct ts = _t.instanceof!TypeStruct;
+
+            if(ts.name.into(StructTable)) {
+                if(cast(immutable)[ts.name,n].into(structsNumbers)) {
+                    return structsNumbers[cast(immutable)[ts.name,n]].var;
+                }
+            }
+        }
         Generator.error(line-1,"Undefined variable \""~n~"\"!");
         assert(0);
     }
@@ -1639,7 +1672,7 @@ class NodeVar : Node {
                     }
                     LLVMBuildStore(Generator.Builder,LLVMConstArray(LLVMGetElementType(gT),_values.ptr,cast(uint)_values.length),currScope.localscope[name]);
                 }
-                else if(LLVMGetTypeKind(gT) != LLVMFunctionTypeKind && LLVMGetTypeKind(gT) != LLVMStructTypeKind) {
+                else if(LLVMGetTypeKind(gT) != LLVMStructTypeKind) {
                     LLVMBuildStore(Generator.Builder,LLVMConstNull(gT), currScope.localscope[name]);
                 }
             }
@@ -2209,8 +2242,7 @@ class NodeCall : Node {
         for(int i=0; i<args.length; i++) {
             if(NodeCall nc = args[i].instanceof!NodeCall) {
                 if(NodeIden id = nc.func.instanceof!NodeIden) {
-                    LLVMTypeRef t = LLVMTypeOf(currScope.get(id.name,loc));
-                    params ~= LLVMConstNull(t);
+                    params ~= LLVMConstNull(Generator.GenerateType(FuncTable[id.name].type,loc));
                 }
                 else if(NodeGet ng = nc.func.instanceof!NodeGet) {
                     NodeGet _ng = ng;
@@ -4871,14 +4903,6 @@ class NodeBuiltin : Node {
                     if(ty.toString() != "bool" && tb.type == BasicType.Bool) ty = new TypeStruct(ty.toString());
                 }
                 return null;
-            case "getCurrArg":
-                Type getArgType = asType(0).ty;
-                int getArgNum = Generator.currentBuiltinArg;
-                return new NodeCast(getArgType,new NodeIden("_RaveArg"~to!string(getArgNum),loc),loc).generate();
-            case "getCurrArgType":
-                int getArgNum = Generator.currentBuiltinArg;
-                this.ty = currScope.getVar("_RaveArg"~to!string(getArgNum),loc).t;
-                return null;
             case "typeToString":
                 Type typeToStr = asType(0).ty;
                 return new NodeString(typeToStr.toString(),false).generate();
@@ -4985,6 +5009,14 @@ class NodeBuiltin : Node {
                 }
                 Generator.warning(loc,allString);
                 return null;
+            case "getCurrArg":
+                Type getArgType = asType(0).ty;
+                int getArgNum = Generator.currentBuiltinArg;
+                return new NodeCast(getArgType,new NodeIden("_RaveArg"~to!string(getArgNum),loc),loc).generate();
+            case "getCurrArgType":
+                int getArgNum = Generator.currentBuiltinArg;
+                this.ty = currScope.getVar("_RaveArg"~to!string(getArgNum),loc).t;
+                return null;
             default: break;
         }
         Generator.error(loc,"Builtin with the name '"~name~"' does not exist");
@@ -5027,6 +5059,10 @@ class NodeBuiltin : Node {
             case "setCustomMalloc":
                 NeededFunctions["malloc"] = asStringIden(0);
                 break;
+            case "getCurrArgType":
+                int getArgNum = Generator.currentBuiltinArg;
+                this.ty = currScope.getVar("_RaveArg"~to!string(getArgNum),loc).t;
+                return new NodeType(this.ty,loc);
             default: break;
         }
         return null;
@@ -5140,23 +5176,34 @@ class NodeWith : Node {
 
 class NodeAsm : Node {
     string line;
+    string additions = "";
+    bool isVolatile = false;
+    Type t;
 
-    this(string line) {
+    this(string line, bool isVolatile, Type t, string additions) {
         this.line = line;
+        this.isVolatile = isVolatile;
+        this.t = t;
+        this.additions = additions;
     }
 
     override LLVMValueRef generate() {
+        // asm volatile ("movl %%ebp, %0" : "=r" (stack_top));
+        // stack_top = asm(long,"movl %%ebp, %0","=r");
         LLVMTypeRef[] ts;
-        return LLVMGetInlineAsm(
-            LLVMFunctionType(LLVMVoidTypeInContext(Generator.Context),ts.ptr,0,false),
+        LLVMValueRef[] vs;
+        LLVMValueRef v = LLVMGetInlineAsm(
+            LLVMFunctionType(Generator.GenerateType(t),ts.ptr,0,false),
             cast(char*)toStringz(line),
             line.length,
-            cast(char*)toStringz(""),
-            "".length,
+            cast(char*)toStringz(additions),
+            additions.length,
+            isVolatile,
             false,
-            false,
-            LLVMInlineAsmDialectIntel
+            //LLVMInlineAsmDialectIntel
+            LLVMInlineAsmDialectATT
         );
+        return LLVMBuildCall(Generator.Builder,v,vs.ptr,0,toStringz(t.instanceof!TypeVoid ? "" : "v_"));
     }
 }
 

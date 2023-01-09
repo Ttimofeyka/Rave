@@ -278,14 +278,16 @@ namespace std {
 
     (ctargs) std::string sprint {
         std::string result = "";
-        auto v = std::vector<std::argument>();
+        std::vector<void*> values = std::vector<void*>();
+        std::vector<char*> types = std::vector<char*>();
 
         int z = 0;
         @foreachArgs() {
             @if(@typesIsNequals(@getCurrArgType(),float)) {
                 @if(@typesIsNequals(@getCurrArgType(),double)) {
                     @if(@typesIsNequals(@getCurrArgType(),std::string)) {
-                        v.add(std::argument(@getCurrArg(void*), @typeToString(@getCurrArgType())));
+                        values.add(@getCurrArg(void*));
+                        types.add(@typeToString(@getCurrArgType()));
                     };
                     @if(@typesIsEquals(@getCurrArgType(),std::string)){
                         std::string s = @getCurrArg(std::string);
@@ -305,29 +307,29 @@ namespace std {
         };
 
         int i = 0;
-        while(i<v.length) {
-            if(v.data[i].type == "char*") {
-                result.append(std::string(v.data[i].value));
+        while(i<types.length) {
+            if(types.data[i] == "char*") {
+                result.append(std::string(values.data[i]));
             }
-            else if((v.data[i].type == "std::string") || (v.data[i].type == "std::string*")) {
-                std::string* s = cast(std::string*)v.data[i].value;
+            else if((types.data[i] == "std::string") || (types.data[i] == "std::string*")) {
+                std::string* s = cast(std::string*)values.data[i];
                 result.append(s);
             }
-            else if((v.data[i].type == "float") || (v.data[i].type == "double")) {
-                double* d = cast(double*)v.data[i].value;
+            else if((types.data[i] == "float") || (types.data[i] == "double")) {
+                double* d = cast(double*)values.data[i];
                 result.append(result.fromDouble(d[0]));
             }
-            else if((v.data[i].type == "long" || v.data[i].type == "int") || v.data[i].type == "short") {
-                long l = cast(long)v.data[i].value;
+            else if((types.data[i] == "long" || types.data[i] == "int") || types.data[i] == "short") {
+                long l = cast(long)values.data[i];
                 result.append(result.fromNumber(l));
             }
-            else if(v.data[i].type == "bool") {
-                bool b = cast(bool)v.data[i].value;
+            else if(types.data[i] == "bool") {
+                bool b = cast(bool)values.data[i];
                 if(b) result.append(std::string("true"));
                 else result.append(std::string("false"));
             }
-            else if(v.data[i].type == "char") {
-                result.append(cast(char)v.data[i].value);
+            else if(types.data[i] == "char") {
+                result.append(cast(char)values.data[i]);
             }
             i += 1;
         }

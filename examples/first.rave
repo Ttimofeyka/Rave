@@ -1,5 +1,5 @@
 import <std/io>
 
 void main {
-    SafePtr<int> ptr = SafePtr<int>(10);
+    
 }
