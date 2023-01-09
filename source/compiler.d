@@ -127,7 +127,7 @@ class Compiler {
         parseTime += dur.total!"msecs";
 
         startT = MonoTime.currTime;
-        Generator = new LLVMGen(file,opts.optimizeLevel);
+        Generator = new LLVMGen(file,opts);
         if(opts.printAll) writeln("File: "~file);
         for(int i=0; i<n.length; i++) {
             if(opts.printAll) writeln("\t"~n[i].classinfo.name);

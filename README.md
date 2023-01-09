@@ -8,7 +8,7 @@ Rave is a statically typed, compiled, procedural, general-purpose programming la
 import <std/io>
 
 void main {
-  std::printf("Hello, world!\n");
+    std::println("Hello, world!");
 }
 ```
 

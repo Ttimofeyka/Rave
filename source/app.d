@@ -46,6 +46,8 @@ struct CompOpts {
 	int optimizeLevel = 0;
     bool isPIE = false;
     bool noPIE = false;
+	bool runtimeChecks = true;
+	bool disableWarnings = false;
 }
 
 CompOpts analyzeArgs(string[] args) {
@@ -73,6 +75,12 @@ CompOpts analyzeArgs(string[] args) {
 				opts.optimizeLevel = to!int(args[idx+1]); idx += 1; break;
 			case "-s": case "--shared":
 				opts.linkparams ~= "-shared "; break;
+			case "-rco": case "--runtimeChecksOff":
+				opts.runtimeChecks = false;
+				break;
+			case "-dw": case "--disableWarnings":
+				opts.disableWarnings = true;
+				break;
 			default:
 				if(currCommand[0] == '-') {
 					opts.linkparams ~= currCommand~" "; idx += 1;

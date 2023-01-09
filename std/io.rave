@@ -28,12 +28,13 @@ namespace libc {
 }
 
 namespace std {
-    extern(linkname: "printf") int printf(char* str, ...);
+    //extern(linkname: "printf") int printf(char* str, ...);
     (vararg) int printf(std::string str) {
         va_list list;
 
         va_start(&list);
-            int toret = std::printf(str.c());
+            char* _s = str.c();
+            int toret = std::printf(_s);
         va_end(&list);
     } => toret;
     extern(linkname: "scanf") int scanf(char* fmt, ...);

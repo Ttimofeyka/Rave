@@ -1,11 +1,21 @@
 namespace std {
     extern(linkname: "exit") void exit(int code);
+    extern(linkname: "system") int system(char* cmd);
+    extern(linkname: "printf",vararg) int printf(char* str);
+
     (inline) void assert(bool cond) {
         if(!cond) {
-            std::exit(2);
+            std::printf("Assert: The conditions haven't been verified!\n");
+            std::exit(1);
         }
     }
-    extern(linkname: "system") int system(char* cmd);
+
+    (inline) void assert(bool cond, char* msg) {
+        if(!cond) {
+            std::printf("%s",msg);
+            std::exit(1);
+        }
+    }
 
     namespace dontuse {
         (inline) void _void(bool* b) {} // Just... ignore it?

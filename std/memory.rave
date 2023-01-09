@@ -24,6 +24,50 @@ namespace std {
     }
 }
 
+struct SafePtr<T> {
+    T* pointer;
+    int size = 0;
+
+    SafePtr<T> this {
+        this.pointer = cast(T*)null;
+        this.size = 0;
+    } => this;
+
+    SafePtr<T> this(T* pointer) {
+        this.pointer = pointer;
+        this.size = 0;
+    } => this;
+
+    SafePtr<T> this(T* pointer, int size) {
+        this.pointer = pointer;
+        this.size = size;
+    } => this;
+
+    SafePtr<T> this(int size) {
+        if(size > 0) this.pointer = cast(T*)std::malloc(size);
+        this.size = size;
+    } => this;
+
+    (inline) T get(int n) {
+        std::assert((this.pointer != cast(T*)null),"Error using SafePtr: attempt to access the null pointer!\n");
+        std::assert(((n < this.size) && (n > 0)),"Error using SafePtr: attempt to access an element outside the pointer!\n");
+    } => this.pointer[n];
+
+    (inline) void set(int n, T value) {
+        std::assert((this.pointer != cast(T*)null),"Error using SafePtr: attempt to access the null pointer!\n");
+        std::assert(((n < this.size) && (n > 0)),"Error using SafePtr: attempt to access an element outside the pointer!\n");
+        this.pointer[n] = value;
+    } => this;
+
+    (inline) bool operator==(SafePtr<T> one, SafePtr<T> two) => one.pointer == two.pointer;
+
+    void ~this {
+        std::free(cast(void*)this.pointer);
+        this.pointer = cast(T*)null;
+        this.size = 0;
+    }
+}
+
 macro delete {
     std::free(cast(void*)#0);
 }

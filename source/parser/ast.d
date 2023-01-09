@@ -17,6 +17,7 @@ import std.file;
 import std.path;
 import lexer.lexer : Lexer;
 import parser.parser : Parser;
+import app : CompOpts;
 
 Node[string] AliasTable;
 NodeFunc[string] FuncTable;
@@ -107,13 +108,13 @@ class LLVMGen {
     string file;
     long countOfLambdas;
     Type[string] toReplace;
-    int optLevel;
     int currentBuiltinArg = 0;
     string lastFunc = "";
+    CompOpts opts;
 
-    this(string file, int optLevel) {
+    this(string file, CompOpts opts) {
         this.file = file;
-        this.optLevel = optLevel;
+        this.opts = opts;
         Context = LLVMContextCreate();
         Module = LLVMModuleCreateWithNameInContext(toStringz("rave"),Context);
         LLVMInitializeAllTargets();
@@ -124,6 +125,9 @@ class LLVMGen {
 
         NeededFunctions["free"] = "std::free";
         NeededFunctions["malloc"] = "std::malloc";
+        if(opts.runtimeChecks) {
+            NeededFunctions["assert"] = "std::assert[_b_p]";
+        }
     }
 
     string mangle(string name, bool isFunc, bool isMethod, FuncArgSet[] args = null) {
@@ -137,10 +141,15 @@ class LLVMGen {
         return "_Raveg"~name;
     }
 
-    void error(int loc,string msg) {
+    void error(int loc, string msg) {
         pragma(inline,true);
         writeln("\033[0;31mError in '",file,"' file on "~to!string(loc)~" line: " ~ msg ~ "\033[0;0m");
 		exit(1);
+    }
+
+    void warning(int loc, string msg) {
+        pragma(inline,true);
+        writeln("\033[33mWarning in '",file,"' file on "~to!string(loc)~" line: "~ msg ~"\033[0;0m");
     }
 
     Type getTrueStructType(TypeStruct ts) {
@@ -1505,6 +1514,7 @@ class NodeVar : Node {
     bool isVolatile;
 
     bool isChanged = false;
+    bool noZeroInit = false;
 
     this(string name, Node value, bool isExt, bool isConst, bool isGlobal, DeclMod[] mods, int loc, Type t, bool isVolatile = false) {
         this.name = name;
@@ -1584,6 +1594,7 @@ class NodeVar : Node {
             // Local variables
             for(int i=0; i<mods.length; i++) {
                 if(mods[i].name == "volatile") isVolatile = true;
+                else if(mods[i].name == "nozeroinit") noZeroInit = true;
             }
             currScope.localVars[name] = this;
 
@@ -1603,9 +1614,11 @@ class NodeVar : Node {
                 value = ni;
             }
 
+            LLVMTypeRef gT = Generator.GenerateType(t,loc);
+
             currScope.localscope[name] = LLVMBuildAlloca(
                 Generator.Builder,
-                Generator.GenerateType(t,loc),
+                gT,
                 toStringz(name)
             );
             if(isVolatile) {
@@ -1618,7 +1631,18 @@ class NodeVar : Node {
             if(value !is null) {
                 new NodeBinary(TokType.Equ,new NodeIden(name,loc),value,loc).generate();
             }
-
+            else if (!noZeroInit) {
+                if(LLVMGetTypeKind(gT) == LLVMArrayTypeKind) {
+                    LLVMValueRef[] _values;
+                    for(int i=0; i<LLVMGetArrayLength(gT); i++) {
+                        _values ~= LLVMConstNull(LLVMGetElementType(gT));
+                    }
+                    LLVMBuildStore(Generator.Builder,LLVMConstArray(LLVMGetElementType(gT),_values.ptr,cast(uint)_values.length),currScope.localscope[name]);
+                }
+                else if(LLVMGetTypeKind(gT) != LLVMFunctionTypeKind && LLVMGetTypeKind(gT) != LLVMStructTypeKind) {
+                    LLVMBuildStore(Generator.Builder,LLVMConstNull(gT), currScope.localscope[name]);
+                }
+            }
             return currScope.localscope[name];
         }
     }
@@ -1798,6 +1822,7 @@ class NodeFunc : Node {
     bool isCtargs = false;
     bool isCtargsPart = false;
     bool isComdat = false;
+    bool isSafe = false;
 
     string[] templateNames;
     Type[] _templateTypes;
@@ -1825,7 +1850,7 @@ class NodeFunc : Node {
         string toAdd = typesToString(args);
         if(!(name !in FuncTable)) {
             if(typesToString(FuncTable[name].args) == toAdd) {
-                checkError(loc,"a function with '"~name~"' name already exists on "~to!string(FuncTable[name].loc+1)~" line!");
+                if(name != "std::printf") checkError(loc,"a function with '"~name~"' name already exists on "~to!string(FuncTable[name].loc+1)~" line!");
             }
             else {
                 name ~= toAdd;
@@ -1895,6 +1920,7 @@ class NodeFunc : Node {
                 case "pure": isPure = true; break;
                 case "ctargs": isCtargs = true; return null;
                 case "comdat": isComdat = true; break;
+                case "safe": isSafe = true; break;
                 default: if(mods[i].name[0] == '@') _builtins[mods[i].name[1..$]] = mods[i]._genValue.instanceof!NodeBuiltin; break;
             }
         }
@@ -1938,7 +1964,6 @@ class NodeFunc : Node {
 
             LLVMSetComdat(Generator.Functions[name],cmr);
             LLVMSetLinkage(Generator.Functions[name],LLVMLinkOnceODRLinkage);
-            isExtern = false;
         }
 
         if(!isExtern) {
@@ -2505,9 +2530,14 @@ class NodeCall : Node {
         if(into(f.name~typesToString(parametersToTypes(params)),FuncTable)) {
             rname ~= typesToString(parametersToTypes(params));
             if(rname !in Generator.Functions) {
-                Generator.error(loc,"Function '"~rname~"' does not exist!");
+                writeln(f.name.into(Generator.Functions));
+                if(f.name.into(Generator.Functions)) {
+                    calledFunc = FuncTable[f.name];
+                    rname = f.name;
+                }
+                else Generator.error(loc,"Function '"~rname~"' does not exist!");
             }
-            calledFunc = FuncTable[rname];
+            else calledFunc = FuncTable[rname];
         }
         else {
             if(rname !in Generator.Functions) {
@@ -2540,7 +2570,7 @@ class NodeCall : Node {
         }
         if(fromStringz(LLVMPrintValueToString(Generator.Functions[rname])).indexOf("llvm.") != -1) {
             LLVMValueRef _v = LLVMBuildAlloca(Generator.Builder,LLVMInt1TypeInContext(Generator.Context),toStringz("fix"));
-            if(Generator.optLevel > 0) LLVMBuildCall(Generator.Builder,Generator.Functions["std::dontuse::_void"],[_v].ptr,1,toStringz(""));
+            if(Generator.opts.optimizeLevel > 0) LLVMBuildCall(Generator.Builder,Generator.Functions["std::dontuse::_void"],[_v].ptr,1,toStringz(""));
             // This is necessary to solve a bug with LLVM-11
         }
         _val = LLVMBuildCall(
@@ -2870,6 +2900,16 @@ class NodeIndex : Node {
             }
 
             LLVMValueRef ptr = currScope.get(id.name,loc);
+            if(Generator.opts.runtimeChecks) {
+                LLVMValueRef isNull = LLVMBuildICmp(
+                    Generator.Builder,
+                    LLVMIntNE,
+                    LLVMBuildPtrToInt(Generator.Builder,ptr,LLVMInt32TypeInContext(Generator.Context),toStringz("ptoi_")),
+                    LLVMBuildPtrToInt(Generator.Builder,new NodeNull().generate(),LLVMInt32TypeInContext(Generator.Context),toStringz("ptoi_")),
+                    toStringz("assert(p==null)_")
+                );
+                LLVMBuildCall(Generator.Builder,Generator.Functions[NeededFunctions["assert"]],[isNull,new NodeString("Runtime error in '"~Generator.file~"' file on "~to!string(loc)~" line: attempt to use a null pointer in ptoi!\n",false).generate()].ptr,2,toStringz(""));
+            }
             if(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMArrayTypeKind && LLVMGetTypeKind(LLVMTypeOf(currScope.getWithoutLoad(id.name,loc))) == LLVMArrayTypeKind) {
                 // Argument
                 LLVMValueRef copyVal = LLVMBuildAlloca(Generator.Builder,LLVMTypeOf(ptr),toStringz("copyVal_"));
@@ -3165,9 +3205,20 @@ class NodeUnary : Node {
             return LLVMBuildNot(Generator.Builder,base.generate(),toStringz("not_"));
         }
         else if(type == TokType.Multiply) {
+            LLVMValueRef _base = base.generate();
+            if(Generator.opts.runtimeChecks) {
+                LLVMValueRef isNull = LLVMBuildICmp(
+                    Generator.Builder,
+                    LLVMIntNE,
+                    LLVMBuildPtrToInt(Generator.Builder,_base,LLVMInt32TypeInContext(Generator.Context),toStringz("ptoi_")),
+                    LLVMBuildPtrToInt(Generator.Builder,new NodeNull().generate(),LLVMInt32TypeInContext(Generator.Context),toStringz("ptoi_")),
+                    toStringz("assert(p==null)_")
+                );
+                LLVMBuildCall(Generator.Builder,Generator.Functions[NeededFunctions["assert"]],[isNull,new NodeString("Runtime error in '"~Generator.file~"' file on "~to!string(loc)~" line: attempt to use a null pointer in ptoi!\n",false).generate()].ptr,2,toStringz(""));
+            }
             return LLVMBuildLoad(
                 Generator.Builder,
-                base.generate(),
+                _base,
                 toStringz("load1958_")
             );
         }
@@ -4366,9 +4417,18 @@ class NodeItop : Node {
 
     override void check() {I.check();}
     override LLVMValueRef generate() {
+        LLVMValueRef _int = I.generate();
+        LLVMValueRef isNull = LLVMBuildICmp(
+            Generator.Builder,
+            LLVMIntNE,
+            _int,
+            LLVMConstInt(LLVMTypeOf(_int),0,false),
+            toStringz("assert(number==0)_")
+        );
+        LLVMBuildCall(Generator.Builder,Generator.Functions[NeededFunctions["assert"]],[isNull,new NodeString("Runtime error in '"~Generator.file~"' file on "~to!string(loc)~" line: an attempt to turn a number into a null pointer in itop!\n",false).generate()].ptr,2,toStringz(""));
         return LLVMBuildIntToPtr(
             Generator.Builder,
-            I.generate(),
+            _int,
             Generator.GenerateType(t,loc),
             toStringz("itop")
         );
@@ -4386,9 +4446,20 @@ class NodePtoi : Node {
 
     override void check() {P.check();}
     override LLVMValueRef generate() {
+        LLVMValueRef ptr = P.generate();
+        if(Generator.opts.runtimeChecks) {
+            LLVMValueRef isNull = LLVMBuildICmp(
+                Generator.Builder,
+                LLVMIntNE,
+                LLVMBuildPtrToInt(Generator.Builder,ptr,LLVMInt32TypeInContext(Generator.Context),toStringz("ptoi_")),
+                LLVMBuildPtrToInt(Generator.Builder,new NodeNull().generate(),LLVMInt32TypeInContext(Generator.Context),toStringz("ptoi_")),
+                toStringz("assert(p==null)_")
+            );
+            LLVMBuildCall(Generator.Builder,Generator.Functions[NeededFunctions["assert"]],[isNull,new NodeString("Runtime error in '"~Generator.file~"' file on "~to!string(loc)~" line: attempt to use a null pointer in ptoi!\n",false).generate()].ptr,2,toStringz(""));
+        }
         return LLVMBuildPtrToInt(
             Generator.Builder,
-            P.generate(),
+            ptr,
             LLVMInt64TypeInContext(Generator.Context),
             toStringz("ptoi")
         );
@@ -4683,6 +4754,39 @@ class NodeBuiltin : Node {
         assert(0);
     }
 
+    string getStringFrom(string s) {
+        if(currScope.has(s)) {
+            LLVMValueRef v = currScope.getWithoutLoad(s,loc);
+            string trueString = "";
+            LLVMValueRef nextInst = LLVMGetNextInstruction(v);
+            while(nextInst !is null) {
+                string str = cast(string)fromStringz(LLVMPrintValueToString(nextInst));
+                if(LLVMGetInstructionOpcode(nextInst) == LLVMStore) {
+                       str = str.strip();
+                        str = str[6..$];
+                    if(str[0..3] == "i8*") {
+                        if(str.indexOf("i8**") != -1 && str.indexOf("@_str") != -1 && str.indexOf(s) != -1) {
+                            // We found the right value
+                            str = str[str.indexOf("@_str")..$];
+                            str = str[1..str.indexOf(",")];
+                            str = cast(string)fromStringz(LLVMPrintValueToString(LLVMGetNamedGlobal(Generator.Module,toStringz(str))));
+                            str = str[str.indexOf("constant")+"constant".length..$].strip();
+                            str = str[str.indexOf("c")+2..str.lastIndexOf(",")-1];
+                            trueString = str;
+                        }
+                    }
+                }
+                nextInst = LLVMGetNextInstruction(nextInst);
+            }
+            trueString = trueString[0..$-3];
+            trueString = trueString.replace("\\0A","\n")
+                .replace("\\09","\t")
+                .replace("\\00","");
+                return trueString;
+        }
+        assert(0);
+    }
+
     string asStringIden(int n) {
         if(NodeIden id = args[n].instanceof!NodeIden) {
             string nam = id.name;
@@ -4695,6 +4799,7 @@ class NodeBuiltin : Node {
             return nam;
         }
         else if(NodeString str = args[n].instanceof!NodeString) return str.value;
+        else if(NodeBool bo = args[n].instanceof!NodeBool) return to!string(bo.value);
         assert(0);
     }
 
@@ -4833,6 +4938,53 @@ class NodeBuiltin : Node {
             case "setCustomMalloc":
                 NeededFunctions["malloc"] = asStringIden(0);
                 return null;
+            case "lengthOfCString":
+                if(NodeString str = args[0].instanceof!NodeString) {
+                    return LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),str.value.length,false);
+                }
+                else {
+                    string s = asStringIden(0);
+                    return LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),s.length,false);
+                }
+            case "execute":
+                string s = asStringIden(0);
+                if(currScope !is null && currScope.has(s)) s = getStringFrom(s);
+                if(currScope !is null) s = "{"~s~"}";
+
+                Lexer l = new Lexer(s,1);
+                Parser p = new Parser(l.getTokens(),1,"(execute)");
+
+                if(currScope is null) p.parseAll();
+                else {
+                    NodeBlock bl = p.parseBlock(currScope.func).instanceof!NodeBlock;
+                    bl.check();
+                    bl.generate();
+                    return null;
+                }
+
+                Node[] nodes = p.getNodes().dup;
+                for(int i=0; i<nodes.length; i++) nodes[i].check();
+                for(int i=0; i<nodes.length; i++) nodes[i].generate();
+                return null;
+            case "setRuntimeChecks":
+                string s = asStringIden(0);
+                Generator.opts.runtimeChecks = to!bool(s);
+                return null;
+            case "error":
+                string allString = "";
+                for(int i=0; i<args.length; i++) {
+                    allString ~= asStringIden(i);
+                }
+                Generator.error(loc,allString);
+                return null;
+            case "warning":
+                if(Generator.opts.disableWarnings) return null;
+                string allString = "";
+                for(int i=0; i<args.length; i++) {
+                    allString ~= asStringIden(i);
+                }
+                Generator.warning(loc,allString);
+                return null;
             default: break;
         }
         Generator.error(loc,"Builtin with the name '"~name~"' does not exist");
@@ -4853,7 +5005,7 @@ class NodeBuiltin : Node {
                 Type one = asType(0).ty;
                 Type two = asType(1).ty;
                 return new NodeBool(one.toString() != two.toString());
-            case "sizeof":
+            case "sizeOf":
                 Type t = asType(0).ty;
                 return new NodeInt(cast(ulong)t.getSize());
             case "isNumeric":
