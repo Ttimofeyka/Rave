@@ -96,7 +96,6 @@ class TypeBasic : Type {
                 type = BasicType.Char; break;
             case "cent":
                 type = BasicType.Cent; break;
-
             case "uint":
                 type = BasicType.Uint; break;
             case "uwchar":

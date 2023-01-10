@@ -657,7 +657,7 @@ class NodeString : Node {
         if(isWide) {
             globalstr = LLVMAddGlobal(
                 Generator.Module,
-                LLVMArrayType(LLVMInt16TypeInContext(Generator.Context),cast(uint)value.length+1),
+                LLVMArrayType(LLVMInt32TypeInContext(Generator.Context),cast(uint)value.length+1),
                 toStringz("_wstr")
             );
         }
@@ -2255,6 +2255,7 @@ class NodeCall : Node {
         for(int i=0; i<args.length; i++) {
             if(NodeCall nc = args[i].instanceof!NodeCall) {
                 if(NodeIden id = nc.func.instanceof!NodeIden) {
+                    if(!id.name.into(FuncTable)) Generator.error(loc,"Attempt to call a non-existent function '"~id.name~"'!");
                     params ~= LLVMConstNull(Generator.GenerateType(FuncTable[id.name].type,loc));
                 }
                 else if(NodeGet ng = nc.func.instanceof!NodeGet) {

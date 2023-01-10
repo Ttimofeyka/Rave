@@ -143,7 +143,9 @@ namespace std {
         }
 
         void append(char* cstr) {
-            this.append(std::string(cstr));
+            for(int i=0; cstr[i] != '\0'; i+=1) {
+                this.append(cstr[i]);
+            }
         }
 
         std::string copy {
@@ -286,22 +288,32 @@ namespace std {
             @if(@typesIsNequals(@getCurrArgType(),float)) {
                 @if(@typesIsNequals(@getCurrArgType(),double)) {
                     @if(@typesIsNequals(@getCurrArgType(),std::string)) {
-                        values.add(@getCurrArg(void*));
-                        types.add(@typeToString(@getCurrArgType()));
+                        @if(@typesIsEquals(@getCurrArgType(),std::ustring)) {
+                            std::ustring us = @getCurrArg(std::ustring);
+                            values.add(cast(void*)&us);
+                            types.add("std::ustring*");
+                        };
+                        @if(@typesIsNequals(@getCurrArgType(),std::ustring)) {
+                            values.add(@getCurrArg(void*));
+                            types.add(@typeToString(@getCurrArgType()));
+                        };
                     };
-                    @if(@typesIsEquals(@getCurrArgType(),std::string)){
+                    @if(@typesIsEquals(@getCurrArgType(),std::string)) {
                         std::string s = @getCurrArg(std::string);
-                        v.add(std::argument(cast(void*)&s, "std::string"));
+                        values.add(cast(void*)&s);
+                        types.add("std::string*");
                     };
                 };
                 @if(@typesIsEquals(@getCurrArgType(),double)) {
                     double d = @getCurrArg(double);
-                    v.add(std::argument(cast(void*)&d, "double"));
+                    values.add(cast(void*)&d);
+                    types.add("double");
                 };
             };
             @if(@typesIsEquals(@getCurrArgType(),float)) {
                 double f = @getCurrArg(double);
-                v.add(std::argument(cast(void*)&f, "double"));
+                values.add(cast(void*)&f);
+                types.add("double");
             };
             z += 1;
         };
@@ -330,6 +342,10 @@ namespace std {
             }
             else if(types.data[i] == "char") {
                 result.append(cast(char)values.data[i]);
+            }
+            else if(types.data[i] == "std::ustring*") {
+                std::ustring* s = cast(std::ustring*)values.data[i];
+                result.append(s.c());
             }
             i += 1;
         }

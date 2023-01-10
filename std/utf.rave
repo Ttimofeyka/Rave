@@ -1,0 +1,115 @@
+import <std/string>
+
+@addLibrary("unistring");
+
+namespace libc {
+    namespace utf {
+        extern(linkname: "u8_strlen") int strlen(char* s);
+        extern(linkname: "u8_strcpy") char* strcpy(char* dest, char* src);
+        extern(linkname: "u8_strcmp") bool strcmp(char* s1, char* s2);
+        extern(linkname: "u8_strtok") char* strtok(char* str, char* delim, char** ptr);
+        extern(linkname: "u8_strchr") char* strchr(char* str, int uc);
+        extern(linkname: "u8_strmblen") int strmblen(char* s);
+        extern(linkname: "u8_next") char* next(int* puc, char* s);
+        extern(linkname: "u8_strstr") char* strstr(char* haystack, char* needle);
+    }
+}
+
+namespace std {
+    struct ustring {
+        char* data;
+        int length;
+        int bytes;
+        int capacity;
+
+        std::ustring this(char* s) {
+            if(s != null) {
+                this.length = libc::utf::strlen(s);
+                this.bytes = libc::strlen(s);
+                this.capacity = this.bytes * 2;
+                if(this.capacity == 0) this.capacity = 1;
+                this.data = std::malloc(this.capacity);
+
+                int i = 0;
+                while(i<this.length) {
+                    this.data[i] = s[i];
+                    i += 1;
+                }
+            }
+            else {
+                this.length = 0;
+                this.capacity = 4;
+                this.data = std::malloc(this.capacity);
+            }
+        } => this;
+
+        bool isDeleted => (this.data == null);
+
+        char* c {
+            char* temp = std::malloc(this.bytes+1);
+            for(int i=0; i<this.bytes; i+=1) {
+                temp[i] = this.data[i];
+            }
+        } => temp;
+
+        bool has(int ch) {
+            char* p = libc::utf::strchr(this.c(),ch);
+        } => (p == null);
+
+        int indexOf(int ch) {
+            char* _c = this.c();
+            char* p = libc::utf::strchr(_c,ch);
+
+            int index = 0;
+            if(p == null) index = -1;
+            else index = ptoi(_c) - ptoi(p);
+        } => index;
+
+        int indexOf(char* s) {
+            char* _c = this.c();
+            char* p = libc::utf::strstr(_c,s);
+
+            int index = 0;
+            if(p == null) index = -1;
+            else index = ptoi(_c) - ptoi(p);
+        } => index;
+
+        int indexOf(std::string s) => this.indexOf(s.c());
+        int indexOf(std::ustring s) => this.indexOf(s.c());
+
+        void append(char* s) {
+            for(int i=0; s[i] != '\0'; i+=1) {
+                this.length += 1;
+                if(this.capacity > this.length) {
+                    this.capacity = this.capacity * 2;
+                    this.data = std::realloc(this.data,this.capacity);
+                }
+                this.data[this.length-1] = s[i];
+            }
+        }
+
+        void append(std::string s) {
+            char* _c = s.c();
+            this.append(_c);
+            std::free(_c);
+        }
+
+        void append(std::ustring s) {
+            char* _c = s.c();
+            this.append(_c);
+            std::free(_c);
+        }
+
+        std::ustring copy {
+            char* _c = this.c();
+            std::ustring cp = std::ustring(_c);
+            std::free(_c);
+        } => cp;
+
+        void ~this {
+            std::free(this.data);
+            this.length = 0;
+            this.capacity = 0;
+        }
+    }
+}
