@@ -1869,6 +1869,8 @@ class NodeFunc : Node {
     bool isCtargsPart = false;
     bool isComdat = false;
     bool isSafe = false;
+    bool isFakeMethod = false;
+    bool isNoNamespaces = false;
 
     string[] templateNames;
     Type[] _templateTypes;
@@ -1890,7 +1892,16 @@ class NodeFunc : Node {
     }
 
     override void check() {
-        if(namespacesNames.length>0) {
+        for(int i=0; i<mods.length; i++) {
+            if(mods[i].name == "method") {
+                Type _struct = args[0].type;
+                name = "{"~_struct.toString()~"}"~name;
+            }
+            else if(mods[i].name == "noNamespaces") {
+                isNoNamespaces = true;
+            }
+        }
+        if(namespacesNames.length>0 && !isNoNamespaces) {
             name = namespacesNamesToString(namespacesNames,name);
         }
         string toAdd = typesToString(args);
@@ -2443,6 +2454,9 @@ class NodeCall : Node {
                     return generate();
                 }
                 if(f.name.indexOf('<') != -1) {
+                    foreach(k; byKey(FuncTable)) {
+                        writeln(k);
+                    }
                     if(!f.name[0..f.name.indexOf('<')].into(FuncTable)) {
                         Lexer l = new Lexer(f.name,1);
                         Parser p = new Parser(l.getTokens(),1,"(builtin)");
@@ -2671,7 +2685,6 @@ class NodeCall : Node {
 
                     calledFunc = FuncTable[g.field];
                     LLVMValueRef[] params = getParameters(FuncTable[g.field].isVararg, FuncTable[g.field].args);
-
                     _val = LLVMBuildCall(
                         Generator.Builder,
                         Generator.Functions[FuncTable[g.field].name],
@@ -2690,7 +2703,7 @@ class NodeCall : Node {
                     if(s.name.into(Generator.toReplace)) s = Generator.toReplace[s.name].instanceof!TypeStruct;
                     else {
                         Lexer l = new Lexer(s.name,1);
-                        Parser p = new Parser(l.getTokens(),1,"(builtin)");
+                        Parser p = new Parser(l.getTokens(),1,"(builtin_sname)");
                         TypeStruct ts = p.parseType().instanceof!TypeStruct;
                         for(int j=0; j<ts.types.length; j++) {
                             while(ts.types[j].toString().into(Generator.toReplace)) {
@@ -2704,6 +2717,37 @@ class NodeCall : Node {
 
                 if(!into(cast(immutable)[s.name,g.field],MethodTable)) {
                     if(!cast(immutable)[s.name,g.field].into(structsNumbers)) {
+                        LLVMValueRef[] pregenerate = getPredParameters();
+                        string n;
+                        if(LLVMGetTypeKind(LLVMTypeOf(pregenerate[0])) == LLVMPointerTypeKind) {
+                            n = Generator.typeToString(LLVMTypeOf(pregenerate[0]))[1..$];
+                        }
+                        else {
+                            n = cast(string)fromStringz(LLVMGetStructName(LLVMTypeOf(pregenerate[0])));
+                        }
+
+                        if(g.field.indexOf('<') != -1) {
+                            string newName = g.field[0..g.field.indexOf('<')];
+                            Lexer l = new Lexer(g.field,1);
+                            Parser p = new Parser(l.getTokens(),1,"(builtin_im)");
+                            if(("{"~n~"*}"~newName).into(FuncTable)) {
+                                TypeStruct ts = p.parseType().instanceof!TypeStruct;
+                                FuncTable["{"~n~"*}"~newName].generateWithTemplate(ts.types,(ts.name));
+                                return new NodeCall(loc,new NodeIden(("{"~n~"*}"~ts.name),loc),args).generate();
+                            }
+                            else if(("{"~n~"}"~newName).into(FuncTable)) {
+                                TypeStruct ts = p.parseType().instanceof!TypeStruct;
+                                FuncTable["{"~n~"}"~newName].generateWithTemplate(ts.types,(ts.name));
+                                return new NodeCall(loc,new NodeIden(("{"~n~"}"~ts.name),loc),args).generate();
+                            }
+                            assert(0);
+                        }
+
+                        if(("{"~n~"}"~g.field).into(FuncTable) || ("{"~n~"*}"~g.field).into(FuncTable)) {
+                            // Internal method
+                            if(("{"~n~"*}"~g.field).into(FuncTable)) return new NodeCall(loc,new NodeIden(("{"~n~"*}"~g.field),loc),args).generate();
+                            return new NodeCall(loc,new NodeIden(("{"~n~"}"~g.field),loc),args).generate();
+                        }
                         Generator.error(loc,"Structure '"~s.name~"' doesn't contain method '"~g.field~"'!");
                     }
                     v = StructTable[s.name].elements[structsNumbers[cast(immutable)[s.name,g.field]].number].instanceof!NodeVar;

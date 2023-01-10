@@ -570,6 +570,52 @@ class Parser {
         return new NodeSlice(loc, start, end, value, isConst);
     }
 
+    bool isTemplate() {
+        int idx = _idx;
+        next();
+
+        if(peek().type == TokType.Number || peek().type == TokType.String || peek().type == TokType.HexNumber || peek().type == TokType.FloatNumber) {
+            _idx = idx;
+            return false;
+        }
+
+        next();
+        if(peek().type == TokType.Multiply || peek().type == TokType.Comma || peek().type == TokType.Rarr || peek().type == TokType.More || peek().type == TokType.Less) {
+            if(peek().type == TokType.Multiply) {
+                next();
+                if(peek().type == TokType.Multiply || peek().type == TokType.Rarr || peek().type == TokType.Less || peek().type == TokType.More || peek().type == TokType.Comma) {
+                    _idx = idx;
+                    return true;
+                }
+                _idx = idx;
+                return false;
+            }
+            else if(peek().type == TokType.Comma || peek().type == TokType.More || peek().type == TokType.Less) {
+                _idx = idx;
+                return true;
+            }
+            else if(peek().type == TokType.Rarr) {
+                while(peek().type == TokType.Rarr) {
+                    next();
+                    if(peek().type != TokType.Number) { // TODO: Alias support
+                        _idx = idx;
+                        return false;
+                    }
+                    next();
+                    next();
+                }
+                if(peek().type == TokType.Multiply || peek().type == TokType.Less || peek().type == TokType.More || peek().type == TokType.Comma) {
+                    _idx = idx;
+                    return true;
+                }
+                _idx = idx;
+                return false;
+            }
+        }
+        _idx = idx;
+        return false;
+    }
+
     Node parseSuffix(Node base, string f) {
         while(peek().type == TokType.Rpar
              || peek().type == TokType.Rarr
@@ -591,6 +637,24 @@ class Parser {
                 string field = expect(TokType.Identifier).value;
                 if(peek().type == TokType.Rpar) {
                     base = parseCall(new NodeGet(base,field,(isPtr),peek().line));
+                }
+                else if(peek().type == TokType.Less) {
+                    if(isTemplate()) {
+                        Type[] types;
+                        string _stypes = "<";
+                        next();
+                        while(peek().type != TokType.More) {
+                            types ~= parseType();
+                            _stypes ~= types[types.length-1].toString()~",";
+                            if(peek().type == TokType.Comma) next();
+                        }
+                        _stypes = _stypes[0..$-1]~">";
+                        next();
+                        if(peek().type == TokType.Rpar) {
+                            base = parseCall(new NodeGet(base,field~_stypes,(isPtr),peek().line));
+                        }
+                        else assert(0);
+                    }
                 }
                 else base = new NodeGet(base,field,(peek().type == TokType.Equ || isPtr),peek().line);
             }

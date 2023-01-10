@@ -288,15 +288,15 @@ namespace std {
             @if(@typesIsNequals(@getCurrArgType(),float)) {
                 @if(@typesIsNequals(@getCurrArgType(),double)) {
                     @if(@typesIsNequals(@getCurrArgType(),std::string)) {
-                        @if(@typesIsEquals(@getCurrArgType(),std::ustring)) {
+                        /*@if(@typesIsEquals(@getCurrArgType(),std::ustring)) {
                             std::ustring us = @getCurrArg(std::ustring);
                             values.add(cast(void*)&us);
                             types.add("std::ustring*");
-                        };
-                        @if(@typesIsNequals(@getCurrArgType(),std::ustring)) {
+                        };*/
+                        //@if(@typesIsNequals(@getCurrArgType(),std::ustring)) {
                             values.add(@getCurrArg(void*));
                             types.add(@typeToString(@getCurrArgType()));
-                        };
+                        //};
                     };
                     @if(@typesIsEquals(@getCurrArgType(),std::string)) {
                         std::string s = @getCurrArg(std::string);
@@ -343,10 +343,10 @@ namespace std {
             else if(types.data[i] == "char") {
                 result.append(cast(char)values.data[i]);
             }
-            else if(types.data[i] == "std::ustring*") {
+            /*else if(types.data[i] == "std::ustring*") {
                 std::ustring* s = cast(std::ustring*)values.data[i];
                 result.append(s.c());
-            }
+            }*/
             i += 1;
         }
     } => result;
