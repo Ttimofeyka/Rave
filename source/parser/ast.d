@@ -1298,8 +1298,10 @@ class NodeBinary : Node {
             else if(NodeDone nd = first.instanceof!NodeDone) {
                 LLVMValueRef ptr = nd.generate();
                 LLVMValueRef value = second.generate();
-
                 return LLVMBuildStore(Generator.Builder,value,ptr);
+            }
+            else if(NodeSlice ns = first.instanceof!NodeSlice) {
+                return ns.binSet(second);
             }
         }
 
@@ -5278,6 +5280,7 @@ class NodeSlice : Node {
     Node end;
     Node value;
     bool isConst = true;
+    bool isMustBePtr = false;
 
     this(int loc, Node start, Node end, Node value, bool isConst) {
         this.loc = loc;
@@ -5291,6 +5294,65 @@ class NodeSlice : Node {
         start.check();
         end.check();
         value.check();
+    }
+
+    LLVMValueRef binSet(Node n) {
+        LLVMValueRef val = n.generate();
+        if(LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMConstantArrayValueKind) {
+            LLVMValueRef v = LLVMBuildAlloca(Generator.Builder,LLVMTypeOf(val),toStringz("temp_"));
+            LLVMBuildStore(Generator.Builder,val,v);
+            val = v;
+        }
+        
+        LLVMValueRef gValue;
+
+        if(NodeIden id = value.instanceof!NodeIden) gValue = currScope.getWithoutLoad(id.name,loc);
+        else if(NodeGet ng = value.instanceof!NodeGet) {
+            ng.isMustBePtr = true;
+            gValue = ng.generate();
+        }
+        else if(NodeIndex ind = value.instanceof!NodeIndex) {
+            ind.isMustBePtr = true;
+            gValue = ind.generate();
+        }
+        else gValue = value.generate();
+
+        if(LLVMGetTypeKind(LLVMTypeOf(gValue)) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(gValue))) == LLVMPointerTypeKind) gValue = LLVMBuildLoad(Generator.Builder, gValue, toStringz("load_"));
+
+        if(isConst) {
+            for(int i=cast(int)(start.comptime().instanceof!NodeInt.value); i<end.comptime().instanceof!NodeInt.value; i++) {
+                LLVMBuildStore(
+                    Generator.Builder,
+                    LLVMBuildLoad(
+                        Generator.Builder,
+                        Generator.byIndex(val,[LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),cast(ulong)i,false)]),
+                        toStringz("load_")
+                    ),
+                    Generator.byIndex(gValue,[LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),cast(ulong)i,false)])
+                );
+            }
+        }
+        else {
+            NodeFor _f = new NodeFor(
+                [new NodeVar("i",start,false,false,false,[],loc,new TypeBasic("int"))],
+                new NodeBinary(TokType.Less, new NodeIden("i",loc), end, loc),
+                [new NodeBinary(TokType.PluEqu, new NodeIden("i",loc), new NodeInt(1),loc)],
+                new NodeBlock([
+                    new NodeBinary(
+                        TokType.Equ, 
+                        new NodeIndex(new NodeDone(gValue),[new NodeIden("i",loc)],loc),
+                        new NodeIndex(new NodeDone(val), [new NodeIden("i",loc)],loc),
+                        loc
+                    )
+                ]),
+                currScope.func,
+                loc
+            );
+            _f.check();
+            _f.generate();
+        }
+
+        return gValue;
     }
 
     override LLVMValueRef generate() {
@@ -5307,9 +5369,11 @@ class NodeSlice : Node {
         }
         else gValue = value.generate();
 
+        if(LLVMGetTypeKind(LLVMTypeOf(gValue)) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(gValue))) == LLVMPointerTypeKind) gValue = LLVMBuildLoad(Generator.Builder, gValue, toStringz("load_"));
+
         LLVMTypeRef _type;
 
-        if(LLVMGetTypeKind(LLVMTypeOf(gValue))) {
+        if(LLVMGetTypeKind(LLVMTypeOf(gValue)) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(gValue))) == LLVMPointerTypeKind) {
             _type = LLVMGetElementType(LLVMGetElementType(LLVMTypeOf(gValue)));
         }
         else _type = LLVMGetElementType(LLVMTypeOf(gValue));
@@ -5342,7 +5406,13 @@ class NodeSlice : Node {
         );
         _f.check();
         _f.generate();
-        if(isConst) return LLVMBuildLoad(Generator.Builder,container,toStringz("load_"));
-        return container;
+        if(isConst) {
+            if(!isMustBePtr) return LLVMBuildLoad(Generator.Builder,container,toStringz("load_"));
+            return container;
+        }
+        else {
+            if(!isMustBePtr) return container;
+            else return Generator.byIndex(container,[LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),0,false)]);
+        }
     }
 }

@@ -126,6 +126,8 @@ Constant slices are generated using the operator '..'. They return a constant ar
 Non-constant arrays are generated using the '->' operator. They return a pointer to the memory allocated from the heap, allowing you to use non-const values to determine the edges of the slice.
 They need to be cleaned up via std::free after the end of use.
 
+If you try to put a value to a slice, the slice will reflect the interval of the pointer or array elements that will be set to a value from this array or pointer.
+
 Examples:
 ```d
 import <std/io>
@@ -135,7 +137,9 @@ void main {
 
     int[3] b = a[0..3]; // Constant slice
     int* c = a[0->3]; // Non-constant slice
-
     std::free(c);
+
+    int[4] d; // [0,0,0,0]
+    d[0..2] = [5,10]; // Setting to 0 and 1 elements values from a constant array
 }
 ```
