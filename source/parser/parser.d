@@ -286,6 +286,25 @@ class Parser {
         return result;
     }
 
+    bool isSlice() {
+        // peek() == TokType.Rarr
+        int idx = _idx;
+        next();
+
+        int countOfRarr = 1;
+        while(countOfRarr != 0) {
+            if(peek().type == TokType.Rarr) countOfRarr += 1;
+            else if(peek().type == TokType.Larr) countOfRarr -= 1;
+            else if(peek().type == TokType.SliceOper || peek().type == TokType.SlicePtrOper) {
+                _idx = idx;
+                return true;
+            }
+            next();
+        }
+        _idx = idx;
+        return false;
+    }
+
     Node[] parseFuncCallArgs() {
         import std.algorithm : canFind;
         if(peek().type == TokType.Rpar) next(); // skip (
@@ -455,10 +474,6 @@ class Parser {
                     return parseCall(new NodeIden(all,peek().line));
                 }
             }
-            /*else if(peek().type == TokType.Rpar) {
-                // FuncCall
-                return parseCall(new NodeIden(t.value,t.line));
-            }*/
             return new NodeIden(t.value,peek().line);
         }
         if(t.type == TokType.MacroArgNum) {
@@ -538,6 +553,22 @@ class Parser {
         return parseAtom(f);
     }
 
+    Node parseSlice(string f, Node value) {
+        // peek() == TokType.Rarr
+        Node start;
+        Node end;
+        int loc = peek().line;
+        
+        next();
+        start = parseExpr(f);
+        bool isConst = true;
+        if(peek().type == TokType.SlicePtrOper) isConst = false;
+        next();
+        end = parseExpr(f);
+        if(peek().type == TokType.Larr) next();
+
+        return new NodeSlice(loc, start, end, value, isConst);
+    }
 
     Node parseSuffix(Node base, string f) {
         while(peek().type == TokType.Rpar
@@ -548,7 +579,10 @@ class Parser {
                 base = parseCall(base);
             }
             else if(peek().type == TokType.Rarr) {
-                base = new NodeIndex(base,parseIndexs(),peek().line);
+                if(isSlice()) {
+                    base = parseSlice(f,base);
+                }
+                else base = new NodeIndex(base,parseIndexs(),peek().line);
             }
             else if(peek().type == TokType.Dot) {
                 next();

@@ -15,6 +15,7 @@ import parser.parser : Parser;
 import lexer.lexer : Lexer;
 import std.stdio;
 import parser.parser : instanceof;
+import llvm.types : LLVMTypeRef;
 
 enum BasicType {
     Bool,
@@ -336,4 +337,15 @@ class TypeConst : Type {
     }
 
     override string toString() {return "const("~instance.toString()~")";}
+}
+class TypeLLVM : Type {
+    LLVMTypeRef tr;
+
+    this(LLVMTypeRef tr) {
+        this.tr = tr;
+    }
+
+    override int getSize() {
+        return 0; // TODO
+    }
 }

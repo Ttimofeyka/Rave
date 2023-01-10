@@ -1,5 +1,7 @@
-import <std/io> <std/threads>
+import <std/io>
 
 void main {
-    
+    int[5] a = [5,10,15,20,25];
+    int* b = a[0->3];
+    std::println(b[0]);
 }

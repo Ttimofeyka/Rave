@@ -72,9 +72,13 @@ class Lexer {
                         }
                         else tokens ~= new Token(TokType.Plus,"+",line); 
                         break;
-                    case '-': 
-                        if(next() == '=') {
+                    case '-':
+                        char n = next();
+                        if(n == '=') {
                             tokens ~= new Token(TokType.MinEqu,"-=",line); _idx++;
+                        }
+                        else if(n == '>') {
+                            tokens ~= new Token(TokType.SlicePtrOper,"->",line); _idx++;
                         }
                         else tokens ~= new Token(TokType.Minus,"-",line); 
                         break;
@@ -133,8 +137,7 @@ class Lexer {
                             if(n == '.') {
                                 tokens ~= new Token(TokType.VarArg,"...",line); _idx++; break;
                             }
-                            writeln("Undefined operator '..' at ",line," line!"); 
-                            exit(1);
+                            tokens ~= new Token(TokType.SliceOper,"..",line); break;
                         }
                         tokens ~= new Token(TokType.Dot,".",line); break;
                     case '#': 
@@ -312,7 +315,7 @@ class Lexer {
                             }
                             else {
                                 bool isFloat = false;
-                                while(isDigit(cast(dchar)peek()) || peek() == '.') {
+                                while(isDigit(cast(dchar)peek()) || (peek() == '.' && text[_idx+1] != '.')) {
                                     if(peek() == '.') {
                                         isFloat = true;
                                         buffernum ~= ".";

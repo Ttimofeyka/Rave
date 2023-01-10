@@ -95,6 +95,8 @@ Type llvmTypeToType(LLVMTypeRef t) {
         assert(0);
 }
 
+string[] warningStack;
+
 class LLVMGen {
     LLVMModuleRef Module;
     LLVMContextRef Context;
@@ -1293,6 +1295,12 @@ class NodeBinary : Node {
 
                 return LLVMBuildStore(Generator.Builder,val,ptr);
             }
+            else if(NodeDone nd = first.instanceof!NodeDone) {
+                LLVMValueRef ptr = nd.generate();
+                LLVMValueRef value = second.generate();
+
+                return LLVMBuildStore(Generator.Builder,value,ptr);
+            }
         }
 
         if(isStatic) {
@@ -1697,7 +1705,10 @@ class NodeIden : Node {
 
     override LLVMValueRef generate() {
         if(name in AliasTable) return AliasTable[name].generate();
-        if(name.into(Generator.Functions)) return Generator.Functions[name];
+        if(name.into(Generator.Functions)) {
+            Generator.addAttribute("noinline",LLVMAttributeFunctionIndex,Generator.Functions[name]);
+            return Generator.Functions[name];
+        }
         if(!currScope.has(name)) {
             Generator.error(loc,"Unknown identifier \""~name~"\"!");
             return null;
@@ -2932,7 +2943,7 @@ class NodeIndex : Node {
             }
 
             LLVMValueRef ptr = currScope.get(id.name,loc);
-            if(Generator.opts.runtimeChecks) {
+            if(Generator.opts.runtimeChecks && LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMPointerTypeKind) {
                 LLVMValueRef isNull = LLVMBuildICmp(
                     Generator.Builder,
                     LLVMIntNE,
@@ -3000,6 +3011,13 @@ class NodeIndex : Node {
             if(isMustBePtr) return index;
             return LLVMBuildLoad(Generator.Builder,index,toStringz("load2062_"));
         }
+        if(NodeDone nd = element.instanceof!NodeDone) {
+            LLVMValueRef val = nd.generate();
+
+            LLVMValueRef index = Generator.byIndex(val,generateIndexs());
+            if(isMustBePtr) return index;
+            return LLVMBuildLoad(Generator.Builder,index,toStringz("load3013_"));
+        }
         writeln("Base: ",element);
         assert(0);
     }
@@ -3046,12 +3064,24 @@ class NodeGet : Node {
         return null;
     }
 
+    void checkIsNull(LLVMValueRef ptr) {
+        if(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMPointerTypeKind && Generator.opts.runtimeChecks) {
+            LLVMValueRef isNull = LLVMBuildICmp(
+                Generator.Builder,
+                LLVMIntNE,
+                LLVMBuildPtrToInt(Generator.Builder,ptr,LLVMInt32TypeInContext(Generator.Context),toStringz("ptoi_")),
+                LLVMBuildPtrToInt(Generator.Builder,new NodeNull().generate(),LLVMInt32TypeInContext(Generator.Context),toStringz("ptoi_")),
+                toStringz("assert(p==null)_")
+            );
+            LLVMBuildCall(Generator.Builder,Generator.Functions[NeededFunctions["assert"]],[isNull,new NodeString("Runtime error in '"~Generator.file~"' file on "~to!string(loc)~" line: attempt to get an element from a null pointer to a structure!\n",false).generate()].ptr,2,toStringz(""));
+        }
+    }
+
     override LLVMValueRef generate() {
         if(NodeIden id = base.instanceof!NodeIden) {
             LLVMValueRef ptr = checkStructure(currScope.getWithoutLoad(id.name,loc));
             string structName = cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(ptr))));
             LLVMValueRef f = checkIn(structName);
-
             if(f !is null) return f;
 
             if(isMustBePtr) return LLVMBuildStructGEP(
@@ -4834,8 +4864,8 @@ class NodeBuiltin : Node {
     string asStringIden(int n) {
         if(NodeIden id = args[n].instanceof!NodeIden) {
             string nam = id.name;
-            while(name.into(AliasTable)) {
-                Node node = AliasTable[name];
+            while(nam.into(AliasTable)) {
+                Node node = AliasTable[nam];
                 if(NodeIden _id = node.instanceof!NodeIden) nam = _id.name;
                 else if(NodeString str = node.instanceof!NodeString) nam = str.value;
                 else assert(0);
@@ -5016,7 +5046,10 @@ class NodeBuiltin : Node {
                 for(int i=0; i<args.length; i++) {
                     allString ~= asStringIden(i);
                 }
-                Generator.warning(loc,allString);
+                if(!canFind(warningStack,allString)) {
+                    Generator.warning(loc,allString);
+                    warningStack ~= allString;
+                }
                 return null;
             case "getCurrArg":
                 Type getArgType = asType(0).ty;
@@ -5224,5 +5257,92 @@ class NodeMixin : Node { // TODO
     this(int loc, Node[] _strings) {
         this.loc = loc;
         this._strings = _strings.dup;
+    }
+}
+
+class NodeDone : Node {
+    LLVMValueRef value;
+
+    this(LLVMValueRef value) {
+        this.value = value;
+    }
+
+    override LLVMValueRef generate() {
+        return value;
+    }
+}
+
+class NodeSlice : Node {
+    int loc;
+    Node start;
+    Node end;
+    Node value;
+    bool isConst = true;
+
+    this(int loc, Node start, Node end, Node value, bool isConst) {
+        this.loc = loc;
+        this.start = start;
+        this.end = end;
+        this.value = value;
+        this.isConst = isConst;
+    }
+
+    override void check() {
+        start.check();
+        end.check();
+        value.check();
+    }
+
+    override LLVMValueRef generate() {
+        LLVMValueRef gValue;
+
+        if(NodeIden id = value.instanceof!NodeIden) gValue = currScope.getWithoutLoad(id.name,loc);
+        else if(NodeGet ng = value.instanceof!NodeGet) {
+            ng.isMustBePtr = true;
+            gValue = ng.generate();
+        }
+        else if(NodeIndex ind = value.instanceof!NodeIndex) {
+            ind.isMustBePtr = true;
+            gValue = ind.generate();
+        }
+        else gValue = value.generate();
+
+        LLVMTypeRef _type;
+
+        if(LLVMGetTypeKind(LLVMTypeOf(gValue))) {
+            _type = LLVMGetElementType(LLVMGetElementType(LLVMTypeOf(gValue)));
+        }
+        else _type = LLVMGetElementType(LLVMTypeOf(gValue));
+
+        LLVMValueRef container;
+
+        if(isConst) {
+            Node _length = new NodeBinary(TokType.Minus,end,start,loc).comptime();
+            container = LLVMBuildAlloca(Generator.Builder,LLVMArrayType(_type,cast(uint)_length.comptime().instanceof!NodeInt.value),toStringz("val_"));
+        }
+        else {
+            LLVMValueRef cl = new NodeCall(loc,new NodeIden(NeededFunctions["malloc"],loc),[new NodeBinary(TokType.Minus,end,start,loc)]).generate();
+            container = LLVMBuildPointerCast(Generator.Builder,cl,LLVMPointerType(_type,0),toStringz("ptc_"));
+        }
+
+        NodeFor _f = new NodeFor(
+            [new NodeVar("i",start,false,false,false,[],loc,new TypeBasic("int")), new NodeVar("j",new NodeInt(0),false,false,false,[],loc,new TypeBasic("int"))],
+            new NodeBinary(TokType.Less, new NodeIden("i",loc), end, loc),
+            [new NodeBinary(TokType.PluEqu, new NodeIden("i",loc), new NodeInt(1),loc), new NodeBinary(TokType.PluEqu, new NodeIden("j",loc), new NodeInt(1),loc)],
+            new NodeBlock([
+                new NodeBinary(
+                    TokType.Equ, 
+                    new NodeIndex(new NodeDone(container),[new NodeIden("j",loc)],loc),
+                    new NodeIndex(new NodeDone(gValue), [new NodeIden("i",loc)],loc),
+                    loc
+                )
+            ]),
+            currScope.func,
+            loc
+        );
+        _f.check();
+        _f.generate();
+        if(isConst) return LLVMBuildLoad(Generator.Builder,container,toStringz("load_"));
+        return container;
     }
 }

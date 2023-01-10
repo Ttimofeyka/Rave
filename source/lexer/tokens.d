@@ -50,6 +50,9 @@ enum TokType {
     GetPtr,
     VarArg,
 
+    SliceOper,
+    SlicePtrOper,
+
     Rem,
 
     BitLeft,

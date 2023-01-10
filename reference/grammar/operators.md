@@ -88,7 +88,7 @@ struct A {
     }
 
     void ~with {
-        std::printf("Called by with!");
+        std::println("Called by with!");
     }
 }
 
@@ -112,5 +112,30 @@ void main {
         The compiler is able to automatically get the structure that you passed, even if you pass a method call. Please note that if your method has the type of a third-party structure, then the structure received from the method will be used in 'with', and not the root one.
         */
     }
+}
+```
+
+## Slices
+
+Slices are built-in language constructs that allow programmers to simplify working with arrays and pointers.
+
+There are two types of slices - constant and non-constant.
+
+Constant slices are generated using the operator '..'. They return a constant array with a length that is determined at compile time.
+
+Non-constant arrays are generated using the '->' operator. They return a pointer to the memory allocated from the heap, allowing you to use non-const values to determine the edges of the slice.
+They need to be cleaned up via std::free after the end of use.
+
+Examples:
+```d
+import <std/io>
+
+void main {
+    int[5] a = [0,5,10,15,20];
+
+    int[3] b = a[0..3]; // Constant slice
+    int* c = a[0->3]; // Non-constant slice
+
+    std::free(c);
 }
 ```

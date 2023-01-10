@@ -1,0 +1,7 @@
+namespace std {
+    namespace process {
+        extern(linkname: "getpid") int getPID();
+        extern(linkname: "getppid") int getPPID();
+        extern(linkname: "fork") int fork();
+    }
+}
