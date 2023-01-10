@@ -96,6 +96,7 @@ Type llvmTypeToType(LLVMTypeRef t) {
 }
 
 string[] warningStack;
+Type[string] aliasTypes;
 
 class LLVMGen {
     LLVMModuleRef Module;
@@ -1577,6 +1578,10 @@ class NodeVar : Node {
             name = namespacesNamesToString(namespacesNames,name);
         }
         if(isGlobal) VarTable[name] = this;
+        if(!t.instanceof!TypeBasic && !aliasTypes.empty) {
+            Type _nt = t.check(null);
+            if(_nt !is null) this.t = _nt;
+        }
     }
 
     override LLVMValueRef generate() {
@@ -1904,6 +1909,12 @@ class NodeFunc : Node {
         if(namespacesNames.length>0 && !isNoNamespaces) {
             name = namespacesNamesToString(namespacesNames,name);
         }
+
+        if(!type.instanceof!TypeBasic && !aliasTypes.empty) {
+            Type _nt = type.check(null);
+            if(_nt !is null) this.type = _nt;
+        }
+
         string toAdd = typesToString(args);
         if(!(name !in FuncTable)) {
             if(typesToString(FuncTable[name].args) == toAdd) {
@@ -5459,5 +5470,32 @@ class NodeSlice : Node {
             if(!isMustBePtr) return container;
             else return Generator.byIndex(container,[LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),0,false)]);
         }
+    }
+}
+
+class NodeAliasType : Node {
+    int loc;
+    string name;
+    Type value;
+
+    this(int loc, string name, Type value) {
+        this.loc = loc;
+        this.name = name;
+        this.value = value;
+    }
+
+    override void check() {
+        while(name.into(AliasTable)) {
+            name = AliasTable[name].instanceof!NodeIden.name;
+        }
+        aliasTypes[name] = value;
+    }
+
+    override LLVMValueRef generate() {
+        return null;
+    }
+
+    override Node comptime() {
+        return new NodeType(value,loc);
     }
 }

@@ -16,6 +16,7 @@ import lexer.lexer : Lexer;
 import std.stdio;
 import parser.parser : instanceof;
 import llvm.types : LLVMTypeRef;
+import parser.ast : aliasTypes;
 
 enum BasicType {
     Bool,
@@ -64,6 +65,10 @@ class Type {
 
     int getSize() {
         return 0;
+    }
+
+    Type check(Type parent) {
+        return null;
     }
 
     override string toString()
@@ -155,6 +160,12 @@ class TypePointer : Type {
         return new TypePointer(instance.copy());
     }
 
+    override Type check(Type t) {
+        pragma(inline,true);
+        if(!instance.instanceof!TypeBasic) instance.check(this);
+        return null;
+    }
+
     override int getSize() {
         return 8;
     }
@@ -172,6 +183,12 @@ class TypeArray : Type {
     this(int count, Type element) {
         this.count = count;
         this.element = element;
+    }
+
+    override Type check(Type parent) {
+        pragma(inline,true);
+        if(!element.instanceof!TypeBasic) element.check(this);
+        return null;
     }
 
     override Type copy() {
@@ -228,6 +245,29 @@ class TypeStruct : Type {
             this.name ~= types[i].toString()~",";
         }
         this.name = this.name[0..$-1]~">";
+    }
+
+    override Type check(Type parent) {
+        if(name.into(aliasTypes)) {
+            Type _t = aliasTypes[name];
+            while(_t.toString().into(aliasTypes)) {
+                _t = aliasTypes[_t.toString()];
+            }
+            
+            if(parent is null) return _t;
+
+            if(TypePointer tp = parent.instanceof!TypePointer) {
+                tp.instance = _t;
+            }
+            else if(TypeArray ta = parent.instanceof!TypeArray) {
+                ta.element = _t;
+            }
+            else if(TypeConst tc = parent.instanceof!TypeConst) {
+                tc.instance = _t;
+            }
+        }
+
+        return null;
     }
 
     override int getSize() {
@@ -329,6 +369,11 @@ class TypeConst : Type {
 
     override Type copy() {
         return new TypeConst(this.instance.copy());
+    }
+
+    override Type check(Type p) {
+        this.instance.check(this);
+        return null;
     }
 
     override int getSize() {

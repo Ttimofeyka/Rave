@@ -62,6 +62,7 @@ class Compiler {
         VarTable.clear();
         Generator.Globals.clear();
         Generator.Functions.clear();
+        Generator.currentBuiltinArg = 0;
         Generator.currBB = null;
         FuncTable.clear();
         AliasTable.clear();
@@ -73,6 +74,7 @@ class Compiler {
         MethodTable.clear();
         _importedFiles = [];
         condStack.clear();
+        aliasTypes.clear();
     }
 
     void compile(string file) {

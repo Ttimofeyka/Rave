@@ -1030,8 +1030,7 @@ class Parser {
         expect(TokType.Equ);
         Type childType = parseType();
         if(peek().type == TokType.Semicolon) next();
-        _aliasTypes[name] = childType;
-        return new NodeNone();
+        return new NodeAliasType(l,name,childType);
     }
 
     Node parseMultiAlias(string s, DeclMod[] mods , int loc) {
