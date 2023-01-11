@@ -343,10 +343,12 @@ namespace std {
             else if(types.data[i] == "char") {
                 result.append(cast(char)values.data[i]);
             }
-            /*else if(types.data[i] == "std::ustring*") {
-                std::ustring* s = cast(std::ustring*)values.data[i];
-                result.append(s.c());
-            }*/
+            else if(types.data[i] == "uchar" || types.data[i] == "uint" || types.data[i] == "ushort" || types.data[i] == "ulong") {
+                char[512] _cs;
+                ulong ul = cast(ulong)values.data[i];
+                libc::cformat(&_cs, "%lu", cast(ulong)ul);
+                result.append(&_cs);
+            }
             i += 1;
         }
     } => result;

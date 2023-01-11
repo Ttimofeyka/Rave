@@ -8,12 +8,12 @@ namespace libc {
 namespace std {
     struct error<T> {
         char* message = null;
-        T value;
+        T result;
         int type;
         
         std::error<T> this => this;
-        std::error<T> this(T value) {
-            this.value = value;
+        std::error<T> this(T result) {
+            this.result = result;
         } => this;
 
         void catch {

@@ -1,5 +1,5 @@
-import <std/io>
+import <std/io> <std/map>
 
 void main {
-    std::println(a);
+   
 }

@@ -9,8 +9,6 @@ namespace std {
     extern(linkname: "calloc") void* calloc(int num, int size);
     extern(linkname: "llvm.frameaddress.p0i8") void* frameAddress(int level);
     extern(linkname: "llvm.eh.sjlj.setjmp") int setjmp(char* buff);
-    
-    (inline) bool isStackPtr(void* ptr) => ((cast(long)ptr) >= 0xFFFFFFFF);
 
     struct pair<F,S> {
         F first;

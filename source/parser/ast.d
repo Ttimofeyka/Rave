@@ -18,6 +18,7 @@ import std.path;
 import lexer.lexer : Lexer;
 import parser.parser : Parser;
 import app : CompOpts;
+import std.bigint;
 
 Node[string] AliasTable;
 NodeFunc[string] FuncTable;
@@ -585,37 +586,64 @@ class Node
 class NodeNone : Node {}
 
 class NodeInt : Node {
-    ulong value;
+    BigInt value;
     BasicType ty;
     Type _isVarVal = null;
+    ubyte sys;
 
-    this(ulong value) {
+    this(BigInt value, int sys = 10) {
         this.value = value;
+        this.sys = cast(ubyte)sys;
+    }
+
+    this(int value, int sys = 10) {
+        this.value = BigInt(value);
+        this.sys = cast(ubyte)sys;
+    }
+
+    this(uint value, int sys = 10) {
+        this.value = BigInt(value);
+        this.sys = cast(ubyte)sys;
+    }
+
+    this(long value, int sys = 10) {
+        this.value = BigInt(value);
+        this.sys = cast(ubyte)sys;
+    }
+
+    this(ulong value, int sys = 10) {
+        this.value = BigInt(value);
+        this.sys = cast(ubyte)sys;
     }
 
     override LLVMValueRef generate() {
         if(_isVarVal.instanceof!TypeBasic) {
             ty = _isVarVal.instanceof!TypeBasic.type;
             switch(ty) {
-                case BasicType.Bool: return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),value,false);
-                case BasicType.Char: return LLVMConstInt(LLVMInt8TypeInContext(Generator.Context),value,false);
-                case BasicType.Short: return LLVMConstInt(LLVMInt16TypeInContext(Generator.Context),value,false);
-                case BasicType.Int: return LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),value,false);
-                case BasicType.Long: return LLVMConstInt(LLVMInt64TypeInContext(Generator.Context),value,false);
-                case BasicType.Cent: return LLVMConstInt(LLVMInt128TypeInContext(Generator.Context),value,false);
+                case BasicType.Bool: return LLVMConstIntOfString(LLVMInt1TypeInContext(Generator.Context),toStringz(value.toDecimalString()),this.sys);
+                case BasicType.Uchar:
+                case BasicType.Char: return LLVMConstIntOfString(LLVMInt8TypeInContext(Generator.Context),toStringz(value.toDecimalString()),this.sys);
+                case BasicType.Ushort:
+                case BasicType.Short: return LLVMConstIntOfString(LLVMInt16TypeInContext(Generator.Context),toStringz(value.toDecimalString()),this.sys);
+                case BasicType.Uint:
+                case BasicType.Int: return LLVMConstIntOfString(LLVMInt32TypeInContext(Generator.Context),toStringz(value.toDecimalString()),this.sys);
+                case BasicType.Ulong:
+                case BasicType.Long: return LLVMConstIntOfString(LLVMInt64TypeInContext(Generator.Context),toStringz(value.toDecimalString()),this.sys);
+                case BasicType.Ucent:
+                case BasicType.Cent: return LLVMConstIntOfString(LLVMInt128TypeInContext(Generator.Context),toStringz(value.toDecimalString()),this.sys);
                 default: break;
             }
         }
-        if(value < int.max) {
+        if(value.toDecimalString().length < to!string(int.max).length) {
             ty = BasicType.Int;
-            return LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),value,false);
+            return LLVMConstIntOfString(LLVMInt32TypeInContext(Generator.Context),toStringz(value.toDecimalString()),this.sys);
         }
-        if(value < long.max) {
+        if(value.toDecimalString().length < to!string(long.max).length) {
             ty = BasicType.Long;
-            return LLVMConstInt(LLVMInt64TypeInContext(Generator.Context),value,false);
+            return LLVMConstIntOfString(LLVMInt64TypeInContext(Generator.Context),toStringz(value.toDecimalString()),this.sys);
         }
         ty = BasicType.Cent;
-        return LLVMConstInt(LLVMInt128TypeInContext(Generator.Context), value, false);
+        return LLVMConstIntOfString(LLVMInt128TypeInContext(Generator.Context),toStringz(value.toDecimalString()),this.sys);
         assert(0);
     }
 
@@ -2465,9 +2493,6 @@ class NodeCall : Node {
                     return generate();
                 }
                 if(f.name.indexOf('<') != -1) {
-                    foreach(k; byKey(FuncTable)) {
-                        writeln(k);
-                    }
                     if(!f.name[0..f.name.indexOf('<')].into(FuncTable)) {
                         Lexer l = new Lexer(f.name,1);
                         Parser p = new Parser(l.getTokens(),1,"(builtin)");
@@ -4734,6 +4759,7 @@ class NodeLambda : Node {
         LambdaTable["lambda"~to!string(Generator.countOfLambdas)] = this;
         NodeFunc nf = new NodeFunc("__RAVE_LAMBDA"~to!string(Generator.countOfLambdas),_fargs,block,false,[],loc,typ.main,[]);
         nf.check();
+        nf.isComdat = true;
         LLVMValueRef func = nf.generate();
 
         currScope = oldScope;

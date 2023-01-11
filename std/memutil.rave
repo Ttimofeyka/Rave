@@ -1,3 +1,5 @@
+import <std/io>
+
 namespace std {
-    (inline) bool isStackPtr(void* ptr) => ((cast(long)ptr) >= 0xFFFFFFFF);
+    
 }

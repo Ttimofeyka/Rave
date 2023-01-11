@@ -14,6 +14,7 @@ import std.container : SList;
 import app : files;
 import std.conv : parse;
 import llvm.types;
+import std.bigint;
 
 string[] types = ["void","bool", "char", "uchar", "wchar", "uwchar", "short", "ushort", "int", "uint", "long", "ulong", "cent", "ucent"];
 
@@ -366,9 +367,9 @@ class Parser {
     Node parseAtom(string f) {
         import std.algorithm : canFind;
         auto t = next();
-        if(t.type == TokType.Number) return new NodeInt(to!ulong(t.value));
+        if(t.type == TokType.Number) return new NodeInt(BigInt(t.value));
         if(t.type == TokType.FloatNumber) return new NodeFloat(to!double(t.value));
-        if(t.type == TokType.HexNumber) return new NodeInt(hexToLong(t.value));
+        if(t.type == TokType.HexNumber) return new NodeInt(BigInt(t.value),16);
         if(t.type == TokType.True) return new NodeBool(true);
         if(t.type == TokType.False) return new NodeBool(false);
         if(t.type == TokType.String) return new NodeString(t.value,false);
