@@ -1,5 +1,7 @@
-import <std/io> <std/map>
+import <std/io> <std/error>
+
+std::error<int> jam => std::error<int>(10,"5");
 
 void main {
-   
+    
 }

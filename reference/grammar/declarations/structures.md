@@ -4,6 +4,8 @@ Structures are a full-fledged type that has a designation like class in C++.
 
 A structure can have a constructor, a destructor, methods, and operator overloading.
 
+Also, structures can be inherited from another structure.
+
 Example:
 
 ```d
@@ -40,7 +42,7 @@ struct A {
     }
 
     void printAll {
-        std::printf("%d\n%d\n",this.a,this.b);
+        std::println(this.a,this.b);
     }
 
     void operator=(A* pointer, int[2] values) {
@@ -50,6 +52,18 @@ struct A {
 
         pointer.a = values[0];
         pointer.b = values[1];
+    }
+}
+
+struct B : A {
+    /*
+    This structure is inherited from structure A.
+    All its elements will be equal to the elements of structure A by default.
+    To replace the method, you can simply rewrite it.
+    */
+
+    void printAll {
+        std::println(this.a + this.b);
     }
 }
 ```

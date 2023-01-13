@@ -32,6 +32,18 @@ namespace std {
         else if(x >= 1000) len = 4;
         else if(x >= 100) len = 3;
         else if(x >= 10) len = 2;
+        else if(x <= -10) len = 2;
+        else if(x <= -100) len = 3;
+        else if(x <= -1000) len = 4;
+        else if(x <= -10000) len = 5;
+        else if(x <= -100000) len = 6;
+        else if(x <= -1000000) len = 7;
+        else if(x <= -10000000) len = 8;
+        else if(x <= -100000000) len = 9;
+        else if(x <= -1000000000) len = 10;
+        else if(x <= -10000000000) len = 11;
+        else if(x <= -100000000000) len = 12;
+        else if(x <= -1000000000000) len = 13;
     } => len;
     (inline) int lengthOfNumber(long x) {
         int len = 0;
@@ -91,23 +103,6 @@ namespace std {
         (inline) long toLong => libc::strtol(this.c(),cast(char**)null,10);
         (inline) int toInt => cast(int)this.toLong();
 
-        (inline) std::string fromNumber(long n) {
-            char* buf = std::malloc(std::lengthOfNumber(n)+2);
-            libc::cformat(buf,"%d",n);
-        } => std::string(buf);
-        (inline) std::string fromNumber(int n) => this.fromNumber(cast(long)n);
-        (inline) std::string fromNumber(short n) => this.fromNumber(cast(long)n);
-        (inline) std::string fromNumber(char n) => this.fromNumber(cast(long)n);
-        (inline) std::string fromNumber(bool n) => this.fromNumber(cast(long)n);
-        (inline) std::string fromFloat(float n) {
-            char* buf = std::malloc(128);
-            libc::cformat(buf,"%f",cast(double)n);
-        } => std::string(buf);
-        (inline) std::string fromDouble(double n) {
-            char* buf = std::malloc(128);
-            libc::cformat(buf,"%f",n);
-        } => std::string(buf);
-
         int indexOf(char c) {
             int i = 0;
             int needed = -1;
@@ -125,7 +120,7 @@ namespace std {
 
         int indexOf(std::string s) => this.indexOf(s.c());
 
-        void append(char c) {
+        void add(char c) {
             this.length += 1;
             if(this.length == this.capacity) {
                 this.capacity = this.capacity * 2;
@@ -137,14 +132,17 @@ namespace std {
         void append(std::string str) {
             int i = 0;
             while(i<str.length) {
-                this.append(str.data[i]);
+                this.add(str.data[i]);
                 i += 1;
             }
         }
 
         void append(char* cstr) {
-            for(int i=0; cstr[i] != '\0'; i+=1) {
-                this.append(cstr[i]);
+            int len = libc::strlen(cstr);
+            int i = 0;
+            while(i<len) {
+                this.add(cstr[i]);
+                i += 1;
             }
         }
 
@@ -157,7 +155,7 @@ namespace std {
 
         std::string via(char c) {
             std::string _cp = this.copy();
-            _cp.append(c);
+            _cp.add(c);
         } => _cp;
 
         std::string via(std::string s) {
@@ -230,7 +228,7 @@ namespace std {
 
             int i = from;
             while(i<to) {
-                temp.append(this.data[i]);
+                temp.add(this.data[i]);
                 i += 1;
             }
         } => temp;
@@ -278,6 +276,55 @@ namespace std {
         }
     }
 
+    namespace string {
+        (inline) std::string fromNumber(long n) {
+            char* buf = std::malloc(std::lengthOfNumber(n)+2);
+            libc::cformat(buf,"%ld",n);
+            std::string sbuf = std::string(buf);
+            std::free(buf);
+        } => sbuf;
+        (inline) std::string fromNumber(int n) => std::string::fromNumber(cast(long)n);
+        (inline) std::string fromNumber(short n) => std::string::fromNumber(cast(long)n);
+        (inline) std::string fromNumber(char n) => std::string::fromNumber(cast(long)n);
+        (inline) std::string fromNumber(bool n) => std::string::fromNumber(cast(long)n);
+        (inline) std::string fromFloat(float n) {
+            char* buf = std::malloc(128);
+            libc::cformat(buf,"%f",cast(double)n);
+            std::string sbuf = std::string(buf);
+            std::free(buf);
+        } => sbuf;
+        (inline) std::string fromDouble(double n) {
+            char* buf = std::malloc(128);
+            libc::cformat(buf,"%f",n);
+            std::string sbuf = std::string(buf);
+            std::free(buf);
+        } => sbuf;
+        (inline) std::string fromUNumber(long n) {
+            char* buf = std::malloc((std::lengthOfNumber(n)*2)+2);
+            libc::cformat(buf,"%lu",n);
+            std::string sbuf = std::string(buf);
+            std::free(buf);
+        } => sbuf;
+        (inline) std::string fromUNumber(int n) {
+            char* buf = std::malloc((std::lengthOfNumber(cast(long)n)*2)+2);
+            libc::cformat(buf,"%u",n);
+            std::string sbuf = std::string(buf);
+            std::free(buf);
+        } => sbuf;
+        (inline) std::string fromUNumber(short n) {
+            char* buf = std::malloc((std::lengthOfNumber(cast(long)n)*2)+2);
+            libc::cformat(buf,"%d",n);
+            std::string sbuf = std::string(buf);
+            std::free(buf);
+        } => sbuf;
+        (inline) std::string fromUNumber(char n) {
+            char* buf = std::malloc((std::lengthOfNumber(cast(long)n)*2)+2);
+            libc::cformat(buf,"%d",n);
+            std::string sbuf = std::string(buf);
+            std::free(buf);
+        } => sbuf;
+    }
+
     (ctargs) std::string sprint {
         std::string result = "";
         std::vector<void*> values = std::vector<void*>();
@@ -321,7 +368,7 @@ namespace std {
         int i = 0;
         while(i<types.length) {
             if(types.data[i] == "char*") {
-                result.append(std::string(values.data[i]));
+                result.append(values.data[i]);
             }
             else if((types.data[i] == "std::string") || (types.data[i] == "std::string*")) {
                 std::string* s = cast(std::string*)values.data[i];
@@ -329,25 +376,23 @@ namespace std {
             }
             else if((types.data[i] == "float") || (types.data[i] == "double")) {
                 double* d = cast(double*)values.data[i];
-                result.append(result.fromDouble(d[0]));
+                std::string s = std::string::fromDouble(d[0]);
+                    result.append(s);
+                ~s;
             }
             else if((types.data[i] == "long" || types.data[i] == "int") || types.data[i] == "short") {
                 long l = cast(long)values.data[i];
-                result.append(result.fromNumber(l));
+                std::string s = std::string::fromNumber(l);
+                    result.append(s);
+                ~s;
             }
             else if(types.data[i] == "bool") {
                 bool b = cast(bool)values.data[i];
-                if(b) result.append(std::string("true"));
-                else result.append(std::string("false"));
+                if(b) result.append("true");
+                else result.append("false");
             }
             else if(types.data[i] == "char") {
-                result.append(cast(char)values.data[i]);
-            }
-            else if(types.data[i] == "uchar" || types.data[i] == "uint" || types.data[i] == "ushort" || types.data[i] == "ulong") {
-                char[512] _cs;
-                ulong ul = cast(ulong)values.data[i];
-                libc::cformat(&_cs, "%lu", cast(ulong)ul);
-                result.append(&_cs);
+                result.add(cast(char)values.data[i]);
             }
             i += 1;
         }

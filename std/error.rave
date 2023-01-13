@@ -15,6 +15,15 @@ namespace std {
         std::error<T> this(T result) {
             this.result = result;
         } => this;
+        std::error<T> this(T result, char* message) {
+            this.result = result;
+            this.message = message;
+        } => this;
+        std::error<T> this(T result, char* message, int code) {
+            this.result = result;
+            this.message = message;
+            this.type = code;
+        } => this;
 
         void catch {
             if(this.message != null) {
@@ -23,8 +32,8 @@ namespace std {
             }
         }
         
-        void catch(void(char*) catcher) {
-            if(this.message != null) catcher(this.message);
+        void catch(void(char*,int) catcher) {
+            if(this.message != null) catcher(this.message,this.type);
         }
     }
 }

@@ -1,5 +1,34 @@
 import <std/io>
 
 namespace std {
-    
+    bool _isValidPtr(void* ptr, const(char)* type) {
+        int length = libc::strlen(type)-1;
+        bool result = true;
+
+        if(ptr == null) {
+            result = false;
+        }
+        else if(type[length-1] == '*') {
+            char* data = type[0->(length-2)];
+                result = std::_isValidPtr(cast(void*)(ptr[0]),data);
+            std::free(data);
+        }
+    } => result;
+
+    (ctargs) bool isValidPtr {
+        void* ptr = @getCurrArg(void*);
+        char* type = @typeToString(@getCurrArgType());
+
+        int length = libc::strlen(type)-1;
+        bool result = true;
+
+        if(ptr == null) {
+            result = false;
+        }
+        else if(type[length-1] == '*') {
+            char* data = type[0->(length-2)];
+                result = std::_isValidPtr(cast(void*)ptr[0],data);
+            std::free(data);
+        }
+    } => result;
 }

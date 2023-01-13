@@ -311,34 +311,45 @@ class Parser {
         if(peek().type == TokType.Rpar) next(); // skip (
         Node[] args;
         while(peek().type != TokType.Lpar) {
-            switch(peek().value) {
-                case "int":
-                case "short":
-                case "long":
-                case "cent":
-                case "char":
-                case "bool":
-                case "uint":
-                case "ushort":
-                case "ulong":
-                case "ucent":
-                case "uchar":
-                case "wchar":
-                case "uwchar":
-                    if(isDefinedLambda()) {
-                        NodeLambda nl = parseLambda().instanceof!NodeLambda;
-                        args ~= nl;
+            if(peek().type == TokType.Identifier) {
+                switch(peek().value) {
+                    case "int":
+                    case "short":
+                    case "long":
+                    case "cent":
+                    case "char":
+                    case "bool":
+                    case "uint":
+                    case "ushort":
+                    case "ulong":
+                    case "ucent":
+                    case "uchar":
+                    case "wchar":
+                    case "uwchar":
+                        if(isDefinedLambda()) {
+                            NodeLambda nl = parseLambda().instanceof!NodeLambda;
+                            args ~= nl;
+                            break;
+                        }
+                        args ~= new NodeType(parseType(),peek().line);
                         break;
-                    }
-                    args ~= new NodeType(parseType(),peek().line);
-                    break;
-                default:
-                    if(canFind(structs,peek().value) || canFind(_templateNames,peek().value)) args ~= new NodeType(parseType(),peek().line);
-                    else {
-                        args ~= parseExpr();
-                    }
-                    break;
+                    default:
+                        if(canFind(structs,peek().value) || canFind(_templateNames,peek().value)) {
+                            if(isDefinedLambda()) {
+                                NodeLambda nl = parseLambda().instanceof!NodeLambda;
+                                args ~= nl;
+                                break;
+                            }
+                            else if(tokens[_idx+1].type != TokType.Rpar) args ~= new NodeType(parseType(),peek().line);
+                            else args ~= parseExpr();
+                        }
+                        else {
+                            args ~= parseExpr();
+                        }
+                        break;
+                }
             }
+            else args ~= parseExpr();
             if(peek().type == TokType.Comma) next();
         }
         next(); // skip )
@@ -367,7 +378,15 @@ class Parser {
     Node parseAtom(string f) {
         import std.algorithm : canFind;
         auto t = next();
-        if(t.type == TokType.Number) return new NodeInt(BigInt(t.value));
+        if(t.type == TokType.Number) {
+            if(peek().value.toLower() == "u") {
+                next();
+                NodeInt _int = new NodeInt(BigInt(t.value));
+                _int.isUnsigned = true;
+                return _int;
+            }
+            return new NodeInt(BigInt(t.value));
+        }
         if(t.type == TokType.FloatNumber) return new NodeFloat(to!double(t.value));
         if(t.type == TokType.HexNumber) return new NodeInt(BigInt(t.value),16);
         if(t.type == TokType.True) return new NodeBool(true);
@@ -524,6 +543,16 @@ class Parser {
                 block = parseBlock(f);
             }
             else block = new NodeBlock([]);
+            if(peek().type == TokType.Identifier && tokens[_idx-1].type != TokType.Lbra && tokens[_idx-1].type != TokType.Semicolon) {
+                string nam = peek().value;
+                Node val = null;
+                next();
+                if(peek().type == TokType.Equ) {
+                    next();
+                    val = parseExpr(f);
+                }
+                return new NodeVar(nam,val,false,false,false,[],peek().line,new TypeBuiltin(name,args.dup,block));
+            }
             return new NodeBuiltin(name,args.dup,t.line,block);
         }
         error("Expected a number, true/false, char, variable or expression. Got: "~to!string(t.type)~" on "~to!string(peek().line+1)~" line.");
@@ -915,6 +944,13 @@ class Parser {
             if(peek().type == TokType.Lpar) next();
             if(peek().type == TokType.Semicolon) next();
             return new NodeAsm(s,true,tt,adds);
+        }
+        else if(peek().value == "try") {
+            int l = peek().line;
+            next();
+            NodeBlock nb = parseBlock(f);
+            if(peek().type == TokType.Lbra) next();
+            return new NodeTry(l,nb);
         }
         else if(peek().type == TokType.Command) {
             if(peek().value == "if") return parseIf(f,isStatic);

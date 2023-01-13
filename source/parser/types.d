@@ -115,6 +115,39 @@ class TypeBasic : Type {
             default: break;
         }
     }
+
+    this(BasicType t) {
+        switch(t) {
+            case BasicType.Int:
+                value = "int"; break;
+            case BasicType.Bool:
+                value = "bool"; break;
+            case BasicType.Short:
+                value = "short"; break;
+            case BasicType.Long:
+                value = "long"; break;
+            case BasicType.Float:
+                value = "float"; break;
+            case BasicType.Double:
+                value = "double"; break;
+            case BasicType.Char:
+                value = "char"; break;
+            case BasicType.Cent:
+                value = "cent"; break;
+            case BasicType.Uint:
+                value = "uint"; break;
+            case BasicType.Ushort:
+                value = "ushort"; break;
+            case BasicType.Ulong:
+                value = "ulong"; break;
+            case BasicType.Uchar:
+                value = "uchar"; break;
+            case BasicType.Ucent:
+                value = "ucent"; break;
+            default: break;
+        }
+        type = t;
+    }
     
     override Type copy() {
         return new TypeBasic(this.value);

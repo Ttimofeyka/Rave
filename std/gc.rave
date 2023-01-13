@@ -1,5 +1,41 @@
-import <std/vector>
+import <std/map> <std/memutil>
 
 namespace std {
-    // TODO
+    std::map<void*,int>* refcnt;
+
+    namespace refcounter {
+        (inline) void initialize {
+            std::refcnt = std::map<void*,int>();
+        }
+
+        (inline) void add(void* ptr) {
+            std::refcnt.add(ptr,1);
+        }
+
+        (inline) void inc(void** ptr) {
+            if(std::refcnt.has(ptr)) {
+                std::refcnt.set(ptr[0],std::refcnt.get(ptr[0])+1);
+            }
+        }
+
+        (inline) bool dec(void** ptr) {
+            bool result = false;
+            if(std::refcnt.has(ptr)) {
+                int value = std::refcnt.get(ptr[0]);
+                if(value > 1) {
+                    std::refcnt.set(ptr[0],std::refcnt.get(ptr[0])-1);
+                }
+                else {
+                    std::refcnt.remove(ptr[0]);
+                    std::free(ptr[0]);
+                    ptr[0] = null;
+                    result = true;
+                }
+            }
+        } => result;
+
+        (inline) void destroy {
+            ~std::refcnt;
+        }
+    }
 }

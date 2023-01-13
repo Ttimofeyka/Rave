@@ -143,3 +143,32 @@ void main {
     d[0..2] = [5,10]; // Setting to 0 and 1 elements values from a constant array
 }
 ```
+
+## Try
+
+If you call a function with the return type std::error, the value will be automatically checked for errors, and the return value will be with the original type.
+
+Examples:
+```d
+import <std/io> <std/error>
+
+int data = 0;
+
+std::error<int> initializeData {
+    std::error<int> result;
+    ...
+    if(expression) {
+        result.error = "Error!\n"; // Custom message
+        result.code = 100; // Custom code
+    }
+    else {
+        result.result = ...; // Custom value
+    }
+} => result;
+
+void main {
+    try {
+        int initD = initializeData();
+    }
+}
+```

@@ -2,11 +2,11 @@ namespace std {
     extern(linkname: "malloc") void* malloc(int size);
     extern(linkname: "free") void free(void* ptr);
     extern(linkname: "realloc") void* realloc(void* ptr, int newsize);
+    extern(linkname: "calloc") void* calloc(int num, int size);
     extern(linkname: "memcpy") void* memcpy(void* dest, void* src, int n);
     extern(linkname: "memmove") void* memmove(void* dest, void* src, int n);
     extern(linkname: "memcmp") bool memcmp(void* one, void* two, int n);
     extern(linkname: "memset") void* memset(void* dest, int c, int n);
-    extern(linkname: "calloc") void* calloc(int num, int size);
     extern(linkname: "llvm.frameaddress.p0i8") void* frameAddress(int level);
     extern(linkname: "llvm.eh.sjlj.setjmp") int setjmp(char* buff);
 
@@ -58,8 +58,6 @@ struct SafePtr<T> {
         std::assert(((n < this.size) && (n > 0)),"Error using SafePtr: attempt to access an element outside the pointer!\n");
         this.pointer[n] = value;
     } => this;
-
-    (inline) bool operator==(SafePtr<T> one, SafePtr<T> two) => one.pointer == two.pointer;
 
     void ~this {
         std::free(cast(void*)this.pointer);

@@ -119,5 +119,34 @@ namespace std {
                 }
             }
         } => toret;
+
+        void remove(K key) {
+            int _hash = (cast(int)key) % 3;
+
+            if(_hash == 0) {
+                for(int i=0; i<this.first.length; i+=1) {
+                    if(this.first.data[i].first == key) {
+                        this.first.remove(i);
+                        break;
+                    }
+                }
+            }
+            else if(_hash == 1) {
+                for(int i=0; i<this.second.length; i+=1) {
+                    if(this.second.data[i].first == key) {
+                        this.second.remove(i);
+                        break;
+                    }
+                }
+            }
+            else {
+                for(int i=0; i<this.third.length; i+=1) {
+                    if(this.third.data[i].first == key) {
+                        this.third.remove(i);
+                        break;
+                    }
+                }
+            }
+        }
     }
 }
