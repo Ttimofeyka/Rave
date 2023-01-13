@@ -40,3 +40,4 @@ a
 
 std/*.o
 examples/*.o
+.lite_project.lua

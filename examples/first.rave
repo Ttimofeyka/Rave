@@ -1,7 +1,11 @@
 import <std/io> <std/error>
 
-std::error<int> jam => std::error<int>(10,"5");
+std::error<int> jam => std::error<int>(10,"");
 
 void main {
-    
+    std::println("Hello, world!");
+    try {
+        int base = jam();
+        std::println("Jamal = ",base);
+    }
 }
