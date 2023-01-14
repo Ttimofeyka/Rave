@@ -1,21 +1,12 @@
-@if(__RAVE_OS == "LINUX") {
-    namespace libc {
-        namespace thread {
-            alias CloneVM = 0x00000100;
-            alias CloneThread = 0x00010000;
-            alias CloneParent = 0x00008000;
-            alias CloneFS = 0x00000200;
-            alias CloneSighand = 0x00000800;
-            alias CloneFiles = 0x00000400;
-        }
+@addLibrary("pthread");
+
+namespace libc {
+    struct pthread {}
+    struct pthread_attr {}
+
+    namespace pthread {
+        extern(linkname: "pthread_create") int create(libc::pthread* pthr, libc::pthread_attr* attr, void*(void*) func, void* arg);
+        extern(linkname: "pthread_join") int join(libc::pthread thread, void** retval);
+        extern(linkname: "pthread_exit") void exit(void* retval);
     }
-    
-    namespace libc {
-        namespace thread {
-            extern(linkname: "clone", vararg) int create(int(void*) fn, void* stack, int flags, void* arg);
-        }
-    }
-}
-@else {
-    @warning("Threads are not supported on your OS(",__RAVE_OS,")!");
 }

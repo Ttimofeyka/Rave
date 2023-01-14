@@ -90,8 +90,7 @@ Type llvmTypeToType(LLVMTypeRef t) {
         }
         else if(LLVMGetTypeKind(t) == LLVMStructTypeKind) return new TypeStruct(cast(string)fromStringz(LLVMGetStructName(t)));
         else if(LLVMGetTypeKind(t) == LLVMFunctionTypeKind) {
-            string ownType = Generator.typeToString(t)[0..Generator.typeToString(t).lastIndexOf('(')].strip();
-            return getType(ownType);
+            return getType(Generator.typeToString(t)[0..Generator.typeToString(t).lastIndexOf('(')].strip());
         }
         assert(0);
 }
@@ -222,13 +221,13 @@ class LLVMGen {
                 case BasicType.Char:
                 case BasicType.Uchar:
                     return LLVMInt8TypeInContext(Generator.Context);
-                case BasicType.Short: 
+                case BasicType.Short:
                 case BasicType.Ushort:
                     return LLVMInt16TypeInContext(Generator.Context);
-                case BasicType.Int: 
+                case BasicType.Int:
                 case BasicType.Uint:
                     return LLVMInt32TypeInContext(Generator.Context);
-                case BasicType.Long: 
+                case BasicType.Long:
                 case BasicType.Ulong:
                     return LLVMInt64TypeInContext(Generator.Context);
                 case BasicType.Cent: return LLVMInt128TypeInContext(Generator.Context);
@@ -313,7 +312,7 @@ class LLVMGen {
         if(TypeConst tc = t.instanceof!TypeConst) return this.GenerateType(tc.instance,loc);
         assert(0);
     }
-    
+
     LLVMTypeKind GenerateTypeKind(Type t) {
         pragma(inline,true);
         if(t.instanceof!TypeAlias) return -1;
@@ -574,7 +573,7 @@ struct FuncArgSet {
     Type type;
 }
 
-class Node 
+class Node
 {
     this() {}
 
@@ -606,6 +605,7 @@ class NodeInt : Node {
     Type _isVarVal = null;
     ubyte sys;
     bool isUnsigned = false;
+    bool isMustBeLong = false;
 
     this(BigInt value, int sys = 10) {
         this.value = value;
@@ -633,6 +633,7 @@ class NodeInt : Node {
     }
 
     override Type getType() {
+        if(isMustBeLong) return new TypeBasic("long");
         BasicType _type;
         if(_isVarVal.instanceof!TypeBasic) _type = ty = _isVarVal.instanceof!TypeBasic.type;
         else {
@@ -659,6 +660,7 @@ class NodeInt : Node {
     }
 
     override LLVMValueRef generate() {
+        if(isMustBeLong) return LLVMConstIntOfString(LLVMInt64TypeInContext(Generator.Context),toStringz(value.toDecimalString()),this.sys);
         if(_isVarVal.instanceof!TypeBasic) {
             ty = _isVarVal.instanceof!TypeBasic.type;
             switch(ty) {
@@ -848,9 +850,9 @@ class NodeBinary : Node {
 
             if(operator == TokType.Plus) {
                 if(TokType.Plus.into(StructTable[structName].operators)) {
-                    Type[] _types; 
+                    Type[] _types;
 
-                    _types ~= llvmTypeToType(LLVMTypeOf(one)); 
+                    _types ~= llvmTypeToType(LLVMTypeOf(one));
                     _types ~= llvmTypeToType(LLVMTypeOf(two));
                     if(typesToString(_types).into(StructTable[structName].operators[TokType.Plus])) {
                         NodeFunc fn = StructTable[structName].operators[TokType.Plus][typesToString(_types)];
@@ -932,7 +934,7 @@ class NodeBinary : Node {
 
         string structName = "";
         bool isOperatorOverload = false;
-        
+
         if((LLVMGetTypeKind(one) == LLVMPointerTypeKind || LLVMGetTypeKind(one) == LLVMStructTypeKind) && getStructName(one).into(StructTable)) {
             structName = getStructName(one);
             isOperatorOverload = true;
@@ -941,7 +943,7 @@ class NodeBinary : Node {
             structName = getStructName(two);
             isOperatorOverload = true;
         }
-        
+
         if(isOperatorOverload) {
             if(operator == TokType.Equal) {
                 if(TokType.Equal.into(StructTable[structName].operators)) {
@@ -992,7 +994,7 @@ class NodeBinary : Node {
         else if(two == LLVMPointerType(one,0)) {
             twov = LLVMBuildLoad(Generator.Builder,twov,toStringz("load654_"));
         }
-        
+
         if(LLVMGetTypeKind(one) == LLVMGetTypeKind(two) && one != two) {
             if(LLVMGetTypeKind(one) == LLVMIntegerTypeKind) {
                 onev = LLVMBuildIntCast(Generator.Builder,onev,two,toStringz("intcast693_"));
@@ -1256,7 +1258,7 @@ class NodeBinary : Node {
         switch(operator) {
             case TokType.Equ: case TokType.PluEqu:
             case TokType.MinEqu: case TokType.DivEqu:
-            case TokType.MulEqu: 
+            case TokType.MulEqu:
                 return new TypeVoid();
             case TokType.Equal: case TokType.Nequal:
             case TokType.More: case TokType.Less:
@@ -1322,7 +1324,7 @@ class NodeBinary : Node {
                     }
                 }
 
-                if(LLVMTypeOf(val) != ty 
+                if(LLVMTypeOf(val) != ty
                    && LLVMTypeOf(val) == LLVMPointerType(LLVMInt8TypeInContext(Generator.Context),0)) {
                     val = LLVMBuildBitCast(
                         Generator.Builder,
@@ -1358,7 +1360,7 @@ class NodeBinary : Node {
                 }
 
                 g.isMustBePtr = true;
-                
+
                 if(NodeIden id = g.base.instanceof!NodeIden) {
                     if(id.name.into(VarTable) && currScope.isPure) {
                         Generator.error(loc,"An attempt to change the global variable '"~id.name~"' in a pure function '"~currScope.func~"'!");
@@ -1387,7 +1389,7 @@ class NodeBinary : Node {
 
                 LLVMValueRef ptr = ind.generate();
                 if(ind.elementIsConst) Generator.error(loc, "An attempt to change the constant element!");
-                
+
                 LLVMValueRef val = second.generate();
 
                 if(LLVMTypeOf(ptr) == LLVMPointerType(LLVMPointerType(LLVMTypeOf(val),0),0)) ptr = LLVMBuildLoad(Generator.Builder,ptr,toStringz("load784_"));
@@ -1415,6 +1417,15 @@ class NodeBinary : Node {
              &&operator != TokType.Multiply) return null;
         }
 
+        if(first.getType() != second.getType()) {
+            if(NodeNull nn = first.instanceof!NodeNull) {
+                nn.maintype = second.getType();
+            }
+            else if(NodeNull nn = second.instanceof!NodeNull) {
+                nn.maintype = first.getType();
+            }
+        }
+
         LLVMValueRef f = first.generate();
         LLVMValueRef s = second.generate();
 
@@ -1433,13 +1444,13 @@ class NodeBinary : Node {
                 toStringz("IntCast")
             );
         }
-        
+
         switch(operator) {
             case TokType.Rem:
                 if(LLVMGetTypeKind(LLVMTypeOf(f)) == LLVMFloatTypeKind) {
                     return LLVMBuildFRem(
                         Generator.Builder,
-                        f, 
+                        f,
                         (LLVMGetTypeKind(LLVMTypeOf(s)) == LLVMFloatTypeKind ? s : LLVMBuildSIToFP(Generator.Builder,s,LLVMTypeOf(f),toStringz("sitofp"))),
                         toStringz("fr")
                     );
@@ -1718,8 +1729,8 @@ class NodeVar : Node {
                     value = ni;
                 }
                 Generator.Globals[name] = LLVMAddGlobal(
-                    Generator.Module, 
-                    Generator.GenerateType(t,loc), 
+                    Generator.Module,
+                    Generator.GenerateType(t,loc),
                     toStringz((noMangling) ? name : Generator.mangle(name,false,false))
                 );
             }
@@ -1788,7 +1799,7 @@ class NodeVar : Node {
             structSetPredefines(t, currScope.localscope[name]);
 
             LLVMSetAlignment(currScope.getWithoutLoad(name,loc),Generator.getAlignmentOfType(t));
-            
+
             if(value !is null) {
                 new NodeBinary(TokType.Equ,new NodeIden(name,loc),value,loc).generate();
             }
@@ -2066,7 +2077,7 @@ class NodeFunc : Node {
         }
 
         for(int i=0; i<args.length; i++) {
-            while(args[i].type.toString().into(Generator.toReplace)) args[i].type = Generator.toReplace[args[i].type.toString()];
+            if(args[i].type !is null && Generator !is null && Generator.toReplace !is null) while(args[i].type.toString().into(Generator.toReplace)) args[i].type = Generator.toReplace[args[i].type.toString()];
         }
 
         string toAdd = typesToString(args);
@@ -2195,7 +2206,7 @@ class NodeFunc : Node {
                 Generator.Functions[name],
                 toStringz("entry")
             );
-            
+
             exitBlock = LLVMAppendBasicBlockInContext(
                 Generator.Context,
                 Generator.Functions[name],
@@ -2270,7 +2281,7 @@ class NodeFunc : Node {
 			else {
                 LLVMBuildRetVoid(Generator.Builder);
             }
-			
+
 			Generator.Builder = null;
             currScope = null;
         }
@@ -2307,7 +2318,7 @@ class NodeFunc : Node {
             Type t = llvmTypeToType(args[i]);
             newargs ~= FuncArgSet("_RaveArg"~to!string(i),t);
         }
-        
+
         auto activeLoops = Generator.ActiveLoops.dup;
         auto builder = Generator.Builder;
         auto currBB = Generator.currBB;
@@ -2317,7 +2328,7 @@ class NodeFunc : Node {
         for(int i=0; i<mods.length; i++) {
             if(mods[i].name != "ctargs") _mods ~= mods[i];
         }
-        
+
         NodeFunc _f = new NodeFunc(name~typesToString(newargs.dup),newargs.dup,block,false,_mods.dup,loc,type,[]);
         _f.args = newargs.dup;
         _f.isCtargsPart = true;
@@ -2530,7 +2541,7 @@ class NodeCall : Node {
                         if(NodeIden id = args[i].instanceof!NodeIden) {id.isMustBePtr = true; arg = id.generate();}
                         else if(NodeGet ng = args[i].instanceof!NodeGet) {ng.isMustBePtr = true; arg = ng.generate();}
                         else if(NodeIndex ind = args[i].instanceof!NodeIndex) {ind.isMustBePtr = true; arg = ind.generate();}
-                        
+
                         if(LLVMGetTypeKind(LLVMTypeOf(arg)) != LLVMPointerTypeKind && (fas[i].name != "this" || LLVMGetTypeKind(LLVMTypeOf(arg)) == LLVMStructTypeKind)) {
                             // Create local copy
                             LLVMValueRef temp = LLVMBuildAlloca(Generator.Builder,LLVMTypeOf(arg),toStringz("tempArg_"));
@@ -2547,7 +2558,7 @@ class NodeCall : Node {
             LLVMValueRef arg = args[i].generate();
             params ~= arg;
         }
-        
+
         return correctByLLVM(params);
     }
 
@@ -2639,7 +2650,7 @@ class NodeCall : Node {
                         }
                         Generator.error(loc,"Unknown macro or function '"~f.name~"'!");
                     }
-                    
+
                     // Template function
                     Lexer l = new Lexer(f.name,1);
                     Parser p = new Parser(l.getTokens(),1,"(builtin)");
@@ -2697,9 +2708,9 @@ class NodeCall : Node {
             MacroTable[f.name].block.nodes = presets~MacroTable[f.name].block.nodes;
 
             MacroTable[f.name].block.generate();
-            
+
             LLVMValueRef toret = null;
-            
+
             if(MacroTable[f.name].ret !is null) {
                 MacroTable[f.name].ret.parent = f.name;
                 toret = MacroTable[f.name].ret.generate();
@@ -2981,9 +2992,9 @@ class NodeCall : Node {
 
                 calledFunc = MethodTable[cast(immutable)[sname,g.field]];
                 LLVMValueRef[] params = getParameters(MethodTable[cast(immutable)[sname,g.field]].isVararg, MethodTable[cast(immutable)[sname,g.field]].args);
-                
+
                 params = val~params;
-                
+
                 _val = LLVMBuildCall(
                     Generator.Builder,
                     Generator.Functions[MethodTable[cast(immutable)[sname,g.field]].name],
@@ -3000,14 +3011,14 @@ class NodeCall : Node {
                 string sname = "";
                 if(LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMStructTypeKind) sname = cast(string)fromStringz(LLVMGetStructName(LLVMTypeOf(val)));
                 else sname = cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(val))));
-                
+
                 calledFunc = MethodTable[cast(immutable)[sname,g.field]];
                 _offset = 1;
                 LLVMValueRef[] params = getParameters(MethodTable[cast(immutable)[sname,g.field]].isVararg, MethodTable[cast(immutable)[sname,g.field]].args);
                 _offset = 0;
 
                 params = val~params;
-                
+
                 _val = LLVMBuildCall(
                     Generator.Builder,
                     Generator.Functions[MethodTable[cast(immutable)[sname,g.field]].name],
@@ -3123,7 +3134,7 @@ class NodeCall : Node {
         Generator.error(loc,"TODO!");
         assert(0);
     }
-    
+
 
     override void debugPrint() {
         writeln("NodeCall()");
@@ -3319,7 +3330,7 @@ class NodeGet : Node {
                 ts = Generator.toReplace[ts.toString()].instanceof!TypeStruct;
             }
         }
-        
+
         if(into(cast(immutable)[ts.name,field],MethodTable)) {
             return MethodTable[cast(immutable)[ts.name,field]].getType();
         }
@@ -3432,16 +3443,16 @@ class NodeGet : Node {
         }
         if(NodeBuiltin nb = base.instanceof!NodeBuiltin) {
             LLVMValueRef v = nb.generate();
-            
+
             string structName;
             if(v is null) {
                 Generator.error(loc, "The built-in function '"~nb.name~"' does not return values!");
             }
-            
+
             LLVMValueRef ptr = checkStructure(v);
             structName = cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(ptr))));
             LLVMValueRef f = checkIn(structName);
-            
+
             if(f !is null) return f;
 
             if(isMustBePtr) return LLVMBuildStructGEP(
@@ -3454,7 +3465,7 @@ class NodeGet : Node {
         if(NodeDone nd = base.instanceof!NodeDone) {
             LLVMValueRef done = nd.generate();
             string structName = cast(string)fromStringz(LLVMGetStructName(LLVMTypeOf(done)));
-            
+
             LLVMValueRef ptr = checkStructure(done);
             LLVMValueRef f = checkIn(structName);
 
@@ -3739,7 +3750,7 @@ class NodeIf : Node {
                 Generator.Context,
 				Generator.Functions[currScope.func],
 				toStringz("then"));
-				
+
 		LLVMBasicBlockRef elseBlock =
 			LLVMAppendBasicBlockInContext(
                 Generator.Context,
@@ -3770,7 +3781,7 @@ class NodeIf : Node {
         if(Generator.ActiveLoops[selfNum].rets.length>0) {
             FuncTable[func].rets ~= Generator.ActiveLoops[selfNum].rets[0].ret;
         }
-        
+
         bool hasEnd1 = Generator.ActiveLoops[selfNum].hasEnd;
 
         Generator.ActiveLoops[selfNum] = Loop(true,elseBlock,endBlock,false,true);
@@ -3832,13 +3843,13 @@ class NodeWhile : Node {
     }
 
     override LLVMValueRef generate() {
-        LLVMBasicBlockRef condBlock = 
+        LLVMBasicBlockRef condBlock =
             LLVMAppendBasicBlock(
                 Generator.Functions[currScope.func],
                 toStringz("cond")
         );
 
-        LLVMBasicBlockRef whileBlock = 
+        LLVMBasicBlockRef whileBlock =
             LLVMAppendBasicBlock(
                 Generator.Functions[currScope.func],
                 toStringz("while")
@@ -3866,7 +3877,7 @@ class NodeWhile : Node {
         LLVMPositionBuilderAtEnd(Generator.Builder, whileBlock);
         int selfNumber = cast(int)Generator.ActiveLoops.length;
         Generator.ActiveLoops[selfNumber] = Loop(true,condBlock,currScope.BlockExit,false,false);
-        
+
         Generator.currBB = whileBlock;
         _body.generate();
         if(!Generator.ActiveLoops[selfNumber].hasEnd) LLVMBuildBr(
@@ -4137,16 +4148,16 @@ class NodeStruct : Node {
 
                     TokType oper;
                     switch(f.name[$-3..$]) {
-                        case "(+)": 
+                        case "(+)":
                             oper = TokType.Plus; f.name = name~"(+)";
                             break;
                         case "(=)":
                             oper = TokType.Equ; f.name = name~"(=)";
                             break;
-                        case "==)": 
+                        case "==)":
                             oper = TokType.Equal; f.name = name~"(==)";
                             break;
-                        case "!=)": 
+                        case "!=)":
                             oper = TokType.Nequal; f.name = name~"(!=)";
                             break;
                         default: break;
@@ -4177,7 +4188,7 @@ class NodeStruct : Node {
                         else Generator.error(loc," method '"~f.origname~"' has already been declared on "~to!string(MethodTable[cast(immutable)[name,f.origname]].loc)~" line!");
                     }
                     else MethodTable[cast(immutable)[name,f.origname]] = f;
-                    
+
                     methods ~= f;
                     f.check();
                     f.generate();
@@ -4230,7 +4241,7 @@ class NodeStruct : Node {
                                 new NodeCall(
                                     _this.loc,new NodeIden(NeededFunctions["malloc"],_this.loc),
                                     [new NodeCast(new TypeBasic("int"), new NodeSizeof(new NodeType(new TypeStruct(name),_this.loc),_this.loc), _this.loc)]
-                                ), 
+                                ),
                                 _this.loc
                             ),
                             _this.loc
@@ -4266,7 +4277,7 @@ class NodeStruct : Node {
                         else Generator.error(loc," method '"~f.origname~"' has already been declared on "~to!string(MethodTable[cast(immutable)[name,f.origname]].loc)~" line!");
                     }
                     else MethodTable[cast(immutable)[name,f.origname]] = f;
-                    
+
                     methods ~= f;
                 }
                 else if(f.origname == "~this") {
@@ -4288,13 +4299,13 @@ class NodeStruct : Node {
                         _destructor.check();
                         continue;
                     }
-                    
+
                     if(!_this.type.instanceof!TypeStruct) _destructor.block.nodes = _destructor.block.nodes ~ new NodeCall(
                             _destructor.loc,
                             new NodeIden(NeededFunctions["free"],_destructor.loc),
                             [new NodeIden("this",_destructor.loc)]
                     );
-                    
+
                     _destructor.check();
                 }
                 else if(f.origname.indexOf('(') != -1) {
@@ -4305,16 +4316,16 @@ class NodeStruct : Node {
 
                     TokType oper;
                     switch(f.origname[$-3..$]) {
-                        case "(+)": 
+                        case "(+)":
                             oper = TokType.Plus; f.name = name~"(+)";
                             break;
                         case "(=)":
                             oper = TokType.Equ; f.name = name~"(=)";
                             break;
-                        case "==)": 
+                        case "==)":
                             oper = TokType.Equal; f.name = name~"(==)";
                             break;
-                        case "!=)": 
+                        case "!=)":
                             oper = TokType.Nequal; f.name = name~"(!=)";
                             break;
                         case "[])":
@@ -4374,7 +4385,7 @@ class NodeStruct : Node {
                         else Generator.error(loc," method '"~f.origname~"' has already been declared on "~to!string(MethodTable[cast(immutable)[name,f.origname]].loc)~" line!");
                     }
                     else MethodTable[cast(immutable)[name,f.origname]] = f;
-                    
+
                     methods ~= f;
                 }
             }
@@ -4413,7 +4424,7 @@ class NodeStruct : Node {
                     if(outType.instanceof!TypeStruct) outType = new TypePointer(outType);
 
                     _destructor.args = [FuncArgSet("this",outType)];
-                    
+
                     _destructor.check();
                     _destructor.generate();
                 }
@@ -4452,7 +4463,7 @@ class NodeStruct : Node {
         auto toReplace = Generator.toReplace.dup;
 
         string _fn = "<";
-        
+
         for(int i=0; i<_types.length; i++) {
             ///writeln("Structure: ",name,", Type: ",templateNames[i],", replaced: ",_types[i]);
             if(TypeStruct _ts = _types[i].instanceof!TypeStruct) if(!_ts.name.into(StructTable) && !_ts.types.empty) {
@@ -4467,11 +4478,11 @@ class NodeStruct : Node {
         }
 
         Generator.toReplace[name~_fn[0..$-1]~">"] = new TypeStruct(name~typesS);
-        
+
         NodeStruct _struct = new NodeStruct(name~typesS,copyElements().dup,loc,"",[]);
         _struct.isTemplated = true;
         _struct.isComdat = true;
-        
+
         _struct.check();
         _struct.generate();
 
@@ -4979,7 +4990,7 @@ class NodeType : Node {
 class NodeSizeof : Node {
     Node val;
     int loc;
-    
+
     this(Node val, int loc) {
         this.val = val;
         this.loc = loc;
@@ -5015,7 +5026,7 @@ class NodeDebug : Node {
     override LLVMValueRef generate() {
         if(idenName.into(AliasTable)) {
             block.check();
-            return block.generate(); 
+            return block.generate();
         }
         return null;
     }
@@ -5553,7 +5564,7 @@ class NodeBuiltin : Node {
 
 class NodeFor : Node {
     int loc;
-    
+
     Node[] _Sets;
     NodeBinary _Condition;
     Node[] _Afters;
@@ -5762,7 +5773,7 @@ class NodeSlice : Node {
             LLVMBuildStore(Generator.Builder,val,v);
             val = v;
         }
-        
+
         LLVMValueRef gValue;
 
         if(NodeIden id = value.instanceof!NodeIden) gValue = currScope.getWithoutLoad(id.name,loc);
@@ -5798,7 +5809,7 @@ class NodeSlice : Node {
                 [new NodeBinary(TokType.PluEqu, new NodeIden("i",loc), new NodeInt(1),loc)],
                 new NodeBlock([
                     new NodeBinary(
-                        TokType.Equ, 
+                        TokType.Equ,
                         new NodeIndex(new NodeDone(gValue),[new NodeIden("i",loc)],loc),
                         new NodeIndex(new NodeDone(val), [new NodeIden("i",loc)],loc),
                         loc
@@ -5854,7 +5865,7 @@ class NodeSlice : Node {
             [new NodeBinary(TokType.PluEqu, new NodeIden("i",loc), new NodeInt(1),loc), new NodeBinary(TokType.PluEqu, new NodeIden("j",loc), new NodeInt(1),loc)],
             new NodeBlock([
                 new NodeBinary(
-                    TokType.Equ, 
+                    TokType.Equ,
                     new NodeIndex(new NodeDone(container),[new NodeIden("j",loc)],loc),
                     new NodeIndex(new NodeDone(gValue), [new NodeIden("i",loc)],loc),
                     loc

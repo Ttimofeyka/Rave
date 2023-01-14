@@ -25,6 +25,7 @@ namespace libc {
     extern(linkname: "fread") int fread(void* buffer, int size, int n, libc::File* file);
     extern(linkname: "fseek") int fseek(libc::File* stream, int offset, int origin);
     extern(linkname: "ftell") int ftell(libc::File* stream);
+    extern(linkname: "fwrite") int fwrite(void* buffer, int size, int n, libc::File* stream);
 }
 
 namespace std {
@@ -110,6 +111,7 @@ namespace std {
         } => toret;
 
         int read(void* buffer, int size, int n) => libc::fread(buffer, size, n, this._file);
+        int write(void* buffer, int size, int n) => libc::fwrite(buffer, size, n, this._file);
 
         char getc => libc::fgetc(this._file);
 
@@ -129,7 +131,7 @@ namespace std {
                 else this.close();
             }
         } => toret;
-        
+
         int flush => libc::fflush(this._file);
 
         void ~this {

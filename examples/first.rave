@@ -1,11 +1,5 @@
-import <std/io> <std/error>
-
-std::error<int> jam => std::error<int>(10,"");
+import <std/io> <std/network>
 
 void main {
-    std::println("Hello, world!");
-    try {
-        int base = jam();
-        std::println("Jamal = ",base);
-    }
+
 }

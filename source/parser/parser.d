@@ -105,7 +105,7 @@ class Parser {
 
     private Type parseTypeAtom() {
         import std.algorithm : canFind;
-        
+
         if(peek().type == TokType.Identifier) {
             auto t = next();
             switch(t.value) {
@@ -135,7 +135,7 @@ class Parser {
             while(peek().type != TokType.Lpar) {
                 if(peek().type == TokType.MacroArgNum) {
                     args ~= new MacroGetArg(to!int(peek().value),loc);
-                    next(); 
+                    next();
                 }
                 else args ~= parseExpr();
                 if(peek().type == TokType.Comma) next();
@@ -385,6 +385,12 @@ class Parser {
                 _int.isUnsigned = true;
                 return _int;
             }
+            else if(peek().value == "L") {
+                next();
+                NodeInt _int = new NodeInt(BigInt(t.value));
+                _int.isMustBeLong = true;
+                return _int;
+            }
             return new NodeInt(BigInt(t.value));
         }
         if(t.type == TokType.FloatNumber) return new NodeFloat(to!double(t.value));
@@ -588,7 +594,7 @@ class Parser {
         Node start;
         Node end;
         int loc = peek().line;
-        
+
         next();
         start = parseExpr(f);
         bool isConst = true;
@@ -880,7 +886,7 @@ class Parser {
 
         // Current token - "with"
         next();
-        
+
         Node _structure;
         // Current token - "("
         next();
@@ -1138,7 +1144,7 @@ class Parser {
             block = parseBlock(s);
         }
         else block = new NodeBlock([]);
-            
+
         return new NodeBuiltin(name,args.dup,peek().line,block);
     }
 
@@ -1204,7 +1210,7 @@ class Parser {
         loc = peek().line;
 
         next();
-        
+
         string[] _templates;
 
         if(peek().type == TokType.Less) {
@@ -1374,7 +1380,7 @@ class Parser {
         structs ~= name;
         return new NodeStruct(name,nodes,loc,_exs,templateNames);
     }
-    
+
     Node parseMacro() {
         next();
         string m = peek().value;
@@ -1481,7 +1487,7 @@ class Parser {
         if(peek().type == TokType.Eof) return null;
 
         if(peek().value == "}") return null;
-        
+
         if(peek().value == "namespace") return parseNamespace();
 
         if(peek().value == "struct") return parseStruct();
@@ -1550,10 +1556,10 @@ class Parser {
                 }
                 next();
             }
-            
+
             return new NodeBuiltin(name,args.dup,t.line,block);
         }
-        
+
         return parseDecl(s);
     }
 
@@ -1568,6 +1574,6 @@ class Parser {
     Node[] getNodes() {
         return this._nodes.dup;
     }
-    
+
     this(Token[] t, int offset, string _file) {this.tokens = t; this.offset = offset; this._file = _file;}
 }

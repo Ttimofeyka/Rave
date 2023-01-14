@@ -38,8 +38,8 @@ class Compiler {
 
     private void error(string msg) {
         pragma(inline,true);
-		writeln("\033[0;31mError: " ~ msg ~ "\033[0;0m");
-		exit(1);
+		    writeln("\033[0;31mError: " ~ msg ~ "\033[0;0m");
+		    exit(1);
 	}
 
     this(string outfile, string outtype, CompOpts opts) {
@@ -82,7 +82,7 @@ class Compiler {
 
         int offset = 1;
         string oldContent = content;
-        
+
         if(outtype.indexOf("i686") != -1 || outtype.indexOf("i386") != -1) content = "alias __RAVE_PLATFORM = \"X86\"; ";
         else if(outtype.indexOf("x86_64") != -1) content = "alias __RAVE_PLATFORM = \"X86_64\"; ";
         else if(outtype.indexOf("aarch64") != -1) content = "alias __RAVE_PLATFORM = \"AARCH64\"; ";
@@ -158,12 +158,12 @@ class Compiler {
         char* triple = LLVMNormalizeTargetTriple(toStringz(outtype));
     	LLVMGetTargetFromTriple(triple, &target, &errors);
     	LLVMTargetMachineRef machine = LLVMCreateTargetMachine(
-			target, 
-			triple, 
-			"generic", 
+			target,
+			triple,
+			"generic",
 			LLVMGetHostCPUFeatures(),
-			 LLVMCodeGenLevelDefault, 
-			 LLVMRelocDefault, 
+			 LLVMCodeGenLevelDefault,
+			 LLVMRelocDefault,
 		LLVMCodeModelDefault);
 
         LLVMDisposeMessage(errors);
