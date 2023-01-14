@@ -7,7 +7,7 @@ namespace std {
         int length;
 
         std::vector<T> this {
-            this.data = new(T);
+            this.data = cast(T*)std::malloc(sizeof(T));
             this.capacity = 1;
             this.length = 0;
         } => this;
@@ -36,14 +36,14 @@ namespace std {
             buffer.data = cast(T*)std::malloc(sizeof(std::vector<T>));
             buffer.capacity = 1;
             buffer.length = 0;
-            
+
             for(int i=0; i<this.length; i+=1) {
                 buffer.add(this.data[i]);
             }
         } => buffer;
 
         T operator[](std::vector<T>* v, int index) => v.data[index];
-        
+
         std::vector<T> operator+(std::vector<T> one, std::vector<T> two) {
             std::vector<T> cp = one.copy();
             cp.assign(two);

@@ -9,8 +9,8 @@ namespace std {
     struct error<T> {
         char* message = null;
         T result;
-        int type;
-        
+        int code;
+
         std::error<T> this => this;
         std::error<T> this(T result) {
             this.result = result;
@@ -22,7 +22,7 @@ namespace std {
         std::error<T> this(T result, char* message, int code) {
             this.result = result;
             this.message = message;
-            this.type = code;
+            this.code = code;
         } => this;
 
         void catch {
@@ -31,9 +31,9 @@ namespace std {
                 std::exit(1);
             }
         }
-        
+
         void catch(void(char*,int) catcher) {
-            if(this.message != null) catcher(this.message,this.type);
+            if(this.message != null) catcher(this.message,this.code);
         }
     }
 }

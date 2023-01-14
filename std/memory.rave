@@ -65,11 +65,3 @@ struct SafePtr<T> {
         this.size = 0;
     }
 }
-
-macro delete {
-    std::free(cast(void*)#0);
-}
-
-macro new {
-    return cast(@baseType(#0)*)std::malloc(sizeof(#0));
-}

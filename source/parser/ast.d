@@ -207,7 +207,7 @@ class LLVMGen {
         return list[0];
     }
 
-    LLVMTypeRef GenerateType(Type t, int loc = -1) {
+    LLVMTypeRef GenerateType(Type t, int loc) {
         pragma(inline,true);
         if(t is null) return LLVMPointerType(
             LLVMInt8TypeInContext(Generator.Context),
@@ -1292,7 +1292,7 @@ class NodeBinary : Node {
         bool isAliasIden = false;
         if(NodeIden i = first.instanceof!NodeIden) {isAliasIden = i.name.into(AliasTable);}
 
-        if(operator == TokType.Equ) { // TODO: Replace it to setTo function call
+        if(operator == TokType.Equ) {
             if(NodeIden i = first.instanceof!NodeIden) {
                 if(currScope.getVar(i.name,loc).isConst && i.name != "this" && currScope.getVar(i.name,loc).isChanged) {
                     Generator.error(loc, "An attempt to change the value of a constant variable!");
@@ -1303,8 +1303,14 @@ class NodeBinary : Node {
                     return null;
                 }
 
-                LLVMValueRef val = second.generate();
                 LLVMTypeRef ty = LLVMTypeOf(currScope.get(i.name,loc));
+
+                if(NodeNull nn = second.instanceof!NodeNull) {
+                    nn.maintype = null;
+                    nn.llvmtype = ty;
+                }
+
+                LLVMValueRef val = second.generate();
                 if(LLVMGetTypeKind(ty) == LLVMStructTypeKind
                 || (LLVMGetTypeKind(ty) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVMGetElementType(ty)) == LLVMStructTypeKind)) {
                     string structName;
@@ -1324,16 +1330,7 @@ class NodeBinary : Node {
                     }
                 }
 
-                if(LLVMTypeOf(val) != ty
-                   && LLVMTypeOf(val) == LLVMPointerType(LLVMInt8TypeInContext(Generator.Context),0)) {
-                    val = LLVMBuildBitCast(
-                        Generator.Builder,
-                        val,
-                        ty,
-                        toStringz("bitcast")
-                    );
-                }
-                else if(LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMGetTypeKind(ty) && LLVMGetTypeKind(ty) == LLVMIntegerTypeKind && LLVMTypeOf(val) != ty) {
+                if(LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMGetTypeKind(ty) && LLVMGetTypeKind(ty) == LLVMIntegerTypeKind && LLVMTypeOf(val) != ty) {
                     val = LLVMBuildIntCast(Generator.Builder,val,ty,toStringz("intc_"));
                 }
                 else if(LLVMGetTypeKind(ty) == LLVMDoubleTypeKind && LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMFloatTypeKind) {
@@ -1353,9 +1350,14 @@ class NodeBinary : Node {
                 );
             }
             else if(NodeGet g = first.instanceof!NodeGet) {
+                LLVMValueRef _g = g.generate();
+                if(NodeNull nn = second.instanceof!NodeNull) {
+                    nn.maintype = null;
+                    nn.llvmtype = LLVMTypeOf(g.generate());
+                }
                 LLVMValueRef val = second.generate();
 
-                if(Generator.typeToString(LLVMTypeOf(val))[0..$-1] == Generator.typeToString(LLVMTypeOf(g.generate()))) {
+                if(Generator.typeToString(LLVMTypeOf(val))[0..$-1] == Generator.typeToString(LLVMTypeOf(_g))) {
                     val = LLVMBuildLoad(Generator.Builder,val,toStringz("load764_1_"));
                 }
 
@@ -1367,7 +1369,12 @@ class NodeBinary : Node {
                     }
                 }
 
-                LLVMValueRef _g = g.generate();
+                _g = g.generate();
+
+                if(LLVMTypeOf(val) == LLVMTypeOf(_g)) {
+                    if(second.instanceof!NodeNull) val = LLVMBuildLoad(Generator.Builder,val,"load_");
+                }
+
                 if(g.elementIsConst) {
                     Generator.error(loc, "An attempt to change the constant element!");
                 }
@@ -1390,6 +1397,10 @@ class NodeBinary : Node {
                 LLVMValueRef ptr = ind.generate();
                 if(ind.elementIsConst) Generator.error(loc, "An attempt to change the constant element!");
 
+                if(NodeNull nn = second.instanceof!NodeNull) {
+                    nn.maintype = null;
+                    nn.llvmtype = LLVMGetElementType(LLVMTypeOf(ptr));
+                }
                 LLVMValueRef val = second.generate();
 
                 if(LLVMTypeOf(ptr) == LLVMPointerType(LLVMPointerType(LLVMTypeOf(val),0),0)) ptr = LLVMBuildLoad(Generator.Builder,ptr,toStringz("load784_"));
@@ -1428,6 +1439,17 @@ class NodeBinary : Node {
 
         LLVMValueRef f = first.generate();
         LLVMValueRef s = second.generate();
+
+        if(NodeNull nn = first.instanceof!NodeNull) {
+            nn.maintype = null;
+            nn.llvmtype = LLVMTypeOf(s);
+            f = nn.generate();
+        }
+        else if(NodeNull nn = second.instanceof!NodeNull) {
+            nn.maintype = null;
+            nn.llvmtype = LLVMTypeOf(f);
+            s = nn.generate();
+        }
 
         if(Generator.typeToString(LLVMTypeOf(f))[0..$-1] == Generator.typeToString(LLVMTypeOf(s))) {
             f = LLVMBuildLoad(Generator.Builder,f,toStringz("load1389_"));
@@ -1701,6 +1723,17 @@ class NodeVar : Node {
             Type _nt = t.check(null);
             if(_nt !is null) this.t = _nt;
         }
+        if(TypeStruct ts = t.instanceof!TypeStruct) {
+            if(ts.types.length > 0 && Generator.toReplace.length > 0) {
+                for(int i=0; i<ts.types.length; i++) {
+                    Type _t = ts.types[i];
+                    while(_t.toString().into(Generator.toReplace)) {
+                        _t = Generator.toReplace[_t.toString()];
+                    }
+                    ts.types[i] = _t;
+                }
+            }
+        }
     }
 
     override LLVMValueRef generate() {
@@ -1837,6 +1870,7 @@ class NodeIden : Node {
     override Type getType() {
         if(name in AliasTable) return AliasTable[name].getType();
         if(name.into(FuncTable)) return FuncTable[name].getType();
+        if(name.into(MacroTable)) return MacroTable[name].getType();
         if(!currScope.has(name)) {
             if(name.into(Generator.toReplace)) {
                 string newname = Generator.toReplace[name].toString();
@@ -4596,14 +4630,14 @@ class NodeCast : Node {
                 return LLVMBuildIntToPtr(
                     Generator.Builder,
                     gval,
-                    Generator.GenerateType(f),
+                    Generator.GenerateType(f,loc),
                     toStringz("ipcast")
                 );
             }
             return LLVMBuildPointerCast(
                 Generator.Builder,
                 gval,
-                Generator.GenerateType(f),
+                Generator.GenerateType(f,loc),
                 toStringz("ppcast")
             );
         }
@@ -4806,6 +4840,7 @@ class NodeUsing : Node {
 
 class NodeNull : Node {
     Type maintype;
+    LLVMTypeRef llvmtype;
 
     this() {}
 
@@ -4813,7 +4848,9 @@ class NodeNull : Node {
 
     override Type getType() {return maintype;}
     override LLVMValueRef generate() {
-        return LLVMConstNull(Generator.GenerateType(maintype));
+        if(maintype !is null) return LLVMConstNull(Generator.GenerateType(maintype,-5));
+        if(llvmtype !is null) return LLVMConstNull(llvmtype);
+        return LLVMConstNull(LLVMPointerType(LLVMInt8TypeInContext(Generator.Context),0));
     }
 }
 
@@ -5000,7 +5037,7 @@ class NodeSizeof : Node {
 
     override LLVMValueRef generate() {
         if(NodeType ty = val.instanceof!NodeType) {
-            return LLVMBuildIntCast(Generator.Builder, LLVMSizeOf(Generator.GenerateType(ty.ty)), LLVMInt32TypeInContext(Generator.Context), toStringz("cast"));
+            return LLVMBuildIntCast(Generator.Builder, LLVMSizeOf(Generator.GenerateType(ty.ty,loc)), LLVMInt32TypeInContext(Generator.Context), toStringz("cast"));
         }
         if(MacroGetArg mga = val.instanceof!MacroGetArg) {
             NodeSizeof newsizeof = new NodeSizeof(currScope.macroArgs[mga.number],loc);
@@ -5061,7 +5098,7 @@ class NodeLambda : Node {
     LLVMTypeRef[] generateTypes() {
         LLVMTypeRef[] ts;
         for(int i=0; i<typ.args.length; i++) {
-            ts ~= Generator.GenerateType(typ.args[i]);
+            ts ~= Generator.GenerateType(typ.args[i],loc);
         }
         return ts.dup;
     }
@@ -5341,7 +5378,7 @@ class NodeBuiltin : Node {
                 if(isEqType.toString() != isEqType2.toString()) return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false);
                 return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),0,false);
             case "va_arg":
-                return LLVMBuildVAArg(Generator.Builder,args[0].generate(),Generator.GenerateType(asType(1).ty),toStringz("builtInVaArg"));
+                return LLVMBuildVAArg(Generator.Builder,args[0].generate(),Generator.GenerateType(asType(1).ty,loc),toStringz("builtInVaArg"));
             case "addLibrary":
                 for(int i=0; i<args.length; i++) {
                     if(!canFind(_libraries,args[i].instanceof!NodeString.value)) {
@@ -5698,7 +5735,7 @@ class NodeAsm : Node {
         LLVMTypeRef[] ts;
         LLVMValueRef[] vs;
         LLVMValueRef v = LLVMGetInlineAsm(
-            LLVMFunctionType(Generator.GenerateType(t),ts.ptr,0,false),
+            LLVMFunctionType(Generator.GenerateType(t,-6),ts.ptr,0,false),
             cast(char*)toStringz(line),
             line.length,
             cast(char*)toStringz(additions),

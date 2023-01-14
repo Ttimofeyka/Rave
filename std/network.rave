@@ -1,3 +1,4 @@
+import <std/error>
 @addLibrary("curl");
 
 namespace std {
@@ -9,8 +10,22 @@ namespace std {
         alias optFollowLocation = 52;
         alias optWriteFunction = 20011;
         alias optWriteData = 10001;
+        alias initializeFailed = 1;
 
-        extern(linkname: "curl_easy_init") std::curl* init();
+        extern(linkname: "curl_easy_init") std::curl* cinit();
+        (inline) std::error<std::curl*> init {
+            std::error<std::curl*> result;
+
+            std::curl* c = std::curl::cinit();
+            if(c == null) {
+                result.message = "Curl initialization failed!";
+                result.code = std::curl::initializeFailed;
+                result.result = null;
+            }
+            else {
+                result.result = c;
+            }
+        } => result;
         extern(linkname: "curl_easy_cleanup") void cleanUp(std::curl* c);
         extern(linkname: "curl_easy_setopt", vararg) int setOption(std::curl* c, int type);
         extern(linkname: "curl_easy_perform") int perform(std::curl* c);
