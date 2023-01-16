@@ -1,5 +1,5 @@
-import <std/io> <std/network>
+import <std/io>
 
 void main {
-
+    
 }

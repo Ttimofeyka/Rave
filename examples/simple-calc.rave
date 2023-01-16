@@ -1,0 +1,26 @@
+import <std/io>
+
+void main {
+    int menu;
+    float num1;
+    float num2;
+    float result;
+
+    std::println("Choose a mode from the list below");
+    std::println("1. Addition\n2. Subtraction\n3. Multiplication\n4. Division\n");
+    std::print("Enter number: ");
+    std::scanf("%d",&menu);
+
+    std::print("\nFirst number: ");
+    std::scanf("%f",&num1);
+
+    std::print("Second number: ");
+    std::scanf("%f",&num2);
+
+    if(menu == 1) result = num1 + num2;
+    else if(menu == 2) result = num1 - num2;
+    else if(menu == 3) result = num1 * num2;
+    else if(menu == 4) result = num1 / num2;
+
+    std::println("\nResult: ",result);
+}

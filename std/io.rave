@@ -29,7 +29,6 @@ namespace libc {
 }
 
 namespace std {
-    //extern(linkname: "printf") int printf(char* str, ...);
     (vararg) int printf(std::string str) {
         va_list list;
 

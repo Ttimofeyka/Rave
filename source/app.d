@@ -65,7 +65,8 @@ CompOpts analyzeArgs(string[] args) {
 			case "-emit-llvm": // Compatible with the same option from clang
 				opts.emit_llvm = true; break;
             case "-fPIE": opts.isPIE = true; break;
-			case "-l": case "--library": opts.linkparams ~= "-l"~args[idx+1]~" "; idx += 1; break;
+			case "-l": case "--library":
+			  opts.linkparams ~= "-l"~args[idx+1]~" "; idx += 1; break;
 			case "-c": opts.onlyObject = true; break;
 			case "-ne": case "--noEntry": opts.noEntry = true; break;
 			case "-ns": case "--noStd": opts.noStd = true; break;
@@ -85,7 +86,7 @@ CompOpts analyzeArgs(string[] args) {
 				if(currCommand[0] == '-') {
 					opts.linkparams ~= currCommand~" "; idx += 1;
 				}
-				else files ~= args[idx]; 
+				else files ~= args[idx];
 				break;
 		}
 		idx += 1;

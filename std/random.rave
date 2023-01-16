@@ -15,4 +15,20 @@ namespace std {
 
         result = libc::rand();
     } => (result % ((max+1)-min))+min;
+
+    long randomLong(long min, long max) {
+        long result = 0;
+
+        std::timeSpec ts;
+        libc::clockGetTime(std::RealTime,&ts);
+        libc::srand(cast(int)ts.nsec);
+
+        int first = libc::rand();
+
+        libc::clockGetTime(std::RealTime,&ts);
+        libc::srand(cast(int)ts.nsec);
+
+        int second = libc::rand();
+        result = cast(long)(first+second);
+    } => (result % ((max+1)-min))+min;
 }
