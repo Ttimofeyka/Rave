@@ -115,6 +115,7 @@ class LLVMGen {
     int currentBuiltinArg = 0;
     string lastFunc = "";
     CompOpts opts;
+    LLVMTypeRef[BasicType] changeableTypes;
 
     this(string file, CompOpts opts) {
         this.file = file;
@@ -126,6 +127,20 @@ class LLVMGen {
         LLVMInitializeAllAsmPrinters();
         LLVMInitializeAllTargetInfos();
         LLVMInitializeAllTargetMCs();
+
+        changeableTypes[BasicType.Bool] = LLVMInt1TypeInContext(Context);
+        changeableTypes[BasicType.Char] = LLVMInt8TypeInContext(Context);
+        changeableTypes[BasicType.Uchar] = LLVMInt8TypeInContext(Context);
+        changeableTypes[BasicType.Short] = LLVMInt16TypeInContext(Context);
+        changeableTypes[BasicType.Ushort] = LLVMInt16TypeInContext(Context);
+        changeableTypes[BasicType.Int] = LLVMInt32TypeInContext(Context);
+        changeableTypes[BasicType.Uint] = LLVMInt32TypeInContext(Context);
+        changeableTypes[BasicType.Long] = LLVMInt64TypeInContext(Context);
+        changeableTypes[BasicType.Ulong] = LLVMInt64TypeInContext(Context);
+        changeableTypes[BasicType.Cent] = LLVMInt128TypeInContext(Context);
+        changeableTypes[BasicType.Ucent] = LLVMInt128TypeInContext(Context);
+        changeableTypes[BasicType.Float] = LLVMFloatTypeInContext(Context);
+        changeableTypes[BasicType.Double] = LLVMDoubleTypeInContext(Context);
 
         NeededFunctions["free"] = "std::free";
         NeededFunctions["malloc"] = "std::malloc";
@@ -215,26 +230,7 @@ class LLVMGen {
         );
         if(t.instanceof!TypeAlias) return null;
         if(t.instanceof!TypeBasic) {
-            TypeBasic b = cast(TypeBasic)t;
-            switch(b.type) {
-                case BasicType.Bool: return LLVMInt1TypeInContext(Generator.Context);
-                case BasicType.Char:
-                case BasicType.Uchar:
-                    return LLVMInt8TypeInContext(Generator.Context);
-                case BasicType.Short:
-                case BasicType.Ushort:
-                    return LLVMInt16TypeInContext(Generator.Context);
-                case BasicType.Int:
-                case BasicType.Uint:
-                    return LLVMInt32TypeInContext(Generator.Context);
-                case BasicType.Long:
-                case BasicType.Ulong:
-                    return LLVMInt64TypeInContext(Generator.Context);
-                case BasicType.Cent: return LLVMInt128TypeInContext(Generator.Context);
-                case BasicType.Float: return LLVMFloatTypeInContext(Generator.Context);
-                case BasicType.Double: return LLVMDoubleTypeInContext(Generator.Context);
-                default: assert(0);
-            }
+            return changeableTypes[t.instanceof!TypeBasic.type];
         }
         if(TypePointer p = t.instanceof!TypePointer) {
             if(p.instance.instanceof!TypeVoid) {
@@ -3763,8 +3759,12 @@ class NodeIf : Node {
 
     override Node comptime() {
         NodeBool b = condition.comptime().instanceof!NodeBool;
-        if(b.value && _body !is null) _body.generate();
-        if(!b.value && _else !is null) _else.generate();
+        if(b.value && _body !is null) {
+            _body.generate();
+        }
+        if(!b.value && _else !is null) {
+            _else.generate();
+        }
         return null;
     }
 
@@ -5438,6 +5438,7 @@ class NodeBuiltin : Node {
                     else if(NodeStruct ns = block.nodes[i].instanceof!NodeStruct) ns.isImported = true;
                 }
                 NodeIf _if = new NodeIf(cond, block, null, loc, (currScope is null ? "" : currScope.func), true);
+                _if.check();
                 _if.comptime();
                 return null;
             case "else":
@@ -5544,6 +5545,13 @@ class NodeBuiltin : Node {
                 TypeStruct ts = asType(0).ty.instanceof!TypeStruct;
                 if(ts !is null) ty = new TypeStruct(ts.name[0..ts.name.indexOf('<')]);
                 else ty = new TypeVoid();
+                return null;
+            case "replaceIntTypes":
+                Type one = asType(0).ty;
+                Type two = asType(1).ty;
+                BasicType onebt = one.instanceof!TypeBasic.type;
+                BasicType twobt = two.instanceof!TypeBasic.type;
+                Generator.changeableTypes[onebt] = Generator.changeableTypes[twobt];
                 return null;
             default: break;
         }

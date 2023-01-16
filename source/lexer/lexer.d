@@ -239,6 +239,10 @@ class Lexer {
                                     _idx += 1;
                                     bufferstr ~= "\\";
                                 }
+                                else if(text[_idx+1] == '\'') {
+                                    _idx += 1;
+                                    bufferstr ~= "'";
+                                }
                                 else if(isNumeric(text[_idx+1]~"")) {
                                     _idx += 1;
                                     bufferstr ~= getNumEscape();
@@ -336,6 +340,74 @@ class Lexer {
                             }
                         }
                         else {
+                            if(peek() == 'n' && text[_idx+1] == '"') {
+                                string bufferstr = "";
+                                next(); next();
+                                while(peek() != '"') {
+                                    if(peek() == '\\') {
+                                        if(text[_idx+1] == '"') {
+                                            _idx += 1;
+                                            bufferstr ~= "\"";
+                                        }
+                                        else if(text[_idx+1] == '\\') {
+                                            _idx += 1;
+                                            bufferstr ~= "\\";
+                                        }
+                                        else if(text[_idx+1] == '\'') {
+                                            _idx += 1;
+                                            bufferstr ~= "'";
+                                        }
+                                        else if(isNumeric(text[_idx+1]~"")) {
+                                            _idx += 1;
+                                            bufferstr ~= getNumEscape();
+                                        }
+                                        else if(text[_idx+1] == 'n') {
+                                            _idx += 1;
+                                            bufferstr ~= "\n";
+                                        }
+                                        else if(text[_idx+1] == 't') {
+                                            _idx += 1;
+                                            bufferstr ~= "\t";
+                                        }
+                                        else if(text[_idx+1] == 'r') {
+                                            _idx += 1;
+                                            bufferstr ~= "\r";
+                                        }
+                                        else if(text[_idx+1] == 'x') {
+                                            _idx += 1;
+                                            string s = "";
+                                            _idx += 1;
+                                            s ~= text[_idx];
+                                            _idx += 1;
+                                            s ~= text[_idx];
+                                            bufferstr ~= to!string(s.to!int(16));
+                                        }
+                                        else if(text[_idx+1] == 'u') {
+                                           _idx += 1;
+                                           string s ="";
+                                           _idx += 1;
+                                            s ~= text[_idx];
+                                            _idx += 1;
+                                            s ~= text[_idx];
+                                            _idx += 1;
+                                            s ~= text[_idx];
+                                            _idx += 1;
+                                         s ~= text[_idx];
+                                            bufferstr ~= to!string(s.to!int(16));
+                                        }
+                                        else {
+                                            assert(0);
+                                        }
+                                    }
+                                    else {
+                                        if(peek() != '\n' && peek() != '\t') bufferstr ~= ""~peek();
+                                    }
+                                    next();
+                                }
+                                next();
+                                tokens ~= new Token(TokType.String,bufferstr,line);
+                                break;
+                            }
                             string bufferiden = "";
                             while(
                                 !isWhite(cast(dchar)peek())

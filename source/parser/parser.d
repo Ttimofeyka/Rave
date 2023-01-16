@@ -397,8 +397,22 @@ class Parser {
         if(t.type == TokType.HexNumber) return new NodeInt(BigInt(t.value),16);
         if(t.type == TokType.True) return new NodeBool(true);
         if(t.type == TokType.False) return new NodeBool(false);
-        if(t.type == TokType.String) return new NodeString(t.value,false);
-        if(t.type == TokType.Char) return new NodeChar(to!char(t.value));
+        if(t.type == TokType.String) {
+            if(peek().type == TokType.Identifier && peek().value == "w") {
+                next();
+                return new NodeString(tokens[_idx-2].value,true);
+            }
+            return new NodeString(t.value,false);
+        }
+        if(t.type == TokType.Char) {
+            if(peek().type == TokType.Identifier && peek().value == "w") {
+                next();
+                NodeChar ch = new NodeChar(to!char(tokens[_idx-2].value));
+                ch.isWide = true;
+                return ch;
+            }
+            return new NodeChar(to!char(t.value));
+        }
         if(t.type == TokType.Identifier) {
             if(t.value == "cast") {
                 next();
@@ -450,16 +464,6 @@ class Parser {
                 }
                 if(peek().type == TokType.Lpar) next();
                 return new NodeAsm(s,true,tt,adds);
-            }
-            else if(t.value.toLower() == "w" && peek().type == TokType.String) {
-                next();
-                return new NodeString(tokens[_idx-1].value,true);
-            }
-            else if(t.value.toLower() == "w" && peek().type == TokType.Char) {
-                next();
-                NodeChar ch = new NodeChar(to!char(tokens[_idx-1].value));
-                ch.isWide = true;
-                return ch;
             }
             else if(canFind(types,t.value)) {
                 // Lambda
@@ -577,7 +581,7 @@ class Parser {
 
         if(operators.canFind(peek().type)) {
             auto tok = next();
-            auto tok2 = next();
+            next();
             auto tok3 = next();
             if(tok3.value == "[" || tok3.value == ".") {
                 _idx -= 2;
@@ -695,7 +699,6 @@ class Parser {
                 else base = new NodeGet(base,field,(peek().type == TokType.Equ || isPtr),peek().line);
             }
         }
-
         return base;
     }
 

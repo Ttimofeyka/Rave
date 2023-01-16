@@ -95,7 +95,6 @@ class Compiler {
         else if(outtype.indexOf("s390x") != -1) content = "alias __RAVE_PLATFORM = \"S390X\"; ";
         else if(outtype.indexOf("wasm") != -1) content = "alias __RAVE_PLATFORM = \"WASM\"; ";
         else content = "alias __RAVE_PLATFORM = \"UNKNOWN\"; ";
-
         if(outtype.indexOf("windows") != -1) content = `alias __RAVE_OS = "WINDOWS"; `~content;
         else if(outtype.indexOf("linux") != -1) content = `alias __RAVE_OS = "LINUX"; `~content;
         else if(outtype.indexOf("darwin") != -1 || outtype.indexOf("macos") != -1) content = `alias __RAVE_OS = "DARWIN"; `~content;
