@@ -5184,6 +5184,17 @@ class NodeImport : Node {
     override LLVMValueRef generate() {
         for(int i=0; i<files.length; i++) {
             if(canFind(_importedFiles,files[i]) || files[i] == Generator.file) continue;
+
+            if(files[i].indexOf("/.rave") == files[i].length-6) {
+                // Import all files from directory
+                NodeImport imp = new NodeImport([],loc);
+                foreach(string n; dirEntries(files[i][0..$-5], SpanMode.depth)) {
+                    if(n.indexOf(".rave") == n.length) imp.files ~= n;
+                }
+                imp.generate();
+                continue;
+            }
+
             Lexer l = new Lexer(readText(files[i]),1);
             Parser p = new Parser(l.getTokens(),1,files[i]);
             p.parseAll();
