@@ -56,7 +56,7 @@ namespace std {
                     std::string buffer = std::string("");
 
                     while(std::ascii::isDigit(str[i]) && i<length) {
-                        buffer.append(str[i]);
+                        buffer.add(str[i]);
                         i += 1;
                     }
 
@@ -71,7 +71,7 @@ namespace std {
                     std::string buffer = std::string("");
 
                     while((str[i] != '"') && i<length) {
-                        buffer.append(str[i]);
+                        buffer.add(str[i]);
                         i += 1;
                     }
                     i += 1;

@@ -18,11 +18,11 @@ namespace std {
             std::error<void*> result;
             if(std::globalBuffer == null) {
                 result.message = "The global buffer was not initialized!\n";
-                result.type = std::allocator::NotInitialized;
+                result.code = std::allocator::NotInitialized;
             }
             else if((std::globalBufferIterator+size) >= std::globalBufferSize) {
                 result.message = "There is not enough memory in the global buffer!\n";
-                result.type = std::allocator::NotEnoughMemory;
+                result.code = std::allocator::NotEnoughMemory;
             }
             else {
                 result.result = &std::globalBuffer[std::globalBufferIterator];

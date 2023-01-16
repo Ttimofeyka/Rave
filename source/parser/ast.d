@@ -5189,7 +5189,7 @@ class NodeImport : Node {
                 // Import all files from directory
                 NodeImport imp = new NodeImport([],loc);
                 foreach(string n; dirEntries(files[i][0..$-5], SpanMode.depth)) {
-                    if(n.indexOf(".rave") == n.length) imp.files ~= n;
+                    if(n.lastIndexOf(".rave") == n.length-5) imp.files ~= n;
                 }
                 imp.generate();
                 continue;
