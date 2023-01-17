@@ -44,7 +44,6 @@ struct SafePtr<T> {
     } => this;
 
     SafePtr<T> this(int size) {
-        if(size > 0) this.pointer = cast(T*)std::malloc(size);
         this.size = size;
     } => this;
 
