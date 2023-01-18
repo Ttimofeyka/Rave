@@ -26,13 +26,13 @@ namespace std {
     extern(linkname: "truncf") float trunc(float f);
 
     bool isPrime(int number) {
-        bool toret = cast(bool)1;
+        bool toret = true;
         int i = 2;
 
         bool active = true;
         while((i<number) && active) {
             if((number % i == 0) && (i != number)) {
-                toret = cast(bool)0;
+                toret = false;
                 active = false;
             }
             i += 1;
