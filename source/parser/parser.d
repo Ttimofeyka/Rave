@@ -1559,8 +1559,9 @@ class Parser {
                 }
                 next();
             }
-
-            return new NodeBuiltin(name,args.dup,t.line,block);
+            NodeBuiltin nb = new NodeBuiltin(name,args.dup,t.line,block);
+            nb.isTopLevel = true;
+            return nb;
         }
 
         return parseDecl(s);

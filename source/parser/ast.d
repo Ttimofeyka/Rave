@@ -262,6 +262,10 @@ class LLVMGen {
                         return StructTable[originalStructure].generateWithTemplate(_s.name[_s.name.indexOf('<')..$],_s.types);
                     }
                 }
+                if(s.name.into(StructTable)) {
+                    StructTable[s.name].check();
+                    StructTable[s.name].generate();
+                }
                 Generator.error(loc,"Unknown structure '"~s.name~"'!");
             }
             return Generator.Structs[s.name];
@@ -5236,6 +5240,7 @@ class NodeBuiltin : Node {
     Type ty = null;
     NodeBlock block;
     bool isImport = false;
+    bool isTopLevel = false;
     int CTId = 0;
 
     this(string name, Node[] args, int loc, NodeBlock block) {
@@ -5250,7 +5255,7 @@ class NodeBuiltin : Node {
     }
 
     override void check() {
-        if(block !is null && !block.nodes.empty) {
+        /*if(block !is null && !block.nodes.empty) {
             for(int i=0; i<block.nodes.length; i++) {
                 if(NodeBuiltin nb = block.nodes[i].instanceof!NodeBuiltin) {
                     nb.CTId += 1;
@@ -5258,7 +5263,7 @@ class NodeBuiltin : Node {
                 }
                 else block.nodes[i].check();
             }
-        }
+        }*/
     }
 
     NodeType asType(int n, bool isCompTime = false) {
