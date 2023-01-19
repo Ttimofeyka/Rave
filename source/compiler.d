@@ -257,6 +257,6 @@ class Compiler {
         for(int i=0; i<toRemove.length; i++) {
             if(toRemove[i] != outfile) remove(toRemove[i]);
         }
-        writeln("Time spent by the lexer: ",lexTime," ms\nTime spent by parser: ",parseTime," ms\nTime spent by code generator: ",generateTime," ms");
+        writeln("Time spent by lexer: ",lexTime," ms\nTime spent by parser: ",parseTime," ms\nTime spent by code generator: ",generateTime," ms");
     }
 }
