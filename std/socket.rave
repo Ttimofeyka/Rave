@@ -1,5 +1,5 @@
 namespace std {
-    namespace network {
+    namespace socket {
         alias AfInet = 1;
         alias AfInet6 = 2;
         alias SockStream = 1;
@@ -23,7 +23,7 @@ namespace std {
         struct sockaddr_in {
             int sa_family;
             short sin_port;
-            std::network::in_addr sin_addr;
+            std::socket::in_addr sin_addr;
         }
 
         extern(linkname: "recv") int recv(int s, char* buff, int len, int flags);
@@ -35,7 +35,7 @@ namespace std {
         extern(linkname: "send") int send(int s, char* buf, int len, int flags);
         extern(linkname: "shutdown") int shutdown(int s, int how);
         extern(linkname: "close") int close(int s);
-        extern(linkname: "getsockname") int getSockName(int fd, std::network::sockaddr addr, int len);
+        extern(linkname: "getsockname") int getSockName(int fd, std::socket::sockaddr addr, int len);
         extern(linkname: "inet_addr") int inetAddr(char* ip);
         extern(linkname: "htons") short htons(int n);
     }
