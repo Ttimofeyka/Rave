@@ -8,7 +8,8 @@
 }
 @if(
     (__RAVE_PLATFORM == "X86") || (__RAVE_PLATFORM == "POWERPC64")
-    || (__RAVE_PLATFORM == "MIPS") || (__RAVE_PLATFORM == "MIPS64")) {
+    || (__RAVE_PLATFORM == "MIPS") || (__RAVE_PLATFORM == "MIPS64")
+) {
     struct va_list {
         void* __ap;
     }

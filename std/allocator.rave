@@ -25,7 +25,7 @@ namespace std {
                 result.code = std::allocator::NotEnoughMemory;
             }
             else {
-                result.result = &std::globalBuffer[std::globalBufferIterator];
+                result.value = &std::globalBuffer[std::globalBufferIterator];
                 std::globalBufferIterator += size;
             }
         } => result;

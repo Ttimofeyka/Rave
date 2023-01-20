@@ -1,4 +1,4 @@
-import <std/io>
+import <std/io> <std/error>
 
 namespace std {
     bool _isValidPtr(void* ptr, const(char)* type) {
@@ -31,4 +31,65 @@ namespace std {
             std::free(data);
         }
     } => result;
+}
+
+struct SafePtr<T> {
+    T* pointer;
+    int size = 0;
+
+    SafePtr<T> this {
+        this.pointer = cast(T*)null;
+        this.size = 0;
+    } => this;
+
+    SafePtr<T> this(T* pointer) {
+        this.pointer = pointer;
+        this.size = 0;
+    } => this;
+
+    SafePtr<T> this(T* pointer, int size) {
+        this.pointer = pointer;
+        this.size = size;
+    } => this;
+
+    SafePtr<T> this(int size) {
+        this.size = size;
+    } => this;
+
+    (inline) std::error<T> get(int n) {
+        std::error<T> result;
+        if(this.pointer == cast(T*)null) {
+            result.message = "Error using SafePtr: attempt to access the null pointer!\n";
+            result.code = std::NullPointer;
+        }
+        else if((n < this.size) && (n > 0)) {
+            result.message = "Error using SafePtr: attempt to access an element outside the pointer!\n";
+            result.code = std::BeyondSize;
+        }
+        else result.value = this.pointer[n];
+    } => result;
+
+    (inline) std::error<bool> set(int n, T value) {
+        std::error<bool> result;
+        if(this.pointer == cast(T*)null) {
+            result.message = "Error using SafePtr: attempt to access the null pointer!\n";
+            result.code = std::NullPointer;
+            result.value = false;
+        }
+        else if((n < this.size) && (n > 0)) {
+            result.message = "Error using SafePtr: attempt to access an element outside the pointer!\n";
+            result.code = std::BeyondSize;
+            result.value = false;
+        }
+        else {
+            this.pointer[n] = value;
+            result.value = true;
+        }
+    } => result;
+
+    void ~this {
+        std::free(cast(void*)this.pointer);
+        this.pointer = cast(T*)null;
+        this.size = 0;
+    }
 }

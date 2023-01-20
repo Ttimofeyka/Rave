@@ -20,10 +20,10 @@ namespace std {
             if(c == null) {
                 result.message = "Curl initialization failed!";
                 result.code = std::curl::initializeFailed;
-                result.result = null;
+                result.value = null;
             }
             else {
-                result.result = c;
+                result.value = c;
             }
         } => result;
         extern(linkname: "curl_easy_cleanup") void cleanUp(std::curl* c);

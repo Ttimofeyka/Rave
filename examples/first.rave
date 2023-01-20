@@ -1,5 +1,5 @@
-import <std/io>
+import <std/>
 
 void main {
-    
+    SafePtr<int> jam = SafePtr<int>(10);
 }

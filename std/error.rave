@@ -6,21 +6,26 @@ namespace libc {
 }
 
 namespace std {
+    alias NotEnoughMemory = 100;
+    alias NotFound = 101;
+    alias BeyondSize = 102;
+    alias NullPointer = 103;
+
     struct error<T> {
         char* message = null;
-        T result;
+        T value;
         int code;
 
         std::error<T> this => this;
-        std::error<T> this(T result) {
-            this.result = result;
+        std::error<T> this(T value) {
+            this.value = value;
         } => this;
-        std::error<T> this(T result, char* message) {
-            this.result = result;
+        std::error<T> this(T value, char* message) {
+            this.value = value;
             this.message = message;
         } => this;
-        std::error<T> this(T result, char* message, int code) {
-            this.result = result;
+        std::error<T> this(T value, char* message, int code) {
+            this.value = value;
             this.message = message;
             this.code = code;
         } => this;

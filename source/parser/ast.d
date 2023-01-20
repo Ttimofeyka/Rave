@@ -1724,7 +1724,7 @@ class NodeVar : Node {
             if(_nt !is null) this.t = _nt;
         }
         if(TypeStruct ts = t.instanceof!TypeStruct) {
-            if(ts.types.length > 0 && Generator.toReplace.length > 0) {
+            if(ts.types.length > 0 && Generator !is null && Generator.toReplace.length > 0) {
                 for(int i=0; i<ts.types.length; i++) {
                     Type _t = ts.types[i];
                     while(_t.toString().into(Generator.toReplace)) {
