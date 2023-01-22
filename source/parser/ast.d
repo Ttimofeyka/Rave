@@ -4753,8 +4753,10 @@ class NodeUsing : Node {
                 var.name = namespacesNamesToString(var.namespacesNames, var.origname);
                 VarTable[var.name] = var;
                 //VarTable.remove(oldname);
-                if(var.name.into(Generator.Globals)) Generator.Globals[var.name] = Generator.Globals[oldname];
-                else AliasTable[var.name] = AliasTable[oldname];
+                if(oldname.into(Generator.Globals)) Generator.Globals[var.name] = Generator.Globals[oldname];
+                else if(oldname.into(AliasTable)) {
+                    AliasTable[var.name] = AliasTable[oldname];
+                }
                 //Generator.Globals.remove(oldname);
             }
         }
