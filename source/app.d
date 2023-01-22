@@ -19,24 +19,27 @@ version(Win64) {
 	string outtype = "win64";
 }
 
-version(Win32) {
+else version(Win32) {
 	string outtype = "win32";
 }
 
-version(linux) {
+else version(linux) {
 	version(X86_64) {
 		string outtype = "linux-x86_64";
 	}
-	version(X86) {
+	else version(X86) {
 		string outtype = "linux-i686";
 	}
-	version(AArch64) {
+	else version(AArch64) {
 		string outtype = "aarch64";
 	}
 	else version(ARM) {
 		string outtype = "armv7";
 	}
+	else string outtype = "unknown-linux";
 }
+
+else string outtype = "unknown";
 
 struct CompOpts {
 	bool noPrelude = false;
@@ -50,6 +53,7 @@ struct CompOpts {
 	int optimizeLevel = 0;
     bool isPIE = false;
     bool noPIE = false;
+	bool isPIC = false;
 	bool runtimeChecks = true;
 	bool disableWarnings = false;
 }
@@ -69,6 +73,7 @@ CompOpts analyzeArgs(string[] args) {
 			case "-emit-llvm": // Compatible with the same option from clang
 				opts.emit_llvm = true; break;
             case "-fPIE": opts.isPIE = true; break;
+			case "-fPIC": opts.isPIC = true; break;
 			case "-l": case "--library":
 			  opts.linkparams ~= "-l"~args[idx+1]~" "; idx += 1; break;
 			case "-c": opts.onlyObject = true; break;

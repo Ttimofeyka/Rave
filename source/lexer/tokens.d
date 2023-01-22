@@ -96,6 +96,7 @@ class Token {
     }
 
     Token copy() {
+        pragma(inline,true);
         return new Token(this.type,this.value);
     }
 }

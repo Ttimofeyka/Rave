@@ -103,6 +103,8 @@ class Compiler {
         if(outtype.indexOf("windows") != -1) content = `alias __RAVE_OS = "WINDOWS"; `~content;
         else if(outtype.indexOf("linux") != -1) content = `alias __RAVE_OS = "LINUX"; `~content;
         else if(outtype.indexOf("darwin") != -1 || outtype.indexOf("macos") != -1) content = `alias __RAVE_OS = "DARWIN"; `~content;
+        else if(outtype.indexOf("android") != -1) content = `alias __RAVE_OS = "ANDROID"; `~content;
+        else if(outtype.indexOf("ios") != -1) content = `alias __RAVE_OS = "IOS"; `~content;
         else content = `alias __RAVE_OS = "UNKNOWN"; `~content;
 
         content = content~"\n"~oldContent;
@@ -166,8 +168,8 @@ class Compiler {
 			triple,
 			"generic",
 			LLVMGetHostCPUFeatures(),
-			 LLVMCodeGenLevelDefault,
-			 LLVMRelocDefault,
+			LLVMCodeGenLevelDefault,
+            (opts.isPIC ? LLVMRelocPIC : LLVMRelocDefault),
 		LLVMCodeModelDefault);
 
         LLVMDisposeMessage(errors);
