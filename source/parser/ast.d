@@ -3598,9 +3598,10 @@ class NodeUnary : Node {
             );
         }
         else if(type == TokType.GetPtr) {
+            LLVMValueRef val;
             if(NodeGet s = base.instanceof!NodeGet) {
                 s.isMustBePtr = true;
-                return s.generate();
+                val = s.generate();
             }
             else if(NodeCall call = base.instanceof!NodeCall) {
                 auto gcall = call.generate();
@@ -3614,16 +3615,15 @@ class NodeUnary : Node {
                     gcall,
                     temp
                 );
-                return temp;
+                val = temp;
             }
             else if(NodeBinary bin = base.instanceof!NodeBinary) {
                 LLVMValueRef v = bin.generate();
-                return Generator.byIndex(v,[LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),0,false)]);
+                val = Generator.byIndex(v,[LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),0,false)]);
             }
             else if(NodeSlice sl = base.instanceof!NodeSlice) {
                 sl.isMustBePtr = true;
-                LLVMValueRef val = sl.generate();
-                return val;
+                val = sl.generate();
             }
             else if(NodeIden id = base.instanceof!NodeIden) {
                 if(TypeArray ta = currScope.getVar(id.name,loc).t.instanceof!TypeArray) {
@@ -3634,20 +3634,24 @@ class NodeUnary : Node {
 			    		2,
 			    		toStringz("ingep")
 			    	);
-                    return LLVMBuildPointerCast(
-                        Generator.Builder,
-                        ptr,
-                        Generator.GenerateType(new TypePointer(ta.element),loc),
-                        toStringz("bitcast")
-                    );
+                    val = ptr;
                 }
-                return currScope.getWithoutLoad(id.name);
+                else val = currScope.getWithoutLoad(id.name);
             }
             else if(NodeIndex ind = base.instanceof!NodeIndex) {
                 ind.isMustBePtr = true;
-                return ind.generate();
+                val = ind.generate();
             }
-            assert(0);
+            else assert(0);
+            if(LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(val))) == LLVMArrayTypeKind) {
+                return LLVMBuildPointerCast(
+                    Generator.Builder,
+                    val,
+                    LLVMPointerType(LLVMGetElementType(LLVMGetElementType(LLVMTypeOf(val))),0),
+                    toStringz("bitcast")
+                );
+            }
+            else return val;
         }
         else if(type == TokType.Ne) {
             return LLVMBuildNot(Generator.Builder,base.generate(),toStringz("not_"));
