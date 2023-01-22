@@ -4775,7 +4775,7 @@ class NodeUsing : Node {
                 else f.name = namespacesNamesToString(f.namespacesNames, f.origname);
                 if(oldname[$-1] == ']') f.name ~= typesToString(f.args);
                 FuncTable[f.name] = f;
-                if(into(f.name,Generator.Functions)) Generator.Functions[f.name] = Generator.Functions[oldname];
+                if(into(oldname,Generator.Functions)) Generator.Functions[f.name] = Generator.Functions[oldname];
             }
         }
         foreach(var; MacroTable) {
