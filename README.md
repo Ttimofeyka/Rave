@@ -25,6 +25,9 @@ Install all dependencies and write `dub build` in the project directory.
 
 The reference is in `reference` directory.
 
-Discord server - https://discord.gg/AfEtyArvsM
+<a href="https://github.com/Ttimofeyka/Rave/blob/main/bindings.md">Bindings</a>
 
-Web-site - https://www.ravelang.tk/
+<a href="https://discord.gg/AfEtyArvsM">Discord</a>
+
+<a href="https://www.ravelang.tk/">Web-site</a>
+
