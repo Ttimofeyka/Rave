@@ -3373,6 +3373,9 @@ class NodeGet : Node {
             return MethodTable[cast(immutable)[ts.name,field]].getType();
         }
         if(into(cast(immutable)[ts.name,field],structsNumbers)) return structsNumbers[cast(immutable)[ts.name,field]].var.getType();
+        foreach(k; byKey(Generator.toReplace)) {
+            if(k.indexOf('<') != -1) return Generator.toReplace[k];
+        }
         Generator.error(loc,"Structure '"~ts.name~"' doesn't contain element "~field~"!");
         assert(0);
     }
