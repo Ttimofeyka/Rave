@@ -166,8 +166,8 @@ class Compiler {
     	LLVMTargetMachineRef machine = LLVMCreateTargetMachine(
 			target,
 			triple,
-			"generic",
-			LLVMGetHostCPUFeatures(),
+			toStringz("generic"),
+			toStringz(""),
 			LLVMCodeGenLevelDefault,
             (opts.isPIC ? LLVMRelocPIC : LLVMRelocDefault),
 		LLVMCodeModelDefault);
