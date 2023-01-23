@@ -150,6 +150,10 @@ class Compiler {
             }
         }
 
+        char* triple = LLVMNormalizeTargetTriple(toStringz(outtype));
+
+        LLVMSetTarget(Generator.Module,triple);
+
         if(opts.optimizeLevel > 0) {
             LLVMPassManagerRef pm = LLVMCreatePassManager();
 
@@ -161,8 +165,10 @@ class Compiler {
 
         char* errors;
         LLVMTargetRef target;
-        char* triple = LLVMNormalizeTargetTriple(toStringz(outtype));
-    	LLVMGetTargetFromTriple(triple, &target, &errors);
+
+        LLVMGetTargetFromTriple(triple, &target, &errors);
+        LLVMDisposeMessage(errors);
+
     	LLVMTargetMachineRef machine = LLVMCreateTargetMachine(
 			target,
 			triple,

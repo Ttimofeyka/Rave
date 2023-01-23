@@ -1,4 +1,4 @@
-import <std/json>
+import <std/io>
 
 void main {
     
