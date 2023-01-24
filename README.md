@@ -14,12 +14,16 @@ void main {
 
 ## Requirements
 
-* `llvm-11` (including dev-libs and clang-11)
+* `llvm-11` (including clang-11)
 * dub and dmd(or ldc/gdc) compiler
 
 ## Building/Running
 
-Install all dependencies and write `dub build` in the project directory.
+To install, you can try running `install.sh` (Ubuntu/Debian) or `install.ps1` (Windows).
+
+If the installer does not work well on your system, you can try to install all the dependencies yourself.
+
+After install write `dub build` in the project directory.
 
 ## Reference
 
