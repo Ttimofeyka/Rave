@@ -167,6 +167,11 @@ class Compiler {
         LLVMTargetRef target;
 
         LLVMGetTargetFromTriple(triple, &target, &errors);
+
+        if(target is null) {
+            
+        }
+
         LLVMDisposeMessage(errors);
 
     	LLVMTargetMachineRef machine = LLVMCreateTargetMachine(
@@ -248,10 +253,14 @@ class Compiler {
         else {
             outfile = dirName(files[0])~"/"~outfile;
         }
-        if(opts.onlyObject) linkString ~= " -r ";
+        if(opts.onlyObject) {
+            linkString ~= " -r ";
+        }
         linkString ~= " "~opts.linkparams;
 
-        if(outtype != "") linkString = linkString~"-target "~outtype~" ";
+        if(outtype != "") {
+            if(options.object["compiler"].str.indexOf("gcc") == -1) linkString = linkString~"-target "~outtype~" ";
+        }
 
         if(!_libraries.empty) {
             for(int i=0; i<_libraries.length; i++) {

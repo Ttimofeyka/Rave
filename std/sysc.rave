@@ -1,3 +1,15 @@
-namespace libc {
-    extern(linkname: "syscall", vararg) int syscall(int number);
+namespace std {
+    extern(linkname: "syscall", vararg) void* syscall(int number);
 }
+
+// TODO
+@if(__RAVE_OS == "LINUX") {
+    @if(__RAVE_PLATFORM == "X86_64") {
+        namespace std {
+            namespace sysctable {
+                alias Read = 0;
+                alias Write = 1;
+            }
+        }
+    };
+};

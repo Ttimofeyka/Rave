@@ -466,8 +466,16 @@ class Parser {
                     adds = peek().value;
                     next();
                 }
+                Node[] args;
+                if(peek().type == TokType.Comma) {
+                    next();
+                    while(peek().type != TokType.Lpar) {
+                        args ~= parseExpr();
+                        if(peek().type != TokType.Lpar) next();
+                    }
+                }
                 if(peek().type == TokType.Lpar) next();
-                return new NodeAsm(s,true,tt,adds);
+                return new NodeAsm(s,true,tt,adds,args);
             }
             else if(canFind(types,t.value)) {
                 // Lambda
@@ -954,9 +962,17 @@ class Parser {
                 adds = peek().value;
                 next();
             }
+            Node[] args;
+            if(peek().type == TokType.Comma) {
+                next();
+                while(peek().type != TokType.Lpar) {
+                    args ~= parseExpr();
+                    if(peek().type != TokType.Lpar) next();
+                }
+            }
             if(peek().type == TokType.Lpar) next();
             if(peek().type == TokType.Semicolon) next();
-            return new NodeAsm(s,true,tt,adds);
+            return new NodeAsm(s,true,tt,adds,args);
         }
         else if(peek().value == "try") {
             int l = peek().line;

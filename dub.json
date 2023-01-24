@@ -10,6 +10,16 @@
 	"buildRequirements": ["silenceDeprecations"],
 	"libs": ["LLVM-11"],
 	"description": "Rave Programming Language",
-	"license": "LGPL-3.0-or-later",
+	"license": "MPL-2.0",
+	"versions": [
+		"LLVM_Target_AVR",
+		"LLVM_Target_X86",
+		"LLVM_Target_Sparc",
+		"LLVM_Target_PowerPC",
+		"LLVM_Target_ARM",
+		"LLVM_Target_Mips",
+		"LLVM_Target_SystemZ",
+		"LLVM_Target_AArch64"
+	],
 	"name": "rave"
 }

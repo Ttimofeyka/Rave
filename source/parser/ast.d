@@ -5752,14 +5752,16 @@ class NodeWith : Node {
 class NodeAsm : Node {
     string line;
     string additions = "";
+    Node[] values;
     bool isVolatile = false;
     Type t;
 
-    this(string line, bool isVolatile, Type t, string additions) {
+    this(string line, bool isVolatile, Type t, string additions, Node[] values) {
         this.line = line;
         this.isVolatile = isVolatile;
         this.t = t;
         this.additions = additions;
+        this.values = values.dup;
     }
 
     override Type getType() {
@@ -5769,20 +5771,26 @@ class NodeAsm : Node {
     override LLVMValueRef generate() {
         // asm volatile ("movl %%ebp, %0" : "=r" (stack_top));
         // stack_top = asm(long,"movl %%ebp, %0","=r");
+        LLVMValueRef[] values;
         LLVMTypeRef[] ts;
-        LLVMValueRef[] vs;
+        for(int i=0; i<this.values.length; i++) {
+            LLVMValueRef val = this.values[i].generate();
+            values ~= val;
+            ts ~= LLVMTypeOf(val);
+        }
+
         LLVMValueRef v = LLVMGetInlineAsm(
-            LLVMFunctionType(Generator.GenerateType(t,-6),ts.ptr,0,false),
+            LLVMFunctionType(Generator.GenerateType(t,-6),ts.ptr,cast(uint)ts.length,false),
             cast(char*)toStringz(line),
             line.length,
             cast(char*)toStringz(additions),
             additions.length,
             isVolatile,
             false,
-            //LLVMInlineAsmDialectIntel
             LLVMInlineAsmDialectATT
         );
-        return LLVMBuildCall(Generator.Builder,v,vs.ptr,0,toStringz(t.instanceof!TypeVoid ? "" : "v_"));
+
+        return LLVMBuildCall(Generator.Builder,v,values.ptr,cast(uint)values.length,toStringz(t.instanceof!TypeVoid ? "" : "v_"));
     }
 }
 
