@@ -12,18 +12,20 @@ void main {
 }
 ```
 
-## Requirements
+You can compile are examples using `rave directory/of/Rave/examples/necessary_example.rave -o preffered/directory/necessary_example`
+
+## Dependencies
 
 * `llvm-11` (including clang-11)
 * dub and dmd(or ldc/gdc) compiler
 
 ## Building/Running
 
-To install, you can try running `install.sh` (Ubuntu/Debian) or `install.ps1` (Windows).
+To install dependencies, you can try running `install.sh` (Ubuntu/Debian) or `install.ps1` (Windows).
 
 If the installer does not work well on your system, you can try to install all the dependencies yourself.
 
-After install write `dub build` in the project directory.
+After install write `dub build` in the Rave directory.
 
 ## Reference
 
