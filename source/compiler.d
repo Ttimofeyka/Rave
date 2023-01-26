@@ -87,9 +87,10 @@ class Compiler {
         int offset = 1;
         string oldContent = content;
 
-        if(outtype.indexOf("i686") != -1 || outtype.indexOf("i386") != -1) content = "alias __RAVE_PLATFORM = \"X86\";";
+        if(outtype.indexOf("i686") != -1 || outtype.indexOf("i386") != -1) content = "alias __RAVE_PLATFORM = \"X86\"; ";
         else if(outtype.indexOf("x86_64") != -1) content = "alias __RAVE_PLATFORM = \"X86_64\"; ";
         else if(outtype.indexOf("aarch64") != -1) content = "alias __RAVE_PLATFORM = \"AARCH64\"; ";
+        else if(outtype.indexOf("arm") != -1) content = "alias __RAVE_PLATFORM = \"ARM\"; ";
         else if(outtype.indexOf("mips64") != -1) content = "alias __RAVE_PLATFORM = \"MIPS64\"; ";
         else if(outtype.indexOf("mips") != -1) content = "alias __RAVE_PLATFORM = \"MIPS\"; ";
         else if(outtype.indexOf("powerpc64") != -1) content = "alias __RAVE_PLATFORM = \"POWERPC64\"; ";
@@ -98,6 +99,7 @@ class Compiler {
         else if(outtype.indexOf("sparc") != -1) content = "alias __RAVE_PLATFORM = \"SPARC\"; ";
         else if(outtype.indexOf("s390x") != -1) content = "alias __RAVE_PLATFORM = \"S390X\"; ";
         else if(outtype.indexOf("wasm") != -1) content = "alias __RAVE_PLATFORM = \"WASM\"; ";
+        else if(outtype.indexOf("avr") != -1) content = "alias __RAVE_PLATFORM = \"AVR\"; ";
         else content = "alias __RAVE_PLATFORM = \"UNKNOWN\"; ";
         
         if(outtype.indexOf("windows") != -1) content = `alias __RAVE_OS = "WINDOWS"; `~content;

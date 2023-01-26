@@ -2,13 +2,28 @@ namespace std {
     extern(linkname: "syscall", vararg) void* syscall(int number);
 }
 
-// TODO
 @if(__RAVE_OS == "LINUX") {
     @if(__RAVE_PLATFORM == "X86_64") {
         namespace std {
             namespace sysctable {
-                alias Read = 0;
-                alias Write = 1;
+                alias Read = 0x00;
+                alias Write = 0x01;
+            }
+        }
+    };
+    @if(__RAVE_PLATFORM == "X86") {
+        namespace std {
+            namespace sysctable {
+                Read = 0x03;
+                Write = 0x04;
+            }
+        }
+    };
+    @if(__RAVE_PLATFORM == "AARCH64") {
+        namespace std {
+            namespace sysctable {
+                Read = 0x3F;
+                Write = 0x40;
             }
         }
     };
