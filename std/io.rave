@@ -41,11 +41,21 @@ namespace std {
     extern(linkname: "putchar") int putchar(char c);
     extern(linkname: "puts") int puts(char* s);
 
+    (inline) void putswnl(char* s) {
+        for(int i=0; s[i] != '\0'; i+=1) {
+            std::putchar(s[i]);
+        }
+    }
+
+    (inline) void putswnl(std::string s) {
+        for(int i=0; i<s.length; i+=1) {
+            std::putchar(s.data[i]);
+        }
+    }
+
     (ctargs, inline) void print {
         std::string s = @callWithArgs(std::sprint);
-        char* buffer = s.c();
-        std::printf("%s",buffer);
-        std::free(buffer);
+        std::putswnl(s);
     }
 
     (ctargs, inline) void println {

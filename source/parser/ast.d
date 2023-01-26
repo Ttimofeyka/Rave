@@ -3363,6 +3363,10 @@ class NodeGet : Node {
         }
         else ts = _t.instanceof!TypeStruct;
 
+        if(ts is null) {
+            Generator.error(loc,"Type '"~_t.toString()~"' is not a structure!");
+        }
+
         if(ts.name.into(Generator.toReplace)) {
             while(ts.toString().into(Generator.toReplace)) {
                 ts = Generator.toReplace[ts.toString()].instanceof!TypeStruct;

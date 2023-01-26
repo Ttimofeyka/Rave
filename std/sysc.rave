@@ -14,16 +14,16 @@ namespace std {
     @if(__RAVE_PLATFORM == "X86") {
         namespace std {
             namespace sysctable {
-                Read = 0x03;
-                Write = 0x04;
+                alias Read = 0x03;
+                alias Write = 0x04;
             }
         }
     };
     @if(__RAVE_PLATFORM == "AARCH64") {
         namespace std {
             namespace sysctable {
-                Read = 0x3F;
-                Write = 0x40;
+                alias Read = 0x3F;
+                alias Write = 0x40;
             }
         }
     };

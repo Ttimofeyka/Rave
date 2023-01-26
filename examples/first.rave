@@ -1,5 +1,5 @@
-import <std/>
+import <std/sysc> <std/io>
 
 void main {
-    
+    std::println("A");
 }
