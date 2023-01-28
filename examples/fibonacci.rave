@@ -1,0 +1,12 @@
+import <std/io>
+
+int fibonacci(int num) {
+    if (num == 1 || num == 2) {
+        return 1;
+    }
+    return fibonacci(num - 1) + fibonacci(num + 2);
+}
+
+void main {
+    std::println("fibonacci of 10: ", fibonacci(10));
+}
