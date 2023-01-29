@@ -4132,8 +4132,10 @@ class NodeStruct : Node {
     bool noCompile = false;
     NodeFunc[] _thisFs;
     bool isComdat = false;
+    DeclMod[] mods;
+    bool isPacked = false;
 
-    this(string name, Node[] elements, int loc, string _exs, string[] templateNames) {
+    this(string name, Node[] elements, int loc, string _exs, string[] templateNames, DeclMod[] mods) {
         this.name = name;
         this._oldElements = elements.dup;
         this.elements = elements.dup;
@@ -4141,6 +4143,7 @@ class NodeStruct : Node {
         this.origname = name;
         this._extends = _exs;
         this.templateNames = templateNames.dup;
+        this.mods = mods;
     }
 
     LLVMTypeRef asConstType() {
@@ -4192,60 +4195,6 @@ class NodeStruct : Node {
             }
         }
         return false;
-    }
-
-    void addMethod(NodeFunc f) {
-                if(f.name == origname~"(+)" || f.name == origname~"(==)" || f.name == origname~"(!=)" || f.name == origname~"(=)") {
-                    f.isMethod = true;
-                    if(isImported) f.isExtern = true;
-
-                    TokType oper;
-                    switch(f.name[$-3..$]) {
-                        case "(+)":
-                            oper = TokType.Plus; f.name = name~"(+)";
-                            break;
-                        case "(=)":
-                            oper = TokType.Equ; f.name = name~"(=)";
-                            break;
-                        case "==)":
-                            oper = TokType.Equal; f.name = name~"(==)";
-                            break;
-                        case "!=)":
-                            oper = TokType.Nequal; f.name = name~"(!=)";
-                            break;
-                        default: break;
-                    }
-
-                    f.name = f.name ~ typesToString(f.args);
-
-                    operators[oper][typesToString(f.args)] = f;
-                    methods ~= f;
-                    f.check();
-                    f.generate();
-                }
-                else {
-                    f.args = FuncArgSet("this",new TypePointer(new TypeStruct(name)))~f.args;
-                    f.name = name~"."~f.origname;
-                    f.isMethod = true;
-
-                    if(isImported) {
-                        f.isExtern = true;
-                    }
-
-                    if(cast(immutable)[name,f.origname].into(MethodTable)) {
-                        // Maybe overload?
-                        if(typesToString(MethodTable[cast(immutable)[name,f.origname]].args) != typesToString(f.args)) {
-                            // Overload
-                            MethodTable[cast(immutable)[name,f.origname~typesToString(f.args)]] = f;
-                        }
-                        else Generator.error(loc," method '"~f.origname~"' has already been declared on "~to!string(MethodTable[cast(immutable)[name,f.origname]].loc)~" line!");
-                    }
-                    else MethodTable[cast(immutable)[name,f.origname]] = f;
-
-                    methods ~= f;
-                    f.check();
-                    f.generate();
-                }
     }
 
     LLVMTypeRef[] getParameters(bool isLinkOnce) {
@@ -4451,9 +4400,16 @@ class NodeStruct : Node {
     override LLVMValueRef generate() {
         if(templateNames.length > 0 || noCompile) return null;
 
+        for(int i=0; i<mods.length; i++) {
+            switch(mods[i].name) {
+                case "packed": isPacked = true; break;
+                default: break;
+            }
+        }
+
         Generator.Structs[name] = LLVMStructCreateNamed(Generator.Context,toStringz(name));
         LLVMTypeRef[] params = getParameters(isTemplated);
-        LLVMStructSetBody(Generator.Structs[name],params.ptr,cast(uint)params.length,false);
+        LLVMStructSetBody(Generator.Structs[name],params.ptr,cast(uint)params.length,isPacked);
 
         NodeFunc[] _listOfMethods;
         for(int i=0; i<elements.length; i++) {
@@ -4532,7 +4488,7 @@ class NodeStruct : Node {
 
         Generator.toReplace[name~_fn[0..$-1]~">"] = new TypeStruct(name~typesS);
 
-        NodeStruct _struct = new NodeStruct(name~typesS,copyElements().dup,loc,"",[]);
+        NodeStruct _struct = new NodeStruct(name~typesS,copyElements().dup,loc,"",[],mods.dup);
         _struct.isTemplated = true;
         _struct.isComdat = true;
 
@@ -4794,7 +4750,7 @@ class NodeUsing : Node {
             }
         }
         foreach(varr; StructTable) {
-            NodeStruct var = new NodeStruct(varr.origname, varr.elements.dup, varr.loc, varr._extends, varr.templateNames.dup);
+            NodeStruct var = new NodeStruct(varr.origname, varr.elements.dup, varr.loc, varr._extends, varr.templateNames.dup, varr.mods.dup);
             var._oldElements = varr._oldElements.dup;
             var.operators = varr.operators.dup;
             var.predefines = varr.predefines.dup;

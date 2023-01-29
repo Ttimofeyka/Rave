@@ -1072,7 +1072,30 @@ class Parser {
                 return parseDecl(f);
         }
         else if(peek().type == TokType.Eof) return null;
-        else if(peek().type == TokType.Rpar) return parseDecl(f);
+        else if(peek().type == TokType.Rpar) {
+            DeclMod[] mods;
+            next();
+            while(peek().type != TokType.Lpar) {
+                if(peek().type == TokType.Builtin) {
+                    NodeBuiltin nb = parseBuiltin().instanceof!NodeBuiltin;
+                    mods ~= DeclMod("@"~nb.name,"",nb);
+                    if(peek().type == TokType.Comma) next();
+                    continue;
+                }
+                auto nam = expect(TokType.Identifier).value;
+                string value = "";
+                if(peek().type == TokType.ValSel) {
+                    next();
+                    value = peek().value;
+                    next();
+                }
+                mods ~= DeclMod(nam,value);
+                if(peek().type == TokType.Comma) next();
+                else if(peek().type == TokType.Lpar) break;
+            }
+            next(); // Skip lpar
+            return parseDecl(f,mods.dup);
+        }
         auto e = parseExpr();
         if(peek().type == TokType.Builtin) return e;
         if(peek().value == "}") next();
@@ -1171,8 +1194,8 @@ class Parser {
         return new NodeBuiltin(name,args.dup,peek().line,block);
     }
 
-    Node parseDecl(string s = "") {
-        DeclMod[] mods;
+    Node parseDecl(string s = "", DeclMod[] _mods = []) {
+        DeclMod[] mods = _mods;
         int loc;
         string name;
         bool isExtern = false;
@@ -1365,7 +1388,7 @@ class Parser {
         return new NodeImport(_files.dup,peek().line);
     }
 
-    Node parseStruct() {
+    Node parseStruct(DeclMod[] mods = []) {
         import std.algorithm : canFind;
 
         int loc = peek().line;
@@ -1401,7 +1424,7 @@ class Parser {
         _templateNames = [];
 
         structs ~= name;
-        return new NodeStruct(name,nodes,loc,_exs,templateNames);
+        return new NodeStruct(name,nodes,loc,_exs,templateNames,mods.dup);
     }
 
     Node parseMacro() {
@@ -1582,6 +1605,32 @@ class Parser {
             NodeBuiltin nb = new NodeBuiltin(name,args.dup,t.line,block);
             nb.isTopLevel = true;
             return nb;
+        }
+
+        if(peek().type == TokType.Rpar) {
+            DeclMod[] mods;
+            next();
+            while(peek().type != TokType.Lpar) {
+                if(peek().type == TokType.Builtin) {
+                    NodeBuiltin nb = parseBuiltin().instanceof!NodeBuiltin;
+                    mods ~= DeclMod("@"~nb.name,"",nb);
+                    if(peek().type == TokType.Comma) next();
+                    continue;
+                }
+                auto nam = expect(TokType.Identifier).value;
+                string value = "";
+                if(peek().type == TokType.ValSel) {
+                    next();
+                    value = peek().value;
+                    next();
+                }
+                mods ~= DeclMod(nam,value);
+                if(peek().type == TokType.Comma) next();
+                else if(peek().type == TokType.Lpar) break;
+            }
+            next(); // Skip lpar
+            if(peek().value != "struct") return parseDecl(s,mods.dup);
+            return parseStruct(mods.dup);
         }
 
         return parseDecl(s);
