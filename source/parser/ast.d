@@ -1755,10 +1755,14 @@ class NodeVar : Node {
             // Global variable
             // Only const-values
             bool noMangling = false;
+            string cMangle = "";
 
             for(int i=0; i<mods.length; i++) {
                 if(mods[i].name == "C") noMangling = true;
-                if(mods[i].name == "volatile") isVolatile = true;
+                else if(mods[i].name == "volatile") isVolatile = true;
+                else if(mods[i].name == "linkname") {
+                    cMangle = mods[i].value;
+                }
             }
             if(!t.instanceof!TypeAuto) {
                 if(NodeInt ni = value.instanceof!NodeInt) {
@@ -1768,7 +1772,7 @@ class NodeVar : Node {
                 Generator.Globals[name] = LLVMAddGlobal(
                     Generator.Module,
                     Generator.GenerateType(t,loc),
-                    toStringz((noMangling) ? name : Generator.mangle(name,false,false))
+                    toStringz(cMangle == "" ? ((noMangling) ? name : Generator.mangle(name,false,false)) : cMangle)
                 );
             }
             else {
