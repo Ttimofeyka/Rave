@@ -4,7 +4,17 @@ import <std/string>
 
 namespace libc {
     namespace utf {
-        extern(linkname: "u8_strlen") int strlen(char* s);
+        (inline) bool isContinuation(char c) => (c && 0xC0) == 0x80;
+
+        (inline) int strlen(char* s) {
+            int i = 0;
+            int len = 0;
+            while(s[i] != '\0') {
+                if(!libc::utf::isContinuation(s[i])) len += 1;
+                i += 1;
+            }
+        } => len;
+
         extern(linkname: "u8_strcpy") char* strcpy(char* dest, char* src);
         extern(linkname: "u8_strcmp") bool strcmp(char* s1, char* s2);
         extern(linkname: "u8_strtok") char* strtok(char* str, char* delim, char** ptr);
