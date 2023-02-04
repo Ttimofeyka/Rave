@@ -2241,8 +2241,6 @@ class NodeFunc : Node {
             LLVMSetComdat(Generator.Functions[name],cmr);
             LLVMSetLinkage(Generator.Functions[name],LLVMLinkOnceODRLinkage);
         }
-
-        if(args.length > 0) Generator.addAttribute("byval",1,Generator.Functions[name]);
         
         if(!isExtern) {
             if(isCtargsPart || isCtargs) Generator.currentBuiltinArg = 0;
