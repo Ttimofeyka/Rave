@@ -21,5 +21,8 @@
 		"LLVM_Target_SystemZ",
 		"LLVM_Target_AArch64"
 	],
+	"dflags": [
+		"-lowmem"
+	],
 	"name": "rave"
 }

@@ -407,12 +407,13 @@ class LLVMGen {
         assert(0);
     }
 
-    void addAttribute(string name, LLVMAttributeIndex index, LLVMValueRef ptr) {
+    void addAttribute(string name, LLVMAttributeIndex index, LLVMValueRef ptr, ulong value = 0) {
         int id = LLVMGetEnumAttributeKindForName(toStringz(name),cast(int)(name.length));
         if(id == 0) {
             error(-1,"Unknown attribute '"~name~"'!");
         }
-        LLVMAttributeRef attr = LLVMCreateEnumAttribute(Generator.Context,id,0);
+        
+        LLVMAttributeRef attr = LLVMCreateEnumAttribute(Generator.Context,id,value);
         LLVMAddAttributeAtIndex(ptr,index,attr);
     }
 }
@@ -2241,6 +2242,8 @@ class NodeFunc : Node {
             LLVMSetLinkage(Generator.Functions[name],LLVMLinkOnceODRLinkage);
         }
 
+        if(args.length > 0) Generator.addAttribute("byval",1,Generator.Functions[name]);
+        
         if(!isExtern) {
             if(isCtargsPart || isCtargs) Generator.currentBuiltinArg = 0;
             LLVMBasicBlockRef entry = LLVMAppendBasicBlockInContext(

@@ -1,5 +1,11 @@
-import <std/sysc> <std/io>
+struct A {
+    int a;
+    int b;
+}
+
+extern void jamal(A* a);
 
 void main {
-    std::println("A");
+    A a;
+    jamal(&a);
 }
