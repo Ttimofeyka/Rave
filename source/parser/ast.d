@@ -2517,6 +2517,15 @@ class NodeCall : Node {
                     LLVMBuildStore(Generator.Builder,corrected[i],v);
                     corrected[i] = v;
                 }
+                else if(LLVMGetTypeKind(LLVMTypeOf(corrected[i])) == LLVMIntegerTypeKind && LLVMGetTypeKind(_types[i+_offset]) == LLVMIntegerTypeKind) {
+                    corrected[i] = LLVMBuildIntCast(Generator.Builder,corrected[i],_types[i],toStringz("intc"));
+                }
+                else if(LLVMGetTypeKind(LLVMTypeOf(corrected[i])) == LLVMFloatTypeKind && LLVMGetTypeKind(_types[i+_offset]) == LLVMDoubleTypeKind) {
+                    corrected[i] = LLVMBuildFPCast(Generator.Builder,corrected[i],_types[i],toStringz("floatc"));
+                }
+                else if(LLVMGetTypeKind(LLVMTypeOf(corrected[i])) == LLVMDoubleTypeKind && LLVMGetTypeKind(_types[i+_offset]) == LLVMFloatTypeKind) {
+                    corrected[i] = LLVMBuildFPCast(Generator.Builder,corrected[i],_types[i],toStringz("floatc"));
+                }
             }
         }
 
@@ -4024,6 +4033,7 @@ class NodeNamespace : Node {
     string[] _checkedS;
     string[] _checkedV;
     string[] _checkedN;
+    string[] _checkedAT;
 
     this(string name, Node[] nodes, int loc) {
         this.names ~= name;
@@ -4077,6 +4087,14 @@ class NodeNamespace : Node {
                 if(!s.isImported) s.isImported = isImport;
                 s.generate();
             }
+            else if(NodeAliasType nat = nodes[i].instanceof!NodeAliasType) {
+                if(!canFind(_checkedAT,nat.name)) {
+                    nat.namespacesNames ~= names;
+                    _checkedAT ~= nat.name;
+                    nat.check();
+                }
+                nat.generate();
+            }
             else nodes[i].generate();
         }
         return null;
@@ -4107,6 +4125,11 @@ class NodeNamespace : Node {
             else if(NodeMacro m = nodes[i].instanceof!NodeMacro) {
                 m.namespacesNames ~= names;
                 m.check();
+            }
+            else if(NodeAliasType nat = nodes[i].instanceof!NodeAliasType) {
+                nat.namespacesNames ~= names;
+                nat.check();
+                _checkedAT ~= nat.name;
             }
         }
     }
@@ -5938,6 +5961,7 @@ class NodeAliasType : Node {
     int loc;
     string name;
     Type value;
+    string[] namespacesNames;
 
     this(int loc, string name, Type value) {
         this.loc = loc;
@@ -5948,6 +5972,9 @@ class NodeAliasType : Node {
     override void check() {
         while(name.into(AliasTable)) {
             name = AliasTable[name].instanceof!NodeIden.name;
+        }
+        if(namespacesNames.length>0) {
+            name = namespacesNamesToString(namespacesNames,name);
         }
         aliasTypes[name] = value;
     }

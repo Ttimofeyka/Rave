@@ -1,7 +1,5 @@
 import <std/string>
 
-@addLibrary("unistring");
-
 namespace libc {
     namespace utf {
         (inline) bool isContinuation(char c) => (c && 0xC0) == 0x80;
@@ -14,14 +12,6 @@ namespace libc {
                 i += 1;
             }
         } => len;
-
-        extern(linkname: "u8_strcpy") char* strcpy(char* dest, char* src);
-        extern(linkname: "u8_strcmp") bool strcmp(char* s1, char* s2);
-        extern(linkname: "u8_strtok") char* strtok(char* str, char* delim, char** ptr);
-        extern(linkname: "u8_strchr") char* strchr(char* str, int uc);
-        extern(linkname: "u8_strmblen") int strmblen(char* s);
-        extern(linkname: "u8_next") char* next(int* puc, char* s);
-        extern(linkname: "u8_strstr") char* strstr(char* haystack, char* needle);
     }
 }
 

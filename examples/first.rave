@@ -1,11 +1,36 @@
-struct A {
-    int a;
-    int b;
+namespace Test {
+    type foo = int;
 }
 
-extern void jamal(A* a);
+void jamal(int a) {
+
+}
+
+struct Jam {
+    Jam this(int one) {
+
+    } => this;
+
+    Jam this(int one, int two) {
+        
+    } => this;
+
+    Jam this {
+
+    } => this;
+
+    Jam this(char* one, char* two) {
+
+    } => this;
+}
 
 void main {
-    A a;
-    jamal(&a);
+    jamal('A');
+
+    Jam j = Jam(10);
+    Jam j2 = Jam(10,10);
+    Jam j3 = Jam();
+    Jam j4 = Jam("a","b");
+
+    Test::foo a = 0;
 }
