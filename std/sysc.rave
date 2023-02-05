@@ -1,8 +1,8 @@
-namespace std {
-    extern(linkname: "syscall", vararg) void* syscall(int number);
-}
-
 @if(__RAVE_OS == "LINUX") {
+    namespace std {
+        extern(linkname: "syscall", vararg) void* syscall(int number);
+    }
+    
     @if(__RAVE_PLATFORM == "X86_64") {
         namespace std {
             namespace sysctable {

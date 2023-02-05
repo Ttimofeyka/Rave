@@ -1762,6 +1762,13 @@ class NodeVar : Node {
             string cMangle = "";
 
             for(int i=0; i<mods.length; i++) {
+                while(mods[i].name.into(AliasTable)) {
+                    if(NodeArray arr = AliasTable[mods[i].name].instanceof!NodeArray) {
+                        mods[i].name = arr.values[0].instanceof!NodeString.value;
+                        mods[i].value = arr.values[1].instanceof!NodeString.value;
+                    }
+                    else mods[i].name = AliasTable[mods[i].name].instanceof!NodeString.value;
+                }
                 if(mods[i].name == "C") noMangling = true;
                 else if(mods[i].name == "volatile") isVolatile = true;
                 else if(mods[i].name == "linkname") {
@@ -2189,6 +2196,13 @@ class NodeFunc : Node {
 
         if(name == "main") linkName = "main";
         for(int i=0; i<mods.length; i++) {
+            while(mods[i].name.into(AliasTable)) {
+                if(NodeArray arr = AliasTable[mods[i].name].instanceof!NodeArray) {
+                    mods[i].name = arr.values[0].instanceof!NodeString.value;
+                    mods[i].value = arr.values[1].instanceof!NodeString.value;
+                }
+                else mods[i].name = AliasTable[mods[i].name].instanceof!NodeString.value;
+            }
             switch(mods[i].name) {
                 case "C": case "c": linkName = name; break;
                 case "vararg": isVararg = true; break;
@@ -4432,6 +4446,13 @@ class NodeStruct : Node {
         if(templateNames.length > 0 || noCompile) return null;
 
         for(int i=0; i<mods.length; i++) {
+            while(mods[i].name.into(AliasTable)) {
+                if(NodeArray arr = AliasTable[mods[i].name].instanceof!NodeArray) {
+                    mods[i].name = arr.values[0].instanceof!NodeString.value;
+                    mods[i].value = arr.values[1].instanceof!NodeString.value;
+                }
+                else mods[i].name = AliasTable[mods[i].name].instanceof!NodeString.value;
+            }
             switch(mods[i].name) {
                 case "packed": isPacked = true; break;
                 default: break;

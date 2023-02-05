@@ -1,38 +1,11 @@
-namespace Test {
-    type foo = int;
-}
+import <std/sysc>
 
-using Test;
+alias itsinline = ["inline","C"];
 
-void jamal(int a) {
-
-}
-
-struct Jam {
-    Jam this(int one) {
-
-    } => this;
-
-    Jam this(int one, int two) {
-        
-    } => this;
-
-    Jam this {
-
-    } => this;
-
-    Jam this(char* one, char* two) {
-
-    } => this;
+(itsinline) void jam {
+    
 }
 
 void main {
-    jamal('A');
-
-    Jam j = Jam(10);
-    Jam j2 = Jam(10,10);
-    Jam j3 = Jam();
-    Jam j4 = Jam("a","b");
-
-    foo a = 0;
+    std::syscall(std::sysctable::Write, 1, "Jamal", 5);
 }
