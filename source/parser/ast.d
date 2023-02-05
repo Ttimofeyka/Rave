@@ -270,6 +270,9 @@ class LLVMGen {
                     StructTable[s.name].check();
                     StructTable[s.name].generate();
                 }
+                else if(s.name.into(aliasTypes)) {
+                    return Generator.GenerateType(aliasTypes[s.name],loc);
+                }
                 Generator.error(loc,"Unknown structure '"~s.name~"'!");
             }
             return Generator.Structs[s.name];
@@ -4746,6 +4749,16 @@ class NodeUsing : Node {
                     AliasTable[var.name] = AliasTable[oldname];
                 }
                 //Generator.Globals.remove(oldname);
+            }
+        }
+        foreach(t; byKey(aliasTypes)) {
+            if(t.indexOf("::") != -1) {
+                string[] splitted = t.split("::");
+                string[] newNamespaceNames;
+                for(int i=0; i<splitted.length-1; i++) {
+                    if(splitted[i] != namespace) newNamespaceNames ~= splitted[i];
+                }
+                aliasTypes[namespacesNamesToString(newNamespaceNames, splitted[splitted.length-1])] = aliasTypes[t].copy();
             }
         }
         foreach(f; FuncTable) {

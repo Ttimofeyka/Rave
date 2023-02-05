@@ -2,6 +2,8 @@ namespace Test {
     type foo = int;
 }
 
+using Test;
+
 void jamal(int a) {
 
 }
@@ -32,5 +34,5 @@ void main {
     Jam j3 = Jam();
     Jam j4 = Jam("a","b");
 
-    Test::foo a = 0;
+    foo a = 0;
 }
