@@ -159,7 +159,7 @@ class Lexer {
                                     n = next();
                                     if(n == 's') {
                                         n = next();
-                                        if(n != '.') tokens ~= new Token(TokType.Identifier,"~this",line);
+                                        if(n != '.' && (n == ';' || n == ',')) tokens ~= new Token(TokType.Identifier,"~this",line);
                                         else {tokens ~= new Token(TokType.Destructor,"~",line); _idx -= 4;}
                                     }
                                     else {tokens ~= new Token(TokType.Destructor,"~",line); _idx -= 3;}

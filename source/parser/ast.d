@@ -5563,6 +5563,13 @@ class NodeBuiltin : Node {
                     warningStack ~= allString;
                 }
                 return null;
+            case "echo":
+                string allString = "";
+                for(int i=0; i<args.length; i++) {
+                    allString ~= asStringIden(i);
+                }
+                writeln(allString);
+                return null;
             case "getCurrArg":
                 Type getArgType = asType(0).ty;
                 int getArgNum = Generator.currentBuiltinArg;
