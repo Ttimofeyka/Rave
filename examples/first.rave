@@ -1,8 +1,11 @@
 import <std/sysc>
 
-alias itsinline = ["inline","C"];
+struct A {
+    int a;
+    int b;
+}
 
-(itsinline) void jam {
+void jamal(A a) {
     
 }
 

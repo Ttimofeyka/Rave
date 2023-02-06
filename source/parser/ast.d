@@ -419,6 +419,14 @@ class LLVMGen {
         LLVMAttributeRef attr = LLVMCreateEnumAttribute(Generator.Context,id,value);
         LLVMAddAttributeAtIndex(ptr,index,attr);
     }
+
+    void addStringAttribute(string name, LLVMAttributeIndex index, LLVMValueRef ptr, string val) {
+        LLVMAttributeRef attr = LLVMCreateStringAttribute(Generator.Context,toStringz(name),cast(uint)name.length,toStringz(val),cast(uint)val.length);
+        if(attr is null) {
+            error(-1,"Unknown attribute '"~name~"'!");
+        }
+        LLVMAddAttributeAtIndex(ptr,index,attr);
+    }
 }
 
 Node[int] condStack;
@@ -2151,13 +2159,13 @@ class NodeFunc : Node {
         }
     }
 
-    LLVMTypeRef* getParameters() {
+    LLVMTypeRef* getParameters(int callconv) {
         LLVMTypeRef[] p;
         for(int i=0; i<args.length; i++) {
             if(args[i].type.instanceof!TypeVarArg) {
                 isVararg = true;
                 args = args[1..$];
-                return getParameters();
+                return getParameters(callconv);
             }
             else if(args[i].type.instanceof!TypeStruct) {
                 //p ~= Generator.GenerateType(new TypePointer(args[i].type),loc);
@@ -2208,6 +2216,8 @@ class NodeFunc : Node {
                 case "vararg": isVararg = true; break;
                 case "fastcc": callconv = 1; break;
                 case "coldcc": callconv = 2; break;
+                case "cdecl32": callconv = 3; break;
+                case "cdecl64": callconv = 4; break;
                 case "inline": isInline = true; break;
                 case "linkname": linkName = mods[i].value; break;
                 case "pure": isPure = true; break;
@@ -2232,7 +2242,7 @@ class NodeFunc : Node {
             }
         }
 
-        LLVMTypeRef* parametersG = getParameters();
+        LLVMTypeRef* parametersG = getParameters(callconv);
 
         LLVMTypeRef functype = LLVMFunctionType(
             Generator.GenerateType(type,loc),
