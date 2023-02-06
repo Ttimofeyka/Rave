@@ -17,8 +17,14 @@ namespace std {
     extern(linkname: "erff") float erf(float f);
     extern(linkname: "exp2") float exp2(float f);
     extern(linkname: "floor") float floor(float f);
-    extern(linkname: "fminf") float fmin(float f);
-    extern(linkname: "fmaxf") float fmax(float f);
+    float fmin(float one, float two) {
+        float result = one;
+        if(one > two) result = two;
+    } => result;
+    float fmax(float one, float two) {
+        float result = one;
+        if(one < two) result = two;
+    } => result;
     extern(linkname: "fmodf") float fmod(float f);
     extern(linkname: "sinf") float sin(float f);
     extern(linkname: "sqrtf") float sqrt(float f);

@@ -1,7 +1,22 @@
-namespace std {
-    namespace process {
-        extern(linkname: "getpid") int getPID();
-        extern(linkname: "getppid") int getPPID();
-        extern(linkname: "fork") int fork();
+@if(__RAVE_OS == "LINUX") {
+    import <std/sysc>
+
+    namespace std {
+        namespace process {
+            (inline) int getPID => cast(int)std::syscall(std::sysctable::GetPID);
+            (inline) int getPPID => cast(int)std::syscall(std::sysctable::GetPPID);
+        
+            extern(linkname: "fork") int fork();
+        }
     }
-}
+};
+
+@if(__RAVE_OS != "LINUX") {
+    namespace std {
+        namespace process {
+            extern(linkname: "getpid") int getPID();
+            extern(linkname: "getppid") int getPPID();
+            extern(linkname: "fork") int fork();
+        }
+    }
+};

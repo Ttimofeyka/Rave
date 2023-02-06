@@ -8,22 +8,116 @@
             namespace sysctable {
                 alias Read = 0x00;
                 alias Write = 0x01;
+
+                alias Socket = 0x29;
+                alias Bind = 0x31;
+                alias Shutdown = 0x30;
+                alias Listen = 0x32;
+
+                alias GetPID = 0x27;
+                alias GetPPID = 0x6E;
             }
         }
     };
+
     @if(__RAVE_PLATFORM == "X86") {
         namespace std {
             namespace sysctable {
                 alias Read = 0x03;
                 alias Write = 0x04;
+
+                alias Socket = 0x167;
+                alias Bind = 0x169;
+                alias Shutdown = 0x175;
+                alias Listen = 0x16B;
+
+                alias GetPID = 0x14;
+                alias GetPPID = 0x40;
             }
         }
     };
+
     @if(__RAVE_PLATFORM == "AARCH64") {
         namespace std {
             namespace sysctable {
                 alias Read = 0x3F;
                 alias Write = 0x40;
+
+                alias Socket = 0xC6;
+                alias Bind = 0xC8;
+                alias Shutdown = 0xD2;
+                alias Listen = 0xC9;
+
+                alias GetPID = 0xAC;
+                alias GetPPID = 0xAD;
+            }
+        }
+    };
+
+    @if(__RAVE_PLATFORM == "ARM") {
+        namespace std {
+            namespace sysctable {
+                alias Read = 0x03;
+                alias Write = 0x04;
+
+                alias Socket = 0x119;
+                alias Bind = 0x11A;
+                alias Shutdown = 0x125;
+                alias Listen = 0x11C;
+
+                alias GetPID = 0x14;
+                alias GetPPID = 0x40;
+            }
+        }
+    };
+
+    @if(__RAVE_PLATFORM == "POWERPC") {
+        namespace std {
+            namespace sysctable {
+                alias Read = 0x03;
+                alias Write = 0x04;
+
+                alias Socket = 326;
+                alias Bind = 327;
+                alias Shutdown = 338;
+                alias Listen = 329;
+
+                alias GetPID = 20;
+                alias GetPPID = 64;
+            }
+        }
+    };
+
+    @if(__RAVE_PLATFORM == "POWERPC64") {
+        namespace std {
+            namespace sysctable {
+                alias Read = 0x03;
+                alias Write = 0x04;
+
+                alias Socket = 326;
+                alias Bind = 327;
+                alias Shutdown = 338;
+                alias Listen = 329;
+
+                alias GetPID = 20;
+                alias GetPPID = 64;
+            }
+        }
+    };
+
+    @if(__RAVE_PLATFORM == "S390X") {
+        namespace std {
+            namespace sysctable {
+                alias Read = 0x03;
+                alias Write = 0x04;
+
+                alias Socket = 359;
+                alias Bind = 361;
+                alias Shutdown = 373;
+                alias Listen = 363;
+
+                alias GetPID = 20;
+                alias GetPPID = 64;
             }
         }
     };

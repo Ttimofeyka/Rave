@@ -89,7 +89,8 @@ class Compiler {
 
         if(outtype.indexOf("i686") != -1 || outtype.indexOf("i386") != -1) content = "alias __RAVE_PLATFORM = \"X86\"; ";
         else if(outtype.indexOf("x86_64") != -1) content = "alias __RAVE_PLATFORM = \"X86_64\"; ";
-        else if(outtype.indexOf("aarch64") != -1) content = "alias __RAVE_PLATFORM = \"AARCH64\"; ";
+        else if(outtype.indexOf("x32") != -1) content = "alias __RAVE_PLATFORM = \"X32\"; ";
+        else if(outtype.indexOf("aarch64") != -1 || outtype.indexOf("arm64") != -1) content = "alias __RAVE_PLATFORM = \"AARCH64\"; ";
         else if(outtype.indexOf("arm") != -1) content = "alias __RAVE_PLATFORM = \"ARM\"; ";
         else if(outtype.indexOf("mips64") != -1) content = "alias __RAVE_PLATFORM = \"MIPS64\"; ";
         else if(outtype.indexOf("mips") != -1) content = "alias __RAVE_PLATFORM = \"MIPS\"; ";
@@ -169,10 +170,6 @@ class Compiler {
         LLVMTargetRef target;
 
         LLVMGetTargetFromTriple(triple, &target, &errors);
-
-        if(target is null) {
-            
-        }
 
         LLVMDisposeMessage(errors);
 

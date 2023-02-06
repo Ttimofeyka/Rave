@@ -389,7 +389,7 @@ class Parser {
                 _int.isUnsigned = true;
                 return _int;
             }
-            else if(peek().value == "L") {
+            else if(peek().value.toLower() == "l") {
                 next();
                 NodeInt _int = new NodeInt(BigInt(t.value));
                 _int.isMustBeLong = true;

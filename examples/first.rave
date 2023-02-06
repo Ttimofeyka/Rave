@@ -1,14 +1,5 @@
-import <std/sysc>
-
-struct A {
-    int a;
-    int b;
-}
-
-void jamal(A a) {
-    
-}
+import <std/sysc> <std/io> <std/socket> <std/process>
 
 void main {
-    std::syscall(std::sysctable::Write, 1, "Jamal", 5);
+    int a = std::socket::listen(1,1);
 }

@@ -3820,9 +3820,11 @@ class NodeIf : Node {
     override Node comptime() {
         NodeBool b = condition.comptime().instanceof!NodeBool;
         if(b.value && _body !is null) {
+            _body.check();
             _body.generate();
         }
         if(!b.value && _else !is null) {
+            _else.check();
             _else.generate();
         }
         return null;
@@ -5488,7 +5490,6 @@ class NodeBuiltin : Node {
                     else if(NodeStruct ns = block.nodes[i].instanceof!NodeStruct) ns.isImported = true;
                 }
                 NodeIf _if = new NodeIf(cond, block, null, loc, (currScope is null ? "" : currScope.func), true);
-                _if.check();
                 _if.comptime();
                 return null;
             case "else":
