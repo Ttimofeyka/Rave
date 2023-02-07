@@ -56,6 +56,7 @@ struct CompOpts {
 	bool isPIC = false;
 	bool runtimeChecks = true;
 	bool disableWarnings = false;
+	bool saveObjectFiles = false;
 }
 
 CompOpts analyzeArgs(string[] args) {
@@ -87,6 +88,9 @@ CompOpts analyzeArgs(string[] args) {
 				opts.linkparams ~= "-shared "; break;
 			case "-rco": case "--runtimeChecksOff":
 				opts.runtimeChecks = false;
+				break;
+			case "-sof": case "--saveObjectFiles":
+				opts.saveObjectFiles = true;
 				break;
 			case "-dw": case "--disableWarnings":
 				opts.disableWarnings = true;

@@ -217,13 +217,13 @@ class Compiler {
                     linkString ~= files[i]~" ";
             }
             else {
-                    compile(files[i]);
-                    if(opts.emit_llvm) {
-                            char* err;
-                            LLVMPrintModuleToFile(Generator.Module, toStringz(files[i]~".ll"), &err);
-                    }
-                    linkString ~= files[i].replace(".rave",".o ");
-                    toRemove ~= files[i].replace(".rave",".o");
+                compile(files[i]);
+                if(opts.emit_llvm) {
+                        char* err;
+                        LLVMPrintModuleToFile(Generator.Module, toStringz(files[i]~".ll"), &err);
+                }
+                linkString ~= files[i].replace(".rave",".o ");
+                if(!opts.saveObjectFiles) toRemove ~= files[i].replace(".rave",".o");
             }
         }
         for(int i=0; i<toImport.length; i++) {

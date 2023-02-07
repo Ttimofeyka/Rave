@@ -11,6 +11,24 @@ namespace libc {
 }
 
 namespace libc {
+    struct stat {
+        ulong dev;
+        ulong ino;
+        ushort mode;
+        uint nlink;
+        int uid;
+        int gid;
+        ulong rdev;
+        long size;
+        int blksize;
+        long blkcnt;
+        long st_atime;
+        long st_mtime;
+        long st_ctime;
+    }
+}
+
+namespace libc {
     extern(linkname: "fopen") libc::File* fopen(char* path, char* mode);
     extern(linkname: "fclose") int fclose(libc::File* file);
     extern(linkname: "ferror") int fhasError(libc::File* file);
@@ -26,6 +44,7 @@ namespace libc {
     extern(linkname: "fseek") int fseek(libc::File* stream, int offset, int origin);
     extern(linkname: "ftell") int ftell(libc::File* stream);
     extern(linkname: "fwrite") int fwrite(void* buffer, int size, int n, libc::File* stream);
+    extern(linkname: "stat") int stat(const(char)* name, libc::stat* buffer);
 }
 
 namespace std {
