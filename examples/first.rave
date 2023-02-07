@@ -1,5 +1,5 @@
-import <std/sysc> <std/io> <std/socket> <std/process>
+import <std/sysc> <std/socket>
 
 void main {
-    int a = std::socket::listen(1,1);
+	
 }

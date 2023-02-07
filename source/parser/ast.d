@@ -2202,7 +2202,13 @@ class NodeFunc : Node {
 
         NodeBuiltin[string] _builtins;
 
-        if(name == "main") linkName = "main";
+        if(name == "main") {
+            linkName = "main";
+            if(type.instanceof!TypeVoid) {
+                type = new TypeBasic(BasicType.Int);
+                block.nodes ~= new NodeRet(new NodeInt(BigInt(0)),loc,name);
+            }
+        }
         for(int i=0; i<mods.length; i++) {
             while(mods[i].name.into(AliasTable)) {
                 if(NodeArray arr = AliasTable[mods[i].name].instanceof!NodeArray) {
