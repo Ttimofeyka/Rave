@@ -45,6 +45,7 @@ namespace libc {
     extern(linkname: "ftell") int ftell(libc::File* stream);
     extern(linkname: "fwrite") int fwrite(void* buffer, int size, int n, libc::File* stream);
     extern(linkname: "stat") int stat(const(char)* name, libc::stat* buffer);
+    extern(linkname: "getline") int getline(char** buffer, int* len, int fd);
 }
 
 namespace std {

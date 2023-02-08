@@ -9,7 +9,7 @@ import lexer.lexer;
 import std.conv : to;
 import compiler;
 import core.stdc.stdlib : exit;
-import parser.parser;
+import parser.parser, lexer.tokens;
 import llvm;
 
 string[] files;
@@ -114,6 +114,32 @@ void main(string[] args)
 		exit(1);
 	}
 	CompOpts o = analyzeArgs(args[1..$]);
+
+	operators = [
+    	TokType.Plus: 0,
+    	TokType.Minus: 0,
+    	TokType.Multiply: 1,
+    	TokType.Divide: 1,
+    	TokType.Rem: -50,
+    	TokType.Equ: -95,
+    	TokType.PluEqu: -97,
+    	TokType.MinEqu: -97,
+    	TokType.DivEqu: -97,
+    	TokType.MinEqu: -97,
+    	TokType.Equal: -80,
+    	TokType.Nequal: -80,
+    	TokType.Less: -70,
+    	TokType.More: -70,
+    	TokType.Or: -85,
+    	TokType.And: -85,
+    	TokType.BitLeft: -51,
+    	TokType.BitRight: -51,
+    	TokType.MoreEqual: -70,
+    	TokType.LessEqual: -70,
+    	TokType.BitXor: -51,
+    	TokType.BitNot: -51
+	];
+
 	Compiler compiler = new Compiler(outfile,outtype,o);
 	compiler.compileAll();
 }

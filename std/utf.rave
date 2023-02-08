@@ -52,31 +52,6 @@ namespace std {
             }
         } => temp;
 
-        bool has(int ch) {
-            char* p = libc::utf::strchr(this.c(),ch);
-        } => (p == null);
-
-        int indexOf(int ch) {
-            char* _c = this.c();
-            char* p = libc::utf::strchr(_c,ch);
-
-            int index = 0;
-            if(p == null) index = -1;
-            else index = ptoi(_c) - ptoi(p);
-        } => index;
-
-        int indexOf(char* s) {
-            char* _c = this.c();
-            char* p = libc::utf::strstr(_c,s);
-
-            int index = 0;
-            if(p == null) index = -1;
-            else index = ptoi(_c) - ptoi(p);
-        } => index;
-
-        int indexOf(std::string s) => this.indexOf(s.c());
-        int indexOf(std::ustring s) => this.indexOf(s.c());
-
         void append(char* s) {
             for(int i=0; s[i] != '\0'; i+=1) {
                 this.length += 1;

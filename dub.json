@@ -24,5 +24,15 @@
 	"dflags": [
 		"-lowmem"
 	],
+	"buildTypes": {
+		"profile": {
+			"buildRequirements": ["silenceDeprecations", "silenceWarnings"],
+			"buildOptions": ["profile"]
+		},
+		"release": {
+			"buildRequirements": ["silenceDeprecations"],
+			"buildOptions": ["inline"]
+		}
+	},
 	"name": "rave"
 }

@@ -103,7 +103,8 @@ class Compiler {
         else if(outtype.indexOf("avr") != -1) content = "alias __RAVE_PLATFORM = \"AVR\"; ";
         else content = "alias __RAVE_PLATFORM = \"UNKNOWN\"; ";
         
-        if(outtype.indexOf("windows") != -1) content = `alias __RAVE_OS = "WINDOWS"; `~content;
+        if(outtype.indexOf("win32") != -1) content = `alias __RAVE_OS = "WINDOWS32"; `~content;
+        else if(outtype.indexOf("win64") != -1) content = `alias __RAVE_OS = "WINDOWS64"; `~content;
         else if(outtype.indexOf("linux") != -1) content = `alias __RAVE_OS = "LINUX"; `~content;
         else if(outtype.indexOf("darwin") != -1 || outtype.indexOf("macos") != -1) content = `alias __RAVE_OS = "DARWIN"; `~content;
         else if(outtype.indexOf("android") != -1) content = `alias __RAVE_OS = "ANDROID"; `~content;

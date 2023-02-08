@@ -9,7 +9,7 @@ module lexer.tokens;
 // Lpar = )
 // Rpar = (
 
-enum TokType {
+enum TokType : char {
     String,
     Char,
     Identifier,
