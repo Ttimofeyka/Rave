@@ -3014,6 +3014,9 @@ class NodeCall : Node {
                             if(("{"~n~"*}"~g.field).into(FuncTable)) return new NodeCall(loc,new NodeIden(("{"~n~"*}"~g.field),loc),args).generate();
                             return new NodeCall(loc,new NodeIden(("{"~n~"}"~g.field),loc),args).generate();
                         }
+                        foreach(k; byKey(FuncTable)) {
+                            if(k.indexOf("pr") != -1) writeln(k);
+                        }
                         Generator.error(loc,"Structure '"~s.name~"' doesn't contain method '"~g.field~"'!");
                     }
                     v = StructTable[s.name].elements[structsNumbers[cast(immutable)[s.name,g.field]].number].instanceof!NodeVar;

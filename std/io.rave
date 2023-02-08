@@ -73,6 +73,17 @@ namespace std {
         }
     }
 
+    (ctargs, inline) void fprint {
+        std::file f = @getArg(std::file,0);
+        @skipArg();
+        std::string data = @callWithArgs(std::sprint);
+        f.write(data.c(), sizeof(char), data.length);
+    }
+
+    (ctargs, inline) void fprintln {
+        @callWithArgs(std::fprint,'\n');
+    }
+
     (ctargs, inline) void print {
         std::string s = @callWithArgs(std::sprint);
         std::putswnl(s);
@@ -109,35 +120,6 @@ namespace std {
         void remove {
             libc::fremove(this.name);
         }
-
-        (vararg,inline) int scanf(char* fmt) {
-            va_list list;
-
-            va_start(&list);
-                int toret = libc::fscanf(this._file,fmt);
-            va_end(&list);
-        } => toret;
-        (vararg,inline) int scanf(std::string fmt) {
-            va_list list;
-
-            va_start(&list);
-                int toret = libc::fscanf(this._file,fmt.c());
-            va_end(&list);
-        } => toret;
-        (vararg,inline) int printf(char* fmt) {
-            va_list list;
-
-            va_start(&list);
-                int toret = libc::fprintf(this._file,fmt);
-            va_end(&list);
-        } => toret;
-        (vararg,inline) int printf(std::string fmt) {
-            va_list list;
-
-            va_start(&list);
-                int toret = libc::fprintf(this._file,fmt.c());
-            va_end(&list);
-        } => toret;
 
         int read(void* buffer, int size, int n) => libc::fread(buffer, size, n, this._file);
         int write(void* buffer, int size, int n) => libc::fwrite(buffer, size, n, this._file);
