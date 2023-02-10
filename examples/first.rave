@@ -1,5 +1,6 @@
 import <std/>
 
 void main {
-    
+    int n = 5;
+    std::println(std::math::factorial(n));
 }

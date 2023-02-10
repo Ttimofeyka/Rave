@@ -1,7 +1,20 @@
 import <std/vector>
 
 namespace std {
+  namespace math {
     alias PI = 3.14159265358979323846;
+
+    (inline) float degToRad(float d) => d * std::math::PI / 180;
+    (inline) float radToDeg(float r) => r * 180 / std::math::PI;
+
+    int factorial(int n) {
+        int fact = 1;
+        int i = 1;
+        while(i <= n) {
+            fact = fact * i;
+            i += 1;
+        }
+    } => fact;
 
     extern(linkname: "lroundf") long round(float f);
     extern(linkname: "acosf") float acos(float f);
@@ -32,7 +45,7 @@ namespace std {
     extern(linkname: "sinf") float sin(float f);
     extern(linkname: "sqrtf") float sqrt(float f);
     extern(linkname: "powf") float pow(float f1, float f2);
-    extern(linkname: "truncf") float trunc(float f);
+    float trunc(float f) => cast(float)(cast(long)f);
 
     bool isPrime(int number) {
         bool toret = true;
@@ -50,6 +63,7 @@ namespace std {
 
     int nextPrime(int number) {
         int n = number;
-        while(!(std::isPrime(n))) n += 1;
+        while(!(std::math::isPrime(n))) n += 1;
     } => n;
+  }
 }
