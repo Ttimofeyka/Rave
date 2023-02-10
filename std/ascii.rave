@@ -3,8 +3,14 @@ namespace std {
         (inline) bool isSpace(char c) => (c == ' ');
         (inline) bool isLower(char c) => (c > 96) && (c < 123);
         (inline) bool isUpper(char c) => (c > 64) && (c < 91);
-        extern(linkname: "tolower") char toLower(char c);
-        extern(linkname: "toupper") char toUpper(char c);
+        (inline) char toLower(char c) {
+            char tmp = c;
+            if(std::ascii::isUpper(c)) tmp = (tmp + 32); 
+        } => tmp;
+        (inline) char toUpper(char c) {
+            char tmp = c;
+            if(std::ascii::isLower(c)) tmp = (tmp - 32); 
+        } => tmp;
         (inline) bool isDigit(char c) => (c == '0') || (c == '1') || (c == '2') || (c == '3') || (c == '4') || (c == '5') || (c == '6') || (c == '7') || (c == '8') || (c == '9');
         extern(linkname: "strchr") char charInChars(char* chars, char c);
     }
