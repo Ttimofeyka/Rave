@@ -44,6 +44,8 @@ the result of a call with the same parameters will be the same.
 
                 alias GetPID = 0x27;
                 alias GetPPID = 0x6E;
+
+                alias ClockGetTime = 228;
             }
         }
     };
@@ -82,6 +84,8 @@ the result of a call with the same parameters will be the same.
 
                 alias GetPID = 0x14;
                 alias GetPPID = 0x40;
+
+                alias ClockGetTime = 265;
             }
         }
     };
@@ -122,6 +126,8 @@ the result of a call with the same parameters will be the same.
 
                 alias GetPID = 0xAC;
                 alias GetPPID = 0xAD;
+                
+                alias ClockGetTime = 113;
             }
         }
     };
@@ -162,6 +168,8 @@ the result of a call with the same parameters will be the same.
 
                 alias GetPID = 0x14;
                 alias GetPPID = 0x40;
+
+                alias ClockGetTime = 263;
             }
         }
     };

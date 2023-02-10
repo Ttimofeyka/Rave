@@ -1,6 +1,6 @@
-import <std/string>
+import <std/string> <std/cstring>
 
-namespace libc {
+namespace std {
     namespace utf {
         (inline) bool isContinuation(char c) => (c && 0xC0) == 0x80;
 
@@ -8,7 +8,7 @@ namespace libc {
             int i = 0;
             int len = 0;
             while(s[i] != '\0') {
-                if(!libc::utf::isContinuation(s[i])) len += 1;
+                if(!std::utf::isContinuation(s[i])) len += 1;
                 i += 1;
             }
         } => len;
@@ -24,8 +24,8 @@ namespace std {
 
         std::ustring this(char* s) {
             if(s != null) {
-                this.length = libc::utf::strlen(s);
-                this.bytes = libc::strlen(s);
+                this.length = std::utf::strlen(s);
+                this.bytes = std::cstring::strlen(s);
                 this.capacity = this.bytes * 2;
                 if(this.capacity == 0) this.capacity = 1;
                 this.data = std::malloc(this.capacity);

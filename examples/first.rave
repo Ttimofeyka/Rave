@@ -1,8 +1,5 @@
 import <std/>
 
 void main {
-    char a = 'a';
-    char b = 'B';
-
-    std::println(std::ascii::toLower(a)," ",std::ascii::toLower(b));
+    
 }

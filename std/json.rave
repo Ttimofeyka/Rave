@@ -37,7 +37,7 @@ namespace std {
             auto tokens = std::vector<std::json::token>();
 
             int i = 0;
-            const(int) length = libc::strlen(str);
+            const(int) length = std::cstring::strlen(str);
 
             while(i<length) {
                 if(str[i] == '{') {

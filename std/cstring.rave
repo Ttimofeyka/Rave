@@ -1,0 +1,45 @@
+namespace std {
+    namespace cstring {
+        int strlen(const(char)* s) {
+            int i = 0;
+            while(s[i] != '\0') i += 1;
+        } => i;
+
+        (inline) const(char)* fromBool(bool b) {
+            const(char)* s = "false";
+            if(b) s = "true";
+        } => s;
+
+        (inline) bool strncmp(const(char)* s1, const(char)* s2, int n) {
+            int i = 0;
+            bool value = true;
+            while(i < n) {
+                if(s1[i] != s2[i]) {
+                    value = false;
+                    break;
+                }
+                i += 1;
+            }
+        } => value;
+
+        char* strstr(const(char)* str, const(char)* substr) {
+            int i = 0;
+            char* ptr = str;
+            bool done = false;
+
+            @setRuntimeChecks(false);
+
+            while(ptr[i] != '\0') {
+                if(std::cstring::strncmp(ptr, substr, std::cstring::strlen(substr))) {
+                    done = true;
+                    break;
+                }
+                ptr = itop(char*,ptoi(ptr)+1);
+            }
+
+            @setRuntimeChecks(true);
+
+            if(!done) ptr = null;
+        } => ptr;
+    }
+}

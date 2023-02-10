@@ -2,7 +2,7 @@ import <std/io> <std/error>
 
 namespace std {
     bool _isValidPtr(void* ptr, const(char)* type) {
-        int length = libc::strlen(type)-1;
+        int length = std::cstring::strlen(type)-1;
         bool result = true;
 
         if(ptr == null) {

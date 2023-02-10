@@ -1,34 +1,25 @@
 import <std/time>
 
-namespace libc {
-    extern(linkname: "srand") void srand(int seed);
-    extern(linkname: "rand") int rand();
-}
-
 namespace std {
     int randomInt(int min, int max) {
         int result = 0;
 
         std::timeSpec ts;
-        libc::clockGetTime(std::RealTime,&ts);
-        libc::srand(cast(int)ts.nsec);
+        std::getCurrentTime(&ts);
 
-        result = libc::rand();
+        result = cast(int)ts.nsec;
     } => (result % ((max+1)-min))+min;
 
     long randomLong(long min, long max) {
         long result = 0;
 
         std::timeSpec ts;
-        libc::clockGetTime(std::RealTime,&ts);
-        libc::srand(cast(int)ts.nsec);
+        std::getCurrentTime(&ts);
+        int first = cast(int)ts.nsec;
 
-        int first = libc::rand();
+        std::getCurrentTime(&ts);
+        int second = cast(int)ts.nsec;
 
-        libc::clockGetTime(std::RealTime,&ts);
-        libc::srand(cast(int)ts.nsec);
-
-        int second = libc::rand();
         result = cast(long)(first+second);
     } => (result % ((max+1)-min))+min;
 }

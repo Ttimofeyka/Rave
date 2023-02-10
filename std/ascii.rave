@@ -12,6 +12,18 @@ namespace std {
             if(std::ascii::isLower(c)) tmp = (tmp - 32); 
         } => tmp;
         (inline) bool isDigit(char c) => (c == '0') || (c == '1') || (c == '2') || (c == '3') || (c == '4') || (c == '5') || (c == '6') || (c == '7') || (c == '8') || (c == '9');
-        extern(linkname: "strchr") char charInChars(char* chars, char c);
+        (inline) char* charInChars(char* chars, char c) {
+            int i = 0;
+            char* ptr = null;
+            bool active = true;
+            while((chars[i] != '\0') && active) {
+                if(chars[i] == c) {
+                    ptr = &chars[i];
+                    active = false;
+                }
+                i += 1;
+            }
+        } => ptr;
+        (inline) bool isWhitespace(char c) => ((c == ' ') || (c == '\n')) || ((c == '\r') || (c == '\t'));
     }
 }

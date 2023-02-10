@@ -1,3 +1,5 @@
+import <std/sysc>
+
 namespace std {
     struct time {
         int sec;
@@ -19,14 +21,32 @@ namespace std {
     }
 
     alias RealTime = 0;
+
+    struct timeval {
+        int tv_sec;
+        int tv_usec;
+    }
+
+    struct timezone {
+        int tz_minuteswest;
+        int tz_dsttime;
+    }
 }
 
-namespace libc {
-    extern(linkname: "time") long time(void* n);
-    extern(linkname: "localtime") std::time* localtime(long* t);
-    extern(linkname: "clock_gettime") int clockGetTime(int id, std::timeSpec* tp);
-}
+@if(__RAVE_OS == "LINUX") {
+    namespace std {
+        (inline) int getCurrentTime(std::timeSpec* tc) => cast(int)std::syscall(std::sysctable::ClockGetTime, std::RealTime, tc);
+    }
+};
 
-namespace std {
-    (inline) std::time getLocalTime {long _t = libc::time(null);} => libc::localtime(&_t)[0];
-}
+@if(__RAVE_OS != "LINUX") {
+    namespace libc {
+        extern(linkname: "time") long getTime(void* v);
+    }
+
+    namespace std {
+        (inline) int getCurrentTime(std::timeSpec* tc) {
+            tc.sec = libc::getTime(null);
+        } => 0;
+    }
+};
