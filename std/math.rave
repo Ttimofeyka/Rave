@@ -16,7 +16,10 @@ namespace std {
     extern(linkname: "coshf") float cosh(float f);
     extern(linkname: "erff") float erf(float f);
     extern(linkname: "exp2") float exp2(float f);
-    extern(linkname: "floor") float floor(float f);
+    float floor(float f) {
+        float tmp = (cast(float)(cast(long)f));
+        if(tmp < 0) tmp = tmp - 1.0;
+    } => tmp;
     float fmin(float one, float two) {
         float result = one;
         if(one > two) result = two;
@@ -25,7 +28,7 @@ namespace std {
         float result = one;
         if(one < two) result = two;
     } => result;
-    extern(linkname: "fmodf") float fmod(float f);
+    extern(linkname: "fmodf") float fmod(float x, float y);
     extern(linkname: "sinf") float sin(float f);
     extern(linkname: "sqrtf") float sqrt(float f);
     extern(linkname: "powf") float pow(float f1, float f2);
@@ -49,5 +52,4 @@ namespace std {
         int n = number;
         while(!(std::isPrime(n))) n += 1;
     } => n;
-    
 }

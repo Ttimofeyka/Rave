@@ -1,10 +1,5 @@
 import <std/io>
 
-namespace libc {
-    extern(linkname: "__errno_location") int* _errno();
-    (inline) int errno => libc::_errno()[0];
-}
-
 namespace std {
     alias NotEnoughMemory = 100;
     alias NotFound = 101;

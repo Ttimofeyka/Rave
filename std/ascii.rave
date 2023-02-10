@@ -1,8 +1,8 @@
 namespace std {
     namespace ascii {
-        extern(linkname: "isspace") bool isSpace(char c);
-        extern(linkname: "islower") bool isLower(char c);
-        extern(linkname: "isupper") bool isUpper(char c);
+        (inline) bool isSpace(char c) => (c == ' ');
+        (inline) bool isLower(char c) => (c > 96) && (c < 123);
+        (inline) bool isUpper(char c) => (c > 64) && (c < 91);
         extern(linkname: "tolower") char toLower(char c);
         extern(linkname: "toupper") char toUpper(char c);
         (inline) bool isDigit(char c) => (c == '0') || (c == '1') || (c == '2') || (c == '3') || (c == '4') || (c == '5') || (c == '6') || (c == '7') || (c == '8') || (c == '9');

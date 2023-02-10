@@ -1,5 +1,9 @@
 import <std/>
 
 void main {
+    char a = 'a';
+    char b = 'B';
+    std::println(cast(int)b);
     
+    std::println(std::ascii::isUpper(a)," ",std::ascii::isUpper(b));
 }

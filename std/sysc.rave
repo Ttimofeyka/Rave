@@ -32,6 +32,8 @@ the result of a call with the same parameters will be the same.
             namespace sysctable {
                 alias Read = 0x00;
                 alias Write = 0x01;
+                alias OpenAt = 0x101;
+                alias Close = 0x03;
 
                 alias Socket = 0x29;
                 alias Bind = 0x31;
@@ -48,13 +50,28 @@ the result of a call with the same parameters will be the same.
 
     @if(__RAVE_PLATFORM == "X86") {
         namespace std {
-            extern(linkname: "syscall", vararg) void* syscall(int number);
+            (vararg) void* syscall(int number) {
+                bool fix;
+	            asm(
+                "
+	                movl %ebx, %eax
+	                movl %ecx, %ebx
+	                movl %edx, %ecx
+	                movl %esi, %edx
+	                movl %ebp, %edi
+	                syscall
+
+	            	movl %eax, \"_Ravegstd::__syscResult\"
+                ");
+            } => cast(void*)std::__syscResult;
         }
 
         namespace std {
             namespace sysctable {
                 alias Read = 0x03;
                 alias Write = 0x04;
+                alias OpenAt = 0x127;
+                alias Close = 0x06;
 
                 alias Socket = 0x167;
                 alias Bind = 0x169;
@@ -71,13 +88,30 @@ the result of a call with the same parameters will be the same.
 
     @if(__RAVE_PLATFORM == "AARCH64") {
         namespace std {
-            extern(linkname: "syscall", vararg) void* syscall(int number);
+            (vararg) void* syscall(int number) {
+                bool fix;
+	            asm(
+                "
+	                mov x8, x1
+                    mov x1, x2
+                    mov x2, x3
+                    mov x3, x4
+                    mov x4, x5
+                    mov x5, x6
+	                svc #0
+
+                    ldr x1, =\"_Ravegstd::__syscResult\"
+                    str x0, [x1]
+                ");
+            } => cast(void*)std::__syscResult;
         }
 
         namespace std {
             namespace sysctable {
                 alias Read = 0x3F;
                 alias Write = 0x40;
+                alias OpenAt = 0x38;
+                alias Close = 0x39;
 
                 alias Socket = 0xC6;
                 alias Bind = 0xC8;
@@ -94,13 +128,30 @@ the result of a call with the same parameters will be the same.
 
     @if(__RAVE_PLATFORM == "ARM") {
         namespace std {
-            extern(linkname: "syscall", vararg) void* syscall(int number);
+            (vararg) void* syscall(int number) {
+                bool fix;
+	            asm(
+                "
+	                mov r7, r0
+                    mov r1, r2
+                    mov r2, r3
+                    mov r3, r4
+                    mov r4, r5
+                    mov r5, r6
+	                swi 0x0
+
+                    ldr r1, =\"_Ravegstd::__syscResult\"
+                    str r0, [r1]
+                ");
+            } => cast(void*)std::__syscResult;
         }
 
         namespace std {
             namespace sysctable {
                 alias Read = 0x03;
                 alias Write = 0x04;
+                alias OpenAt = 0x142;
+                alias Close = 0x06;
 
                 alias Socket = 0x119;
                 alias Bind = 0x11A;
