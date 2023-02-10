@@ -57,6 +57,7 @@ struct CompOpts {
 	bool runtimeChecks = true;
 	bool disableWarnings = false;
 	bool saveObjectFiles = false;
+	bool useLibc = false;
 }
 
 CompOpts analyzeArgs(string[] args) {
@@ -95,6 +96,7 @@ CompOpts analyzeArgs(string[] args) {
 			case "-dw": case "--disableWarnings":
 				opts.disableWarnings = true;
 				break;
+			case "-ul": case "--useLibc": opts.useLibc = true; break;
 			default:
 				if(currCommand[0] == '-') {
 					opts.linkparams ~= currCommand~" "; idx += 1;

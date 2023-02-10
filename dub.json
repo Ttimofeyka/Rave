@@ -27,11 +27,13 @@
 	"buildTypes": {
 		"profile": {
 			"buildRequirements": ["silenceDeprecations", "silenceWarnings"],
-			"buildOptions": ["profile"]
+			"buildOptions": ["profile"],
+			"dflags": ["-lowmem"]
 		},
 		"release": {
 			"buildRequirements": ["silenceDeprecations"],
-			"buildOptions": ["inline"]
+			"buildOptions": ["noBoundsCheck","releaseMode","inline"],
+			"dflags": ["-lowmem"]
 		}
 	},
 	"name": "rave"

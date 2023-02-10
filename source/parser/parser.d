@@ -399,7 +399,13 @@ class Parser {
             }
             return new NodeInt(BigInt(t.value));
         }
-        if(t.type == TokType.FloatNumber) return new NodeFloat(to!double(t.value));
+        if(t.type == TokType.FloatNumber) {
+            if(peek().value.toLower() == "d") {
+                next();
+                return new NodeFloat(to!double(t.value),true);
+            }
+            return new NodeFloat(to!double(t.value));
+        }
         if(t.type == TokType.HexNumber) return new NodeInt(BigInt(t.value));
         if(t.type == TokType.True) return new NodeBool(true);
         if(t.type == TokType.False) return new NodeBool(false);

@@ -589,8 +589,9 @@ struct FuncArgSet {
     Type type;
 }
 
-class Node
-{
+class Node {
+    bool isChecked = false;
+
     this() {}
 
     LLVMValueRef generate() {
@@ -714,24 +715,33 @@ class NodeInt : Node {
 
 class NodeFloat : Node {
     private double value;
+    TypeBasic ty = null;
 
     this(double value) {
         this.value = value;
     }
 
+    this(double value, bool v) {
+        if(v) {
+            ty = new TypeBasic(BasicType.Double);
+        }
+        this.value = value;
+    }
+
     override Type getType() {
-        string[] parts = to!string(value).split(".");
-        if(parts.length == 1) return new TypeBasic(BasicType.Float);
-        if(parts.length>1 && parts[1].length<double.max_exp) return new TypeBasic(BasicType.Float);
-        return new TypeBasic(BasicType.Double);
+        if(ty !is null) return ty;
+        if(value > float.max) ty = new TypeBasic(BasicType.Double);
+        else ty = new TypeBasic(BasicType.Float);
+        return ty;
     }
 
     override LLVMValueRef generate() {
-        string val = to!string(value);
-        string[] parts = val.split(".");
-        if(parts.length==1) return LLVMConstReal(LLVMFloatTypeInContext(Generator.Context),value);
-        if(parts.length>1 && parts[1].length<double.max_exp) return LLVMConstReal(LLVMFloatTypeInContext(Generator.Context),value);
-        return LLVMConstReal(LLVMDoubleTypeInContext(Generator.Context),value);
+        if(ty is null) {
+            if(value > float.max) ty = new TypeBasic(BasicType.Double);
+            else ty = new TypeBasic(BasicType.Float);
+        }
+        if(ty.type == BasicType.Double) return LLVMConstReal(LLVMDoubleTypeInContext(Generator.Context),value);
+        return LLVMConstReal(LLVMFloatTypeInContext(Generator.Context),value);
     }
 
     override void debugPrint() {
@@ -770,7 +780,7 @@ class NodeString : Node {
         LLVMSetUnnamedAddr(globalstr, true);
         LLVMSetLinkage(globalstr, LLVMPrivateLinkage);
         if(!isWide) LLVMSetAlignment(globalstr, 1);
-        else LLVMSetAlignment(globalstr, 2);
+        else LLVMSetAlignment(globalstr, 4);
         LLVMSetInitializer(globalstr, LLVMConstStringInContext(Generator.Context, toStringz(value), cast(uint)value.length, false));
         return LLVMConstInBoundsGEP(
             globalstr,
@@ -824,17 +834,19 @@ class NodeBinary : Node {
     }
 
     Type llvmTypeToType(LLVMTypeRef t) {
+        string ty = Generator.typeToString(t);
         if(LLVMGetTypeKind(t) == LLVMIntegerTypeKind) {
-            if(t == LLVMInt32TypeInContext(Generator.Context)) return new TypeBasic("int");
-            if(t == LLVMInt64TypeInContext(Generator.Context)) return new TypeBasic("long");
-            if(t == LLVMInt16TypeInContext(Generator.Context)) return new TypeBasic("short");
-            if(t == LLVMInt8TypeInContext(Generator.Context)) return new TypeBasic("char");
-            if(t == LLVMInt1TypeInContext(Generator.Context)) return new TypeBasic("bool");
-            return new TypeBasic("cent");
+            switch(ty) {
+                case "i1": return new TypeBasic(BasicType.Bool);
+                case "i8": return new TypeBasic(BasicType.Char);
+                case "i16": return new TypeBasic(BasicType.Short);
+                case "i32": return new TypeBasic(BasicType.Int);
+                case "i64": return new TypeBasic(BasicType.Long);
+                default: return new TypeBasic(BasicType.Cent);
+            }
         }
         else if(LLVMGetTypeKind(t) == LLVMFloatTypeKind) {
-            if(t == LLVMFloatTypeInContext(Generator.Context)) return new TypeBasic("float");
-            return new TypeBasic("double");
+            return new TypeBasic(ty);
         }
         else if(LLVMGetTypeKind(t) == LLVMPointerTypeKind) {
             if(LLVMGetTypeKind(LLVMGetElementType(t)) == LLVMStructTypeKind) {
@@ -1639,6 +1651,7 @@ class NodeBlock : Node {
     }
 
     override void check() {
+        this.isChecked = true;
         foreach(n; nodes) {
             if(n !is null) n.check();
         }
@@ -1731,6 +1744,7 @@ class NodeVar : Node {
     }
 
     override void check() {
+        this.isChecked = true;
         if(namespacesNames.length>0) {
             name = namespacesNamesToString(namespacesNames,name);
         }
@@ -2119,6 +2133,7 @@ class NodeFunc : Node {
     }
 
     override void check() {
+        this.isChecked = true;
         for(int i=0; i<mods.length; i++) {
             if(mods[i].name == "method") {
                 Type _struct = args[0].type;
@@ -2441,6 +2456,7 @@ class NodeRet : Node {
     }
 
     override void check() {
+        this.isChecked = true;
         if(parent.into(FuncTable)) FuncTable[parent].rets ~= this;
     }
 
@@ -3243,6 +3259,7 @@ class NodeIndex : Node {
     }
 
     override void check() {
+        this.isChecked = true;
         element.check();
     }
 
@@ -3589,7 +3606,9 @@ class NodeBool : Node {
         return new TypeBasic("bool");
     }
 
-    override void check() {}
+    override void check() {
+        this.isChecked = true;
+    }
 
     override LLVMValueRef generate() {
         return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),to!ulong(value),false);
@@ -3639,7 +3658,10 @@ class NodeUnary : Node {
         assert(0);
     }
 
-    override void check() {base.check();}
+    override void check() {
+        this.isChecked = true;
+        base.check();
+    }
     override LLVMValueRef generate() {
         if(type == TokType.Minus) {
             LLVMValueRef bs = base.generate();
@@ -3791,6 +3813,7 @@ class NodeIf : Node {
     }
 
     override void check() {
+        this.isChecked = true;
         if(_body !is null) {
             if(NodeRet r = _body.instanceof!NodeRet) {
                 r.parent = func;
@@ -3935,6 +3958,7 @@ class NodeWhile : Node {
     }
 
     override void check() {
+        this.isChecked = true;
         if(_body !is null) {
             if(NodeRet r = _body.instanceof!NodeRet) {
                 r.parent = func;
@@ -4013,7 +4037,9 @@ class NodeBreak : Node {
         return new TypeVoid();
     }
 
-    override void check() {}
+    override void check() {
+        this.isChecked = true;
+    }
     override LLVMValueRef generate() {
         if(Generator.ActiveLoops.length == 0) Generator.error(loc,"Attempt to call 'break' out of the loop!");
         int id = getWhileLoop();
@@ -4047,7 +4073,9 @@ class NodeContinue : Node {
         return new TypeVoid();
     }
 
-    override void check() {}
+    override void check() {
+        this.isChecked = true;
+    }
     override LLVMValueRef generate() {
         if(Generator.ActiveLoops.length == 0) Generator.error(loc,"Attempt to call 'continue' out of the loop!");
         int id = getWhileLoop();
@@ -4067,11 +4095,6 @@ class NodeNamespace : Node {
     Node[] nodes;
     int loc;
     bool isImport = false;
-    string[] _checkedF;
-    string[] _checkedS;
-    string[] _checkedV;
-    string[] _checkedN;
-    string[] _checkedAT;
 
     this(string name, Node[] nodes, int loc) {
         this.names ~= name;
@@ -4090,45 +4113,40 @@ class NodeNamespace : Node {
         }
         for(int i=0; i<nodes.length; i++) {
             if(NodeFunc f = nodes[i].instanceof!NodeFunc) {
-                if(!canFind(_checkedF,f.name)) {
+                if(!f.isChecked) {
                     f.namespacesNames ~= names;
-                    _checkedF ~= f.name;
                     f.check();
                 }
                 if(!f.isExtern) f.isExtern = isImport;
                 f.generate();
             }
             else if(NodeVar v = nodes[i].instanceof!NodeVar) {
-                if(!canFind(_checkedV,v.name)) {
+                if(!v.isChecked) {
                     v.namespacesNames ~= names;
-                    _checkedV ~= v.name;
                     v.check();
                 }
                 if(!v.isExtern) v.isExtern = isImport;
                 v.generate();
             }
             else if(NodeNamespace n = nodes[i].instanceof!NodeNamespace) {
-                if(!canFind(_checkedN,n.names)) {
+                if(!n.isChecked) {
                     n.names ~= names;
-                    _checkedN ~= n.names;
                     n.check();
                 }
                 if(!n.isImport) n.isImport = isImport;
                 n.generate();
             }
             else if(NodeStruct s = nodes[i].instanceof!NodeStruct) {
-                if(!canFind(_checkedS,s.name)) {
+                if(!s.isChecked) {
                     s.namespacesNames ~= names;
-                    _checkedS ~= s.name;
                     s.check();
                 }
                 if(!s.isImported) s.isImported = isImport;
                 s.generate();
             }
             else if(NodeAliasType nat = nodes[i].instanceof!NodeAliasType) {
-                if(!canFind(_checkedAT,nat.name)) {
+                if(!nat.isChecked) {
                     nat.namespacesNames ~= names;
-                    _checkedAT ~= nat.name;
                     nat.check();
                 }
                 nat.generate();
@@ -4139,26 +4157,23 @@ class NodeNamespace : Node {
     }
 
     override void check() {
+        this.isChecked = true;
         for(int i=0; i<nodes.length; i++) {
             if(NodeFunc f = nodes[i].instanceof!NodeFunc) {
                 f.namespacesNames ~= names;
                 f.check();
-                _checkedF ~= f.name;
             }
             else if(NodeNamespace n = nodes[i].instanceof!NodeNamespace) {
                 n.names ~= names;
                 n.check();
-                _checkedN ~= n.names;
             }
             else if(NodeVar v = nodes[i].instanceof!NodeVar) {
                 v.namespacesNames ~= names;
                 v.check();
-                _checkedV ~= v.name;
             }
             else if(NodeStruct s = nodes[i].instanceof!NodeStruct) {
                 s.namespacesNames ~= names;
                 s.check();
-                _checkedS ~= s.name;
             }
             else if(NodeMacro m = nodes[i].instanceof!NodeMacro) {
                 m.namespacesNames ~= names;
@@ -4167,7 +4182,6 @@ class NodeNamespace : Node {
             else if(NodeAliasType nat = nodes[i].instanceof!NodeAliasType) {
                 nat.namespacesNames ~= names;
                 nat.check();
-                _checkedAT ~= nat.name;
             }
         }
     }
@@ -4232,6 +4246,7 @@ class NodeStruct : Node {
     }
 
     override void check() {
+        this.isChecked = true;
         if(namespacesNames.length>0) {
             name = namespacesNamesToString(namespacesNames,name);
         }
@@ -4590,7 +4605,10 @@ class NodeCast : Node {
     }
 
     override Type getType() {return type;}
-    override void check() {val.check();}
+    override void check() {
+        this.isChecked = true;
+        val.check();
+    }
     override LLVMValueRef generate() {
         LLVMValueRef gval;
 
@@ -4733,6 +4751,7 @@ class NodeMacro : Node {
     }
 
     override void check() {
+        this.isChecked = true;
         if(namespacesNames.length>0) {
             name = namespacesNamesToString(namespacesNames,name);
         }
@@ -4772,7 +4791,9 @@ class NodeUsing : Node {
         return new TypeVoid();
     }
 
-    override void check() {}
+    override void check() {
+        this.isChecked = true;
+    }
 
     override LLVMValueRef generate() {
         foreach(var; VarTable) {
@@ -4904,7 +4925,9 @@ class NodeNull : Node {
 
     this() {}
 
-    override void check() {}
+    override void check() {
+        this.isChecked = true;
+    }
 
     override Type getType() {return maintype;}
     override LLVMValueRef generate() {
@@ -4942,7 +4965,10 @@ class NodeTypeof : Node {
         return expr.getType();
     }
 
-    override void check() {expr.check();}
+    override void check() {
+        this.isChecked = true;
+        expr.check();
+    }
     override LLVMValueRef generate() {
         if(NodeInt i = expr.instanceof!NodeInt) {
             TypeBasic b;
@@ -4971,7 +4997,10 @@ class NodeItop : Node {
         return t;
     }
 
-    override void check() {I.check();}
+    override void check() {
+        this.isChecked = true;
+        I.check();
+    }
     override LLVMValueRef generate() {
         LLVMValueRef _int = I.generate();
         LLVMValueRef isNull = LLVMBuildICmp(
@@ -5004,7 +5033,10 @@ class NodePtoi : Node {
         return new TypeBasic("int");
     }
 
-    override void check() {P.check();}
+    override void check() {
+        this.isChecked = true;
+        P.check();
+    }
     override LLVMValueRef generate() {
         LLVMValueRef ptr = P.generate();
         if(Generator.opts.runtimeChecks) {
@@ -5035,7 +5067,10 @@ class NodeAddr : Node {
         this.loc = loc;
     }
 
-    override void check() {expr.check();}
+    override void check() {
+        this.isChecked = true;
+        expr.check();
+    }
     override LLVMValueRef generate() {
         LLVMValueRef value;
 
@@ -5078,7 +5113,9 @@ class NodeType : Node {
     }
 
     override Type getType() {return ty;}
-    override void check() {}
+    override void check() {
+        this.isChecked = true;
+    }
     override LLVMValueRef generate() {
         return new NodeSizeof(this,loc).generate();
     }
@@ -5118,7 +5155,9 @@ class NodeDebug : Node {
         this.block = block;
     }
 
-    override void check() {/* No there */}
+    override void check() {
+        this.isChecked = true;
+    }
 
     override LLVMValueRef generate() {
         if(idenName.into(AliasTable)) {
@@ -5311,15 +5350,7 @@ class NodeBuiltin : Node {
     }
 
     override void check() {
-        /*if(block !is null && !block.nodes.empty) {
-            for(int i=0; i<block.nodes.length; i++) {
-                if(NodeBuiltin nb = block.nodes[i].instanceof!NodeBuiltin) {
-                    nb.CTId += 1;
-                    nb.check();
-                }
-                else block.nodes[i].check();
-            }
-        }*/
+        this.isChecked = true;
     }
 
     NodeType asType(int n, bool isCompTime = false) {
@@ -5400,12 +5431,21 @@ class NodeBuiltin : Node {
                 Node node = AliasTable[nam];
                 if(NodeIden _id = node.instanceof!NodeIden) nam = _id.name;
                 else if(NodeString str = node.instanceof!NodeString) nam = str.value;
-                else assert(0);
+                else {
+                    writeln(node," ",name," ",args);
+                    assert(0);
+                }
             }
             return nam;
         }
         else if(NodeString str = args[n].instanceof!NodeString) return str.value;
         else if(NodeBool bo = args[n].instanceof!NodeBool) return to!string(bo.value);
+        assert(0);
+    }
+
+    string getAliasName(int n) {
+        if(NodeIden id = args[n].instanceof!NodeIden) return id.name;
+        else if(NodeString str = args[n].instanceof!NodeString) return str.value;
         assert(0);
     }
 
@@ -5524,7 +5564,7 @@ class NodeBuiltin : Node {
                 for(int i=1; i<args.length; i++) nodes ~= args[i];
                 return new NodeCall(loc,args[0],nodes.dup).generate();
             case "aliasExists":
-                string s = asStringIden(0);
+                string s = getAliasName(0);
                 if(s.into(AliasTable)) return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false);
                 return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),0,false);
             case "setCustomFree":
@@ -5653,9 +5693,7 @@ class NodeBuiltin : Node {
                 }
                 return new NodeBool(false);
             case "aliasExists":
-                string s = asStringIden(0);
-                if(s.into(AliasTable)) return new NodeBool(true);
-                return new NodeBool(false);
+                return new NodeBool(getAliasName(0).into(AliasTable));
             case "setCustomFree":
                 NeededFunctions["free"] = asStringIden(0);
                 break;
@@ -5884,6 +5922,7 @@ class NodeSlice : Node {
     }
 
     override void check() {
+        this.isChecked = true;
         start.check();
         end.check();
         value.check();
@@ -6031,6 +6070,7 @@ class NodeAliasType : Node {
     }
 
     override void check() {
+        this.isChecked = true;
         while(name.into(AliasTable)) {
             name = AliasTable[name].instanceof!NodeIden.name;
         }
@@ -6059,6 +6099,7 @@ class NodeTry : Node {
     }
 
     override void check() {
+        this.isChecked = true;
         block.check();
     }
 

@@ -33,13 +33,13 @@ namespace std {
     }
 }
 
-@if(__RAVE_OS == "LINUX") {
+@if((__RAVE_OS == "LINUX") && (!@aliasExists(__RAVE_USELIBC))) {
     namespace std {
         (inline) int getCurrentTime(std::timeSpec* tc) => cast(int)std::syscall(std::sysctable::ClockGetTime, std::RealTime, tc);
     }
 };
 
-@if(__RAVE_OS != "LINUX") {
+@if((__RAVE_OS != "LINUX") || (@aliasExists(__RAVE_USELIBC))) {
     namespace libc {
         extern(linkname: "time") long getTime(void* v);
     }
@@ -47,6 +47,7 @@ namespace std {
     namespace std {
         (inline) int getCurrentTime(std::timeSpec* tc) {
             tc.sec = libc::getTime(null);
+            tc.nsec = tc.sec;
         } => 0;
     }
 };

@@ -27,7 +27,7 @@ namespace std {
     }
 }
 
-@if(__RAVE_OS == "LINUX") {
+@if((__RAVE_OS == "LINUX") && (!@aliasExists(__RAVE_USELIBC))) {
     import <std/sysc>
 
     namespace std {
@@ -49,7 +49,7 @@ namespace std {
     }
 };
 
-@if(__RAVE_OS != "LINUX") {
+@if((__RAVE_OS != "LINUX") || (@aliasExists(__RAVE_USELIBC))) {
     namespace std {
         namespace socket {
             extern(linkname: "recv") int recv(int s, char* buff, int len, int flags);

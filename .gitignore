@@ -44,3 +44,6 @@ examples/*.o
 .lite_project.lua
 
 *.log
+*.def
+dcallgrind
+d-profile-viewer
