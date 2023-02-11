@@ -25,7 +25,6 @@ namespace std {
     extern(linkname: "atanhf") float atanh(float f);
     extern(linkname: "cbrtf") float cbrt(float f);
     extern(linkname: "ceilf") float ceil(float f);
-    extern(linkname: "cosf") float cos(float f);
     extern(linkname: "coshf") float cosh(float f);
     extern(linkname: "erff") float erf(float f);
     extern(linkname: "exp2") float exp2(float f);
@@ -65,5 +64,22 @@ namespace std {
         int n = number;
         while(!(std::math::isPrime(n))) n += 1;
     } => n;
+
+    /*
+    TODO patch for <0 and >90 deg
+    */
+    @warning("std::math::cos is experimental, and values above 90deg and below 0deg may not work correctly.")
+    float cos(float f)
+    {
+        float result = 0.0;
+        int n = 0;
+        int precision = 10;
+        while(n < precision)
+        {
+            result += (std::math::pow(-1.0, cast(float)n)*std::math::pow(f, cast(float)2*n))/std::math::factorial(2*n);
+            n += 1;
+        }
+        
+    } => result;
   }
 }
