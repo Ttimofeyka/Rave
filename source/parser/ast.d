@@ -461,7 +461,7 @@ class Scope {
             }
             return Generator.Globals[n];
         }
-        if(currScope.has("this")) {
+        if(currScope.has("this") && !into(n,args)) {
             Type _t = currScope.getVar("this",loc).t;
             if(TypePointer tp = _t.instanceof!TypePointer) _t = tp.instance;
             TypeStruct ts = _t.instanceof!TypeStruct;
@@ -524,7 +524,7 @@ class Scope {
             LLVMSetAlignment(instr,Generator.getAlignmentOfType(VarTable[n].t));
             return instr;
         }
-        if(currScope.has("this")) {
+        if(currScope.has("this") && !into(n,args) && !into(n,Generator.Functions)) {
             Type _t = currScope.getVar("this",loc).t;
             if(TypePointer tp = _t.instanceof!TypePointer) _t = tp.instance;
             TypeStruct ts = _t.instanceof!TypeStruct;
@@ -545,7 +545,7 @@ class Scope {
                 cast(uint)args[n]
             );
         }
-        else return LLVMGetParam(
+        return LLVMGetParam(
             LambdaTable[func].f,
             cast(uint)args[n]
         );
@@ -4156,7 +4156,7 @@ class NodeStruct : Node {
     string[] namespacesNames;
     int loc;
     string origname;
-    NodeFunc _this;
+    NodeFunc[] _this;
     NodeFunc _destructor;
     NodeFunc _with;
     NodeFunc[] methods;
@@ -4252,50 +4252,50 @@ class NodeStruct : Node {
                 NodeFunc f = elements[i].instanceof!NodeFunc;
                 if(f.isCtargs) continue;
                 if(f.origname == "this") {
-                    _this = f;
-                    _this.name = origname;
-                    _this.type = f.type;
-                    _this.namespacesNames = namespacesNames.dup;
-                    _this.isTemplatePart = isLinkOnce;
-                    _this.isComdat = isComdat;
+                    _this ~= f;
+                    _this[_this.length-1].name = origname;
+                    _this[_this.length-1].type = f.type;
+                    _this[_this.length-1].namespacesNames = namespacesNames.dup;
+                    _this[_this.length-1].isTemplatePart = isLinkOnce;
+                    _this[_this.length-1].isComdat = isComdat;
 
-                    if(_this.args.length>0 && _this.args[0].name == "this") _this.args = _this.args[1..$];
+                    if(_this[_this.length-1].args.length>0 && _this[_this.length-1].args[0].name == "this") _this[_this.length-1].args = _this[_this.length-1].args[1..$];
 
                     _thisFs ~= f;
 
                     if(isImported) {
-                        _this.isExtern = true;
-                        _this.check();
+                        _this[_this.length-1].isExtern = true;
+                        _this[_this.length-1].check();
                         continue;
                     }
 
-                    _this.isExtern = false;
+                    _this[_this.length-1].isExtern = false;
 
                     Node[] toAdd;
                     if((!f.type.instanceof!TypeStruct) && !canFind(f.mods,DeclMod("noNew",""))) {
                         toAdd ~= new NodeBinary(
                             TokType.Equ,
-                            new NodeIden("this",_this.loc),
+                            new NodeIden("this",_this[_this.length-1].loc),
                             new NodeCast(new TypePointer(new TypeStruct(name)),
                                 new NodeCall(
-                                    _this.loc,new NodeIden(NeededFunctions["malloc"],_this.loc),
-                                    [new NodeCast(new TypeBasic("int"), new NodeSizeof(new NodeType(new TypeStruct(name),_this.loc),_this.loc), _this.loc)]
+                                    _this[_this.length-1].loc,new NodeIden(NeededFunctions["malloc"],_this[_this.length-1].loc),
+                                    [new NodeCast(new TypeBasic("int"), new NodeSizeof(new NodeType(new TypeStruct(name),_this[_this.length-1].loc),_this[_this.length-1].loc), _this[_this.length-1].loc)]
                                 ),
-                                _this.loc
+                                _this[_this.length-1].loc
                             ),
-                            _this.loc
+                            _this[_this.length-1].loc
                         );
                     }
 
-                    _this.block.nodes = new NodeVar("this",null,false,false,false,[],_this.loc,f.type)~toAdd~_this.block.nodes;
-                    _this.check();
+                    _this[_this.length-1].block.nodes = new NodeVar("this",null,false,false,false,[],_this[_this.length-1].loc,f.type)~toAdd~_this[_this.length-1].block.nodes;
+                    _this[_this.length-1].check();
                 }
                 else if(f.origname == name) {
                     Type outType = new TypePointer(new TypeStruct(name));
                     f.isTemplatePart = isLinkOnce;
                     f.isComdat = isComdat;
                     if(_this !is null) {
-                        outType = _this.type;
+                        outType = _this[0].type;
                         if(outType.instanceof!TypeStruct) outType = new TypePointer(outType);
                     }
                     if((f.args.length > 0 && f.args[0].name != "this") || f.args.length == 0) f.args = FuncArgSet("this",outType)~f.args;
@@ -4327,7 +4327,7 @@ class NodeStruct : Node {
                     _destructor.namespacesNames = namespacesNames.dup;
                     _destructor.isComdat = isComdat;
 
-                    Type outType = _this.type;
+                    Type outType = _this[0].type;
                     if(outType.instanceof!TypeStruct) outType = new TypePointer(outType);
 
                     if(_destructor.args.length>0 && _destructor.args[0].name == "this") _destructor.args = _destructor.args[1..$];
@@ -4339,7 +4339,7 @@ class NodeStruct : Node {
                         continue;
                     }
 
-                    if(!_this.type.instanceof!TypeStruct) _destructor.block.nodes = _destructor.block.nodes ~ new NodeCall(
+                    if(!_this[0].type.instanceof!TypeStruct) _destructor.block.nodes = _destructor.block.nodes ~ new NodeCall(
                             _destructor.loc,
                             new NodeIden(NeededFunctions["free"],_destructor.loc),
                             [new NodeIden("this",_destructor.loc)]
@@ -4387,7 +4387,7 @@ class NodeStruct : Node {
 
                     f.name = "~with."~name;
 
-                    Type outType = _this.type;
+                    Type outType = _this[0].type;
                     if(outType.instanceof!TypeStruct) outType = new TypePointer(outType);
 
                     f.args = [FuncArgSet("this",outType)];
@@ -4404,7 +4404,7 @@ class NodeStruct : Node {
                     Type outType = new TypePointer(new TypeStruct(name));
                     f.isTemplatePart = isLinkOnce;
                     if(_this !is null) {
-                        outType = _this.type;
+                        outType = _this[0].type;
                         if(outType.instanceof!TypeStruct) outType = new TypePointer(outType);
                     }
                     if((f.args.length > 0 && f.args[0].name != "this") || f.args.length == 0) f.args = FuncArgSet("this",outType)~f.args;
@@ -4465,7 +4465,7 @@ class NodeStruct : Node {
             _destructor.namespacesNames = namespacesNames.dup;
             _destructor.isComdat = isComdat;
 
-            if(_this !is null && _this.type.instanceof!TypePointer) {
+            if(_this.length > 0 && _this[0].type.instanceof!TypePointer) {
 
                 if(isImported) {
                     _destructor.isExtern = true;
@@ -4473,7 +4473,7 @@ class NodeStruct : Node {
                 }
                 else {
                     Type outType;
-                    outType = _this.type;
+                    outType = _this[0].type;
                     if(outType.instanceof!TypeStruct) outType = new TypePointer(outType);
 
                     _destructor.args = [FuncArgSet("this",outType)];

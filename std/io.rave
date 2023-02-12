@@ -95,10 +95,18 @@ namespace std {
 
     struct file {
         libc::File* _file;
-        char* name;
+        const(char)* name;
         bool isOpen;
 
-        std::file this(char* name) {this.name = name; this.isOpen = false;} => this;
+        std::file this(const(char)* name) {
+            this.name = name;
+            this.isOpen = false;
+        } => this;
+
+        std::file this(std::string name) {
+            this.name = name.c();
+            this.isOpen = false;
+        } => this;
 
         void open(char* mode) {
             this._file = libc::fopen(this.name,mode);

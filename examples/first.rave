@@ -1,5 +1,7 @@
 import <std/>
 
 void main {
-    std::println(std::math::round(100.222, 2));
+    auto file = std::file("jamal.txt");
+    file.open("w");
+    file.close();
 }
