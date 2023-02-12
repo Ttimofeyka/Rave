@@ -85,6 +85,9 @@ Type llvmTypeToType(LLVMTypeRef t) {
             if(t == LLVMFloatTypeInContext(Generator.Context)) return new TypeBasic("float");
             return new TypeBasic("double");
         }
+        else if(LLVMGetTypeKind(t) == LLVMDoubleTypeKind) {
+            return new TypeBasic("double");
+        }
         else if(LLVMGetTypeKind(t) == LLVMPointerTypeKind) {
             if(LLVMGetTypeKind(LLVMGetElementType(t)) == LLVMStructTypeKind) return new TypeStruct(cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(t))));
             return new TypePointer(llvmTypeToType(LLVMGetElementType(t)));
@@ -833,35 +836,6 @@ class NodeBinary : Node {
         this.loc = line;
     }
 
-    Type llvmTypeToType(LLVMTypeRef t) {
-        string ty = Generator.typeToString(t);
-        if(LLVMGetTypeKind(t) == LLVMIntegerTypeKind) {
-            switch(ty) {
-                case "i1": return new TypeBasic(BasicType.Bool);
-                case "i8": return new TypeBasic(BasicType.Char);
-                case "i16": return new TypeBasic(BasicType.Short);
-                case "i32": return new TypeBasic(BasicType.Int);
-                case "i64": return new TypeBasic(BasicType.Long);
-                default: return new TypeBasic(BasicType.Cent);
-            }
-        }
-        else if(LLVMGetTypeKind(t) == LLVMFloatTypeKind) {
-            return new TypeBasic(ty);
-        }
-        else if(LLVMGetTypeKind(t) == LLVMPointerTypeKind) {
-            if(LLVMGetTypeKind(LLVMGetElementType(t)) == LLVMStructTypeKind) {
-                string name = cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(t)));
-                return new TypeStruct((name.indexOf('<') == -1) ? name : name[0..name.indexOf('<')]);
-            }
-            return new TypePointer(null);
-        }
-        else if(LLVMGetTypeKind(t) == LLVMStructTypeKind) {
-            string name = cast(string)fromStringz(LLVMGetStructName(t));
-            return new TypeStruct((name.indexOf('<') == -1) ? name : name[0..name.indexOf('<')]);
-        }
-        return null;
-    }
-
     LLVMValueRef mathOperation(LLVMValueRef one, LLVMValueRef two) {
         if(Generator.typeToString(LLVMTypeOf(one))[0..$-1] == Generator.typeToString(LLVMTypeOf(two)) && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(one))) != LLVMStructTypeKind) {
             one = LLVMBuildLoad(Generator.Builder,one,toStringz("load1389_"));
@@ -1045,7 +1019,7 @@ class NodeBinary : Node {
             else if(LLVMGetTypeKind(one) == LLVMFloatTypeKind || LLVMGetTypeKind(one) == LLVMDoubleTypeKind) {
                 return LLVMBuildFCmp(
                     Generator.Builder,
-                    (neq ? LLVMRealOEQ : LLVMRealONE),
+                    (neq ? LLVMRealONE : LLVMRealOEQ),
                     onev,
                     twov,
                     toStringz("fcmp")
@@ -1465,6 +1439,16 @@ class NodeBinary : Node {
             }
         }
 
+        if(operator == TokType.Rem) {
+            if(TypeBasic tb = first.getType().instanceof!TypeBasic) {
+                if(tb.type == BasicType.Float || tb.type == BasicType.Double) {
+                    return new NodeBuiltin("fmodf",[first,second],loc,null).generate();
+                }
+                return new NodeCast(new TypeBasic(tb.type), new NodeBuiltin("fmodf",[first,second],loc,null),loc).generate();
+            }
+            assert(0);
+        }
+
         LLVMValueRef f = first.generate();
         LLVMValueRef s = second.generate();
 
@@ -1493,28 +1477,6 @@ class NodeBinary : Node {
                 LLVMTypeOf(s),
                 toStringz("IntCast")
             );
-        }
-
-        switch(operator) {
-            case TokType.Rem:
-                if(LLVMGetTypeKind(LLVMTypeOf(f)) == LLVMFloatTypeKind) {
-                    return LLVMBuildFRem(
-                        Generator.Builder,
-                        f,
-                        (LLVMGetTypeKind(LLVMTypeOf(s)) == LLVMFloatTypeKind ? s : LLVMBuildSIToFP(Generator.Builder,s,LLVMTypeOf(f),toStringz("sitofp"))),
-                        toStringz("fr")
-                    );
-                }
-                else if(LLVMGetTypeKind(LLVMTypeOf(f)) == LLVMIntegerTypeKind) {
-                    return LLVMBuildSRem(
-                        Generator.Builder,
-                        f,
-                        (LLVMGetTypeKind(LLVMTypeOf(s)) == LLVMIntegerTypeKind ? s : LLVMBuildFPToSI(Generator.Builder,s,LLVMTypeOf(f),toStringz("fptosi"))),
-                        toStringz("sr")
-                    );
-                }
-                break;
-            default: break;
         }
 
         if(LLVMGetTypeKind(LLVMTypeOf(f)) != LLVMGetTypeKind(LLVMTypeOf(s))) {
@@ -3867,12 +3829,6 @@ class NodeIf : Node {
             comptime();
             return null;
         }
-        if(NodeBuiltin _c = condition.instanceof!NodeBuiltin) {
-            if(_c.generate() != LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false)) {
-                _body = null;
-            }
-            else _else = null;
-        }
         LLVMBasicBlockRef thenBlock =
 			LLVMAppendBasicBlockInContext(
                 Generator.Context,
@@ -5346,7 +5302,12 @@ class NodeBuiltin : Node {
     }
 
     override Type getType() {
-        return new TypeVoid();
+        switch(name) {
+            case "trunc":
+            case "fmodf":
+                return args[0].getType();
+            default: return new TypeVoid();
+        }
     }
 
     override void check() {
@@ -5660,6 +5621,78 @@ class NodeBuiltin : Node {
                 BasicType twobt = two.instanceof!TypeBasic.type;
                 Generator.changeableTypes[onebt] = Generator.changeableTypes[twobt];
                 return null;
+            case "trunc":
+                LLVMValueRef val = args[0].generate();
+                if(LLVMGetTypeKind(LLVMTypeOf(val)) != LLVMFloatTypeKind && LLVMGetTypeKind(LLVMTypeOf(val)) != LLVMDoubleTypeKind) {
+                    return val;
+                }
+                return LLVMBuildSIToFP(Generator.Builder,
+                    LLVMBuildFPToSI(
+                        Generator.Builder,
+                        val,
+                        LLVMInt64TypeInContext(Generator.Context),
+                        toStringz("trunc1_")
+                    ),
+                    LLVMTypeOf(val),
+                    toStringz("trunc2_")
+                );
+            case "fmodf":
+                LLVMValueRef _x = args[0].generate();
+                LLVMValueRef _y = args[1].generate();
+                LLVMTypeRef _t = LLVMTypeOf(_x);
+                LLVMValueRef _div;
+                LLVMValueRef _result;
+                if(LLVMGetTypeKind(_t) == LLVMFloatTypeKind || LLVMGetTypeKind(_t) == LLVMDoubleTypeKind) {
+                    _div = LLVMBuildFDiv(
+                        Generator.Builder,
+                        _x,
+                        _y,
+                        toStringz("fmodf_fdiv_")
+                    ); 
+                    _result = LLVMBuildSIToFP(Generator.Builder,
+                        LLVMBuildFPToSI(
+                            Generator.Builder,
+                            _div,
+                            LLVMInt64TypeInContext(Generator.Context),
+                            toStringz("fmodf_trunc1_")
+                        ),
+                        LLVMTypeOf(_x),
+                        toStringz("fmodf_trunc2_")
+                    );
+                    _result = LLVMBuildFMul(
+                        Generator.Builder,
+                        _result,
+                        _y,
+                        toStringz("fmodf_fmul_")
+                    );
+                    _result = LLVMBuildFSub(
+                        Generator.Builder,
+                        _x,
+                        _result,
+                        toStringz("fmodf_")
+                    );
+                }
+                else {
+                    _div = LLVMBuildSDiv(
+                        Generator.Builder,
+                        _x,
+                        _y,
+                        toStringz("fmodf_sdiv_")
+                    );
+                    _result = LLVMBuildMul(
+                        Generator.Builder,
+                        _div,
+                        _y,
+                        toStringz("fmodf_mul_")
+                    );
+                    _result = LLVMBuildSub(
+                        Generator.Builder,
+                        _x,
+                        _result,
+                        toStringz("fmodf_")
+                    );
+                }
+                return _result;
             default: break;
         }
         Generator.error(loc,"Builtin with the name '"~name~"' does not exist");
@@ -5897,6 +5930,10 @@ class NodeDone : Node {
 
     this(LLVMValueRef value) {
         this.value = value;
+    }
+
+    override Type getType() {
+        return llvmTypeToType(LLVMTypeOf(value));
     }
 
     override LLVMValueRef generate() {

@@ -1,5 +1,5 @@
 import <std/>
 
 void main {
-    float a = 0.0;
+    std::println(std::math::round(100.222, 2));
 }

@@ -122,7 +122,7 @@ void main(string[] args)
     	TokType.Minus: 0,
     	TokType.Multiply: 1,
     	TokType.Divide: 1,
-    	TokType.Rem: -50,
+    	TokType.Rem: 0,
     	TokType.Equ: -95,
     	TokType.PluEqu: -97,
     	TokType.MinEqu: -97,

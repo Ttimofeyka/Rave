@@ -105,10 +105,6 @@ class Lexer {
                             tokens ~= new Token(TokType.Or,"||",line);
                             _idx++;
                         }
-                        else if(_n == '.') {
-                            tokens ~= new Token(TokType.BitXor,"|.",line);
-                            _idx++;
-                        }
                         else tokens ~= new Token(TokType.BitOr,"|",line);
                         break;
                     case '(': tokens ~= new Token(TokType.Rpar,"(",line); _idx++; break;

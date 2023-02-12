@@ -16,7 +16,11 @@ namespace std {
         }
     } => fact;
 
-    extern(linkname: "lroundf") long round(float f);
+    float abs(float f) {
+        float result = f;
+        if(f < 0.0) result = -result;
+    } => result;
+
     extern(linkname: "acosf") float acos(float f);
     extern(linkname: "acoshf") float acosh(float f);
     extern(linkname: "asinf") float asin(float f);
@@ -29,6 +33,46 @@ namespace std {
     extern(linkname: "coshf") float cosh(float f);
     extern(linkname: "erff") float erf(float f);
     extern(linkname: "exp2") float exp2(float f);
+    float pow(float f, float f2) {
+        float result;
+        if(f2 < 0) {
+            result = 1 / std::math::pow(f,-f2);
+        }
+        else {
+            float r = 1.0;
+            while(f2 > 0) {
+                r = r * f;
+                f2 = f2 - 1;
+            }
+            if(f2 > 0) {
+                r = r * f * f2;
+            }
+            result = r;
+        }
+    } => result;
+    double pow(double f, double f2) {
+        double result;
+        if(f2 < 0) {
+            result = 1 / std::math::pow(f,-f2);
+        }
+        else {
+            double r = 1.0;
+            while(f2 > 0) {
+                r = r * f;
+                f2 = f2 - 1;
+            }
+            if(f2 > 0) {
+                r = r * f * f2;
+            }
+            result = r;
+        }
+    } => result;
+    char sign(float x) {
+        char result = 0;
+        if(x < 0) result = -1;
+        else if(x == 0) result = 0;
+        else if(x > 0) result = 1;
+    } => result;
     float floor(float f) {
         float tmp = (cast(float)(cast(long)f));
         if(tmp < 0) tmp = tmp - 1.0;
@@ -41,11 +85,21 @@ namespace std {
         float result = one;
         if(one < two) result = two;
     } => result;
-    extern(linkname: "fmodf") float fmod(float x, float y);
     extern(linkname: "sinf") float sin(float f);
     extern(linkname: "sqrtf") float sqrt(float f);
-    extern(linkname: "powf") float pow(float f1, float f2);
-    float trunc(float f) => cast(float)(cast(long)f);
+
+    float mod(float x) {
+        float result = 1.0;
+        if((x % 1.0) != 0.0) {
+            result = (x % 1.0);
+        }
+    } => result;
+
+    float round(float x, int n) {
+        x = x * std::math::pow(10.0,cast(float)n);
+        x += 0.5;
+        x = std::math::floor(x) / std::math::pow(10.0,cast(float)n);
+    } => x;
 
     bool isPrime(int number) {
         bool toret = true;
