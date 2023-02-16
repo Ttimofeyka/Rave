@@ -3310,12 +3310,13 @@ class NodeIndex : Node {
             }
 
             if(structName != "" && TokType.Rbra.into(StructTable[structName].operators)) {
-                if(StructTable[structName].operators[TokType.Rbra]["[_i]"].args[0].type.instanceof!TypeStruct) {
+                NodeFunc _f = StructTable[structName].operators[TokType.Rbra][""];
+                if(_f.args[0].type.instanceof!TypeStruct) {
                     if(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMPointerTypeKind) ptr = LLVMBuildLoad(Generator.Builder,ptr,toStringz("load_"));
                 }
                 return LLVMBuildCall(
                     Generator.Builder,
-                    Generator.Functions[StructTable[structName].operators[TokType.Rbra]["[_i]"].name],
+                    Generator.Functions[_f.name],
                     [ptr, indexs[0].generate()].ptr,
                     2,
                     toStringz("call")
@@ -4378,7 +4379,8 @@ class NodeStruct : Node {
 
                     f.name = f.name ~ typesToString(f.args);
 
-                    operators[oper][typesToString(f.args)] = f;
+                    if(f.origname[$-3..$] != "[])") operators[oper][typesToString(f.args)] = f;
+                    else operators[oper][""] = f;
                     methods ~= f;
                 }
                 else if(f.origname == "~with") {

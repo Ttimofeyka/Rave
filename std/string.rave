@@ -11,6 +11,7 @@ namespace libc {
 namespace std {
     extern(linkname: "sscanf") int format(char* buff, char* fmt);
     (inline) int _lengthOfNumber(long x) {
+        if(x < 0) x = x * (-1);
         int len = 1;
 
         if(x >= 1000000000000) len = 13;
@@ -25,18 +26,6 @@ namespace std {
         else if(x >= 1000) len = 4;
         else if(x >= 100) len = 3;
         else if(x >= 10) len = 2;
-        else if(x <= -10) len = 2;
-        else if(x <= -100) len = 3;
-        else if(x <= -1000) len = 4;
-        else if(x <= -10000) len = 5;
-        else if(x <= -100000) len = 6;
-        else if(x <= -1000000) len = 7;
-        else if(x <= -10000000) len = 8;
-        else if(x <= -100000000) len = 9;
-        else if(x <= -1000000000) len = 10;
-        else if(x <= -10000000000) len = 11;
-        else if(x <= -100000000000) len = 12;
-        else if(x <= -1000000000000) len = 13;
     } => len;
     (inline) int lengthOfNumber(long x) {
         int len = 0;

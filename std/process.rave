@@ -1,4 +1,4 @@
-@if(__RAVE_OS == "LINUX") {
+@if((__RAVE_OS == "LINUX") && (!@aliasExists(__RAVE_USELIBC))) {
     import <std/sysc>
 
     namespace std {
@@ -11,7 +11,7 @@
     }
 };
 
-@if(__RAVE_OS != "LINUX") {
+@if((__RAVE_OS != "LINUX") || (@aliasExists(__RAVE_USELIBC))) {
     namespace std {
         namespace process {
             extern(linkname: "getpid") int getPID();

@@ -1,7 +1,8 @@
 import <std/>
 
 void main {
-    auto file = std::file("jamal.txt");
-    file.open("w");
-    file.close();
+    auto vec = std::vector<int>();
+    vec.add(10);
+    int jam = vec[0];
+    std::println(jam);
 }
