@@ -42,42 +42,35 @@ struct SafePtr<T> {
         this.size = 0;
     } => this;
 
-    SafePtr<T> this(T* pointer) {
-        this.pointer = pointer;
-        this.size = 0;
-    } => this;
-
     SafePtr<T> this(T* pointer, int size) {
         this.pointer = pointer;
-        this.size = size;
-    } => this;
-
-    SafePtr<T> this(int size) {
         this.size = size;
     } => this;
 
     (inline) std::error<T> get(int n) {
         std::error<T> result;
         if(this.pointer == cast(T*)null) {
-            result.message = "Error using SafePtr: attempt to access the null pointer!\n";
+            result.message = "Error using SafePtr: attempt to access the null pointer!";
             result.code = std::NullPointer;
         }
-        else if((n < this.size) && (n > 0)) {
-            result.message = "Error using SafePtr: attempt to access an element outside the pointer!\n";
+        else if((n < 0) || (n >= this.size)) {
+            result.message = "Error using SafePtr: attempt to access an element outside the pointer!";
             result.code = std::BeyondSize;
         }
-        else result.value = this.pointer[n];
+        else {
+            result.value = this.pointer[n];
+        }
     } => result;
 
     (inline) std::error<bool> set(int n, T value) {
         std::error<bool> result;
         if(this.pointer == cast(T*)null) {
-            result.message = "Error using SafePtr: attempt to access the null pointer!\n";
+            result.message = "Error using SafePtr: attempt to access the null pointer!";
             result.code = std::NullPointer;
             result.value = false;
         }
-        else if((n < this.size) && (n > 0)) {
-            result.message = "Error using SafePtr: attempt to access an element outside the pointer!\n";
+        else if((n < 0) || (n >= this.size)) {
+            result.message = "Error using SafePtr: attempt to access an element outside the pointer!";
             result.code = std::BeyondSize;
             result.value = false;
         }

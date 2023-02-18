@@ -188,7 +188,7 @@ class Lexer {
                     case '>':
                         auto rnext = next(); 
                         if(rnext == '=') {
-                            tokens ~= new Token(TokType.More,">=",line); _idx++;
+                            tokens ~= new Token(TokType.MoreEqual,">=",line); _idx++;
                         }
                         else if(rnext == '.') {tokens ~= new Token(TokType.BitRight,">>",line); _idx++;}
                         else tokens ~= new Token(TokType.More,">",line); 

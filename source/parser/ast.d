@@ -1056,7 +1056,7 @@ class NodeBinary : Node {
         else if(Generator.typeToString(LLVMTypeOf(two))[0..$-1] == Generator.typeToString(LLVMTypeOf(one))) {
             two = LLVMBuildLoad(Generator.Builder,two,toStringz("load1389_"));
         }
-
+        
         if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMGetTypeKind(LLVMTypeOf(two))) {
             if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMIntegerTypeKind) {
                 if(!orequal) return LLVMBuildICmp(
@@ -2116,6 +2116,20 @@ class NodeFunc : Node {
 
         for(int i=0; i<args.length; i++) {
             if(args[i].type !is null && Generator !is null && Generator.toReplace !is null) while(args[i].type.toString().into(Generator.toReplace)) args[i].type = Generator.toReplace[args[i].type.toString()];
+        }
+
+        if(TypeStruct ts = type.instanceof!TypeStruct) {
+            for(int i=0; i<ts.types.length; i++) {
+                while(ts.types[i].toString().into(Generator.toReplace)) {
+                    ts.types[i] = Generator.toReplace[ts.types[i].toString()];
+                }
+            }
+            if(ts.types.length > 0) ts.updateByTypes();
+            if(ts !is null && Generator !is null && Generator.toReplace !is null) {
+                while(type.toString().into(Generator.toReplace)) {
+                    type = Generator.toReplace[type.toString()];
+                }
+            }
         }
 
         string toAdd = typesToString(args);
@@ -4520,7 +4534,7 @@ class NodeStruct : Node {
         string _fn = "<";
 
         for(int i=0; i<_types.length; i++) {
-            ///writeln("Structure: ",name,", Type: ",templateNames[i],", replaced: ",_types[i]);
+            //writeln("Structure: ",name,", Type: ",templateNames[i],", replaced: ",_types[i]);
             if(TypeStruct _ts = _types[i].instanceof!TypeStruct) if(!_ts.name.into(StructTable) && !_ts.types.empty) {
                 //writeln("\t??? Replacing structure = ",_ts.name);
                 Generator.GenerateType(_ts,loc);
@@ -5605,16 +5619,6 @@ class NodeBuiltin : Node {
                 TypeStruct ts = asType(0).ty.instanceof!TypeStruct;
                 string n = asStringIden(1);
                 ty = structsNumbers[cast(immutable)[ts.name,n]].var.t;
-                return null;
-            case "getTemplateType":
-                TypeStruct ts = asType(0).ty.instanceof!TypeStruct;
-                if(ts !is null) ty = ts.types[args[1].instanceof!NodeInt.value.toLong()];
-                else ty = new TypeVoid();
-                return null;
-            case "getTemplateStructure":
-                TypeStruct ts = asType(0).ty.instanceof!TypeStruct;
-                if(ts !is null) ty = new TypeStruct(ts.name[0..ts.name.indexOf('<')]);
-                else ty = new TypeVoid();
                 return null;
             case "replaceIntTypes":
                 Type one = asType(0).ty;

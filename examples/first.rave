@@ -1,8 +1,10 @@
 import <std/>
 
 void main {
-    auto vec = std::vector<int>();
-    vec.add(10);
-    int jam = vec[0];
-    std::println(jam);
+    int[10] lol;
+    auto jam = SafePtr<int>();
+    jam.pointer = &lol;
+    auto ja = jam.get(0);
+
+    std::println(ja.message);
 }
