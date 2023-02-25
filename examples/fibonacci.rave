@@ -8,5 +8,5 @@ int fibonacci(int num) {
 }
 
 void main {
-    std::println("fibonacci of 10: ", fibonacci(10));
+    std::println("Fibonacci of 10: ", fibonacci(10));
 }

@@ -59,7 +59,13 @@ namespace std {
     } => toret;
     extern(linkname: "scanf") int scanf(char* fmt, ...);
     extern(linkname: "putchar") int putchar(char c);
-    extern(linkname: "puts") int puts(char* s);
+
+    (inline) void puts(const(char)* s) {
+        for(int i=0; s[i] != '\0'; i+=1) {
+            std::putchar(s[i]);
+        }
+        std::putchar('\n');
+    }
 
     (inline) void putswnl(char* s) {
         for(int i=0; s[i] != '\0'; i+=1) {

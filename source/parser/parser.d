@@ -19,6 +19,7 @@ import app : files;
 import std.conv : parse;
 import llvm.types;
 import std.bigint;
+import compiler : _parsed;
 
 string[] types = ["void","bool", "char", "uchar", "wchar", "uwchar", "short", "ushort", "int", "uint", "long", "ulong", "cent", "ucent"];
 
@@ -1366,9 +1367,18 @@ class Parser {
             }
             next();
         }
-        if(peek().type == TokType.Semicolon) next();
 
-        return new NodeImport(_files.dup,peek().line);
+        string[] funcs;
+
+        if(peek().type == TokType.Semicolon) next();
+        else if(peek().type == TokType.ValSel) {
+            next();
+            funcs ~= peek().value;
+            next();
+            if(peek().type == TokType.Semicolon) next();
+        }
+
+        return new NodeImport(_files.dup,peek().line, funcs.dup);
     }
 
     Node parseStruct(DeclMod[] mods = []) {

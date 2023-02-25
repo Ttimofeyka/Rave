@@ -1,6 +1,6 @@
 /*
 Rave guarantees that on all supported platforms, 
-the result of a call with the same parameters will be the same.
+the result of a call with the same parameters and the same number will be the same.
 */
 
 @if(__RAVE_OS == "LINUX") {

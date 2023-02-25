@@ -23,6 +23,7 @@ import lexer.lexer : Lexer;
 import parser.parser : Parser;
 import app : CompOpts;
 import std.bigint;
+import compiler : _parsed;
 
 Node[string] AliasTable;
 NodeFunc[string] FuncTable;
@@ -1613,8 +1614,9 @@ class NodeBlock : Node {
     }
 
     override void check() {
+        bool oldCheck = isChecked;
         this.isChecked = true;
-        foreach(n; nodes) {
+        if(!oldCheck) foreach(n; nodes) {
             if(n !is null) n.check();
         }
     }
@@ -1706,23 +1708,26 @@ class NodeVar : Node {
     }
 
     override void check() {
+        bool oldCheck = isChecked;
         this.isChecked = true;
-        if(namespacesNames.length>0) {
-            name = namespacesNamesToString(namespacesNames,name);
-        }
-        if(isGlobal) VarTable[name] = this;
-        if(!t.instanceof!TypeBasic && !aliasTypes.empty) {
-            Type _nt = t.check(null);
-            if(_nt !is null) this.t = _nt;
-        }
-        if(TypeStruct ts = t.instanceof!TypeStruct) {
-            if(ts.types.length > 0 && Generator !is null && Generator.toReplace.length > 0) {
-                for(int i=0; i<ts.types.length; i++) {
-                    Type _t = ts.types[i];
-                    while(_t.toString().into(Generator.toReplace)) {
-                        _t = Generator.toReplace[_t.toString()];
+        if(!oldCheck) {
+            if(namespacesNames.length>0) {
+                name = namespacesNamesToString(namespacesNames,name);
+            }
+            if(isGlobal) VarTable[name] = this;
+            if(!t.instanceof!TypeBasic && !aliasTypes.empty) {
+                Type _nt = t.check(null);
+                if(_nt !is null) this.t = _nt;
+            }
+            if(TypeStruct ts = t.instanceof!TypeStruct) {
+                if(ts.types.length > 0 && Generator !is null && Generator.toReplace.length > 0) {
+                    for(int i=0; i<ts.types.length; i++) {
+                        Type _t = ts.types[i];
+                        while(_t.toString().into(Generator.toReplace)) {
+                            _t = Generator.toReplace[_t.toString()];
+                        }
+                        ts.types[i] = _t;
                     }
-                    ts.types[i] = _t;
                 }
             }
         }
@@ -2095,58 +2100,62 @@ class NodeFunc : Node {
     }
 
     override void check() {
+        bool oldCheck = isChecked;
         this.isChecked = true;
-        for(int i=0; i<mods.length; i++) {
-            if(mods[i].name == "method") {
-                Type _struct = args[0].type;
-                name = "{"~_struct.toString()~"}"~name;
-            }
-            else if(mods[i].name == "noNamespaces") {
-                isNoNamespaces = true;
-            }
-        }
-        if(namespacesNames.length>0 && !isNoNamespaces) {
-            name = namespacesNamesToString(namespacesNames,name);
-        }
 
-        if(!type.instanceof!TypeBasic && !aliasTypes.empty) {
-            Type _nt = type.check(null);
-            if(_nt !is null) this.type = _nt;
-        }
-
-        for(int i=0; i<args.length; i++) {
-            if(args[i].type !is null && Generator !is null && Generator.toReplace !is null) while(args[i].type.toString().into(Generator.toReplace)) args[i].type = Generator.toReplace[args[i].type.toString()];
-        }
-
-        if(TypeStruct ts = type.instanceof!TypeStruct) {
-            for(int i=0; i<ts.types.length; i++) {
-                while(ts.types[i].toString().into(Generator.toReplace)) {
-                    ts.types[i] = Generator.toReplace[ts.types[i].toString()];
+        if(!oldCheck) {
+            for(int i=0; i<mods.length; i++) {
+                if(mods[i].name == "method") {
+                    Type _struct = args[0].type;
+                    name = "{"~_struct.toString()~"}"~name;
+                }
+                else if(mods[i].name == "noNamespaces") {
+                    isNoNamespaces = true;
                 }
             }
-            if(ts.types.length > 0) ts.updateByTypes();
-            if(ts !is null && Generator !is null && Generator.toReplace !is null) {
-                while(type.toString().into(Generator.toReplace)) {
-                    type = Generator.toReplace[type.toString()];
+            if(namespacesNames.length>0 && !isNoNamespaces) {
+                name = namespacesNamesToString(namespacesNames,name);
+            }
+
+            if(!type.instanceof!TypeBasic && !aliasTypes.empty) {
+                Type _nt = type.check(null);
+                if(_nt !is null) this.type = _nt;
+            }
+
+            for(int i=0; i<args.length; i++) {
+                if(args[i].type !is null && Generator !is null && Generator.toReplace !is null) while(args[i].type.toString().into(Generator.toReplace)) args[i].type = Generator.toReplace[args[i].type.toString()];
+            }
+
+            if(TypeStruct ts = type.instanceof!TypeStruct) {
+                for(int i=0; i<ts.types.length; i++) {
+                    while(ts.types[i].toString().into(Generator.toReplace)) {
+                        ts.types[i] = Generator.toReplace[ts.types[i].toString()];
+                    }
+                }
+                if(ts.types.length > 0) ts.updateByTypes();
+                if(ts !is null && Generator !is null && Generator.toReplace !is null) {
+                    while(type.toString().into(Generator.toReplace)) {
+                        type = Generator.toReplace[type.toString()];
+                    }
                 }
             }
-        }
 
-        string toAdd = typesToString(args);
-        if(!(name !in FuncTable)) {
-            if(typesToString(FuncTable[name].args) == toAdd) {
-                if(name != "std::printf") checkError(loc,"a function with '"~name~"' name already exists on "~to!string(FuncTable[name].loc+1)~" line!");
+            string toAdd = typesToString(args);
+            if(!(name !in FuncTable)) {
+                if(typesToString(FuncTable[name].args) == toAdd) {
+                    if(name != "std::printf") checkError(loc,"a function with '"~name~"' name already exists on "~to!string(FuncTable[name].loc+1)~" line!");
+                }
+                else {
+                    name ~= toAdd;
+                }
             }
-            else {
-                name ~= toAdd;
+            FuncTable[name] = this;
+            for(int i=0; i<block.nodes.length; i++) {
+                if(NodeRet r = block.nodes[i].instanceof!NodeRet) {
+                    r.parent = name;
+                }
+                block.nodes[i].check();
             }
-        }
-        FuncTable[name] = this;
-        for(int i=0; i<block.nodes.length; i++) {
-            if(NodeRet r = block.nodes[i].instanceof!NodeRet) {
-                r.parent = name;
-            }
-            block.nodes[i].check();
         }
     }
 
@@ -2432,8 +2441,9 @@ class NodeRet : Node {
     }
 
     override void check() {
+        bool oldCheck = isChecked;
         this.isChecked = true;
-        if(parent.into(FuncTable)) FuncTable[parent].rets ~= this;
+        if(parent.into(FuncTable) && !oldCheck) FuncTable[parent].rets ~= this;
     }
 
     Loop getParentBlock(int n = -1) {
@@ -3235,8 +3245,9 @@ class NodeIndex : Node {
     }
 
     override void check() {
+        bool oldCheck = isChecked;
         this.isChecked = true;
-        element.check();
+        if(!oldCheck) element.check();
     }
 
     override Type getType() {
@@ -3636,8 +3647,9 @@ class NodeUnary : Node {
     }
 
     override void check() {
+        bool oldCheck = isChecked;
         this.isChecked = true;
-        base.check();
+        if(!oldCheck) base.check();
     }
     override LLVMValueRef generate() {
         if(type == TokType.Minus) {
@@ -3790,40 +3802,44 @@ class NodeIf : Node {
     }
 
     override void check() {
+        bool oldCheck = isChecked;
         this.isChecked = true;
-        if(_body !is null) {
-            if(NodeRet r = _body.instanceof!NodeRet) {
-                r.parent = func;
-                _hasRets[0] = true;
-            }
-            else if(NodeBlock b = _body.instanceof!NodeBlock) {
-                foreach(n; b.nodes) {
-                    if(NodeRet r = n.instanceof!NodeRet) {
-                        r.parent = func;
-                        _hasRets[0] = true;
+
+        if(!oldCheck) {
+            if(_body !is null) {
+                if(NodeRet r = _body.instanceof!NodeRet) {
+                    r.parent = func;
+                    _hasRets[0] = true;
+                }
+                else if(NodeBlock b = _body.instanceof!NodeBlock) {
+                    foreach(n; b.nodes) {
+                        if(NodeRet r = n.instanceof!NodeRet) {
+                            r.parent = func;
+                            _hasRets[0] = true;
+                        }
                     }
                 }
             }
-        }
 
-        if(_else !is null) {
-            if(NodeRet r = _else.instanceof!NodeRet) {
-                r.parent = func;
-                _hasRets[1] = true;
-            }
-            else if(NodeBlock b = _else.instanceof!NodeBlock) {
-                foreach(n; b.nodes) {
-                    if(NodeRet r = n.instanceof!NodeRet) {
-                        r.parent = func;
-                        _hasRets[1] = true;
+            if(_else !is null) {
+                if(NodeRet r = _else.instanceof!NodeRet) {
+                    r.parent = func;
+                    _hasRets[1] = true;
+                }
+                else if(NodeBlock b = _else.instanceof!NodeBlock) {
+                    foreach(n; b.nodes) {
+                        if(NodeRet r = n.instanceof!NodeRet) {
+                            r.parent = func;
+                            _hasRets[1] = true;
+                        }
                     }
                 }
             }
-        }
 
-        condition.check();
-        if(_body !is null) _body.check();
-        if(_else !is null) _else.check();
+            condition.check();
+            if(_body !is null) _body.check();
+            if(_else !is null) _else.check();
+        }
     }
 
     override Node comptime() {
@@ -3929,8 +3945,10 @@ class NodeWhile : Node {
     }
 
     override void check() {
+        bool oldCheck = isChecked;
         this.isChecked = true;
-        if(_body !is null) {
+
+        if(_body !is null && !oldCheck) {
             if(NodeRet r = _body.instanceof!NodeRet) {
                 r.parent = func;
             }
@@ -4128,8 +4146,10 @@ class NodeNamespace : Node {
     }
 
     override void check() {
+        bool oldCheck = isChecked;
         this.isChecked = true;
-        for(int i=0; i<nodes.length; i++) {
+
+        if(!oldCheck) for(int i=0; i<nodes.length; i++) {
             if(NodeFunc f = nodes[i].instanceof!NodeFunc) {
                 f.namespacesNames ~= names;
                 f.check();
@@ -4217,22 +4237,26 @@ class NodeStruct : Node {
     }
 
     override void check() {
+        bool oldCheck = isChecked;
         this.isChecked = true;
-        if(namespacesNames.length>0) {
-            name = namespacesNamesToString(namespacesNames,name);
+
+        if(!oldCheck) {
+            if(namespacesNames.length>0) {
+                name = namespacesNamesToString(namespacesNames,name);
+            }
+            if(!(name !in StructTable)) {
+                //checkError(loc,"a struct with that name('"~name~"') already exists on "~to!string(StructTable[name].loc+1)~" line!");
+                noCompile = true;
+                return;
+            }
+            if(_extends != "") {
+                NodeStruct _s = StructTable[_extends];
+                elements ~= _s.elements;
+                methods ~= _s.methods;
+                predefines ~= _s.predefines;
+            }
+            StructTable[name] = this;
         }
-        if(!(name !in StructTable)) {
-            //checkError(loc,"a struct with that name('"~name~"') already exists on "~to!string(StructTable[name].loc+1)~" line!");
-            noCompile = true;
-            return;
-        }
-        if(_extends != "") {
-            NodeStruct _s = StructTable[_extends];
-            elements ~= _s.elements;
-            methods ~= _s.methods;
-            predefines ~= _s.predefines;
-        }
-        StructTable[name] = this;
     }
 
     bool hasPredefines() {
@@ -4578,8 +4602,9 @@ class NodeCast : Node {
 
     override Type getType() {return type;}
     override void check() {
+        bool oldCheck = isChecked;
         this.isChecked = true;
-        val.check();
+        if(!oldCheck) val.check();
     }
     override LLVMValueRef generate() {
         LLVMValueRef gval;
@@ -4723,19 +4748,23 @@ class NodeMacro : Node {
     }
 
     override void check() {
+        bool oldCheck = isChecked;
         this.isChecked = true;
-        if(namespacesNames.length>0) {
-            name = namespacesNamesToString(namespacesNames,name);
-        }
-        Node[] nodes;
-        for(int i=0; i<block.nodes.length; i++) {
-            if(NodeRet r = block.nodes[i].instanceof!NodeRet) {
-                ret = r;
+
+        if(!oldCheck) {
+            if(namespacesNames.length>0) {
+                name = namespacesNamesToString(namespacesNames,name);
             }
-            else {block.nodes[i].check(); nodes ~= block.nodes[i];}
+            Node[] nodes;
+            for(int i=0; i<block.nodes.length; i++) {
+                if(NodeRet r = block.nodes[i].instanceof!NodeRet) {
+                    ret = r;
+                }
+                else {block.nodes[i].check(); nodes ~= block.nodes[i];}
+            }
+            this.block = new NodeBlock(nodes.dup);
+            MacroTable[name] = this;
         }
-        this.block = new NodeBlock(nodes.dup);
-        MacroTable[name] = this;
     }
 
     override LLVMValueRef generate() {
@@ -4938,8 +4967,9 @@ class NodeTypeof : Node {
     }
 
     override void check() {
+        bool oldCheck = isChecked;
         this.isChecked = true;
-        expr.check();
+        if(!oldCheck) expr.check();
     }
     override LLVMValueRef generate() {
         if(NodeInt i = expr.instanceof!NodeInt) {
@@ -4970,8 +5000,9 @@ class NodeItop : Node {
     }
 
     override void check() {
+        bool oldCheck = isChecked;
         this.isChecked = true;
-        I.check();
+        if(!oldCheck) I.check();
     }
     override LLVMValueRef generate() {
         LLVMValueRef _int = I.generate();
@@ -5006,8 +5037,9 @@ class NodePtoi : Node {
     }
 
     override void check() {
+        bool oldCheck = isChecked;
         this.isChecked = true;
-        P.check();
+        if(!oldCheck) P.check();
     }
     override LLVMValueRef generate() {
         LLVMValueRef ptr = P.generate();
@@ -5040,8 +5072,9 @@ class NodeAddr : Node {
     }
 
     override void check() {
+        bool oldCheck = isChecked;
         this.isChecked = true;
-        expr.check();
+        if(!oldCheck) expr.check();
     }
     override LLVMValueRef generate() {
         LLVMValueRef value;
@@ -5245,34 +5278,73 @@ class NodeArray : Node {
 
 class NodeImport : Node {
     string[] files;
+    string[] functions;
     int loc;
 
-    this(string[] files, int loc) {
+    this(string[] files, int loc, string[] functions) {
         this.files = files;
         this.loc = loc;
+        this.functions = functions;
     }
 
     override LLVMValueRef generate() {
+        if(functions.length > 0) {
+            // One file
+            Lexer l = new Lexer(readText(files[0]),1);
+
+            Node[] nodes;
+            Parser p = new Parser(l.getTokens(),1,files[0]);
+            p.parseAll();
+            nodes = p.getNodes().dup;
+            for(int j=0; j<nodes.length; j++) {
+                nodes[j].check();
+            }
+            string oldFile = Generator.file;
+            Generator.file = files[0];
+            for(int j=0; j<nodes.length; j++) {
+                if(NodeNamespace nn = nodes[j].instanceof!NodeNamespace) {
+                    nn.isImport = true;
+                }
+                else if(NodeFunc nf = nodes[j].instanceof!NodeFunc) {
+                    nf.isExtern = true;
+                }
+                else if(NodeVar nv = nodes[j].instanceof!NodeVar) {
+                    nv.isExtern = true;
+                }
+                else if(NodeStruct ns = nodes[j].instanceof!NodeStruct) {
+                    ns.isImported = true;
+                }
+                else if(NodeBuiltin nb = nodes[j].instanceof!NodeBuiltin) {
+                    nb.isImport = true;
+                }
+                nodes[j].generate();
+            }
+            Generator.file = oldFile;
+            _importedFiles ~= files[0];
+        }
+
         for(int i=0; i<files.length; i++) {
             if(canFind(_importedFiles,files[i]) || files[i] == Generator.file) continue;
 
             if(files[i].indexOf("/.rave") == files[i].length-6) {
                 // Import all files from directory
-                NodeImport imp = new NodeImport([],loc);
+                NodeImport imp = new NodeImport([],loc,functions.dup);
                 foreach(string n; dirEntries(files[i][0..$-5], SpanMode.depth)) {
                     if(n.lastIndexOf(".rave") == n.length-5) imp.files ~= n;
                 }
                 imp.generate();
                 continue;
             }
-
+            Node[] nodes;
             Lexer l = new Lexer(readText(files[i]),1);
             Parser p = new Parser(l.getTokens(),1,files[i]);
             p.parseAll();
-            Node[] nodes = p.getNodes().dup;
+            nodes = p.getNodes().dup;
+
             for(int j=0; j<nodes.length; j++) {
                 nodes[j].check();
             }
+
             string oldFile = Generator.file;
             Generator.file = files[i];
             for(int j=0; j<nodes.length; j++) {
@@ -5965,10 +6037,14 @@ class NodeSlice : Node {
     }
 
     override void check() {
+        bool oldCheck = isChecked;
         this.isChecked = true;
-        start.check();
-        end.check();
-        value.check();
+
+        if(!oldCheck) {
+            start.check();
+            end.check();
+            value.check();
+        }
     }
 
     override Type getType() {
@@ -6113,14 +6189,18 @@ class NodeAliasType : Node {
     }
 
     override void check() {
+        bool oldCheck = isChecked;
         this.isChecked = true;
-        while(name.into(AliasTable)) {
-            name = AliasTable[name].instanceof!NodeIden.name;
+
+        if(!oldCheck) {
+            while(name.into(AliasTable)) {
+                name = AliasTable[name].instanceof!NodeIden.name;
+            }
+            if(namespacesNames.length>0) {
+                name = namespacesNamesToString(namespacesNames,name);
+            }
+            aliasTypes[name] = value;
         }
-        if(namespacesNames.length>0) {
-            name = namespacesNamesToString(namespacesNames,name);
-        }
-        aliasTypes[name] = value;
     }
 
     override LLVMValueRef generate() {
@@ -6142,8 +6222,9 @@ class NodeTry : Node {
     }
 
     override void check() {
+        bool oldCheck = isChecked;
         this.isChecked = true;
-        block.check();
+        if(!oldCheck) block.check();
     }
 
     override LLVMValueRef generate() {

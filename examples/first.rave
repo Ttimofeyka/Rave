@@ -1,10 +1,5 @@
 import <std/>
 
 void main {
-    int[10] lol;
-    auto jam = SafePtr<int>();
-    jam.pointer = &lol;
-    auto ja = jam.get(0);
-
-    std::println(ja.message);
+    
 }

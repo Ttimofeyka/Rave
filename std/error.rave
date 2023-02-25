@@ -27,7 +27,7 @@ namespace std {
 
         void catch {
             if((this.message != null) && (this.message != "")) {
-                std::printf("%s",this.message);
+                std::puts(this.message);
                 std::exit(1);
             }
         }
