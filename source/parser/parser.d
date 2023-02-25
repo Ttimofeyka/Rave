@@ -19,7 +19,6 @@ import app : files;
 import std.conv : parse;
 import llvm.types;
 import std.bigint;
-import compiler : _parsed;
 
 string[] types = ["void","bool", "char", "uchar", "wchar", "uwchar", "short", "ushort", "int", "uint", "long", "ulong", "cent", "ucent"];
 

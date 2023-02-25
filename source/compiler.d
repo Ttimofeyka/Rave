@@ -30,8 +30,6 @@ string hasAnyone(string str, string[] strs) {
     return "";
 }
 
-Node[][string] _parsed;
-
 class Compiler {
     private string linkString;
     private string outfile;
@@ -134,23 +132,11 @@ class Compiler {
 
         startT = MonoTime.currTime;
 
-        Node[] n;
-        if(!file.into(_parsed)) {
-            Parser p = new Parser(lex.getTokens(),offset,file);
-            p.currentFile = file;
-            p.MainFile = files[0];
-            p.parseAll();
-            n = p.getNodes().dup;
-            _parsed[file] = n.dup;
-        }
-        else {
-            n = _parsed[file].dup;
-            Node[] _n = [
-                new NodeVar("__RAVE_OS", new NodeString(__RAVE_OS,false), false, false, true, [], 0, new TypeAlias()),
-                new NodeVar("__RAVE_PLATFORM", new NodeString(__RAVE_PLATFORM,false), false, false, true, [], 0, new TypeAlias())
-            ];
-            n = _n~n;
-        }
+        Parser p = new Parser(lex.getTokens(),offset,file);
+        p.currentFile = file;
+        p.MainFile = files[0];
+        p.parseAll();
+        Node[] n = p.getNodes();       
 
         for(int i=0; i<n.length; i++) {
             n[i].check();

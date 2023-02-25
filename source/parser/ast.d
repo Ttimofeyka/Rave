@@ -23,7 +23,6 @@ import lexer.lexer : Lexer;
 import parser.parser : Parser;
 import app : CompOpts;
 import std.bigint;
-import compiler : _parsed;
 
 Node[string] AliasTable;
 NodeFunc[string] FuncTable;
@@ -36,6 +35,8 @@ NodeLambda[string] LambdaTable;
 string[] _libraries;
 string[string] NeededFunctions;
 string[] _importedFiles;
+
+Node[][string] _parsed;
 
 int countOf(string s, char c) {
     pragma(inline,true);
@@ -616,6 +617,8 @@ class Node {
     }
 
     Node comptime() {return this;}
+
+    Node copy() {return this;}
 }
 
 class NodeNone : Node {}
@@ -628,9 +631,23 @@ class NodeInt : Node {
     bool isUnsigned = false;
     bool isMustBeLong = false;
 
+    override Node copy() {
+        return new NodeInt(value, sys);
+    }
+
     this(BigInt value, int sys = 10) {
         this.value = value;
         this.sys = cast(ubyte)sys;
+    }
+
+    this(BigInt value, BasicType ty, Type _isVarVal, ubyte sys, bool isUnsigned, bool isMustBeLong) {
+        this.value = value;
+        this.ty = ty;
+        if(_isVarVal !is null) this._isVarVal = _isVarVal.copy();
+        else this._isVarVal = null;
+        this.sys = sys;
+        this.isUnsigned = isUnsigned;
+        this.isMustBeLong = isMustBeLong;
     }
 
     this(int value, int sys = 10) {
@@ -721,6 +738,10 @@ class NodeFloat : Node {
     private double value;
     TypeBasic ty = null;
 
+    override Node copy() {
+        return new NodeFloat(value, ty);
+    }
+
     this(double value) {
         this.value = value;
     }
@@ -730,6 +751,11 @@ class NodeFloat : Node {
             ty = new TypeBasic(BasicType.Double);
         }
         this.value = value;
+    }
+
+    this(double value, TypeBasic ty) {
+        this.value = value;
+        this.ty = ty;
     }
 
     override Type getType() {
@@ -760,6 +786,10 @@ class NodeString : Node {
     this(string value, bool isWide) {
         this.value = value;
         this.isWide = isWide;
+    }
+
+    override Node copy() {
+        return new NodeString(value, isWide);
     }
 
     override Type getType() {
@@ -805,8 +835,13 @@ class NodeChar : Node {
     private char value;
     bool isWide = false;
 
-    this(char value) {
+    this(char value, bool isWide = false) {
         this.value = value;
+        this.isWide = isWide;
+    }
+
+    override Node copy() {
+        return new NodeChar(value, isWide);
     }
 
     override Type getType() {
@@ -830,11 +865,16 @@ class NodeBinary : Node {
     bool isStatic = false;
     int loc;
 
-    this(TokType operator, Node first, Node second, int line) {
+    this(TokType operator, Node first, Node second, int line, bool isStatic = false) {
         this.first = first;
         this.second = second;
         this.operator = operator;
         this.loc = line;
+        this.isStatic = isStatic;
+    }
+
+    override Node copy() {
+        return new NodeBinary(operator, first.copy(), second.copy(), loc, isStatic);
     }
 
     LLVMValueRef mathOperation(LLVMValueRef one, LLVMValueRef two) {
@@ -1606,6 +1646,12 @@ class NodeBlock : Node {
         this.nodes = nodes.dup;
     }
 
+    override Node copy() {
+        Node[] _nodes;
+        for(int i=0; i<nodes.length; i++) if(nodes[i] !is null) _nodes ~= nodes[i].copy();
+        return new NodeBlock(_nodes.dup);
+    }
+
     override LLVMValueRef generate() {
         for(int i=0; i<nodes.length; i++) {
             if(nodes[i] !is null) nodes[i].generate();
@@ -1705,6 +1751,27 @@ class NodeVar : Node {
         this.t = t;
         this.isGlobal = isGlobal;
         this.isVolatile = isVolatile;
+    }
+
+    this(string name, Node value, bool isExt, bool isConst, bool isGlobal, DeclMod[] mods, int loc, Type t, bool isVolatile, bool isChanged, bool noZeroInit) {
+        this.name = name;
+        this.origname = name;
+        this.value = value;
+        this.isExtern = isExt;
+        this.isConst = isConst;
+        this.mods = mods.dup;
+        this.loc = loc;
+        this.t = t;
+        this.isGlobal = isGlobal;
+        this.isVolatile = isVolatile;
+        this.isChanged = isChanged;
+        this.noZeroInit = noZeroInit;
+    }
+
+    override Node copy() {
+        Node _value = null;
+        if(value !is null) _value = value.copy();
+        return new NodeVar(origname, _value, isExtern, isConst, isGlobal, mods, loc, t, isVolatile);
     }
 
     override void check() {
@@ -1873,6 +1940,16 @@ class NodeIden : Node {
     this(string name, int loc) {
         this.name = name;
         this.loc = loc;
+    }
+
+    this(string name, int loc, bool isMustBePtr) {
+        this.name = name;
+        this.loc = loc;
+        this.isMustBePtr = isMustBePtr;
+    }
+
+    override Node copy() {
+        return new NodeIden(name, loc);
     }
 
     override Type getType() {
@@ -2097,6 +2174,14 @@ class NodeFunc : Node {
         this.loc = loc;
         this.type = type;
         this.templateNames = templateNames.dup;
+    }
+
+    override Node copy() {
+        FuncArgSet[] _args;
+        for(int i=0; i<args.length; i++) {
+            _args ~= FuncArgSet(args[i].name, args[i].type.copy());
+        }
+        return new NodeFunc(origname, _args.dup, block.copy().instanceof!NodeBlock, isExtern, mods.dup, loc, type.copy(), templateNames.dup);
     }
 
     override void check() {
@@ -2434,6 +2519,10 @@ class NodeRet : Node {
         this.val = val;
         this.loc = loc;
         this.parent = parent;
+    }
+
+    override Node copy() {
+        return new NodeRet(val, loc, parent);
     }
 
     override Type getType() {
@@ -4091,6 +4180,12 @@ class NodeNamespace : Node {
         this.loc = loc;
     }
 
+    override Node copy() {
+        Node[] _nodes;
+        for(int i=0; i<nodes.length; i++) if(nodes[i] !is null) _nodes ~= nodes[i].copy();
+        return new NodeNamespace(names[0], _nodes, loc); 
+    }
+
     override Type getType() {
         return new TypeVoid();
     }
@@ -4215,6 +4310,12 @@ class NodeStruct : Node {
         this._extends = _exs;
         this.templateNames = templateNames.dup;
         this.mods = mods;
+    }
+
+    override Node copy() {
+        Node[] _elements;
+        for(int i=0; i<elements.length; i++) if(elements[i] !is null) _elements ~= elements[i].copy();
+        return new NodeStruct(origname, _elements, loc, _extends, templateNames.dup, mods.dup);
     }
 
     LLVMTypeRef asConstType() {
@@ -5290,12 +5391,19 @@ class NodeImport : Node {
     override LLVMValueRef generate() {
         if(functions.length > 0) {
             // One file
-            Lexer l = new Lexer(readText(files[0]),1);
-
             Node[] nodes;
-            Parser p = new Parser(l.getTokens(),1,files[0]);
-            p.parseAll();
-            nodes = p.getNodes().dup;
+            if(!files[0].into(_parsed)) {
+                Lexer l = new Lexer(readText(files[0]),1);
+                Parser p = new Parser(l.getTokens(),1,files[0]);
+                p.parseAll();
+                nodes = p.getNodes().dup;
+                _parsed[files[0]] = nodes.dup;
+            }
+            else {
+                Node[] _nodes = _parsed[files[0]].dup;
+                for(int i=0; i<_nodes.length; i++) nodes ~= _nodes[i].copy();
+            }
+
             for(int j=0; j<nodes.length; j++) {
                 nodes[j].check();
             }
@@ -5323,6 +5431,9 @@ class NodeImport : Node {
             _importedFiles ~= files[0];
         }
 
+        Node[] nodes;
+        Node[] _nodes;
+
         for(int i=0; i<files.length; i++) {
             if(canFind(_importedFiles,files[i]) || files[i] == Generator.file) continue;
 
@@ -5335,11 +5446,21 @@ class NodeImport : Node {
                 imp.generate();
                 continue;
             }
-            Node[] nodes;
-            Lexer l = new Lexer(readText(files[i]),1);
-            Parser p = new Parser(l.getTokens(),1,files[i]);
-            p.parseAll();
-            nodes = p.getNodes().dup;
+
+            if(!files[i].into(_parsed)) {
+                Lexer l = new Lexer(readText(files[i]),1);
+                Parser p = new Parser(l.getTokens(),1,files[i]);
+                p.parseAll();
+                nodes = p.getNodes().dup;
+                _parsed[files[i]] = nodes.dup;
+            }
+            else {
+                _nodes = _parsed[files[i]].dup;
+                nodes = [];
+                for(int j=0; j<_nodes.length; j++) {
+                    nodes ~= _nodes[j].copy();
+                }
+            }
 
             for(int j=0; j<nodes.length; j++) {
                 nodes[j].check();
@@ -5387,6 +5508,28 @@ class NodeBuiltin : Node {
         this.args = args.dup;
         this.loc = loc;
         this.block = block;
+    }
+
+    this(string name, Node[] args, int loc, NodeBlock block, Type ty, bool isImport, bool isTopLevel, int CTId) {
+        this.name = name;
+        this.args = args.dup;
+        this.loc = loc;
+        this.block = block;
+        this.ty = ty;
+        this.isImport = isImport;
+        this.isTopLevel = isTopLevel;
+        this.CTId = CTId;
+    }
+
+    override Node copy() {
+        Node[] _args;
+        for(int i=0; i<args.length; i++) _args ~= args[i].copy();
+
+        Type _ty;
+        if(ty !is null) _ty = ty.copy();
+        else _ty = null;
+
+        return new NodeBuiltin(name, _args, loc, block.copy().instanceof!NodeBlock, _ty, isImport, isTopLevel, CTId);
     }
 
     override Type getType() {
@@ -5894,6 +6037,10 @@ class NodeWith : Node {
         this.bl = bl;
     }
 
+    override Node copy() {
+        return new NodeWith(loc, expr.copy(), bl.copy().instanceof!NodeBlock);
+    }
+
     override Type getType() {
         return new TypeVoid();
     }
@@ -5962,6 +6109,12 @@ class NodeAsm : Node {
         this.values = values.dup;
     }
 
+    override Node copy() {
+        Node[] _values;
+        for(int i=0; i<values.length; i++) _values ~= values[i].copy();
+        return new NodeAsm(line, isVolatile, (t is null ? null : t.copy()), additions, _values);
+    }
+
     override Type getType() {
         return t;
     }
@@ -5994,7 +6147,6 @@ class NodeAsm : Node {
 
 class NodeMixin : Node { // TODO
     int loc;
-
     Node[] _strings;
 
     this(int loc, Node[] _strings) {
@@ -6034,6 +6186,10 @@ class NodeSlice : Node {
         this.end = end;
         this.value = value;
         this.isConst = isConst;
+    }
+
+    override Node copy() {
+        return new NodeSlice(loc, start.copy(), end.copy(), value.copy(), isConst);
     }
 
     override void check() {
@@ -6179,13 +6335,19 @@ class NodeSlice : Node {
 class NodeAliasType : Node {
     int loc;
     string name;
+    string origname;
     Type value;
     string[] namespacesNames;
 
     this(int loc, string name, Type value) {
         this.loc = loc;
         this.name = name;
+        this.origname = name;
         this.value = value;
+    }
+
+    override Node copy() {
+        return new NodeAliasType(loc, origname, value.copy());
     }
 
     override void check() {
@@ -6219,6 +6381,10 @@ class NodeTry : Node {
     this(int loc, NodeBlock block) {
         this.loc = loc;
         this.block = block;
+    }
+
+    override Node copy() {
+        return new NodeTry(loc, block.copy().instanceof!NodeBlock);
     }
 
     override void check() {
