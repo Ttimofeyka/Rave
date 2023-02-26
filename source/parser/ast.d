@@ -32,6 +32,8 @@ NodeMacro[string] MacroTable;
 bool[string] ConstVars;
 NodeFunc[string[]] MethodTable;
 NodeLambda[string] LambdaTable;
+NodeMixin[string] MixinTable;
+
 string[] _libraries;
 string[string] NeededFunctions;
 string[] _importedFiles;
@@ -2778,7 +2780,7 @@ class NodeCall : Node {
 
         if(NodeIden f = func.instanceof!NodeIden) {
         if(!f.name.into(FuncTable) && !into(f.name~to!string(args.length),FuncTable) && !f.name.into(Generator.LLVMFunctions) && !into(f.name~typesToString(getTypes()),FuncTable)) {
-            if(!f.name.into(MacroTable)) {
+            if(!f.name.into(MixinTable)) {
                 if(currScope.has(f.name)) {
                     NodeVar nv = currScope.getVar(f.name,loc);
                     TypeFunc tf = nv.t.instanceof!TypeFunc;
@@ -2824,7 +2826,7 @@ class NodeCall : Node {
                             StructTable[f.name[0..f.name.indexOf('<')]].generateWithTemplate(f.name[f.name.indexOf('<')..$],_t.types.dup);
                             return generate();
                         }
-                        Generator.error(loc,"Unknown macro or function '"~f.name~"'!");
+                        Generator.error(loc,"Unknown mixin or function '"~f.name~"'!");
                     }
 
                     // Template function
@@ -2833,66 +2835,11 @@ class NodeCall : Node {
                     FuncTable[f.name[0..f.name.indexOf('<')]].generateWithTemplate(p.parseType().instanceof!TypeStruct.types,f.name);
                     return generate();
                 }
-                Generator.error(loc,"Unknown macro or function '"~f.name~"'!");
+                Generator.error(loc,"Unknown mixin or function '"~f.name~"'!");
             }
 
-            // Generate macro-call
-            Scope oldScope = currScope;
-            currScope = new Scope(f.name, null, null);
-            for(int i=0; i<args.length; i++) {
-                currScope.macroArgs[i] = args[i];
-            }
-            currScope.args = oldScope.args.dup;
-            currScope.argVars = oldScope.argVars.dup;
-            currScope.localscope = oldScope.localscope.dup;
-
-            Node[] presets;
-            presets ~= new NodeVar(
-                f.name~"::argCount",
-                new NodeInt(currScope.macroArgs.length),
-                false,
-                true,
-                false,
-                [],
-                loc,
-                new TypeAlias()
-            );
-            presets ~= new NodeVar(
-                f.name~"::callLine",
-                new NodeInt(loc),
-                false,
-                true,
-                false,
-                [],
-                loc,
-                new TypeAlias()
-            );
-
-            for(int i=0; i<MacroTable[f.name].args.length; i++) {
-                presets ~= new NodeVar(
-                    MacroTable[f.name].args[i],
-                    args[i],
-                    false,
-                    true,
-                    false,
-                    [],
-                    loc,
-                    new TypeAlias()
-                );
-            }
-
-            MacroTable[f.name].block.nodes = presets~MacroTable[f.name].block.nodes;
-
-            MacroTable[f.name].block.generate();
-
-            LLVMValueRef toret = null;
-
-            if(MacroTable[f.name].ret !is null) {
-                MacroTable[f.name].ret.parent = f.name;
-                toret = MacroTable[f.name].ret.generate();
-            }
-            currScope = oldScope;
-            return toret;
+            // Generate mixin-call
+            return MixinTable[f.name].generate();
         }
         if(f.name.into(Generator.LLVMFunctions)) {
             if(FuncTable[f.name].args.length != args.length && FuncTable[f.name].isVararg != true) {
@@ -6145,13 +6092,47 @@ class NodeAsm : Node {
     }
 }
 
-class NodeMixin : Node { // TODO
+class NodeMixin : Node {
+    string name;
+    string origname;
     int loc;
-    Node[] _strings;
+    NodeBlock block;
+    string[] argumentsNames;
+    string[] templateNames;
+    string[] namespacesNames;
 
-    this(int loc, Node[] _strings) {
+    this(string name, int loc, NodeBlock block, string[] templateNames, string[] argumentsNames) {
         this.loc = loc;
-        this._strings = _strings.dup;
+        this.block = block;
+        this.templateNames = templateNames.dup;
+        this.name = name;
+        this.origname = name;
+        this.argumentsNames = argumentsNames.dup;
+    }
+
+    override Node copy() {
+        return new NodeMixin(origname, loc, block.copy().instanceof!NodeBlock, templateNames, argumentsNames);
+    }
+
+    override void check() {
+        bool oldCheck = isChecked;
+        isChecked = true;
+
+        if(!oldCheck) {
+            if(namespacesNames.length>0) {
+                name = namespacesNamesToString(namespacesNames,name);
+            }
+
+            if(name.into(MixinTable)) {
+                checkError(loc,"a mixin with '"~name~"' name already exists on "~to!string(MixinTable[name].loc)~" line!");
+            }
+            MixinTable[name] = this;
+        }
+    }
+
+    override LLVMValueRef generate() {
+        block.check();
+        return block.generate();
     }
 }
 

@@ -1516,6 +1516,38 @@ class Parser {
         }
     }
 
+    Node parseMixin() {
+        next(); // Skip mixin command
+        string name = peek().value;
+        int loc = peek().line;
+        next();
+
+        string[] templateNames;
+        string[] names;
+        if(peek().type == TokType.Less) {
+            // Template names
+            next();
+            while(peek().type != TokType.More) {
+                templateNames ~= peek().value;
+                next();
+                if(peek().type == TokType.Comma) next();
+            }
+            next();
+        }
+
+        if(peek().type == TokType.Rpar) {
+            // Names for arguments
+            next();
+            while(peek().type != TokType.Lpar) {
+                names ~= peek().value;
+                next();
+                if(peek().type == TokType.Comma) next();
+            }
+        }
+
+        return new NodeMixin(name, loc, parseBlock(), templateNames, names);
+    }
+
     Node parseTopLevel(string s = "") {
         import std.algorithm : canFind;
         while(peek().type == TokType.Semicolon) {
@@ -1534,9 +1566,9 @@ class Parser {
 
         if(peek().value == "using") return parseUsing();
 
-        if(peek().value == "import") {
-            return parseImport();
-        }
+        if(peek().value == "import") return parseImport();
+
+        if(peek().value == "mixin") return parseMixin();
 
         if(peek().value == "debug") return parseDebug();
 

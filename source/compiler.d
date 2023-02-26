@@ -72,6 +72,7 @@ class Compiler {
         FuncTable.clear();
         AliasTable.clear();
         StructTable.clear();
+        MixinTable.clear();
         Generator.Structs.clear();
         structsNumbers.clear();
         ConstVars.clear();
