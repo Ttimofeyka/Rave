@@ -37,7 +37,7 @@
         long f;
         long s;
         char* t;
-        char*_f;
+        char* _f;
     }
 }
 

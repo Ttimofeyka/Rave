@@ -88,8 +88,8 @@ class Compiler {
         int offset = 1;
         string oldContent = content;
 
-        string __RAVE_PLATFORM = "";
-        string __RAVE_OS = "";
+        string __RAVE_PLATFORM = "UNKNOWN";
+        string __RAVE_OS = "UNKNOWN";
 
         if(outtype.indexOf("i686") != -1 || outtype.indexOf("i386") != -1) __RAVE_PLATFORM = "X86";
         else if(outtype.indexOf("x86_64") != -1) __RAVE_PLATFORM = "X86_64";
@@ -105,7 +105,6 @@ class Compiler {
         else if(outtype.indexOf("s390x") != -1) __RAVE_PLATFORM = "S390X";
         else if(outtype.indexOf("wasm") != -1) __RAVE_PLATFORM = "WASM";
         else if(outtype.indexOf("avr") != -1) __RAVE_PLATFORM = "AVR";
-        else __RAVE_PLATFORM = "UNKNOWN";
 
         content = "alias __RAVE_PLATFORM = \""~__RAVE_PLATFORM~"\"; ";
         
@@ -115,7 +114,6 @@ class Compiler {
         else if(outtype.indexOf("darwin") != -1 || outtype.indexOf("macos") != -1) __RAVE_OS = "DARWIN";
         else if(outtype.indexOf("android") != -1) __RAVE_OS = "ANDROID";
         else if(outtype.indexOf("ios") != -1) __RAVE_OS = "IOS";
-        else __RAVE_OS = "UNKNOWN";
 
         content = `alias __RAVE_OS = "`~__RAVE_OS~`"; `~content;
         content = content~"\n"~oldContent;
