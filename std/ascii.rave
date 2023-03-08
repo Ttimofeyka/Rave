@@ -1,6 +1,6 @@
 namespace std {
     namespace ascii {
-        (inline) bool isSpace(char c) => (c == ' ') || (c == '\n') || (c == '\r') || (c == '\v') || (c == '\f');
+        (inline) bool isSpace(char c) => (c == ' ');
         (inline) bool isLower(char c) => (c > 96) && (c < 123);
         (inline) bool isUpper(char c) => (c > 64) && (c < 91);
         (inline) char toLower(char c) {
