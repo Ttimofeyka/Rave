@@ -3,7 +3,26 @@ import <std/string> <std/ascii>
 namespace std {
     namespace crypto {
         namespace caesar {
-            // TODO
+            (inline) char encryptChar(char c, int key) {
+                if(std::ascii::isUpper(c)) c = ((c + key - 'A') % (cast(char)26)) + 'A';
+                else if(std::ascii::isLower(c)) c = ((c + key - 'a') % (cast(char)26)) + 'a';
+            } => c;
+
+            (inline) char decryptChar(char c, int key) => std::crypto::caesar::encryptChar(c, 26 - key);
+
+            std::string encrypt(std::string s, int key) {
+                std::string buffer = "";
+                for(int i=0; i<s.length; i+=1) {
+                    buffer.add(std::crypto::caesar::encryptChar(s.data[i], key));
+                }
+            } => buffer;
+
+            std::string decrypt(std::string s, int key) {
+                std::string buffer = "";
+                for(int i=0; i<s.length; i+=1) {
+                    buffer.add(std::crypto::caesar::decryptChar(s.data[i], key));
+                }
+            } => buffer;
         }
     }
 }

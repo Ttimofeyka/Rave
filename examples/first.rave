@@ -1,5 +1,8 @@
 import <std/>
 
 void main {
-    
+    std::string s = "Hello, world!";
+    std::string enc = std::crypto::caesar::encrypt(s,1);
+    std::string dec = std::crypto::caesar::decrypt(enc,1);
+    std::println(s, " ", enc, " ", dec);
 }
