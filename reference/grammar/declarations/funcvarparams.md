@@ -12,6 +12,7 @@ List of possible declarations:
 - volatile - Informing the compiler that the value of a variable can change from the outside.
 - fastcc and coldcc - Denote the type of call agreement. In both cases, you cannot use 'vararg'. The 'fastcc' call convention means that all arguments will be passed (if possible) in registers for acceleration. 'coldcc' means that all arguments will be passed on the stack. Works only for functions.
 - pure - Makes the function "clean". A pure function can't change global variables.
+- nochecks - Disables all built-in checks in the function.
 
 Also, it should be noted that you cannot use the parameter C with linkname, since they interfere with each other.
 
