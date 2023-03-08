@@ -1,10 +1,5 @@
 import <std/>
 
-mixin A {
-    int a = 0;
-}
-
 void main {
-    A();
-    a = 100;
+    
 }

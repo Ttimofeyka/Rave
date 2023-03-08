@@ -3288,7 +3288,12 @@ class NodeIndex : Node {
 
     override Type getType() {
         Type elType = element.getType();
-        if(!elType.instanceof!TypePointer && !elType.instanceof!TypeArray) assert(0);
+        if(!elType.instanceof!TypePointer && !elType.instanceof!TypeArray) {
+            if(TypeStruct ts = elType.instanceof!TypeStruct) {
+                if(TokType.Rbra.into(StructTable[ts.name].operators)) return StructTable[ts.name].operators[TokType.Rbra][""].type;
+            } 
+            assert(0);
+        }
 
         if(TypePointer tp = elType.instanceof!TypePointer) return tp.instance;
         else if(TypeArray ta = elType.instanceof!TypeArray) return ta.element;
@@ -4460,7 +4465,7 @@ class NodeStruct : Node {
                         case "]=)":
                             oper = TokType.Lbra; f.name = name~"([]=)";
                             break;
-                        default: break;
+                        default: assert(0);
                     }
 
                     f.name = f.name ~ typesToString(f.args);
@@ -4519,7 +4524,6 @@ class NodeStruct : Node {
         }
         return values.dup;
     }
-
     bool isTemplated = false;
 
     override LLVMValueRef generate() {

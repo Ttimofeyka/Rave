@@ -36,6 +36,8 @@ class Lexer {
             str.replace("\\n","\n")
             .replace("\\r","\r")
             .replace("\\t","\t")
+            .replace("\\v", "\v")
+            .replace("\\f", "\f")
             .replace("\\\"","\"")
             .replace("\\'","'");
         if(newchar[0] == '\\') {
