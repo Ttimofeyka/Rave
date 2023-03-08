@@ -2612,6 +2612,9 @@ class NodeCall : Node {
     }
 
     override Type getType() {
+        if(NodeIden id = func.instanceof!NodeIden) {
+            if((id.name ~ typesToString(getTypes())).into(FuncTable)) return FuncTable[(id.name ~ typesToString(getTypes()))].getType();
+        }
         return func.getType();
     }
 
@@ -5913,7 +5916,6 @@ class NodeBuiltin : Node {
                 int getArgNum = Generator.currentBuiltinArg;
                 this.ty = currScope.getVar("_RaveArg"~to!string(getArgNum),loc).t;
                 return new NodeType(this.ty,loc);
-            default: break;
             case "getStructElementType":
                 TypeStruct ts = asType(0,true).ty.instanceof!TypeStruct;
                 string n = asStringIden(1);
@@ -5927,6 +5929,7 @@ class NodeBuiltin : Node {
                 TypeStruct ts = asType(0,true).ty.instanceof!TypeStruct;
                 if(ts !is null) return new NodeType(new TypeStruct(ts.name[0..ts.name.indexOf('<')]),loc);
                 return new NodeType(new TypeVoid(),loc);
+            default: break;
         }
         return null;
     }

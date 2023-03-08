@@ -1,8 +1,5 @@
 import <std/>
 
 void main {
-    int j = 100;
-    int j2 = 10; 
-
-    std::println(std::memcmp(cast(void*)&j, cast(void*)&j2, sizeof(int)));
+    std::println(std::math::sqrt(90.0));
 }

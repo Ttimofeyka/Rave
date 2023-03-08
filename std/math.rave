@@ -77,16 +77,31 @@ namespace std {
         float tmp = (cast(float)(cast(long)f));
         if(tmp < 0) tmp = tmp - 1.0;
     } => tmp;
-    float fmin(float one, float two) {
-        float result = one;
-        if(one > two) result = two;
+    double min(double one, double two) {
+        double result = one;
+        if(two < one) result = two;
     } => result;
-    float fmax(float one, float two) {
-        float result = one;
-        if(one < two) result = two;
+    int min(int one, int two) {
+        int result = one;
+        if(two < one) result = two;
     } => result;
+    double max(double one, double two) {
+        double result = one;
+        if(two > one) result = two;
+    } => result;
+    int max(int one, int two) {
+        int result = one;
+        if(two > one) result = two;
+    } => result;
+    
     extern(linkname: "sinf") float sin(float f);
-    extern(linkname: "sqrtf") float sqrt(float f);
+
+    double sqrt(double d) {
+        double result = 1.0;
+        for(int i=0; i<=10; i+=1) {
+            result = result - (result * result - d) / (2 * result);
+        }
+    } => result;
 
     float mod(float x) {
         float result = 1.0;
