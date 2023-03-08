@@ -1,12 +1,12 @@
 namespace std {
     namespace locale {
-        alias CTYPE = 0;
-        alias NUMERIC = 1;
-        alias TIME = 2;
-        alias COLLATE = 3;
-        alias MONETARY = 4;
-        alias MESSAGES = 5;
-        alias ALL = 6;
+        alias ctype = 0;
+        alias numeric = 1;
+        alias time = 2;
+        alias collate = 3;
+        alias monetary = 4;
+        alias messages = 5;
+        alias all = 6;
 
         extern(linkname: "setlocale") char* set(int category, char* locale);
     }
