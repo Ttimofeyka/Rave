@@ -1,8 +1,8 @@
 import <std/>
 
 void main {
-    std::string s = "Hello, world!";
-    std::string enc = std::crypto::caesar::encrypt(s,1);
-    std::string dec = std::crypto::caesar::decrypt(enc,1);
-    std::println(s, " ", enc, " ", dec);
+    int j = 100;
+    int j2 = 10; 
+
+    std::println(std::memcmp(cast(void*)&j, cast(void*)&j2, sizeof(int)));
 }

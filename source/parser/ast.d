@@ -2154,6 +2154,7 @@ class NodeFunc : Node {
     bool isSafe = false;
     bool isFakeMethod = false;
     bool isNoNamespaces = false;
+    bool isNoChecks = false;
 
     string[] templateNames;
     Type[] _templateTypes;
@@ -2317,6 +2318,7 @@ class NodeFunc : Node {
                 case "ctargs": isCtargs = true; return null;
                 case "comdat": isComdat = true; break;
                 case "safe": isSafe = true; break;
+                case "nochecks": isNoChecks = true; break;
                 default: if(mods[i].name[0] == '@') _builtins[mods[i].name[1..$]] = mods[i]._genValue.instanceof!NodeBuiltin; break;
             }
         }
@@ -3344,7 +3346,7 @@ class NodeIndex : Node {
             }
 
             LLVMValueRef ptr = currScope.get(id.name,loc);
-            if(Generator.opts.runtimeChecks && LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMPointerTypeKind) {
+            if(Generator.opts.runtimeChecks && LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMPointerTypeKind && !FuncTable[currScope.func].isNoChecks) {
                 LLVMValueRef isNull = LLVMBuildICmp(
                     Generator.Builder,
                     LLVMIntNE,
@@ -3506,7 +3508,7 @@ class NodeGet : Node {
     }
 
     void checkIsNull(LLVMValueRef ptr) {
-        if(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMPointerTypeKind && Generator.opts.runtimeChecks) {
+        if(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMPointerTypeKind && Generator.opts.runtimeChecks && !FuncTable[currScope.func].isNoChecks) {
             LLVMValueRef isNull = LLVMBuildICmp(
                 Generator.Builder,
                 LLVMIntNE,
@@ -5058,14 +5060,16 @@ class NodeItop : Node {
     }
     override LLVMValueRef generate() {
         LLVMValueRef _int = I.generate();
-        LLVMValueRef isNull = LLVMBuildICmp(
-            Generator.Builder,
-            LLVMIntNE,
-            _int,
-            LLVMConstInt(LLVMTypeOf(_int),0,false),
-            toStringz("assert(number==0)_")
-        );
-        LLVMBuildCall(Generator.Builder,Generator.Functions[NeededFunctions["assert"]],[isNull,new NodeString("Runtime error in '"~Generator.file~"' file on "~to!string(loc)~" line: an attempt to turn a number into a null pointer in itop!\n",false).generate()].ptr,2,toStringz(""));
+        if(Generator.opts.runtimeChecks && !FuncTable[currScope.func].isNoChecks) {
+            LLVMValueRef isNull = LLVMBuildICmp(
+                Generator.Builder,
+                LLVMIntNE,
+                _int,
+                LLVMConstInt(LLVMTypeOf(_int),0,false),
+                toStringz("assert(number==0)_")
+            );
+            LLVMBuildCall(Generator.Builder,Generator.Functions[NeededFunctions["assert"]],[isNull,new NodeString("Runtime error in '"~Generator.file~"' file on "~to!string(loc)~" line: an attempt to turn a number into a null pointer in itop!\n",false).generate()].ptr,2,toStringz(""));
+        }
         return LLVMBuildIntToPtr(
             Generator.Builder,
             _int,
@@ -5095,7 +5099,7 @@ class NodePtoi : Node {
     }
     override LLVMValueRef generate() {
         LLVMValueRef ptr = P.generate();
-        if(Generator.opts.runtimeChecks) {
+        if(Generator.opts.runtimeChecks && !FuncTable[currScope.func].isNoChecks) {
             LLVMValueRef isNull = LLVMBuildICmp(
                 Generator.Builder,
                 LLVMIntNE,

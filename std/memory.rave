@@ -3,10 +3,35 @@ namespace std {
     extern(linkname: "free") void free(void* ptr);
     extern(linkname: "realloc") void* realloc(void* ptr, int newsize);
     extern(linkname: "calloc") void* calloc(int num, int size);
-    extern(linkname: "memcpy") void* memcpy(void* dest, void* src, int n);
-    extern(linkname: "memmove") void* memmove(void* dest, void* src, int n);
-    extern(linkname: "memcmp") bool memcmp(void* one, void* two, int n);
-    extern(linkname: "memset") void* memset(void* dest, int c, int n);
+    (nochecks) void* memcpy(void* dest, void* src, int n) {
+        for(int i=0; i<n; i+=1) {
+            dest[i] = src[i];
+        }
+    } => dest;
+    (nochecks) void* memmove(void* dest, void* src, int n) {
+        void* temp = std::malloc(n);
+        for(int i=0; i<n; i+=1) {
+            temp[i] = src[i];
+        }
+        for(int i=0; i<n; i+=1) {
+            dest[i] = temp[i];
+        }
+        std::free(temp);
+    } => dest;
+    (nochecks) bool memcmp(void* one, void* two, int n) {
+        bool result = true;
+        for(int i=0; i<n; i+=1) {
+            if(one[i] != two[i]) {
+                result = false;
+                break;
+            }
+        }
+    } => result;
+    (nochecks) void* memset(void* dest, int c, int n) {
+        for(int i=0; i<n; i+=1) {
+            dest[i] = cast(char)c;
+        }
+    } => dest;
     extern(linkname: "llvm.frameaddress.p0i8") void* frameAddress(int level);
     extern(linkname: "llvm.eh.sjlj.setjmp") int setjmp(char* buff);
 
