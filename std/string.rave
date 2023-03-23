@@ -232,7 +232,7 @@ namespace std {
         std::string ltrim {
             char* _c = this.c();
 
-            while(std::ascii::isWhitespace(_c[0])) _c = cast(char*)((cast(int)_c) + 1);
+            while(std::ascii::isSpace(_c[0])) _c = cast(char*)((cast(int)_c) + 1);
 
             std::string _s = std::string(_c);
         } => _s;
@@ -241,7 +241,7 @@ namespace std {
             char* _c = this.c();
 
             int i = std::cstring::strlen(_c)-1;
-            while(std::ascii::isWhitespace(_c[i])) i -= 1;
+            while(std::ascii::isSpace(_c[i])) i -= 1;
             _c[i+1] = '\0';
 
             std::string _s = std::string(_c);

@@ -93,7 +93,7 @@ namespace std {
         int result = one;
         if(two > one) result = two;
     } => result;
-    
+
     extern(linkname: "sinf") float sin(float f);
 
     double sqrt(double d) {

@@ -852,7 +852,7 @@ class NodeChar : Node {
 
     override LLVMValueRef generate() {
         if(!isWide) return LLVMConstInt(LLVMInt8TypeInContext(Generator.Context),to!ulong(value),false);
-        return LLVMConstInt(LLVMInt16TypeInContext(Generator.Context),to!ulong(value),false);
+        return LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),to!ulong(value),false);
     }
 
     override void debugPrint() {

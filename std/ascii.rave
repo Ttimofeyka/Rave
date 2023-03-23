@@ -1,11 +1,11 @@
 namespace std {
     namespace ascii {
-        (inline) bool isSpace(char c) => (c == ' ');
+        (inline) bool isSpace(char c) => (c == ' ') || (c == '\r') || (c == '\t') || (c == '\n') || (c == '\v');
         (inline) bool isLower(char c) => (c > 96) && (c < 123);
         (inline) bool isUpper(char c) => (c > 64) && (c < 91);
         (inline) char toLower(char c) {
             char tmp = c;
-            if(std::ascii::isUpper(c)) tmp = (tmp + 32); 
+            if(std::ascii::isUpper(c)) tmp = (tmp + 32);
         } => tmp;
         (inline) char toUpper(char c) {
             char tmp = c;
@@ -24,6 +24,5 @@ namespace std {
                 i += 1;
             }
         } => ptr;
-        (inline) bool isWhitespace(char c) => ((c == ' ') || (c == '\n')) || ((c == '\r') || (c == '\t'));
     }
 }
