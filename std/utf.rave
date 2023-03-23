@@ -86,6 +86,117 @@ namespace std {
             std::ustring _l = this.ltrim();
         } => _l.rtrim();
 
+        void add(uint c) {
+            this.length += 1;
+            if(this.length == this.capacity) {
+                this.capacity = this.capacity * 2;
+                this.data = cast(uint*)std::realloc(cast(void*)this.data,this.capacity);
+            }
+            this.data[this.length-1] = c;
+        }
+
+        void append(std::ustring str) {
+            int i = 0;
+            while(i<str.length) {
+                this.add(str.data[i]);
+                i += 1;
+            }
+        }
+
+        void append(uint* cstr) {
+            int len = std::utf::strlen(cstr);
+            int i = 0;
+            while(i<len) {
+                this.add(cstr[i]);
+                i += 1;
+            }
+        }
+
+        std::ustring copy {
+            std::ustring cp = std::ustring(""w);
+            cp.append(*this);
+        } => cp;
+
+        std::ustring via(uint c) {
+            std::ustring _cp = this.copy();
+            _cp.add(c);
+        } => _cp;
+
+        std::ustring via(std::ustring s) {
+            std::ustring _cp = this.copy();
+            _cp.append(s);
+        } => _cp;
+
+        std::ustring via(uint* s) {
+            std::ustring _cp = this.copy();
+            _cp.append(s);
+        } => _cp;
+
+        std::ustring replace(uint c, uint to) {
+            std::ustring temp = this.copy();
+
+            int i = 0;
+            while(i<this.length) {
+                if(this.data[i] == c) {
+                    temp.data[i] = to;
+                }
+                i += 1;
+            }
+        } => temp;
+
+        std::ustring operator+(std::ustring one, std::ustring two) {
+            std::ustring third = std::ustring(one.c());
+            third.append(two);
+        } => third;
+
+        bool compare(std::ustring another) {
+            bool isEqual = true;
+            if(this.length != another.length) {
+                isEqual = false;
+            }
+            else {
+                int i = 0;
+                while(i<another.length) {
+                    if(this.data[i] != another.data[i]) isEqual = false;
+                    i += 1;
+                }
+            }
+        } => isEqual;
+
+        bool compare(uint* another) {
+            bool isEqual = true;
+            int len = std::utf::strlen(another);
+
+            if(this.length != len) {
+                isEqual = false;
+            }
+            else {
+                int i = 0;
+                while(i<len) {
+                    if(this.data[i] != another[i]) isEqual = false;
+                    i += 1;
+                }
+            }
+        } => isEqual;
+
+        bool operator==(std::ustring one, std::ustring two) => one.compare(two);
+        bool operator==(std::ustring one, uint* two) => one.compare(two);
+        bool operator!=(std::ustring one, std::ustring two) => !(one.compare(two));
+        bool operator!=(std::ustring one, uint* two) => !(one.compare(two));
+        void operator=(std::ustring* one, uint* two) {
+            one[0] = std::ustring(two);
+        }
+
+        std::ustring substring(int from, int to) {
+            std::ustring temp = ""w;
+
+            int i = from;
+            while(i<to) {
+                temp.add(this.data[i]);
+                i += 1;
+            }
+        } => temp;
+
         void ~this {
             std::free(this.data);
         }
