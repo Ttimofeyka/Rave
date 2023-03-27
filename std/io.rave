@@ -83,7 +83,8 @@ namespace std {
         std::file f = @getArg(std::file,0);
         @skipArg();
         std::string data = @callWithArgs(std::sprint);
-        f.write(data.c(), sizeof(char), data.length);
+            f.write(data.c(), sizeof(char), data.length);
+        ~data;
     }
 
     (ctargs, inline) void fprintln {

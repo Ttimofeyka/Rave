@@ -1,6 +1,5 @@
 import <std/io>
 
 void main {
-    std::ustring us = "Hello, world from UTF-8!"w;
-    std::println("Hello, world! -> ",us,", yes?");
+    
 }

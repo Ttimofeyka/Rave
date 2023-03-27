@@ -387,6 +387,12 @@ namespace std {
                                     result.add(usData[i]);
                                 }
                             };
+                            @if(@typesIsEquals(@getCurrArgType(),int*)) {
+                                char* utf8Text = @getCurrArg(char*);
+                                for(int i=0; utf8Text[i] != '\0'; i+=1) {
+                                    result.add(utf8Text[i]);
+                                }
+                            };
                             @if(@typesIsEquals(@getCurrArgType(), char*)) {
                                 result.append(@getCurrArg(void*));
                             };
