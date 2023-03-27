@@ -1,4 +1,4 @@
-import <std/vector> <std/cstring> <std/ascii>
+import <std/vector> <std/cstring> <std/ascii> <std/utf>
 
 namespace libc {
     // Functions that are practically unnecessary in normal use and come from libc
@@ -369,72 +369,51 @@ namespace std {
 
     (ctargs) std::string sprint {
         std::string result = "";
-        std::vector<void*> values = std::vector<void*>();
-        std::vector<char*> types = std::vector<char*>();
 
         @foreachArgs() {
             @if(@typesIsNequals(@getCurrArgType(),float)) {
                 @if(@typesIsNequals(@getCurrArgType(),double)) {
                     @if(@typesIsNequals(@getCurrArgType(),std::string)) {
-                        /*@if(@typesIsEquals(@getCurrArgType(),std::ustring)) {
-                            std::ustring us = @getCurrArg(std::ustring);
-                            values.add(cast(void*)&us);
-                            types.add("std::ustring*");
-                        };*/
-                        //@if(@typesIsNequals(@getCurrArgType(),std::ustring)) {
-                            values.add(@getCurrArg(void*));
-                            types.add(@typeToString(@getCurrArgType()));
-                        //};
+                        @if(@typesIsNequals(@getCurrArgType(),char)) {
+                            @if(@typesIsEquals(@getCurrArgType(),short) || @typesIsEquals(@getCurrArgType(),int) || @typesIsEquals(@getCurrArgType(),long)) {
+                                std::string s = std::string::fromNumber(@getCurrArg(long));
+                                    result.append(s);
+                                ~s;
+                            };
+                            @if(@typesIsEquals(@getCurrArgType(),std::ustring)) {
+                                std::ustring us = @getCurrArg(std::ustring);
+                                uchar* usData = cast(uchar*)(us.data);
+                                for(int i=0; i<us.length; i+=1) {
+                                    result.add(usData[i]);
+                                }
+                            };
+                            @if(@typesIsEquals(@getCurrArgType(), char*)) {
+                                result.append(@getCurrArg(void*));
+                            };
+                        };
+                        @if(@typesIsEquals(@getCurrArgType(),char)) {
+                            result.add(@getCurrArg(char));
+                        };
                     };
                     @if(@typesIsEquals(@getCurrArgType(),std::string)) {
                         std::string s = @getCurrArg(std::string);
-                        values.add(cast(void*)&s);
-                        types.add("std::string*");
+                        result.append(s);
                     };
                 };
                 @if(@typesIsEquals(@getCurrArgType(),double)) {
                     double d = @getCurrArg(double);
-                    values.add(cast(void*)&d);
-                    types.add("double");
+                    std::string s = std::string::fromDouble(d);
+                        result.append(s);
+                    ~s;
                 };
             };
             @if(@typesIsEquals(@getCurrArgType(),float)) {
                 double f = @getCurrArg(double);
-                values.add(cast(void*)&f);
-                types.add("double");
+                std::string s = std::string::fromDouble(f);
+                    result.append(s);
+                ~s; 
             };
         };
 
-        int i = 0;
-        while(i<types.length) {
-            if(types.data[i] == "char*") {
-                result.append(values.data[i]);
-            }
-            else if((types.data[i] == "std::string") || (types.data[i] == "std::string*")) {
-                std::string* s = cast(std::string*)values.data[i];
-                result.append(s);
-            }
-            else if((types.data[i] == "float") || (types.data[i] == "double")) {
-                double* d = cast(double*)values.data[i];
-                std::string s = std::string::fromDouble(d[0]);
-                    result.append(s);
-                ~s;
-            }
-            else if((types.data[i] == "long" || types.data[i] == "int") || types.data[i] == "short") {
-                long l = cast(long)values.data[i];
-                std::string s = std::string::fromNumber(l);
-                    result.append(s);
-                ~s;
-            }
-            else if(types.data[i] == "bool") {
-                bool b = cast(bool)values.data[i];
-                if(b) result.append("true");
-                else result.append("false");
-            }
-            else if(types.data[i] == "char") {
-                result.add(cast(char)values.data[i]);
-            }
-            i += 1;
-        }
     } => result;
 }

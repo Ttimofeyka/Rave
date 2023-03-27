@@ -1,4 +1,4 @@
-import <std/arg> <std/string>
+import <std/arg> <std/string> <std/utf>
 
 namespace libc {
     struct File {

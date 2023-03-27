@@ -1,14 +1,21 @@
 import <std/memory> <std/ascii> <std/cstring>
 
-// TODO
-
 namespace std {
     namespace utf {
-        (inline) bool isStartOfSequence(int c) => ((c && 0xC0) != 0x80);
+        (inline) bool isStartOfSequence(uchar c) => ((c && 0xC0) != 0x80);
         (inline) int strlen(uint* str) {
             int i = 0;
             while(str[i] != '\0'w) i += 1;
         } => i;
+        (inline) int utflen(uint* str) {
+            int i = 0;
+            int len = 0;
+            uchar* data = cast(uchar*)str;
+            while(data[i] != '\0') {
+                if(std::utf::isStartOfSequence(data[i])) len += 1;
+                i += 1;
+            }
+        } => len;
     }
     struct ustring {
         uint* data;
@@ -17,9 +24,9 @@ namespace std {
 
         std::ustring this(uint* a) {
             if(a != null) {
-                this.length = std::utf::strlen(a);
-                this.capacity = this.length*2;
-                if(this.capacity == 0) this.capacity = 1;
+                this.length = std::utf::utflen(a);
+                this.capacity = this.length*4;
+                if(this.capacity == 0) this.capacity = 4;
                 this.data = cast(uint*)std::malloc(this.capacity);
 
                 int i = 0;
@@ -30,7 +37,7 @@ namespace std {
             }
             else {
                 this.length = 0;
-                this.capacity = 1;
+                this.capacity = 4;
                 this.data = cast(uint*)std::malloc(this.capacity);
             }
         } => this;
