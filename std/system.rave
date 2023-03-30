@@ -1,0 +1,19 @@
+namespace std {
+    extern(linkname: "system") int system(char* cmd);
+}
+
+@if((__RAVE_OS == "LINUX") && (!@aliasExists(__RAVE_USELIBC))) {
+    import <std/sysc>
+
+    namespace std {
+        (inline) int reboot(int cmd) => cast(int)std::syscall(std::sysctable::Reboot, cmd);
+        (inline) char* getcwd(char* buffer, int size) => std::syscall(std::sysctable::GetCwd, buffer, size); 
+    }
+};
+
+@if((__RAVE_OS != "LINUX") || (@aliasExists(__RAVE_USELIBC))) {
+    namespace std {
+        extern(linkname: "reboot") int reboot(int cmd);
+        extern(linkname: "getcwd") char* getcwd(char* buffer, int size);
+    }
+};

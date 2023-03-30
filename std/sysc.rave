@@ -36,6 +36,8 @@ the result of a call with the same parameters and the same number will be the sa
                 alias Close = 0x03;
 
                 alias Exit = 60;
+                alias Reboot = 169;
+                alias GetCwd = 79;
 
                 alias Socket = 0x29;
                 alias Bind = 0x31;
@@ -78,6 +80,8 @@ the result of a call with the same parameters and the same number will be the sa
                 alias Close = 0x06;
 
                 alias Exit = 1;
+                alias Reboot = 88;
+                alias GetCwd = 183;
 
                 alias Socket = 0x167;
                 alias Bind = 0x169;
@@ -122,6 +126,8 @@ the result of a call with the same parameters and the same number will be the sa
                 alias Close = 0x39;
 
                 alias Exit = 93;
+                alias Reboot = 142;
+                alias GetCwd = 17;
 
                 alias Socket = 0xC6;
                 alias Bind = 0xC8;
@@ -166,6 +172,8 @@ the result of a call with the same parameters and the same number will be the sa
                 alias Close = 0x06;
 
                 alias Exit = 1;
+                alias Reboot = 88;
+                alias GetCwd = 183;
 
                 alias Socket = 0x119;
                 alias Bind = 0x11A;
@@ -191,8 +199,12 @@ the result of a call with the same parameters and the same number will be the sa
             namespace sysctable {
                 alias Read = 0x03;
                 alias Write = 0x04;
+                alias OpenAt = 286;
+                alias Close = 6;
 
                 alias Exit = 1;
+                alias Reboot = 88;
+                alias GetCwd = 182;
 
                 alias Socket = 326;
                 alias Bind = 327;
@@ -218,8 +230,12 @@ the result of a call with the same parameters and the same number will be the sa
             namespace sysctable {
                 alias Read = 0x03;
                 alias Write = 0x04;
+                alias OpenAt = 286;
+                alias Close = 6;
 
                 alias Exit = 1;
+                alias Reboot = 88;
+                alias GetCwd = 182;
 
                 alias Socket = 326;
                 alias Bind = 327;
@@ -245,8 +261,12 @@ the result of a call with the same parameters and the same number will be the sa
             namespace sysctable {
                 alias Read = 0x03;
                 alias Write = 0x04;
+                alias OpenAt = 288;
+                alias Close = 6;
 
                 alias Exit = 1;
+                alias Reboot = 88;
+                alias GetCwd = 183;
 
                 alias Socket = 359;
                 alias Bind = 361;
