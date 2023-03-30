@@ -122,6 +122,8 @@ class Compiler {
         }
         content = content~"\n"~oldContent;
 
+        ASTMainFile = files[0];
+
         auto startT = MonoTime.currTime;
         Lexer lex = new Lexer(content,offset);
         auto endT = MonoTime.currTime;
@@ -154,9 +156,13 @@ class Compiler {
 
         if(_importedFiles.length > 0) {
             foreach(k; _importedFiles) {
-                if(!canFind(toImport,k)) {
-                    toImport ~= k;
-                }
+                if(!canFind(toImport,k)) toImport ~= k;
+            }
+        }
+        
+        if(_addToImport.length > 0) {
+            foreach(k; _addToImport) {
+                if(!canFind(toImport,k)) toImport ~= k;
             }
         }
 

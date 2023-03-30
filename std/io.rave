@@ -49,31 +49,23 @@ namespace libc {
 }
 
 namespace std {
-    (vararg) int printf(std::string str) {
-        va_list list;
-
-        va_start(&list);
-            char* _s = str.c();
-            int toret = std::printf(_s);
-        va_end(&list);
-    } => toret;
     extern(linkname: "scanf") int scanf(char* fmt, ...);
     extern(linkname: "putchar") int putchar(char c);
 
-    (inline) void puts(const(char)* s) {
+    void puts(const(char)* s) {
         for(int i=0; s[i] != '\0'; i+=1) {
             std::putchar(s[i]);
         }
         std::putchar('\n');
     }
 
-    (inline) void putswnl(char* s) {
+    void putswnl(char* s) {
         for(int i=0; s[i] != '\0'; i+=1) {
             std::putchar(s[i]);
         }
     }
 
-    (inline) void putswnl(std::string s) {
+    void putswnl(std::string s) {
         for(int i=0; i<s.length; i+=1) {
             std::putchar(s.data[i]);
         }

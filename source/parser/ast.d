@@ -37,6 +37,8 @@ NodeMixin[string] MixinTable;
 string[] _libraries;
 string[string] NeededFunctions;
 string[] _importedFiles;
+string[] _addToImport;
+string ASTMainFile;
 
 Node[][string] _parsed;
 
@@ -2155,6 +2157,7 @@ class NodeFunc : Node {
     bool isFakeMethod = false;
     bool isNoNamespaces = false;
     bool isNoChecks = false;
+    bool isPrivate = false;
 
     string[] templateNames;
     Type[] _templateTypes;
@@ -2177,6 +2180,10 @@ class NodeFunc : Node {
         this.loc = loc;
         this.type = type;
         this.templateNames = templateNames.dup;
+
+        for(int i=0; i<mods.length; i++) {
+            if(mods[i].name == "private") isPrivate = true;
+        }
     }
 
     override Node copy() {
@@ -4130,6 +4137,7 @@ class NodeNamespace : Node {
     Node[] nodes;
     int loc;
     bool isImport = false;
+    bool hidePrivated = false;
 
     this(string name, Node[] nodes, int loc) {
         this.names ~= name;
@@ -4154,6 +4162,7 @@ class NodeNamespace : Node {
         }
         for(int i=0; i<nodes.length; i++) {
             if(NodeFunc f = nodes[i].instanceof!NodeFunc) {
+                if(hidePrivated && f.isPrivate) continue;
                 if(!f.isChecked) {
                     f.namespacesNames ~= names;
                     f.check();
@@ -4203,6 +4212,7 @@ class NodeNamespace : Node {
 
         if(!oldCheck) for(int i=0; i<nodes.length; i++) {
             if(NodeFunc f = nodes[i].instanceof!NodeFunc) {
+                if(hidePrivated && f.isPrivate) continue;
                 f.namespacesNames ~= names;
                 f.check();
             }
@@ -5347,49 +5357,6 @@ class NodeImport : Node {
     }
 
     override LLVMValueRef generate() {
-        if(functions.length > 0) {
-            // One file
-            Node[] nodes;
-            if(!files[0].into(_parsed)) {
-                string content = "alias __RAVE_IMPORTED_FROM = \""~Generator.file~"\"; "~readText(files[0]);
-                Lexer l = new Lexer(content,1);
-                Parser p = new Parser(l.getTokens(),1,files[0]);
-                p.parseAll();
-                nodes = p.getNodes().dup;
-                _parsed[files[0]] = nodes.dup;
-            }
-            else {
-                Node[] _nodes = _parsed[files[0]].dup;
-                for(int i=0; i<_nodes.length; i++) nodes ~= _nodes[i].copy();
-            }
-
-            for(int j=0; j<nodes.length; j++) {
-                nodes[j].check();
-            }
-            string oldFile = Generator.file;
-            Generator.file = files[0];
-            for(int j=0; j<nodes.length; j++) {
-                if(NodeNamespace nn = nodes[j].instanceof!NodeNamespace) {
-                    nn.isImport = true;
-                }
-                else if(NodeFunc nf = nodes[j].instanceof!NodeFunc) {
-                    nf.isExtern = true;
-                }
-                else if(NodeVar nv = nodes[j].instanceof!NodeVar) {
-                    nv.isExtern = true;
-                }
-                else if(NodeStruct ns = nodes[j].instanceof!NodeStruct) {
-                    ns.isImported = true;
-                }
-                else if(NodeBuiltin nb = nodes[j].instanceof!NodeBuiltin) {
-                    nb.isImport = true;
-                }
-                nodes[j].generate();
-            }
-            Generator.file = oldFile;
-            _importedFiles ~= files[0];
-        }
-
         Node[] nodes;
         Node[] _nodes;
 
@@ -5426,7 +5393,14 @@ class NodeImport : Node {
             }
 
             for(int j=0; j<nodes.length; j++) {
-                nodes[j].check();
+                if(NodeFunc nf = nodes[j].instanceof!NodeFunc) {
+                    if(!nf.isPrivate) nf.check();
+                }
+                else if(NodeNamespace nn = nodes[j].instanceof!NodeNamespace) {
+                    nn.hidePrivated = true;
+                    nn.check();
+                }
+                else nodes[j].check();
             }
 
             string oldFile = Generator.file;
@@ -5436,6 +5410,7 @@ class NodeImport : Node {
                     nn.isImport = true;
                 }
                 else if(NodeFunc nf = nodes[j].instanceof!NodeFunc) {
+                    if(nf.isPrivate) continue;
                     nf.isExtern = true;
                 }
                 else if(NodeVar nv = nodes[j].instanceof!NodeVar) {
@@ -5804,6 +5779,11 @@ class NodeBuiltin : Node {
                 BasicType onebt = one.instanceof!TypeBasic.type;
                 BasicType twobt = two.instanceof!TypeBasic.type;
                 Generator.changeableTypes[onebt] = Generator.changeableTypes[twobt];
+                return null;
+            case "compileAndLink":
+                string s = asStringIden(0);
+                if(s[0] == '<') _addToImport ~= thisExePath()[0..$-4]~s[1..$-1]~".rave";
+                else _addToImport ~= dirName(ASTMainFile)~"/"~s[1..$-1]~".rave";
                 return null;
             case "trunc":
                 LLVMValueRef val = args[0].generate();
