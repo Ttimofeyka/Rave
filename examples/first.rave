@@ -1,5 +1,5 @@
-import <std/io> <std/system> <std/network>
+import <std/math> <std/io>
 
 void main {
-    
+    std::println(std::math::sin(3.0));
 }

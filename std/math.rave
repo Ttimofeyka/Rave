@@ -94,7 +94,16 @@ namespace std {
         if(two > one) result = two;
     } => result;
 
-    extern(linkname: "sinf") float sin(float f);
+    double sin(double x) {
+        double t = x;
+        double sine = t;
+        
+        for(int i=1; i<=20; i+=1) {
+            double mult = (-x) * (x / ((2*i+1)*(2*i)));
+            t = t * mult;
+            sine = sine + t;
+        }
+    } => sine;
 
     double sqrt(double d) {
         double result = 1.0;
