@@ -117,11 +117,10 @@ class Compiler {
         else if(outtype.indexOf("ios") != -1) __RAVE_OS = "IOS";
 
         content = `alias __RAVE_OS = "`~__RAVE_OS~`"; `~content;
-        content = content~"\n"~oldContent;
-
         if(!opts.noPrelude && file != "std/prelude.rave" && file != "std/memory.rave") {
-            content = "import <std/prelude> <std/memory>\n"~content;
+            content = content~" import <std/prelude> <std/memory>";
         }
+        content = content~"\n"~oldContent;
 
         auto startT = MonoTime.currTime;
         Lexer lex = new Lexer(content,offset);

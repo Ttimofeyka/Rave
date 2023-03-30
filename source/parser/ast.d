@@ -5351,7 +5351,8 @@ class NodeImport : Node {
             // One file
             Node[] nodes;
             if(!files[0].into(_parsed)) {
-                Lexer l = new Lexer(readText(files[0]),1);
+                string content = "alias __RAVE_IMPORTED_FROM = \""~Generator.file~"\"; "~readText(files[0]);
+                Lexer l = new Lexer(content,1);
                 Parser p = new Parser(l.getTokens(),1,files[0]);
                 p.parseAll();
                 nodes = p.getNodes().dup;
@@ -5406,7 +5407,8 @@ class NodeImport : Node {
             }
 
             if(!files[i].into(_parsed)) {
-                Lexer l = new Lexer(readText(files[i]),1);
+                string content = "alias __RAVE_IMPORTED_FROM = \""~Generator.file~"\"; "~readText(files[i]);
+                Lexer l = new Lexer(content,1);
                 Parser p = new Parser(l.getTokens(),1,files[i]);
                 p.parseAll();
                 nodes = p.getNodes().dup;
@@ -5415,6 +5417,9 @@ class NodeImport : Node {
             else {
                 _nodes = _parsed[files[i]].dup;
                 nodes = [];
+                if(NodeVar v = _nodes[0].instanceof!NodeVar) {
+                    if(v.name == "__RAVE_IMPORTED_FROM") v.value = new NodeString(Generator.file, false);
+                }
                 for(int j=0; j<_nodes.length; j++) {
                     nodes ~= _nodes[j].copy();
                 }
@@ -5929,6 +5934,10 @@ class NodeBuiltin : Node {
                 TypeStruct ts = asType(0,true).ty.instanceof!TypeStruct;
                 if(ts !is null) return new NodeType(new TypeStruct(ts.name[0..ts.name.indexOf('<')]),loc);
                 return new NodeType(new TypeVoid(),loc);
+            case "contains":
+                string str = asStringIden(0);
+                string str2 = asStringIden(1);
+                return new NodeBool(str.indexOf(str2) != -1);
             default: break;
         }
         return null;

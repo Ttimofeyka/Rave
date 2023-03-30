@@ -1,7 +1,26 @@
+@if((__RAVE_OS == "LINUX") && (!@aliasExists(__RAVE_USELIBC))) {
+    @if(@aliasExists(__RAVE_IMPORTED_FROM)) {
+        @if(!(@contains(__RAVE_IMPORTED_FROM, "std/sysc.rave")) == true) {
+            import <std/sysc>  
+        };
+    };
+
+    namespace std {
+        (inline) void exit(int code) {
+            std::syscall(std::sysctable::Exit, code);
+        }
+    }
+};
+
+@if((__RAVE_OS != "LINUX") || (@aliasExists(__RAVE_USELIBC))) {
+    namespace std {
+        extern(linkname: "exit") void exit(int code);
+    }
+};
+
 namespace std {
-    extern(linkname: "exit") void exit(int code);
     extern(linkname: "system") int system(char* cmd);
-    extern(linkname: "printf",vararg) int printf(char* str);
+    extern(linkname: "printf", vararg) int printf(char* str);
 
     (inline) void assert(bool cond) {
         if(!cond) {
