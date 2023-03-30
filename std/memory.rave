@@ -2,7 +2,7 @@ namespace std {
     extern(linkname: "malloc") void* malloc(int size);
     extern(linkname: "free") void free(void* ptr);
     extern(linkname: "realloc") void* realloc(void* ptr, int newsize);
-    extern(linkname: "calloc") void* calloc(int num, int size);
+    (inline) void* calloc(int num, int size) => std::malloc(num*size);
     (nochecks) void* memcpy(void* dest, void* src, int n) {
         for(int i=0; i<n; i+=1) {
             dest[i] = src[i];

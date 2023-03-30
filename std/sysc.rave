@@ -193,6 +193,8 @@ the result of a call with the same parameters and the same number will be the sa
 
                 alias GetPID = 20;
                 alias GetPPID = 64;
+
+                alias ClockGetTime = 246;
             }
         }
     };
@@ -216,6 +218,8 @@ the result of a call with the same parameters and the same number will be the sa
 
                 alias GetPID = 20;
                 alias GetPPID = 64;
+
+                alias ClockGetTime = 246;
             }
         }
     };
@@ -239,6 +243,8 @@ the result of a call with the same parameters and the same number will be the sa
 
                 alias GetPID = 20;
                 alias GetPPID = 64;
+
+                alias ClockGetTime = 260;
             }
         }
     };
