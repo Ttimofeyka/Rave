@@ -1,5 +1,5 @@
-import <std/math> <std/io>
+import <std/network> <std/io>
 
 void main {
-    std::println(std::math::ceil(1.4));
+    
 }

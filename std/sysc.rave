@@ -47,6 +47,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias GetSockName = 51;
                 alias Accept4 = 288;
                 alias RecvFrom = 45;
+                alias SendTo = 44;
 
                 alias GetPID = 0x27;
                 alias GetPPID = 0x6E;
@@ -93,6 +94,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias GetSockName = 367;
                 alias Accept4 = 364;
                 alias RecvFrom = 371;
+                alias SendTo = 369;
 
                 alias GetPID = 0x14;
                 alias GetPPID = 0x40;
@@ -141,6 +143,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias GetSockName = 204;
                 alias Accept4 = 242;
                 alias RecvFrom = 207;
+                alias SendTo = 206;
 
                 alias GetPID = 0xAC;
                 alias GetPPID = 0xAD;
@@ -189,6 +192,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias GetSockName = 286;
                 alias Accept4 = 366;
                 alias RecvFrom = 292;
+                alias SendTo = 290;
 
                 alias GetPID = 0x14;
                 alias GetPPID = 0x40;
@@ -222,6 +226,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias GetSockName = 331;
                 alias Accept4 = 344;
                 alias RecvFrom = 337;
+                alias SendTo = 335;
 
                 alias GetPID = 20;
                 alias GetPPID = 64;
@@ -255,6 +260,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias GetSockName = 331;
                 alias Accept4 = 344;
                 alias RecvFrom = 337;
+                alias SendTo = 335;
 
                 alias GetPID = 20;
                 alias GetPPID = 64;
@@ -288,6 +294,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias GetSockName = 367;
                 alias Accept4 = 364;
                 alias RecvFrom = 371;
+                alias SendTo = 369;
 
                 alias GetPID = 20;
                 alias GetPPID = 64;

@@ -36,19 +36,38 @@ namespace std {
     namespace std {
         namespace network {
             (inline) int socket(int domain, int type, int protocol) => cast(int)std::syscall(std::sysctable::Socket, domain, type, protocol);
+
             (inline) int bind(int sockfd, const(std::network::sockaddr)* addr, int addrlen) => cast(int)std::syscall(std::sysctable::Bind, sockfd, addr, addrlen);
+            
             (inline) int shutdown(int sockfd, int how) => cast(int)std::syscall(std::sysctable::Shutdown, sockfd, how);
+            
             (inline) int listen(int s, int backlog) => cast(int)std::syscall(std::sysctable::Listen, s, backlog);
+            
             (inline) int connect(int sockfd, std::network::sockaddr* addr, int addrlen) => cast(int)std::syscall(std::sysctable::Connect, sockfd, addr, addrlen);
+            
             (inline) int getSockName(int sockfd, std::network::sockaddr* addr, int* addrlen) => cast(int)std::syscall(std::sysctable::GetSockName, sockfd, addr, addrlen);
+            
             (inline) int close(int sockfd) => cast(int)std::syscall(std::sysctable::Close, sockfd);
+            
             (inline) int read(int fd, void* buffer, int cnt) => cast(int)std::syscall(std::sysctable::Read, fd, buffer, cnt);
+            
             (inline) int write(int fd, void* buffer, int cnt) => cast(int)std::syscall(std::sysctable::Write, fd, buffer, cnt);
+            
             (inline) int accept4(int sockfd, std::network::sockaddr* addr, int* addrlen, int flags) => cast(int)std::syscall(std::sysctable::Accept4, sockfd, addr, addrlen, flags);
+            
             (inline) int recvfrom(int s, char* buff, int len, int flags, std::network::sockaddr* src, int* addrlen) => cast(int)std::syscall(std::sysctable::RecvFrom, s, buff, len, flags, src, addrlen);
-            extern(linkname: "send") int send(int s, char* buff, int len, int flags);
+            
+            (inline) int sendto(int s, char* buff, int len, int flags, std::network::sockaddr* dest, int addrlen) => cast(int)std::syscall(std::sysctable::SendTo, s, buff, len, flags, dest, addrlen);
+            
+            short htons(short n) {
+                short netshort;
+                char* nptr = cast(char*)&n;
+                char* netshortptr = cast(char*)&netshortptr;
+                netshortptr[0] = nptr[1];
+                netshortptr[1] = nptr[0];
+            } => netshort;
+
             extern(linkname: "inet_addr") int inetAddr(char* ip);
-            extern(linkname: "htons") short htons(short n);
         }
     }
 };
@@ -62,7 +81,7 @@ namespace std {
             extern(linkname: "listen") int listen(int s, int backlog);
             extern(linkname: "accept4") int accept4(int sockfd, std::socket::sockaddr* addr, int* addrlen, int flags);
             extern(linkname: "connect") int connect(int sockfd, const(std::socket::sockaddr)* addr, int addrlen);
-            extern(linkname: "send") int send(int s, char* buff, int len, int flags);
+            extern(linkname: "sendto") int sendto(int s, char* buff, int len, int flags, std::network::sockaddr* dest, int addrlen);
             extern(linkname: "shutdown") int shutdown(int s, int how);
             extern(linkname: "getsockname") int getSockName(int fd, std::socket::sockaddr* addr, int* len);
             extern(linkname: "read") int read(int fd, void* buffer, int cnt);
@@ -77,6 +96,9 @@ namespace std {
 namespace std {
     namespace network {
         (inline) int accept(int sockfd, std::network::sockaddr* addr, int* addrlen) => std::network::accept4(sockfd, addr, addrlen, 0);
+
         (inline) int recv(int sockfd, void* buff, int len, int flags) => std::network::recvfrom(sockfd, buff, len, flags, cast(std::network::sockaddr*)null, cast(int*)null);
+
+        (inline) int send(int s, char* buff, int len, int flags) => std::network::sendto(s, buff, len, flags, cast(std::network::sockaddr*)null, 0);
     }
 }

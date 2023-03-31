@@ -39,7 +39,26 @@ namespace std {
     extern(linkname: "asinf") float asin(float f);
     extern(linkname: "asinhf") float asinh(float f);
     extern(linkname: "atanhf") float atanh(float f);
-    extern(linkname: "cbrtf") float cbrt(float f);
+
+    double pow(double f, double f2) {
+        double result;
+        if(f2 < 0) {
+            result = 1 / std::math::pow(f,-f2);
+        }
+        else {
+            double r = 1.0;
+            while(f2 > 0) {
+                r = r * f;
+                f2 = f2 - 1;
+            }
+            if(f2 > 0) {
+                r = r * f * f2;
+            }
+            result = r;
+        }
+    } => result;
+    
+    extern(linkname: "cbrt") double cbrt(double d);
     
     double cos(double d) {
         while(d < 0.0) d = d + (2.0 * std::math::PI);
@@ -76,24 +95,6 @@ namespace std {
     } => c;
 
     double cosh(double d) => std::math::coshn(d, 100);
-
-    double pow(double f, double f2) {
-        double result;
-        if(f2 < 0) {
-            result = 1 / std::math::pow(f,-f2);
-        }
-        else {
-            double r = 1.0;
-            while(f2 > 0) {
-                r = r * f;
-                f2 = f2 - 1;
-            }
-            if(f2 > 0) {
-                r = r * f * f2;
-            }
-            result = r;
-        }
-    } => result;
 
     double sqrt(double d) {
         double result = 1.0;
