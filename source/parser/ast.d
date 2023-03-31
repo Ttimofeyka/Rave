@@ -5807,6 +5807,14 @@ class NodeBuiltin : Node {
                 LLVMValueRef _div;
                 LLVMValueRef _result;
                 if(LLVMGetTypeKind(_t) == LLVMFloatTypeKind || LLVMGetTypeKind(_t) == LLVMDoubleTypeKind) {
+                    if(LLVMGetTypeKind(_t) != LLVMGetTypeKind(LLVMTypeOf(_y))) {
+                        if(LLVMGetTypeKind(_t) == LLVMDoubleTypeKind) _y = LLVMBuildFPCast(
+                            Generator.Builder, _y, _t, toStringz("fmodf_ftod")
+                        );
+                        else _x = LLVMBuildFPCast(
+                            Generator.Builder, _x, LLVMTypeOf(_y), toStringz("fmodf_ftod")
+                        );
+                    }
                     _div = LLVMBuildFDiv(
                         Generator.Builder,
                         _x,

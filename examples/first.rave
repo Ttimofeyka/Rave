@@ -1,5 +1,5 @@
 import <std/math> <std/io>
 
 void main {
-    std::println(std::math::cos(3.0));
+    std::println(std::math::ceil(1.4));
 }

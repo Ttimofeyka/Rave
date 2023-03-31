@@ -3,6 +3,7 @@ import <std/vector>
 namespace std {
   namespace math {
     alias PI = 3.14159265358979323846;
+    alias NAN = (0.0) / (0.0);
 
     (inline) double degToRad(double d) => d * std::math::PI / 180;
     (inline) double radToDeg(double r) => r * 180 / std::math::PI;
@@ -21,14 +22,24 @@ namespace std {
         if(f < 0.0) result = -result;
     } => result;
 
+    double copysign(double d1, double d2) {
+        char sign = -1;
+        if(d2 > 0.0) sign = 1;
+    } => std::math::abs(d1) * sign;
+
+    double floor(double f) {
+        double tmp = (cast(double)(cast(long)f));
+        if(tmp < 0) tmp = tmp - 1.0;
+    } => tmp;
+
+    double ceil(double d) => -(std::math::floor(-d));
+
     extern(linkname: "acosf") float acos(float f);
     extern(linkname: "acoshf") float acosh(float f);
     extern(linkname: "asinf") float asin(float f);
     extern(linkname: "asinhf") float asinh(float f);
-    extern(linkname: "atanf") float atan(float f);
     extern(linkname: "atanhf") float atanh(float f);
     extern(linkname: "cbrtf") float cbrt(float f);
-    extern(linkname: "ceilf") float ceil(float f);
     
     double cos(double d) {
         while(d < 0.0) d = d + (2.0 * std::math::PI);
@@ -42,8 +53,6 @@ namespace std {
         }
     } => cos;
 
-    extern(linkname: "coshf") float cosh(float f);
-
     double exp(double d) {
         double res = 1.0;
         double term = 1.0;
@@ -54,6 +63,19 @@ namespace std {
             i += 1;
         }
     } => res;
+
+    double coshn(double d, int n) {
+        double c = 1.0;
+        double f = 1.0;
+        double xp = 1.0;
+        for(int i=1; i<n; i+=1) {
+            f = f * ((2 * i - 1) * (2 * i));
+            xp = xp * (d * d);
+            c += xp / f;
+        }
+    } => c;
+
+    double cosh(double d) => std::math::coshn(d, 100);
 
     double pow(double f, double f2) {
         double result;
@@ -82,17 +104,12 @@ namespace std {
     
     extern(linkname: "erf") double erf(double d);
 
-    char sign(float x) {
+    char sign(double x) {
         char result = 0;
         if(x < 0) result = -1;
         else if(x == 0) result = 0;
         else if(x > 0) result = 1;
     } => result;
-
-    float floor(float f) {
-        float tmp = (cast(float)(cast(long)f));
-        if(tmp < 0) tmp = tmp - 1.0;
-    } => tmp;
 
     double min(double one, double two) {
         double result = one;
@@ -125,17 +142,21 @@ namespace std {
         }
     } => sine;
 
-    float mod(float x) {
-        float result = 1.0;
+    double fma(double a, double b, double c) => (a*b)+c;
+
+    double tan(double d) => std::math::sin(d) / std::math::cos(d);
+
+    double mod(double x) {
+        double result = 1.0;
         if((x % 1.0) != 0.0) {
             result = (x % 1.0);
         }
     } => result;
 
-    float round(float x, int n) {
-        x = x * std::math::pow(10.0,cast(float)n);
+    double round(double x, int n) {
+        x = x * std::math::pow(10.0,cast(double)n);
         x += 0.5;
-        x = std::math::floor(x) / std::math::pow(10.0,cast(float)n);
+        x = std::math::floor(x) / std::math::pow(10.0,cast(double)n);
     } => x;
 
     bool isPrime(int number) {
