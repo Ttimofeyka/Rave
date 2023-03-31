@@ -2,7 +2,7 @@
 
 @if((__RAVE_OS == "LINUX") && (!@aliasExists(__RAVE_USELIBC))) {
     @if(@aliasExists(__RAVE_IMPORTED_FROM)) {
-        @if(!(@contains(__RAVE_IMPORTED_FROM, "std/sysc.rave")) == true) {
+        @if(@contains(__RAVE_IMPORTED_FROM, "std/sysc.rave") == false) {
             import <std/sysc>  
         };
     };
@@ -21,7 +21,7 @@
 };
 
 namespace std {
-    extern(private, linkname: "_RaveF12std::putswnl") void putswnl(char* msg);
+    extern(private) void putswnl(char* msg);
 
     (inline) void assert(bool cond) {
         if(!cond) {
