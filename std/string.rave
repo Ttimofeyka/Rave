@@ -380,6 +380,9 @@ namespace std {
                                     result.append(s);
                                 ~s;
                             };
+                            @if(@typesIsEquals(@getCurrArgType(),bool)) {
+                                result.append(std::cstring::fromBool(@getCurrArg(bool)));
+                            };
                             @if(@typesIsEquals(@getCurrArgType(),std::ustring)) {
                                 std::ustring us = @getCurrArg(std::ustring);
                                 uchar* usData = cast(uchar*)(us.data);
