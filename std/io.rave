@@ -32,6 +32,12 @@ namespace libc {
     namespace std {
         namespace file {
             int rename(char* oldpath, char* newpath) => cast(int)std::syscall(std::sysctable::RenameTo, -100, oldpath, -100, newpath);
+
+            namespace linux {
+                int unlinkat(int dirfd, char* pathname, int flags) => cast(int)std::syscall(std::sysctable::UnlinkAt, dirfd, pathname, flags);
+            }
+
+            int remove(char* pathname) => std::file::linux::unlinkat(-100, pathname, 0);
         }
     }
 };
@@ -40,6 +46,7 @@ namespace libc {
     namespace std {
         namespace file {
             extern(linkname: "rename") int rename(char* oldpath, char* newpath);
+            extern(linkname: "remove") int remove(char* pathname);
         }
     }
 };
@@ -51,7 +58,6 @@ namespace libc {
     extern(linkname: "fprintf") int fprintf(libc::File* file, char* str, ...);
     extern(linkname: "fflush") int fflush(libc::File* file);
     extern(linkname: "fscanf") int fscanf(libc::File* file, char* fmt, ...);
-    extern(linkname: "remove") int fremove(char* name);
     extern(linkname: "feof") int feof(libc::File* file);
     extern(linkname: "fgetc") char fgetc(libc::File* file);
     extern(linkname: "fgets") char* fgets(char* s, int size, libc::File* file);
@@ -140,7 +146,7 @@ namespace std {
         }
 
         void remove {
-            libc::fremove(this.name);
+            std::file::remove(this.name);
         }
 
         int read(void* buffer, int size, int n) => libc::fread(buffer, size, n, this._file);

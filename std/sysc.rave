@@ -35,6 +35,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias OpenAt = 0x101;
                 alias Close = 0x03;
                 alias RenameTo = 264;
+                alias UnlinkAt = 263;
 
                 alias Exit = 60;
                 alias Reboot = 169;
@@ -83,6 +84,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias OpenAt = 0x127;
                 alias Close = 0x06;
                 alias RenameTo = 302;
+                alias UnlinkAt = 301;
 
                 alias Exit = 1;
                 alias Reboot = 88;
@@ -133,6 +135,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias OpenAt = 0x38;
                 alias Close = 0x39;
                 alias RenameTo = 38;
+                alias UnlinkAt = 35;
 
                 alias Exit = 93;
                 alias Reboot = 142;
@@ -183,6 +186,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias OpenAt = 0x142;
                 alias Close = 0x06;
                 alias RenameTo = 329;
+                alias UnlinkAt = 328;
 
                 alias Exit = 1;
                 alias Reboot = 88;
@@ -218,6 +222,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias OpenAt = 286;
                 alias Close = 6;
                 alias RenameTo = 293;
+                alias UnlinkAt = 292;
 
                 alias Exit = 1;
                 alias Reboot = 88;
@@ -253,6 +258,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias OpenAt = 286;
                 alias Close = 6;
                 alias RenameTo = 293;
+                alias UnlinkAt = 292;
 
                 alias Exit = 1;
                 alias Reboot = 88;
@@ -288,6 +294,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias OpenAt = 288;
                 alias Close = 6;
                 alias RenameTo = 295;
+                alias UnlinkAt = 294;
 
                 alias Exit = 1;
                 alias Reboot = 88;
