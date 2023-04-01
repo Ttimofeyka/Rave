@@ -28,6 +28,22 @@ namespace libc {
     }
 }
 
+@if((__RAVE_OS == "LINUX") && (!@aliasExists(__RAVE_USELIBC))) {
+    namespace std {
+        namespace file {
+            int rename(char* oldpath, char* newpath) => cast(int)std::syscall(std::sysctable::RenameTo, -100, oldpath, -100, newpath);
+        }
+    }
+};
+
+@if((__RAVE_OS != "LINUX") || (@aliasExists(__RAVE_USELIBC))) {
+    namespace std {
+        namespace file {
+            extern(linkname: "rename") int rename(char* oldpath, char* newpath);
+        }
+    }
+};
+
 namespace libc {
     extern(linkname: "fopen") libc::File* fopen(char* path, char* mode);
     extern(linkname: "fclose") int fclose(libc::File* file);
@@ -36,7 +52,6 @@ namespace libc {
     extern(linkname: "fflush") int fflush(libc::File* file);
     extern(linkname: "fscanf") int fscanf(libc::File* file, char* fmt, ...);
     extern(linkname: "remove") int fremove(char* name);
-    extern(linkname: "rename") int frename(char* from, char* to);
     extern(linkname: "feof") int feof(libc::File* file);
     extern(linkname: "fgetc") char fgetc(libc::File* file);
     extern(linkname: "fgets") char* fgets(char* s, int size, libc::File* file);
@@ -120,7 +135,7 @@ namespace std {
         }
 
         void rename(char* to) {
-            libc::frename(this.name,to);
+            std::file::rename(this.name,to);
             this.name = to;
         }
 

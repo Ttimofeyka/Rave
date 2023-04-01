@@ -1,4 +1,4 @@
-import <std/network> <std/io>
+import <std/io> <std/system>
 
 void main {
     
