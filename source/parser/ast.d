@@ -1739,6 +1739,7 @@ class NodeVar : Node {
 
     bool isChanged = false;
     bool noZeroInit = false;
+    bool isPrivate = false;
 
     override Type getType() {
         return this.t;
@@ -1755,6 +1756,10 @@ class NodeVar : Node {
         this.t = t;
         this.isGlobal = isGlobal;
         this.isVolatile = isVolatile;
+
+        for(int i=0; i<mods.length; i++) {
+            if(mods[i].name == "private") isPrivate = true;
+        }
     }
 
     this(string name, Node value, bool isExt, bool isConst, bool isGlobal, DeclMod[] mods, int loc, Type t, bool isVolatile, bool isChanged, bool noZeroInit) {
@@ -4171,6 +4176,7 @@ class NodeNamespace : Node {
                 f.generate();
             }
             else if(NodeVar v = nodes[i].instanceof!NodeVar) {
+                if(hidePrivated && v.isPrivate) continue;
                 if(!v.isChecked) {
                     v.namespacesNames ~= names;
                     v.check();
@@ -4221,6 +4227,7 @@ class NodeNamespace : Node {
                 n.check();
             }
             else if(NodeVar v = nodes[i].instanceof!NodeVar) {
+                if(hidePrivated && v.isPrivate) continue;
                 v.namespacesNames ~= names;
                 v.check();
             }
@@ -5414,6 +5421,7 @@ class NodeImport : Node {
                     nf.isExtern = true;
                 }
                 else if(NodeVar nv = nodes[j].instanceof!NodeVar) {
+                    if(nv.isPrivate) continue;
                     nv.isExtern = true;
                 }
                 else if(NodeStruct ns = nodes[j].instanceof!NodeStruct) {
