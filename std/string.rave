@@ -35,7 +35,7 @@ namespace std {
     } => len;
 
     struct string {
-        char* data;
+        char* data = null;
         int length;
         int capacity;
 
@@ -58,6 +58,30 @@ namespace std {
                 this.data = std::malloc(this.capacity);
             }
         } => this;
+
+        void set(char* a) {
+            if(a != null) {
+                this.length = std::cstring::strlen(a);
+                this.capacity = this.length*2;
+                if(this.capacity == 0) this.capacity = 1;
+                if(this.data != null) std::free(this.data);
+                this.data = std::malloc(this.capacity);
+
+                int i = 0;
+                while(i<this.length) {
+                    this.data[i] = a[i];
+                    i += 1;
+                }
+            }
+            else {
+                this.length = 0;
+                this.capacity = 1;
+                if(this.data != null) {
+                    std::free(this.data);
+                }
+                this.data = std::malloc(this.capacity);
+            }
+        }
 
         bool isDeleted => (this.data == null);
 
