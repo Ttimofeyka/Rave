@@ -5,8 +5,31 @@
         namespace process {
             (inline) int getPID => cast(int)std::syscall(std::sysctable::GetPID);
             (inline) int getPPID => cast(int)std::syscall(std::sysctable::GetPPID);
-        
-            extern(linkname: "fork") int fork();
+        }
+    }
+};
+
+@if(__RAVE_OS == "LINUX") {
+    import <std/sysc>
+
+    namespace std {
+        namespace process {
+            alias cloneVM = 0x00000100;
+            alias cloneFS = 0x00000200;
+            alias cloneFiles = 0x00000400;
+            alias cloneSighand = 0x00000800;
+            alias clonePigFD = 0x00001000;
+            alias clonePtrace = 0x00002000;
+            alias cloneVfork = 0x00004000;
+            alias cloneParent = 0x00008000;
+            alias cloneThread = 0x00010000;
+            alias cloneNewNS = 0x00020000;
+            alias cloneSysvsem = 0x00040000;
+            alias cloneSetTLS = 0x00080000;
+            alias cloneParentSetTID = 0x00100000;
+            alias cloneChildClearTID = 0x00200000;
+
+            (vararg, inline) int clone(int(void*) fn, void* stack, int flags, void* arg) => cast(int)std::syscall(std::sysctable::Clone, fn, stack, flags, arg);
         }
     }
 };
@@ -16,7 +39,6 @@
         namespace process {
             extern(linkname: "getpid") int getPID();
             extern(linkname: "getppid") int getPPID();
-            extern(linkname: "fork") int fork();
         }
     }
 };

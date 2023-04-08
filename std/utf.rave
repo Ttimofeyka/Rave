@@ -42,6 +42,28 @@ namespace std {
             }
         } => this;
 
+        void set(uint* a) {
+            if(a != null) {
+                this.length = std::utf::utflen(a);
+                this.capacity = this.length*4;
+                if(this.capacity == 0) this.capacity = 4;
+                if(this.data != cast(uint*)null) std::free(cast(void*)this.data);
+                this.data = cast(uint*)std::malloc(this.capacity);
+
+                int i = 0;
+                while(i<this.length) {
+                    this.data[i] = a[i];
+                    i += 1;
+                }
+            }
+            else {
+                this.length = 0;
+                this.capacity = 4;
+                if(this.data != cast(uint*)null) std::free(cast(void*)this.data);
+                this.data = cast(uint*)std::malloc(this.capacity);
+            }
+        }
+
         uint* c {
             uint* _data = cast(uint*)std::malloc(this.capacity);
             for(int i=0; i<this.length; i+=1) {

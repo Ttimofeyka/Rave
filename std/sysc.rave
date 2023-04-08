@@ -53,6 +53,7 @@ the result of a call with the same parameters and the same number will be the sa
 
                 alias GetPID = 0x27;
                 alias GetPPID = 0x6E;
+                alias Clone = 56;
 
                 alias ClockGetTime = 228;
             }
@@ -102,6 +103,7 @@ the result of a call with the same parameters and the same number will be the sa
 
                 alias GetPID = 0x14;
                 alias GetPPID = 0x40;
+                alias Clone = 120;
 
                 alias ClockGetTime = 265;
             }
@@ -153,6 +155,7 @@ the result of a call with the same parameters and the same number will be the sa
 
                 alias GetPID = 0xAC;
                 alias GetPPID = 0xAD;
+                alias Clone = 220;
                 
                 alias ClockGetTime = 113;
             }
@@ -204,6 +207,7 @@ the result of a call with the same parameters and the same number will be the sa
 
                 alias GetPID = 0x14;
                 alias GetPPID = 0x40;
+                alias Clone = 120;
 
                 alias ClockGetTime = 263;
             }
@@ -240,6 +244,7 @@ the result of a call with the same parameters and the same number will be the sa
 
                 alias GetPID = 20;
                 alias GetPPID = 64;
+                alias Clone = 120;
 
                 alias ClockGetTime = 246;
             }
@@ -276,6 +281,7 @@ the result of a call with the same parameters and the same number will be the sa
 
                 alias GetPID = 20;
                 alias GetPPID = 64;
+                alias Clone = 120;
 
                 alias ClockGetTime = 246;
             }
@@ -312,6 +318,7 @@ the result of a call with the same parameters and the same number will be the sa
 
                 alias GetPID = 20;
                 alias GetPPID = 64;
+                alias Clone = 120;
 
                 alias ClockGetTime = 260;
             }

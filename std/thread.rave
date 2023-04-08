@@ -1,0 +1,11 @@
+import <std/process>
+
+// The current implementation works only on Linux.
+
+@if(__RAVE_OS == "LINUX") {
+    namespace std {
+        namespace thread {
+            
+        }
+    }
+};

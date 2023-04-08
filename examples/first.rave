@@ -1,4 +1,4 @@
-import <std/io> <std/system>
+import <std/io> <std/utf> <std/system> <std/thread>
 
 void main {
     std::println(true); 
