@@ -34,6 +34,48 @@ namespace std {
 
     double ceil(double d) => -(std::math::floor(-d));
 
+    double exp(double d) {
+        double res = 1.0;
+        double term = 1.0;
+        int i = 1;
+        while(term > 0.000000000000001) {
+            term = term * (d / i);
+            res = res + term;
+            i += 1;
+        }
+    } => res;
+
+    double loge(double x) {
+        double result = 0.0;
+
+        if (x <= 0) result = std::math::NAN;
+        else {
+            int powAdj = 0;
+            while (x > 1.0) {
+                x = x / 2.718281828459045235;
+                powAdj += 1;
+            }
+            while (x < 0.25) {
+                x = x * 2.718281828459045235;
+                powAdj -= 1;
+            }
+
+            x -= 1.0;
+            double t = 0.0;
+            double s = 1.0;
+            double z = x;
+            for(int k=1; k<=20; k+=1) {
+                t = t + (z * s) / k;
+                z = z * x;
+                s = -s;
+            }
+
+            result = t + powAdj;
+        }
+    } => result;
+
+    (inline) double log(double x) => std::math::loge(x) / std::math::loge(10.0);
+
     extern(linkname: "acosf") float acos(float f);
     extern(linkname: "acoshf") float acosh(float f);
     extern(linkname: "asinf") float asin(float f);
@@ -71,17 +113,6 @@ namespace std {
             cos = cos + t;
         }
     } => cos;
-
-    double exp(double d) {
-        double res = 1.0;
-        double term = 1.0;
-        int i = 1;
-        while(term > 0.000000000000001) {
-            term = term * (d / i);
-            res = res + term;
-            i += 1;
-        }
-    } => res;
 
     double coshn(double d, int n) {
         double c = 1.0;

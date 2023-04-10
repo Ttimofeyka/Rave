@@ -1,5 +1,5 @@
-import <std/io> <std/utf> <std/system> <std/thread>
+import <std/io> <std/system> <std/thread> <std/math>
 
 void main {
-    std::println(true); 
+    
 }
