@@ -34,16 +34,14 @@ namespace std {
 
     double ceil(double d) => -(std::math::floor(-d));
 
-    double exp(double d) {
-        double res = 1.0;
-        double term = 1.0;
-        int i = 1;
-        while(term > 0.000000000000001) {
-            term = term * (d / i);
-            res = res + term;
-            i += 1;
+    double exp(double x) {
+        double sum = 1.0 + x;
+        double term = x;
+        for(int k=2; k<50; k+=1) {
+            term = term * x / cast(double)k;
+            sum = sum + term;
         }
-    } => res;
+    } => sum;
 
     double loge(double x) {
         double result = 0.0;
@@ -51,11 +49,11 @@ namespace std {
         if (x <= 0) result = std::math::NAN;
         else {
             int powAdj = 0;
-            while (x > 1.0) {
+            while(x > 1.0) {
                 x = x / 2.718281828459045235;
                 powAdj += 1;
             }
-            while (x < 0.25) {
+            while(x < 0.25) {
                 x = x * 2.718281828459045235;
                 powAdj -= 1;
             }
@@ -64,7 +62,7 @@ namespace std {
             double t = 0.0;
             double s = 1.0;
             double z = x;
-            for(int k=1; k<=20; k+=1) {
+            for(int k=1; k<=50; k+=1) {
                 t = t + (z * s) / k;
                 z = z * x;
                 s = -s;
@@ -86,6 +84,10 @@ namespace std {
         double result;
         if(f2 < 0) {
             result = 1 / std::math::pow(f,-f2);
+        }
+        else if((f2 > 0.0) && (f2 < 1.0)) {
+            // TODO: Is there a possible inaccuracy?
+            result = std::math::exp(f2*std::math::loge(f));
         }
         else {
             double r = 1.0;
