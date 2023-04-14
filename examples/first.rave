@@ -1,5 +1,5 @@
 import <std/>
 
 void main {
-    std::println(std::math::pow(81.0,0.5));
+    
 }

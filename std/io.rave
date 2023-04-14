@@ -10,8 +10,8 @@ namespace libc {
     alias SeekEnd = 2;
 }
 
-namespace libc {
-    struct stat {
+namespace std {
+    struct fstat {
         ulong dev;
         ulong ino;
         ushort mode;
@@ -25,6 +25,10 @@ namespace libc {
         long st_atime;
         long st_mtime;
         long st_ctime;
+    }
+
+    namespace file {
+        extern(linkname: "stat") int getStat(const(char)* name, std::fstat* buffer);
     }
 }
 
@@ -65,7 +69,6 @@ namespace libc {
     extern(linkname: "fseek") int fseek(libc::File* stream, int offset, int origin);
     extern(linkname: "ftell") int ftell(libc::File* stream);
     extern(linkname: "fwrite") int fwrite(void* buffer, int size, int n, libc::File* stream);
-    extern(linkname: "stat") int stat(const(char)* name, libc::stat* buffer);
     extern(linkname: "getline") int getline(char** buffer, int* len, int fd);
 }
 
