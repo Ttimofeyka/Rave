@@ -116,6 +116,80 @@ namespace std {
         @callWithArgs(std::print,'\n');
     }
 
+    (ctargs) void finput {
+        std::file f = @getArg(std::file,0);
+        @skipArg();
+        @foreachArgs() {
+            @if(@typesIsNequals(@getCurrArgType(),float*)) {
+                @if(@typesIsNequals(@getCurrArgType(),double*)) {
+                    @if(@typesIsNequals(@getCurrArgType(),char*)) {
+                        @if(@typesIsNequals(@getCurrArgType(),short*)) {
+                            @if(@typesIsNequals(@getCurrArgType(),int*)) {
+                                @if(@typesIsNequals(@getCurrArgType(),long*)) {
+                                
+                                };
+                                @if(@typesIsEquals(@getCurrArgType(),long*)) {
+                                    libc::fscanf(f._file, "%ld", @getCurrArg(long*));
+                                };
+                            };
+                            @if(@typesIsEquals(@getCurrArgType(),int*)) {
+                                libc::fscanf(f._file, "%d", @getCurrArg(int*));
+                            };
+                        };
+                        @if(@typesIsEquals(@getCurrArgType(),short*)) {
+                            libc::fscanf(f._file, "%hd", @getCurrArg(short*));
+                        };
+                    };
+                    @if(@typesIsEquals(@getCurrArgType(),char*)) {
+                        libc::fscanf(f._file, "%c", @getCurrArg(char*));
+                    };
+                };
+                @if(@typesIsEquals(@getCurrArgType(),double*)) {
+                    libc::fscanf(f._file, "%lf", @getCurrArg(double*));
+                };
+            };
+            @if(@typesIsEquals(@getCurrArgType(),float*)) {
+                libc::fscanf(f._file, "%f", @getCurrArg(float*));
+            };
+        };
+    }
+
+    (ctargs) void input {
+        @foreachArgs() {
+            @if(@typesIsNequals(@getCurrArgType(),float*)) {
+                @if(@typesIsNequals(@getCurrArgType(),double*)) {
+                    @if(@typesIsNequals(@getCurrArgType(),char*)) {
+                        @if(@typesIsNequals(@getCurrArgType(),short*)) {
+                            @if(@typesIsNequals(@getCurrArgType(),int*)) {
+                                @if(@typesIsNequals(@getCurrArgType(),long*)) {
+                                
+                                };
+                                @if(@typesIsEquals(@getCurrArgType(),long*)) {
+                                    std::scanf("%ld", @getCurrArg(long*));
+                                };
+                            };
+                            @if(@typesIsEquals(@getCurrArgType(),int*)) {
+                                std::scanf("%d", @getCurrArg(int*));
+                            };
+                        };
+                        @if(@typesIsEquals(@getCurrArgType(),short*)) {
+                            std::scanf("%hd", @getCurrArg(short*));
+                        };
+                    };
+                    @if(@typesIsEquals(@getCurrArgType(),char*)) {
+                        std::scanf("%c", @getCurrArg(char*));
+                    };
+                };
+                @if(@typesIsEquals(@getCurrArgType(),double*)) {
+                    std::scanf("%lf", @getCurrArg(double*));
+                };
+            };
+            @if(@typesIsEquals(@getCurrArgType(),float*)) {
+                std::scanf("%f", @getCurrArg(float*));
+            };
+        };
+    }
+
     struct file {
         libc::File* _file;
         const(char)* name;

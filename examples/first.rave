@@ -1,5 +1,8 @@
 import <std/>
 
 void main {
-    
+    std::println("Hello, world!");
+    long jamal;
+    std::input(&jamal);
+    std::println("Jamal is ",jamal);
 }
