@@ -2323,6 +2323,7 @@ class NodeFunc : Node {
                 case "coldcc": callconv = 2; break;
                 case "cdecl32": callconv = 3; break;
                 case "cdecl64": callconv = 4; break;
+                case "stdcall": callconv = 5; break;
                 case "inline": isInline = true; break;
                 case "linkname": linkName = mods[i].value; break;
                 case "pure": isPure = true; break;
@@ -2365,6 +2366,7 @@ class NodeFunc : Node {
 
         if(callconv == 1) LLVMSetFunctionCallConv(Generator.Functions[name],LLVMFastCallConv);
         else if(callconv == 2) LLVMSetFunctionCallConv(Generator.Functions[name],LLVMColdCallConv);
+        else if(callconv == 5) LLVMSetFunctionCallConv(Generator.Functions[name],LLVMX86StdcallCallConv);
 
         if(isInline) Generator.addAttribute("alwaysinline",LLVMAttributeFunctionIndex,Generator.Functions[name]);
         if(isTemplatePart || isTemplate || isCtargsPart || isComdat) {

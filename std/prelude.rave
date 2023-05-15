@@ -1,12 +1,15 @@
 @compileAndLink("<std/io>");
 
-@if((__RAVE_OS == "LINUX") && (!@aliasExists(__RAVE_USELIBC))) {
-    @if(@aliasExists(__RAVE_IMPORTED_FROM)) {
-        @if(@contains(__RAVE_IMPORTED_FROM, "std/sysc.rave") == false) {
-            import <std/sysc>  
-        };
+@if(@aliasExists(__RAVE_IMPORTED_FROM)) {
+    @if(@contains(__RAVE_IMPORTED_FROM, "std/sysc.rave") == false) {
+        import <std/sysc>  
     };
+};
+@if(!@aliasExists(__RAVE_IMPORTED_FROM)) {
+    import <std/sysc>
+};
 
+@if((__RAVE_OS == "LINUX") && (!@aliasExists(__RAVE_USELIBC))) {
     namespace std {
         (inline) void exit(int code) {
             std::syscall(std::sysctable::Exit, code);
@@ -14,7 +17,15 @@
     }
 };
 
-@if((__RAVE_OS != "LINUX") || (@aliasExists(__RAVE_USELIBC))) {
+@if(((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64")) && (!@aliasExists(__RAVE_USELIBC))) {
+    namespace std {
+        (inline) void exit(int code) {
+            std::winapi::ExitProcess(code);
+        }
+    }
+};
+
+@if((@aliasExists(__RAVE_USELIBC))) {
     namespace std {
         extern(linkname: "exit") void exit(int code);
     }

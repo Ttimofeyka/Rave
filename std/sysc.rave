@@ -332,3 +332,14 @@ the result of a call with the same parameters and the same number will be the sa
         }
     };
 };
+
+@if((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64")) {
+    @addLibrary("user32", "kernel32");
+
+    namespace std {
+        namespace winapi {
+            extern(stdcall, linkname: "MessageBoxA") int MessageBoxA(void* h, const(char)* s, const(char)* s2, uint d);
+            extern(stdcall, linkname: "ExitProcess") void ExitProcess(int v);
+        }
+    }
+};

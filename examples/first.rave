@@ -1,5 +1,5 @@
-import <std/>
+import <std/io> <std/sysc>
 
 void main {
-    std::println("Hello from Windows!");
+    
 }
