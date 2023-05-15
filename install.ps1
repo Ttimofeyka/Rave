@@ -53,8 +53,6 @@ Remove-Item -Path "./llvm-mingw" -Force -Recurse
 Remove-Item -Path "./llvm_installer.exe" -Force
 Remove-Item -Path "./dlang_installer.exe" -Force
 
-Remove-Item -Path "./options.json" -Force
-New-Item "./options.json"
 Set-Content "./options.json" '{
     "compiler": "clang"
 }
