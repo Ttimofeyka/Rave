@@ -2,16 +2,15 @@
 	"authors": [
 		"Ttimofeyka"
 	],
-	"copyright": "Copyright © 2022 Ttimofeyka",
+	"copyright": "Copyright © 2022 Ttimofeyka (LLVM-D Copyright © 2013-2018 Moritz Maxeiner, Copyright © 2016-2017 Alex Parrill)",
 	"dependencies": {
-		"d-glob": "~>0.4.0",
-		"llvm-d": "~>3.0.0"
+		"d-glob": "~>0.4.0"
 	},
 	"buildRequirements": ["silenceDeprecations"],
-	"libs": ["LLVM-11"],
 	"description": "Rave Programming Language",
 	"license": "MPL-2.0",
 	"versions": [
+		"LLVM_Load",
 		"LLVM_Target_AVR",
 		"LLVM_Target_X86",
 		"LLVM_Target_Sparc",

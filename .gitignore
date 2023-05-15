@@ -47,3 +47,4 @@ examples/*.o
 *.def
 dcallgrind
 d-profile-viewer
+*.pdb

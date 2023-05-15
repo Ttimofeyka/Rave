@@ -12,17 +12,25 @@ import core.stdc.stdlib : exit;
 import parser.parser, lexer.tokens;
 import llvm;
 
+struct ver {
+    template opDispatch(string M) {
+        mixin(`
+        	version(`~M~`) enum opDispatch = true;
+        	else           enum opDispatch = false;
+        `);
+    }
+}
+
 string[] files;
 string outfile;
 
 version(Win64) {
-	string outtype = "win64";
+	string outtype = "x86_64-win32-gnu";
 }
-
 else version(Win32) {
-	string outtype = "win32";
+	version(X86) string outtype = "i686-win32-gnu";
+	else string outtype = "x86_64-win32-gnu";
 }
-
 else version(linux) {
 	version(X86_64) {
 		string outtype = "linux-x86_64";
@@ -38,7 +46,6 @@ else version(linux) {
 	}
 	else string outtype = "unknown-linux";
 }
-
 else string outtype = "unknown";
 
 struct CompOpts {
@@ -109,13 +116,15 @@ CompOpts analyzeArgs(string[] args) {
 	return opts;
 }
 
-void main(string[] args)
-{
+void main(string[] args) {
 	if(args.length==1) {
 		writeln("No compilation files were found!");
 		exit(1);
 	}
 	CompOpts o = analyzeArgs(args[1..$]);
+
+	version(linux) LLVM.load(["libLLVM-11.so", "/usr/lib/llvm-11/lib/libLTO.so.11"]);
+	version(Windows) LLVM.load(["LLVM-C.dll", "LTO.dll"]);
 
 	operators = [
     	TokType.Plus: 0,

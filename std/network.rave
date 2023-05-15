@@ -1,36 +1,37 @@
-namespace std {
-    namespace network {
-        alias AfInet = 1;
-        alias AfInet6 = 2;
-        alias SockStream = 1;
-        alias ShutRD = 0;
-        alias ShutWR = 1;
-        alias ShutRDWR = 2;
+@if((__RAVE_OS == "LINUX") && (!@aliasExists(__RAVE_USELIBC))) {
 
-        struct sockaddr {
-            int sa_family;
-            char[14] sa_data;
-        }
+    namespace std {
+        namespace network {
+            alias AfInet = 1;
+            alias AfInet6 = 2;
+            alias SockStream = 1;
+            alias ShutRD = 0;
+            alias ShutWR = 1;
+            alias ShutRDWR = 2;
 
-        struct sockaddr_storage {
-            int sa_family;
-            long __ss_align;
-            char[120] __ss_padding;
-        }
+            struct sockaddr {
+                int sa_family;
+                char[14] sa_data;
+            }
 
-        struct in_addr {
-            int s_addr;
-        }
+            struct sockaddr_storage {
+                int sa_family;
+                long __ss_align;
+                char[120] __ss_padding;
+            }
 
-        struct sockaddr_in {
+            struct in_addr {
+                int s_addr;
+            }
+
+            struct sockaddr_in {
             int sa_family;
             short sin_port;
             std::network::in_addr sin_addr;
+            }
         }
     }
-}
 
-@if((__RAVE_OS == "LINUX") && (!@aliasExists(__RAVE_USELIBC))) {
     import <std/sysc>
 
     namespace std {
@@ -71,34 +72,3 @@ namespace std {
         }
     }
 };
-
-@if((__RAVE_OS != "LINUX") || (@aliasExists(__RAVE_USELIBC))) {
-    namespace std {
-        namespace network {
-            extern(linkname: "recvfrom") int recvfrom(int sockfd, void* buff, int len, int flags, std::network::sockaddr* src, int* addrlen);
-            extern(linkname: "socket") int socket(int domain, int type, int protocol);
-            extern(linkname: "bind") int bind(int s, const(std::socket::sockaddr)* addr, int namelen);
-            extern(linkname: "listen") int listen(int s, int backlog);
-            extern(linkname: "accept4") int accept4(int sockfd, std::socket::sockaddr* addr, int* addrlen, int flags);
-            extern(linkname: "connect") int connect(int sockfd, const(std::socket::sockaddr)* addr, int addrlen);
-            extern(linkname: "sendto") int sendto(int s, char* buff, int len, int flags, std::network::sockaddr* dest, int addrlen);
-            extern(linkname: "shutdown") int shutdown(int s, int how);
-            extern(linkname: "getsockname") int getSockName(int fd, std::socket::sockaddr* addr, int* len);
-            extern(linkname: "read") int read(int fd, void* buffer, int cnt);
-            extern(linkname: "write") int write(int fd, void* buffer, int cnt);
-            extern(linkname: "inet_addr") int inetAddr(char* ip);
-            extern(linkname: "htons") short htons(short n);
-            extern(linkname: "close") int close(int sockfd);
-        }
-    }
-};
-
-namespace std {
-    namespace network {
-        (inline) int accept(int sockfd, std::network::sockaddr* addr, int* addrlen) => std::network::accept4(sockfd, addr, addrlen, 0);
-
-        (inline) int recv(int sockfd, void* buff, int len, int flags) => std::network::recvfrom(sockfd, buff, len, flags, cast(std::network::sockaddr*)null, cast(int*)null);
-
-        (inline) int send(int s, char* buff, int len, int flags) => std::network::sendto(s, buff, len, flags, cast(std::network::sockaddr*)null, 0);
-    }
-}

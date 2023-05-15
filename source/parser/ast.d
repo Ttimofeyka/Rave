@@ -23,6 +23,7 @@ import lexer.lexer : Lexer;
 import parser.parser : Parser;
 import app : CompOpts;
 import std.bigint;
+import app : ver;
 
 Node[string] AliasTable;
 NodeFunc[string] FuncTable;
@@ -75,8 +76,6 @@ struct Loop {
     bool isIf;
     LoopReturn[] rets;
 }
-
-extern(C) LLVMBuilderRef LLVMCreateBuilderInContext(LLVMContextRef context);
 
 Type llvmTypeToType(LLVMTypeRef t) {
         if(LLVMGetTypeKind(t) == LLVMIntegerTypeKind) {
@@ -2369,9 +2368,8 @@ class NodeFunc : Node {
 
         if(isInline) Generator.addAttribute("alwaysinline",LLVMAttributeFunctionIndex,Generator.Functions[name]);
         if(isTemplatePart || isTemplate || isCtargsPart || isComdat) {
-            LLVMComdatRef cmr = LLVMGetOrInsertComdat(Generator.Module,toStringz(name));
+            LLVMComdatRef cmr = LLVMGetOrInsertComdat(Generator.Module,toStringz(linkName));
             LLVMSetComdatSelectionKind(cmr,LLVMAnyComdatSelectionKind);
-
             LLVMSetComdat(Generator.Functions[name],cmr);
             LLVMSetLinkage(Generator.Functions[name],LLVMLinkOnceODRLinkage);
         }
@@ -3369,7 +3367,7 @@ class NodeIndex : Node {
                     LLVMBuildPtrToInt(Generator.Builder,new NodeNull().generate(),LLVMInt32TypeInContext(Generator.Context),toStringz("ptoi_")),
                     toStringz("assert(p==null)_")
                 );
-                LLVMBuildCall(Generator.Builder,Generator.Functions[NeededFunctions["assert"]],[isNull,new NodeString("Runtime error in '"~Generator.file~"' file on "~to!string(loc)~" line: attempt to use a null pointer in ptoi!\n",false).generate()].ptr,2,toStringz(""));
+                if(NeededFunctions["assert"].into(Generator.Functions)) LLVMBuildCall(Generator.Builder,Generator.Functions[NeededFunctions["assert"]],[isNull,new NodeString("Runtime error in '"~Generator.file~"' file on "~to!string(loc)~" line: attempt to use a null pointer in ptoi!\n",false).generate()].ptr,2,toStringz(""));
             }
             if(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMArrayTypeKind && LLVMGetTypeKind(LLVMTypeOf(currScope.getWithoutLoad(id.name,loc))) == LLVMArrayTypeKind) {
                 // Argument
@@ -3792,7 +3790,7 @@ class NodeUnary : Node {
                     LLVMBuildPtrToInt(Generator.Builder,new NodeNull().generate(),LLVMInt32TypeInContext(Generator.Context),toStringz("ptoi_")),
                     toStringz("assert(p==null)_")
                 );
-                LLVMBuildCall(Generator.Builder,Generator.Functions[NeededFunctions["assert"]],[isNull,new NodeString("Runtime error in '"~Generator.file~"' file on "~to!string(loc)~" line: attempt to use a null pointer in ptoi!\n",false).generate()].ptr,2,toStringz(""));
+                if(NeededFunctions["assert"].into(Generator.Functions)) LLVMBuildCall(Generator.Builder,Generator.Functions[NeededFunctions["assert"]],[isNull,new NodeString("Runtime error in '"~Generator.file~"' file on "~to!string(loc)~" line: attempt to use a null pointer in ptoi!\n",false).generate()].ptr,2,toStringz(""));
             }
             return LLVMBuildLoad(
                 Generator.Builder,
@@ -5790,7 +5788,11 @@ class NodeBuiltin : Node {
                 return null;
             case "compileAndLink":
                 string s = asStringIden(0);
-                if(s[0] == '<') _addToImport ~= thisExePath()[0..$-4]~s[1..$-1]~".rave";
+                if(s[0] == '<') {
+                    string exePath = thisExePath();
+                    if(exePath[$-3..$] == "exe") exePath = exePath[$-4..$];
+                    _addToImport ~= exePath[0..$-4]~s[1..$-1]~".rave";
+                }
                 else _addToImport ~= dirName(ASTMainFile)~"/"~s[1..$-1]~".rave";
                 return null;
             case "trunc":

@@ -1355,10 +1355,13 @@ class Parser {
         next();
         string[] _files;
 
+        string exePath = thisExePath();
+        if(exePath[$-3..$] == "exe") exePath = exePath[$-4..$];
+
         while(peek().type == TokType.Less || peek().type == TokType.String) {
             if(peek().type == TokType.Less) {
                 // Global
-                _files ~= thisExePath()[0..$-4]~getGlobalFile()~".rave";
+                _files ~= exePath[0..$-4]~getGlobalFile()~".rave";
             }
             else {
                 // Local

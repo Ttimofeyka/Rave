@@ -93,7 +93,7 @@ class Compiler {
         string __RAVE_OS = "UNKNOWN";
 
         if(outtype.indexOf("i686") != -1 || outtype.indexOf("i386") != -1) __RAVE_PLATFORM = "X86";
-        else if(outtype.indexOf("x86_64") != -1) __RAVE_PLATFORM = "X86_64";
+        else if(outtype.indexOf("x86_64") != -1 || outtype.indexOf("win64") != -1) __RAVE_PLATFORM = "X86_64";
         else if(outtype.indexOf("x32") != -1) __RAVE_PLATFORM = "X32";
         else if(outtype.indexOf("aarch64") != -1 || outtype.indexOf("arm64") != -1) __RAVE_PLATFORM = "AARCH64";
         else if(outtype.indexOf("arm") != -1) __RAVE_PLATFORM = "ARM";
@@ -165,9 +165,7 @@ class Compiler {
                 if(!canFind(toImport,k)) toImport ~= k;
             }
         }
-
         char* triple = LLVMNormalizeTargetTriple(toStringz(outtype));
-
         LLVMSetTarget(Generator.Module,triple);
 
         if(opts.optimizeLevel > 0) {
@@ -178,14 +176,12 @@ class Compiler {
             LLVMPassManagerBuilderPopulateModulePassManager(pmb,pm);
             LLVMRunPassManager(pm,Generator.Module);
         }
-
         char* errors;
         LLVMTargetRef target;
 
         LLVMGetTargetFromTriple(triple, &target, &errors);
 
         LLVMDisposeMessage(errors);
-
     	LLVMTargetMachineRef machine = LLVMCreateTargetMachine(
 			target,
 			triple,
@@ -204,7 +200,7 @@ class Compiler {
 		char* file_ptr = cast(char*)toStringz(file.replace(".rave",".o"));
         //char* m = LLVMPrintModuleToString(Generator.Module);
         //writeln("Module: \n",fromStringz(m));
-        LLVMTargetMachineEmitToFile(machine,Generator.Module,file_ptr, LLVMObjectFile, &errors);
+        LLVMTargetMachineEmitToFile(machine,Generator.Module,file_ptr,LLVMObjectFile,&errors);
         endT = MonoTime.currTime;
         dur = endT - startT;
         generateTime += dur.total!"msecs";
