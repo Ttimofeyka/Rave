@@ -296,7 +296,7 @@ class LLVMGen {
                     Generator.GenerateType(f.main,loc),
                     types.ptr,
                     cast(uint)types.length,
-                    false
+                    (f.main.instanceof!TypeVoid ? true : false)
                 ),
                 0
             );
@@ -5578,6 +5578,12 @@ class NodeBuiltin : Node {
         }
         else if(NodeString str = args[n].instanceof!NodeString) return str.value;
         else if(NodeBool bo = args[n].instanceof!NodeBool) return to!string(bo.value);
+        else if(NodeBuiltin nb = args[n].instanceof!NodeBuiltin) {
+            Node nn = nb.comptime();
+            if(NodeString nns = nn.instanceof!NodeString) return nns.value;
+            if(NodeInt nni = nn.instanceof!NodeInt) return to!string(nni.value);
+            assert(0);
+        }
         assert(0);
     }
 
@@ -5665,6 +5671,8 @@ class NodeBuiltin : Node {
                     Generator.currentBuiltinArg += 1;
                 }
                 return null;
+            case "argsLength":
+                return new NodeInt(FuncTable[currScope.func].args.length).generate();
             case "if":
                 Node cond = args[0];
                 if(NodeBinary nb = args[0].instanceof!NodeBinary) nb.isStatic = true;
@@ -5886,6 +5894,8 @@ class NodeBuiltin : Node {
     override Node comptime() {
         name = name.strip();
         switch(name) {
+            case "argsLength":
+                return new NodeInt(FuncTable[currScope.func].args.length);
             case "typeToString":
                 Type typeToStr = asType(0,true).ty;
                 return new NodeString(typeToStr.toString(),false);

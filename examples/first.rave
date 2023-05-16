@@ -1,5 +1,5 @@
-import <std/io> <std/sysc>
+import <std/io> <std/library>
 
 void main {
-    
+    void* lib = std::library::open("user32.dll");
 }

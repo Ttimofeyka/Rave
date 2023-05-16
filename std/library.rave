@@ -1,10 +1,30 @@
-namespace std {
-    namespace library {
-        alias RtldLazy = 0x00001;
+@if((__RAVE_OS != "WINDOWS32") && (__RAVE_OS != "WINDOWS64")) {
+    namespace std {
+        namespace library {
+            alias RtldLazy = 0x00001;
         
-        extern(linkname: "dlopen") void* open(char* filename, int flags);
-        extern(linkname: "dlclose") int close(void* handle);
-        extern(linkname: "dlsym") void* sym(void* handle, char* name);
-        extern(linkname: "dlerror") char* error();
+            extern(linkname: "dlopen") void* __open(char* filename, int flags);
+            (inline) void* open(char* filename) => std::library::__open(filename, std::library::RtldLazy);
+            extern(linkname: "dlclose") int close(void* handle);
+            extern(linkname: "dlsym") void* sym(void* handle, char* name);
+            extern(linkname: "dlerror") char* error();
+        }
     }
-}
+};
+
+@if((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64")) {
+    import <std/sysc>
+
+    namespace std {
+        namespace library {
+            alias RtldLazy = 0x00001;
+        
+            void* open(char* filename) => std::winapi::LoadLibrary(filename);
+            int close(void* handle) {
+                std::winapi::FreeLibrary(handle);
+            } => 0;
+            void* sym(void* handle, char* name) => std::winapi::GetProcAddress(handle, name);
+            char* error => null;
+        }
+    }
+};

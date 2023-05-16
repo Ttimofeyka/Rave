@@ -340,6 +340,9 @@ the result of a call with the same parameters and the same number will be the sa
         namespace winapi {
             extern(stdcall, linkname: "MessageBoxA") int MessageBoxA(void* h, const(char)* s, const(char)* s2, uint d);
             extern(stdcall, linkname: "ExitProcess") void ExitProcess(int v);
+            extern(stdcall, linkname: "LoadLibraryA") void* LoadLibrary(const(char)* name);
+            extern(stdcall, linkname: "FreeLibrary") void FreeLibrary(void* library);
+            extern(stdcall, linkname: "GetProcAddress") void* GetProcAddress(void* library, const(char)* name);
         }
     }
 };
