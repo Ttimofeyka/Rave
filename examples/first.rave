@@ -2,4 +2,6 @@ import <std/io> <std/library>
 
 void main {
     void* lib = std::library::open("user32.dll");
+    void(void*,const(char)*,const(char)*,uint) msgb = std::library::sym(lib, "MessageBoxA");
+    msgb(null, "Jam", "Jamal", 0);
 }

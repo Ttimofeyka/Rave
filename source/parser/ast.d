@@ -287,6 +287,7 @@ class LLVMGen {
         }
         if(t.instanceof!TypeVoid) return LLVMVoidTypeInContext(Generator.Context);
         if(TypeFunc f = t.instanceof!TypeFunc) {
+            if(f.main.instanceof!TypeVoid) f.main = new TypeBasic(BasicType.Bool);
             LLVMTypeRef[] types;
             foreach(ty; f.args) {
                 types ~= Generator.GenerateType(ty,loc);
@@ -296,7 +297,7 @@ class LLVMGen {
                     Generator.GenerateType(f.main,loc),
                     types.ptr,
                     cast(uint)types.length,
-                    (f.main.instanceof!TypeVoid ? true : false)
+                    false
                 ),
                 0
             );
@@ -1386,7 +1387,10 @@ class NodeBinary : Node {
                     val = LLVMBuildFPCast(Generator.Builder,val,ty,toStringz("floatc_"));
                 }
                 else if(ty != LLVMTypeOf(val)) {
-                    Generator.error(loc,"The variable '"~i.name~"' with type '"~Generator.typeToString(ty)~"' is incompatible with value type '"~Generator.typeToString(LLVMTypeOf(val))~"'!");
+                    if(LLVMGetTypeKind(ty) == LLVMPointerTypeKind && LLVMTypeOf(val) == LLVMPointerType(LLVMInt8TypeInContext(Generator.Context),0)) {
+                        val = LLVMBuildPointerCast(Generator.Builder, val, ty, toStringz("ptrc_"));
+                    }
+                    else Generator.error(loc,"The variable '"~i.name~"' with type '"~Generator.typeToString(ty)~"' is incompatible with value type '"~Generator.typeToString(LLVMTypeOf(val))~"'!");
                 }
 
                 return LLVMBuildStore(
