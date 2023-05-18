@@ -54,7 +54,8 @@ Remove-Item -Path "./llvm_installer.exe" -Force
 Remove-Item -Path "./dlang_installer.exe" -Force
 
 Set-Content "./options.json" '{
-    "compiler": "clang"
+    "compiler": "clang",
+    "linker": "ld"
 }
 
 '

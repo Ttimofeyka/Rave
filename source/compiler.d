@@ -267,7 +267,9 @@ class Compiler {
         linkString ~= " "~opts.linkparams;
 
         if(outtype != "") {
-            if(options.object["compiler"].str.indexOf("gcc") == -1) linkString = linkString~"-target "~outtype~" ";
+            if(options.object["compiler"].str.indexOf("gcc") == -1) {
+                linkString = linkString~"-target "~outtype~" -fuse-ld="~options.object["linker"].str~" ";
+            }
         }
 
         if(!_libraries.empty) {
