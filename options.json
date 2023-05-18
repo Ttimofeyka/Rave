@@ -1,4 +1,3 @@
 {
-    "compiler": "clang-11",
-    "linker": "ld"
+    "compiler": "clang-11"
 }
