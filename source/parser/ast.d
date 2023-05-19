@@ -24,6 +24,7 @@ import parser.parser : Parser;
 import app : CompOpts;
 import std.bigint;
 import app : ver;
+import std.random : uniform;
 
 Node[string] AliasTable;
 NodeFunc[string] FuncTable;
@@ -5591,6 +5592,23 @@ class NodeBuiltin : Node {
         assert(0);
     }
 
+    BigInt asConstLong(int n) {
+        BigInt result = 0;
+        if(NodeIden id = args[n].instanceof!NodeIden) {
+            string nam = id.name;
+            while(nam.into(AliasTable)) {
+                Node node = AliasTable[nam];
+                if(NodeIden _id = node.instanceof!NodeIden) nam = _id.name;
+                else if(NodeInt _int = node.instanceof!NodeInt) {
+                    result = _int.value;
+                    nam = "";
+                }
+            }
+        }
+        else if(NodeInt _int = args[n].instanceof!NodeInt) result = _int.value;
+        return result;
+    }
+
     string getAliasName(int n) {
         if(NodeIden id = args[n].instanceof!NodeIden) return id.name;
         else if(NodeString str = args[n].instanceof!NodeString) return str.value;
@@ -5646,6 +5664,15 @@ class NodeBuiltin : Node {
                     }
                 }
                 return null;
+            case "random":
+                BigInt minimum = asConstLong(0);
+                BigInt maximum = asConstLong(1);
+                BigInt _rand = uniform!"[]"(cast(long)minimum, cast(long)maximum);
+                if(maximum >= int.max) {
+                    if(maximum >= long.max) return LLVMConstIntOfString(LLVMInt128TypeInContext(Generator.Context), toStringz(_rand.toDecimalString()), 10);
+                    return LLVMConstIntOfString(LLVMInt64TypeInContext(Generator.Context), toStringz(_rand.toDecimalString()), 10);
+                }
+                return LLVMConstIntOfString(LLVMInt64TypeInContext(Generator.Context), toStringz(_rand.toDecimalString()), 10);
             case "isConstType":
                 if(asType(0).ty.instanceof!TypeConst) return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),1,false);
                 return LLVMConstInt(LLVMInt1TypeInContext(Generator.Context),0,false);
@@ -5898,6 +5925,10 @@ class NodeBuiltin : Node {
     override Node comptime() {
         name = name.strip();
         switch(name) {
+            case "random":
+                BigInt minimum = asConstLong(0);
+                BigInt maximum = asConstLong(1);
+                return new NodeInt(uniform!"[]"(cast(long)minimum, cast(long)maximum));
             case "argsLength":
                 return new NodeInt(FuncTable[currScope.func].args.length);
             case "typeToString":
