@@ -141,33 +141,6 @@ Example:
 @compileAndLink("<std/io>");
 ```
 
-### Compile-time arguments
-
-**@getCurrArg(type)** - Get the value of the current argument, leading to the required type.
-
-Example:
-
-```d
-(ctargs) int sumOfTwo {
-    int one = @getCurrArg(0, int);
-    int two = @getArg(1, int);
-} => one+two;
-```
-
-**@getCurrArgType()** - Get the type of the current argument.
-
-Example:
-
-```d
-(ctargs) int bow {
-    @if(@typesIsEquals(@getCurrArgType(), int)) {
-        @echo("INT");
-    };
-}
-```
-
-**@getArg(n, type), @getArgType(n)** - Functions similar to the top two, except for the need to add an argument number.
-
 **@typeToString(type)** - Convert the type to a string.
 
 Example:
@@ -218,3 +191,30 @@ void two(int one, int _two) => one + _two;
     @callWithArgs(2, two);
 }
 ```
+
+### Compile-time arguments
+
+**@getCurrArg(type)** - Get the value of the current argument, leading to the required type.
+
+Example:
+
+```d
+(ctargs) int sumOfTwo {
+    int one = @getCurrArg(0, int);
+    int two = @getArg(1, int);
+} => one+two;
+```
+
+**@getCurrArgType()** - Get the type of the current argument.
+
+Example:
+
+```d
+(ctargs) int bow {
+    @if(@typesIsEquals(@getCurrArgType(), int)) {
+        @echo("INT");
+    };
+}
+```
+
+**@getArg(n, type), @getArgType(n)** - Functions similar to the top two, except for the need to add an argument number.
