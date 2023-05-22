@@ -245,7 +245,7 @@ class NodeChar : Node {
     }
 
     override Type getType() {
-        return new TypeBasic(BasicType.Char);
+        return new TypeBasic((isWide ? BasicType.Uint : BasicType.Char));
     }
 
     override LLVMValueRef generate() {
