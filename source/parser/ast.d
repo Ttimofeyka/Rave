@@ -4763,24 +4763,6 @@ class NodeUsing : Node {
     }
 }
 
-class NodeNull : Node {
-    Type maintype;
-    LLVMTypeRef llvmtype;
-
-    this() {}
-
-    override void check() {
-        this.isChecked = true;
-    }
-
-    override Type getType() {return maintype;}
-    override LLVMValueRef generate() {
-        if(maintype !is null) return LLVMConstNull(Generator.GenerateType(maintype,-5));
-        if(llvmtype !is null) return LLVMConstNull(llvmtype);
-        return LLVMConstNull(LLVMPointerType(LLVMInt8TypeInContext(Generator.Context),0));
-    }
-}
-
 class MacroGetArg : Node {
     int number;
     int loc;
