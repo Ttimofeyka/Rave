@@ -1,7 +1,5 @@
 import <std/io> <std/library>
 
 void main {
-    int jam = @random(0,100);
-    int jam2 = @random(0,100);
-    std::println(jam, " ", jam2);
+    std::println("Hello!"w);
 }

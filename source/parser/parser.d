@@ -13,7 +13,7 @@ import lexer.tokens;
 import core.stdc.stdlib : exit;
 import std.stdio : writeln;
 import parser.types;
-import parser.ast;
+import parser.ast, parser.nodes.constants;
 import std.container : SList;
 import app : files;
 import std.conv : parse;

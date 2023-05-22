@@ -9,6 +9,15 @@
     }
 };
 
+@if((__RAVE_OS != "LINUX") || (@aliasExists(__RAVE_USELIBC))) {
+    namespace std {
+        namespace process {
+            extern(linkname: "getpid") int getPID();
+            extern(linkname: "getppid") int getPPID();
+        }
+    }
+};
+
 @if(__RAVE_OS == "LINUX") {
     import <std/sysc>
 
@@ -30,15 +39,6 @@
             alias cloneChildClearTID = 0x00200000;
 
             (vararg, inline) int clone(int(void*) fn, void* stack, int flags, void* arg) => cast(int)std::syscall(std::sysctable::Clone, fn, stack, flags, arg);
-        }
-    }
-};
-
-@if((__RAVE_OS != "LINUX") || (@aliasExists(__RAVE_USELIBC))) {
-    namespace std {
-        namespace process {
-            extern(linkname: "getpid") int getPID();
-            extern(linkname: "getppid") int getPPID();
         }
     }
 };

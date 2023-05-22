@@ -162,7 +162,7 @@ namespace std {
                         @if(@typesIsNequals(@getCurrArgType(),short*)) {
                             @if(@typesIsNequals(@getCurrArgType(),int*)) {
                                 @if(@typesIsNequals(@getCurrArgType(),long*)) {
-                                
+                                    
                                 };
                                 @if(@typesIsEquals(@getCurrArgType(),long*)) {
                                     std::scanf("%ld", @getCurrArg(long*));

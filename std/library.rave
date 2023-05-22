@@ -19,12 +19,12 @@
         namespace library {
             alias RtldLazy = 0x00001;
         
-            void* open(char* filename) => std::winapi::LoadLibrary(filename);
-            int close(void* handle) {
+            (inline) void* open(char* filename) => std::winapi::LoadLibrary(filename);
+            (inline) int close(void* handle) {
                 std::winapi::FreeLibrary(handle);
             } => 0;
-            void* sym(void* handle, char* name) => std::winapi::GetProcAddress(handle, name);
-            char* error => null;
+            (inline) void* sym(void* handle, char* name) => std::winapi::GetProcAddress(handle, name);
+            (inline) char* error => null;
         }
     }
 };
