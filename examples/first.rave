@@ -1,5 +1,14 @@
 import <std/io> <std/library>
 
+struct Jamal {
+    std::string a;
+
+    Jamal this(std::string b) {
+        this.a = b;
+    } => this;
+}
+
 void main {
-    std::println("Hello!"w);
+    Jamal jam = Jamal(std::string("Hello!"));
+    std::println(jam.a.length);
 }
