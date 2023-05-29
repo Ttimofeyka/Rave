@@ -331,6 +331,45 @@ the result of a call with the same parameters and the same number will be the sa
             }
         }
     };
+
+    if(__RAVE_PLATFORM == "MIPS64") {
+        namespace std {
+            extern(linkname: "syscall", vararg) void* syscall(int number);
+        }
+
+        namespace std {
+            namespace sysctable {
+                alias Read = 5000;
+                alias Write = 5001;
+                alias OpenAt = 5247;
+                alias Close = 5003;
+                alias RenameTo = 5254;
+                alias UnlinkAt = 5085;
+                alias FStat = 5433;
+
+                alias Exit = 5057;
+                alias Reboot = 5164;
+                alias GetCwd = 5077;
+
+
+                alias Socket = 5040;
+                alias Bind = 5048;
+                alias Shutdown = 5028;
+                alias Listen = 5049;
+                alias Connect = 5436;
+                alias GetSockName = 5050;
+                alias Accept4 = 5293;
+                alias RecvFrom = 5044;
+                alias SendTo = 5043;
+
+                alias GetPID = 5109;
+                alias GetPPID = 5108;
+                alias Clone = 5055;
+
+                alias ClockGetTime = 5222;
+            }
+        }
+    };
 };
 
 @if((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64")) {
