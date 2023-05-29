@@ -17,7 +17,7 @@ else
         echo Debian-based detected.
         echo For compatibility, LLVM-11 is being installed.
         echo If desired, you can later install other versions of LLVM at your discretion.
-        sudo apt install llvm-11 llvm-11-dev clang-11
+        sudo apt install llvm-11 llvm-11-dev clang-11 lld-11 gcc-mingw-w64 binutils-mingw-w64
         wget https://downloads.dlang.org/releases/2.x/2.103.0/dmd_2.103.0-0_amd64.deb
         sudo dpkg -i dmd_2.103.0-0_amd64.deb
         rm dmd_2.103.0-0_amd64.deb

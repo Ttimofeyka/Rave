@@ -27,6 +27,10 @@ If the installer does not work well on your system, you can try to install all t
 
 After install write `dub build` in the Rave directory.
 
+### Cross-compilation programs from Linux for Windows
+
+You just need to set the compiler "i686-w64-mingw32-gcc-win32" in options.json, and add "-t i686-win32" to your build command.
+
 ## Reference
 
 The reference is in `reference` directory.

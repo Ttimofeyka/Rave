@@ -1,14 +1,5 @@
 import <std/io> <std/library>
 
-struct Jamal {
-    std::string a;
-
-    Jamal this(std::string b) {
-        this.a = b;
-    } => this;
-}
-
 void main {
-    Jamal jam = Jamal(std::string("Hello!"));
-    std::println(jam.a.length);
+    std::println("Hello, world!");
 }
