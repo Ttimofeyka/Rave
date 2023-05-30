@@ -332,7 +332,7 @@ the result of a call with the same parameters and the same number will be the sa
         }
     };
 
-    if(__RAVE_PLATFORM == "MIPS64") {
+    @if(__RAVE_PLATFORM == "MIPS64") {
         namespace std {
             extern(linkname: "syscall", vararg) void* syscall(int number);
         }
@@ -350,7 +350,6 @@ the result of a call with the same parameters and the same number will be the sa
                 alias Exit = 5057;
                 alias Reboot = 5164;
                 alias GetCwd = 5077;
-
 
                 alias Socket = 5040;
                 alias Bind = 5048;
