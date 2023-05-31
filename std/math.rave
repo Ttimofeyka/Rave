@@ -8,8 +8,8 @@ namespace std {
     (inline) double degToRad(double d) => d * std::math::PI / 180;
     (inline) double radToDeg(double r) => r * 180 / std::math::PI;
 
-    int factorial(int n) {
-        int fact = 1;
+    long factorial(int n) {
+        long fact = 1;
         int i = 1;
         while(i <= n) {
             fact = fact * i;

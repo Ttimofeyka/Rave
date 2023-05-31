@@ -1,4 +1,4 @@
-import <std/io> <std/library>
+import <std/io>
 
 void main {
     std::println("Hello, world!");

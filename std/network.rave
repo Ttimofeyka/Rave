@@ -1,4 +1,4 @@
-@if((__RAVE_OS == "LINUX") && (!@aliasExists(__RAVE_USELIBC))) {
+@if((__RAVE_OS == "LINUX")) {
 
     namespace std {
         namespace network {
@@ -8,6 +8,7 @@
             alias ShutRD = 0;
             alias ShutWR = 1;
             alias ShutRDWR = 2;
+            alias InAddrAll = 0;
 
             struct sockaddr {
                 int sa_family;
@@ -25,9 +26,9 @@
             }
 
             struct sockaddr_in {
-            int sa_family;
-            short sin_port;
-            std::network::in_addr sin_addr;
+                int sa_family;
+                short sin_port;
+                std::network::in_addr sin_addr;
             }
         }
     }
@@ -67,6 +68,8 @@
                 netshortptr[0] = nptr[1];
                 netshortptr[1] = nptr[0];
             } => netshort;
+
+            extern(linkname: "htonl") uint htonl(uint host);
 
             extern(linkname: "inet_addr") int inetAddr(char* ip);
         }
