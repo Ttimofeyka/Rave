@@ -363,6 +363,24 @@ namespace std {
             std::string sbuf = std::string(buf);
             std::free(buf);
         } => sbuf;
+        (inline) std::string fromDouble6(double n) {
+            char* buf = std::malloc(128);
+            libc::cformat(buf,"%.6f",n);
+            std::string sbuf = std::string(buf);
+            std::free(buf);
+        } => sbuf;
+        (inline) std::string fromDouble7(double n) {
+            char* buf = std::malloc(128);
+            libc::cformat(buf,"%.7f",n);
+            std::string sbuf = std::string(buf);
+            std::free(buf);
+        } => sbuf;
+        (inline) std::string fromDouble8(double n) {
+            char* buf = std::malloc(128);
+            libc::cformat(buf,"%.8f",n);
+            std::string sbuf = std::string(buf);
+            std::free(buf);
+        } => sbuf;
 
         (inline) std::string fromUNumber(long n) {
             char* buf = std::malloc((std::lengthOfNumber(n)*2)+2);

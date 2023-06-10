@@ -28,9 +28,12 @@ namespace std {
     } => std::math::abs(d1) * sign;
 
     double floor(double f) {
-        double tmp = (cast(double)(cast(long)f));
-        if(tmp < 0) tmp = tmp - 1.0;
-    } => tmp;
+        double result = f;
+        if((f == f) && (f != std::math::NAN)) {
+            result = (cast(double)(cast(long)f));
+            if((result < 0) && (result != f)) result = result - 1.0;
+        }
+    } => result;
 
     double ceil(double d) => -(std::math::floor(-d));
 
