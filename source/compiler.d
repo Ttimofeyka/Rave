@@ -105,7 +105,10 @@ class Compiler {
         else if(outtype.indexOf("sparc") != -1) __RAVE_PLATFORM = "SPARC";
         else if(outtype.indexOf("s390x") != -1) __RAVE_PLATFORM = "S390X";
         else if(outtype.indexOf("wasm") != -1) __RAVE_PLATFORM = "WASM";
-        else if(outtype.indexOf("avr") != -1) __RAVE_PLATFORM = "AVR";
+        else if(outtype.indexOf("avr") != -1) {
+            __RAVE_PLATFORM = "AVR";
+            __RAVE_OS = "ARDUINO";
+        }
 
         content = "alias __RAVE_PLATFORM = \""~__RAVE_PLATFORM~"\"; ";
         

@@ -53,7 +53,7 @@ namespace std {
                     tokens.add(std::json::token(std::json::SetVal,":")); i += 1;
                 }
                 else if(std::ascii::isDigit(str[i])) {
-                    std::string buffer = std::string("");
+                    std::string buffer = "";
 
                     while(std::ascii::isDigit(str[i]) && i<length) {
                         buffer.add(str[i]);
@@ -68,7 +68,7 @@ namespace std {
                 else if(str[i] == '\t') i += 1;
                 else if(str[i] == '"') {
                     i += 1;
-                    std::string buffer = std::string("");
+                    std::string buffer =  "";
 
                     while((str[i] != '"') && i<length) {
                         buffer.add(str[i]);

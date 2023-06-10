@@ -25,7 +25,7 @@
     }
 };
 
-@if((@aliasExists(__RAVE_USELIBC)) || (__RAVE_OS == "DARWIN")) {
+@if((@aliasExists(__RAVE_USELIBC)) || (__RAVE_OS == "DARWIN") || (__RAVE_OS == "ARDUINO")) {
     namespace std {
         extern(linkname: "exit") void exit(int code);
     }

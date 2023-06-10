@@ -41,6 +41,12 @@
     }
 }
 
+@if((__RAVE_PLATFORM == "AVR") || (__RAVE_PLATFORM == "WASM") || (__RAVE_PLATFORM == "UNKNOWN")) {
+    struct va_list {
+        void* v;
+    }
+};
+
 extern(linkname:"llvm.va_start") void __builtin_va_start(void* va);
 extern(linkname:"llvm.va_end") void __builtin_va_end(void* va);
 extern(linkname:"llvm.va_copy") void __builtin_va_copy(void* dest, void* src);

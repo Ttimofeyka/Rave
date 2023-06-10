@@ -16,6 +16,8 @@ namespace std {
                 i += 1;
             }
         } => len;
+        (inline) bool isSpace(uint c) => (c == ' ') || (c == '\r') || (c == '\t') || (c == '\n') || (c == '\v');
+        (inline) bool isDigit(uint c) => (c == '0') || (c == '1') || (c == '2') || (c == '3') || (c == '4') || (c == '5') || (c == '6') || (c == '7') || (c == '8') || (c == '9');
     }
     struct ustring {
         uint* data;
