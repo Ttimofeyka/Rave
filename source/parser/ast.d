@@ -4870,6 +4870,8 @@ class NodeBuiltin : Node {
             else _t = b.comptime().instanceof!NodeType.ty.copy();
             return new NodeType(_t,loc);
         }
+        if(NodeInt _int = args[n].instanceof!NodeInt) return new NodeType(new TypeBasic(_int.ty), -1);
+        if(NodeFloat _float = args[n].instanceof!NodeFloat) return new NodeType(_float.ty, -1);
         assert(0);
     }
 
