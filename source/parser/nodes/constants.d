@@ -20,6 +20,7 @@ import std.bigint;
 import app : ver;
 import std.random : uniform;
 import parser.ast : Node, into, checkError, countOf, Generator;
+import std.utf;
 
 class NodeNone : Node {}
 
@@ -232,10 +233,10 @@ class NodeString : Node {
 }
 
 class NodeChar : Node {
-    char value;
+    string value;
     bool isWide = false;
 
-    this(char value, bool isWide = false) {
+    this(string value, bool isWide = false) {
         this.value = value;
         this.isWide = isWide;
     }
@@ -249,8 +250,12 @@ class NodeChar : Node {
     }
 
     override LLVMValueRef generate() {
-        if(!isWide) return LLVMConstInt(LLVMInt8TypeInContext(Generator.Context),to!ulong(value),false);
-        return LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),to!ulong(value),false);
+        if(!isWide) return LLVMConstInt(LLVMInt8TypeInContext(Generator.Context), to!ulong(value[0]), 10);
+        if(value.length > 1) {
+            size_t i;
+            return LLVMConstInt(LLVMInt32TypeInContext(Generator.Context), to!ulong(value.decode(i)), 10);
+        }
+        return LLVMConstInt(LLVMInt32TypeInContext(Generator.Context), to!ulong(value[0]), 10);
     }
 
     override void debugPrint() {

@@ -419,11 +419,11 @@ class Parser {
         if(t.type == TokType.Char) {
             if(peek().type == TokType.Identifier && peek().value == "w") {
                 next();
-                NodeChar ch = new NodeChar(to!char(tokens[_idx-2].value));
+                NodeChar ch = new NodeChar(tokens[_idx-2].value);
                 ch.isWide = true;
                 return ch;
             }
-            return new NodeChar(to!char(t.value));
+            return new NodeChar(t.value);
         }
         if(t.type == TokType.Identifier) {
             if(t.value == "cast") {

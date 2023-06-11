@@ -31,7 +31,7 @@ class Lexer {
         return text[_idx];
     }
     
-    private char replaceAllEscapesInChar(string str) {
+    private string replaceAllEscapesInChar(string str) {
         string newchar = 
             str.replace("\\n","\n")
             .replace("\\r","\r")
@@ -41,9 +41,9 @@ class Lexer {
             .replace("\\\"","\"")
             .replace("\\'","'");
         if(newchar[0] == '\\') {
-            return cast(char)(str[1..$]).to!int(8);
+            return to!string(cast(char)(str[1..$]).to!int(8));
         }
-        return to!char(newchar);
+        return newchar;
     }
 
     private string getNumEscape() {
