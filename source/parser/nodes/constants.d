@@ -198,6 +198,13 @@ class NodeString : Node {
     }
 
     override LLVMValueRef generate() {
+        LLVMValueRef getWide(string s) {
+            if(value.length > 1) {
+                size_t i;
+                return LLVMConstInt(LLVMInt32TypeInContext(Generator.Context), to!ulong(s.decode(i)), 10);
+            }
+            return LLVMConstInt(LLVMInt32TypeInContext(Generator.Context), to!ulong(s[0]), 10);
+        }
         LLVMValueRef globalstr;
         if(isWide) {
             globalstr = LLVMAddGlobal(
@@ -216,7 +223,17 @@ class NodeString : Node {
         LLVMSetLinkage(globalstr, LLVMPrivateLinkage);
         if(!isWide) LLVMSetAlignment(globalstr, 1);
         else LLVMSetAlignment(globalstr, 4);
-        LLVMSetInitializer(globalstr, LLVMConstStringInContext(Generator.Context, toStringz(value), cast(uint)value.length, false));
+
+        if(!isWide) LLVMSetInitializer(globalstr, LLVMConstStringInContext(Generator.Context, toStringz(value), cast(uint)value.length, false));
+        else {
+            LLVMValueRef[] vals;
+            foreach(dchar n; value.byUTF!dchar()) {
+                vals ~= getWide(to!string(n));
+            }
+            vals ~= LLVMConstInt(LLVMInt32TypeInContext(Generator.Context), to!ulong('\0'), 10);
+            LLVMSetInitializer(globalstr, LLVMConstArray(LLVMInt32TypeInContext(Generator.Context), vals.ptr, cast(uint)vals.length));
+        }
+
         return LLVMConstInBoundsGEP(
             globalstr,
             [

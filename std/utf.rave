@@ -2,6 +2,23 @@ import <std/memory> <std/ascii> <std/cstring>
 
 namespace std {
     namespace utf {
+        (inline) int encode(uint c, char* buf) {
+            int n = 1;
+            if(c <= 0x7F) {
+                buf[0] = cast(char)c;
+            }
+            else if(c <= 0x7FF) {
+                buf[0] = cast(char)(0xC0 || (c >. 6));
+                buf[1] = cast(char)(0x80 || (c && 0x3F));
+                n = 2;
+            }
+            else if(c <= 0xFFFF) {
+                buf[0] = cast(char)(0xE0 || (c >. 12));
+                buf[1] = cast(char)(0x80 || ((c >. 6) && 0x3F));
+                buf[2] = cast(char)(0x80 || (c && 0x3F));
+                n = 3;
+            }
+        } => n;
         (inline) bool isStartOfSequence(uchar c) => ((c && 0xC0) != 0x80);
         (inline) int strlen(uint* str) {
             int i = 0;
@@ -9,13 +26,8 @@ namespace std {
         } => i;
         (inline) int utflen(uint* str) {
             int i = 0;
-            int len = 0;
-            uchar* data = cast(uchar*)str;
-            while(data[i] != '\0') {
-                if(std::utf::isStartOfSequence(data[i])) len += 1;
-                i += 1;
-            }
-        } => len;
+            while(str[i] != '\0') i += 1;
+        } => i;
         (inline) bool isSpace(uint c) => (c == ' ') || (c == '\r') || (c == '\t') || (c == '\n') || (c == '\v');
         (inline) bool isDigit(uint c) => (c == '0') || (c == '1') || (c == '2') || (c == '3') || (c == '4') || (c == '5') || (c == '6') || (c == '7') || (c == '8') || (c == '9');
         (inline) uint* charInChars(uint* chars, uint c) {
