@@ -1,5 +1,9 @@
-import <std/io> <std/utf>
+import <std/io> <std/utf> <std/cstring>
 
 void main {
-    std::println("Hello, Unicode!"w);
+    char* s = "а";
+    std::ustring us = cast(uint*)null;
+    uint c = std::utf::decode(2, s);
+    us.add(c);
+    std::println(std::cstring::strlen(s), " ", us);
 }

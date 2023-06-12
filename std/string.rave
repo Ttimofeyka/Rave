@@ -439,6 +439,12 @@ namespace std {
                                         result.add(buf[1]);
                                         result.add(buf[2]);
                                     }
+                                    else if(n == 4) {
+                                        result.add(buf[0]);
+                                        result.add(buf[1]);
+                                        result.add(buf[2]);
+                                        result.add(buf[3]);
+                                    }
                                 }
                             };
                             @if(@typesIsEquals(@getCurrArgType(),int*)) {

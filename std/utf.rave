@@ -18,7 +18,19 @@ namespace std {
                 buf[2] = cast(char)(0x80 || (c && 0x3F));
                 n = 3;
             }
+            else if(c <= 0x10FFFF) {
+                buf[0] = cast(char)(0xF0 || (c >. 18));
+                buf[1] = cast(char)(0x80 || ((c >. 12) && 0x3F));
+                buf[2] = cast(char)(0x80 || ((c >. 6) && 0x3F));
+                buf[3] = cast(char)(0x80 || (c && 0x3F));
+                n = 4;
+            }
         } => n;
+        (inline) uint decode(int n, char* buf) {
+            uint result;
+            if(n == 1) result = cast(uint)(buf[0]);
+            else result = -1;
+        } => result;
         (inline) bool isStartOfSequence(uchar c) => ((c && 0xC0) != 0x80);
         (inline) int strlen(uint* str) {
             int i = 0;
