@@ -2013,12 +2013,8 @@ class NodeFunc : Node {
 
             string toAdd = typesToString(args);
             if(!(name !in FuncTable)) {
-                if(typesToString(FuncTable[name].args) == toAdd) {
-                    if(name != "std::printf") checkError(loc,"a function with '"~name~"' name already exists on "~to!string(FuncTable[name].loc+1)~" line!");
-                }
-                else {
-                    name ~= toAdd;
-                }
+                if(typesToString(FuncTable[name].args) == toAdd) checkError(loc,"a function with '"~name~"' name already exists on "~to!string(FuncTable[name].loc+1)~" line!");
+                else name ~= toAdd;
             }
             FuncTable[name] = this;
             for(int i=0; i<block.nodes.length; i++) {
@@ -2039,7 +2035,6 @@ class NodeFunc : Node {
                 return getParameters(callconv);
             }
             else if(args[i].type.instanceof!TypeStruct) {
-                //p ~= Generator.GenerateType(new TypePointer(args[i].type),loc);
                 if(!args[i].type.instanceof!TypeStruct.name.into(Generator.toReplace)) {
                     string oldname = args[i].name;
                     args[i].name = "_RaveStructArgument"~oldname;
@@ -2099,12 +2094,13 @@ class NodeFunc : Node {
                 case "inline": isInline = true; break;
                 case "linkname": linkName = mods[i].value; break;
                 case "pure": isPure = true; break;
-                case "ctargs": isCtargs = true; return null;
+                case "ctargs": isCtargs = true; break;
                 case "comdat": isComdat = true; break;
                 case "safe": isSafe = true; break;
                 case "nochecks": isNoChecks = true; break;
                 default: if(mods[i].name[0] == '@') _builtins[mods[i].name[1..$]] = mods[i]._genValue.instanceof!NodeBuiltin; break;
             }
+            if(isCtargs) return null;
         }
 
         auto oldReplace = Generator.toReplace.dup;

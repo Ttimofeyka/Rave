@@ -1,9 +1,7 @@
 import <std/io> <std/utf> <std/cstring>
 
 void main {
-    char* s = "а";
-    std::ustring us = cast(uint*)null;
-    uint c = std::utf::decode(2, s);
-    us.add(c);
-    std::println(std::cstring::strlen(s), " ", us);
+    void* jamal = std::malloc(1);
+    void* jamal2 = std::malloc(1);
+    std::delete(jamal, jamal2);
 }

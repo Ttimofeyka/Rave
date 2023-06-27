@@ -32,6 +32,11 @@ namespace std {
             dest[i] = cast(char)c;
         }
     } => dest;
+    (nochecks, inline, ctargs) void delete {
+        @foreachArgs() {
+            std::free(@getCurrArg(void*));
+        };
+    }
     extern(linkname: "llvm.frameaddress.p0i8") void* frameAddress(int level);
     extern(linkname: "llvm.eh.sjlj.setjmp") int setjmp(char* buff);
 
