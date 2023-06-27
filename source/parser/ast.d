@@ -5291,6 +5291,10 @@ class NodeBuiltin : Node {
                     }
                 }
                 return new NodeBool(false);
+            case "isStructure":
+                Type isSType = asType(0).ty;
+                if(isSType.instanceof!TypeStruct) return new NodeBool(true);
+                return new NodeBool(false);
             case "aliasExists":
                 return new NodeBool(getAliasName(0).into(AliasTable));
             case "setCustomFree":
