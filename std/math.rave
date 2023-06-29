@@ -77,11 +77,32 @@ namespace std {
 
     (inline) double log(double x) => std::math::loge(x) / std::math::loge(10.0);
 
-    extern(linkname: "acosf") float acos(float f);
+    double sqrt(double d) {
+        double result = 1.0;
+        for(int i=0; i<=10; i+=1) {
+            result = result - (result * result - d) / (2 * result);
+        }
+    } => result;
+
+    double acos(double d) {
+        float negate = cast(float)(d < 0.0);
+        d = std::math::abs(d);
+        double result = -0.0187293;
+        result = result * d;
+        result = result + 0.0742610;
+        result = result * d;
+        result = result - 0.2121144;
+        result = result * d;
+        result = result + 1.5707288;
+        result = result * std::math::sqrt(1.0-d);
+        result = result - 2 * negate * result;
+    } => ((negate * std::math::PI) + result);
+
     extern(linkname: "acoshf") float acosh(float f);
     extern(linkname: "asinf") float asin(float f);
     extern(linkname: "asinhf") float asinh(float f);
     extern(linkname: "atanhf") float atanh(float f);
+    extern(linkname: "erf") double erf(double d);
 
     double pow(double f, double f2) {
         double result;
@@ -135,15 +156,6 @@ namespace std {
     } => c;
 
     double cosh(double d) => std::math::coshn(d, 100);
-
-    double sqrt(double d) {
-        double result = 1.0;
-        for(int i=0; i<=10; i+=1) {
-            result = result - (result * result - d) / (2 * result);
-        }
-    } => result;
-    
-    extern(linkname: "erf") double erf(double d);
 
     char sign(double x) {
         char result = 0;
@@ -201,17 +213,17 @@ namespace std {
     } => x;
 
     bool isPrime(int number) {
-        bool toret = true;
+        bool result = true;
         int i = 2;
 
         bool active = true;
         while((i<number) && active) {
             if((number % i == 0) && (i != number)) {
-                toret = false;
+                result = false;
                 active = false;
             }
             i += 1;
         }
-    } => toret;  
+    } => result;  
   }
 }
