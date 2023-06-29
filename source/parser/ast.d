@@ -5287,7 +5287,7 @@ class NodeBuiltin : Node {
                 return new NodeBool(one.toString() != two.toString());
             case "sizeOf":
                 Type t = asType(0).ty;
-                return new NodeInt(cast(ulong)t.getSize());
+                return new NodeInt(cast(ulong)t.getSize() / 8);
             case "isNumeric":
                 Type isNType = asType(0).ty;
                 if(isNType.instanceof!TypeBasic) {
