@@ -34,7 +34,7 @@ namespace std {
 };
 
 namespace std {
-    namespace utf {
+    namespace utf32 {
         (inline) int encode(uint c, char* buf) {
             int n = 1;
             if(c <= 0x7F) {
@@ -119,15 +119,52 @@ namespace std {
                 // TODO: add completely support of cyrillic
             }
         } => tmp;
+        
+        ushort* toUtf16(uint* codepoints) {
+            ushort* result;
+            int len = 0;
+
+            for(int i=0; codepoints[i]!='\0'; i+=1) {
+                if(codepoints[i] < 0x10000) len += 1;
+                else if(codepoints[i] <= 0x10FFFF) len += 2;
+                else len += 1;
+            }
+
+            if(len > 0) {
+                result = std::malloc(len + @sizeOf(ushort));
+                len = 0;
+
+                for(int i=0; codepoints[i]!='\0'; i+=1) {
+                    if (codepoints[i] < 0x10000) {
+                        result[len] = cast(ushort)codepoints[i];
+                        len += 1;
+                    }
+                    else if(codepoints[i] <= 0x10FFFF) {
+                        uint cp = codepoints[i];
+                        cp = cp - 0x10000;
+                        result[len] = cast(ushort)((cp >. 10) + 0xD800);
+                        len += 1;
+                        result[len] = cast(ushort)((cp && 0x3FF) + 0xDC00);
+                        len += 1;
+                    }
+                    else {
+                        result[len] = cast(ushort)(0xFFFD);
+                        len += 1;
+                    }
+                }
+            }
+
+            result[len] = '\0';
+        } => result;
     }
-    struct ustring {
+    struct u32string {
         uint* data;
         int length;
         int capacity;
 
-        std::ustring this(uint* a) {
+        std::u32string this(uint* a) {
             if(a != null) {
-                this.length = std::utf::utflen(a);
+                this.length = std::utf32::utflen(a);
                 this.capacity = this.length*4;
                 if(this.capacity == 0) this.capacity = 4;
                 this.data = cast(uint*)std::malloc(this.capacity);
@@ -147,7 +184,7 @@ namespace std {
 
         void set(uint* a) {
             if(a != null) {
-                this.length = std::utf::utflen(a);
+                this.length = std::utf32::utflen(a);
                 this.capacity = this.length*4;
                 if(this.capacity == 0) this.capacity = 4;
                 if(this.data != cast(uint*)null) std::free(cast(void*)this.data);
@@ -196,26 +233,26 @@ namespace std {
         } => needed;
 
 
-        std::ustring ltrim {
+        std::u32string ltrim {
             uint* _c = this.c();
 
             while(std::ascii::isSpace(_c[0])) _c = cast(uint*)((cast(int)_c) + 1);
 
-            std::ustring _s = std::ustring(_c);
+            std::u32string _s = std::u32string(_c);
         } => _s;
 
-        std::ustring rtrim {
+        std::u32string rtrim {
             uint* _c = this.c();
 
-            int i = std::utf::strlen(_c)-1;
+            int i = std::utf32::strlen(_c)-1;
             while(std::ascii::isSpace(_c[i])) i -= 1;
             _c[i+1] = '\0';
 
-            std::ustring _s = std::ustring(_c);
+            std::u32string _s = std::u32string(_c);
         } => _s;
 
-        std::ustring trim {
-            std::ustring _l = this.ltrim();
+        std::u32string trim {
+            std::u32string _l = this.ltrim();
         } => _l.rtrim();
 
         void add(uint c) {
@@ -227,7 +264,7 @@ namespace std {
             this.data[this.length-1] = c;
         }
 
-        void append(std::ustring str) {
+        void append(std::u32string str) {
             int i = 0;
             while(i<str.length) {
                 this.add(str.data[i]);
@@ -236,7 +273,7 @@ namespace std {
         }
 
         void append(uint* cstr) {
-            int len = std::utf::strlen(cstr);
+            int len = std::utf32::strlen(cstr);
             int i = 0;
             while(i<len) {
                 this.add(cstr[i]);
@@ -244,28 +281,28 @@ namespace std {
             }
         }
 
-        std::ustring copy {
-            std::ustring cp = std::ustring(""w);
+        std::u32string copy {
+            std::u32string cp = std::u32string(""w);
             cp.append(*this);
         } => cp;
 
-        std::ustring via(uint c) {
-            std::ustring _cp = this.copy();
+        std::u32string via(uint c) {
+            std::u32string _cp = this.copy();
             _cp.add(c);
         } => _cp;
 
-        std::ustring via(std::ustring s) {
-            std::ustring _cp = this.copy();
+        std::u32string via(std::u32string s) {
+            std::u32string _cp = this.copy();
             _cp.append(s);
         } => _cp;
 
-        std::ustring via(uint* s) {
-            std::ustring _cp = this.copy();
+        std::u32string via(uint* s) {
+            std::u32string _cp = this.copy();
             _cp.append(s);
         } => _cp;
 
-        std::ustring replace(uint c, uint to) {
-            std::ustring temp = this.copy();
+        std::u32string replace(uint c, uint to) {
+            std::u32string temp = this.copy();
 
             int i = 0;
             while(i<this.length) {
@@ -276,12 +313,12 @@ namespace std {
             }
         } => temp;
 
-        std::ustring operator+(std::ustring one, std::ustring two) {
-            std::ustring third = std::ustring(one.c());
+        std::u32string operator+(std::u32string one, std::u32string two) {
+            std::u32string third = std::u32string(one.c());
             third.append(two);
         } => third;
 
-        bool compare(std::ustring another) {
+        bool compare(std::u32string another) {
             bool isEqual = true;
             if(this.length != another.length) {
                 isEqual = false;
@@ -297,7 +334,7 @@ namespace std {
 
         bool compare(uint* another) {
             bool isEqual = true;
-            int len = std::utf::strlen(another);
+            int len = std::utf32::strlen(another);
 
             if(this.length != len) {
                 isEqual = false;
@@ -311,16 +348,16 @@ namespace std {
             }
         } => isEqual;
 
-        bool operator==(std::ustring one, std::ustring two) => one.compare(two);
-        bool operator==(std::ustring one, uint* two) => one.compare(two);
-        bool operator!=(std::ustring one, std::ustring two) => !(one.compare(two));
-        bool operator!=(std::ustring one, uint* two) => !(one.compare(two));
-        void operator=(std::ustring* one, uint* two) {
-            one[0] = std::ustring(two);
+        bool operator==(std::u32string one, std::u32string two) => one.compare(two);
+        bool operator==(std::u32string one, uint* two) => one.compare(two);
+        bool operator!=(std::u32string one, std::u32string two) => !(one.compare(two));
+        bool operator!=(std::u32string one, uint* two) => !(one.compare(two));
+        void operator=(std::u32string* one, uint* two) {
+            one[0] = std::u32string(two);
         }
 
-        std::ustring substring(int from, int to) {
-            std::ustring temp = ""w;
+        std::u32string substring(int from, int to) {
+            std::u32string temp = ""w;
 
             int i = from;
             while(i<to) {

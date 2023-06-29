@@ -424,8 +424,8 @@ namespace std {
                             @if(@typesIsEquals(@getCurrArgType(),bool)) {
                                 result.append(std::cstring::fromBool(@getCurrArg(bool)));
                             };
-                            @if(@typesIsEquals(@getCurrArgType(),std::ustring)) {
-                                std::ustring us = @getCurrArg(std::ustring);
+                            @if(@typesIsEquals(@getCurrArgType(),std::u32string)) {
+                                std::u32string us = @getCurrArg(std::u32string);
                                 for(int i=0; i<us.length; i+=1) {
                                     char[4] buf;
                                     int n = std::utf::encode(us.data[i], &buf[0]);

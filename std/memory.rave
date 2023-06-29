@@ -1,7 +1,18 @@
-namespace std {
-    extern(linkname: "malloc") void* malloc(int size);
+@if(((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64")) && (!@aliasExists(__RAVE_USELIBC))) {
+    namespace std {
+        (inline) void* malloc(uint size) => std::winapi::HeapAlloc(std::winapi::GetProcessHeap(), 0, size);
+        (inline) void free(void* ptr) {std::winapi::HeapFree(std::winapi::GetProcessHeap(), 0, ptr);}
+        (inline) void* realloc(void* ptr, uint newsize) => std::winapi::HeapReAlloc(std::winapi::GetProcessHeap(), 0, ptr, newsize);
+    }
+};
+
+@if(((__RAVE_OS != "WINDOWS32") && (__RAVE_OS != "WINDOWS64")) || (@aliasExists(__RAVE_USELIBC))) {
+    extern(linkname: "malloc") void* malloc(uint size);
     extern(linkname: "free") void free(void* ptr);
-    extern(linkname: "realloc") void* realloc(void* ptr, int newsize);
+    extern(linkname: "realloc") void* realloc(void* ptr, uint newsize);
+};
+
+namespace std {
     (inline) void* calloc(int num, int size) => std::malloc(num*size);
     (nochecks) void* memcpy(void* dest, void* src, int n) {
         for(int i=0; i<n; i+=1) {

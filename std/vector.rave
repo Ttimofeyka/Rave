@@ -14,7 +14,7 @@ namespace std {
 
         void add(T value) {
             if(this.length == this.capacity) {
-                this.data = cast(T*)std::realloc(this.data, 2 * this.capacity * sizeof(T));
+                this.data = cast(T*)std::realloc(this.data, 2 * this.capacity * @sizeOf(T));
                 this.capacity = this.capacity * 2;
             }
             this.data[this.length] = value;
