@@ -1,5 +1,5 @@
-import <std/io> <std/utf> <std/cstring>
+import <std/io> <std/math>
 
 void main {
-    
+    std::println(std::math::cbrt(-8.0))
 }

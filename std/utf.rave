@@ -1,6 +1,12 @@
 import <std/memory> <std/ascii> <std/cstring> <std/vector>
 
 namespace std {
+    namespace utf8 {
+        (inline) bool isStartOfSequence(uchar c) => ((c && 0xC0) != 0x80);
+    }
+}
+
+namespace std {
     namespace utf16 {
         (inline, nochecks) int strlen(ushort* wstr) {
             int i = 0;
@@ -64,7 +70,6 @@ namespace std {
             if(n == 1) result = cast(uint)(buf[0]);
             else result = -1;
         } => result;
-        (inline) bool isStartOfSequence(uchar c) => ((c && 0xC0) != 0x80);
         (inline) int strlen(uint* str) {
             int i = 0;
             while(str[i] != '\0'w) i += 1;
@@ -153,7 +158,6 @@ namespace std {
                     }
                 }
             }
-
             result[len] = '\0';
         } => result;
     }

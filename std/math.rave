@@ -29,7 +29,7 @@ namespace std {
 
     double floor(double f) {
         double result = f;
-        if((f == f) && (f != std::math::NAN)) {
+        if(f != std::math::NAN) {
             result = (cast(double)(cast(long)f));
             if((result < 0) && (result != f)) result = result - 1.0;
         }
@@ -104,8 +104,12 @@ namespace std {
             result = r;
         }
     } => result;
-    
-    extern(linkname: "cbrt") double cbrt(double d);
+
+    double cbrt(double d) {
+        double result;
+        if(d < 0.0) result = (-1.0 * std::math::pow(-1.0*d, 1.0/3.0));
+        else result = std::math::pow(d, 1.0/3.0);
+    } => result;
     
     double cos(double d) {
         while(d < 0.0) d = d + (2.0 * std::math::PI);

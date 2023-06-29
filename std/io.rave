@@ -238,9 +238,7 @@ namespace std {
             bool toret = true;
             if(this.isOpen == false) {
                 libc::File* f = libc::fopen(this.name,"r");
-                if(f == cast(libc::File*)null) {
-                    toret = false;
-                }
+                if(f == cast(libc::File*)null) toret = false;
                 else this.close();
             }
         } => toret;

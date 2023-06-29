@@ -14,6 +14,7 @@ List of possible declarations:
 - pure - Makes the function "clean". A pure function can't change global variables.
 - nochecks - Disables all built-in checks in the function.
 - private - This function/variable will not be imported from other files.
+- noOptimize - Forces the compiler to bypass the function during optimization.
 
 Also, it should be noted that you cannot use the parameter C with linkname, since they interfere with each other.
 

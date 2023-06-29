@@ -7,9 +7,11 @@
 };
 
 @if(((__RAVE_OS != "WINDOWS32") && (__RAVE_OS != "WINDOWS64")) || (@aliasExists(__RAVE_USELIBC))) {
-    extern(linkname: "malloc") void* malloc(uint size);
-    extern(linkname: "free") void free(void* ptr);
-    extern(linkname: "realloc") void* realloc(void* ptr, uint newsize);
+    namespace std {
+        extern(linkname: "malloc") void* malloc(uint size);
+        extern(linkname: "free") void free(void* ptr);
+        extern(linkname: "realloc") void* realloc(void* ptr, uint newsize);
+    }
 };
 
 namespace std {
