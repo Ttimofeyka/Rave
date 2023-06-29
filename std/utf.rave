@@ -1,4 +1,37 @@
-import <std/memory> <std/ascii> <std/cstring>
+import <std/memory> <std/ascii> <std/cstring> <std/vector>
+
+namespace std {
+    namespace utf16 {
+        (inline, nochecks) int strlen(ushort* wstr) {
+            int i = 0;
+            while(wstr[i] != cast(ushort)'\0') i += 1;
+        } => i;
+        (inline, nochecks) int utflen(ushort* wstr) {
+            int bytes = std::utf16::strlen(wstr);
+            int cnt = 0;
+            int pos = 0;
+
+            while(pos < bytes) {
+                ushort codeUnit = wstr[pos];
+                cnt += 1;
+                if((codeUnit >= 0xD800) && (codeUnit <= 0xDBFF)) pos += 2;
+                else pos += 1;
+            }
+        } => cnt;
+    }
+}
+
+@if((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64")) {
+    namespace std {
+        namespace utf16 {
+            (noOptimize) ushort* _fromUtf8(const(char)* str) {
+                int utf16Length = std::winapi::MultiByteToWideChar(65001, 0, str, std::cstring::strlen(str), cast(ushort*)null, 0);
+                ushort* buffer = cast(ushort*)std::malloc(@sizeOf(ushort) * utf16Length);
+                std::winapi::MultiByteToWideChar(65001, 0, str, std::cstring::strlen(str), buffer, utf16Length);
+            } => buffer;
+        }
+    }
+};
 
 namespace std {
     namespace utf {

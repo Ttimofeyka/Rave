@@ -44,6 +44,14 @@ namespace std {
 
         T operator[](std::vector<T>* v, int index) => v.data[index];
 
+        T* c {
+            T* cdata = cast(T*)std::malloc(this.length * sizeof(T) + 1);
+            for(int i=0; i<this.length; i+=1) {
+                cdata[i] = this.data[i];
+            }
+            cdata[this.length] = cast(T)null;
+        } => cdata;
+
         std::vector<T> operator+(std::vector<T> one, std::vector<T> two) {
             std::vector<T> cp = one.copy();
             cp.assign(two);

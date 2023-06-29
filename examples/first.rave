@@ -1,8 +1,5 @@
 import <std/io> <std/utf> <std/cstring>
 
 void main {
-    void* jamal = std::malloc(1);
-    void* jamal2 = std::malloc(1);
-    std::string jamal3 = "";
-    std::delete(jamal, jamal2, jamal3);
+    
 }

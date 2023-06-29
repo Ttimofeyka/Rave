@@ -57,7 +57,7 @@ struct CompOpts {
 	bool noEntry = false;
 	bool noStd = false;
 	bool printAll = false;
-	int optimizeLevel = 0;
+	int optimizeLevel = 1;
     bool isPIE = false;
     bool noPIE = false;
 	bool isPIC = false;

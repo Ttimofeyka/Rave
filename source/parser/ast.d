@@ -1934,6 +1934,7 @@ class NodeFunc : Node {
     bool isNoNamespaces = false;
     bool isNoChecks = false;
     bool isPrivate = false;
+    bool isNoOptimize = false;
 
     string[] templateNames;
     Type[] _templateTypes;
@@ -2098,6 +2099,7 @@ class NodeFunc : Node {
                 case "comdat": isComdat = true; break;
                 case "safe": isSafe = true; break;
                 case "nochecks": isNoChecks = true; break;
+                case "noOptimize": isNoOptimize = true; break;
                 default: if(mods[i].name[0] == '@') _builtins[mods[i].name[1..$]] = mods[i]._genValue.instanceof!NodeBuiltin; break;
             }
             if(isCtargs) return null;
@@ -2137,6 +2139,10 @@ class NodeFunc : Node {
         else if(callconv == 5) LLVMSetFunctionCallConv(Generator.Functions[name],LLVMX86StdcallCallConv);
 
         if(isInline) Generator.addAttribute("alwaysinline",LLVMAttributeFunctionIndex,Generator.Functions[name]);
+        else if(isNoOptimize) {
+            Generator.addAttribute("noinline",LLVMAttributeFunctionIndex,Generator.Functions[name]);
+            Generator.addAttribute("optnone",LLVMAttributeFunctionIndex,Generator.Functions[name]);
+        }
         if(isTemplatePart || isTemplate || isCtargsPart || isComdat) {
             LLVMComdatRef cmr = LLVMGetOrInsertComdat(Generator.Module,toStringz(linkName));
             LLVMSetComdatSelectionKind(cmr,LLVMAnyComdatSelectionKind);
@@ -5069,7 +5075,7 @@ class NodeBuiltin : Node {
                 return null;
             case "sizeOf":
                 Type t = asType(0).ty;
-                return LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),cast(ulong)t.getSize(),false);
+                return LLVMConstInt(LLVMInt32TypeInContext(Generator.Context),cast(ulong)t.getSize() / 8,false);
             case "callWithArgs":
                 Node[] nodes;
                 for(int i=Generator.currentBuiltinArg; i<FuncTable[currScope.func].args.length; i++) {

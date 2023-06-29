@@ -38,13 +38,12 @@ namespace std {
             }
 
             int remove(char* pathname) => std::file::linux::unlinkat(-100, pathname, 0);
-
             int getStat(int fd, std::fstat* buffer) => cast(int)std::syscall(std::sysctable::FStat, fd, buffer);
         }
     }
 };
 
-@if((__RAVE_OS != "LINUX") || (@aliasExists(__RAVE_USELIBC))) {
+@if((__RAVE_OS != "LINUX") || @aliasExists(__RAVE_USELIBC)) {
     namespace std {
         namespace file {
             extern(linkname: "rename") int rename(char* oldpath, char* newpath);
