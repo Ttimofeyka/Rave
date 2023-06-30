@@ -22,6 +22,11 @@ namespace std {
         if(f < 0.0) result = -result;
     } => result;
 
+    (inline) char getsign(double d) {
+        char result = 1;
+        if(d < 0.0) result = -1;
+    } => result;
+
     double copysign(double d1, double d2) {
         char sign = -1;
         if(d2 > 0.0) sign = 1;
@@ -100,10 +105,29 @@ namespace std {
 
     double asin(double x) => 1.5707963267948966 - std::math::sqrt(1.0 - x) * (1.5707288 + (-0.2121144) * x + 0.0742610 * (x * x) + -0.0187293 * (x * x * x));
 
-    extern(linkname: "acoshf") float acosh(float f);
-    extern(linkname: "asinhf") float asinh(float f);
-    extern(linkname: "atanhf") float atanh(float f);
-    extern(linkname: "erf") double erf(double d);
+    double coshn(double d, int n) {
+        double c = 1.0;
+        double f = 1.0;
+        double xp = 1.0;
+        for(int i=1; i<n; i+=1) {
+            f = f * ((2 * i - 1) * (2 * i));
+            xp = xp * (d * d);
+            c += xp / f;
+        }
+    } => c;
+
+    double cosh(double x) => 0.5 * (std::math::exp(x) + std::math::exp(-x));
+    double sinh(double x) => 0.5 * (std::math::exp(x) - std::math::exp(-x));
+    double tanh(double x) => (std::math::exp(2.0*x)-1) / (std::math::exp(2.0*x)+1.0);
+    double acosh(double x) => std::math::log(x+std::math::sqrt((x+1.0)*(x-1.0)));
+    double asinh(double x) => std::math::log(x+std::math::sqrt(x*x+1.0));
+    double atanh(double x) => 0.5 * (std::math::log(1.0+x) - std::math::log(1.0-x));
+
+    double erf(double x) {
+        x = std::math::abs(x);
+        double t = 1.0 / (1.0 + (0.3275911*x));
+        double y = 1.0 - (((((1.061405429*t + (-1.453152027))*t) + 1.421413741)*t + (-0.284496736))*t + 0.254829592)*t*std::math::exp(-x*x);
+    } => std::math::getsign(x) * y;
 
     double pow(double f, double f2) {
         double result;
@@ -144,19 +168,6 @@ namespace std {
             cos = cos + t;
         }
     } => cos;
-
-    double coshn(double d, int n) {
-        double c = 1.0;
-        double f = 1.0;
-        double xp = 1.0;
-        for(int i=1; i<n; i+=1) {
-            f = f * ((2 * i - 1) * (2 * i));
-            xp = xp * (d * d);
-            c += xp / f;
-        }
-    } => c;
-
-    double cosh(double d) => std::math::coshn(d, 100);
 
     char sign(double x) {
         char result = 0;
