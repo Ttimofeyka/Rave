@@ -1,5 +1,5 @@
 import <std/io> <std/math>
 
 void main {
-    
+    std::println(std::math::asin(0.8));
 }

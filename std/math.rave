@@ -98,6 +98,8 @@ namespace std {
         result = result - 2 * negate * result;
     } => ((negate * std::math::PI) + result);
 
+    double asin(double x) => 1.5707963267948966 - std::math::sqrt(1.0 - x) * (1.5707288 + (-0.2121144) * x + 0.0742610 * (x * x) + -0.0187293 * (x * x * x));
+
     extern(linkname: "acoshf") float acosh(float f);
     extern(linkname: "asinhf") float asinh(float f);
     extern(linkname: "atanhf") float atanh(float f);
