@@ -1,5 +1,5 @@
 import <std/io> <std/math>
 
 void main {
-    std::println(std::math::acos(0.5))
+    
 }
