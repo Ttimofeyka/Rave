@@ -5326,6 +5326,17 @@ class NodeBuiltin : Node {
                 TypeStruct ts = asType(0,true).ty.instanceof!TypeStruct;
                 if(ts !is null) return new NodeType(new TypeStruct(ts.name[0..ts.name.indexOf('<')]),loc);
                 return new NodeType(new TypeVoid(),loc);
+            case "getArgType":
+                int n = cast(int)(args[0].instanceof!NodeInt.value);
+                Type t = currScope.getVar("_RaveArg"~to!string(n), loc).t;
+                return new NodeType(t, loc);
+            case "argsHasType":
+                NodeType _type = asType(0, true);
+                for(int i=Generator.currentBuiltinArg; i<FuncTable[currScope.func].args.length; i++) {
+                    Type t = currScope.getVar("_RaveArg"~to!string(i), loc).t;
+                    if(_type.ty.toString() != t.toString()) return new NodeBool(false);
+                }
+                return new NodeBool(true);
             case "contains":
                 string str = asStringIden(0);
                 string str2 = asStringIden(1);

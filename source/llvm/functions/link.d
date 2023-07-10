@@ -91,7 +91,7 @@ void LLVMAddFunctionInliningPass(LLVMPassManagerRef PM);
 void LLVMAddAlwaysInlinerPass(LLVMPassManagerRef PM);
 void LLVMAddGlobalDCEPass(LLVMPassManagerRef PM);
 void LLVMAddGlobalOptimizerPass(LLVMPassManagerRef PM);
-void LLVMAddIPConstantPropagationPass(LLVMPassManagerRef PM);
+// void LLVMAddIPConstantPropagationPass(LLVMPassManagerRef PM);
 void LLVMAddPruneEHPass(LLVMPassManagerRef PM);
 void LLVMAddIPSCCPPass(LLVMPassManagerRef PM);
 void LLVMAddInternalizePass(LLVMPassManagerRef, uint AllButMain);
@@ -178,7 +178,7 @@ void LLVMAddScalarReplAggregatesPassSSA(LLVMPassManagerRef PM);
 void LLVMAddScalarReplAggregatesPassWithThreshold(LLVMPassManagerRef PM, int Threshold);
 void LLVMAddSimplifyLibCallsPass(LLVMPassManagerRef PM);
 void LLVMAddTailCallEliminationPass(LLVMPassManagerRef PM);
-void LLVMAddConstantPropagationPass(LLVMPassManagerRef PM);
+// void LLVMAddConstantPropagationPass(LLVMPassManagerRef PM);
 void LLVMAddDemoteMemoryToRegisterPass(LLVMPassManagerRef PM);
 void LLVMAddVerifierPass(LLVMPassManagerRef PM);
 void LLVMAddCorrelatedValuePropagationPass(LLVMPassManagerRef PM);
@@ -2030,7 +2030,7 @@ static if (LLVM_Version >= asVersion(3, 4, 0)) {
 }
 
 /+ JIT compilation of LLVM IR +/
-static if (LLVM_Version >= asVersion(5, 0, 0) && LLVM_Version < asVersion(7, 0, 0)) {
+/*static if (LLVM_Version >= asVersion(5, 0, 0) && LLVM_Version < asVersion(7, 0, 0)) {
 	LLVMSharedModuleRef LLVMOrcMakeSharedModule(LLVMModuleRef Mod);
 	void LLVMOrcDisposeSharedModuleRef(LLVMSharedModuleRef SharedMod);
 }
@@ -2171,7 +2171,7 @@ static if (LLVM_Version >= asVersion(6, 0, 0)) {
 }
 static if (LLVM_Version >= asVersion(6, 0, 0)) {
 	LLVMMetadataRef LLVMDIBuilderCreateDebugLocation(LLVMContextRef Ctx, uint Line, uint Column, LLVMMetadataRef Scope, LLVMMetadataRef InlinedAt);
-}
+}*/
 
 
 
@@ -2621,13 +2621,13 @@ static if (LLVM_Version >= asVersion(7, 0, 0)) {
 	void LLVMInitializeAggressiveInstCombiner(LLVMPassRegistryRef R);
 }
 
-static if (LLVM_Version >= asVersion(7, 0, 0)) {
+/*static if (LLVM_Version >= asVersion(7, 0, 0)) {
 	void LLVMOrcRegisterJITEventListener(LLVMOrcJITStackRef JITStack, LLVMJITEventListenerRef L);
-}
+}*/
 
-static if (LLVM_Version >= asVersion(7, 0, 0)) {
+/*static if (LLVM_Version >= asVersion(7, 0, 0)) {
 	void LLVMOrcUnregisterJITEventListener(LLVMOrcJITStackRef JITStack, LLVMJITEventListenerRef L);
-}
+}*/
 
 static if (LLVM_Version >= asVersion(7, 0, 0)) {
 	char* LLVMNormalizeTargetTriple(const(char)* triple);

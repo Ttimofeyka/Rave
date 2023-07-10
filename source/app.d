@@ -4,7 +4,7 @@ Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-import std.stdio;
+import std.stdio, std.string, std.file;
 import lexer.lexer;
 import std.conv : to;
 import compiler;
@@ -123,7 +123,17 @@ void main(string[] args) {
 	}
 	CompOpts o = analyzeArgs(args[1..$]);
 
-	version(linux) LLVM.load(["libLLVM-11.so", "/usr/lib/llvm-11/lib/libLTO.so.11"]);
+	// Support LLVM-10, LLVM-11 and LLVM-12
+	version(linux) {
+		if(!exists("/usr/lib/llvm-11/lib/libLTO.so.11")) {
+			if(exists("/usr/lib/libLTO.so.11")) LLVM.load(["libLLVM-11.so", "/usr/lib/libLTO.so.11"]);
+			else if(exists("/usr/lib/llvm-10/lib/libLTO.so.10")) LLVM.load(["libLLVM-10.so", "/usr/lib/llvm-10/lib/libLTO.so.10"]);
+			else if(exists("/usr/lib/libLTO.so.10")) LLVM.load(["libLLVM-10.so", "/usr/lib/libLTO.so.10"]);
+			else if(exists("/usr/lib/llvm-12/lib/libLTO.so.12")) LLVM.load(["libLLVM-12.so", "/usr/lib/llvm-12/lib/libLTO.so.12"]);
+			else if(exists("/usr/lib/libLTO.so.12")) LLVM.load(["libLLVM-12.so", "/usr/lib/libLTO.so.12"]);
+		}
+		else LLVM.load(["libLLVM-11.so", "/usr/lib/llvm-11/lib/libLTO.so.11"]);
+	}
 	version(Windows) LLVM.load(["LLVM-C.dll", "LTO.dll"]);
 
 	operators = [
