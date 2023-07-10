@@ -390,6 +390,7 @@ the result of a call with the same parameters and the same number will be the sa
             extern(stdcall, linkname: "HeapAlloc") void* HeapAlloc(void* heap, int flags, uint size);
             extern(stdcall, linkname: "HeapFree") bool HeapFree(void* heap, int flags, void* ptr);
             extern(stdcall, linkname: "HeapReAlloc") void* HeapReAlloc(void* heap, int flags, void* ptr, uint size);
+            extern(stdcall, linkname: "GetCurrentProcessId") int GetCurrentProcessId();
         }
     }
 };

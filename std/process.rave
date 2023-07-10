@@ -9,7 +9,16 @@
     }
 };
 
-@if((__RAVE_OS != "LINUX") || (@aliasExists(__RAVE_USELIBC))) {
+@if(((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64")) && (!@aliasExists(__RAVE_USELIBC))) {
+    namespace std {
+        namespace process {
+            (inline) int getPID => std::winapi::GetCurrentProcessId();
+            extern(linkname: "getppid") int getPPID();
+        }
+    }
+};
+
+@if(((__RAVE_OS != "WINDOWS32") && (__RAVE_OS != "WINDOWS64") && (__RAVE_OS != "LINUX")) || (@aliasExists(__RAVE_USELIBC))) {
     namespace std {
         namespace process {
             extern(linkname: "getpid") int getPID();

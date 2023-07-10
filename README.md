@@ -17,6 +17,7 @@ You can compile are examples using `rave directory/of/Rave/examples/necessary_ex
 ## Dependencies
 
 * `llvm-11` (including clang-11)
+    **You can also use LLVM-10 and LLVM-12. To use clang version 12 and higher, you will most likely need the "-no-pie" flag.**
 * dub and ldc (or dmd/gdc) compiler **(ldc is recommended)**
 * mingw (if you need cross-compilation or you are using Windows)
 

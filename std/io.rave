@@ -96,7 +96,9 @@ namespace std {
         std::file f = @getArg(std::file,0);
         @skipArg();
         std::string data = @callWithArgs(std::sprint);
-            f.write(data.c(), @sizeOf(char), data.length);
+            char* _data = data.c();
+                f.write(_data, @sizeOf(char), data.length);
+            std::delete(_data);
         ~data;
     }
 
@@ -106,7 +108,8 @@ namespace std {
 
     (ctargs, inline) void print {
         std::string s = @callWithArgs(std::sprint);
-        std::putswnl(s);
+            std::putswnl(s);
+        ~s;
     }
 
     (ctargs, inline) void println {
