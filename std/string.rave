@@ -1,4 +1,4 @@
-import <std/vector> <std/cstring> <std/ascii> <std/utf>
+import <std/vector> <std/cstring> <std/ascii> <std/utf32>
 
 namespace libc {
     // Functions that are practically unnecessary in normal use and come from libc

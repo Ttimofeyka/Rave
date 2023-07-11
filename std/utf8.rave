@@ -1,0 +1,24 @@
+import <std/memory> <std/cstring> <std/ascii> <std/vector> <std/io>
+
+namespace std {
+    namespace utf8 {
+        const(int[16]) utfLength = [1,1,1,1,1,1,1,1,0,0,0,0,2,2,3,4];
+
+        (inline) int strlen(uchar* str) {
+            int i = 0;
+            while(str[i] != '\0'w) i += 1;
+        } => i;
+        (inline) int utflen(uchar* str) {
+            int i = 0;
+            int len = 0;
+            while(str[i] != '\0') {
+                if((str[i] && 0xC0) != 0x80) len += 1;
+                i += 1;
+            }
+        } => len;
+        int charlen(uchar* ch) => cast(int)(std::utf8::utfLength[(ch[0] && 0xFF) >. 4]);
+    }
+    struct u8string {
+
+    }
+}

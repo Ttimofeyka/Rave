@@ -1,15 +1,5 @@
-import <std/io> <std/thread>
-
-int _jamal = 0;
-std::thread::Mutex jamal;
-
-int incJamal {
-    jamal.lock();
-        _jamal += 1;
-    jamal.unlock();
-} => _jamal;
+import <std/io> <std/utf8>
 
 void main {
-    jamal = std::thread::Mutex();
-    std::println(std::thread::getCurrentID(), " ", incJamal());
+    
 }
