@@ -53,6 +53,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias SendTo = 44;
 
                 alias GetPID = 0x27;
+                alias GetTID = 186;
                 alias GetPPID = 0x6E;
                 alias Clone = 56;
 
@@ -104,6 +105,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias SendTo = 369;
 
                 alias GetPID = 0x14;
+                alias GetTID = 224;
                 alias GetPPID = 0x40;
                 alias Clone = 120;
 
@@ -157,6 +159,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias SendTo = 206;
 
                 alias GetPID = 0xAC;
+                alias GetTID = 178;
                 alias GetPPID = 0xAD;
                 alias Clone = 220;
                 
@@ -210,6 +213,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias SendTo = 290;
 
                 alias GetPID = 0x14;
+                alias GetTID = 224;
                 alias GetPPID = 0x40;
                 alias Clone = 120;
 
@@ -248,6 +252,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias SendTo = 335;
 
                 alias GetPID = 20;
+                alias GetTID = 207;
                 alias GetPPID = 64;
                 alias Clone = 120;
 
@@ -286,6 +291,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias SendTo = 335;
 
                 alias GetPID = 20;
+                alias GetTID = 207;
                 alias GetPPID = 64;
                 alias Clone = 120;
 
@@ -324,6 +330,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias SendTo = 369;
 
                 alias GetPID = 20;
+                alias GetTID = 236;
                 alias GetPPID = 64;
                 alias Clone = 120;
 
@@ -362,6 +369,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias SendTo = 5043;
 
                 alias GetPID = 5109;
+                alias GetTID = 5178;
                 alias GetPPID = 5108;
                 alias Clone = 5055;
 
@@ -391,6 +399,7 @@ the result of a call with the same parameters and the same number will be the sa
             extern(stdcall, linkname: "HeapFree") bool HeapFree(void* heap, int flags, void* ptr);
             extern(stdcall, linkname: "HeapReAlloc") void* HeapReAlloc(void* heap, int flags, void* ptr, uint size);
             extern(stdcall, linkname: "GetCurrentProcessId") int GetCurrentProcessId();
+            extern(stdcall, linkname: "GetCurrentThreadId") int GetCurrentThreadId();
         }
     }
 };
