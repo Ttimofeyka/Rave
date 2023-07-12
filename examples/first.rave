@@ -1,10 +1,5 @@
 import <std/io> <std/utf8>
 
 void main {
-    char* test = "èfg";
-    int idx = 0;
-    std::u8string s = " jam ";
-    std::println("'",s,"'");
-    s = s.trim();
-    std::println("'",s,"'");
+    
 }
