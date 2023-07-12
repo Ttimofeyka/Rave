@@ -177,7 +177,6 @@ class Compiler {
         if(opts.optimizeLevel > 0) {
             LLVMPassManagerRef pm = LLVMCreatePassManager();
             LLVMAddAlwaysInlinerPass(pm);
-            LLVMAddAggressiveInstCombinerPass(pm);
 
             LLVMPassManagerBuilderRef pmb = LLVMPassManagerBuilderCreate();
             LLVMPassManagerBuilderSetOptLevel(pmb,opts.optimizeLevel);
