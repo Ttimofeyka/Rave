@@ -65,7 +65,6 @@ struct CompOpts {
 	bool disableWarnings = false;
 	bool saveObjectFiles = false;
 	bool useLibc = false;
-	bool usePthreads = false;
 }
 
 CompOpts analyzeArgs(string[] args) {
@@ -105,7 +104,6 @@ CompOpts analyzeArgs(string[] args) {
 				opts.disableWarnings = true;
 				break;
 			case "-ul": case "--useLibc": opts.useLibc = true; break;
-			case "-up": case "-pthreads": case "--usePthreads": opts.usePthreads = true; break;
 			default:
 				if(currCommand[0] == '-') {
 					opts.linkparams ~= currCommand~" "; idx += 1;

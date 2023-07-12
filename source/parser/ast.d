@@ -5826,3 +5826,33 @@ class NodeTry : Node {
         return null;
     }
 }
+
+class NodeCmpXchg : Node {
+    int loc;
+    Node ptr, val1, val2;
+
+    this(int loc, Node ptr, Node val1, Node val2) {
+        this.loc = loc;
+        this.ptr = ptr;
+        this.val1 = val1;
+        this.val2 = val2;
+    }
+
+    override void check() {
+        ptr.check();
+        val1.check();
+        val2.check();
+    }
+
+    override LLVMValueRef generate() {
+        return LLVMBuildAtomicCmpXchg(
+            Generator.Builder,
+            ptr.generate(),
+            val1.generate(),
+            val2.generate(),
+            LLVMAtomicOrderingSequentiallyConsistent,
+            LLVMAtomicOrderingSequentiallyConsistent,
+            false
+        );
+    }
+}

@@ -1,12 +1,6 @@
 import <std/vector> <std/cstring> <std/ascii> <std/utf32> <std/utf8>
 import <std/thread>
 
-@if(@aliasExists(__RAVE_USEPTHREADS)) {
-    namespace std {
-        int sprintBufferSL = -1;
-    }
-};
-
 namespace std {
     extern(linkname: "sscanf") int format(char* buff, char* fmt);
     (inline) int _lengthOfNumber(long x) {
@@ -398,12 +392,11 @@ namespace std {
         } => sbuf;
     }
 
+    int sprintBufferSL = -1;
     std::string sprintBuffer;
     (ctargs) std::string __sprint {
-        @if(@aliasExists(__RAVE_USEPTHREADS)) {
-            if(std::sprintBufferSL == -1) std::thread::spinlock::initialize(&std::sprintBufferSL, 0);
-            std::thread::spinlock::lock(&std::sprintBufferSL);
-        };
+        if(std::sprintBufferSL == -1) std::thread::spinlock::initialize(&std::sprintBufferSL);
+        std::thread::spinlock::lock(&std::sprintBufferSL);
 
         if(std::sprintBuffer.capacity <= 0) std::sprintBuffer = std::string(128);
         else std::sprintBuffer.length = 0;
@@ -502,7 +495,7 @@ namespace std {
                 ~s; 
             };
         };
-        @if(@aliasExists(__RAVE_USEPTHREADS)) {std::thread::spinlock::unlock(&std::sprintBufferSL);};
+        std::thread::spinlock::unlock(&std::sprintBufferSL);
     } => std::sprintBuffer;
 
     (ctargs) std::string sprint {

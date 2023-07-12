@@ -453,6 +453,7 @@ class Parser {
                 next();
                 return new NodeItop(val,type,t.line);
             }
+            else if(t.value == "cmpxchg") return parseCmpXchg(f);
             else if(t.value == "ptoi") {
                 next();
                 Node val = parseExpr();
@@ -911,6 +912,18 @@ class Parser {
 
     Node parseAsm(string f) {
         assert(0);
+    }
+
+    Node parseCmpXchg(string f = "") {
+        int loc = peek().line;
+        _idx += 1;
+        Node ptr = parseExpr(f);
+        if(peek().type == TokType.Comma) next();
+        Node val1 = parseExpr(f);
+        if(peek().type == TokType.Comma) next();
+        Node val2 = parseExpr(f);
+        if(peek().type == TokType.Lpar) _idx += 1;
+        return new NodeCmpXchg(loc, ptr, val1, val2);
     }
 
     Node parseStmt(string f = "") {

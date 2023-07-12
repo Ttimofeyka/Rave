@@ -17,26 +17,20 @@ import <std/process>
 };
 
 namespace std {
-    struct Atomic {
-        volatile int cell;
+    namespace thread {
+        namespace spinlock {
+            (nochecks) void initialize(int* sl) {sl[0] = 0;}
+            (nochecks) int __tas(int* sl) => cast(int)cmpxchg(sl, 0, 1);
+            (nochecks) void lock(int* sl) {while(std::thread::spinlock::__tas(sl) == 0) {}}
+            (nochecks) void unlock(int* sl) {sl[0] = 0;}
+        }
+        struct Spinlock {
+            int value;
 
-        std::Atomic this(int value) {this.cell = value;} => this;
+            std::thread::Spinlock this {this.value = 0;} => this;
 
-        void store(int value) {std::atomic::store(this.&cell, value);}
-        int load => std::atomic::load(this.&cell);
-        int exchange(int value) => std::atomic::exchange(this.&cell, value);
-    }
-}
-
-@if(@aliasExists(__RAVE_USEPTHREADS)) {
-    @addLibrary("pthread");
-    namespace std {
-        namespace thread {
-            namespace spinlock {
-                extern(linkname: "pthread_spin_init") int initialize(int* sl, int flag);
-                extern(linkname: "pthread_spin_lock") int lock(int* sl);
-                extern(linkname: "pthread_spin_unlock") int unlock(int* sl);
-            }
+            (inline) void lock {std::thread::spinlock::lock(this.&value);}
+            (inline) void unlock {this.value = 0;}
         }
     }
-};
+}
