@@ -1,4 +1,4 @@
-import <std/memory> <std/cstring> <std/ascii> <std/vector> <std/io>
+import <std/memory> <std/ascii> <std/cstring> <std/vector>
 
 namespace std {
     namespace utf8 {
@@ -154,14 +154,6 @@ namespace std {
             }
         }
 
-        void append(std::string str) {
-            int i = 0;
-            while(i<str.length) {
-                this.add(str.data[i]);
-                i += 1;
-            }
-        }
-
         std::u8string copy {
             std::u8string cp = std::u8string("");
             cp.append(*this);
@@ -211,18 +203,6 @@ namespace std {
             }
         } => isEqual;
 
-        bool compare(std::string another) {
-            bool isEqual = true;
-            if(this.byteLength != another.length) isEqual = false;
-            else {
-                int i = 0;
-                while(i<another.length) {
-                    if(this.data[i] != another.data[i]) isEqual = false;
-                    i += 1;
-                }
-            }
-        } => isEqual;
-
         bool compare(char* another) {
             bool isEqual = true;
             int len = std::cstring::strlen(another);
@@ -238,10 +218,8 @@ namespace std {
         } => isEqual;
 
         bool operator==(std::u8string one, std::u8string two) => one.compare(two);
-        bool operator==(std::u8string one, std::string two) => one.compare(two);
         bool operator==(std::u8string one, char* two) => one.compare(two);
         bool operator!=(std::u8string one, std::u8string two) => !(one.compare(two));
-        bool operator!=(std::u8string one, std::string two) => !(one.compare(two));
         bool operator!=(std::u8string one, char* two) => !(one.compare(two));
         void operator=(std::u8string* one, char* two) {one[0] = std::u8string(two);}
 

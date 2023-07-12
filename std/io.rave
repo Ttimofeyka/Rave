@@ -1,4 +1,4 @@
-import <std/arg> <std/string> <std/utf32>
+import <std/arg> <std/string> <std/utf8>
 
 namespace libc {
     struct File {
@@ -205,6 +205,11 @@ namespace std {
             this.isOpen = false;
         } => this;
 
+        std::file this(std::u8string name) {
+            this.name = name.c();
+            this.isOpen = false;
+        } => this;
+
         void open(char* mode) {
             this._file = libc::fopen(this.name,mode);
             this.isOpen = true;
@@ -272,6 +277,27 @@ namespace std {
             content[size] = '\0';
 
             std::string result = content;
+            std::free(content);
+
+            if(needToClose) this.close();
+        } => result;
+
+        std::u8string u8ReadText {
+            bool needToClose = false;
+            if(this.isOpen == false) {
+                this.open("rb");
+                needToClose = true;
+            }
+
+            libc::fseek(this._file, 0, libc::SeekEnd);
+            int size = libc::ftell(this._file);
+            libc::fseek(this._file, 0, libc::SeekSet);
+
+            char* content = std::malloc(size+1);
+            this.read(content,@sizeOf(char),size);
+            content[size] = '\0';
+
+            std::u8string result = content;
             std::free(content);
 
             if(needToClose) this.close();

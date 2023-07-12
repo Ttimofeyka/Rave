@@ -1,11 +1,4 @@
-import <std/vector> <std/cstring> <std/ascii> <std/utf32>
-
-namespace libc {
-    // Functions that are practically unnecessary in normal use and come from libc
-    extern(linkname: "sprintf") int cformat(char* str, char* fmt, ...);
-    extern(linkname: "strtok") char* strtok(char* str, char* chars);
-    extern(linkname: "strtol") long strtol(char* str, char** end, int base);
-}
+import <std/vector> <std/cstring> <std/ascii> <std/utf32> <std/utf8>
 
 namespace std {
     extern(linkname: "sscanf") int format(char* buff, char* fmt);
@@ -185,6 +178,18 @@ namespace std {
             }
         } => isEqual;
 
+        bool compare(std::u8string another) {
+            bool isEqual = true;
+            if(this.length != another.byteLength) isEqual = false;
+            else {
+                int i = 0;
+                while(i<another.byteLength) {
+                    if(this.data[i] != another.data[i]) isEqual = false;
+                    i += 1;
+                }
+            }
+        } => isEqual;
+
         bool compare(char* another) {
             bool isEqual = true;
             int len = std::cstring::strlen(another);
@@ -201,8 +206,10 @@ namespace std {
 
         bool operator==(std::string one, std::string two) => one.compare(two);
         bool operator==(std::string one, char* two) => one.compare(two);
+        bool operator==(std::string one, std::u8string two) => one.compare(two);
         bool operator!=(std::string one, std::string two) => !(one.compare(two));
         bool operator!=(std::string one, char* two) => !(one.compare(two));
+        bool operator!=(std::string one, std::u8string two) => one.compare(two);
         void operator=(std::string* one, char* two) {one[0] = std::string(two);}
 
         std::string substring(int from, int to) {
