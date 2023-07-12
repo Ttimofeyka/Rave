@@ -1,4 +1,11 @@
 import <std/vector> <std/cstring> <std/ascii> <std/utf32> <std/utf8>
+import <std/thread>
+
+@if(@aliasExists(__RAVE_USEPTHREADS)) {
+    namespace std {
+        int sprintBufferSL = -1;
+    }
+};
 
 namespace std {
     extern(linkname: "sscanf") int format(char* buff, char* fmt);
@@ -35,7 +42,7 @@ namespace std {
             if(a != null) {
                 this.length = std::cstring::strlen(a);
                 this.capacity = this.length*2;
-                if(this.capacity == 0) this.capacity = 1;
+                if(this.capacity <= 0) this.capacity = 1;
                 this.data = std::malloc(this.capacity);
 
                 int i = 0;
@@ -49,6 +56,13 @@ namespace std {
                 this.capacity = 1;
                 this.data = std::malloc(this.capacity);
             }
+        } => this;
+
+        std::string this(int n) {
+            this.length = 0;
+            this.capacity = n;
+            if(this.capacity <= 0) this.capacity = 1;
+            this.data = std::malloc(this.capacity);
         } => this;
 
         void set(char* a) {
@@ -383,6 +397,113 @@ namespace std {
             std::free(buf);
         } => sbuf;
     }
+
+    std::string sprintBuffer;
+    (ctargs) std::string __sprint {
+        @if(@aliasExists(__RAVE_USEPTHREADS)) {
+            if(std::sprintBufferSL == -1) std::thread::spinlock::initialize(&std::sprintBufferSL, 0);
+            std::thread::spinlock::lock(&std::sprintBufferSL);
+        };
+
+        if(std::sprintBuffer.capacity <= 0) std::sprintBuffer = std::string(128);
+        else std::sprintBuffer.length = 0;
+
+        int idx = 0;
+
+        @foreachArgs() {
+            @if(@typesIsNequals(@getCurrArgType(),float)) {
+                @if(@typesIsNequals(@getCurrArgType(),double)) {
+                    @if(@typesIsNequals(@getCurrArgType(),std::string)) {
+                        @if(@typesIsNequals(@getCurrArgType(),char)) {
+                            @if(@typesIsEquals(@getCurrArgType(),short) || @typesIsEquals(@getCurrArgType(),int) || @typesIsEquals(@getCurrArgType(),long)) {
+                                std::string s = std::string::fromNumber(@getCurrArg(long));
+                                    std::sprintBuffer.append(s);
+                                ~s;
+                            };
+                            @if(@typesIsEquals(@getCurrArgType(),bool)) {
+                                std::sprintBuffer.append(std::cstring::fromBool(@getCurrArg(bool)));
+                            };
+                            @if(@typesIsEquals(@getCurrArgType(),std::u32string)) {
+                                std::u32string us = @getCurrArg(std::u32string);
+                                for(int i=0; i<us.length; i+=1) {
+                                    char[4] buf;
+                                    int n = std::utf::encode(us.data[i], &buf[0]);
+                                    if(n == 1) std::sprintBuffer.add(buf[0]);
+                                    else if(n == 2) {
+                                        std::sprintBuffer.add(buf[0]);
+                                        std::sprintBuffer.add(buf[1]);
+                                    }
+                                    else if(n == 3) {
+                                        std::sprintBuffer.add(buf[0]);
+                                        std::sprintBuffer.add(buf[1]);
+                                        std::sprintBuffer.add(buf[2]);
+                                    }
+                                    else if(n == 4) {
+                                        std::sprintBuffer.add(buf[0]);
+                                        std::sprintBuffer.add(buf[1]);
+                                        std::sprintBuffer.add(buf[2]);
+                                        std::sprintBuffer.add(buf[3]);
+                                    }
+                                }
+                            };
+                            @if(@typesIsEquals(@getCurrArgType(),std::u8string)) {
+                                std::u8string u8s = @getCurrArg(std::u8string);
+                                for(int i=0; i<u8s.byteLength; i+=1) {
+                                    std::sprintBuffer.add(u8s.data[i]);
+                                }
+                            };
+                            @if(@typesIsEquals(@getCurrArgType(),int*)) {
+                                uint* utf8Text = @getCurrArg(uint*);
+                                for(int i=0; utf8Text[i] != '\0'; i+=1) {
+                                    char[4] buf;
+                                    int n = std::utf::encode(utf8Text[i], &buf[0]);
+                                    if(n == 1) std::sprintBuffer.add(buf[0]);
+                                    else if(n == 2) {
+                                        std::sprintBuffer.add(buf[0]);
+                                        std::sprintBuffer.add(buf[1]);
+                                    }
+                                    else if(n == 3) {
+                                        std::sprintBuffer.add(buf[0]);
+                                        std::sprintBuffer.add(buf[1]);
+                                        std::sprintBuffer.add(buf[2]);
+                                    }
+                                    else if(n == 4) {
+                                        std::sprintBuffer.add(buf[0]);
+                                        std::sprintBuffer.add(buf[1]);
+                                        std::sprintBuffer.add(buf[2]);
+                                        std::sprintBuffer.add(buf[3]);
+                                    }
+                                }
+                            };
+                            @if(@typesIsEquals(@getCurrArgType(), char*)) {
+                                std::sprintBuffer.append(@getCurrArg(void*));
+                            };
+                        };
+                        @if(@typesIsEquals(@getCurrArgType(),char)) {
+                            std::sprintBuffer.add(@getCurrArg(char));
+                        };
+                    };
+                    @if(@typesIsEquals(@getCurrArgType(),std::string)) {
+                        std::string s = @getCurrArg(std::string);
+                        std::sprintBuffer.append(s);
+                    };
+                };
+                @if(@typesIsEquals(@getCurrArgType(),double)) {
+                    double d = @getCurrArg(double);
+                    std::string s = std::string::fromDouble(d);
+                        std::sprintBuffer.append(s);
+                    ~s;
+                };
+            };
+            @if(@typesIsEquals(@getCurrArgType(),float)) {
+                double f = @getCurrArg(double);
+                std::string s = std::string::fromDouble(f);
+                    std::sprintBuffer.append(s);
+                ~s; 
+            };
+        };
+        @if(@aliasExists(__RAVE_USEPTHREADS)) {std::thread::spinlock::unlock(&std::sprintBufferSL);};
+    } => std::sprintBuffer;
 
     (ctargs) std::string sprint {
         std::string result = "";

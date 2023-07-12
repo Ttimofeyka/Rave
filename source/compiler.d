@@ -120,6 +120,9 @@ class Compiler {
         else if(outtype.indexOf("ios") != -1) __RAVE_OS = "IOS";
 
         content = `alias __RAVE_OS = "`~__RAVE_OS~`"; `~content;
+
+        if(opts.usePthreads) content = `alias __RAVE_USEPTHREADS = true; `~content;
+
         if(!opts.noPrelude && file != "std/prelude.rave" && file != "std/memory.rave") {
             content = content~" import <std/prelude> <std/memory>";
         }

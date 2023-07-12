@@ -1623,7 +1623,9 @@ class NodeVar : Node {
                 );
             }
             else {
-                LLVMValueRef val = value.generate();
+                LLVMValueRef val;
+                if(NodeUnary nu = value.instanceof!NodeUnary) val = nu.generateConst();
+                else val = value.generate();
                 Generator.Globals[name] = LLVMAddGlobal(
                     Generator.Module,
                     LLVMTypeOf(val),
@@ -1643,7 +1645,10 @@ class NodeVar : Node {
             // else LLVMSetLinkage(Generator.Globals[name],LLVMCommonLinkage);
             LLVMSetAlignment(Generator.Globals[name],Generator.getAlignmentOfType(t));
             if(value !is null && !isExtern) {
-                LLVMSetInitializer(Generator.Globals[name], value.generate());
+                LLVMValueRef val;
+                if(NodeUnary nu = value.instanceof!NodeUnary) val = nu.generateConst();
+                else val = value.generate();
+                LLVMSetInitializer(Generator.Globals[name], val);
             }
             else if(!isExtern) {
                 LLVMSetInitializer(Generator.Globals[name], LLVMConstNull(Generator.GenerateType(t,loc)));
@@ -3485,6 +3490,14 @@ class NodeUnary : Node {
         this.isChecked = true;
         if(!oldCheck) base.check();
     }
+    LLVMValueRef generateConst() {
+        if(type == TokType.Minus) {
+            LLVMValueRef bs = base.generate();
+            if(LLVMGetTypeKind(LLVMTypeOf(bs)) == LLVMIntegerTypeKind) return LLVMConstNeg(bs);
+            return LLVMConstFNeg(bs);
+        }
+        assert(0);
+    }
     override LLVMValueRef generate() {
         if(type == TokType.Minus) {
             LLVMValueRef bs = base.generate();
@@ -5270,6 +5283,13 @@ class NodeBuiltin : Node {
     override Node comptime() {
         name = name.strip();
         switch(name) {
+            case "addLibrary":
+                for(int i=0; i<args.length; i++) {
+                    if(!canFind(_libraries,args[i].instanceof!NodeString.value)) {
+                        _libraries ~= args[i].instanceof!NodeString.value;
+                    }
+                }
+                return null;
             case "random":
                 BigInt minimum = asConstLong(0);
                 BigInt maximum = asConstLong(1);

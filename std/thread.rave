@@ -26,38 +26,17 @@ namespace std {
         int load => std::atomic::load(this.&cell);
         int exchange(int value) => std::atomic::exchange(this.&cell, value);
     }
-    namespace thread {
-        // This is a temporary implementation that may not work efficiently
-        struct Spinlock {
-            bool isUsed;
-            bool isNewThread;
+}
 
-            std::thread::Spinlock this {
-                this.isUsed = false;
-                this.isNewThread = false;
-            } => this;
-
-            void wait {
-                int tid = std::thread::getCurrentID() / 2;
-                for(int i=0; i<tid; i+=1) {
-                    if(this.isNewThread) i = tid;
-                }
-            }
-
-            void lock {
-                this.isNewThread = true;
-                this.isNewThread = false;
-                this.wait();
-                while(this.isUsed) {
-                    this.wait();
-                    while(this.isNewThread) {}
-                }
-                this.isUsed = true;
-            }
-
-            void unlock {
-                this.isUsed = false;
+@if(@aliasExists(__RAVE_USEPTHREADS)) {
+    @addLibrary("pthread");
+    namespace std {
+        namespace thread {
+            namespace spinlock {
+                extern(linkname: "pthread_spin_init") int initialize(int* sl, int flag);
+                extern(linkname: "pthread_spin_lock") int lock(int* sl);
+                extern(linkname: "pthread_spin_unlock") int unlock(int* sl);
             }
         }
     }
-}
+};
