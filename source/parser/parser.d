@@ -989,7 +989,11 @@ class Parser {
                 string iden = peek().value;
                 if(iden == "volatile") return parseDecl(f);
                 if(iden == "debug") return parseDebug();
-                if(tokens[_idx+1].type == TokType.Rarr && tokens[_idx+4].type != TokType.Equ && tokens[_idx+4].type != TokType.Lpar && tokens[_idx+4].type != TokType.Rpar) {
+                if(
+                    tokens[_idx+1].type == TokType.Rarr && tokens[_idx+4].type != TokType.Equ
+                    && tokens[_idx+4].type != TokType.Lpar && tokens[_idx+4].type != TokType.Rpar
+                    && tokens[_idx+4].type != TokType.PluEqu && tokens[_idx+4].type != TokType.MinEqu
+                    && tokens[_idx+4].type != TokType.MulEqu && tokens[_idx+4].type != TokType.DivEqu) {
                     if(tokens[_idx+2].type == TokType.Number && tokens[_idx+3].type == TokType.Larr) return parseDecl(f);
                 }
                 _idx++;

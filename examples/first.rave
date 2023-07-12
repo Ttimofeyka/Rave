@@ -1,16 +1,10 @@
-import <std/io> <std/utf8> <std/thread>
-
-std::thread::Spinlock spinlock;
-
-int foo = 0;
-
-void incFoo {
-    spinlock.lock();
-        foo += 1;
-    spinlock.unlock();
-}
+import <std/io> <std/utf8>
 
 void main {
-    spinlock = std::thread::Spinlock();
-    incFoo();
+    char* test = "èfg";
+    int idx = 0;
+    std::u8string s = " jam ";
+    std::println("'",s,"'");
+    s = s.trim();
+    std::println("'",s,"'");
 }

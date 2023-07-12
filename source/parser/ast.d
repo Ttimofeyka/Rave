@@ -3079,10 +3079,12 @@ class NodeIndex : Node {
 
     override Type getType() {
         Type elType = element.getType();
-        if(!elType.instanceof!TypePointer && !elType.instanceof!TypeArray) {
+        while(TypeConst tc = elType.instanceof!TypeConst) elType = tc.instance;
+        if(!elType.instanceof!TypePointer && !elType.instanceof!TypeArray && !elType.instanceof!TypeConst) {
             if(TypeStruct ts = elType.instanceof!TypeStruct) {
                 if(TokType.Rbra.into(StructTable[ts.name].operators)) return StructTable[ts.name].operators[TokType.Rbra][""].type;
-            } 
+            }
+            writeln(elType);
             assert(0);
         }
 
