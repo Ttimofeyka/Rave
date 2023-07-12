@@ -17,23 +17,41 @@ import <std/process>
 };
 
 namespace std {
+    struct Atomic {
+        volatile int cell;
+
+        std::Atomic this(int value) {this.cell = value;} => this;
+
+        void store(int value) {std::atomic::store(this.&cell, value);}
+        int load => std::atomic::load(this.&cell);
+        int exchange(int value) => std::atomic::exchange(this.&cell, value);
+    }
     namespace thread {
         // This is a temporary implementation that may not work efficiently
-        struct Mutex {
+        struct Spinlock {
             bool isUsed;
+            bool isNewThread;
 
-            std::thread::Mutex this {
+            std::thread::Spinlock this {
                 this.isUsed = false;
+                this.isNewThread = false;
             } => this;
 
             void wait {
-                int tid = std::thread::getCurrentID() / 10;
-                for(int i=0; i<tid; i+=1) {}
+                int tid = std::thread::getCurrentID() / 2;
+                for(int i=0; i<tid; i+=1) {
+                    if(this.isNewThread) i = tid;
+                }
             }
 
             void lock {
+                this.isNewThread = true;
+                this.isNewThread = false;
                 this.wait();
-                while(this.isUsed) this.wait();
+                while(this.isUsed) {
+                    this.wait();
+                    while(this.isNewThread) {}
+                }
                 this.isUsed = true;
             }
 

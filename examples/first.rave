@@ -1,5 +1,16 @@
-import <std/io> <std/utf8>
+import <std/io> <std/utf8> <std/thread>
+
+std::thread::Spinlock spinlock;
+
+int foo = 0;
+
+void incFoo {
+    spinlock.lock();
+        foo += 1;
+    spinlock.unlock();
+}
 
 void main {
-    
+    spinlock = std::thread::Spinlock();
+    incFoo();
 }
