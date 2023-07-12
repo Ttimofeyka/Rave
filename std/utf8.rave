@@ -204,6 +204,18 @@ namespace std {
             if(this.length != another.length) isEqual = false;
             else {
                 int i = 0;
+                while(i<another.byteLength) {
+                    if(this.data[i] != another.data[i]) isEqual = false;
+                    i += 1;
+                }
+            }
+        } => isEqual;
+
+        bool compare(std::string another) {
+            bool isEqual = true;
+            if(this.byteLength != another.length) isEqual = false;
+            else {
+                int i = 0;
                 while(i<another.length) {
                     if(this.data[i] != another.data[i]) isEqual = false;
                     i += 1;
@@ -226,8 +238,10 @@ namespace std {
         } => isEqual;
 
         bool operator==(std::u8string one, std::u8string two) => one.compare(two);
+        bool operator==(std::u8string one, std::string two) => one.compare(two);
         bool operator==(std::u8string one, char* two) => one.compare(two);
         bool operator!=(std::u8string one, std::u8string two) => !(one.compare(two));
+        bool operator!=(std::u8string one, std::string two) => !(one.compare(two));
         bool operator!=(std::u8string one, char* two) => !(one.compare(two));
         void operator=(std::u8string* one, char* two) {one[0] = std::u8string(two);}
 
