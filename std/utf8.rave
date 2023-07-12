@@ -88,6 +88,7 @@ namespace std {
             temp[i] = '\0';
         } => temp;
 
+        (inline) char toChar => this.data[0];
         (inline) long toLong => libc::strtol(this.c(),cast(char**)null,10);
         (inline) int toInt => cast(int)this.toLong();
 
