@@ -402,12 +402,8 @@ class NodeStruct : Node {
         for(int i=0; i<_types.length; i++) {
             //writeln("Structure: ",name,", Type: ",templateNames[i],", replaced: ",_types[i]);
             if(TypeStruct _ts = _types[i].instanceof!TypeStruct) if(!_ts.name.into(StructTable) && !_ts.types.empty) {
-                //writeln("\t??? Replacing structure = ",_ts.name);
                 Generator.GenerateType(_ts,loc);
-                //writeln("\t!!!");
             }
-            //writeln("End.");
-            //writeln("Set ",templateNames[i]," to ",_types[i].toString());
             Generator.toReplace[templateNames[i]] = _types[i];
             _fn ~= templateNames[i]~",";
         }
@@ -419,6 +415,61 @@ class NodeStruct : Node {
         _struct.isComdat = true;
 
         _struct.check();
+        for(int i=0; i<_struct.elements.length; i+=1) {
+            if(NodeVar nv = _struct.elements[i].instanceof!NodeVar) {
+                Type[] types = [nv.t.copy()];
+                int typesIdx = 0;
+                bool needToReplace = false;
+                while(true) {
+                    Type ty = types[typesIdx];
+                    if(ty.instanceof!TypeBasic || ty.instanceof!TypeFunc) break;
+                    else if(TypePointer tp = ty.instanceof!TypePointer) {
+                        types ~= tp.instance;
+                        typesIdx += 1;
+                    }
+                    else if(TypeArray ta = ty.instanceof!TypeArray) {
+                        types ~= ta.element;
+                        typesIdx += 1;
+                    }
+                    else if(TypeStruct ts = ty.instanceof!TypeStruct) {
+                        if(ts.name.into(Generator.toReplace)) {
+                            needToReplace = true;
+                            types ~= Generator.toReplace[ts.name];
+                            typesIdx += 1;
+                        }
+                        break;
+                    }
+                    else break;
+                }
+                if(needToReplace) {
+                    Type doneType = types[typesIdx];
+                    if(typesIdx == 0) nv.t = doneType.copy();
+                    else {
+                        while(true) {
+                            typesIdx -= 1;
+                            if(typesIdx < 0) break;
+                            if(TypePointer tp = types[typesIdx].instanceof!TypePointer) {
+                                tp.instance = doneType.copy();
+                                doneType = tp.copy();
+                            }
+                            else if(TypeArray ta = types[typesIdx].instanceof!TypeArray) {
+                                ta.element = doneType.copy();
+                                doneType = ta.copy();
+                            }
+                            else if(TypeStruct ts = types[typesIdx].instanceof!TypeStruct) {
+                                if(ts.name.indexOf("<") != -1) {
+                                    // Template
+                                    ts.updateByTypes();
+                                    doneType = ts.copy();
+                                }
+                            }
+                        }
+                        nv.t = doneType.copy();
+                    }
+                }
+                _struct.elements[i] = nv;
+            }
+        }
         _struct.generate();
 
         Generator.ActiveLoops = activeLoops;

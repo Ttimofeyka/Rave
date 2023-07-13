@@ -42,7 +42,7 @@ namespace std {
                 this.data = std::malloc(this.capacity);
 
                 int i = 0;
-                while(i<this.length) {
+                while(i<this.byteLength) {
                     this.data[i] = a[i];
                     i += 1;
                 }
@@ -54,6 +54,8 @@ namespace std {
                 this.data = std::malloc(this.capacity);
             }
         } => this;
+
+        void ~this {std::free(this.data);}
 
         void set(char* a) {
             if(a != null) {
@@ -92,17 +94,7 @@ namespace std {
         (inline) long toLong => libc::strtol(this.c(),cast(char**)null,10);
         (inline) int toInt => cast(int)this.toLong();
 
-        int indexOf(char c) {
-            int result = -1;
-            for(int i=0; i<this.byteLength; i+=1) {
-                if(this.data[i] == c) {
-                    result = i;
-                    i = this.byteLength;
-                }
-            }
-        } => result;
-
-        int u8IndexOf(char* c) {
+        int indexOf(char* c) {
             int clen = std::cstring::strlen(c);
             int result = -1;
 
@@ -239,6 +231,26 @@ namespace std {
             }
         } => temp;
 
+        std::vector<std::u8string> split(char ch) {
+            auto parts = std::vector<std::u8string>();
+
+            int idx = 0;
+            std::u8string buffer = "";
+            while(idx < this.length) {
+                if(this.data[idx] != ch) {
+                    buffer.add(this.data[idx]);
+                    idx += 1;
+                }
+                else {
+                    if(buffer.length > 0) parts.add(buffer.copy());
+                    buffer.length = 0;
+                    idx += 1;
+                }
+            }
+            if(buffer.length > 0) parts.add(buffer.copy());
+            ~buffer;
+        } => parts;
+
         std::u8string ltrim {
             int idx = 0;
             while((idx < this.length) && (std::ascii::isSpace(this.data[idx]))) idx += 1;
@@ -252,7 +264,5 @@ namespace std {
         std::u8string trim {
             std::u8string _l = this.ltrim();
         } => _l.rtrim();
-
-        void ~this {std::free(this.data);}
     }
 }

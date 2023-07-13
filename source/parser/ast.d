@@ -280,9 +280,7 @@ class LLVMGen {
                     StructTable[s.name].check();
                     StructTable[s.name].generate();
                 }
-                else if(s.name.into(aliasTypes)) {
-                    return Generator.GenerateType(aliasTypes[s.name],loc);
-                }
+                else if(s.name.into(aliasTypes)) return Generator.GenerateType(aliasTypes[s.name],loc);
                 Generator.error(loc,"Unknown structure '"~s.name~"'!");
             }
             return Generator.Structs[s.name];
@@ -1591,6 +1589,9 @@ class NodeVar : Node {
             this.t = nb.ty;
         }
         if(t.instanceof!TypeAuto && value is null) Generator.error(loc,"using 'auto' without an explicit value is prohibited!");
+
+     
+
         if(currScope is null) {
             // Global variable
             // Only const-values
@@ -2125,7 +2126,6 @@ class NodeFunc : Node {
         }
 
         LLVMTypeRef* parametersG = getParameters(callconv);
-
         LLVMTypeRef functype = LLVMFunctionType(
             Generator.GenerateType(type,loc),
             parametersG,
@@ -2717,6 +2717,7 @@ class NodeCall : Node {
             exit(1);
             assert(0);
         }
+        if(!rname.into(Generator.Functions)) Generator.error(loc,"Function '"~rname~"' does not exist!");
         if(fromStringz(LLVMPrintValueToString(Generator.Functions[rname])).indexOf("llvm.") != -1) {
             LLVMValueRef _v = LLVMBuildAlloca(Generator.Builder,LLVMInt1TypeInContext(Generator.Context),toStringz("fix"));
             if(Generator.opts.optimizeLevel > 0) LLVMBuildCall(Generator.Builder,Generator.Functions["std::dontuse::_void"],[_v].ptr,1,toStringz(""));
@@ -3092,8 +3093,9 @@ class NodeIndex : Node {
             writeln(elType);
             assert(0);
         }
-
-        if(TypePointer tp = elType.instanceof!TypePointer) return tp.instance;
+        if(TypePointer tp = elType.instanceof!TypePointer) {
+            return tp.instance;
+        }
         else if(TypeArray ta = elType.instanceof!TypeArray) return ta.element;
         assert(0);
     }
@@ -3257,20 +3259,20 @@ class NodeGet : Node {
         }
         else ts = _t.instanceof!TypeStruct;
 
-        if(ts is null) {
-            Generator.error(loc,"Type '"~_t.toString()~"' is not a structure!");
-        }
+        if(ts is null) Generator.error(loc,"Type '"~_t.toString()~"' is not a structure!");
 
         if(ts.name.into(Generator.toReplace)) {
             while(ts.toString().into(Generator.toReplace)) {
                 ts = Generator.toReplace[ts.toString()].instanceof!TypeStruct;
             }
         }
-
         if(into(cast(immutable)[ts.name,field],MethodTable)) {
             return MethodTable[cast(immutable)[ts.name,field]].getType();
         }
-        if(into(cast(immutable)[ts.name,field],structsNumbers)) return structsNumbers[cast(immutable)[ts.name,field]].var.getType();
+        if(into(cast(immutable)[ts.name,field],structsNumbers)) {
+            // ERROR THERE
+            return structsNumbers[cast(immutable)[ts.name,field]].var.getType();
+        }
         foreach(k; byKey(Generator.toReplace)) {
             if(k.indexOf('<') != -1) return Generator.toReplace[k];
         }
