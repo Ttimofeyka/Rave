@@ -5840,6 +5840,10 @@ class NodeCmpXchg : Node {
         this.val2 = val2;
     }
 
+    override Node copy() {
+        return new NodeCmpXchg(loc, ptr.copy(), val1.copy(), val2.copy());
+    }
+
     override void check() {
         ptr.check();
         val1.check();
