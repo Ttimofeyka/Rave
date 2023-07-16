@@ -21,7 +21,7 @@ namespace std {
         namespace spinlock {
             (nochecks) void initialize(int* sl) {sl[0] = 0;}
             (nochecks) int __tas(int* sl) => cast(int)cmpxchg(sl, 0, 1);
-            (nochecks) void lock(int* sl) {while(std::thread::spinlock::__tas(sl) == 0) {}}
+            (nochecks) void lock(int* sl) {sl[0] = 1; while(std::thread::spinlock::__tas(sl) == 0) {}}
             (nochecks) void unlock(int* sl) {sl[0] = 0;}
         }
         struct Spinlock {
