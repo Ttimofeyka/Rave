@@ -14,7 +14,7 @@ namespace std {
 
         void add(T value) {
             if((this.length * sizeof(T)) == this.capacity) {
-                this.data = cast(T*)std::realloc(this.data, 2 * this.capacity * sizeof(T));
+                this.data = cast(T*)std::realloc(this.data, 2 * this.capacity);
                 this.capacity = this.capacity * 2;
             }
             this.data[this.length] = value;
@@ -64,12 +64,8 @@ namespace std {
             this.length = this.length - 1;
         }
 
-        (inline) void removeLast {
-            this.remove(this.length-1);
-        }
+        (inline) void removeLast {this.remove(this.length-1);}
 
-        void ~this {
-            std::free(this.data);
-        }
+        void ~this {std::free(this.data);}
     }
 }
