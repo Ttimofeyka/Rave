@@ -48,7 +48,7 @@ else version(linux) {
 }
 else string outtype = "unknown";
 
-struct CompOpts {
+version(linux) struct CompOpts {
 	bool noPrelude = false;
 	bool debugMode = false;
 	bool emit_llvm = false;
@@ -65,6 +65,28 @@ struct CompOpts {
 	bool disableWarnings = false;
 	bool saveObjectFiles = false;
 	bool useLibc = false;
+	string linker = "lld-11";
+	bool isStatic = false;
+}
+else struct CompOpts {
+	bool noPrelude = false;
+	bool debugMode = false;
+	bool emit_llvm = false;
+	string linkparams = "";
+	bool onlyObject = false;
+	bool noEntry = false;
+	bool noStd = false;
+	bool printAll = false;
+	int optimizeLevel = 1;
+    bool isPIE = false;
+    bool noPIE = false;
+	bool isPIC = false;
+	bool runtimeChecks = true;
+	bool disableWarnings = false;
+	bool saveObjectFiles = false;
+	bool useLibc = false;
+	string linker = "lld";
+	bool isStatic = false;
 }
 
 CompOpts analyzeArgs(string[] args) {
@@ -84,8 +106,12 @@ CompOpts analyzeArgs(string[] args) {
             case "-fPIE": opts.isPIE = true; break;
 			case "-fPIC": opts.isPIC = true; break;
 			case "-l": case "--library":
-			  opts.linkparams ~= "-l"~args[idx+1]~" "; idx += 1; break;
-			case "-c": opts.onlyObject = true; break;
+			  	opts.linkparams ~= "-l"~args[idx+1]~" "; idx += 1; break;
+			case "-useld": case "--useLd":
+			  	opts.linker = "ld"; break;
+			case "-st": case "--static":
+			  	opts.isStatic = true; break;
+			case "-c": opts.onlyObject = true; opts.isStatic = true; break;
 			case "-ne": case "--noEntry": opts.noEntry = true; break;
 			case "-ns": case "--noStd": opts.noStd = true; break;
                 case "-nopie": opts.noPIE = true; break;

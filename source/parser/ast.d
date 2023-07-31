@@ -412,10 +412,10 @@ class LLVMGen {
             val = LLVMBuildPointerCast(Generator.Builder,val,LLVMPointerType(LLVMGetElementType(LLVMGetElementType(LLVMTypeOf(val))),0),toStringz("ptrcast"));
         }
         if(indexs.length > 1) {
-            LLVMValueRef oneGep = LLVMBuildGEP(Generator.Builder,val,[indexs[0]].ptr,1,toStringz("gep225_"));
+            LLVMValueRef oneGep = LLVMBuildGEP(Generator.Builder,val,[indexs[0]].ptr,1,toStringz("gep225_1_"));
             return byIndex(oneGep,indexs[1..$]);
         }
-        return LLVMBuildGEP(Generator.Builder,val,indexs.ptr,cast(uint)indexs.length,toStringz("gep225_"));
+        return LLVMBuildGEP(Generator.Builder,val,indexs.ptr,cast(uint)indexs.length,toStringz("gep225_2_"));
         assert(0);
     }
 
@@ -1153,7 +1153,10 @@ class NodeBinary : Node {
                     if(LLVMGetTypeKind(ty) == LLVMPointerTypeKind && LLVMTypeOf(val) == LLVMPointerType(LLVMInt8TypeInContext(Generator.Context),0)) {
                         val = LLVMBuildPointerCast(Generator.Builder, val, ty, toStringz("ptrc_"));
                     }
-                    else Generator.error(loc,"The variable '"~i.name~"' with type '"~Generator.typeToString(ty)~"' is incompatible with value type '"~Generator.typeToString(LLVMTypeOf(val))~"'!");
+                    else {
+                        writeln(fromStringz(LLVMPrintModuleToString(Generator.Module)));
+                        Generator.error(loc,"The variable '"~i.name~"' with type '"~Generator.typeToString(ty)~"' is incompatible with value type '"~Generator.typeToString(LLVMTypeOf(val))~"'!");
+                    }
                 }
 
                 return LLVMBuildStore(
@@ -1462,26 +1465,20 @@ void structSetPredefines(Type t, LLVMValueRef var) {
             if(!s.name.into(StructTable)) return;
             if(StructTable[s.name].predefines.length>0) {
                 for(int i=0; i<StructTable[s.name].predefines.length; i++) {
-                    if(StructTable[s.name].predefines[i].value is null) continue;
-                    if(StructTable[s.name].predefines[i].isStruct) {
-                        NodeVar v = StructTable[s.name].predefines[i].value.instanceof!NodeVar;
-                        structSetPredefines(
-                            v.t,
-                            LLVMBuildStructGEP(
-                                Generator.Builder,
-                                var,
-                                cast(uint)i,
-                                toStringz("getStructElement")
-                            )
-                        );
+                    if(StructTable[s.name].predefines[i].value is null) {
+                        if(StructTable[s.name].predefines[i].isStruct) {
+                            NodeVar v = StructTable[s.name].predefines[i].value.instanceof!NodeVar;
+                            structSetPredefines(
+                                v.t,
+                                new NodeGet(new NodeDone(var), StructTable[s.name].predefines[i].name, true, -1).generate()
+                            );
+                        }
+                        continue;
                     }
                     LLVMValueRef val = StructTable[s.name].predefines[i].value.generate();
-                    LLVMValueRef ptr = LLVMBuildStructGEP(
-                        Generator.Builder, var,
-                        cast(uint)i, toStringz("getStructElement2")
-                    );
+                    LLVMValueRef ptr = new NodeGet(new NodeDone(var), StructTable[s.name].predefines[i].name, true, -1).generate();
 
-                    if(LLVMTypeOf(ptr) == LLVMTypeOf(val)) val = LLVMBuildLoad(Generator.Builder, val, toStringz("structsSetPredefines_Load"));
+                    if(LLVMTypeOf(ptr) == LLVMTypeOf(val)) val = LLVMBuildLoad(Generator.Builder, val, toStringz("structSetPredefines_Load"));
                     
                     LLVMBuildStore(
                         Generator.Builder,
@@ -1490,7 +1487,7 @@ void structSetPredefines(Type t, LLVMValueRef var) {
                     );
                 }
             }
-        }
+    }
 }
 
 class NodeVar : Node {
@@ -1590,8 +1587,6 @@ class NodeVar : Node {
         }
         if(t.instanceof!TypeAuto && value is null) Generator.error(loc,"using 'auto' without an explicit value is prohibited!");
 
-     
-
         if(currScope is null) {
             // Global variable
             // Only const-values
@@ -1639,11 +1634,9 @@ class NodeVar : Node {
                 return null;
             }
 
-            if(isExtern) {
-                LLVMSetLinkage(Generator.Globals[name], LLVMExternalLinkage);
-            }
+            if(isExtern) LLVMSetLinkage(Generator.Globals[name], LLVMExternalLinkage);
             if(isVolatile) LLVMSetVolatile(Generator.Globals[name],true);
-            // else LLVMSetLinkage(Generator.Globals[name],LLVMCommonLinkage);
+
             LLVMSetAlignment(Generator.Globals[name],Generator.getAlignmentOfType(t));
             if(value !is null && !isExtern) {
                 LLVMValueRef val;
@@ -1690,14 +1683,14 @@ class NodeVar : Node {
             if(isVolatile) {
                 LLVMSetVolatile(currScope.localscope[name],true);
             }
-            structSetPredefines(t, currScope.localscope[name]);
+            structSetPredefines(t, currScope.getWithoutLoad(name,loc));
 
             LLVMSetAlignment(currScope.getWithoutLoad(name,loc),Generator.getAlignmentOfType(t));
 
             if(value !is null) {
                 new NodeBinary(TokType.Equ,new NodeIden(name,loc),value,loc).generate();
             }
-            else if (!noZeroInit) {
+            else if(!noZeroInit) {
                 if(LLVMGetTypeKind(gT) == LLVMArrayTypeKind) {
                     LLVMValueRef[] _values;
                     for(int i=0; i<LLVMGetArrayLength(gT); i++) {
@@ -2244,7 +2237,7 @@ class NodeFunc : Node {
         if(isTemplate) Generator.toReplace = oldReplace.dup;
         //writeln(fromStringz(LLVMPrintValueToString(Generator.Functions[name])));
         LLVMVerifyFunction(Generator.Functions[name],0);
-
+        
         return Generator.Functions[name];
     }
 
@@ -3405,7 +3398,9 @@ class NodeGet : Node {
         }
         if(NodeDone nd = base.instanceof!NodeDone) {
             LLVMValueRef done = nd.generate();
-            string structName = cast(string)fromStringz(LLVMGetStructName(LLVMTypeOf(done)));
+            LLVMValueRef _nakedDone = done;
+            while(LLVMGetTypeKind(LLVMTypeOf(_nakedDone)) == LLVMPointerTypeKind) _nakedDone = LLVMBuildLoad(Generator.Builder, _nakedDone, toStringz("_nakedDone_"));
+            string structName = cast(string)fromStringz(LLVMGetStructName(LLVMTypeOf(_nakedDone)));
 
             LLVMValueRef ptr = checkStructure(done);
             LLVMValueRef f = checkIn(structName);
@@ -4042,6 +4037,7 @@ struct StructPredefined {
     int element;
     Node value;
     bool isStruct;
+    string name;
 }
 
 class NodeCast : Node {

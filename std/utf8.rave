@@ -28,7 +28,7 @@ namespace std {
         }
     }
     struct u8string {
-        char* data = null;
+        char* data;
         int length;
         int byteLength;
         int capacity;

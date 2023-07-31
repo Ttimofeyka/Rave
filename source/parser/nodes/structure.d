@@ -122,12 +122,12 @@ class NodeStruct : Node {
             if(NodeVar v = elements[i].instanceof!NodeVar) {
                 structsNumbers[cast(immutable)[name,v.name]] = StructMember(i,v);
                 if(v.value !is null) {
-                    predefines ~= StructPredefined(i,v.value,false);
+                    predefines ~= StructPredefined(i,v.value,false,v.name);
                 }
                 else if(TypeStruct ts = v.t.instanceof!TypeStruct) {
-                    if(!(ts.name !in StructTable) && StructTable[ts.name].hasPredefines()) predefines ~= StructPredefined(i,v,true);
+                    if(!(ts.name !in StructTable) && StructTable[ts.name].hasPredefines()) predefines ~= StructPredefined(i,v,true,v.name);
                 }
-                else predefines ~= StructPredefined(i,null,false);
+                else predefines ~= StructPredefined(i,null,false,v.name);
                 values ~= Generator.GenerateType(v.t,loc);
             }
             else {

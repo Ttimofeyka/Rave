@@ -275,24 +275,26 @@ class Compiler {
             if(options.object["compiler"].str.indexOf("gcc") == -1) {
                 linkString = linkString~"-target "~outtype~" ";
                 if("linker".into(options.object)) linkString = linkString ~ " -fuse-ld="~options.object["linker"].str~" ";
+                else linkString = linkString ~ " -fuse-ld="~opts.linker~" ";
             }
         }
-
         if(!_libraries.empty) {
             for(int i=0; i<_libraries.length; i++) {
                 linkString = linkString~"-l"~_libraries[i]~" ";
             }
         }
+        if(opts.isStatic) linkString = linkString ~ " -static ";
+
         auto l = executeShell(linkString~" -o "~outfile);
         if(l.status != 0) {
             writeln("Linking error: "~l.output~"\nLinking string: '"~linkString~" -o "~outfile~"'");
             for(int i=0; i<toRemove.length; i++) {
-                if(toRemove[i] != outfile) remove(toRemove[i]);
+                if(baseName(toRemove[i]) != baseName(outfile) && exists(toRemove[i])) remove(toRemove[i]);
             }
             exit(l.status);
         }
         for(int i=0; i<toRemove.length; i++) {
-            if(toRemove[i] != outfile) remove(toRemove[i]);
+            if(baseName(toRemove[i]) != baseName(outfile)) remove(toRemove[i]);
         }
         writeln("Time spent by lexer: ",lexTime," ms\nTime spent by parser: ",parseTime," ms\nTime spent by code generator: ",generateTime," ms");
     }
