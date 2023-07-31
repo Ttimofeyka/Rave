@@ -396,10 +396,9 @@ namespace std {
         } => sbuf;
     }
 
-    int sprintBufferSL = -1;
+    int sprintBufferSL = 0;
     std::string sprintBuffer;
     (ctargs) std::string __sprint {
-        if(std::sprintBufferSL == -1) std::thread::spinlock::initialize(&std::sprintBufferSL);
         std::thread::spinlock::lock(&std::sprintBufferSL);
 
         if(std::sprintBuffer.capacity <= 0) std::sprintBuffer = std::string(128);

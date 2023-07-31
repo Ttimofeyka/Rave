@@ -29,7 +29,7 @@
     }
 };
 
-@if(__RAVE_OS == "DARWIN") {
+@if((__RAVE_OS != "LINUX") && (__RAVE_OS != "WINDOWS32") && (__RAVE_OS != "WINDOWS64")) {
     namespace std {
         namespace library {
             alias RtldLazy = 0x00001;
