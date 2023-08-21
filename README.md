@@ -41,5 +41,5 @@ The reference is in `reference` directory.
 
 <a href="https://discord.gg/AfEtyArvsM">Discord</a>
 
-<a href="https://www.ravelang.tk/">Web-site</a>
+<a href="http://www.ravelang.space/">Web-site</a>
 
