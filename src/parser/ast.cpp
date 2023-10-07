@@ -384,10 +384,7 @@ LLVMValueRef Scope::get(std::string name, long loc) {
         generator->error("undefined variable '"+name+"'!", loc);
         return nullptr;
     }
-    if(LLVMGetTypeKind(LLVMTypeOf(value)) == LLVMPointerTypeKind)  {
-        size_t jam;
-        value = LLVMBuildLoad(generator->builder, value, "scopeGetLoad");
-    }
+    if(LLVMGetTypeKind(LLVMTypeOf(value)) == LLVMPointerTypeKind) value = LLVMBuildLoad(generator->builder, value, "scopeGetLoad");
     return value;
 }
 
