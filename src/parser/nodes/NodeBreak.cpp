@@ -1,0 +1,30 @@
+/*
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+
+#include "../../include/parser/nodes/NodeBreak.hpp"
+#include "../../include/utils.hpp"
+#include "../../include/parser/ast.hpp"
+#include "../../include/parser/nodes/NodeRet.hpp"
+#include <string>
+
+NodeBreak::NodeBreak(long loc) {this->loc = loc;}
+void NodeBreak::check() {this->isChecked = true;}
+Type* NodeBreak::getType() {return new TypeVoid();}
+Node* NodeBreak::comptime() {return nullptr;}
+Node* NodeBreak::copy() {return new NodeBreak(this->loc);}
+
+int NodeBreak::getWhileLoop() {
+    int i = generator->activeLoops.size()-1;
+    while((i>=0) && generator->activeLoops[i].isIf) i -= 1;
+    return i;
+}
+
+LLVMValueRef NodeBreak::generate() {
+    if(generator->activeLoops.empty()) generator->error("attempt to call 'break' out of the loop!", this->loc);
+    int id = this->getWhileLoop();
+    generator->activeLoops[generator->activeLoops.size()-1].hasEnd = true;
+    return LLVMBuildBr(generator->builder, generator->activeLoops[id].end);
+}

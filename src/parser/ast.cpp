@@ -352,6 +352,13 @@ Scope::Scope(std::string funcName, std::map<std::string, int> args, std::map<std
     this->argVars = std::map<std::string, NodeVar*>(argVars);
 }
 
+void Scope::remove(std::string name) {
+    if(this->localScope.find(name) != this->localScope.end()) {
+        this->localScope.erase(name);
+        this->localVars.erase(name);
+    }
+}
+
 LLVMValueRef Scope::get(std::string name, long loc) {
     LLVMValueRef value = nullptr;
     if(AST::aliasTable.find(name) != AST::aliasTable.end()) value = AST::aliasTable[name]->generate();
@@ -361,7 +368,7 @@ LLVMValueRef Scope::get(std::string name, long loc) {
         Type* varType = this->getVar(name,loc)->type;
         if(instanceof<TypePointer>(varType)) varType = ((TypePointer*)varType)->instance;
         /*if(AST::structTable.find(((TypeStruct*)varType)->name) != AST::structTable.end()) {
-        TODO
+            TODO
         }*/
         generator->error("TODO",loc);
         return nullptr;
@@ -377,7 +384,10 @@ LLVMValueRef Scope::get(std::string name, long loc) {
         generator->error("undefined variable '"+name+"'!", loc);
         return nullptr;
     }
-    if(LLVMGetTypeKind(LLVMTypeOf(value)) == LLVMPointerTypeKind) value = LLVMBuildLoad(generator->builder, value, "scopeGetLoad");
+    if(LLVMGetTypeKind(LLVMTypeOf(value)) == LLVMPointerTypeKind)  {
+        size_t jam;
+        value = LLVMBuildLoad(generator->builder, value, "scopeGetLoad");
+    }
     return value;
 }
 

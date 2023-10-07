@@ -7,8 +7,10 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeFor.hpp"
 #include "../../include/parser/nodes/NodeWhile.hpp"
 #include "../../include/parser/nodes/NodeBinary.hpp"
+#include "../../include/parser/nodes/NodeVar.hpp"
 #include "../../include/utils.hpp"
 #include "../../include/parser/ast.hpp"
+#include <iostream>
 
 NodeFor::NodeFor(std::vector<Node*> presets, NodeBinary* cond, std::vector<Node*> afters, NodeBlock* block, std::string funcName, long loc) {
     this->presets = std::vector<Node*>(presets);
@@ -24,7 +26,7 @@ Node* NodeFor::copy() {
     std::vector<Node*> afters;
     for(int i=0; i<this->presets.size(); i++) presets.push_back(this->presets[i]->copy());
     for(int i=0; i<this->afters.size(); i++) afters.push_back(this->afters[i]->copy());
-    return new NodeFor(presets, (NodeBinary*)this->cond->copy(), this->afters, (NodeBlock*)this->block->copy(), this->funcName, this->loc);
+    return new NodeFor(presets, (NodeBinary*)(this->cond->copy()), this->afters, (NodeBlock*)(this->block->copy()), this->funcName, this->loc);
 }
 
 Node* NodeFor::comptime() {return nullptr;}
@@ -32,19 +34,22 @@ void NodeFor::check() {this->isChecked = true;}
 Type* NodeFor::getType() {return new TypeVoid();}
 
 LLVMValueRef NodeFor::generate() {
-    auto oldLocalVars = std::map<std::string, NodeVar*>(currScope->localVars);
-    auto oldLocalScope = std::map<std::string, LLVMValueRef>(currScope->localScope);
-
     for(int i=0; i<this->presets.size(); i++) {
         this->presets[i]->check();
         this->presets[i]->generate();
     }
     for(int i=0; i<this->afters.size(); i++) this->block->nodes.push_back(this->afters[i]);
 
-    LLVMValueRef toret = (new NodeWhile(this->cond, this->block, this->loc, this->funcName))->generate();
+    NodeWhile* nwhile = new NodeWhile(this->cond, this->block, this->loc, this->funcName);
+    nwhile->check();
+    LLVMValueRef result = nwhile->generate();
 
-    currScope->localVars = oldLocalVars;
-    currScope->localScope = oldLocalScope;
+    for(int i=0; i<this->presets.size(); i++) {
+        if(instanceof<NodeVar>(this->presets[i])) {
+            NodeVar* nvar = (NodeVar*)this->presets[i];
+            currScope->remove(nvar->name);
+        }
+    }
 
-    return toret;
+    return result;
 }

@@ -1,5 +1,6 @@
 # Compiled Object files
 *.obj
+*.o
 
 # Compiled Dynamic libraries
 *.so
@@ -38,6 +39,10 @@ a
 ./a
 
 std/*.o
+src/*.o
+src/parser/*.o
+src/parser/nodes/*.o
+src/lexer/*.o
 examples/*.o
 .lite_project.lua
 

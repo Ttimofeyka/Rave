@@ -243,13 +243,13 @@ LLVMValueRef NodeBinary::generate() {
     else if(this->op == TokType::Equ) {
         if(instanceof<NodeIden>(first)) {
             NodeIden* id = ((NodeIden*)first);
-            if(currScope->getVar(id->name,loc)->isConst && id->name != "this" && currScope->getVar(id->name,loc)->isChanged) {
-                generator->error("an attempt to change the value of a constant variable!",loc);
+            if(currScope->getVar(id->name, this->loc)->isConst && id->name != "this" && currScope->getVar(id->name, this->loc)->isChanged) {
+                generator->error("an attempt to change the value of a constant variable!", this->loc);
             }
-            if(!currScope->getVar(id->name,loc)->isChanged) currScope->hasChanged(id->name);
+            if(!currScope->getVar(id->name, this->loc)->isChanged) currScope->hasChanged(id->name);
             if(isAliasIden) {AST::aliasTable[id->name] = this->second->copy(); return nullptr;}
             
-            LLVMTypeRef lType = LLVMTypeOf(currScope->get(id->name,this->loc));
+            LLVMTypeRef lType = LLVMTypeOf(currScope->get(id->name, this->loc));
             if(instanceof<NodeNull>(this->second)) {((NodeNull*)(this->second))->type = nullptr; ((NodeNull*)this->second)->lType = lType;}
 
             LLVMValueRef value = this->second->generate();

@@ -75,13 +75,14 @@ LLVMValueRef NodeNamespace::generate() {
     for(int i=0; i<this->nodes.size(); i++) {
         if(this->nodes[i] == nullptr) continue;
         if(instanceof<NodeFunc>(this->nodes[i])) {
-            if(hidePrivated && ((NodeFunc*)nodes[i])->isPrivate) continue;
+            NodeFunc* nfunc = (NodeFunc*)this->nodes[i];
+            if(hidePrivated && (nfunc->isPrivate)) continue;
             if(!this->nodes[i]->isChecked) {
-                for(int i=0; i<this->names.size(); i++) ((NodeFunc*)nodes[i])->namespacesNames.push_back(this->names[i]);
+                for(int i=0; i<this->names.size(); i++) nfunc->namespacesNames.push_back(this->names[i]);
                 this->nodes[i]->check();
             }
-            if(!((NodeFunc*)this->nodes[i])->isExtern) ((NodeFunc*)this->nodes[i])->isExtern = this->isImported;
-            this->nodes[i]->generate();
+            if(!nfunc->isExtern) nfunc->isExtern = this->isImported;
+            nfunc->generate();
         }
         else if(instanceof<NodeNamespace>(this->nodes[i])) {
             if(!this->nodes[i]->isChecked) {

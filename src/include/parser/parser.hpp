@@ -63,6 +63,7 @@ public:
     Node* parseWhile(std::string f);
     Node* parseFor(std::string f);
     Node* parseOperatorOverload(Type* type, std::string s);
+    Node* parseBreak();
     std::vector<FuncArgSet> parseFuncArgSets();
     std::vector<Node*> parseIndexes();
 

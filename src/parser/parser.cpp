@@ -32,6 +32,7 @@ with this file, You can obtain one at htypep://mozilla.org/MPL/2.0/.
 #include "../include/parser/nodes/NodePtoi.hpp"
 #include "../include/parser/nodes/NodeStruct.hpp"
 #include "../include/parser/nodes/NodeNull.hpp"
+#include "../include/parser/nodes/NodeBreak.hpp"
 #include "../include/parser/nodes/NodeArray.hpp"
 #include "../include/parser/nodes/NodeUnary.hpp"
 #include "../include/parser/nodes/NodeGet.hpp"
@@ -961,6 +962,7 @@ Node* Parser::parseStmt(std::string f) {
         if(id == "if") return this->parseIf(f, isStatic);
         if(id == "while") return this->parseWhile(f);
         if(id == "for") return this->parseFor(f);
+        if(id == "break") return this->parseBreak();
         if(id == "return") {
             auto tok = this->peek();
             if(this->next()->type != TokType::Semicolon) {
@@ -1022,6 +1024,13 @@ Node* Parser::parseStmt(std::string f) {
     if(this->peek()->type == TokType::Lbra) this->next();
     else this->expect(TokType::Semicolon);
     return expr;
+}
+
+Node* Parser::parseBreak() {
+    this->next();
+    Node* nbreak = new NodeBreak(this->peek()->line);
+    this->next();
+    return nbreak;
 }
 
 Node* Parser::parseIf(std::string f, bool isStatic) {

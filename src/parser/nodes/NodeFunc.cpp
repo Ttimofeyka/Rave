@@ -15,6 +15,9 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeInt.hpp"
 #include "../../include/parser/nodes/NodeArray.hpp"
 #include "../../include/parser/nodes/NodeString.hpp"
+#include "../../include/parser/nodes/NodeIf.hpp"
+#include "../../include/parser/nodes/NodeWhile.hpp"
+#include "../../include/parser/nodes/NodeFor.hpp"
 #include "../../include/llvm-c/Comdat.h"
 #include "../../include/llvm-c/Analysis.h"
 
@@ -84,6 +87,9 @@ void NodeFunc::check() {
         AST::funcTable[this->name] = this;
         for(int i=0; i<this->block->nodes.size(); i++) {
             if(instanceof<NodeRet>(this->block->nodes[i])) ((NodeRet*)this->block->nodes[i])->parent = this->name;
+            else if(instanceof<NodeIf>(this->block->nodes[i])) ((NodeIf*)this->block->nodes[i])->funcName = this->name;
+            else if(instanceof<NodeWhile>(this->block->nodes[i])) ((NodeWhile*)this->block->nodes[i])->funcName = this->name;
+            else if(instanceof<NodeFor>(this->block->nodes[i])) ((NodeFor*)this->block->nodes[i])->funcName = this->name;
             this->block->nodes[i]->check();
         }
     }
@@ -185,15 +191,11 @@ LLVMValueRef NodeFunc::generate() {
         LLVMSetComdat(generator->functions[this->name], comdat);
         LLVMSetLinkage(generator->functions[this->name], LLVMLinkOnceODRLinkage);
     }
+    else if(this->isExtern) LLVMSetLinkage(generator->functions[this->name], LLVMExternalLinkage);
 
     if(!this->isExtern) {
         if(this->isCtargsPart || this->isCtargs) generator->currentBuiltinArg = 0;
-        LLVMBasicBlockRef entry = LLVMAppendBasicBlockInContext(
-            generator->context,
-            generator->functions[this->name],
-            "entry"
-        );
-
+        LLVMBasicBlockRef entry = LLVMAppendBasicBlockInContext(generator->context, generator->functions[this->name], "entry");
         this->exitBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[this->name], "exit");
         this->builder = LLVMCreateBuilderInContext(generator->context);
         generator->builder = this->builder;

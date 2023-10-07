@@ -8,6 +8,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeRet.hpp"
 #include "../../include/parser/nodes/NodeBool.hpp"
 #include "../../include/parser/nodes/NodeFunc.hpp"
+#include "../../include/parser/nodes/NodeIf.hpp"
+#include "../../include/parser/nodes/NodeFor.hpp"
 #include "../../include/utils.hpp"
 
 NodeWhile::NodeWhile(Node* cond, Node* body, long loc, std::string funcName) {
@@ -31,6 +33,9 @@ void NodeWhile::check() {
             NodeBlock* nb = (NodeBlock*)this->body;
             for(int i=0; i<nb->nodes.size(); i++) {
                 if(instanceof<NodeRet>(nb->nodes[i])) ((NodeRet*)nb->nodes[i])->parent = this->funcName;
+                else if(instanceof<NodeIf>(nb->nodes[i])) ((NodeIf*)nb->nodes[i])->funcName = this->funcName;
+                else if(instanceof<NodeWhile>(nb->nodes[i])) ((NodeWhile*)nb->nodes[i])->funcName = this->funcName;
+                else if(instanceof<NodeFor>(nb->nodes[i])) ((NodeFor*)nb->nodes[i])->funcName = this->funcName;
             }
         }
     }

@@ -1,4 +1,4 @@
-import <std/sysc>
+import <std/sysc> <std/memory>
 
 void main {
     

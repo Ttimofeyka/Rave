@@ -29,7 +29,7 @@ To install dependencies, you can try running `install.sh` (Ubuntu/Debian) or `in
 
 If the installer does not work well on your system, you can try to install all the dependencies yourself.
 
-After install write `dub build` in the Rave directory.
+After install write `make` in the Rave directory.
 
 ### Cross-compilation programs from Linux for Windows
 

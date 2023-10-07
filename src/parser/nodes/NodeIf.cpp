@@ -8,6 +8,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeRet.hpp"
 #include "../../include/parser/nodes/NodeBool.hpp"
 #include "../../include/parser/nodes/NodeFunc.hpp"
+#include "../../include/parser/nodes/NodeWhile.hpp"
+#include "../../include/parser/nodes/NodeFor.hpp"
 #include "../../include/utils.hpp"
 
 NodeIf::NodeIf(Node* cond, Node* body, Node* _else, long loc, std::string funcName, bool isStatic) {
@@ -38,6 +40,9 @@ void NodeIf::check() {
                         ((NodeRet*)nb->nodes[i])->parent = this->funcName;
                         this->hasRets[0] = true;
                     }
+                    else if(instanceof<NodeIf>(nb->nodes[i])) ((NodeIf*)nb->nodes[i])->funcName = this->funcName;
+                    else if(instanceof<NodeWhile>(nb->nodes[i])) ((NodeWhile*)nb->nodes[i])->funcName = this->funcName;
+                    else if(instanceof<NodeFor>(nb->nodes[i])) ((NodeFor*)nb->nodes[i])->funcName = this->funcName;
                 }
             }
         }
@@ -54,6 +59,9 @@ void NodeIf::check() {
                         ((NodeRet*)nb->nodes[i])->parent = this->funcName;
                         this->hasRets[1] = true;
                     }
+                    else if(instanceof<NodeIf>(nb->nodes[i])) ((NodeIf*)nb->nodes[i])->funcName = this->funcName;
+                    else if(instanceof<NodeWhile>(nb->nodes[i])) ((NodeWhile*)nb->nodes[i])->funcName = this->funcName;
+                    else if(instanceof<NodeFor>(nb->nodes[i])) ((NodeFor*)nb->nodes[i])->funcName = this->funcName;
                 }
             }
         }
@@ -73,17 +81,11 @@ LLVMValueRef NodeIf::generate() {
 	LLVMBasicBlockRef elseBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[this->funcName], "else");
 	LLVMBasicBlockRef endBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[this->funcName], "end");
 
-    LLVMBuildCondBr(
-		generator->builder,
-		this->cond->generate(),
-		thenBlock,
-		elseBlock
-	);
+    LLVMBuildCondBr(generator->builder, this->cond->generate(), thenBlock, elseBlock);
 
     int selfNum = generator->activeLoops.size();
     generator->activeLoops[selfNum] = Loop{.isActive = true, .start = thenBlock, .end = endBlock, .hasEnd = false, .isIf = true, .loopRets = std::vector<LoopReturn>()};
 
-    std::cout << "Error there?" << std::endl;
     LLVMPositionBuilderAtEnd(generator->builder, thenBlock);
     generator->currBB = thenBlock;
     if(this->body != nullptr) this->body->generate();
