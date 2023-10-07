@@ -416,7 +416,8 @@ Node* Parser::parseAtom(std::string f) {
         return new NodeChar(t->value, false);
     }
     if(t->type == TokType::Identifier) {
-        if(t->value == "cast") {
+        if(t->value == "null") return new NodeNull(nullptr, t->line);
+        else if(t->value == "cast") {
             this->next();
             Type* ty = this->parseType();
             this->next(); // skip )
@@ -489,7 +490,6 @@ Node* Parser::parseAtom(std::string f) {
         }
         return new NodeIden(t->value,this->peek()->line);
     }
-    if(t->type == TokType::Null) return new NodeNull(nullptr, t->line);
     if(t->type == TokType::Rpar) {
         auto e = this->parseExpr();
         this->expect(TokType::Lpar);

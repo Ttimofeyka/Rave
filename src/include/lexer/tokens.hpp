@@ -35,7 +35,6 @@ enum TokType : char {
     MoreEqual,
     LessEqual,
     ShortRet,
-    Null,
     True,
     False,
     Eof,

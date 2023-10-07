@@ -1,5 +1,5 @@
-import <std/sysc> <std/memory>
+import <std/sysc> <std/memory> <std/cstring>
 
-void main {
-    
-}
+int main {
+    const(char)* str = "Hello";
+} => std::cstring::strlen(str);

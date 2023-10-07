@@ -15,7 +15,6 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 std::string Lexer::replaceAllEscapes(std::string buffer, bool isChar) {
     std::string str = replaceAll(replaceAll(replaceAll(replaceAll(replaceAll(buffer, "\\r", "\r"), "\\n", "\n"),"\\'", "\'"),"\\\"", "\""), "\\t", "\t");
-    if(isChar && str.size() > 1 && str[0] == '\\' && isdigit(str[1])) return std::to_string(char(std::stoi(str.substr(1))));
     return str;
 }
 
