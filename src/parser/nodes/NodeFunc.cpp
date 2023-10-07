@@ -254,7 +254,9 @@ LLVMValueRef NodeFunc::generate() {
     }
     if(this->isTemplate) generator->toReplace = std::map<std::string, Type*>(oldReplace);
 
-    //std::cout << LLVMPrintModuleToString(generator->lModule) << std::endl;
+    #if(RAVE_DEBUG_MODE)
+        std::cout << LLVMPrintModuleToString(generator->lModule) << std::endl;
+    #endif
     LLVMVerifyFunction(generator->functions[this->name], LLVMPrintMessageAction);
     return generator->functions[this->name];
 }

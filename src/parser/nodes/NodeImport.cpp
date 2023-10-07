@@ -141,17 +141,28 @@ LLVMValueRef NodeImport::generate() {
     std::string oldFile = generator->file;
     generator->file = this->file;
     for(int j=0; j<buffer.size(); j++) {
-        if(instanceof<NodeNamespace>(buffer[j])) ((NodeNamespace*)buffer[j])->isImported = true;
+        if(instanceof<NodeNamespace>(buffer[j])) {
+            NodeNamespace* nnamespace = (NodeNamespace*)buffer[j];
+            nnamespace->isImported = true;
+        }
         else if(instanceof<NodeFunc>(buffer[j])) {
-            if(((NodeFunc*)buffer[j])->isPrivate) continue;
-            ((NodeFunc*)buffer[j])->isExtern = true;
+            NodeFunc* nfunc = (NodeFunc*)buffer[j];
+            if(nfunc->isPrivate) continue;
+            nfunc->isExtern = true;
         }
         else if(instanceof<NodeVar>(buffer[j])) {
-            if(((NodeVar*)buffer[j])->isPrivate) continue;
-            ((NodeVar*)buffer[j])->isExtern = true;
+            NodeVar* nvar = (NodeVar*)buffer[j];
+            if(nvar->isPrivate) continue;
+            nvar->isExtern = true;
         }
-        else if(instanceof<NodeStruct>(buffer[j])) ((NodeStruct*)buffer[j])->isImported = true;
-        else if(instanceof<NodeBuiltin>(buffer[j])) ((NodeStruct*)buffer[j])->isImported = true;
+        else if(instanceof<NodeStruct>(buffer[j])) {
+            NodeStruct* nstruct = (NodeStruct*)buffer[j];
+            nstruct->isImported = true;
+        }
+        else if(instanceof<NodeBuiltin>(buffer[j])) {
+            NodeBuiltin* nbuiltin = (NodeBuiltin*)buffer[j];
+            nbuiltin->isImport = true;
+        }
         buffer[j]->generate();
     }
     generator->file = oldFile;

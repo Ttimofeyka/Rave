@@ -94,3 +94,5 @@ static inline std::string &rtrim(std::string &s) {
 static inline std::string &trim(std::string &s) {
     return ltrim(rtrim(s));
 }
+
+#define RAVE_DEBUG_MODE false
