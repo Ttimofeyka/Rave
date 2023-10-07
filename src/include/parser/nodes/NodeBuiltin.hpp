@@ -1,0 +1,39 @@
+/*
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+
+#pragma once
+
+#include "../../llvm-c/Core.h"
+#include "Node.hpp"
+#include "NodeBlock.hpp"
+#include "../Types.hpp"
+#include <vector>
+#include <string>
+
+class NodeType;
+
+class NodeBuiltin : public Node {
+public:
+    std::string name;
+    std::vector<Node*> args;
+    long loc;
+    Type* type = nullptr;
+    NodeBlock* block;
+    bool isImport = false;
+    bool isTopLevel = false;
+    int CTId = 0;
+
+    NodeBuiltin(std::string name, std::vector<Node*> args, long loc, NodeBlock* block);
+    NodeBuiltin(std::string name, std::vector<Node*> args, long loc, NodeBlock* block, Type* type, bool isImport, bool isTopLevel, int CTId);
+
+    NodeType* asType(int n, bool isCompTime = false);
+    std::string getAliasName(int n);
+    Type* getType() override;
+    void check() override;
+    LLVMValueRef generate() override;
+    Node* comptime() override;
+    Node* copy() override;
+};

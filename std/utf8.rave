@@ -1,6 +1,7 @@
-import <std/memory> <std/ascii> <std/cstring> <std/vector>
+import <std/memory> <std/ascii> <std/cstring> <std/vector> <std/strutil>
 
 namespace std {
+    extern(private, vararg, linkname: "sscanf") int format(char* buff, char* fmt);
     namespace utf8 {
         const(int[16]) utfLength = [1,1,1,1,1,1,1,1,0,0,0,0,2,2,3,4];
         const(int[1]) offsets = [
@@ -91,7 +92,11 @@ namespace std {
         } => temp;
 
         (inline) char toChar => this.data[0];
-        (inline) long toLong => libc::strtol(this.c(),cast(char**)null,10);
+        long toLong {
+            char* buff = this.c();
+            long n = libc::strtol(buff,cast(char**)null,10);
+            std::delete(buff);
+        } => n;
         (inline) int toInt => cast(int)this.toLong();
 
         int indexOf(char* c) {
@@ -267,5 +272,27 @@ namespace std {
         std::u8string trim {
             std::u8string _l = this.ltrim();
         } => _l.rtrim();
+
+        int fromHex {
+            int hex = 0;
+            char* buffer = this.c();
+            std::format(cast(char*)((cast(int)buffer)+2), "%x", &hex);
+            std::delete(buffer);
+        } => hex;
+
+        std::u8string toLower {
+            std::u8string buffer = "";
+            for(int i=0; i<this.length; i+=1) {
+                buffer.add(std::ascii::toLower(this.data[i]));
+            }
+        } => buffer;
+    }
+    namespace u8string {
+        (inline) std::u8string fromNumber(long n) {
+            char* buf = std::malloc(std::lengthOfNumber(n)+2);
+            libc::cformat(buf,"%ld",n);
+            std::u8string sbuf = std::u8string(buf);
+            std::delete(buf);
+        } => sbuf;
     }
 }

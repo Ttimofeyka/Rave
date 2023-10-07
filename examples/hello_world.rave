@@ -1,5 +1,0 @@
-import <std/io>
-
-void main {
-    std::println("Hello, world!");
-}

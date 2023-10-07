@@ -23,7 +23,7 @@ the result of a call with the same parameters and the same number will be the sa
 	                movq 8(%rsp),%r9
 	                syscall
 
-	            	movq %rax, \"_Ravegstd::__syscResult\"
+	            	movq %rax, \"_RaveGstd::__syscResult\"
                 ");
             } => cast(void*)std::__syscResult;
         }
@@ -75,7 +75,7 @@ the result of a call with the same parameters and the same number will be the sa
 	                movl %ebp, %edi
 	                syscall
 
-	            	movl %eax, \"_Ravegstd::__syscResult\"
+	            	movl %eax, \"_RaveGstd::__syscResult\"
                 ");
             } => cast(void*)std::__syscResult;
         }
@@ -128,7 +128,7 @@ the result of a call with the same parameters and the same number will be the sa
                     mov x5, x6
 	                svc #0
 
-                    ldr x1, =\"_Ravegstd::__syscResult\"
+                    ldr x1, =\"_RaveGstd::__syscResult\"
                     str x0, [x1]
                 ");
             } => cast(void*)std::__syscResult;
@@ -197,7 +197,7 @@ the result of a call with the same parameters and the same number will be the sa
                     mov r5, r6
 	                swi 0x0
 
-                    ldr r1, =\"_Ravegstd::__syscResult\"
+                    ldr r1, =\"_RaveGstd::__syscResult\"
                     str r0, [r1]
                 ");
             } => cast(void*)std::__syscResult;

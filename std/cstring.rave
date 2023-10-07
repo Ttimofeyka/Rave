@@ -1,5 +1,4 @@
 namespace libc {
-    // Functions that are practically unnecessary in normal use and come from libc
     extern(vararg, linkname: "sprintf") int cformat(char* str, char* fmt);
     extern(linkname: "strtok") char* strtok(char* str, char* chars);
     extern(linkname: "strtol") long strtol(char* str, char** end, int base);

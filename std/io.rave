@@ -74,7 +74,7 @@ namespace std {
     extern(linkname: "putchar") int putchar(char c);
 
     int __putsSL = 0;
-    void puts(const(char)* s) {
+    (nochecks) void puts(const(char)* s) {
         std::thread::spinlock::lock(&std::__putsSL);
         for(int i=0; s[i] != '\0'; i+=1) {
             std::putchar(s[i]);
@@ -84,7 +84,7 @@ namespace std {
     }
 
     int __putswnlSL = 0;
-    void putswnl(char* s) {
+    (nochecks) void putswnl(char* s) {
         std::thread::spinlock::lock(&std::__putswnlSL);
         for(int i=0; s[i] != '\0'; i+=1) {
             std::putchar(s[i]);
@@ -93,7 +93,7 @@ namespace std {
     }
 
     int __putswnlSL2 = 0;
-    void putswnl(std::string s) {
+    (nochecks) void putswnl(std::string s) {
         std::thread::spinlock::lock(&std::__putswnlSL2);
         for(int i=0; i<s.length; i+=1) {
             std::putchar(s.data[i]);

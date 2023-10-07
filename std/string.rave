@@ -1,31 +1,8 @@
 import <std/vector> <std/cstring> <std/ascii> <std/utf32> <std/utf8>
-import <std/thread>
+import <std/thread> <std/strutil>
 
 namespace std {
-    extern(linkname: "sscanf") int format(char* buff, char* fmt);
-    (inline) int _lengthOfNumber(long x) {
-        if(x < 0) x = x * (-1);
-        int len = 1;
-
-        if(x >= 1000000000000) len = 13;
-        else if(x >= 100000000000) len = 12;
-        else if(x >= 10000000000) len = 11;
-        else if(x >= 1000000000) len = 10;
-        else if(x >= 100000000) len = 9;
-        else if(x >= 10000000) len = 8;
-        else if(x >= 1000000) len = 7;
-        else if(x >= 100000) len = 6;
-        else if(x >= 10000) len = 5;
-        else if(x >= 1000) len = 4;
-        else if(x >= 100) len = 3;
-        else if(x >= 10) len = 2;
-    } => len;
-    (inline) int lengthOfNumber(long x) {
-        int len = 0;
-
-        if(x<0) len = std::_lengthOfNumber(-x)+1;
-        else len = std::_lengthOfNumber(x);
-    } => len;
+    extern(private,linkname: "sscanf") int format(char* buff, char* fmt);
 
     struct string {
         char* data = null;
@@ -398,13 +375,13 @@ namespace std {
 
     int sprintBufferSL = 0;
     std::string sprintBuffer;
+    bool sbInitialized = false;
+
     (ctargs) std::string __sprint {
         std::thread::spinlock::lock(&std::sprintBufferSL);
 
-        if(std::sprintBuffer.capacity <= 0) std::sprintBuffer = std::string(128);
+        if(!std::sbInitialized) {std::sprintBuffer = std::string(128); std::sbInitialized = true;}
         else std::sprintBuffer.length = 0;
-
-        int idx = 0;
 
         @foreachArgs() {
             @if(@typesIsNequals(@getCurrArgType(),float)) {
