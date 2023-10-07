@@ -110,8 +110,8 @@ Lexer::Lexer(std::string text, int offset) {
     this->line = 0 - offset;
     while(idx < this->text.size()) {
         while(peek() == '\n' || peek() == '\r' || peek() == ' ' || peek() == '\t') {
-            idx += 1;
             if(peek() == '\n') line += 1;
+            idx += 1;
         }
         if(peek() == '\0' || peek() == 0 || peek() == EOF) break;
         switch(peek()) {
