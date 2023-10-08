@@ -20,3 +20,6 @@ $(BIN): $(OBJ)
 	$(COMPILER) $(OBJ) -o $@ $(LLVM_LIB) -DLLVM_$(LLVM_VERSION)
 %.o: %.c
 	$(COMPILER) -c $< -o $@ -DLLVM_$(LLVM_VERSION) -std=c++11 -Wno-deprecated
+
+clean: 
+	rm -rf src/*.o src/parser/*.o src/parser/nodes/*.o src/lexer/*.o
