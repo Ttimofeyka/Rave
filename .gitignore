@@ -1,6 +1,5 @@
 # Compiled Object files
 *.obj
-*.o
 
 # Compiled Dynamic libraries
 *.so
@@ -29,6 +28,7 @@ source/old.ast.d
 
 *.out
 *.ll
+*.o
 *.be
 bin
 ./first
