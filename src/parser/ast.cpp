@@ -429,7 +429,6 @@ NodeVar* Scope::getVar(std::string name, long loc) {
                 return structsNumbers[cast(immutable)[ts.name,n]].var;
             }
         }*/
-        return nullptr;
     }
     generator->error("undefined variable '"+name+"'!",loc);
     return nullptr;

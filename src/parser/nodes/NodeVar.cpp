@@ -81,6 +81,7 @@ void NodeVar::check() {
 }
 
 LLVMValueRef NodeVar::generate() {
+    //std::cout << "Name: " << this->name << std::endl;
     if(instanceof<TypeAlias>(this->type)) {
         AST::aliasTable[this->name] = this->value;
         return nullptr;

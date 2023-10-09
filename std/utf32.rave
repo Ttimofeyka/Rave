@@ -110,7 +110,7 @@ namespace std {
         } => result;
         (inline) uint toLower(uint c) {
             uint tmp = c;
-            if(c < 128) tmp = std::ascii::isUpper(c);
+            if(c < 128) tmp = std::ascii::toLower(c);
             else {
                 if((c > 1039) && (c < 1072)) tmp = c + 32; // Cyrillic (russian)
                 // TODO: add completely support of cyrillic
@@ -118,7 +118,7 @@ namespace std {
         } => tmp;
         (inline) uint toUpper(uint c) {
             uint tmp = c;
-            if(c < 128) tmp = std::ascii::isUpper(c);
+            if(c < 128) tmp = std::ascii::toUpper(c);
             else {
                 if((c > 1071) && (c < 1104)) tmp = c - 32; // Cyrillic (russian)
                 // TODO: add completely support of cyrillic
@@ -340,12 +340,12 @@ namespace std {
             }
         } => isEqual;
 
-        bool operator==(std::u32string one, std::u32string two) => one.compare(two);
-        bool operator==(std::u32string one, uint* two) => one.compare(two);
-        bool operator!=(std::u32string one, std::u32string two) => !(one.compare(two));
-        bool operator!=(std::u32string one, uint* two) => !(one.compare(two));
-        void operator=(std::u32string* one, uint* two) {one[0] = std::u32string(two);}
+        //bool operator==(std::u32string one, std::u32string two) => one.compare(two);
+        //bool operator==(std::u32string one, uint* two) => one.compare(two);
+        //bool operator!=(std::u32string one, std::u32string two) => !(one.compare(two));
+        //bool operator!=(std::u32string one, uint* two) => !(one.compare(two));
+        //void operator=(std::u32string* one, uint* two) {one[0] = std::u32string(two);}
 
-        void ~this {std::free(this.data);}
+        //void ~this {std::free(this.data);}
     }
 }

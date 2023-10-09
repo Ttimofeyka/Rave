@@ -282,7 +282,7 @@ LLVMValueRef NodeCall::generate() {
         if(instanceof<NodeIden>(g->base)) {
             NodeIden* i = (NodeIden*)g->base;
             TypeStruct* s = nullptr;
-            if(instanceof<TypePointer>(currScope->getVar(i->name, this->loc)->type)) s = (TypeStruct*)(currScope->getVar(i->name, this->loc)->type);
+            if(instanceof<TypePointer>(currScope->getVar(i->name, this->loc)->type)) s = (TypeStruct*)(((TypePointer*)currScope->getVar(i->name, this->loc)->type)->instance);
             else s = (TypeStruct*)currScope->getVar(i->name, this->loc)->type;
 
             if(s == nullptr) {

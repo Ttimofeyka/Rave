@@ -1099,11 +1099,6 @@ std::vector<Node*> Parser::parseFuncCallArgs() {
                 buffer.push_back(new NodeType(this->parseType(),this->peek()->line));
             }
             else if(this->isDefinedLambda()) buffer.push_back(this->parseLambda());
-            else if(this->tokens[this->idx+1]->type == TokType::Rpar) {
-                NodeIden* func = new NodeIden(this->peek()->value, this->peek()->line);
-                this->next();
-                buffer.push_back(this->parseCall(func));
-            }
             else buffer.push_back(this->parseExpr());
         }
         else buffer.push_back(this->parseExpr());
