@@ -153,16 +153,14 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 if(isImported) func->isExtern = true;
 
                 char oper;
-                std::string sOper = func->origName.substr(4);
-                if(sOper == "(+)") {oper = TokType::Plus; func->name = this->name+"(+)";}
-                else if(sOper == "(=)") {oper = TokType::Equ; func->name = this->name+"(=)";}
-                else if(sOper == "(==)") {oper = TokType::Equal; func->name = this->name+"(==)";}
-                else if(sOper == "(!=)") {oper = TokType::Nequal; func->name = this->name+"(!=)";}
-                else if(sOper == "([])") {oper = TokType::Rbra; func->name = this->name+"([])";}
-                else if(sOper == "([]=)") {oper = TokType::Lbra; func->name = this->name+"([]=)";}
+                if(func->origName.find("(+)") != std::string::npos) {oper = TokType::Plus; func->name = this->name+"(+)";}
+                else if(func->origName.find("(=)") != std::string::npos) {oper = TokType::Equ; func->name = this->name+"(=)";}
+                else if(func->origName.find("(==)") != std::string::npos) {oper = TokType::Equal; func->name = this->name+"(==)";}
+                else if(func->origName.find("(!=)") != std::string::npos) {oper = TokType::Nequal; func->name = this->name+"(!=)";}
+                else if(func->origName.find("([])") != std::string::npos) {oper = TokType::Rbra; func->name = this->name+"([])";}
+                else if(func->origName.find("([]=)") != std::string::npos) {oper = TokType::Lbra; func->name = this->name+"([]=)";}
                 func->name = func->name + typesToString(func->args);
-                if(sOper != "([])") this->operators[oper][typesToString(func->args)] = func;
-                else this->operators[oper][""] = func;
+                this->operators[oper][typesToString(func->args)] = func;
                 this->methods.push_back(func);
             }
             else if(func->origName == "~with") {
@@ -314,6 +312,17 @@ LLVMValueRef NodeStruct::generate() {
                 this->destructor->check();
                 this->destructor->generate();
             }
+        }
+    }
+    else {
+        if(isImported) {
+            this->destructor->isExtern = true;
+            this->destructor->check();
+        }
+        else {
+            this->destructor->args = {FuncArgSet{.name = "this", .type = new TypePointer(this->constructors[0]->type)}};
+            this->destructor->check();
+            this->destructor->generate();
         }
     }
     for(int i=0; i<this->methods.size(); i++) {

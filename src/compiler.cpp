@@ -121,7 +121,7 @@ void Compiler::compile(std::string file) {
     char c;
     while(fContent.get(c)) content += c;
 
-    int offset = 1;
+    int offset = 0;
     std::string oldContent = content;
 
     std::string ravePlatform = "UNKNOWN";

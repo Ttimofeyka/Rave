@@ -24,25 +24,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeStruct.hpp"
 #include "../../include/parser/nodes/NodeCall.hpp"
 #include "../../include/parser/nodes/NodeFunc.hpp"
+#include "../../include/parser/nodes/NodeUnary.hpp"
 #include <iostream>
-
-std::pair<std::string, std::string> isOperatorOverload(LLVMValueRef first, LLVMValueRef second, char op) {
-    LLVMTypeRef type = LLVMTypeOf(first);
-    if(LLVMGetTypeKind(type) == LLVMStructTypeKind || (LLVMGetTypeKind(type) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVMGetElementType(type)) == LLVMStructTypeKind)) {
-        std::string structName = std::string(LLVMGetStructName(type));
-        if(AST::structTable.find(structName) != AST::structTable.end()) {
-            if(AST::structTable[structName]->operators.find(op) != AST::structTable[structName]->operators.end()) {
-                std::vector<Type*> types;
-                types.push_back(lTypeToType(type));
-                types.push_back(lTypeToType(LLVMTypeOf(second)));
-                std::string sTypes = typesToString(types);
-                return ((AST::structTable[structName]->operators[op].find(sTypes) != AST::structTable[structName]->operators[op].end())
-                    ? std::pair<std::string, std::string>(structName, sTypes) : std::pair<std::string, std::string>("", ""));
-            }
-        }
-    }
-    return std::pair<std::string, std::string>("", "");
-}
 
 LLVMValueRef Binary::castValue(LLVMValueRef from, LLVMTypeRef to, long loc) {
     if(LLVMTypeOf(from) == to) return from;
@@ -185,6 +168,32 @@ NodeBinary::NodeBinary(char op, Node* first, Node* second, long loc, bool isStat
     this->isStatic = isStatic;
 }
 
+std::pair<std::string, std::string> isOperatorOverload(LLVMValueRef first, LLVMValueRef second, char op) {
+    LLVMTypeRef type = LLVMTypeOf(first);
+    if(LLVMGetTypeKind(type) == LLVMStructTypeKind || (LLVMGetTypeKind(type) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVMGetElementType(type)) == LLVMStructTypeKind)) {
+        std::string structName = std::string(LLVMGetStructName(type));
+        if(AST::structTable.find(structName) != AST::structTable.end()) {
+            if(AST::structTable[structName]->operators.find(op) != AST::structTable[structName]->operators.end()) {
+                std::vector<Type*> types;
+                types.push_back(lTypeToType(type));
+                types.push_back(lTypeToType(LLVMTypeOf(second)));
+                std::string sTypes = typesToString(types);
+                return ((AST::structTable[structName]->operators[op].find(sTypes) != AST::structTable[structName]->operators[op].end())
+                    ? std::pair<std::string, std::string>(structName, sTypes) : std::pair<std::string, std::string>("", ""));
+            }
+            else if(op == TokType::Nequal && AST::structTable[structName]->operators.find(TokType::Equal) != AST::structTable[structName]->operators.end()) {
+                std::vector<Type*> types;
+                types.push_back(lTypeToType(type));
+                types.push_back(lTypeToType(LLVMTypeOf(second)));
+                std::string sTypes = typesToString(types);
+                return ((AST::structTable[structName]->operators[TokType::Equal].find(sTypes) != AST::structTable[structName]->operators[TokType::Equal].end())
+                    ? std::pair<std::string, std::string>("!"+structName, sTypes) : std::pair<std::string, std::string>("", ""));
+            }
+        }
+    }
+    return std::pair<std::string, std::string>("", "");
+}
+
 Node* NodeBinary::copy() {return new NodeBinary(this->op, this->first->copy(), this->second->copy(), this->loc, this->isStatic);}
 void NodeBinary::check() {this->isChecked = true;}
 Node* NodeBinary::comptime() {
@@ -240,7 +249,8 @@ LLVMValueRef NodeBinary::generate() {
             default: return nullptr;
         }
     }
-    else if(this->op == TokType::Equ) {
+
+    if(this->op == TokType::Equ) {
         if(instanceof<NodeIden>(first)) {
             NodeIden* id = ((NodeIden*)first);
             if(currScope->getVar(id->name, this->loc)->isConst && id->name != "this" && currScope->getVar(id->name, this->loc)->isChanged) {
@@ -248,6 +258,23 @@ LLVMValueRef NodeBinary::generate() {
             }
             if(!currScope->getVar(id->name, this->loc)->isChanged) currScope->hasChanged(id->name);
             if(isAliasIden) {AST::aliasTable[id->name] = this->second->copy(); return nullptr;}
+            if(instanceof<TypeStruct>(currScope->getVar(id->name, this->loc)->type)) {
+                LLVMValueRef vFirst = this->first->generate();
+                LLVMValueRef vSecond = this->second->generate();
+                std::pair<std::string, std::string> opOverload = isOperatorOverload(vFirst, vSecond, this->op);
+                if(opOverload.first != "") {
+                    if(opOverload.first[0] == '!') return (new NodeUnary(this->loc, TokType::Ne, (new NodeCall(
+                        this->loc, new NodeIden(AST::structTable[opOverload.first.substr(1)]->operators[this->op][opOverload.second]->name, this->loc),
+                        std::vector<Node*>({new NodeDone(vFirst), new NodeDone(vSecond)})))))->generate();
+                    return (new NodeCall(
+                        this->loc, new NodeIden(AST::structTable[opOverload.first]->operators[this->op][opOverload.second]->name, this->loc),
+                        std::vector<Node*>({new NodeDone(vFirst), new NodeDone(vSecond)})))->generate();
+                }
+                else {
+                    generator->error("an attempt to compare value with the structure without overloading!", this->loc);
+                    return nullptr;
+                }
+            }
             
             LLVMTypeRef lType = LLVMTypeOf(currScope->get(id->name, this->loc));
             if(instanceof<NodeNull>(this->second)) {((NodeNull*)(this->second))->type = nullptr; ((NodeNull*)this->second)->lType = lType;}
@@ -402,12 +429,7 @@ LLVMValueRef NodeBinary::generate() {
         if(LLVMABISizeOfType(generator->targetData, LLVMTypeOf(vFirst)) > LLVMABISizeOfType(generator->targetData, LLVMTypeOf(vSecond))) vSecond = Binary::castValue(vSecond, LLVMTypeOf(vFirst), this->loc);
         else vFirst = Binary::castValue(vFirst, LLVMTypeOf(vSecond), this->loc);
     }
-
-    std::pair<std::string, std::string> opOverload = isOperatorOverload(vFirst, vSecond, this->op);
-    if(opOverload.first != "") return (new NodeCall(
-        this->loc, new NodeIden(AST::structTable[opOverload.first]->operators[this->op][opOverload.second]->name, this->loc),
-        std::vector<Node*>({new NodeDone(vFirst), new NodeDone(vSecond)})))->generate();
-
+    
     switch(this->op) {
         case TokType::Plus: return Binary::sum(vFirst, vSecond, this->loc);
         case TokType::Minus: return Binary::sub(vFirst, vSecond, this->loc);
