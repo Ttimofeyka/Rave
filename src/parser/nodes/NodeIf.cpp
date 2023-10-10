@@ -77,9 +77,9 @@ LLVMValueRef NodeIf::generate() {
         this->comptime();
         return nullptr;
     }
-    LLVMBasicBlockRef thenBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[this->funcName], "then");
-	LLVMBasicBlockRef elseBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[this->funcName], "else");
-	LLVMBasicBlockRef endBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[this->funcName], "end");
+    LLVMBasicBlockRef thenBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[currScope->funcName], "then");
+	LLVMBasicBlockRef elseBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[currScope->funcName], "else");
+	LLVMBasicBlockRef endBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[currScope->funcName], "end");
 
     LLVMBuildCondBr(generator->builder, this->cond->generate(), thenBlock, elseBlock);
 
@@ -91,7 +91,7 @@ LLVMValueRef NodeIf::generate() {
     if(this->body != nullptr) this->body->generate();
     if(!generator->activeLoops[selfNum].hasEnd) LLVMBuildBr(generator->builder, endBlock);
 
-    if(generator->activeLoops[selfNum].loopRets.size() > 0) AST::funcTable[this->funcName]->rets.push_back(generator->activeLoops[selfNum].loopRets[0].ret);
+    if(generator->activeLoops[selfNum].loopRets.size() > 0) AST::funcTable[currScope->funcName]->rets.push_back(generator->activeLoops[selfNum].loopRets[0].ret);
 
     bool hasEnd1 = generator->activeLoops[selfNum].hasEnd;
 
@@ -105,13 +105,13 @@ LLVMValueRef NodeIf::generate() {
 
     bool hasEnd2 = generator->activeLoops[selfNum].hasEnd;
 
-    if(generator->activeLoops[selfNum].loopRets.size() > 0) AST::funcTable[this->funcName]->rets.push_back(generator->activeLoops[selfNum].loopRets[0].ret);
+    if(generator->activeLoops[selfNum].loopRets.size() > 0) AST::funcTable[currScope->funcName]->rets.push_back(generator->activeLoops[selfNum].loopRets[0].ret);
 
     LLVMPositionBuilderAtEnd(generator->builder, endBlock);
     generator->currBB = endBlock;
     generator->activeLoops.erase(selfNum);
 
-    if(hasEnd1 && hasEnd2 && generator->activeLoops.size() == 0) LLVMBuildRet(generator->builder, LLVMConstNull(generator->genType(AST::funcTable[this->funcName]->type, this->loc)));
+    if(hasEnd1 && hasEnd2 && generator->activeLoops.size() == 0) LLVMBuildRet(generator->builder, LLVMConstNull(generator->genType(AST::funcTable[currScope->funcName]->type, this->loc)));
 
     return nullptr;
 }

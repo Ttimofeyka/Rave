@@ -42,9 +42,9 @@ void NodeWhile::check() {
 }
 
 LLVMValueRef NodeWhile::generate() {
-    LLVMBasicBlockRef condBlock = LLVMAppendBasicBlock(generator->functions[this->funcName], "cond");
-    LLVMBasicBlockRef whileBlock = LLVMAppendBasicBlock(generator->functions[this->funcName], "while");
-    currScope->blockExit = LLVMAppendBasicBlock(generator->functions[this->funcName], "exit");
+    LLVMBasicBlockRef condBlock = LLVMAppendBasicBlock(generator->functions[currScope->funcName], "cond");
+    LLVMBasicBlockRef whileBlock = LLVMAppendBasicBlock(generator->functions[currScope->funcName], "while");
+    currScope->blockExit = LLVMAppendBasicBlock(generator->functions[currScope->funcName], "exit");
 
     LLVMBuildBr(generator->builder, condBlock);
     LLVMPositionBuilderAtEnd(generator->builder, condBlock);

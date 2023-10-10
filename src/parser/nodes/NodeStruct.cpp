@@ -79,6 +79,7 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 if(this->isImported) {
                     func->isExtern = true;
                     func->check();
+                    this->constructors.push_back(func);
                     continue;
                 }
                 std::vector<Node*> toAdd;
@@ -131,7 +132,7 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 func->namespacesNames = std::vector<std::string>(this->namespacesNames);
                 func->isTemplatePart = this->isLinkOnce;
                 func->isComdat = this->isComdat;
-                Type* outType = constructors[0]->type;
+                Type* outType = this->constructors[0]->type;
                 if(instanceof<TypeStruct>(outType)) outType = new TypePointer(outType);
                 this->destructor->args = std::vector<FuncArgSet>({FuncArgSet{.name = "this", .type = outType}});
                 if(isImported) {

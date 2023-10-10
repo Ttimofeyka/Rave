@@ -161,7 +161,7 @@ LLVMValueRef NodeVar::generate() {
 
         if(instanceof<TypeAuto>(this->type)) {
             LLVMValueRef val = this->value->generate();
-            currScope->localScope[this->name] = LLVMBuildAlloca(generator->builder,LLVMTypeOf(val),name.c_str());
+            currScope->localScope[this->name] = LLVMBuildAlloca(generator->builder, LLVMTypeOf(val), name.c_str());
             this->type = lTypeToType(LLVMTypeOf(val));
             LLVMSetAlignment(currScope->localScope[this->name], generator->getAlignment(this->type));
             LLVMBuildStore(generator->builder,val,currScope->localScope[this->name]);
@@ -169,7 +169,7 @@ LLVMValueRef NodeVar::generate() {
         }
         if(instanceof<NodeInt>(this->value)) ((NodeInt*)this->value)->isVarVal = this->type;
 
-        LLVMTypeRef gT = generator->genType(this->type,this->loc);
+        LLVMTypeRef gT = generator->genType(this->type, this->loc);
         currScope->localScope[this->name] = LLVMBuildAlloca(generator->builder, gT, name.c_str());
         if(isVolatile) LLVMSetVolatile(currScope->localScope[this->name],true);
         LLVMSetAlignment(currScope->getWithoutLoad(this->name, this->loc), generator->getAlignment(this->type));

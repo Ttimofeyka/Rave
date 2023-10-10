@@ -54,10 +54,7 @@ void NodeNamespace::check() {
         }
         else if(instanceof<NodeNamespace>(this->nodes[i])) {
             NodeNamespace* nnamespace = (NodeNamespace*)this->nodes[i];
-            if(this->isImported && nnamespace->isChecked) {
-                nnamespace->isChecked = false;
-                nnamespace->isDoubleChecked = true;
-            }
+            if(this->isImported && nnamespace->isChecked) nnamespace->isChecked = false;
             else for(int i=0; i<this->names.size(); i++) nnamespace->names.insert(nnamespace->names.begin(), this->names[i]);
             this->nodes[i]->check();
         }
@@ -69,6 +66,11 @@ void NodeNamespace::check() {
         }
         else if(instanceof<NodeStruct>(this->nodes[i])) {
             NodeStruct* structure = ((NodeStruct*)this->nodes[i]);
+            if(this->isImported && structure->isChecked) {
+                structure->isChecked = false;
+                structure->name = structure->origname;
+                structure->namespacesNames.clear();
+            }
             for(int i=0; i<this->names.size(); i++) structure->namespacesNames.insert(structure->namespacesNames.begin(), this->names[i]);
             this->nodes[i]->check();
         }

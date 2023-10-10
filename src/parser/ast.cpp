@@ -236,6 +236,7 @@ LLVMTypeRef LLVMGen::genType(Type* type, long loc) {
                 sCopy->updateByTypes();
                 if(this->structures.find(sCopy->name) != this->structures.end()) return this->structures[sCopy->name];
                 std::string origStruct = sCopy->name.substr(0, sCopy->name.find('<'));
+                
                 if(AST::structTable.find(origStruct) != AST::structTable.end()) {
                     return AST::structTable[origStruct]->genWithTemplate(sCopy->name.substr(sCopy->name.find('<'), sCopy->name.size()), sCopy->types);
                 }

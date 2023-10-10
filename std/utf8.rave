@@ -57,7 +57,7 @@ namespace std {
             }
         } => this;
 
-        //void ~this {std::free(this.data);}
+        void ~this {std::free(this.data);}
 
         void set(char* a) {
             if(a != null) {
@@ -278,7 +278,7 @@ namespace std {
             int hex = 0;
             char* buffer = this.c();
             std::format(cast(char*)((cast(int)buffer)+2), "%x", &hex);
-            std::delete(buffer);
+            std::free(buffer);
         } => hex;
 
         std::u8string toLower {
@@ -293,7 +293,7 @@ namespace std {
             char* buf = std::malloc(std::lengthOfNumber(n)+2);
             libc::cformat(buf,"%ld",n);
             std::u8string sbuf = std::u8string(buf);
-            std::delete(buf);
+            std::free(buf);
         } => sbuf;
     }
 }
