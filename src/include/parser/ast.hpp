@@ -36,7 +36,6 @@ struct FuncArgSet {
 
 namespace AST {
     extern std::map<std::string, Type*> aliasTypes;
-    extern std::map<std::string, Type*> toReplace;
     extern std::map<std::string, Node*> aliasTable;
     extern std::map<std::string, NodeVar*> varTable;
     extern std::map<std::string, NodeFunc*> funcTable;

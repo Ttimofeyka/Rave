@@ -7,6 +7,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../include/parser/ast.hpp"
 #include "../include/parser/Types.hpp"
 #include "../include/utils.hpp"
+#include "../include/parser/nodes/NodeStruct.hpp"
 #include <iostream>
 
 // Type
@@ -115,14 +116,14 @@ void TypeStruct::updateByTypes() {
 }
 int TypeStruct::getSize() {
     Type* t = this;
-    while(AST::toReplace.find(t->toString()) == AST::toReplace.end()) t = AST::toReplace[t->toString()];
-    /*if(instanceof<TypeStruct>(t)) {
+    while(generator->toReplace.find(t->toString()) == generator->toReplace.end()) t = generator->toReplace[t->toString()];
+    if(instanceof<TypeStruct>(t)) {
         TypeStruct* ts = (TypeStruct*)t;
         if(!ts->types.empty() && AST::structTable.find(ts->name) == AST::structTable.end()) {
-            AST::structTable[ts->name]->genWithTemplate(ts->name[ts.name.indexOf('<')..$],ts.types.dup);
+            AST::structTable[ts->name]->genWithTemplate(ts->name.substr(ts->name.find('<')), ts->types);
         }
-        return StructTable[ts.name].getSize();
-    }*/
+        return AST::structTable[ts->name]->getSize();
+    }
     return t->getSize();
 }
 Type* TypeStruct::check(Type* parent) {

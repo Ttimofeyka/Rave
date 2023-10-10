@@ -19,7 +19,7 @@ namespace std {
     (inline) int lengthOfNumber(long x) {
         int len = 0;
 
-        if(x<0) len = std::_lengthOfNumber(-x)+1;
+        if(x < 0) len = std::_lengthOfNumber(-x) + 1;
         else len = std::_lengthOfNumber(x);
     } => len;
 }

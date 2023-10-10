@@ -10,6 +10,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeCast.hpp"
 #include "../../include/parser/nodes/NodeCall.hpp"
 #include "../../include/parser/nodes/NodeGet.hpp"
+#include "../../include/parser/nodes/NodeUnary.hpp"
 #include "../../include/parser/ast.hpp"
 #include <vector>
 #include <string>
@@ -146,6 +147,12 @@ LLVMValueRef NodeIndex::generate() {
         LLVMValueRef index = generator->byIndex(val, this->generateIndexes());
         if(isMustBePtr) return index;
         return LLVMBuildLoad(generator->builder, index, "NodeIndex_NodeCast_load");
+    }
+    if(instanceof<NodeUnary>(this->element)) {
+        NodeUnary* nunary = (NodeUnary*)this->element;
+        LLVMValueRef val = nunary->generate();
+        LLVMValueRef index = generator->byIndex(val, this->generateIndexes());
+        return index;
     }
     generator->error("NodeIndex::generate assert!",this->loc);
     return nullptr;

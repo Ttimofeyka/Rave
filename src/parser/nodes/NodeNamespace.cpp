@@ -44,12 +44,21 @@ void NodeNamespace::check() {
         if(instanceof<NodeFunc>(this->nodes[i])) {
             NodeFunc* nfunc = (NodeFunc*)this->nodes[i];
             if(hidePrivated && nfunc->isPrivate) continue;
+            if(this->isImported && nfunc->isChecked) {
+                nfunc->isChecked = false;
+                nfunc->name = nfunc->origName;
+                nfunc->namespacesNames.clear();
+            }
             for(int i=0; i<this->names.size(); i++) nfunc->namespacesNames.insert(nfunc->namespacesNames.begin(), this->names[i]);
             this->nodes[i]->check();
         }
         else if(instanceof<NodeNamespace>(this->nodes[i])) {
             NodeNamespace* nnamespace = (NodeNamespace*)this->nodes[i];
-            for(int i=0; i<this->names.size(); i++) nnamespace->names.insert(nnamespace->names.begin(), this->names[i]);
+            if(this->isImported && nnamespace->isChecked) {
+                nnamespace->isChecked = false;
+                nnamespace->isDoubleChecked = true;
+            }
+            else for(int i=0; i<this->names.size(); i++) nnamespace->names.insert(nnamespace->names.begin(), this->names[i]);
             this->nodes[i]->check();
         }
         else if(instanceof<NodeVar>(this->nodes[i])) {
@@ -81,12 +90,14 @@ LLVMValueRef NodeNamespace::generate() {
                 for(int i=0; i<this->names.size(); i++) nfunc->namespacesNames.push_back(this->names[i]);
                 this->nodes[i]->check();
             }
-            if(!nfunc->isExtern) nfunc->isExtern = this->isImported;
+            nfunc->isExtern = (nfunc->isExtern || this->isImported);
             nfunc->generate();
         }
         else if(instanceof<NodeNamespace>(this->nodes[i])) {
+            NodeNamespace* nnamespace = (NodeNamespace*)this->nodes[i];
+            nnamespace->isImported = this->isImported;
             if(!this->nodes[i]->isChecked) {
-                for(int i=0; i<this->names.size(); i++) ((NodeNamespace*)nodes[i])->names.push_back(this->names[i]);
+                for(int i=0; i<this->names.size(); i++) nnamespace->names.push_back(this->names[i]);
                 this->nodes[i]->check();
             }
             if(!((NodeNamespace*)this->nodes[i])->isImported) ((NodeNamespace*)this->nodes[i])->isImported = this->isImported;

@@ -160,6 +160,13 @@ LLVMValueRef NodeBuiltin::generate() {
         if(AST::aliasTable.find(this->getAliasName(0)) != AST::aliasTable.end()) return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 1, false);
         return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 0, false);
     }
+    if(this->name == "foreachArgs") {
+        for(int i=generator->currentBuiltinArg; i<AST::funcTable[currScope->funcName]->args.size(); i++) {
+            this->block->generate();
+            generator->currentBuiltinArg += 1;
+        }
+        return nullptr;
+    }
     generator->error("builtin with the name '"+this->name+"' does not exist!", this->loc);
     return nullptr;
 }

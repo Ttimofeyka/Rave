@@ -81,7 +81,6 @@ void NodeVar::check() {
 }
 
 LLVMValueRef NodeVar::generate() {
-    //std::cout << "Name: " << this->name << std::endl;
     if(instanceof<TypeAlias>(this->type)) {
         AST::aliasTable[this->name] = this->value;
         return nullptr;
@@ -94,6 +93,9 @@ LLVMValueRef NodeVar::generate() {
     if(instanceof<TypeAuto>(this->type) && value == nullptr) {
         generator->error("using 'auto' without an explicit value is prohibited!",loc);
         return nullptr;
+    }
+    if(instanceof<TypeStruct>(this->type)) {
+        while(generator->toReplace.find(((TypeStruct*)this->type)->name) != generator->toReplace.end()) this->type = generator->toReplace[((TypeStruct*)this->type)->name];
     }
 
     if(currScope == nullptr) {

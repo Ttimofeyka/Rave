@@ -198,6 +198,9 @@ LLVMValueRef NodeCall::generate() {
             AST::funcTable[f.name[0..f.name.find('<')]].generateWithTemplate(p.parseType().instanceof!TypeStruct.types,f.name);
             return generate();*/
         }
+        for(auto const& x : AST::funcTable) {
+            std::cout << x.first << std::endl;
+        }
         generator->error("unknown function '"+f->name+"'!", this->loc);
         return nullptr;
     }

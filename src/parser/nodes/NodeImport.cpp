@@ -132,7 +132,9 @@ LLVMValueRef NodeImport::generate() {
             if(!((NodeFunc*)buffer[j])->isPrivate) buffer[j]->check();
         }
         else if(instanceof<NodeNamespace>(buffer[j])) {
-            ((NodeNamespace*)buffer[j])->hidePrivated = true;
+            NodeNamespace* nnamespace = (NodeNamespace*)buffer[j];
+            nnamespace->hidePrivated = true;
+            nnamespace->isImported = true;
             buffer[j]->check();
         }
         else buffer[j]->check();
@@ -141,11 +143,7 @@ LLVMValueRef NodeImport::generate() {
     std::string oldFile = generator->file;
     generator->file = this->file;
     for(int j=0; j<buffer.size(); j++) {
-        if(instanceof<NodeNamespace>(buffer[j])) {
-            NodeNamespace* nnamespace = (NodeNamespace*)buffer[j];
-            nnamespace->isImported = true;
-        }
-        else if(instanceof<NodeFunc>(buffer[j])) {
+        if(instanceof<NodeFunc>(buffer[j])) {
             NodeFunc* nfunc = (NodeFunc*)buffer[j];
             if(nfunc->isPrivate) continue;
             nfunc->isExtern = true;

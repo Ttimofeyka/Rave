@@ -126,11 +126,11 @@ Lexer::Lexer(std::string text, int offset) {
                 break;
             case '*':
                 if(next() == '=') {tokens.push_back(new Token(TokType::MulEqu, "*=", line)); idx += 1;}
-                else tokens.push_back(new Token(TokType::Multiply, "+", line));
+                else tokens.push_back(new Token(TokType::Multiply, "*", line));
                 break;
             case '/':
                 next();
-                if(peek() == '=') {tokens.push_back(new Token(TokType::PluEqu, "+=", line)); idx += 1;}
+                if(peek() == '=') {tokens.push_back(new Token(TokType::DivEqu, "/=", line)); idx += 1;}
                 else if(peek() == '/') {while(peek() != '\n') idx += 1;}
                 else if(peek() == '*') {
                     idx += 1;
@@ -141,7 +141,6 @@ Lexer::Lexer(std::string text, int offset) {
                     }
                     this->idx += 2;
                 }
-                else if(peek() == '=') tokens.push_back(new Token(TokType::DivEqu, "/=", line));
                 else tokens.push_back(new Token(TokType::Divide, "/", line));
                 break;
             case '&':

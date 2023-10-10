@@ -1,4 +1,4 @@
-import <std/memory> <std/ascii> <std/cstring> <std/vector> <std/strutil>
+import <std/memory> <std/ascii> <std/vector> <std/cstring> <std/strutil>
 
 namespace std {
     extern(private, vararg, linkname: "sscanf") int format(char* buff, char* fmt);
@@ -28,6 +28,7 @@ namespace std {
             while((ptr[idx[0]] != '\0') && (!std::utf8::isStart(ptr[idx[0]]))) idx[0] -= 1;
         }
     }
+    
     struct u8string {
         char* data;
         int length;
@@ -95,7 +96,7 @@ namespace std {
         long toLong {
             char* buff = this.c();
             long n = libc::strtol(buff,cast(char**)null,10);
-            std::delete(buff);
+            std::free(buff);
         } => n;
         (inline) int toInt => cast(int)this.toLong();
 

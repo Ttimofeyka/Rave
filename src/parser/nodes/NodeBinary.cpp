@@ -270,8 +270,8 @@ LLVMValueRef NodeBinary::generate() {
                         this->loc, new NodeIden(AST::structTable[opOverload.first]->operators[this->op][opOverload.second]->name, this->loc),
                         std::vector<Node*>({new NodeDone(vFirst), new NodeDone(vSecond)})))->generate();
                 }
-                else {
-                    generator->error("an attempt to compare value with the structure without overloading!", this->loc);
+                else if(instanceof<TypeBasic>(this->second->getType())) {
+                    generator->error("an attempt to change value of the structure as the variable '"+id->name+"' without overloading!", this->loc);
                     return nullptr;
                 }
             }
@@ -380,7 +380,7 @@ LLVMValueRef NodeBinary::generate() {
         //}
     }
 
-    if(this->first->getType()->toString() != this->second->getType()->toString()) {
+    if(this->first->getType() != nullptr && this->second->getType() != nullptr && this->first->getType()->toString() != this->second->getType()->toString()) {
         if(instanceof<NodeNull>(this->first)) ((NodeNull*)this->first)->type = this->second->getType();
         else if(instanceof<NodeNull>(this->second)) ((NodeNull*)this->second)->type = this->first->getType();
     }

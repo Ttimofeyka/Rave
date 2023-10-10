@@ -16,7 +16,6 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <iostream>
 
 std::map<std::string, Type*> AST::aliasTypes;
-std::map<std::string, Type*> AST::toReplace;
 std::map<std::string, Node*> AST::aliasTable;
 std::map<std::string, NodeVar*> AST::varTable;
 std::map<std::string, NodeFunc*> AST::funcTable;
@@ -244,6 +243,7 @@ LLVMTypeRef LLVMGen::genType(Type* type, long loc) {
             if(AST::structTable.find(s->name) != AST::structTable.end()) {
                 AST::structTable[s->name]->check();
                 AST::structTable[s->name]->generate();
+                return this->genType(type, loc);
             }
             else if(AST::aliasTypes.find(s->name) != AST::aliasTypes.end()) return this->genType(AST::aliasTypes[s->name], loc);
             this->error("unknown structure '"+s->name+"'!",loc);
