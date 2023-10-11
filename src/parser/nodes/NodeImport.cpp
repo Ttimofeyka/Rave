@@ -94,7 +94,7 @@ Node* NodeImport::copy() {return new NodeImport(this->file, this->functions, thi
 void NodeImport::check() {this->isChecked = true;}
 
 LLVMValueRef NodeImport::generate() {
-    if(std::count(AST::importedFiles.begin(), AST::importedFiles.end(), this->file) || this->file == generator->file) return nullptr;
+    if(std::count(AST::importedFiles.begin(), AST::importedFiles.end(), this->file) > 0 || this->file == generator->file) return nullptr;
     std::vector<Node*> buffer;
 
     if(this->file.find("/.rave") == this->file.size()-6) {

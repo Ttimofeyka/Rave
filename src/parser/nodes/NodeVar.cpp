@@ -6,6 +6,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "../../include/parser/nodes/NodeVar.hpp"
 #include "../../include/parser/ast.hpp"
+#include "../../include/llvm-c/Comdat.h"
 #include "../../include/parser/nodes/NodeArray.hpp"
 #include "../../include/parser/nodes/NodeString.hpp"
 #include "../../include/parser/nodes/NodeInt.hpp"
@@ -121,7 +122,7 @@ LLVMValueRef NodeVar::generate() {
                 generator->genType(this->type, loc),
                 ((linkName == this->name && !noMangling) ? generator->mangle(name,false,false).c_str() : linkName.c_str())
             );
-            if(this->value != nullptr) LLVMSetInitializer(generator->globals[this->name], this->value->generate());
+            if(!this->isExtern && this->value != nullptr) LLVMSetInitializer(generator->globals[this->name], this->value->generate());
         }
         else {
             LLVMValueRef val = nullptr;
@@ -133,14 +134,20 @@ LLVMValueRef NodeVar::generate() {
                 ((linkName == this->name && !noMangling) ? generator->mangle(name,false,false).c_str() : linkName.c_str())
             );
             this->type = lTypeToType(LLVMTypeOf(val));
-            LLVMSetInitializer(generator->globals[this->name],val);
+            LLVMSetInitializer(generator->globals[this->name], val);
             LLVMSetAlignment(generator->globals[this->name], generator->getAlignment(this->type));
             if(isVolatile) LLVMSetVolatile(generator->globals[name],true);
             return nullptr;
         }
 
-        if(isExtern) LLVMSetLinkage(generator->globals[this->name], LLVMExternalLinkage);
-        if(isVolatile) LLVMSetVolatile(generator->globals[this->name],true);
+        if(this->isComdat) {
+            LLVMComdatRef comdat = LLVMGetOrInsertComdat(generator->lModule, linkName.c_str());
+            LLVMSetComdatSelectionKind(comdat, LLVMAnyComdatSelectionKind);
+            LLVMSetComdat(generator->globals[this->name], comdat);
+            LLVMSetLinkage(generator->globals[this->name], LLVMLinkOnceODRLinkage);
+        }
+        else if(isExtern) LLVMSetLinkage(generator->globals[this->name], LLVMExternalLinkage);
+        if(isVolatile) LLVMSetVolatile(generator->globals[this->name], true);
 
         LLVMSetAlignment(generator->globals[this->name], generator->getAlignment(this->type));
         if(value != nullptr && !isExtern) {
@@ -149,7 +156,7 @@ LLVMValueRef NodeVar::generate() {
             else val = this->value->generate();
             LLVMSetInitializer(generator->globals[this->name], val);
         }
-        else if(!isExtern) LLVMSetInitializer(generator->globals[this->name], LLVMConstNull(generator->genType(this->type,loc)));
+        else if(!isExtern) LLVMSetInitializer(generator->globals[this->name], LLVMConstNull(generator->genType(this->type, this->loc)));
         return nullptr;
     }
     else {

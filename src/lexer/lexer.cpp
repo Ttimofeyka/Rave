@@ -134,7 +134,7 @@ Lexer::Lexer(std::string text, int offset) {
                 else if(peek() == '/') {while(peek() != '\n') idx += 1;}
                 else if(peek() == '*') {
                     idx += 1;
-                    while(peek() != '*' && this->text[this->idx+1] != '/') {
+                    while(peek() != '*' || this->text[this->idx+1] != '/') {
                         if(peek() == '\n') line += 1;
                         if(idx+1 >= text.size()) break;
                         this->next();

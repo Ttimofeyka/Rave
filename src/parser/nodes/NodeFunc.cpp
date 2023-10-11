@@ -190,7 +190,6 @@ LLVMValueRef NodeFunc::generate() {
         LLVMSetComdat(generator->functions[this->name], comdat);
         LLVMSetLinkage(generator->functions[this->name], LLVMLinkOnceODRLinkage);
     }
-    else if(this->isExtern) LLVMSetLinkage(generator->functions[this->name], LLVMExternalLinkage);
 
     if(!this->isExtern) {
         if(this->isCtargsPart || this->isCtargs) generator->currentBuiltinArg = 0;

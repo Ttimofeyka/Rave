@@ -173,6 +173,7 @@ std::pair<std::string, std::string> isOperatorOverload(LLVMValueRef first, LLVMV
     if(LLVMGetTypeKind(type) == LLVMStructTypeKind || (LLVMGetTypeKind(type) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVMGetElementType(type)) == LLVMStructTypeKind)) {
         std::string structName = std::string(LLVMGetStructName(type));
         if(AST::structTable.find(structName) != AST::structTable.end()) {
+            //std::cout << "StructName = " << structName << ", op = " << (int)op << std::endl;
             if(AST::structTable[structName]->operators.find(op) != AST::structTable[structName]->operators.end()) {
                 std::vector<Type*> types;
                 types.push_back(lTypeToType(type));
@@ -224,6 +225,8 @@ Type* NodeBinary::getType() {
         default:
             Type* firstType = this->first->getType();
             Type* secondType = this->second->getType();
+            if(firstType == nullptr) return secondType;
+            if(secondType == nullptr) return firstType;
             return (firstType->getSize() >= secondType->getSize()) ? firstType : secondType;
     } return nullptr;
 }

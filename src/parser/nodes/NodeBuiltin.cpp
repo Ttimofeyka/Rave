@@ -167,6 +167,7 @@ LLVMValueRef NodeBuiltin::generate() {
         }
         return nullptr;
     }
+    if(this->name == "sizeOf") return LLVMConstInt(LLVMInt32TypeInContext(generator->context), (asType(0)->type)->getSize() / 8, false);
     generator->error("builtin with the name '"+this->name+"' does not exist!", this->loc);
     return nullptr;
 }
@@ -175,5 +176,7 @@ Node* NodeBuiltin::comptime() {
     this->name = trim(this->name);
     if(this->name[0] == '@') this->name = this->name.substr(1);
     if(this->name == "aliasExists") return new NodeBool(AST::aliasTable.find(this->getAliasName(0)) != AST::aliasTable.end());
+    if(this->name == "sizeOf") return new NodeInt((asType(0)->type->getSize()) / 8);
+    AST::checkError("builtin with name '"+this->name+"' does not exist!", this->loc);
     return nullptr;
 }

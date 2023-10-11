@@ -352,7 +352,7 @@ void Compiler::compileAll() {
 
     ShellResult result = exec(Compiler::linkString+" -o "+Compiler::outFile);
     if(result.status != 0) {
-        Compiler::error("Error when linking!\nLinking string: '"+Compiler::linkString+" -o "+Compiler::outFile+"'");
+        Compiler::error("error when linking!\nLinking string: '"+Compiler::linkString+" -o "+Compiler::outFile+"'");
         std::exit(result.status);
         return;
     }

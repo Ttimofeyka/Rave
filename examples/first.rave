@@ -1,4 +1,4 @@
-import <std/utf8>
+import <std/string>
 
 int main {
     

@@ -17,6 +17,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeVar.hpp"
 #include "../../include/parser/nodes/NodeInt.hpp"
 #include "../../include/parser/nodes/NodeFloat.hpp"
+#include "../../include/parser/nodes/NodeBuiltin.hpp"
 #include "../../include/parser/ast.hpp"
 
 NodeUnary::NodeUnary(long loc, char type, Node* base) {
@@ -149,11 +150,14 @@ LLVMValueRef NodeUnary::generate() {
 }
 
 Node* NodeUnary::comptime() {
+    //if(instanceof<NodeBuiltin>(this->base)) {
+    //    std::cout << generator->file << ", " << ((NodeBuiltin*)this->base)->loc << ", " << ((NodeBuiltin*)this->base)->name << std::endl;
+    //}
     switch(this->type) {
         case TokType::Minus:
             if(instanceof<NodeInt>(this->base)) return new NodeInt(-((NodeInt*)this->base)->value);
             return new NodeFloat(-((NodeFloat*)this->base)->value);
-        case TokType::Ne: return new NodeBool(!((NodeBool*)!this->base->comptime())->value);
+        case TokType::Ne: return new NodeBool(!(((NodeBool*)this->base->comptime()))->value);
         default: break;
     }
     return nullptr;

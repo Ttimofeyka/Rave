@@ -57,6 +57,8 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
     for(int i=0; i<this->elements.size(); i++) {
         if(instanceof<NodeVar>(this->elements[i])) {
             NodeVar* var = (NodeVar*)this->elements[i];
+            var->isExtern = (var->isExtern || this->isImported);
+            var->isComdat = this->isComdat;
             AST::structsNumbers[std::pair<std::string, std::string>(this->name, var->name)] = StructMember{.number = i, .var = var};
             if(var->value != nullptr && !instanceof<NodeNone>(var->value)) this->predefines.push_back(StructPredefined{.element = i, .value = var->value, .isStruct = false, .name = var->name});
             else if(instanceof<TypeStruct>(var->type)) {
@@ -105,7 +107,7 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 func->check();
                 this->constructors.push_back(func);
             }
-            else if(func->origName == this->name) {
+            /*else if(func->origName == this->name) {
                 Type* outType = new TypePointer(new TypeStruct(name));
                 func->namespacesNames = std::vector<std::string>(this->namespacesNames);
                 func->isTemplatePart = this->isLinkOnce;
@@ -125,7 +127,7 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 }
                 else AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)] = func;
                 this->methods.push_back(func);
-            }
+            }*/
             else if(func->origName == "~this") {
                 this->destructor = func;
                 func->name = "~"+this->origname;
@@ -189,7 +191,8 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 if((func->args.size() > 0 && func->args[0].name != "this") || func->args.size() == 0) func->args.insert(func->args.begin(), FuncArgSet{.name = "this", .type = outType});
                 func->name = this->name+"."+func->origName;
                 func->isMethod = true;
-                if(isImported) func->isExtern = true;
+                func->isExtern = (func->isExtern || this->isImported);
+                func->isComdat = this->isComdat;
                 if(AST::methodTable.find(std::pair<std::string, std::string>(this->name, func->origName)) != AST::methodTable.end()) {
                     std::string sTypes = typesToString(AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)]->args);
                     if(sTypes != typesToString(func->args)) AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName+sTypes)] = func;
