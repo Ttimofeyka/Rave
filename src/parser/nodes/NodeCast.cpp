@@ -51,8 +51,8 @@ LLVMValueRef NodeCast::generate() {
         if(LLVMGetTypeKind(LLVMTypeOf(result)) == LLVMStructTypeKind) {
             LLVMValueRef _temp = LLVMBuildAlloca(generator->builder,LLVMTypeOf(result), "NodeCast_stoiTemp");
             LLVMBuildStore(generator->builder, result, _temp);
-            if(tbasic->isFloat()) return LLVMBuildSIToFP(generator->builder, LLVMBuildPtrToInt(generator->builder, _temp, LLVMInt64TypeInContext(generator->context), "NodeCast_ptoi_stop"), generator->genType(type,loc), "NodeCast_ptoi_stopC");
-            return LLVMBuildPtrToInt(generator->builder, _temp, LLVMInt64TypeInContext(generator->context), "NodeCast_stoi");
+            if(tbasic->isFloat()) return LLVMBuildSIToFP(generator->builder, LLVMBuildPtrToInt(generator->builder, _temp, LLVMInt32TypeInContext(generator->context), "NodeCast_ptoi_stop"), generator->genType(type,loc), "NodeCast_ptoi_stopC");
+            return LLVMBuildPtrToInt(generator->builder, _temp, LLVMInt32TypeInContext(generator->context), "NodeCast_stoi");
         }
 
         if(tbasic->isFloat()) return LLVMBuildFPCast(generator->builder, result, generator->genType(this->type, this->loc), "NodeCast_ftof");

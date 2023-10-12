@@ -256,15 +256,7 @@ namespace std {
             std::u32string _l = this.ltrim();
         } => _l.rtrim();
 
-        void append(std::u32string str) {
-            int i = 0;
-            while(i<str.length) {
-                this.add(str.data[i]);
-                i += 1;
-            }
-        }
-
-        void append(uint* cstr) {
+        void appendCU32(uint* cstr) {
             int len = std::utf32::strlen(cstr);
             int i = 0;
             while(i<len) {
@@ -273,25 +265,18 @@ namespace std {
             }
         }
 
+        void appendU32(std::u32string str) {
+            int i = 0;
+            while(i<str.length) {
+                this.add(str.data[i]);
+                i += 1;
+            }
+        }
+
         std::u32string copy {
             std::u32string cp = std::u32string(""w);
-            cp.append(*this);
+            cp.appendU32(this);
         } => cp;
-
-        std::u32string via(uint c) {
-            std::u32string _cp = this.copy();
-            _cp.add(c);
-        } => _cp;
-
-        std::u32string via(std::u32string s) {
-            std::u32string _cp = this.copy();
-            _cp.append(s);
-        } => _cp;
-
-        std::u32string via(uint* s) {
-            std::u32string _cp = this.copy();
-            _cp.append(s);
-        } => _cp;
 
         std::u32string replace(uint c, uint to) {
             std::u32string temp = this.copy();
@@ -306,8 +291,8 @@ namespace std {
         } => temp;
 
         std::u32string operator+(std::u32string one, std::u32string two) {
-            std::u32string third = std::u32string(one.c());
-            third.append(two);
+            std::u32string third = one.copy();
+            third.appendU32(two);
         } => third;
 
         bool compare(std::u32string another) {

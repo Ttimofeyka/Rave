@@ -54,8 +54,11 @@ void NodeNamespace::check() {
         }
         else if(instanceof<NodeNamespace>(this->nodes[i])) {
             NodeNamespace* nnamespace = (NodeNamespace*)this->nodes[i];
-            if(this->isImported && nnamespace->isChecked) nnamespace->isChecked = false;
-            else for(int i=0; i<this->names.size(); i++) nnamespace->names.insert(nnamespace->names.begin(), this->names[i]);
+            if(this->isImported && nnamespace->isChecked) {
+                nnamespace->isChecked = false;
+                nnamespace->names.erase(nnamespace->names.begin());
+            }
+            for(int i=0; i<this->names.size(); i++) nnamespace->names.insert(nnamespace->names.begin()+i, this->names[i]);
             nnamespace->isImported = (nnamespace->isImported || this->isImported);
             this->nodes[i]->check();
         }
@@ -95,7 +98,7 @@ LLVMValueRef NodeNamespace::generate() {
             NodeFunc* nfunc = (NodeFunc*)this->nodes[i];
             if(hidePrivated && (nfunc->isPrivate)) continue;
             if(!this->nodes[i]->isChecked) {
-                for(int i=0; i<this->names.size(); i++) nfunc->namespacesNames.push_back(this->names[i]);
+                for(int i=0; i<this->names.size(); i++) nfunc->namespacesNames.insert(nfunc->namespacesNames.begin(), this->names[i]);
                 this->nodes[i]->check();
             }
             nfunc->isExtern = (nfunc->isExtern || this->isImported);
@@ -104,7 +107,7 @@ LLVMValueRef NodeNamespace::generate() {
         else if(instanceof<NodeNamespace>(this->nodes[i])) {
             NodeNamespace* nnamespace = (NodeNamespace*)this->nodes[i];
             if(!this->nodes[i]->isChecked) {
-                for(int i=0; i<this->names.size(); i++) nnamespace->names.push_back(this->names[i]);
+                for(int i=0; i<this->names.size(); i++) nnamespace->names.insert(nnamespace->names.begin(), this->names[i]);
                 this->nodes[i]->check();
             }
             nnamespace->isImported = (nnamespace->isImported || this->isImported);
@@ -114,7 +117,7 @@ LLVMValueRef NodeNamespace::generate() {
             NodeVar* nvar = (NodeVar*)this->nodes[i];
             if(hidePrivated && nvar->isPrivate) continue;
             if(!this->nodes[i]->isChecked) {
-                for(int i=0; i<this->names.size(); i++) nvar->namespacesNames.push_back(this->names[i]);
+                for(int i=0; i<this->names.size(); i++) nvar->namespacesNames.insert(nvar->namespacesNames.begin(), this->names[i]);
                 this->nodes[i]->check();
             }
             nvar->isExtern = (nvar->isExtern || this->isImported);
@@ -123,7 +126,7 @@ LLVMValueRef NodeNamespace::generate() {
         else if(instanceof<NodeStruct>(this->nodes[i])) {
             NodeStruct* nstruct = (NodeStruct*)this->nodes[i];
             if(!this->nodes[i]->isChecked) {
-                for(int i=0; i<this->names.size(); i++) nstruct->namespacesNames.push_back(this->names[i]);
+                for(int i=0; i<this->names.size(); i++) nstruct->namespacesNames.insert(nstruct->namespacesNames.begin(), this->names[i]);
                 this->nodes[i]->check();
             }
             nstruct->isImported = (nstruct->isImported || this->isImported);

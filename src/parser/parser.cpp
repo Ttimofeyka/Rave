@@ -42,6 +42,7 @@ with this file, You can obtain one at htypep://mozilla.org/MPL/2.0/.
 #include "../include/parser/nodes/NodeAliasType.hpp"
 #include "../include/parser/nodes/NodeImport.hpp"
 #include "../include/parser/nodes/NodeCall.hpp"
+#include "../include/parser/nodes/NodeCmpxchg.hpp"
 #include "../include/parser/nodes/NodeIf.hpp"
 #include "../include/parser/nodes/NodeWhile.hpp"
 #include "../include/parser/nodes/NodeFor.hpp"
@@ -369,7 +370,15 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
 }
 
 Node* Parser::parseCmpXchg(std::string s) {
-    return nullptr;
+    int loc = this->peek()->line;
+    this->next();
+    Node* ptr = this->parseExpr(s);
+    if(this->peek()->type == TokType::Comma) this->next();
+    Node* val1 = this->parseExpr(s);
+    if(this->peek()->type == TokType::Comma) this->next();
+    Node* val2 = this->parseExpr(s);
+    if(this->peek()->type == TokType::Lpar) this->next();
+    return new NodeCmpxchg(ptr, val1, val2, loc);
 }
 
 Node* Parser::parseAtom(std::string f) {
@@ -488,7 +497,7 @@ Node* Parser::parseAtom(std::string f) {
                 return this->parseCall(new NodeIden(all, this->peek()->line));
             }
         }
-        return new NodeIden(t->value,this->peek()->line);
+        return new NodeIden(t->value, this->peek()->line);
     }
     if(t->type == TokType::Rpar) {
         auto e = this->parseExpr();

@@ -1,7 +1,7 @@
-import <std/vector> <std/cstring> <std/ascii> <std/utf32> <std/utf8>
+import <std/vector> <std/cstring> <std/ascii> <std/utf8>
 import <std/thread> <std/strutil>
 
-namespace std {
+/*namespace std {
     extern(private,linkname: "sscanf") int format(char* buff, char* fmt);
 
     struct string {
@@ -575,4 +575,4 @@ namespace std {
         };
 
     } => result;
-}
+}*/

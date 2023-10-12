@@ -121,7 +121,7 @@ std::vector<LLVMValueRef> NodeCall::getParameters(bool isVararg, std::vector<Fun
                     else if(instanceof<NodeIndex>(args[i])) {((NodeIndex*)args[i])->isMustBePtr = true; arg = args[i]->generate();}
 
                     if(LLVMGetTypeKind(LLVMTypeOf(arg)) != LLVMPointerTypeKind && (fas[i].name != "this" || LLVMGetTypeKind(LLVMTypeOf(arg)) == LLVMStructTypeKind)) {
-                        LLVMValueRef temp = LLVMBuildAlloca(generator->builder, LLVMTypeOf(arg), "NodeCall_getParameters_localcopy");
+                        LLVMValueRef temp = LLVMBuildAlloca(generator->builder, LLVMTypeOf(arg), ("NodeCall"+std::to_string(this->loc)+"_getParameters_localcopy").c_str());
                         LLVMBuildStore(generator->builder, arg, temp);
                         arg = temp;
                     }
@@ -142,6 +142,7 @@ std::vector<LLVMValueRef> NodeCall::getParameters(bool isVararg, std::vector<Fun
 LLVMValueRef NodeCall::generate() {
     if(instanceof<NodeIden>(func)) {
     NodeIden* f = ((NodeIden*)func);
+    //std::cout << "Func = " << f->name << std::endl;
     if(AST::funcTable.find(f->name) == AST::funcTable.end() &&
        AST::funcTable.find(f->name+std::to_string(this->args.size())) == AST::funcTable.end() &&
        AST::funcTable.find(f->name+typesToString(this->getTypes())) == AST::funcTable.end()) {
@@ -282,6 +283,7 @@ LLVMValueRef NodeCall::generate() {
     else if(instanceof<NodeGet>(this->func)) {
         NodeGet* g = (NodeGet*)this->func;
         LLVMValueRef value;
+        if(g->field == "append") std::cout << "There " << g->loc << std::endl;
         if(instanceof<NodeIden>(g->base)) {
             NodeIden* i = (NodeIden*)g->base;
             TypeStruct* s = nullptr;
@@ -289,7 +291,6 @@ LLVMValueRef NodeCall::generate() {
             else s = (TypeStruct*)currScope->getVar(i->name, this->loc)->type;
 
             if(s == nullptr) {
-                // Template
                 LLVMValueRef v = currScope->getWithoutLoad(i->name, this->loc);
 
                 if(LLVMGetTypeKind(LLVMTypeOf(v)) == LLVMStructTypeKind) s = new TypeStruct(std::string(LLVMGetStructName(LLVMTypeOf(v))));
@@ -415,6 +416,7 @@ LLVMValueRef NodeCall::generate() {
                 return value;
             }
             std::string newName = typesToString(parametersToTypes(params));
+            //std::cout << "\tnewName = " << g->field+newName << std::endl;
             if(AST::methodTable.find(std::pair<std::string, std::string>(s->name, g->field+newName)) != AST::methodTable.end()) {
                 calledFunc = AST::methodTable[std::pair<std::string, std::string>(s->name, g->field+newName)];
                 params = getParameters(
@@ -423,10 +425,10 @@ LLVMValueRef NodeCall::generate() {
                 );
                 value = LLVMBuildCall(
                     generator->builder,
-                    generator->functions[AST::methodTable[std::pair<std::string, std::string>(s->name,g->field+newName)]->name],
+                    generator->functions[AST::methodTable[std::pair<std::string, std::string>(s->name, g->field+newName)]->name],
                     params.data(),
                     params.size(),
-                    (instanceof<TypeVoid>(AST::methodTable[std::pair<std::string, std::string>(s->name, g->field+newName)]->type) ? "" : g->field).c_str()
+                    (instanceof<TypeVoid>(AST::methodTable[std::pair<std::string, std::string>(s->name, g->field+newName)]->type) ? "" : g->field+newName).c_str()
                 );
                 if(this->isInverted) value = LLVMBuildNot(generator->builder, value, "NodeCall_inverted");
                 return value;

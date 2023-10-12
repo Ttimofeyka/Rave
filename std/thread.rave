@@ -19,9 +19,13 @@ import <std/process>
 namespace std {
     namespace thread {
         namespace spinlock {
-            (nochecks) int __tas(int* sl) => cast(int)cmpxchg(sl, 0, 1);
-            (nochecks) void lock(int* sl) {sl[0] = 1; while(std::thread::spinlock::__tas(sl) == 0) {}}
-            (nochecks) void unlock(int* sl) {sl[0] = 0;}
+            int tas(int* sl) => (cast(int)cmpxchg(sl, 0, 1));
+            void lock(int* sl) {
+                sl[0] = 1;
+                int j = std::thread::spinlock::tas(sl);
+                while(true) {}
+            }
+            void unlock(int* sl) {sl[0] = 0;}
         }
         struct Spinlock {
             int value;
