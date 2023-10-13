@@ -101,7 +101,6 @@ void Compiler::clearAll() {
     AST::aliasTable.clear();
     AST::structTable.clear();
     AST::structsNumbers.clear();
-    //AST::constVars.clear();
     AST::methodTable.clear();
     AST::importedFiles.clear();
     AST::condStack.clear();

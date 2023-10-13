@@ -11,7 +11,7 @@ namespace std {
 
         bool isStart(char c) => ((c && 0xC0) != 0x80);
 
-        (inline) int utflen(uchar* str) {
+        int utflen(uchar* str) {
             int i = 0;
             int len = 0;
             while(str[i] != '\0') {
@@ -20,7 +20,7 @@ namespace std {
             }
         } => len;
 
-        (inline) int charlen(uchar* ch, int idx) => cast(int)(std::utf8::utfLength[(ch[idx] && 0xFF) >. 4]);
+        int charlen(uchar* ch, int idx) => cast(int)(std::utf8::utfLength[(ch[idx] && 0xFF) >. 4]);
 
         void nextChar(char* ptr, int* idx) {
             idx[0] += 1;
@@ -96,13 +96,15 @@ namespace std {
             temp[i] = '\0';
         } => temp;
 
-        (inline) char toChar => this.data[0];
+        char toChar => this.data[0];
+
         long toLong {
             char* buff = this.c();
             long n = libc::strtol(buff,cast(char**)null,10);
             std::free(buff);
         } => n;
-        (inline) int toInt => cast(int)this.toLong();
+
+        int toInt => cast(int)this.toLong();
 
         int indexOf(char* c) {
             int clen = std::cstring::strlen(c);

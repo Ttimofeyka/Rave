@@ -403,6 +403,16 @@ LLVMValueRef NodeBinary::generate() {
     LLVMValueRef vSecond = this->second->generate();
     std::string vSecondStr = std::string(LLVMPrintTypeToString(LLVMTypeOf(vSecond)));
 
+    std::pair<std::string, std::string> opOverload = isOperatorOverload(vFirst, vSecond, this->op);
+    if(opOverload.first != "") {
+        if(opOverload.first[0] == '!') return (new NodeUnary(this->loc, TokType::Ne, (new NodeCall(
+            this->loc, new NodeIden(AST::structTable[opOverload.first.substr(1)]->operators[this->op][opOverload.second]->name, this->loc),
+            std::vector<Node*>({new NodeDone(vFirst), new NodeDone(vSecond)})))))->generate();
+        return (new NodeCall(
+            this->loc, new NodeIden(AST::structTable[opOverload.first]->operators[this->op][opOverload.second]->name, this->loc),
+            std::vector<Node*>({new NodeDone(vFirst), new NodeDone(vSecond)})))->generate();
+    }
+
     if(vFirstStr.substr(0, vFirstStr.size()-1) == vSecondStr) vFirst = LLVMBuildLoad(generator->builder, vFirst, "NodeBinary_firstload");
     if(vSecondStr.substr(0, vSecondStr.size()-1) == vFirstStr) vSecond = LLVMBuildLoad(generator->builder, vSecond, "NodeBinary_secondload");
 
