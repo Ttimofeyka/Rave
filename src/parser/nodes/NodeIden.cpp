@@ -52,7 +52,7 @@ LLVMValueRef NodeIden::generate() {
         generator->addAttr("noinline", LLVMAttributeFunctionIndex, generator->functions[this->name], loc);
         return generator->functions[this->name];
     }
-    if(!currScope->has(this->name)) {generator->error("unknown identifier '"+this->name+"'!",loc); return nullptr;}
+    if(!currScope->has(this->name)) {generator->error("unknown identifier '"+this->name+"'!", loc); return nullptr;}
     if(this->isMustBePtr) return currScope->getWithoutLoad(this->name, this->loc);
     return currScope->get(this->name, this->loc);
 }

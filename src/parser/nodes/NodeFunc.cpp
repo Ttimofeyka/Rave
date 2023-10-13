@@ -81,8 +81,9 @@ void NodeFunc::check() {
                 AST::checkError("a function with '"+this->name+"' name already exists on "+std::to_string(AST::funcTable[this->name]->loc)+" line!", this->loc);
                 return;
             }
-            else this->name += toAdd;
+            this->name += toAdd;
         }
+
         AST::funcTable[this->name] = this;
         for(int i=0; i<this->block->nodes.size(); i++) {
             if(instanceof<NodeRet>(this->block->nodes[i])) ((NodeRet*)this->block->nodes[i])->parent = this->name;

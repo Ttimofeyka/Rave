@@ -2,6 +2,7 @@ import <std/string>
 
 int main {
     std::u8string a = "Hello";
-    int result = 0;
-    if(a == "Hello") result = 1;
-} => result;
+    std::u8string b = "Hi";
+    a.append("!");
+    a.append(b);
+}

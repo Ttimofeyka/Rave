@@ -314,11 +314,11 @@ Type* lTypeToType(LLVMTypeRef t) {
         if(LLVMGetTypeKind(LLVMGetElementType(t)) == LLVMStructTypeKind) return new TypeStruct(std::string(LLVMGetStructName(LLVMGetElementType(t))));
         return new TypePointer(lTypeToType(LLVMGetElementType(t)));
     }
-    else if(LLVMGetTypeKind(t) == LLVMArrayTypeKind) return new TypeArray(LLVMGetArrayLength(t),lTypeToType(LLVMGetElementType(t)));
+    else if(LLVMGetTypeKind(t) == LLVMArrayTypeKind) return new TypeArray(LLVMGetArrayLength(t), lTypeToType(LLVMGetElementType(t)));
     else if(LLVMGetTypeKind(t) == LLVMStructTypeKind) return new TypeStruct(std::string(LLVMGetStructName(t)));
     else if(LLVMGetTypeKind(t) == LLVMFunctionTypeKind) {
         std::string sT = std::string(LLVMPrintTypeToString(t));
-        sT = sT.substr(0,sT.find_last_of('('));
+        sT = sT.substr(0, sT.find_last_of('('));
         return getType(trim(sT));
     }
     generator->error("assert: lTypeToType",-1);

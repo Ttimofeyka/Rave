@@ -199,9 +199,6 @@ LLVMValueRef NodeCall::generate() {
             AST::funcTable[f.name[0..f.name.find('<')]].generateWithTemplate(p.parseType().instanceof!TypeStruct.types,f.name);
             return generate();*/
         }
-        for(auto const& x : AST::funcTable) {
-            std::cout << x.first << std::endl;
-        }
         generator->error("unknown function '"+f->name+"'!", this->loc);
         return nullptr;
     }
@@ -283,7 +280,6 @@ LLVMValueRef NodeCall::generate() {
     else if(instanceof<NodeGet>(this->func)) {
         NodeGet* g = (NodeGet*)this->func;
         LLVMValueRef value;
-        if(g->field == "append") std::cout << "There " << g->loc << std::endl;
         if(instanceof<NodeIden>(g->base)) {
             NodeIden* i = (NodeIden*)g->base;
             TypeStruct* s = nullptr;
@@ -343,9 +339,12 @@ LLVMValueRef NodeCall::generate() {
                 }
             }
 
+            std::vector<Type*> pregenerate = this->getTypes();
+            std::string sTypes = typesToString(pregenerate);
+            if(AST::methodTable.find(std::pair<std::string, std::string>(s->name, g->field+sTypes)) != AST::methodTable.end()) g->field += sTypes;
+
             if(AST::methodTable.find(std::pair<std::string, std::string>(s->name, g->field)) == AST::methodTable.end()) {
                 if(AST::structsNumbers.find(std::pair<std::string, std::string>(s->name, g->field)) == AST::structsNumbers.end()) {
-                    std::vector<Type*> pregenerate = this->getTypes();
                     std::string n = "";
                     if(instanceof<TypePointer>(pregenerate[0])) n = typeToString(generator->genType(pregenerate[0], this->loc)).substr(1);
                     else n = std::string(LLVMGetStructName(generator->genType(pregenerate[0], this->loc)));
@@ -376,7 +375,7 @@ LLVMValueRef NodeCall::generate() {
                     generator->error("structure '"+s->name+"' does not contain method '"+g->field+"'!", this->loc);
                     return nullptr;
                 }
-                v = (NodeVar*)AST::structTable[s->name]->elements[AST::structsNumbers[std::pair<std::string, std::string>(s->name,g->field)].number];
+                v = (NodeVar*)AST::structTable[s->name]->elements[AST::structsNumbers[std::pair<std::string, std::string>(s->name, g->field)].number];
                 if(instanceof<TypePointer>(v->type)) t = (TypeFunc*)(((TypePointer*)v->type)->instance);
                 else t = (TypeFunc*)v->type;
 
@@ -398,10 +397,20 @@ LLVMValueRef NodeCall::generate() {
             }
             else {
                 calledFunc = AST::methodTable[std::pair<std::string, std::string>(s->name, g->field)];
-                params = getParameters(
-                    AST::methodTable[std::pair<std::string, std::string>(s->name, g->field)]->isVararg,
-                    AST::methodTable[std::pair<std::string, std::string>(s->name,g->field)]->args
+                if(calledFunc->name.find('[') != std::string::npos) {
+                    if(calledFunc->name.substr(calledFunc->name.find('[')) != sTypes) calledFunc->name = calledFunc->name.substr(0, calledFunc->name.find('[')) + sTypes;
+                }
+                params = getParameters(calledFunc->isVararg, calledFunc->args);
+                if(generator->functions.find(calledFunc->name) == generator->functions.end() && calledFunc->name.find('[') != std::string::npos) calledFunc->name = calledFunc->name.substr(0, calledFunc->name.find('['));
+                value = LLVMBuildCall(
+                    generator->builder,
+                    generator->functions[calledFunc->name],
+                    params.data(),
+                    params.size(),
+                    (instanceof<TypeVoid>(calledFunc->type) ? "" : g->field).c_str()
                 );
+                if(this->isInverted) value = LLVMBuildNot(generator->builder, value, "NodeCall_inverted");
+                return value;
             }
 
             if(_toCall != nullptr) {
@@ -416,7 +425,6 @@ LLVMValueRef NodeCall::generate() {
                 return value;
             }
             std::string newName = typesToString(parametersToTypes(params));
-            //std::cout << "\tnewName = " << g->field+newName << std::endl;
             if(AST::methodTable.find(std::pair<std::string, std::string>(s->name, g->field+newName)) != AST::methodTable.end()) {
                 calledFunc = AST::methodTable[std::pair<std::string, std::string>(s->name, g->field+newName)];
                 params = getParameters(
