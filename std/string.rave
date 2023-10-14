@@ -109,7 +109,7 @@ namespace std {
             }
         }
 
-        void appendC(char* cstr) {
+        void append(char* cstr) {
             int len = std::cstring::strlen(cstr);
             int i = 0;
             while(i<len) {
@@ -353,7 +353,10 @@ namespace std {
     (ctargs) std::string __sprint {
         std::thread::spinlock::lock(&std::sprintBufferSL);
 
-        if(!std::sbInitialized) {std::sprintBuffer = std::string(128); std::sbInitialized = true;}
+        if(!std::sbInitialized) {
+            std::sprintBuffer = std::string(128);
+            std::sbInitialized = true;
+        }
         else std::sprintBuffer.length = 0;
 
         @foreachArgs() {
@@ -422,7 +425,7 @@ namespace std {
                                 }
                             };
                             @if(@typesIsEquals(@getCurrArgType(), char*)) {
-                                std::sprintBuffer.appendC(@getCurrArg(char*));
+                                std::sprintBuffer.append(@getCurrArg(char*));
                             };
                         };
                         @if(@typesIsEquals(@getCurrArgType(), char)) {

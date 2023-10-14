@@ -291,18 +291,6 @@ LLVMValueRef NodeBinary::generate() {
                 std::string structName;
                 if(LLVMGetTypeKind(lType) == LLVMPointerTypeKind) structName = std::string(LLVMGetStructName(LLVMGetElementType(lType)));
                 else structName = std::string(LLVMGetStructName(lType));
-                /*if(TokType.Equ.into(StructTable[structName].operators)) {
-                    Type[] types; types ~= llvmTypeToType(LLVMTypeOf(currScope.getWithoutLoad(i.name,loc))); types ~= llvmTypeToType(LLVMTypeOf(val));
-                        if(typesToString(types).into(StructTable[structName].operators[TokType.Equ])) {
-                        return LLVMBuildCall(
-                            Generator.Builder,
-                            Generator.Functions[StructTable[structName].operators[TokType.Equ][typesToString(types)].name],
-                            [currScope.getWithoutLoad(i.name,loc),val].ptr,
-                            2,
-                            toStringz(StructTable[structName].operators[TokType.Equ][typesToString(types)].type.instanceof!TypeVoid ? "" : "call")
-                        );
-                    }
-                }*/
             }
 
             if(LLVMGetTypeKind(LLVMTypeOf(value)) == LLVMGetTypeKind(lType) && LLVMGetTypeKind(lType) == LLVMIntegerTypeKind && LLVMTypeOf(value) != lType) {

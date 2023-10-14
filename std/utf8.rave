@@ -233,7 +233,7 @@ namespace std {
         } => temp;
 
         std::vector<std::u8string> split(char ch) {
-            auto parts = std::vector<std::u8string>();
+            std::vector<std::u8string> parts = std::vector<std::u8string>();
 
             int idx = 0;
             std::u8string buffer = "";

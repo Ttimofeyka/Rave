@@ -1,5 +1,5 @@
 import <std/io>
 
 int main {
-    std::puts("Hello, world!");
+    
 }
