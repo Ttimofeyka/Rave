@@ -233,9 +233,9 @@ LLVMValueRef NodeCall::generate() {
                 if(AST::funcTable.find(rname+sTypes) == AST::funcTable.end()) {
                     std::vector<LLVMTypeRef> lTypes;
                     for(int i=0; i<types.size(); i++) lTypes.push_back(generator->genType(types[i], this->loc));
-                    rname = AST::funcTable[rname]->generateWithCtargs(lTypes);
+                    AST::funcTable[rname]->generateWithCtargs(lTypes);
                 }
-                else rname = rname+sTypes;
+                rname = rname+sTypes;
             }
         }
         calledFunc = AST::funcTable[rname];
@@ -323,7 +323,7 @@ LLVMValueRef NodeCall::generate() {
                 );
                 if(this->isInverted) value = LLVMBuildNot(generator->builder, value, "NodeCall_inverted");
             }
-
+            
             std::vector<LLVMValueRef> params;
             if(generator->toReplace.find(s->name) != generator->toReplace.end()) s = (TypeStruct*)generator->toReplace[s->name];
             if(AST::structTable.find(s->name) == AST::structTable.end() && s->name.find('<') != std::string::npos) {
@@ -342,6 +342,7 @@ LLVMValueRef NodeCall::generate() {
 
             std::vector<Type*> pregenerate = this->getTypes();
             std::string sTypes = typesToString(pregenerate);
+            //std::cout << "I = " << i->name << ", field = " << g->field << ", struct = " << s->name << ", sTypes = " << sTypes << std::endl;
             if(AST::methodTable.find(std::pair<std::string, std::string>(s->name, g->field+sTypes)) != AST::methodTable.end()) g->field += sTypes;
 
             if(AST::methodTable.find(std::pair<std::string, std::string>(s->name, g->field)) == AST::methodTable.end()) {

@@ -169,6 +169,7 @@ NodeBinary::NodeBinary(char op, Node* first, Node* second, long loc, bool isStat
 }
 
 std::pair<std::string, std::string> isOperatorOverload(LLVMValueRef first, LLVMValueRef second, char op) {
+    if(first == nullptr || second ==  nullptr) return std::pair<std::string, std::string>("", "");
     LLVMTypeRef type = LLVMTypeOf(first);
     if(LLVMGetTypeKind(type) == LLVMStructTypeKind || (LLVMGetTypeKind(type) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVMGetElementType(type)) == LLVMStructTypeKind)) {
         std::string structName = std::string(LLVMGetStructName(type));

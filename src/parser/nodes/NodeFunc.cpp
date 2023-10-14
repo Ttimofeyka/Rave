@@ -266,7 +266,7 @@ LLVMValueRef NodeFunc::generate() {
 
 std::string NodeFunc::generateWithCtargs(std::vector<LLVMTypeRef> args) {
     std::vector<FuncArgSet> newArgs;
-    for(int i=0; i<this->args.size(); i++) newArgs.push_back(FuncArgSet{.name = "_RaveArg"+std::to_string(i), .type = lTypeToType(args[i])});
+    for(int i=0; i<args.size(); i++) newArgs.push_back(FuncArgSet{.name = "_RaveArg"+std::to_string(i), .type = lTypeToType(args[i])});
 
     auto activeLoops = std::map<int32_t, Loop>(generator->activeLoops);
     auto builder = generator->builder;

@@ -15,6 +15,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeIden.hpp"
 #include "../../include/parser/nodes/NodeBool.hpp"
 #include "../../include/parser/nodes/NodeBinary.hpp"
+#include "../../include/parser/nodes/NodeCast.hpp"
 #include "../../include/parser/nodes/NodeNamespace.hpp"
 #include "../../include/parser/nodes/NodeFunc.hpp"
 #include "../../include/parser/nodes/NodeCall.hpp"
@@ -49,7 +50,9 @@ Node* NodeBuiltin::copy() {
 }
 
 Type* NodeBuiltin::getType() {
+    if(this->name[0] == '@') this->name = this->name.substr(1);
     if(this->name == "trunc" || this->name == "fmodf") return this->args[0]->getType();
+    if(this->name == "getCurrArg") return asType(0)->type;
     return new TypeVoid();
 }
 
@@ -175,7 +178,22 @@ LLVMValueRef NodeBuiltin::generate() {
             nodes.push_back(new NodeIden("_RaveArg"+std::to_string(i), this->loc));
         }
         for(int i=1; i<args.size(); i++) nodes.push_back(args[i]);
-        return (new NodeCall(this->loc, args[0], nodes))->generate();
+        (new NodeCall(this->loc, args[0], nodes))->generate();
+        std::cout << "\t\tEnd!" << std::endl;
+        return nullptr;
+    }
+    if(this->name == "typesIsEquals") {
+        if(asType(0)->type->toString() == asType(1)->type->toString()) return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 1, false);
+        return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 0, false);
+    }
+    if(this->name == "typesIsNequals") {
+        if(asType(0)->type->toString() != asType(1)->type->toString()) return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 1, false);
+        return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 0, false);
+    }
+    if(this->name == "getCurrArg") return (new NodeCast(asType(0)->type, new NodeIden("_RaveArg"+std::to_string(generator->currentBuiltinArg), this->loc), this->loc))->generate();
+    if(this->name == "getCurrArgType") {
+        this->type = currScope->getVar("_RaveArg"+std::to_string(generator->currentBuiltinArg), this->loc)->type;
+        return nullptr;
     }
     generator->error("builtin with the name '"+this->name+"' does not exist!", this->loc);
     return nullptr;
@@ -186,6 +204,8 @@ Node* NodeBuiltin::comptime() {
     if(this->name[0] == '@') this->name = this->name.substr(1);
     if(this->name == "aliasExists") return new NodeBool(AST::aliasTable.find(this->getAliasName(0)) != AST::aliasTable.end());
     if(this->name == "sizeOf") return new NodeInt((asType(0)->type->getSize()) / 8);
+    if(this->name == "typesIsEquals") return new NodeBool(asType(0)->type->toString() == asType(1)->type->toString());
+    if(this->name == "typesIsNequals") return new NodeBool(asType(0)->type->toString() != asType(1)->type->toString());
     AST::checkError("builtin with name '"+this->name+"' does not exist!", this->loc);
     return nullptr;
 }
