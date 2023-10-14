@@ -192,6 +192,8 @@ LLVMValueRef NodeFunc::generate() {
         LLVMSetLinkage(generator->functions[this->name], LLVMLinkOnceODRLinkage);
     }
 
+    //std::cout << "File = " << generator->file << ", name = " << name << ", isExtern = " << (isExtern ? "true" : "false") << std::endl;
+
     if(!this->isExtern) {
         if(this->isCtargsPart || this->isCtargs) generator->currentBuiltinArg = 0;
         LLVMBasicBlockRef entry = LLVMAppendBasicBlockInContext(generator->context, generator->functions[this->name], "entry");

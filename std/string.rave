@@ -1,11 +1,11 @@
 import <std/vector> <std/cstring> <std/ascii> <std/utf8>
 import <std/thread> <std/strutil>
 
-/*namespace std {
+namespace std {
     extern(private,linkname: "sscanf") int format(char* buff, char* fmt);
 
     struct string {
-        char* data = null;
+        char* data;
         int length;
         int capacity;
 
@@ -35,6 +35,8 @@ import <std/thread> <std/strutil>
             if(this.capacity <= 0) this.capacity = 1;
             this.data = std::malloc(this.capacity);
         } => this;
+
+        void operator=(std::string* one, char* two) {one[0] = std::string(two);}
 
         void ~this {std::free(this.data);}
 
@@ -99,7 +101,7 @@ import <std/thread> <std/strutil>
             this.data[this.length-1] = c;
         }
 
-        void append(std::string str) {
+        void append(std::string* str) {
             int i = 0;
             while(i<str.length) {
                 this.add(str.data[i]);
@@ -118,23 +120,8 @@ import <std/thread> <std/strutil>
 
         std::string copy {
             std::string cp = std::string("");
-            cp.append(*this);
+            cp.append(this);
         } => cp;
-
-        std::string via(char c) {
-            std::string _cp = this.copy();
-            _cp.add(c);
-        } => _cp;
-
-        std::string via(std::string s) {
-            std::string _cp = this.copy();
-            _cp.append(s);
-        } => _cp;
-
-        std::string via(char* s) {
-            std::string _cp = this.copy();
-            _cp.append(s);
-        } => _cp;
 
         std::string replace(char c, char to) {
             std::string temp = this.copy();
@@ -149,55 +136,41 @@ import <std/thread> <std/strutil>
         } => temp;
 
         std::string operator+(std::string one, std::string two) {
-            std::string third = std::string(one.c());
-            third.append(two);
+            std::string third = "";
+            for(int i=0; i<one.length; i+=1) {
+                third.add(one.data[i]);
+            }
+            for(int i=0; i<two.length; i+=1) {
+                third.add(two.data[i]);
+            }
         } => third;
 
-        bool compare(std::string another) {
+        bool operator==(std::string one, std::string two) {
             bool isEqual = true;
-            if(this.length != another.length) isEqual = false;
+            if(one.length != two.length) isEqual = false;
             else {
-                int i = 0;
-                while(i<another.length) {
-                    if(this.data[i] != another.data[i]) isEqual = false;
-                    i += 1;
+                for(int i=0; i<one.length; i+=1) {
+                    if(one.data[i] != two.data[i]) {
+                        isEqual = false;
+                        break;
+                    }
                 }
             }
         } => isEqual;
 
-        bool compare(std::u8string another) {
+        bool operator==(std::string one, char* two) {
             bool isEqual = true;
-            if(this.length != another.byteLength) isEqual = false;
+            int length = std::cstring::strlen(two);
+            if(one.length != length) isEqual = false;
             else {
-                int i = 0;
-                while(i<another.byteLength) {
-                    if(this.data[i] != another.data[i]) isEqual = false;
-                    i += 1;
+                for(int i=0; i<one.length; i+=1) {
+                    if(one.data[i] != two[i]) {
+                        isEqual = false;
+                        break;
+                    }
                 }
             }
         } => isEqual;
-
-        bool compare(char* another) {
-            bool isEqual = true;
-            int len = std::cstring::strlen(another);
-
-            if(this.length != len) isEqual = false;
-            else {
-                int i = 0;
-                while(i<len) {
-                    if(this.data[i] != another[i]) isEqual = false;
-                    i += 1;
-                }
-            }
-        } => isEqual;
-
-        bool operator==(std::string one, std::string two) => one.compare(two);
-        bool operator==(std::string one, char* two) => one.compare(two);
-        bool operator==(std::string one, std::u8string two) => one.compare(two);
-        bool operator!=(std::string one, std::string two) => !(one.compare(two));
-        bool operator!=(std::string one, char* two) => !(one.compare(two));
-        bool operator!=(std::string one, std::u8string two) => one.compare(two);
-        void operator=(std::string* one, char* two) {one[0] = std::string(two);}
 
         std::string substring(int from, int to) {
             std::string temp = "";
@@ -575,4 +548,4 @@ import <std/thread> <std/strutil>
         };
 
     } => result;
-}*/
+}

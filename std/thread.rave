@@ -22,8 +22,7 @@ namespace std {
             int tas(int* sl) => (cast(int)cmpxchg(sl, 0, 1));
             void lock(int* sl) {
                 sl[0] = 1;
-                int j = std::thread::spinlock::tas(sl);
-                while(true) {}
+                while(std::thread::spinlock::tas(sl) == 0) {}
             }
             void unlock(int* sl) {sl[0] = 0;}
         }

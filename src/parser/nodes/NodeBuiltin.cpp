@@ -17,6 +17,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeBinary.hpp"
 #include "../../include/parser/nodes/NodeNamespace.hpp"
 #include "../../include/parser/nodes/NodeFunc.hpp"
+#include "../../include/parser/nodes/NodeCall.hpp"
 #include "../../include/parser/nodes/NodeVar.hpp"
 #include "../../include/parser/nodes/NodeStruct.hpp"
 #include "../../include/parser/nodes/NodeIf.hpp"
@@ -168,6 +169,14 @@ LLVMValueRef NodeBuiltin::generate() {
         return nullptr;
     }
     if(this->name == "sizeOf") return LLVMConstInt(LLVMInt32TypeInContext(generator->context), (asType(0)->type)->getSize() / 8, false);
+    if(this->name == "callWithArgs") {
+        std::vector<Node*> nodes;
+        for(int i=generator->currentBuiltinArg; i<AST::funcTable[currScope->funcName]->args.size(); i++) {
+            nodes.push_back(new NodeIden("_RaveArg"+std::to_string(i), this->loc));
+        }
+        for(int i=1; i<args.size(); i++) nodes.push_back(args[i]);
+        return (new NodeCall(this->loc, args[0], nodes))->generate();
+    }
     generator->error("builtin with the name '"+this->name+"' does not exist!", this->loc);
     return nullptr;
 }

@@ -260,7 +260,8 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
     std::vector<DeclarMod> mods = _mods;
     long loc = 0;
     std::string name = "";
-    bool isExtern, isVolatile = false;
+    bool isExtern = false;
+    bool isVolatile = false;
 
     if(this->peek()->value == "extern") {isExtern = true; this->next();}
     if(this->peek()->value == "volatile") {isVolatile = true; this->next();}

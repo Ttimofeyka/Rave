@@ -199,6 +199,7 @@ LLVMValueRef NodeCall::generate() {
             AST::funcTable[f.name[0..f.name.find('<')]].generateWithTemplate(p.parseType().instanceof!TypeStruct.types,f.name);
             return generate();*/
         }
+        //for(auto const& x : AST::funcTable) std::cout << x.first << std::endl;
         generator->error("unknown function '"+f->name+"'!", this->loc);
         return nullptr;
     }
@@ -225,7 +226,7 @@ LLVMValueRef NodeCall::generate() {
     else {
         if(generator->functions.find(rname) == generator->functions.end()) {
             if(AST::funcTable.find(rname) == AST::funcTable.end()) {
-                generator->error("Function '"+rname+"' does not exist!", this->loc);
+                generator->error("function '"+rname+"' does not exist!", this->loc);
                 return nullptr;
             }
             if(AST::funcTable[rname]->isCtargs) {

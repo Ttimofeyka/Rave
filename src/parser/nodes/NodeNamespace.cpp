@@ -39,6 +39,8 @@ void NodeNamespace::check() {
     bool oldCheck = this->isChecked;
     this->isChecked = true;
 
+    //std::cout << "\tChecking " << names[0] << std::endl;
+
     if(!oldCheck) for(int i=0; i<this->nodes.size(); i++) {
         if(this->nodes[i] == nullptr) continue;
         if(instanceof<NodeFunc>(this->nodes[i])) {
@@ -46,8 +48,10 @@ void NodeNamespace::check() {
             if(hidePrivated && nfunc->isPrivate) continue;
             if(this->isImported && nfunc->isChecked) {
                 nfunc->isChecked = false;
-                nfunc->name = nfunc->origName;
-                nfunc->namespacesNames.clear();
+                if(nfunc->namespacesNames.size() > 0 ) {
+                    nfunc->name = nfunc->origName;
+                    nfunc->namespacesNames.clear();
+                }
             }
             for(int i=0; i<this->names.size(); i++) nfunc->namespacesNames.insert(nfunc->namespacesNames.begin(), this->names[i]);
             this->nodes[i]->check();
@@ -56,9 +60,9 @@ void NodeNamespace::check() {
             NodeNamespace* nnamespace = (NodeNamespace*)this->nodes[i];
             if(this->isImported && nnamespace->isChecked) {
                 nnamespace->isChecked = false;
-                nnamespace->names.erase(nnamespace->names.begin());
+                //nnamespace->names.erase(nnamespace->names.begin());
             }
-            for(int i=0; i<this->names.size(); i++) nnamespace->names.insert(nnamespace->names.begin()+i, this->names[i]);
+            else for(int i=0; i<this->names.size(); i++) nnamespace->names.insert(nnamespace->names.begin()+i, this->names[i]);
             nnamespace->isImported = (nnamespace->isImported || this->isImported);
             this->nodes[i]->check();
         }

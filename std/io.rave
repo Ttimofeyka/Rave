@@ -74,7 +74,7 @@ namespace std {
     extern(linkname: "putchar") int putchar(char c);
 
     int __putsSL = 0;
-    (nochecks) void puts(const(char)* s) {
+    void puts(char* s) {
         std::thread::spinlock::lock(&std::__putsSL);
         for(int i=0; s[i] != '\0'; i+=1) {
             std::putchar(s[i]);
@@ -84,7 +84,7 @@ namespace std {
     }
 
     int __putswnlSL = 0;
-    (nochecks) void putswnl(char* s) {
+    void putswnl(char* s) {
         std::thread::spinlock::lock(&std::__putswnlSL);
         for(int i=0; s[i] != '\0'; i+=1) {
             std::putchar(s[i]);
@@ -93,7 +93,7 @@ namespace std {
     }
 
     int __putswnlSL2 = 0;
-    (nochecks) void putswnl(std::string s) {
+    void putswnl(std::string s) {
         std::thread::spinlock::lock(&std::__putswnlSL2);
         for(int i=0; i<s.length; i+=1) {
             std::putchar(s.data[i]);
@@ -195,7 +195,7 @@ namespace std {
         };
     }
 
-    struct file {
+    /*struct file {
         libc::File* _file;
         const(char)* name;
         bool isOpen;
@@ -301,7 +301,7 @@ namespace std {
 
             if(needToClose) this.close();
         } => result;
-    }
+    }*/
 
     namespace ansi {
         alias black = "\033[30m";

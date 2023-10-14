@@ -1,8 +1,5 @@
-import <std/string>
+import <std/io>
 
 int main {
-    std::u8string a = "Hello";
-    std::u8string b = "Hi";
-    a.append("!");
-    a.append(b);
+    std::puts("Hello, world!");
 }
