@@ -8,6 +8,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/utils.hpp"
 #include "../../include/parser/ast.hpp"
 #include <limits>
+#include <iostream>
 
 NodeFloat::NodeFloat(double value) {this->value = value;}
 NodeFloat::NodeFloat(double value, bool isDouble) {if(isDouble) this->type = new TypeBasic(BasicType::Double); this->value = value;}
@@ -20,8 +21,8 @@ Type* NodeFloat::getType() {
 }
 
 LLVMValueRef NodeFloat::generate() {
-    if(this->type == nullptr) this->type = new TypeBasic((this->value > std::numeric_limits<float>::max()) ? BasicType::Double : BasicType::Float);
-    return LLVMConstReal(this->type->type == BasicType::Float ? LLVMFloatTypeInContext(generator->context) : LLVMDoubleTypeInContext(generator->context), this->value);
+    if(this->type == nullptr) this->type = new TypeBasic(BasicType::Double);
+    return LLVMConstReal(LLVMDoubleTypeInContext(generator->context), this->value);
 }
 
 Node* NodeFloat::copy() {return new NodeFloat(this->value, (this->type == nullptr) ? nullptr : (TypeBasic*)this->type->copy());}

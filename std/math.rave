@@ -88,7 +88,7 @@ namespace std {
         } => result;
 
         double acos(double d) {
-            float negate = cast(float)(d < 0.0);
+            double negate = cast(double)(d < 0.0);
             d = std::math::abs(d);
             double result = -0.0187293;
             result = result * d;
@@ -224,9 +224,9 @@ namespace std {
 
         bool isPrime(int number) {
             bool result = true;
-            if(num == 1) result = false;
-            else for(int i=2; (i*i) <= num; i+=1) {
-                if(num % i == 0) {
+            if(number == 1) result = false;
+            else for(int i=2; (i*i) <= number; i+=1) {
+                if(number % i == 0) {
                     result = false;
                     break;
                 }
