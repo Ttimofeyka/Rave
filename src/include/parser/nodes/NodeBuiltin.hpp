@@ -31,6 +31,7 @@ public:
 
     NodeType* asType(int n, bool isCompTime = false);
     std::string getAliasName(int n);
+    std::string asStringIden(int n);
     Type* getType() override;
     void check() override;
     LLVMValueRef generate() override;

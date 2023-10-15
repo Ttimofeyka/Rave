@@ -102,6 +102,37 @@ NodeType* NodeBuiltin::asType(int n, bool isCompTime) {
     return new NodeType(this->args[n]->getType(), this->loc);
 }
 
+std::string NodeBuiltin::asStringIden(int n) {
+    if(instanceof<NodeIden>(args[n])) {
+        NodeIden* id = (NodeIden*)args[n];
+        std::string nam = id->name;
+        while(AST::aliasTable.find(nam) != AST::aliasTable.end()) {
+            Node* node = AST::aliasTable[nam];
+            if(instanceof<NodeIden>(node)) nam = ((NodeIden*)node)->name;
+            else if(instanceof<NodeString>(node)) nam = ((NodeString*)node)->value;
+            else {
+                generator->error("NodeBuiltin::asStringIden assert!", this->loc);
+                return "";
+            }
+        }
+        return nam;
+    }
+    else if(instanceof<NodeString>(args[n])) return ((NodeString*)args[n])->value;
+    else if(instanceof<NodeBuiltin>(args[n])) {
+        Node* nn = ((NodeBuiltin*)args[n])->comptime();
+        if(instanceof<NodeString>(nn)) return ((NodeString*)nn)->value;
+        if(instanceof<NodeIden>(nn)) return ((NodeIden*)nn)->name;
+        generator->error("NodeBuiltin::asStringIden assert!", this->loc);
+        return "";
+    }
+    generator->error("NodeBuiltin::asStringIden assert!", this->loc);
+    return "";
+}
+
+std::string getDirectory3(std::string file) {
+    return file.substr(0, file.find_last_of("/\\"));
+}
+
 LLVMValueRef NodeBuiltin::generate() {
     this->name = trim(this->name);
     if(this->name[0] == '@') this->name = this->name.substr(1);
@@ -191,6 +222,12 @@ LLVMValueRef NodeBuiltin::generate() {
     if(this->name == "getCurrArg") return (new NodeCast(asType(0)->type, new NodeIden("_RaveArg"+std::to_string(generator->currentBuiltinArg), this->loc), this->loc))->generate();
     if(this->name == "getCurrArgType") {
         this->type = currScope->getVar("_RaveArg"+std::to_string(generator->currentBuiltinArg), this->loc)->type;
+        return nullptr;
+    }
+    if(this->name == "compileAndLink") {
+        std::string iden = this->asStringIden(0);
+        if(iden[0] == '<') AST::addToImport .push_back(iden.substr(1, iden.size()-1)+".rave");
+        else AST::addToImport.push_back(getDirectory3(AST::mainFile)+"/"+iden.substr(1, iden.size()-1)+".rave");
         return nullptr;
     }
     generator->error("builtin with the name '"+this->name+"' does not exist!", this->loc);

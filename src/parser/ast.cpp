@@ -27,6 +27,7 @@ std::vector<std::string> AST::importedFiles;
 std::map<std::string, std::vector<Node*>> AST::parsed;
 std::map<int, Node*> AST::condStack;
 std::string AST::mainFile;
+std::vector<std::string> AST::addToImport;
 
 LLVMGen* generator = nullptr;
 Scope* currScope;

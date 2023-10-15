@@ -158,9 +158,9 @@ void Compiler::compile(std::string file) {
     }
     content = "alias __RAVE_PLATFORM = \""+ravePlatform+"\"; ";
     content = "alias __RAVE_OS = \""+raveOs+"\"; "+content;
-    //if(!Compiler::settings.noPrelude && file != "std/prelude.rave" && file != "std/memory.rave") {
-    //    content = content+" import <std/prelude> <std/memory>";
-    //}
+    if(!Compiler::settings.noPrelude && file != "std/prelude.rave" && file != "std/memory.rave") {
+        content = content+" import <std/prelude> <std/memory>";
+    }
     content = content+"\n"+oldContent;
 
     AST::mainFile = Compiler::files[0];
@@ -312,6 +312,13 @@ void Compiler::compileAll() {
             std::string compiledFile = std::regex_replace(Compiler::files[i], std::regex(".rave"), ".o");
             Compiler::linkString += compiledFile+" ";
             if(!Compiler::settings.saveObjectFiles) toRemove.push_back(compiledFile);
+        }
+    }
+    std::map<std::string, bool> imported;
+    for(int i=0; i<AST::addToImport.size(); i++) {
+        if(imported.find(AST::addToImport[i]) == imported.end()) {
+            Compiler::toImport.push_back(replaceAll(AST::addToImport[i], ">", ""));
+            imported[AST::addToImport[i]] = true;
         }
     }
     for(int i=0; i<Compiler::toImport.size(); i++) {
