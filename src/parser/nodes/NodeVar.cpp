@@ -98,7 +98,7 @@ LLVMValueRef NodeVar::generate() {
     if(instanceof<TypeStruct>(this->type)) {
         while(generator->toReplace.find(((TypeStruct*)this->type)->name) != generator->toReplace.end()) this->type = generator->toReplace[((TypeStruct*)this->type)->name];
     }
-
+ 
     if(currScope == nullptr) {
         bool noMangling = false;
         std::string linkName = this->name;

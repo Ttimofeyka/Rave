@@ -52,20 +52,20 @@ LLVMValueRef Binary::castValue(LLVMValueRef from, LLVMTypeRef to, long loc) {
         case LLVMFloatTypeKind: case LLVMDoubleTypeKind:
             switch(kindTo) {
                 case LLVMIntegerTypeKind: case LLVMDoubleTypeKind: return LLVMBuildFPToSI(generator->builder, from, to, "castValueFtoI");
-                case LLVMPointerTypeKind: generator->error("it is forbidden to cast floating-point numbers into pointers!",loc); return nullptr;
-                case LLVMArrayTypeKind: generator->error("it is forbidden to cast numbers into arrays!",loc); return nullptr;
-                case LLVMStructTypeKind: generator->error("it is forbidden to cast numbers into structures!",loc); return nullptr;
+                case LLVMPointerTypeKind: generator->error("it is forbidden to cast floating-point numbers into pointers!", loc); return nullptr;
+                case LLVMArrayTypeKind: generator->error("it is forbidden to cast numbers into arrays!", loc); return nullptr;
+                case LLVMStructTypeKind: generator->error("it is forbidden to cast numbers into structures!", loc); return nullptr;
                 default: return from;
             }
         case LLVMPointerTypeKind:
             switch(kindTo) {
                 case LLVMIntegerTypeKind: return LLVMBuildPtrToInt(generator->builder, from, to, "castValuePtoI");
-                case LLVMFloatTypeKind: case LLVMDoubleTypeKind: generator->error("it is forbidden to cast pointers into floating-point numbers!",loc); return nullptr;
-                case LLVMArrayTypeKind: generator->error("it is forbidden to cast pointers into arrays!",loc); return nullptr;
-                case LLVMStructTypeKind: generator->error("it is forbidden to cast pointers into structures!",loc); return nullptr;
+                case LLVMFloatTypeKind: case LLVMDoubleTypeKind: generator->error("it is forbidden to cast pointers into floating-point numbers!", loc); return nullptr;
+                case LLVMArrayTypeKind: generator->error("it is forbidden to cast pointers into arrays!", loc); return nullptr;
+                case LLVMStructTypeKind: generator->error("it is forbidden to cast pointers into structures!", loc); return nullptr;
                 default: return from;
             }
-        case LLVMArrayTypeKind: generator->error("it is forbidden to casting arrays!",loc); return nullptr;
+        case LLVMArrayTypeKind: generator->error("it is forbidden to casting arrays!", loc); return nullptr;
         case LLVMStructTypeKind: generator->error("it is forbidden to cast structures!",loc); return nullptr;
         default: return from;
     } return from;
@@ -257,16 +257,18 @@ LLVMValueRef NodeBinary::generate() {
     if(this->op == TokType::Equ) {
         if(instanceof<NodeIden>(first)) {
             NodeIden* id = ((NodeIden*)first);
+            //std::cout << id->name << ", " << loc << std::endl;
             if(currScope->getVar(id->name, this->loc)->isConst && id->name != "this" && currScope->getVar(id->name, this->loc)->isChanged) {
                 generator->error("an attempt to change the value of a constant variable!", this->loc);
             }
             if(!currScope->getVar(id->name, this->loc)->isChanged) currScope->hasChanged(id->name);
             if(isAliasIden) {AST::aliasTable[id->name] = this->second->copy(); return nullptr;}
             NodeVar* nvar = currScope->getVar(id->name, this->loc);
+            LLVMValueRef vSecond = nullptr;
             if(instanceof<TypeStruct>(nvar->type) || (instanceof<TypePointer>(nvar->type) && instanceof<TypeStruct>(((TypePointer*)nvar->type)->instance))
             && !instanceof<TypeStruct>(this->second->getType()) || (instanceof<TypePointer>(this->second->getType()) && instanceof<TypeStruct>(((TypePointer*)this->second->getType())->instance))) {
                 LLVMValueRef vFirst = this->first->generate();
-                LLVMValueRef vSecond = this->second->generate();
+                vSecond = this->second->generate();
                 std::pair<std::string, std::string> opOverload = isOperatorOverload(vFirst, vSecond, this->op);
                 if(opOverload.first != "") {
                     if(opOverload.first[0] == '!') return (new NodeUnary(this->loc, TokType::Ne, (new NodeCall(
@@ -281,40 +283,13 @@ LLVMValueRef NodeBinary::generate() {
                     return nullptr;
                 }
             }
-            
             LLVMTypeRef lType = LLVMTypeOf(currScope->get(id->name, this->loc));
             if(instanceof<NodeNull>(this->second)) {((NodeNull*)(this->second))->type = nullptr; ((NodeNull*)this->second)->lType = lType;}
 
-            LLVMValueRef value = this->second->generate();
-            if(LLVMGetTypeKind(lType) == LLVMStructTypeKind
-            || (LLVMGetTypeKind(lType) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVMGetElementType(lType)) == LLVMStructTypeKind)) {
-                std::string structName;
-                if(LLVMGetTypeKind(lType) == LLVMPointerTypeKind) structName = std::string(LLVMGetStructName(LLVMGetElementType(lType)));
-                else structName = std::string(LLVMGetStructName(lType));
-            }
-
-            if(LLVMGetTypeKind(LLVMTypeOf(value)) == LLVMGetTypeKind(lType) && LLVMGetTypeKind(lType) == LLVMIntegerTypeKind && LLVMTypeOf(value) != lType) {
-                value = LLVMBuildIntCast(generator->builder,value,lType,"binary_intc_");
-            }
-            else if(LLVMGetTypeKind(lType) == LLVMDoubleTypeKind && LLVMGetTypeKind(LLVMTypeOf(value)) == LLVMFloatTypeKind) {
-                value = LLVMBuildFPCast(generator->builder,value,lType,"binary_floatc1_");
-            }
-            else if(LLVMGetTypeKind(lType) == LLVMFloatTypeKind && LLVMGetTypeKind(LLVMTypeOf(value)) == LLVMDoubleTypeKind) {
-                value = LLVMBuildFPCast(generator->builder,value,lType,"binary_floatc2_");
-            }
-            else if(lType != LLVMTypeOf(value)) {
-                if(LLVMGetTypeKind(lType) == LLVMPointerTypeKind && LLVMTypeOf(value) == LLVMPointerType(LLVMInt8TypeInContext(generator->context),0)) {
-                    value = LLVMBuildPointerCast(generator->builder, value, lType, "binary_ptrc_");
-                }
-                else {
-                    generator->error(
-                        "The variable '"+id->name+"' with type '"+std::string(LLVMPrintTypeToString(lType))+"' is incompatible with value type '"+
-                        LLVMPrintTypeToString(LLVMTypeOf(value))+"'!", this->loc
-                    );
-                    return nullptr;
-                }
-            }
-            return LLVMBuildStore(generator->builder, value, currScope->getWithoutLoad(id->name, this->loc));
+            if(vSecond == nullptr) vSecond = this->second->generate();
+            vSecond = Binary::castValue(vSecond, LLVMTypeOf(currScope->get(id->name, this->loc)), this->loc);
+            
+            return LLVMBuildStore(generator->builder, vSecond, currScope->getWithoutLoad(id->name, this->loc));
         }
         else if(instanceof<NodeGet>(this->first)) {
             NodeGet* nget = (NodeGet*)this->first;

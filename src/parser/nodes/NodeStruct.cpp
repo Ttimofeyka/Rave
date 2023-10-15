@@ -322,6 +322,7 @@ LLVMValueRef NodeStruct::generate() {
         if(isImported) {
             this->destructor->isExtern = true;
             this->destructor->check();
+            this->destructor->generate();
         }
         else {
             this->destructor->args = {FuncArgSet{.name = "this", .type = new TypePointer(this->constructors[0]->type)}};

@@ -41,14 +41,32 @@ std::vector<Type*> NodeCall::getTypes() {
     return arr;
 }
 
-std::vector<LLVMValueRef> NodeCall::correctByLLVM(std::vector<LLVMValueRef> values) {
-    
+std::vector<LLVMValueRef> NodeCall::correctByLLVM(std::vector<LLVMValueRef> values, std::vector<FuncArgSet> fas) {
+    std::vector<LLVMValueRef> params = std::vector<LLVMValueRef>(values);
+    if(fas.empty() || params.size() != fas.size()) return params;
+    for(int i=0; i<params.size(); i++) {
+        if(fas[i].type->toString() == "void*" || fas[i].type->toString() == "char*") {
+            LLVMTypeRef type = LLVMTypeOf(params[i]);
+            if(LLVMGetTypeKind(type) != LLVMPointerTypeKind) params[i] = Binary::castValue(params[i], LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0), this->loc);
+            else if(LLVMGetTypeKind(LLVMGetElementType(type)) != LLVMIntegerTypeKind) params[i] = Binary::castValue(params[i], LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0), this->loc);
+        }
+        else if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(((TypePointer*)fas[i].type)->instance)) {
+            LLVMTypeRef type = LLVMTypeOf(params[i]);
+            if(LLVMGetTypeKind(type) != LLVMPointerTypeKind) {
+                LLVMValueRef temp = LLVMBuildAlloca(generator->builder, type, "NodeCall_getParameters_temp");
+                LLVMBuildStore(generator->builder, params[i], temp);
+                params[i] = temp;
+            }
+        }
+        else if(!instanceof<TypePointer>(fas[i].type) && LLVMGetTypeKind(LLVMTypeOf(params[i])) == LLVMPointerTypeKind) params[i] = LLVMBuildLoad(generator->builder, params[i], "correctLoad");
+    }
+    return params;
 }
 
 std::vector<LLVMValueRef> NodeCall::getParameters(bool isVararg, std::vector<FuncArgSet> fas) {
     std::vector<LLVMValueRef> params;
     for(int i=0; i<this->args.size(); i++) params.push_back(this->args[i]->generate());
-    if(fas.empty() || this->args.size() != fas.size()) return params;
+    if(fas.empty() || params.size() != fas.size()) return params;
     for(int i=0; i<params.size(); i++) {
         if(fas[i].type->toString() == "void*" || fas[i].type->toString() == "char*") {
             LLVMTypeRef type = LLVMTypeOf(params[i]);
@@ -104,6 +122,10 @@ LLVMValueRef NodeCall::generate() {
                 generator->error("undefined function '"+idenFunc->name+"'!", this->loc);
                 return nullptr;
             }
+            std::string sTypes = typesToString(this->getTypes());
+            if(AST::funcTable.find(idenFunc->name+sTypes) != AST::funcTable.end()) {
+                return LLVMBuildCall(generator->builder, generator->functions[idenFunc->name+sTypes], this->getParameters(false, AST::funcTable[idenFunc->name+sTypes]->args).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name+sTypes]->type) ? "" : "callFunc"));
+            }
             return LLVMBuildCall(generator->builder, generator->functions[idenFunc->name], this->getParameters(false, AST::funcTable[idenFunc->name]->args).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
         }
         if(currScope->has(idenFunc->name)) {
@@ -139,16 +161,19 @@ LLVMValueRef NodeCall::generate() {
 
                 std::pair<std::string, std::string> method = std::pair<std::string, std::string>(structure->name, getFunc->field);
                 if(AST::methodTable.find(method) != AST::methodTable.end() && hasIdenticallyArgs(types, AST::methodTable[method]->args)) {
+                    params = this->correctByLLVM(params, AST::methodTable[method]->args);
                     return LLVMBuildCall(generator->builder, generator->functions[AST::methodTable[method]->name], params.data(), params.size(), (instanceof<TypeVoid>(AST::methodTable[method]->type) ? "" : "callFunc"));
                 }
                 
                 method.second += typesToString(types);
                 if(AST::methodTable.find(method) != AST::methodTable.end()) {
+                    params = this->correctByLLVM(params, AST::methodTable[method]->args);
                     return LLVMBuildCall(generator->builder, generator->functions[AST::methodTable[method]->name], params.data(), params.size(), (instanceof<TypeVoid>(AST::methodTable[method]->type) ? "" : "callFunc"));
                 }
 
                 method.second = method.second.substr(0, method.second.find('['));
                 if(AST::methodTable.find(method) != AST::methodTable.end()) {
+                    params = this->correctByLLVM(params, AST::methodTable[method]->args);
                     return LLVMBuildCall(generator->builder, generator->functions[AST::methodTable[method]->name], params.data(), params.size(), (instanceof<TypeVoid>(AST::methodTable[method]->type) ? "" : "callFunc"));
                 }
 

@@ -178,9 +178,7 @@ LLVMValueRef NodeBuiltin::generate() {
             nodes.push_back(new NodeIden("_RaveArg"+std::to_string(i), this->loc));
         }
         for(int i=1; i<args.size(); i++) nodes.push_back(args[i]);
-        (new NodeCall(this->loc, args[0], nodes))->generate();
-        std::cout << "\t\tEnd!" << std::endl;
-        return nullptr;
+        return (new NodeCall(this->loc, args[0], nodes))->generate();
     }
     if(this->name == "typesIsEquals") {
         if(asType(0)->type->toString() == asType(1)->type->toString()) return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 1, false);

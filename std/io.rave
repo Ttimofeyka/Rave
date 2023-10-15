@@ -93,7 +93,7 @@ namespace std {
     }
 
     int __putswnlSL2 = 0;
-    void putswnl(std::string s) {
+    void putswnlS(std::string s) {
         std::thread::spinlock::lock(&std::__putswnlSL2);
         for(int i=0; i<s.length; i+=1) {
             std::putchar(s.data[i]);
@@ -114,7 +114,7 @@ namespace std {
 
     (ctargs, inline) void print {
         std::string s = @callWithArgs(std::__sprint);
-        std::putswnl(s);
+        std::putswnlS(s);
     }
 
     (ctargs, inline) void println {

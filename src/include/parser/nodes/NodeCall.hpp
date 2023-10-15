@@ -24,7 +24,7 @@ public:
     Type* getType() override;
     std::vector<Type*> getTypes();
     std::vector<LLVMValueRef> getParameters(bool isVararg, std::vector<FuncArgSet> fas = std::vector<FuncArgSet>());
-    std::vector<LLVMValueRef> correctByLLVM(std::vector<LLVMValueRef> values);
+    std::vector<LLVMValueRef> correctByLLVM(std::vector<LLVMValueRef> values, std::vector<FuncArgSet> fas);
     Node* comptime() override;
     Node* copy() override;
     void check() override;
