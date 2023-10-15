@@ -35,6 +35,18 @@ After install write `make` in the Rave directory.
 
 You just need to set the compiler "i686-w64-mingw32-gcc-win32" in options.json, and add "-t i686-win32" to your build command.
 
+### Building in Termux
+
+1. Install llvm-15 from [Termux User Repository](https://github.com/termux-user-repository/tur):
+```bash
+$ pkg i llvm-15
+```
+2. Apply termux-specific patch for LLVM:
+```bash
+$ ./termux-llvm-patch
+```
+3. Build using `make`.
+
 ## Reference
 
 The reference is in `reference` directory.
