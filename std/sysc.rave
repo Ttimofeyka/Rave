@@ -132,21 +132,6 @@ the result of a call with the same parameters and the same number will be the sa
                     str x0, [x1]
                 ");
             } => cast(void*)std::__syscResult;
-
-            namespace atomic {
-                int load(int* cell) {
-                    int result = 0;
-                    asm("mov (x0), x8");
-                } => result;
-                void store(int* cell, int value) {
-                    int result = 0;
-                    asm("mov x1, (x0)");
-                } => result;
-                int exchange(int* cell, int value) {
-                    int result = 0;
-                    asm("mov (x0), x8; movq x1, (x0)");
-                } => result;
-            }
         }
 
         namespace std {
@@ -201,21 +186,6 @@ the result of a call with the same parameters and the same number will be the sa
                     str r0, [r1]
                 ");
             } => cast(void*)std::__syscResult;
-
-            namespace atomic {
-                int load(int* cell) {
-                    int result = 0;
-                    asm("mov (r0), r7");
-                } => result;
-                void store(int* cell, int value) {
-                    int result = 0;
-                    asm("mov r1, (r0)");
-                } => result;
-                int exchange(int* cell, int value) {
-                    int result = 0;
-                    asm("mov (r0), r7; movq r1, (r0)");
-                } => result;
-            }
         }
 
         namespace std {
