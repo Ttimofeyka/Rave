@@ -187,4 +187,5 @@ LLVMValueRef NodeImports::generate() {
     for(int i=0; i<this->imports.size(); i++) {
         if(this->imports[i] != nullptr) this->imports[i]->generate();
     }
+    return nullptr;
 }
