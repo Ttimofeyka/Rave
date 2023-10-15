@@ -4,7 +4,7 @@ OBJ = $(SRC:%.cpp=%.o)
 
 BIN = rave
 
-LLVM_LIB = `llvm-config-15 --libs`
+LLVM_LIB = -lLLVM-15
 
 LLVM_VERSION = 15
 
