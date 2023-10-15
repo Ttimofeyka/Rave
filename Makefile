@@ -18,7 +18,7 @@ all: $(BIN)
 
 $(BIN): $(OBJ)
 	$(COMPILER) $(OBJ) -o $@ $(LLVM_LIB) -DLLVM_$(LLVM_VERSION)
-%.o: %.c
+%.o: %.cpp
 	$(COMPILER) -c $< -o $@ -DLLVM_$(LLVM_VERSION) -std=c++11 -Wno-deprecated
 
 clean: 

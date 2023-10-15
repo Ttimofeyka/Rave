@@ -314,11 +314,11 @@ void Compiler::compileAll() {
             if(!Compiler::settings.saveObjectFiles) toRemove.push_back(compiledFile);
         }
     }
-    std::map<std::string, bool> imported;
     for(int i=0; i<AST::addToImport.size(); i++) {
-        if(imported.find(AST::addToImport[i]) == imported.end()) {
-            Compiler::toImport.push_back(replaceAll(AST::addToImport[i], ">", ""));
-            imported[AST::addToImport[i]] = true;
+        std::string fname = replaceAll(AST::addToImport[i], ">", "");
+        if(std::count(Compiler::toImport.begin(), Compiler::toImport.end(), fname) == 0
+        && std::count(Compiler::files.begin(), Compiler::files.end(), fname) == 0) {
+            Compiler::toImport.push_back(fname);
         }
     }
     for(int i=0; i<Compiler::toImport.size(); i++) {
