@@ -184,5 +184,7 @@ Node* NodeImports::copy() {
 }
 
 LLVMValueRef NodeImports::generate() {
-    for(int i=0; i<this->imports.size(); i++) this->imports[i]->generate();
+    for(int i=0; i<this->imports.size(); i++) {
+        if(this->imports[i] != nullptr) this->imports[i]->generate();
+    }
 }
