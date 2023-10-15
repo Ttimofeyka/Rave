@@ -195,23 +195,13 @@ namespace std {
         };
     }
 
-    /*struct file {
+    struct file {
         libc::File* _file;
         const(char)* name;
         bool isOpen;
 
         std::file this(const(char)* name) {
             this.name = name;
-            this.isOpen = false;
-        } => this;
-
-        std::file this(std::string name) {
-            this.name = name.c();
-            this.isOpen = false;
-        } => this;
-
-        std::file this(std::u8string name) {
-            this.name = name.c();
             this.isOpen = false;
         } => this;
 
@@ -255,53 +245,7 @@ namespace std {
         } => toret;
 
         int flush => libc::fflush(this._file);
-
-        void ~this {this.close();}
-
-        void ~with {this.close();}
-
-        std::string readText {
-            bool needToClose = false;
-            if(this.isOpen == false) {
-                this.open("rb");
-                needToClose = true;
-            }
-
-            libc::fseek(this._file, 0, libc::SeekEnd);
-            int size = libc::ftell(this._file);
-            libc::fseek(this._file, 0, libc::SeekSet);
-
-            char* content = std::malloc(size+1);
-            this.read(content,@sizeOf(char),size);
-            content[size] = '\0';
-
-            std::string result = content;
-            std::free(content);
-
-            if(needToClose) this.close();
-        } => result;
-
-        std::u8string u8ReadText {
-            bool needToClose = false;
-            if(this.isOpen == false) {
-                this.open("rb");
-                needToClose = true;
-            }
-
-            libc::fseek(this._file, 0, libc::SeekEnd);
-            int size = libc::ftell(this._file);
-            libc::fseek(this._file, 0, libc::SeekSet);
-
-            char* content = std::malloc(size+1);
-            this.read(content,@sizeOf(char),size);
-            content[size] = '\0';
-
-            std::u8string result = content;
-            std::free(content);
-
-            if(needToClose) this.close();
-        } => result;
-    }*/
+    }
 
     namespace ansi {
         alias black = "\033[30m";
