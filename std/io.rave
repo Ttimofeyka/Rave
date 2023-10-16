@@ -159,7 +159,7 @@ namespace std {
         };
     }
 
-    (ctargs) void input {
+    (inline, ctargs) void input {
         @foreachArgs() {
             @if(@typesIsNequals(@getCurrArgType(),float*)) {
                 @if(@typesIsNequals(@getCurrArgType(),double*)) {
