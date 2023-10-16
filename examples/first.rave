@@ -1,6 +1,8 @@
 import <std/io>
 
-int main {
-    int jamal;
-    std::input(&jamal);
+void main {
+    std::string s = "Jam";
+    if(s != "Jam") {
+        std::println("Equals");
+    }
 }
