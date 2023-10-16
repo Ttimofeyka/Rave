@@ -20,6 +20,7 @@ namespace Compiler {
     extern double genTime;
     extern std::vector<std::string> files;
     extern std::vector<std::string> toImport;
+    extern bool debugMode;
 
     extern void error(std::string message);
     extern void initialize(std::string outFile, std::string outType, genSettings settings, std::vector<std::string> files);

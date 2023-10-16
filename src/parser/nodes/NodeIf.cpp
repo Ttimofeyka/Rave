@@ -15,7 +15,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 NodeIf::NodeIf(Node* cond, Node* body, Node* _else, long loc, std::string funcName, bool isStatic) {
     this->cond = cond;
     this->body = body;
-    this->_else = this->_else;
+    this->_else = _else;
     this->loc = loc;
     this->funcName = funcName;
     this->isStatic = isStatic;

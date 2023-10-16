@@ -48,6 +48,7 @@ double Compiler::parseTime = 0.0;
 double Compiler::genTime = 0.0;
 std::vector<std::string> Compiler::files;
 std::vector<std::string> Compiler::toImport;
+bool Compiler::debugMode;
 
 std::string getDirectory(std::string file) {
     return file.substr(0, file.find_last_of("/\\"));
@@ -292,6 +293,7 @@ void Compiler::compile(std::string file) {
 }
 
 void Compiler::compileAll() {
+    AST::debugMode = Compiler::debugMode;
     std::vector<std::string> toRemove;
     for(int i=0; i<Compiler::files.size(); i++) {
         if(access(Compiler::files[i].c_str(), 0) != 0) {

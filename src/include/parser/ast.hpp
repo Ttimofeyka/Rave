@@ -48,6 +48,7 @@ namespace AST {
     extern std::map<std::string, std::vector<Node*>> parsed;
     extern std::map<int, Node*> condStack;
     extern std::string mainFile;
+    extern bool debugMode;
 
     void checkError(std::string message, long loc);
 }

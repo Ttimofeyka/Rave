@@ -28,6 +28,7 @@ genSettings analyzeArguments(std::vector<std::string>& arguments) {
         else if(arguments[i] == "-s" || arguments[i] == "--shared") settings.linkParams += "-shared ";
         else if(arguments[i] == "-sof" || arguments[i] == "--saveObjectFiles") settings.saveObjectFiles = true;
         else if(arguments[i] == "-dw" || arguments[i] == "--disableWarnings") settings.disableWarnings = true;
+        else if(arguments[i] == "--debug") Compiler::debugMode = true;
         else if(arguments[i][0] == '-') settings.linkParams += arguments[i]+" ";
         else files.push_back(arguments[i]);
     }
@@ -35,6 +36,7 @@ genSettings analyzeArguments(std::vector<std::string>& arguments) {
 }
 
 int main(int argc, char** argv) {
+    Compiler::debugMode = false;
     std::vector<std::string> arguments;
     for(int i=1; i<argc; i+=1) arguments.push_back(std::string(argv[i]));
     options = analyzeArguments(arguments);
