@@ -9,16 +9,16 @@ namespace std {
         int length;
         int capacity;
 
-        std::string this(char* a) {
-            if(a != null) {
-                this.length = std::cstring::strlen(a);
-                this.capacity = this.length*2;
+        std::string this(char* str) {
+            if(str != null) {
+                this.length = std::cstring::strlen(str);
+                this.capacity = this.length * 2;
                 if(this.capacity <= 0) this.capacity = 1;
                 this.data = std::malloc(this.capacity);
 
                 int i = 0;
                 while(i<this.length) {
-                    this.data[i] = a[i];
+                    this.data[i] = str[i];
                     i += 1;
                 }
             }
@@ -101,7 +101,7 @@ namespace std {
             this.data[this.length-1] = c;
         }
 
-        void append(std::string* str) {
+        void append(std::string str) {
             int i = 0;
             while(i<str.length) {
                 this.add(str.data[i]);

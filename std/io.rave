@@ -117,7 +117,7 @@ namespace std {
         std::putswnlS(s);
     }
 
-    (ctargs, inline) void println {
+    (inline, ctargs) void println {
         @callWithArgs(std::print, '\n');
     }
 

@@ -273,10 +273,10 @@ LLVMValueRef NodeBinary::generate() {
                 if(opOverload.first != "") {
                     if(opOverload.first[0] == '!') return (new NodeUnary(this->loc, TokType::Ne, (new NodeCall(
                         this->loc, new NodeIden(AST::structTable[opOverload.first.substr(1)]->operators[this->op][opOverload.second]->name, this->loc),
-                        std::vector<Node*>({new NodeDone(vFirst), new NodeDone(vSecond)})))))->generate();
+                        std::vector<Node*>({this->first, new NodeDone(vSecond)})))))->generate();
                     return (new NodeCall(
                         this->loc, new NodeIden(AST::structTable[opOverload.first]->operators[this->op][opOverload.second]->name, this->loc),
-                        std::vector<Node*>({new NodeDone(vFirst), new NodeDone(vSecond)})))->generate();
+                        std::vector<Node*>({this->first, new NodeDone(vSecond)})))->generate();
                 }
                 else if(instanceof<TypeBasic>(this->second->getType())) {
                     generator->error("an attempt to change value of the structure as the variable '"+id->name+"' without overloading!", this->loc);

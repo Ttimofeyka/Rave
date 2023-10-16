@@ -65,8 +65,18 @@ std::vector<LLVMValueRef> NodeCall::correctByLLVM(std::vector<LLVMValueRef> valu
 
 std::vector<LLVMValueRef> NodeCall::getParameters(bool isVararg, std::vector<FuncArgSet> fas) {
     std::vector<LLVMValueRef> params;
-    for(int i=0; i<this->args.size(); i++) params.push_back(this->args[i]->generate());
-    if(fas.empty() || params.size() != fas.size()) return params;
+    if(fas.empty() || this->args.size() != fas.size()) {
+        for(int i=0; i<this->args.size(); i++) params.push_back(this->args[i]->generate());
+        return params;
+    }
+    for(int i=0; i<this->args.size(); i++) {
+        if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(((TypePointer*)fas[i].type)->instance) && !instanceof<TypePointer>(this->args[i]->getType())) {
+            if(instanceof<NodeIden>(this->args[i])) ((NodeIden*)this->args[i])->isMustBePtr = true;
+            else if(instanceof<NodeGet>(this->args[i])) ((NodeGet*)this->args[i])->isMustBePtr = true;
+            else if(instanceof<NodeIndex>(this->args[i])) ((NodeIndex*)this->args[i])->isMustBePtr = true;
+        }
+        params.push_back(this->args[i]->generate());
+    }
     for(int i=0; i<params.size(); i++) {
         if(fas[i].type->toString() == "void*" || fas[i].type->toString() == "char*") {
             LLVMTypeRef type = LLVMTypeOf(params[i]);
