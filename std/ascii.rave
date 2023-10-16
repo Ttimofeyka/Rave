@@ -11,7 +11,7 @@ namespace std {
             char tmp = c;
             if(std::ascii::isLower(c)) tmp = (tmp - 32); 
         } => tmp;
-        (inline) bool isDigit(char c) => (c == '0') || (c == '1') || (c == '2') || (c == '3') || (c == '4') || (c == '5') || (c == '6') || (c == '7') || (c == '8') || (c == '9');
+        (inline) bool isDigit(char c) => (c >= '0') && (c <= '9');
         (inline) char* charInChars(char* chars, char c) {
             int i = 0;
             char* ptr = null;
