@@ -12,8 +12,8 @@ namespace std {
         std::string this(char* str) {
             if(str != null) {
                 this.length = std::cstring::strlen(str);
-                this.capacity = this.length * 2;
-                if(this.capacity <= 0) this.capacity = 1;
+                this.capacity = (this.length * 2) + 2;
+                if(this.capacity <= 0) this.capacity = 2;
                 this.data = std::malloc(this.capacity);
 
                 int i = 0;
@@ -21,19 +21,22 @@ namespace std {
                     this.data[i] = str[i];
                     i += 1;
                 }
+                this.data[i] = '\0';
             }
             else {
                 this.length = 0;
-                this.capacity = 1;
+                this.capacity = 2;
                 this.data = std::malloc(this.capacity);
+                this.data[0] = '\0';
             }
         } => this;
 
         std::string this(int n) {
             this.length = 0;
-            this.capacity = n;
-            if(this.capacity <= 0) this.capacity = 1;
+            this.capacity = n+1;
+            if(this.capacity <= 0) this.capacity = 2;
             this.data = std::malloc(this.capacity);
+            this.data[0] = '\0';
         } => this;
 
         void operator=(std::string* one, char* two) {one[0] = std::string(two);}
@@ -43,8 +46,8 @@ namespace std {
         void set(char* a) {
             if(a != null) {
                 this.length = std::cstring::strlen(a);
-                this.capacity = this.length*2;
-                if(this.capacity == 0) this.capacity = 1;
+                this.capacity = (this.length * 2) + 2;
+                if(this.capacity <= 0) this.capacity = 2;
                 if(this.data != null) std::free(this.data);
                 this.data = std::malloc(this.capacity);
 
@@ -53,26 +56,23 @@ namespace std {
                     this.data[i] = a[i];
                     i += 1;
                 }
+                this.data[i] = '\0';
             }
             else {
                 this.length = 0;
-                this.capacity = 1;
+                this.capacity = 2;
                 if(this.data != null) std::free(this.data);
                 this.data = std::malloc(this.capacity);
+                this.data[0] = '\0';
             }
         }
 
         bool isDeleted => (this.data == null);
 
-        char* c {
-            char* temp = std::malloc(this.length+1);
-            int i = 0;
-            while(i<this.length) {temp[i] = this.data[i]; i += 1;}
-            temp[i] = '\0';
-        } => temp;
+        (inline) char* c => this.data;
 
         (inline) char toChar => this.data[0];
-        (inline) long toLong => libc::strtol(this.c(),cast(char**)null,10);
+        (inline) long toLong => libc::strtol(this.c(), cast(char**)null, 10);
         (inline) int toInt => cast(int)this.toLong();
 
         int indexOf(char c) {
@@ -83,7 +83,7 @@ namespace std {
 
         int indexOf(char* s) {
             char* _c = this.c();
-            char* p = std::cstring::strstr(_c,s);
+            char* p = std::cstring::strstr(_c, s);
 
             int index = 0;
             if(p == null) index = -1;

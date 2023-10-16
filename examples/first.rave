@@ -1,6 +1,10 @@
 import <std/io>
 
 void main {
-    std::string str = std::readLine();
-    std::println(str);
+    int i = 0;
+    std::string str = "ABCD";
+    while(str.data[i] != '\0') {
+        std::println(str.data[i]);
+        i += 1;
+    }
 }

@@ -3,6 +3,7 @@
     namespace std {
         namespace network {
             alias AfInet = 1;
+            alias PfInet = 1;
             alias AfInet6 = 2;
             alias SockStream = 1;
             alias ShutRD = 0;
@@ -61,6 +62,8 @@
             
             (inline) int sendto(int s, char* buff, int len, int flags, std::network::sockaddr* dest, int addrlen) => cast(int)std::syscall(std::sysctable::SendTo, s, buff, len, flags, dest, addrlen);
             
+            (inline) int send(int s, char* buff, int len, int flags) => std::network::sendto(s, buff, len, flags, cast(std::network::sockaddr*)null, 0);
+
             short htons(short n) {
                 short netshort;
                 char* nptr = cast(char*)&n;
