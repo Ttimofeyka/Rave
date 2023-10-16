@@ -14,7 +14,7 @@ namespace std {
 
         void add(T value) {
             if((this.length * sizeof(T)) == this.capacity) {
-                this.data = cast(T*)std::realloc(this.data, 2 * this.capacity);
+                this.data = cast(T*)std::realloc(cast(void*)this.data, 2 * this.capacity);
                 this.capacity = this.capacity * 2;
             }
             this.data[this.length] = value;
@@ -42,7 +42,7 @@ namespace std {
             }
         } => buffer;
 
-        T operator[](std::vector<T>* v, int index) => v.data[index];
+        (inline) T operator[](std::vector<T>* v, int index) => v.data[index];
 
         T* c {
             T* cdata = cast(T*)std::malloc(this.length * sizeof(T) + 1);
@@ -66,6 +66,6 @@ namespace std {
 
         (inline) void removeLast {this.remove(this.length-1);}
 
-        void ~this {std::free(this.data);}
+        void ~this {std::free(cast(void*)this.data);}
     }
 }

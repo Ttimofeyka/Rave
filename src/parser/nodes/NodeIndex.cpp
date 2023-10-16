@@ -11,6 +11,9 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeCall.hpp"
 #include "../../include/parser/nodes/NodeGet.hpp"
 #include "../../include/parser/nodes/NodeUnary.hpp"
+#include "../../include/parser/nodes/NodeStruct.hpp"
+#include "../../include/parser/nodes/NodeInt.hpp"
+#include "../../include/parser/nodes/NodeFunc.hpp"
 #include "../../include/parser/ast.hpp"
 #include <vector>
 #include <string>
@@ -29,13 +32,17 @@ Type* NodeIndex::getType() {
     if(!instanceof<TypePointer>(type) && !instanceof<TypeArray>(type) && !instanceof<TypeConst>(type)) {
         if(instanceof<TypeStruct>(type)) {
             //if(TokType.Rbra.into(StructTable[ts.name].operators)) return StructTable[ts.name].operators[TokType.Rbra][""].type;
+            TypeStruct* tstruct = (TypeStruct*)type;
+            if(AST::structTable[tstruct->name]->operators.find(TokType::Rbra) != AST::structTable[tstruct->name]->operators.end()) {
+                for(auto const& x : AST::structTable[tstruct->name]->operators[TokType::Rbra]) return AST::structTable[tstruct->name]->operators[TokType::Rbra][x.first]->type;
+            }
         }
-        generator->error("Assert into NodeIndex::getType!",this->loc);
+        generator->error("Assert into NodeIndex::getType! Type: "+type->toString(), this->loc);
         return nullptr;
     }
     if(instanceof<TypePointer>(type)) return ((TypePointer*)type)->instance;
     else if(instanceof<TypeArray>(type)) return ((TypeArray*)type)->element;
-    generator->error("Assert into NodeIndex::getType!",this->loc);
+    generator->error("Assert into NodeIndex::getType! Type: "+type->toString(), this->loc);
     return nullptr;
 }
 
@@ -69,6 +76,24 @@ LLVMValueRef NodeIndex::generate() {
     if(instanceof<NodeIden>(this->element)) {
         NodeIden* id = (NodeIden*)this->element;
         Type* _t = currScope->getVar(id->name, this->loc)->type;
+        if(instanceof<TypeStruct>(_t) || (instanceof<TypePointer>(_t) && instanceof<TypeStruct>(((TypePointer*)_t)->instance))) {
+            Type* tstruct = nullptr;
+            if(instanceof<TypeStruct>(_t)) tstruct = _t;
+            else tstruct = ((TypePointer*)_t)->instance;
+            while(generator->toReplace.find(tstruct->toString()) != generator->toReplace.end()) tstruct = (TypeStruct*)generator->toReplace[tstruct->toString()];
+
+            if(instanceof<TypeStruct>(tstruct)) {
+                std::string structName = ((TypeStruct*)tstruct)->name;
+                if(AST::structTable.find(structName) != AST::structTable.end()) {
+                    if(AST::structTable[structName]->operators.find(TokType::Rbra) != AST::structTable[structName]->operators.end()) {
+                        for(auto const& x : AST::structTable[structName]->operators[TokType::Rbra]) {
+                            return (new NodeCall(this->loc, new NodeIden(AST::structTable[structName]->operators[TokType::Rbra][x.first]->name, this->loc),
+                                std::vector<Node*>({id, this->indexes[0]})))->generate();
+                        }
+                    }
+                }
+            }
+        }
         if(instanceof<TypePointer>(_t)) {
             if(instanceof<TypeConst>(((TypePointer*)_t)->instance)) this->elementIsConst = true;
         }
@@ -88,7 +113,7 @@ LLVMValueRef NodeIndex::generate() {
             if(NeededFunctions["assert"].into(Generator.Functions)) LLVMBuildCall(generator->builder,Generator.Functions[NeededFunctions["assert"]],[isNull,new NodeString("Runtime error in '"~Generator.file~"' file on "~to!string(loc)~" line: attempt to use a null pointer in ptoi!\n",false).generate()].ptr,2,toStringz(""));
         }*/
         if(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMArrayTypeKind && LLVMGetTypeKind(LLVMTypeOf(currScope->getWithoutLoad(id->name, this->loc))) == LLVMArrayTypeKind) {
-            LLVMValueRef copyVal = LLVMBuildAlloca(generator->builder, LLVMTypeOf(ptr), "NodeIndex_copyVal_");
+            LLVMValueRef copyVal = LLVMBuildAlloca(generator->builder, LLVMTypeOf(ptr), ("NodeIndex_copyVal_"+std::to_string(this->loc)+"_").c_str());
             LLVMBuildStore(generator->builder, ptr, copyVal);
             ptr = copyVal;
         }
@@ -116,24 +141,24 @@ LLVMValueRef NodeIndex::generate() {
         }*/
         LLVMValueRef index = generator->byIndex(ptr, this->generateIndexes());
         if(isMustBePtr) return index;
-        return LLVMBuildLoad(generator->builder, index, "NodeIndex_NodeIden_load_");
+        return LLVMBuildLoad(generator->builder, index, ("NodeIndex_NodeIden_load_"+std::to_string(this->loc)+"_").c_str());
     }
     if(instanceof<NodeGet>(this->element)) {
         NodeGet* nget = (NodeGet*)this->element;
         nget->isMustBePtr = true;
         LLVMValueRef ptr = nget->generate();
         this->elementIsConst = nget->elementIsConst;
-        if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) != LLVMArrayTypeKind) {ptr = LLVMBuildLoad(generator->builder, ptr, "NodeIndex_NodeGet_load");}
+        if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) != LLVMArrayTypeKind) {ptr = LLVMBuildLoad(generator->builder, ptr, ("NodeIndex_NodeGet_load"+std::to_string(this->loc)+"_").c_str());}
         LLVMValueRef index = generator->byIndex(ptr, this->generateIndexes());
         if(isMustBePtr) return index;
-        return LLVMBuildLoad(generator->builder,index, "NodeIndex_NodeGet");
+        return LLVMBuildLoad(generator->builder,index, ("NodeIndex_NodeGet"+std::to_string(this->loc)+"_").c_str());
     }
     if(instanceof<NodeCall>(this->element)) {
         NodeCall* ncall = (NodeCall*)this->element;
         LLVMValueRef vr = ncall->generate();
         LLVMValueRef index = generator->byIndex(vr, this->generateIndexes());
         if(isMustBePtr) return index;
-        return LLVMBuildLoad(generator->builder, index, "NodeIndex_NodeCall_load");
+        return LLVMBuildLoad(generator->builder, index, ("NodeIndex_NodeCall_load"+std::to_string(this->loc)+"_").c_str());
     }
     /*if(NodeDone nd = element.instanceof!NodeDone) {
         LLVMValueRef val = nd.generate();

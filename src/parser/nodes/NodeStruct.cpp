@@ -146,8 +146,8 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 else if(func->origName.find("(!=)") != std::string::npos) {oper = TokType::Nequal; func->name = this->name+"(!=)";}
                 else if(func->origName.find("([])") != std::string::npos) {oper = TokType::Rbra; func->name = this->name+"([])";}
                 else if(func->origName.find("([]=)") != std::string::npos) {oper = TokType::Lbra; func->name = this->name+"([]=)";}
-                func->name = func->name + typesToString(func->args);
-                this->operators[oper][typesToString(func->args)] = func;
+                if(oper != TokType::Rbra) func->name = func->name + typesToString(func->args);
+                this->operators[oper][(oper != TokType::Rbra ? typesToString(func->args) : "")] = func;
                 this->methods.push_back(func);
                 func->check();
             }

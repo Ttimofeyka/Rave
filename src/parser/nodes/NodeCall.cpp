@@ -134,9 +134,8 @@ LLVMValueRef NodeCall::generate() {
                     return LLVMBuildCall(generator->builder, generator->functions[AST::funcTable[idenFunc->name]->generateWithCtargs(types)], this->getParameters(false).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
                 }
                 if(AST::debugMode) {
-                    std::cout << "DEBUG_MODE: undefined function (generator->functions)!" << std::endl;
-                    std::cout << "All functions:" << std::endl;
                     for(auto const& x : AST::funcTable) std::cout << "\t" << x.first << std::endl;
+                    std::cout << "DEBUG_MODE: undefined function (generator->functions)!" << std::endl;
                 }
                 generator->error("undefined function '"+idenFunc->name+"'!", this->loc);
                 return nullptr;
@@ -151,9 +150,8 @@ LLVMValueRef NodeCall::generate() {
             return LLVMBuildCall(generator->builder, currScope->get(idenFunc->name), this->getParameters(false, tfaToFas(fn->args)).data(), this->args.size(), (instanceof<TypeVoid>(fn->main) ? "" : "callFunc"));
         }
         if(AST::debugMode) {
-            std::cout << "DEBUG_MODE: undefined function!" << std::endl;
-            std::cout << "All functions:" << std::endl;
             for(auto const& x : AST::funcTable) std::cout << "\t" << x.first << std::endl;
+            std::cout << "DEBUG_MODE: undefined function!" << std::endl;
         }
         //for(auto const& x : AST::methodTable) std::cout << "\t" << x.first.first << " : " << x.first.second << std::endl;
         generator->error("undefined function '"+idenFunc->name+"'!", this->loc);
