@@ -135,7 +135,7 @@ LLVMValueRef NodeImport::generate() {
             NodeNamespace* nnamespace = (NodeNamespace*)buffer[j];
             nnamespace->hidePrivated = true;
             nnamespace->isImported = true;
-            buffer[j]->check();
+            nnamespace->check();
         }
         else buffer[j]->check();
     }

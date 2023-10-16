@@ -73,6 +73,10 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
             NodeFunc* func = (NodeFunc*)this->elements[i];
             if(func->isCtargs) continue;
             if(func->origName == "this") {
+                if(func->isChecked) {
+                    func->isMethod = false;
+                    func->isChecked = false;
+                }
                 func->name = this->origname;
                 func->namespacesNames = std::vector<std::string>(this->namespacesNames);
                 func->isTemplatePart = this->isLinkOnce;
@@ -107,33 +111,13 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 func->check();
                 this->constructors.push_back(func);
             }
-            /*else if(func->origName == this->name) {
-                Type* outType = new TypePointer(new TypeStruct(name));
-                func->namespacesNames = std::vector<std::string>(this->namespacesNames);
-                func->isTemplatePart = this->isLinkOnce;
-                func->isComdat = this->isComdat;
-                if(!this->constructors.empty()) {
-                    outType = this->constructors[0]->type;
-                    if(instanceof<TypeStruct>(outType)) outType = new TypePointer(outType);
-                }
-                if((func->args.size() > 0 && func->args[0].name != "this") || func->args.size() == 0) func->args.push_back(FuncArgSet{.name = "this", .type = outType});
-                func->name = name+"."+func->origName;
-                func->isMethod = true;
-                if(isImported) func->isExtern = true;
-                if(AST::methodTable.find(std::pair<std::string, std::string>(this->name, func->origName)) != AST::methodTable.end()) {
-                    std::string sTypes = typesToString(AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)]->args);
-                    if(sTypes != typesToString(func->args)) AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName+sTypes)] = func;
-                    else generator->error("method '"+func->origName+"' has already been declared on "+std::to_string(AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)]->loc)+" line!", this->loc);
-                }
-                else AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)] = func;
-                this->methods.push_back(func);
-            }*/
             else if(func->origName == "~this") {
                 this->destructor = func;
                 func->name = "~"+this->origname;
                 func->namespacesNames = std::vector<std::string>(this->namespacesNames);
                 func->isTemplatePart = this->isLinkOnce;
                 func->isComdat = this->isComdat;
+                func->isChecked = false;
                 Type* outType = this->constructors[0]->type;
                 if(instanceof<TypeStruct>(outType)) outType = new TypePointer(outType);
                 this->destructor->args = std::vector<FuncArgSet>({FuncArgSet{.name = "this", .type = outType}});
@@ -150,9 +134,9 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 func->check();
             }
             else if(func->origName.find('(') != std::string::npos) {
-                func->isMethod = true;
                 func->isTemplatePart = isLinkOnce;
                 func->isComdat = isComdat;
+                func->isChecked = false;
                 if(isImported) func->isExtern = true;
 
                 char oper;
@@ -165,6 +149,7 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 func->name = func->name + typesToString(func->args);
                 this->operators[oper][typesToString(func->args)] = func;
                 this->methods.push_back(func);
+                func->check();
             }
             else if(func->origName == "~with") {
                 func->isMethod = true;
@@ -177,7 +162,6 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 if(this->isImported) {
                     func->isExtern = true;
                     func->check();
-                    continue;
                 }
             }
             else {
@@ -285,17 +269,17 @@ LLVMValueRef NodeStruct::generate() {
         constructor->namespacesNames = std::vector<std::string>(this->namespacesNames);
         constructor->isTemplatePart = this->isLinkOnce;
         constructor->isComdat = this->isComdat;
-        if(this->isImported) {
-            constructor->isExtern = true;
-            constructor->check();
-        }
-        else {
-            constructor->check();
-            constructor->generate();
-        }
+        if(this->isImported) constructor->isExtern = true;
+        constructor->check();
+        constructor->generate();
         this->constructors.push_back(constructor);
     }
-    else for(int i=0; i<this->constructors.size(); i++) this->constructors[i]->generate();
+    else {
+        for(int i=0; i<this->constructors.size(); i++) {
+            if(!this->constructors[i]->isChecked) this->constructors[i]->check();
+            this->constructors[i]->generate();
+        }
+    }
     if(this->destructor == nullptr) {
         // Creating default destructor
         this->destructor = new NodeFunc(
@@ -314,21 +298,20 @@ LLVMValueRef NodeStruct::generate() {
             else {
                 this->destructor->args = {FuncArgSet{.name = "this", .type = new TypePointer(this->constructors[0]->type)}};
                 this->destructor->check();
-                this->destructor->generate();
             }
+            this->destructor->generate();
         }
     }
     else {
         if(isImported) {
             this->destructor->isExtern = true;
             this->destructor->check();
-            this->destructor->generate();
         }
         else {
             this->destructor->args = {FuncArgSet{.name = "this", .type = new TypePointer(this->constructors[0]->type)}};
             this->destructor->check();
-            this->destructor->generate();
         }
+        this->destructor->generate();
     }
     for(int i=0; i<this->methods.size(); i++) {
         this->methods[i]->check();

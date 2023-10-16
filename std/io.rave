@@ -71,6 +71,7 @@ namespace libc {
 
 namespace std {
     extern(vararg, linkname: "scanf") int scanf(char* fmt);
+    extern(linkname: "getchar") char getchar();
     extern(linkname: "putchar") int putchar(char c);
 
     int __putsSL = 0;
@@ -131,7 +132,7 @@ namespace std {
                         @if(@typesIsNequals(@getCurrArgType(), short*)) {
                             @if(@typesIsNequals(@getCurrArgType(), int*)) {
                                 @if(@typesIsNequals(@getCurrArgType(), long*)) {
-                                
+                                    
                                 };
                                 @if(@typesIsEquals(@getCurrArgType(), long*)) {
                                     libc::fscanf(f._file, "%ld", @getCurrArg(long*));
@@ -158,6 +159,15 @@ namespace std {
             };
         };
     }
+
+    std::string readLine {
+        std::string buffer = "";
+        char ch = std::getchar();
+        while((ch != '\n') && (ch != -1)) {
+            buffer.add(ch);
+            ch = std::getchar();
+        }
+    } => buffer;
 
     (inline, ctargs) void input {
         @foreachArgs() {

@@ -21,6 +21,7 @@ class NodeFunc : public Node {
 public:
     std::string name;
     std::string origName;
+    std::string linkName;
     std::vector<std::string> namespacesNames;
     std::vector<std::string> templateNames;
     std::vector<Type*> templateTypes;

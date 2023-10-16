@@ -1,6 +1,6 @@
 import <std/io>
 
 void main {
-    std::string s = "Jam";
-    std::println(s);
+    std::string str = std::readLine();
+    std::println(str);
 }

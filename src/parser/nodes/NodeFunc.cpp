@@ -123,7 +123,7 @@ LLVMValueRef NodeFunc::generate() {
         return nullptr;
     }
 
-    std::string linkName = generator->mangle(this->name, true, this->isMethod);
+    linkName = generator->mangle(this->name, true, this->isMethod);
     int callConv = LLVMCCallConv;
     std::map<std::string, NodeBuiltin*> builtins;
 
@@ -174,6 +174,8 @@ LLVMValueRef NodeFunc::generate() {
     }
 
     this->getParameters();
+    LLVMValueRef get = LLVMGetNamedFunction(generator->lModule, linkName.c_str());
+    if(get != nullptr) return nullptr;
     generator->functions[this->name] = LLVMAddFunction(
         generator->lModule, linkName.c_str(),
         LLVMFunctionType(generator->genType(this->type, loc), this->genTypes.data(), this->args.size(), this->isVararg)

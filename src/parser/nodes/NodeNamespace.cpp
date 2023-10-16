@@ -115,7 +115,7 @@ LLVMValueRef NodeNamespace::generate() {
                 this->nodes[i]->check();
             }
             nnamespace->isImported = (nnamespace->isImported || this->isImported);
-            this->nodes[i]->generate();
+            nnamespace->generate();
         }
         else if(instanceof<NodeVar>(this->nodes[i])) {
             NodeVar* nvar = (NodeVar*)this->nodes[i];
@@ -125,7 +125,7 @@ LLVMValueRef NodeNamespace::generate() {
                 this->nodes[i]->check();
             }
             nvar->isExtern = (nvar->isExtern || this->isImported);
-            this->nodes[i]->generate();
+            nvar->generate();
         }
         else if(instanceof<NodeStruct>(this->nodes[i])) {
             NodeStruct* nstruct = (NodeStruct*)this->nodes[i];
@@ -134,7 +134,7 @@ LLVMValueRef NodeNamespace::generate() {
                 this->nodes[i]->check();
             }
             nstruct->isImported = (nstruct->isImported || this->isImported);
-            this->nodes[i]->generate();
+            nstruct->generate();
         }
         else if(instanceof<NodeAliasType>(this->nodes[i])) {
             if(!this->nodes[i]->isChecked) {
