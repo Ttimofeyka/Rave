@@ -314,6 +314,6 @@ LLVMValueRef NodeFunc::generateWithTemplate(std::vector<Type*> types, std::strin
 }
 
 Node* NodeFunc::comptime() {return this;}
-Type* NodeFunc::getType() {return nullptr;}
+Type* NodeFunc::getType() {return this->type;}
 
 Node* NodeFunc::copy() {return new NodeFunc(this->name, this->args, (NodeBlock*)this->block->copy(), this->isExtern, this->mods, this->loc, this->type->copy(), this->templateNames);}

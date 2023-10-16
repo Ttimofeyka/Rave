@@ -1,5 +1,6 @@
-@if((__RAVE_OS == "LINUX")) {
+import <std/string>
 
+@if((__RAVE_OS == "LINUX")) {
     namespace std {
         namespace network {
             alias AfInet = 1;
@@ -73,8 +74,22 @@
             } => netshort;
 
             extern(linkname: "htonl") uint htonl(uint host);
-
             extern(linkname: "inet_addr") int inetAddr(char* ip);
+
+            namespace request {
+                void get(int fd, char* path, char* contentType, char* content) {
+                    if((contentType != null) && (std::cstring::strlen(contentType) > 0)) {
+                        std::__sprint("GET ", path, " HTTP/1.0\r\nContent-type: ", contentType, "\r\nContent-length: ", std::cstring::strlen(content), "\r\n\r\n", content, "\r\n");
+                    }
+                    else std::__sprint("GET ", path, " HTTP/1.0\r\n\r\n");
+                    std::network::send(fd, std::sprintBuffer.c(), std::sprintBuffer.length, 0);
+                }
+
+                (inline) void post(int fd, char* path, char* contentType, char* content) {
+                    std::__sprint("POST ", path, " HTTP/1.0\r\n", "Content-length: ", std::cstring::strlen(content), "\r\n\r\n", content, "\r\n");
+                    std::network::send(fd, std::sprintBuffer.c(), std::sprintBuffer.length, 0);
+                }
+            }
         }
     }
 };

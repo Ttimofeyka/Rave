@@ -121,10 +121,14 @@ LLVMValueRef NodeCall::generate() {
     if(instanceof<NodeIden>(this->func)) {
         NodeIden* idenFunc = (NodeIden*)this->func;
         if(AST::funcTable.find(idenFunc->name) != AST::funcTable.end()) {
+            std::string sTypes = typesToString(this->getTypes());
             if(generator->functions.find(idenFunc->name) == generator->functions.end()) {
                 // Function with compile-time args (ctargs)
                 if(AST::funcTable[idenFunc->name]->isCtargs) {
-                    std::vector<LLVMValueRef> params = getParameters(false);
+                    if(generator->functions.find(idenFunc->name+sTypes) != generator->functions.end()) {
+                        return LLVMBuildCall(generator->builder, generator->functions[idenFunc->name+sTypes], this->getParameters(false).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
+                    }
+                    std::vector<LLVMValueRef> params = this->getParameters(false);
                     std::vector<LLVMTypeRef> types;
                     for(int i=0; i<params.size(); i++) types.push_back(LLVMTypeOf(params[i]));
                     return LLVMBuildCall(generator->builder, generator->functions[AST::funcTable[idenFunc->name]->generateWithCtargs(types)], this->getParameters(false).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
@@ -137,7 +141,6 @@ LLVMValueRef NodeCall::generate() {
                 generator->error("undefined function '"+idenFunc->name+"'!", this->loc);
                 return nullptr;
             }
-            std::string sTypes = typesToString(this->getTypes());
             if(AST::funcTable.find(idenFunc->name+sTypes) != AST::funcTable.end()) {
                 return LLVMBuildCall(generator->builder, generator->functions[idenFunc->name+sTypes], this->getParameters(false, AST::funcTable[idenFunc->name+sTypes]->args).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name+sTypes]->type) ? "" : "callFunc"));
             }
@@ -188,6 +191,7 @@ LLVMValueRef NodeCall::generate() {
                 
                 method.second += typesToString(types);
                 if(AST::methodTable.find(method) != AST::methodTable.end()) {
+                    //for(auto const& x : generator->functions) std::cout << "\t\t" << x.first << std::endl;
                     params = this->correctByLLVM(params, AST::methodTable[method]->args);
                     return LLVMBuildCall(generator->builder, generator->functions[AST::methodTable[method]->name], params.data(), params.size(), (instanceof<TypeVoid>(AST::methodTable[method]->type) ? "" : "callFunc"));
                 }

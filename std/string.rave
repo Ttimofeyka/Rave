@@ -109,7 +109,7 @@ namespace std {
             }
         }
 
-        void append(char* cstr) {
+        void appendC(char* cstr) {
             int len = std::cstring::strlen(cstr);
             int i = 0;
             while(i<len) {
@@ -370,7 +370,7 @@ namespace std {
                                 ~s;
                             };
                             @if(@typesIsEquals(@getCurrArgType(), bool)) {
-                                std::sprintBuffer.append(std::cstring::fromBool(@getCurrArg(bool)));
+                                std::sprintBuffer.appendC(std::cstring::fromBool(@getCurrArg(bool)));
                             };
                             @if(@typesIsEquals(@getCurrArgType(), std::u32string)) {
                                 std::u32string us = @getCurrArg(std::u32string);
@@ -425,7 +425,7 @@ namespace std {
                                 }
                             };
                             @if(@typesIsEquals(@getCurrArgType(), char*)) {
-                                std::sprintBuffer.append(@getCurrArg(char*));
+                                std::sprintBuffer.appendC(@getCurrArg(char*));
                             };
                         };
                         @if(@typesIsEquals(@getCurrArgType(), char)) {
@@ -468,7 +468,7 @@ namespace std {
                                 ~s;
                             };
                             @if(@typesIsEquals(@getCurrArgType(),bool)) {
-                                result.append(std::cstring::fromBool(@getCurrArg(bool)));
+                                result.appendC(std::cstring::fromBool(@getCurrArg(bool)));
                             };
                             @if(@typesIsEquals(@getCurrArgType(),std::u32string)) {
                                 std::u32string us = @getCurrArg(std::u32string);
@@ -523,7 +523,7 @@ namespace std {
                                 }
                             };
                             @if(@typesIsEquals(@getCurrArgType(), char*)) {
-                                result.append(@getCurrArg(void*));
+                                result.appendC(@getCurrArg(void*));
                             };
                         };
                         @if(@typesIsEquals(@getCurrArgType(),char)) {

@@ -1,10 +1,5 @@
-import <std/io>
+import <std/io> <std/network>
 
 void main {
-    int i = 0;
-    std::string str = "ABCD";
-    while(str.data[i] != '\0') {
-        std::println(str.data[i]);
-        i += 1;
-    }
+    std::network::request::get(0, "", "", "");
 }
