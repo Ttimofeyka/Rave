@@ -86,7 +86,7 @@ import <std/string>
                 }
 
                 (inline) void post(int fd, char* path, char* contentType, char* content) {
-                    std::__sprint("POST ", path, " HTTP/1.0\r\n", "Content-length: ", std::cstring::strlen(content), "\r\n\r\n", content, "\r\n");
+                    std::__sprint("POST ", path, " HTTP/1.0\r\nContent-type: ", contentType, "\r\nContent-length: ", std::cstring::strlen(content), "\r\n\r\n", content, "\r\n");
                     std::network::send(fd, std::sprintBuffer.c(), std::sprintBuffer.length, 0);
                 }
             }
