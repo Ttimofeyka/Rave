@@ -50,6 +50,10 @@ import <std/string>
             (inline) int connect(int sockfd, std::network::sockaddr* addr, int addrlen) => cast(int)std::syscall(std::sysctable::Connect, sockfd, addr, addrlen);
             
             (inline) int getSockName(int sockfd, std::network::sockaddr* addr, int* addrlen) => cast(int)std::syscall(std::sysctable::GetSockName, sockfd, addr, addrlen);
+
+            (inline) int setSockOpt(int sockfd, int lvl, int optname, void* optval, int socklen) => cast(int)std::syscall(std::sysctable::SetSockOpt, sockfd, lvl, optname, optval, socklen);
+
+            (inline) int getSockOpt(int sockfd, int lvl, int optname, void* optval, int* optlen) => cast(int)std::syscall(std::sysctable::GetSockOpt, sockfd, lvl, optname, optval, optlen);
             
             (inline) int close(int sockfd) => cast(int)std::syscall(std::sysctable::Close, sockfd);
             
@@ -59,11 +63,15 @@ import <std/string>
             
             (inline) int accept4(int sockfd, std::network::sockaddr* addr, int* addrlen, int flags) => cast(int)std::syscall(std::sysctable::Accept4, sockfd, addr, addrlen, flags);
             
-            (inline) int recvfrom(int s, char* buff, int len, int flags, std::network::sockaddr* src, int* addrlen) => cast(int)std::syscall(std::sysctable::RecvFrom, s, buff, len, flags, src, addrlen);
+            (inline) int accept(int sockfd, std::network::sockaddr* addr, int* addrlen) => std::network::accept4(sockfd, addr, addrlen, 0);
+
+            (inline) int recvFrom(int s, char* buff, int len, int flags, std::network::sockaddr* src, int* addrlen) => cast(int)std::syscall(std::sysctable::RecvFrom, s, buff, len, flags, src, addrlen);
             
-            (inline) int sendto(int s, char* buff, int len, int flags, std::network::sockaddr* dest, int addrlen) => cast(int)std::syscall(std::sysctable::SendTo, s, buff, len, flags, dest, addrlen);
+            (inline) int sendTo(int s, char* buff, int len, int flags, std::network::sockaddr* dest, int addrlen) => cast(int)std::syscall(std::sysctable::SendTo, s, buff, len, flags, dest, addrlen);
             
-            (inline) int send(int s, char* buff, int len, int flags) => std::network::sendto(s, buff, len, flags, cast(std::network::sockaddr*)null, 0);
+            (inline) int recv(int s, char* buff, int len, int flags) => std::network::recvFrom(s, buff, len, flags, cast(std::network::sockaddr*)null, cast(int*)null);
+
+            (inline) int send(int s, char* buff, int len, int flags) => std::network::sendTo(s, buff, len, flags, cast(std::network::sockaddr*)null, 0);
 
             short htons(short n) {
                 short netshort;

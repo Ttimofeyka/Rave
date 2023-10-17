@@ -1,9 +1,5 @@
 import <std/io> <std/network>
 
 void main {
-    std::vector<int> a = std::vector<int>();
-    a.add(10);
-    a.add(20);
-    int b = a[0];
-    std::println(b);
+    
 }
