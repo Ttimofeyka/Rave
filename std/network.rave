@@ -11,6 +11,8 @@ import <std/string>
             alias ShutWR = 1;
             alias ShutRDWR = 2;
             alias InAddrAll = 0;
+            alias AiPassive = 1;
+            alias AiCanonName = 2;
 
             struct sockaddr {
                 int sa_family;
@@ -25,6 +27,16 @@ import <std/string>
 
             struct in_addr {
                 int s_addr;
+            }
+
+            struct addrinfo {
+                int ai_flags;
+                int ai_family;
+                int ai_socktype;
+                int ai_protocol;
+                uint ai_addrlen;
+                std::network::sockaddr* ai_addr;
+                std::network::addrinfo* ai_next;
             }
 
             struct sockaddr_in {

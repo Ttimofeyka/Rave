@@ -1,5 +1,66 @@
 import <std/io> <std/network>
 
+namespace raveserve {
+    extern(linkname: "accept") int __accept(int s, std::network::sockaddr* addr, int* addrlen);   
+
+    struct Server {
+        int sockfd;
+        int port;
+        std::network::sockaddr_in servaddr;
+
+        raveserve::Server this(short port) {        
+            // create socket
+            this.port = port;
+
+            this.sockfd = std::network::socket(std::network::AfInet,
+                                               std::network::SockStream,
+                                               std::network::InAddrAll); 
+
+            if (this.sockfd == -1) { 
+                std::puts("Socket creation failed\n"); 
+                std::exit(1);
+            }
+            this.servaddr.sa_family = std::network::AfInet; 
+            this.servaddr.sin_addr.s_addr = std::network::htonl(std::network::InAddrAll); 
+            this.servaddr.sin_port = std::network::htons(port);
+        } => this;
+
+        void run() {
+            if ((std::network::bind(this.sockfd, cast(std::network::sockaddr*)this.&servaddr, sizeof(std::network::sockaddr_in))) != 0) { 
+                std::puts("Socket bind failed\n"); 
+                std::exit(1);
+            }
+            // Now server is ready to listen and verification 
+            if ((std::network::listen(this.sockfd, 5)) != 0) { 
+                std::puts("Listen failed\n"); 
+                std::exit(1); 
+            }
+
+            std::puts("[RaveServe] started and listening");
+
+            std::network::sockaddr_in cli;
+            int connfd;
+
+            while(true) {
+                std::puts("[RaveServe] accepted client");  
+                int len = sizeof(std::network::sockaddr_in);
+                std::puts("[RaveServe] accepted client");  
+                connfd = raveserve::__accept(this.sockfd, cast(std::network::sockaddr*)&cli, &len); 
+                std::puts("[RaveServe] accepted client");  
+                if (connfd <= 0) { 
+                    std::puts("Server accept failed\n"); 
+                    std::exit(1); 
+                }
+                std::puts("[RaveServe] accepted client");            
+                // Function for chatting between client and server 
+                // this.handle(connfd);
+                std::network::close(this.sockfd);
+            } 
+        }
+    }
+}
+
 void main {
-    
+    raveserve::Server s = raveserve::Server(cast(short)8989);
+    s.run();
 }
