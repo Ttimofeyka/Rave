@@ -290,7 +290,7 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
     long currIdx = this->idx;
     auto type = this->parseType();
     if(instanceof<TypeCall>(type)) {
-        this->idx = idx;
+        this->idx = currIdx;
         Node* n = this->parseAtom(s);
         if(this->peek()->type == TokType::Semicolon) this->next();
         return n;
@@ -730,6 +730,9 @@ bool Parser::isSlice() {
 
 bool Parser::isTemplate() {
     long idx = this->idx;
+    if(this->tokens[this->idx+1]->type == TokType::Number || this->tokens[this->idx+1]->type != TokType::HexNumber
+    || this->tokens[this->idx+1]->type != TokType::FloatNumber || this->tokens[this->idx+1]->type != TokType::String
+    || this->tokens[this->idx+1]->type != TokType::Rarr) return false;
     this->next();
     if(this->peek()->type == TokType::Number || this->peek()->type == TokType::String || this->peek()->type == TokType::HexNumber || this->peek()->type == TokType::FloatNumber) {
         this->idx = idx;
@@ -829,6 +832,7 @@ Node* Parser::parseSuffix(Node* base, std::string f) {
                         return nullptr;
                     }
                 }
+                else base = new NodeGet(base, field, this->peek()->type == TokType::Equ || isPtr, this->peek()->line);
             }
             else base = new NodeGet(base, field, this->peek()->type == TokType::Equ || isPtr, this->peek()->line);
         }
@@ -1045,10 +1049,9 @@ Node* Parser::parseBreak() {
 
 Node* Parser::parseIf(std::string f, bool isStatic) {
     long line = this->peek()->line;
-    this->next();
-    expect(TokType::Rpar);
+    this->next(); this->next();
     Node* cond = this->parseExpr();
-    expect(TokType::Lpar);
+    this->next();
     Node* body = this->parseStmt(f);
     if(this->peek()->value == "else") {
         this->next();

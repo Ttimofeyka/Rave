@@ -403,7 +403,7 @@ LLVMValueRef NodeBinary::generate() {
              ||LLVMGetTypeKind(LLVMTypeOf(vFirst)) == LLVMIntegerTypeKind) vFirst = Binary::castValue(vFirst, LLVMTypeOf(vSecond), this->loc);
         }
         else {
-            generator->error("value types are incompatible!", loc);
+            generator->error("value types '"+this->first->getType()->toString()+"' and '"+this->second->getType()->toString()+"' are incompatible!", loc);
             return nullptr;
         }
     }

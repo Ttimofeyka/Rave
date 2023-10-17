@@ -1,6 +1,5 @@
-import <std/io> <std/network>
+import <std/network>
 
 void main {
-    std::network::addrinfo* info = std::network::getHostInfo("127.0.0.1", "8989");
-    int fd = std::network::socket(info.ai_family, info.ai_socktype, info.ai_protocol);
+    
 }

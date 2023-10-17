@@ -39,6 +39,11 @@ import <std/string> <std/memory> <std/io>
                 std::network::addrinfo* ai_next;
             }
 
+            struct hostInfo {
+                std::network::addrinfo* addrinfo;
+                int result;
+            }
+
             struct sockaddr_in {
                 int sa_family;
                 short sin_port;
@@ -99,7 +104,7 @@ import <std/string> <std/memory> <std/io>
             extern(linkname: "freeaddrinfo") void freeAddrInfo(std::network::addrinfo* ai);
             extern(linkname: "gai_strerror") char* getHostError(int errcode);
 
-            std::network::addrinfo* getHostInfo(char* host, char* port) {
+            std::network::hostInfo getHostInfo(char* host, char* port) {
                 int r = 0;
                 std::network::addrinfo hints;
                 std::network::addrinfo* getaddrinfoRes = null;
@@ -107,12 +112,10 @@ import <std/string> <std/memory> <std/io>
                 hints.ai_family = std::network::AfInet;
                 hints.ai_socktype = std::network::SockStream;
                 r = std::network::getAddrInfo(host, port, &hints, &getaddrinfoRes);
-                if(cast(bool)r) {
-                    getaddrinfoRes = cast(std::network::addrinfo*)null;
-                    std::__sprint("std::network::getHostInfo error: ", std::network::getHostError(r));
-                    std::puts(std::sprintBuffer.c());
-                }
-            } => getaddrinfoRes;
+                std::network::hostInfo hinfo;
+                hinfo.addrinfo = getaddrinfoRes;
+                hinfo.result = r;
+            } => hinfo;
 
             namespace request {
                 void get(int fd, char* path, char* contentType, char* content) {
