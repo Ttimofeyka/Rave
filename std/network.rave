@@ -4,7 +4,7 @@ import <std/string> <std/memory> <std/io>
     namespace std {
         namespace network {
             alias AfInet = 2;
-            alias PfInet = 1;
+            alias PfInet = 2;
             alias AfInet6 = 2;
             alias SockStream = 1;
             alias ShutRD = 0;
