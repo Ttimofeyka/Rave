@@ -1,9 +1,9 @@
-import <std/string>
+import <std/string> <std/memory> <std/io>
 
 @if((__RAVE_OS == "LINUX")) {
     namespace std {
         namespace network {
-            alias AfInet = 1;
+            alias AfInet = 2;
             alias PfInet = 1;
             alias AfInet6 = 2;
             alias SockStream = 1;
@@ -95,6 +95,24 @@ import <std/string>
 
             extern(linkname: "htonl") uint htonl(uint host);
             extern(linkname: "inet_addr") int inetAddr(char* ip);
+            extern(linkname: "getaddrinfo") int getAddrInfo(char* node, char* service, std::network::addrinfo* hints, std::network::addrinfo** res);
+            extern(linkname: "freeaddrinfo") void freeAddrInfo(std::network::addrinfo* ai);
+            extern(linkname: "gai_strerror") char* getHostError(int errcode);
+
+            std::network::addrinfo* getHostInfo(char* host, char* port) {
+                int r = 0;
+                std::network::addrinfo hints;
+                std::network::addrinfo* getaddrinfoRes = null;
+                std::memset(cast(void*)&hints, 0, sizeof(std::network::addrinfo));
+                hints.ai_family = std::network::AfInet;
+                hints.ai_socktype = std::network::SockStream;
+                r = std::network::getAddrInfo(host, port, &hints, &getaddrinfoRes);
+                if(cast(bool)r) {
+                    getaddrinfoRes = cast(std::network::addrinfo*)null;
+                    std::__sprint("std::network::getHostInfo error: ", std::network::getHostError(r));
+                    std::puts(std::sprintBuffer.c());
+                }
+            } => getaddrinfoRes;
 
             namespace request {
                 void get(int fd, char* path, char* contentType, char* content) {

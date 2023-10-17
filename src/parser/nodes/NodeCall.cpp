@@ -207,6 +207,8 @@ LLVMValueRef NodeCall::generate() {
             generator->error("undefined structure '"+structure->name+"'!", this->loc);
             return nullptr;
         }
+        generator->error("a call of this kind (NodeGet + "+std::string(typeid(this->func[0]).name())+") is temporarily unavailable!", this->loc);
+    return nullptr;
     }
     if(instanceof<NodeUnary>(this->func)) {
         NodeCall* nc = new NodeCall(this->loc, ((NodeUnary*)this->func)->base, this->args);
