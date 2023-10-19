@@ -130,11 +130,11 @@ namespace std {
         double pow(double f, double f2) {
             double result;
             if(f2 < 0) {
-                result = 1 / std::math::pow(f,-f2);
+                result = 1 / std::math::pow(f, -f2);
             }
             else if((f2 > 0.0) && (f2 < 1.0)) {
                 // TODO: Is there a possible inaccuracy?
-                result = std::math::exp(f2*std::math::loge(f));
+                result = std::math::exp(f2 * std::math::loge(f));
             }
             else {
                 double r = 1.0;

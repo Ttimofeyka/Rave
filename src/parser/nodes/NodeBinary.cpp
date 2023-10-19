@@ -109,7 +109,7 @@ LLVMValueRef Binary::mul(LLVMValueRef one, LLVMValueRef two, long loc) {
     else {oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;}
 
     if(LLVMGetTypeKind(LLVMTypeOf(oneCasted)) == LLVMIntegerTypeKind) return LLVMBuildMul(generator->builder, one, two, "sum");
-    return LLVMBuildFAdd(generator->builder, one, two, "fmul");
+    return LLVMBuildFMul(generator->builder, one, two, "fmul");
 }
 
 LLVMValueRef Binary::div(LLVMValueRef one, LLVMValueRef two, long loc) {
