@@ -230,6 +230,25 @@ LLVMValueRef NodeBuiltin::generate() {
         else AST::addToImport.push_back(getDirectory3(AST::mainFile)+"/"+iden.substr(1, iden.size()-1)+".rave");
         return nullptr;
     }
+    if(this->name == "echo") {
+        std::string buffer = "";
+        for(int i=0; i<this->args.size(); i++) buffer += this->asStringIden(i);
+        std::cout << buffer << std::endl;
+        return nullptr;
+    }
+    if(this->name == "warning") {
+        if(generator->settings.disableWarnings) return nullptr;
+        std::string buffer = "";
+        for(int i=0; i<this->args.size(); i++) buffer += this->asStringIden(i);
+        generator->warning(buffer, this->loc);
+        return nullptr;
+    }
+    if(this->name == "error") {
+        std::string buffer = "";
+        for(int i=0; i<this->args.size(); i++) buffer += this->asStringIden(i);
+        generator->error(buffer, this->loc);
+        return nullptr;
+    }
     generator->error("builtin with the name '"+this->name+"' does not exist!", this->loc);
     return nullptr;
 }

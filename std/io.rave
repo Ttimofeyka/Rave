@@ -239,7 +239,16 @@ namespace std {
 
         char getc => libc::fgetc(this._file);
 
-        char* gets(char* buffer, int n) => libc::fgets(buffer,n,this._file);
+        char* gets(char* buffer, int n) => libc::fgets(buffer, n, this._file);
+
+        std::string readLine {
+            std::string buffer = "";
+            char ch = this.getc();
+            while((ch != '\n') && (ch != -1)) {
+                buffer.add(ch);
+                ch = this.getc();
+            }
+        } => buffer;
 
         bool isEof => cast(bool)libc::feof(this._file);
 
