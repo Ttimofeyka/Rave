@@ -1,5 +1,11 @@
 import <std/network> <std/io>
 
 void main {
-    
+    std::string foo = "JAMAL";
+    char first = foo.at(0);
+    if(first == 'J') {
+        foo.set(0, 'C');
+        foo.set(3, 'E');
+    }
+    std::println(foo);
 }

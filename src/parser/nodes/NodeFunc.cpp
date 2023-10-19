@@ -62,11 +62,14 @@ void NodeFunc::check() {
             }
         }
 
-        if(instanceof<TypeStruct>(this->type)) {
+        if(instanceof<TypeStruct>(this->type) && generator != nullptr) {
             TypeStruct* ts = (TypeStruct*)this->type;
             for(int i=0; i<ts->types.size(); i++) {
-                while(generator->toReplace.find(ts->types[i]->toString()) != generator->toReplace.end())
-                    ts->types[i] = generator->toReplace[ts->types[i]->toString()];
+                if(ts->types[i] != nullptr) {
+                    while(generator->toReplace.find(ts->types[i]->toString()) != generator->toReplace.end()) {
+                        ts->types[i] = generator->toReplace[ts->types[i]->toString()];
+                    }
+                }
             }
             if(ts->types.size() > 0) ts->updateByTypes();
             if(ts != nullptr && generator != nullptr) {
@@ -158,7 +161,7 @@ LLVMValueRef NodeFunc::generate() {
         else if(this->mods[i].name == "noOptimize") this->isNoOpt = true;
         else if(this->mods[i].name.size() > 0 && this->mods[i].name[0] == '@') builtins[this->mods[i].name.substr(1)] = ((NodeBuiltin*)this->mods[i].genValue);
     }
-    if(this->isCtargs) return nullptr;
+    if(!this->isTemplate && this->isCtargs) return nullptr;
 
     std::map<std::string, Type*> oldReplace = std::map<std::string, Type*>(generator->toReplace);
     if(this->isTemplate) {

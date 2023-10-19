@@ -149,11 +149,25 @@ LLVMValueRef NodeCall::generate() {
             TypeFunc* fn = (TypeFunc*)(currScope->getVar(idenFunc->name)->type);
             return LLVMBuildCall(generator->builder, currScope->get(idenFunc->name), this->getParameters(false, tfaToFas(fn->args)).data(), this->args.size(), (instanceof<TypeVoid>(fn->main) ? "" : "callFunc"));
         }
+        if(idenFunc->name.find('<') != std::string::npos && AST::funcTable.find(idenFunc->name.substr(0, idenFunc->name.find('<'))) != AST::funcTable.end()) {
+            std::string mainName = idenFunc->name.substr(0, idenFunc->name.find('<'));
+            std::string sTypes = idenFunc->name.substr(idenFunc->name.find('<')+1);
+            Lexer* tLexer = new Lexer(sTypes.substr(0, sTypes.size()-1), 1);
+            Parser* tParser = new Parser(tLexer->tokens, "(builtin)");
+
+            std::vector<Type*> types;
+            while(tParser->peek()->type != TokType::Eof) {
+                types.push_back(tParser->parseType(true));
+                if(tParser->peek()->type == TokType::Comma) tParser->next();
+            }
+
+            AST::funcTable[mainName]->generateWithTemplate(types, idenFunc->name);
+            return this->generate();
+        }
         if(AST::debugMode) {
             for(auto const& x : AST::funcTable) std::cout << "\t" << x.first << std::endl;
             std::cout << "DEBUG_MODE: undefined function!" << std::endl;
         }
-        //for(auto const& x : AST::methodTable) std::cout << "\t" << x.first.first << " : " << x.first.second << std::endl;
         generator->error("undefined function '"+idenFunc->name+"'!", this->loc);
         return nullptr;
     }

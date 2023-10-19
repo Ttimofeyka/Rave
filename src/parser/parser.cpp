@@ -304,7 +304,12 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
 
     std::vector<std::string> templates;
     if(this->peek()->type == TokType::Less) {
-        // TODO
+        this->next();
+        while(this->peek()->type != TokType::More) {
+            templates.push_back(this->peek()->value);
+            this->next();
+            if(this->peek()->type == TokType::Comma) this->next();
+        } this->next();
     }
 
     if(this->peek()->type == TokType::Rpar) {

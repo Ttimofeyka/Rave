@@ -43,7 +43,7 @@ namespace std {
 
         void ~this {std::free(this.data);}
 
-        void set(char* a) {
+        void setValue(char* a) {
             if(a != null) {
                 this.length = std::cstring::strlen(a);
                 this.capacity = (this.length * 2) + 2;
@@ -65,6 +65,15 @@ namespace std {
                 this.data = std::malloc(this.capacity);
                 this.data[0] = '\0';
             }
+        }
+
+        (inline) void set(int index, char ch) {
+            if((index >= 0) && (index < this.length)) this.data[index] = ch;
+        }
+
+        (inline) char at(int index) {
+            if((index >= 0) && (index < this.length)) return this.data[index];
+            else return '\0';
         }
 
         bool isDeleted => (this.data == null);

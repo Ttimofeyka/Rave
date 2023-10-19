@@ -212,12 +212,22 @@ LLVMValueRef NodeBuiltin::generate() {
         return (new NodeCall(this->loc, args[0], nodes))->generate();
     }
     if(this->name == "typesIsEquals") {
-        if(asType(0)->type->toString() == asType(1)->type->toString()) return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 1, false);
+        if(this->asType(0)->type->toString() == this->asType(1)->type->toString()) return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 1, false);
         return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 0, false);
     }
     if(this->name == "typesIsNequals") {
-        if(asType(0)->type->toString() != asType(1)->type->toString()) return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 1, false);
+        if(this->asType(0)->type->toString() != this->asType(1)->type->toString()) return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 1, false);
         return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 0, false);
+    }
+    if(this->name == "typeIsArray") {
+        Type* ty = this->asType(0)->type;
+        while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
+        return LLVMConstInt(LLVMInt1TypeInContext(generator->context), instanceof<TypeArray>(ty), false);
+    }
+    if(this->name == "typeIsPointer") {
+        Type* ty = this->asType(0)->type;
+        while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
+        return LLVMConstInt(LLVMInt1TypeInContext(generator->context), instanceof<TypePointer>(ty), false);
     }
     if(this->name == "getCurrArg") return (new NodeCast(asType(0)->type, new NodeIden("_RaveArg"+std::to_string(generator->currentBuiltinArg), this->loc), this->loc))->generate();
     if(this->name == "getCurrArgType") {
@@ -260,6 +270,16 @@ Node* NodeBuiltin::comptime() {
     if(this->name == "sizeOf") return new NodeInt((asType(0)->type->getSize()) / 8);
     if(this->name == "typesIsEquals") return new NodeBool(asType(0)->type->toString() == asType(1)->type->toString());
     if(this->name == "typesIsNequals") return new NodeBool(asType(0)->type->toString() != asType(1)->type->toString());
+    if(this->name == "typeIsArray") {
+        Type* ty = this->asType(0)->type;
+        while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
+        return new NodeBool(instanceof<TypeArray>(ty));
+    }
+    if(this->name == "typeIsPointer") {
+        Type* ty = this->asType(0)->type;
+        while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
+        return new NodeBool(instanceof<TypePointer>(ty));
+    }
     AST::checkError("builtin with name '"+this->name+"' does not exist!", this->loc);
     return nullptr;
 }
