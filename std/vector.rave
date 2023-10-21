@@ -21,15 +21,11 @@ namespace std {
             this.length = this.length + 1;
         }
 
-        void assign(std::vector<T> of) {
-            for(int i=0; i<of.length; i+=1) {
-                this.add(of.data[i]);
-            }
+        (inline) void assign(std::vector<T> of) {
+            for(int i=0; i<of.length; i+=1) {this.add(of.data[i]);}
         }
 
-        void set(int index, T value) {
-            this.data[index] = value;
-        }
+        (inline) void set(int index, T value) {this.data[index] = value;}
 
         std::vector<T> copy {
             std::vector<T> buffer;

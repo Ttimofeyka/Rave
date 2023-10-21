@@ -1,5 +1,5 @@
 import <std/math> <std/io>
 
 void main {
-    std::println(5.0 * 5.0);
+    
 }
