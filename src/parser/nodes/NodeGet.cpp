@@ -9,6 +9,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeGet.hpp"
 #include "../../include/parser/nodes/NodeIden.hpp"
 #include "../../include/parser/nodes/NodeIndex.hpp"
+#include "../../include/parser/nodes/NodeCall.hpp"
 #include "../../include/parser/ast.hpp"
 #include <vector>
 #include <string>
@@ -131,6 +132,26 @@ LLVMValueRef NodeGet::generate() {
             "NodeGet_generate_Index_preload"
         ), "NodeGet_generate_Index_load");
     }
+    if(instanceof<NodeCall>(this->base)) {
+        NodeCall* ncall = (NodeCall*)this->base;
+        LLVMValueRef ptr = checkStructure(ncall->generate());
+        std::string structName = std::string(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(ptr))));
+        LLVMValueRef f = checkIn(structName);
+
+        if(f != nullptr) return f;
+        if(this->isMustBePtr) return LLVMBuildStructGEP(
+            generator->builder,
+            ptr,
+            AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
+            "NodeGet_generate_Index_ptr"
+        );
+        return LLVMBuildLoad(generator->builder, LLVMBuildStructGEP(
+            generator->builder,
+            ptr,
+            AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
+            "NodeGet_generate_Index_preload"
+        ), "NodeGet_generate_Index_load");
+    }
     /*if(NodeBuiltin nb = base.instanceof!NodeBuiltin) {
         LLVMValueRef v = nb.generate();
         string structName;
@@ -163,7 +184,7 @@ LLVMValueRef NodeGet::generate() {
             Generator.Builder, ptr, cast(uint)structsNumbers[cast(immutable)[structName,field]].number, toStringz("sgep1760_")
         ), toStringz("load1780_"));
     }*/
-    generator->error("Assert into NodeGet!", this->loc);
+    generator->error("Assert into NodeGet ("+std::string(typeid(this->base[0]).name())+")", this->loc);
     return nullptr;
 }
 

@@ -1,0 +1,6 @@
+import <std/io>
+
+int main {
+    int foo;
+    std::input(&foo);
+} => foo;
