@@ -98,3 +98,5 @@ public:
         return new Token(this->type, this->value);
     }
 };
+
+std::string tokenToString(char type);

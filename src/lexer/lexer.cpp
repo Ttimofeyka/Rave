@@ -231,3 +231,20 @@ Lexer::Lexer(std::string text, int offset) {
     }
     tokens.push_back(new Token(TokType::Eof, "", -1));
 }
+
+std::string tokenToString(char type) {
+    switch(type) {
+        case TokType::More: return "'>'";
+        case TokType::MoreEqual: return "'>='";
+        case TokType::Less: return "'<'";
+        case TokType::LessEqual: return "'<='";
+        case TokType::Equal: return "'=='";
+        case TokType::Semicolon: return "';'";
+        case TokType::Nequal: return "'!='";
+        case TokType::Equ: return "'='";
+        case TokType::String: return "string";
+        case TokType::Char: return "char";
+        case TokType::Identifier: return "identifier";
+    }
+    return "type "+std::to_string(type);
+}

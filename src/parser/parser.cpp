@@ -90,7 +90,7 @@ void Parser::warning(std::string msg) {
 Token* Parser::peek() {return this->tokens[this->idx];}
 Token* Parser::next() {this->idx += 1; return this->tokens[this->idx];}
 Token* Parser::expect(char type) {
-    if(this->peek()->type != type) this->error("expected TokType with number "+std::to_string(type)+", not "+std::to_string(this->peek()->type));
+    if(this->peek()->type != type) this->error("expected token "+tokenToString(type)+", not "+tokenToString(this->peek()->type));
     else this->next();
     return this->peek();
 }
