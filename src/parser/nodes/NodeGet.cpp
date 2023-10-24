@@ -134,11 +134,16 @@ LLVMValueRef NodeGet::generate() {
     }
     if(instanceof<NodeCall>(this->base)) {
         NodeCall* ncall = (NodeCall*)this->base;
+        Type* ty = ncall->getType();
+        std::string structName = "";
+        if(ty != nullptr && instanceof<TypeStruct>(ty)) {
+            structName = ((TypeStruct*)ty)->name;
+            LLVMValueRef f = checkIn(structName);
+            if(f != nullptr) return f;
+        }
         LLVMValueRef ptr = checkStructure(ncall->generate());
-        std::string structName = std::string(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(ptr))));
-        LLVMValueRef f = checkIn(structName);
+        if(structName == "") structName = std::string(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(ptr))));
 
-        if(f != nullptr) return f;
         if(this->isMustBePtr) return LLVMBuildStructGEP(
             generator->builder,
             ptr,

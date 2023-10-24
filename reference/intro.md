@@ -24,3 +24,9 @@ The characters are enclosed in single quotes (").
 ##### [Declarations](grammar/declarations.md)
 ##### [Types](grammar/types.md)
 ##### [Operators](grammar/operators.md)
+
+## Standart library
+
+##### [std/io](std/io.md)
+##### [std/vector](std/vector.md)
+##### [std/cstring](std/cstring.md)

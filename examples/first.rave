@@ -1,5 +1,3 @@
-import <std/math> <std/io>
+import <std/io>
 
-void main {
-    
-}
+void main => std::println(std::readLine().length);
