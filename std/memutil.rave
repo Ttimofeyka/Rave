@@ -57,9 +57,7 @@ struct SafePtr<T> {
             result.message = "Error using SafePtr: attempt to access an element outside the pointer!";
             result.code = std::BeyondSize;
         }
-        else {
-            result.value = this.pointer[n];
-        }
+        else result.value = this.pointer[n];
     } => result;
 
     (inline) std::error<bool> set(int n, T value) {

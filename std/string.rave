@@ -76,7 +76,7 @@ namespace std {
             else return '\0';
         }
 
-        bool isDeleted => (this.data == null);
+        (inline) bool isDeleted => (this.data == null);
 
         (inline) char* c => this.data;
 
@@ -99,7 +99,7 @@ namespace std {
             else index = (cast(int)p)-(cast(int)_c);
         } => index;
 
-        int indexOf(std::string s) => this.indexOf(s.c());
+        (inline) int indexOf(std::string s) => this.indexOf(s.c());
 
         void add(char c) {
             this.length += 1;
@@ -127,7 +127,7 @@ namespace std {
             }
         }
 
-        std::string copy {
+        (inline) std::string copy {
             std::string cp = std::string("");
             cp.append(this);
         } => cp;
@@ -221,9 +221,7 @@ namespace std {
             while(std::ascii::isSpace(this.data[idx])) idx -= 1;
         } => this.substring(0, idx+1);
 
-        std::string trim {
-            std::string _l = this.ltrim();
-        } => _l.rtrim();
+        (inline) std::string trim {std::string _l = this.ltrim();} => _l.rtrim();
     }
 
     namespace string {

@@ -3,7 +3,7 @@ import <std/process>
 @if(__RAVE_OS == "LINUX") {
     namespace std {
         namespace thread {
-            int getCurrentID => cast(int)std::syscall(std::sysctable::GetTID);
+            (inline) int getCurrentID => cast(int)std::syscall(std::sysctable::GetTID);
         }
     }
 };
@@ -11,7 +11,7 @@ import <std/process>
 @if((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64")) {
     namespace std {
         namespace thread {
-            int getCurrentID => std::winapi::GetCurrentThreadId();
+            (inline) int getCurrentID => std::winapi::GetCurrentThreadId();
         }
     }
 };
@@ -19,13 +19,14 @@ import <std/process>
 namespace std {
     namespace thread {
         namespace spinlock {
-            int tas(int* sl) => (cast(int)cmpxchg(sl, 0, 1));
+            (inline) int tas(int* sl) => (cast(int)cmpxchg(sl, 0, 1));
             void lock(int* sl) {
                 sl[0] = 1;
                 while(std::thread::spinlock::tas(sl) == 0) {}
             }
             void unlock(int* sl) {sl[0] = 0;}
         }
+        
         struct Spinlock {
             int value;
 

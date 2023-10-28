@@ -1,3 +1,1 @@
-import <std/io>
-
-void main => std::println(std::readLine().length);
+void main {}

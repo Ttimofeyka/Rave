@@ -98,14 +98,30 @@ void NodeFunc::check() {
     }
 }
 
-LLVMTypeRef* NodeFunc::getParameters() {
+LLVMTypeRef* NodeFunc::getParameters(int callConv) {
     std::vector<LLVMTypeRef> buffer;
     for(int i=0; i<this->args.size(); i++) {
         if(instanceof<TypeStruct>(this->args[i].type)) {
             if(generator->toReplace.find(((TypeStruct*)(this->args[i].type))->name) == generator->toReplace.end()) {
                 std::string oldName = this->args[i].name;
                 this->args[i].name = "_RaveStructArgument"+oldName;
-                this->block->nodes.insert(this->block->nodes.begin(), new NodeVar(oldName, new NodeIden(this->args[i].name, this->loc), false, false, false, {}, this->loc, this->args[i].type));
+                if(callConv == -1) {
+                    // Cdecl64
+                    int size = this->args[i].type->getSize();
+                    Type* ty = nullptr;
+                    switch(size) {
+                        case 8: ty = new TypeBasic(BasicType::Char); break;
+                        case 16: ty = new TypeBasic(BasicType::Short); break;
+                        case 32: ty = new TypeBasic(BasicType::Int); break;
+                        default: this->block->nodes.insert(this->block->nodes.begin(), new NodeVar(oldName, new NodeIden(this->args[i].name, this->loc), false, false, false, {}, this->loc, this->args[i].type)); break;
+                    }
+                    if(ty != nullptr) {
+                        this->block->nodes.insert(this->block->nodes.begin(), new NodeVar(oldName, new NodeIden(this->args[i].name, this->loc), false, false, false, {}, this->loc, ty));
+                        buffer.push_back(generator->genType(ty, this->loc));
+                        continue;
+                    }
+                }
+                else this->block->nodes.insert(this->block->nodes.begin(), new NodeVar(oldName, new NodeIden(this->args[i].name, this->loc), false, false, false, {}, this->loc, this->args[i].type));
             }
         }
         else if(!instanceof<TypePointer>(this->args[i].type) && !instanceof<TypeConst>(this->args[i].type) && !instanceof<TypeFunc>(this->args[i].type)) {
@@ -152,6 +168,7 @@ LLVMValueRef NodeFunc::generate() {
         else if(this->mods[i].name == "fastcc") callConv = LLVMFastCallConv;
         else if(this->mods[i].name == "coldcc") callConv = LLVMColdCallConv;
         else if(this->mods[i].name == "stdcc") callConv = LLVMX86StdcallCallConv;
+        else if(this->mods[i].name == "cdecl64") {callConv = -1; this->isCdecl64 = true;}
         else if(this->mods[i].name == "inline") this->isInline = true;
         else if(this->mods[i].name == "linkname") linkName = this->mods[i].value;
         else if(this->mods[i].name == "ctargs") this->isCtargs = true;
@@ -176,9 +193,10 @@ LLVMValueRef NodeFunc::generate() {
         }
     }
 
-    this->getParameters();
+    this->getParameters(callConv);
     LLVMValueRef get = LLVMGetNamedFunction(generator->lModule, linkName.c_str());
     if(get != nullptr) return nullptr;
+    if(callConv == -1) callConv = LLVMCCallConv;
     generator->functions[this->name] = LLVMAddFunction(
         generator->lModule, linkName.c_str(),
         LLVMFunctionType(generator->genType(this->type, loc), this->genTypes.data(), this->args.size(), this->isVararg)

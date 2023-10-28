@@ -259,6 +259,40 @@ LLVMValueRef NodeBuiltin::generate() {
         generator->error(buffer, this->loc);
         return nullptr;
     }
+    if(this->name == "constArrToVal") {
+        Type* inType = asType(0)->type;
+        Type* outType = asType(1)->type;
+        int inSize = inType->getSize();
+        int outSize = outType->getSize();
+        if(inSize == 8) {
+            std::vector<int8_t> ch;
+            for(int i=2; i<this->args.size(); i++) {if(instanceof<NodeInt>(this->args[i])) ch.push_back((int8_t)(((NodeInt*)this->args[i])->value.to_int()));}
+            switch(outSize) {
+                case 16: return LLVMConstInt(LLVMInt16TypeInContext(generator->context), ((int16_t*)ch.data())[0], false);
+                case 32: return LLVMConstInt(LLVMInt32TypeInContext(generator->context), ((int32_t*)ch.data())[0], false);
+                case 64: return LLVMConstInt(LLVMInt64TypeInContext(generator->context), ((int64_t*)ch.data())[0], false);
+                default: generator->error("constArrToVal assert!", this->loc); return nullptr;
+            }
+        }
+        else if(inSize == 16) {
+            std::vector<int16_t> ch;
+            for(int i=2; i<this->args.size(); i++) {if(instanceof<NodeInt>(this->args[i])) ch.push_back((int16_t)(((NodeInt*)this->args[i])->value.to_int()));}
+            switch(outSize) {
+                case 32: return LLVMConstInt(LLVMInt32TypeInContext(generator->context), ((int32_t*)ch.data())[0], false);
+                case 64: return LLVMConstInt(LLVMInt64TypeInContext(generator->context), ((int64_t*)ch.data())[0], false);
+                default: generator->error("constArrToVal assert!", this->loc); return nullptr;
+            }
+        }
+        else if(inSize == 32) {
+            std::vector<int32_t> ch;
+            for(int i=2; i<this->args.size(); i++) {if(instanceof<NodeInt>(this->args[i])) ch.push_back(((NodeInt*)this->args[i])->value.to_int());}
+            if(outSize == 64) return LLVMConstInt(LLVMInt64TypeInContext(generator->context), ((short*)ch.data())[0], false);
+            generator->error("constArrToVal assert!", this->loc);
+            return nullptr;
+        }
+        generator->error("constArrToVal assert!", this->loc);
+        return nullptr;
+    }
     generator->error("builtin with the name '"+this->name+"' does not exist!", this->loc);
     return nullptr;
 }

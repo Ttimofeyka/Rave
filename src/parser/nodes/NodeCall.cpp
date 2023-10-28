@@ -65,7 +65,7 @@ std::vector<LLVMValueRef> NodeCall::correctByLLVM(std::vector<LLVMValueRef> valu
 
 std::vector<LLVMValueRef> NodeCall::getParameters(bool isVararg, std::vector<FuncArgSet> fas) {
     std::vector<LLVMValueRef> params;
-    if(fas.empty() || this->args.size() != fas.size()) {
+    if(this->args.size() != fas.size()) {
         for(int i=0; i<this->args.size(); i++) params.push_back(this->args[i]->generate());
         return params;
     }
@@ -89,6 +89,12 @@ std::vector<LLVMValueRef> NodeCall::getParameters(bool isVararg, std::vector<Fun
                 LLVMValueRef temp = LLVMBuildAlloca(generator->builder, type, "NodeCall_getParameters_temp");
                 LLVMBuildStore(generator->builder, params[i], temp);
                 params[i] = temp;
+            }
+        }
+        else if(instanceof<TypeBasic>(fas[i].type) && LLVMGetTypeKind(LLVMTypeOf(params[i])) == LLVMIntegerTypeKind) {
+            TypeBasic* tbasic = (TypeBasic*)(fas[i].type);
+            if(!tbasic->isFloat() && ("i"+std::to_string(tbasic->getSize())) != std::string(LLVMPrintTypeToString(LLVMTypeOf(params[i])))) {
+                params[i] = LLVMBuildIntCast(generator->builder, params[i], generator->genType(tbasic, this->loc), "Itoi_getParameters");
             }
         }
     }
@@ -131,7 +137,7 @@ LLVMValueRef NodeCall::generate() {
                     std::vector<LLVMValueRef> params = this->getParameters(false);
                     std::vector<LLVMTypeRef> types;
                     for(int i=0; i<params.size(); i++) types.push_back(LLVMTypeOf(params[i]));
-                    return LLVMBuildCall(generator->builder, generator->functions[AST::funcTable[idenFunc->name]->generateWithCtargs(types)], this->getParameters(false).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
+                    return LLVMBuildCall(generator->builder, generator->functions[AST::funcTable[idenFunc->name]->generateWithCtargs(types)], params.data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
                 }
                 if(AST::debugMode) {
                     for(auto const& x : AST::funcTable) std::cout << "\t" << x.first << std::endl;

@@ -8,6 +8,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../include/parser/Types.hpp"
 #include "../include/utils.hpp"
 #include "../include/parser/nodes/NodeStruct.hpp"
+#include "../include/parser/nodes/NodeVar.hpp"
 #include <iostream>
 
 // Type
@@ -116,11 +117,21 @@ void TypeStruct::updateByTypes() {
 }
 int TypeStruct::getSize() {
     Type* t = this;
-    while(generator->toReplace.find(t->toString()) == generator->toReplace.end()) t = generator->toReplace[t->toString()];
+    while(generator->toReplace.find(t->toString()) != generator->toReplace.end()) t = generator->toReplace[t->toString()];
     if(instanceof<TypeStruct>(t)) {
         TypeStruct* ts = (TypeStruct*)t;
         if(!ts->types.empty() && AST::structTable.find(ts->name) == AST::structTable.end()) {
             AST::structTable[ts->name]->genWithTemplate(ts->name.substr(ts->name.find('<')), ts->types);
+        }
+        if(AST::structTable.find(ts->name) != AST::structTable.end()) {
+            int size = 0;
+            for(int i=0; i<AST::structTable[ts->name]->elements.size(); i++) {
+                if(AST::structTable[ts->name]->elements[i] != nullptr && instanceof<NodeVar>(AST::structTable[ts->name]->elements[i])) {
+                    NodeVar* nvar = (NodeVar*)AST::structTable[ts->name]->elements[i];
+                    size += nvar->type->getSize();
+                }
+            }
+            return size;
         }
         return AST::structTable[ts->name]->getSize();
     }
