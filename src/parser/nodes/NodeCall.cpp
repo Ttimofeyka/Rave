@@ -97,6 +97,9 @@ std::vector<LLVMValueRef> NodeCall::getParameters(bool isVararg, std::vector<Fun
                 params[i] = LLVMBuildIntCast(generator->builder, params[i], generator->genType(tbasic, this->loc), "Itoi_getParameters");
             }
         }
+        else if(instanceof<TypeBasic>(fas[i].type) && LLVMGetTypeKind(LLVMTypeOf(params[i])) == LLVMDoubleTypeKind) {
+            if(((TypeBasic*)fas[i].type)->type == BasicType::Float) params[i] = LLVMBuildFPCast(generator->builder, params[i], LLVMFloatTypeInContext(generator->context), "getParameters_dtof");
+        }
         else if(this->isCdecl64 && instanceof<TypeBasic>(fas[i].type) && LLVMGetTypeKind(LLVMTypeOf(params[i])) == LLVMStructTypeKind) {
             TypeBasic* tbasic = (TypeBasic*)(fas[i].type);
             if(!tbasic->isFloat()) {
