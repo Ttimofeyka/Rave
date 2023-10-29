@@ -116,6 +116,7 @@ LLVMTypeRef* NodeFunc::getParameters(int callConv) {
                         default: this->block->nodes.insert(this->block->nodes.begin(), new NodeVar(oldName, new NodeIden(this->args[i].name, this->loc), false, false, false, {}, this->loc, this->args[i].type)); break;
                     }
                     if(ty != nullptr) {
+                        this->args[i].type = ty;
                         this->block->nodes.insert(this->block->nodes.begin(), new NodeVar(oldName, new NodeIden(this->args[i].name, this->loc), false, false, false, {}, this->loc, ty));
                         buffer.push_back(generator->genType(ty, this->loc));
                         continue;
