@@ -79,13 +79,13 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
     Compiler::settings = settings;
     Compiler::files = files;
     
-    if(access("./options.json", 0) == 0) {
-        std::ifstream fOptions("./options.json");
+    if(access((exePath+"options.json").c_str(), 0) == 0) {
+        std::ifstream fOptions(exePath+"options.json");
         Compiler::options = nlohmann::json::parse(fOptions);
         if(fOptions.is_open()) fOptions.close();
     }
     else {
-        std::ofstream fOptions("./options.json");
+        std::ofstream fOptions(exePath+"options.json");
         fOptions << "{\n\t\"compiler\": \"clang-11\"\n}" << std::endl;
         if(fOptions.is_open()) fOptions.close();
     }
