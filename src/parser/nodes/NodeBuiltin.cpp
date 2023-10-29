@@ -236,7 +236,7 @@ LLVMValueRef NodeBuiltin::generate() {
     }
     if(this->name == "compileAndLink") {
         std::string iden = this->asStringIden(0);
-        if(iden[0] == '<') AST::addToImport .push_back(iden.substr(1, iden.size()-1)+".rave");
+        if(iden[0] == '<') AST::addToImport.push_back(exePath+iden.substr(1, iden.size()-1)+".rave");
         else AST::addToImport.push_back(getDirectory3(AST::mainFile)+"/"+iden.substr(1, iden.size()-1)+".rave");
         return nullptr;
     }
@@ -314,6 +314,7 @@ Node* NodeBuiltin::comptime() {
         while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
         return new NodeBool(instanceof<TypePointer>(ty));
     }
+    if(this->name == "contains") return new NodeBool(asStringIden(0).find(asStringIden(1)) != std::string::npos);
     AST::checkError("builtin with name '"+this->name+"' does not exist!", this->loc);
     return nullptr;
 }

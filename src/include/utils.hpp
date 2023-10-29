@@ -97,4 +97,31 @@ static inline std::string trim(std::string s) {
     return rtrim(ltrim(s));
 }
 
+#if defined(_WIN32)
+#include <algorithm> // for transform() in get_exe_path()
+#define WIN32_LEAN_AND_MEAN
+#define VC_EXTRALEAN
+#include <Windows.h>
+#elif defined(__linux__)
+#include <unistd.h>
+#endif
+
+static std::string getExePath() {
+    std::string path = "";
+#if defined(_WIN32)
+    wchar_t wc[260] = {0};
+    GetModuleFileNameW(NULL, wc, 260);
+    std::wstring ws(wc);
+    std::transform(ws.begin(), ws.end(), std::back_inserter(path), [](wchar_t c) { return (char)c; });
+    path = replaceAll(path, "\\", "/");
+#elif defined(__linux__)
+    char c[260];
+    int length = (int)readlink("/proc/self/exe", c, 260);
+    path = std::string(c, length>0 ? length : 0);
+#endif
+    return path.substr(0, path.rfind('/')+1);
+}
+
+extern std::string exePath;
+
 #define RAVE_DEBUG_MODE false

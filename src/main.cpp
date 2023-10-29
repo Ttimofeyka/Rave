@@ -13,6 +13,7 @@ std::string outFile = "";
 std::string outType = "";
 std::vector<std::string> files;
 genSettings options;
+std::string exePath;
 
 genSettings analyzeArguments(std::vector<std::string>& arguments) {
     genSettings settings;
@@ -36,6 +37,7 @@ genSettings analyzeArguments(std::vector<std::string>& arguments) {
 }
 
 int main(int argc, char** argv) {
+    exePath = getExePath();
     Compiler::debugMode = false;
     std::vector<std::string> arguments;
     for(int i=1; i<argc; i+=1) arguments.push_back(std::string(argv[i]));

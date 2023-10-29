@@ -608,7 +608,7 @@ std::string getGlobalFile(Parser* parser) {
         buffer += parser->peek()->value;
         parser->next();
     }
-    return buffer;
+    return exePath+buffer;
 }
 
 Node* Parser::parseImport() {

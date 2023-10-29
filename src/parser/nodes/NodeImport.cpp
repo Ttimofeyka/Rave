@@ -126,7 +126,7 @@ LLVMValueRef NodeImport::generate() {
             if(((NodeVar*)buffer[0])->name == "__RAVE_IMPORTED_FROM") ((NodeVar*)buffer[0])->value = new NodeString(generator->file, false);
         }
     }
-
+    
     for(int j=0; j<buffer.size(); j++) {
         if(instanceof<NodeFunc>(buffer[j])) {
             if(!((NodeFunc*)buffer[j])->isPrivate) buffer[j]->check();
