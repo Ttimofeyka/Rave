@@ -1,1 +1,5 @@
-void main {}
+import <std/io> <std/crypto>
+
+void main {
+    std::println(std::crypto::atbash::encryptChar('z'));
+}

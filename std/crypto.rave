@@ -3,7 +3,7 @@ import <std/string> <std/ascii>
 namespace std {
     namespace crypto {
         namespace caesar {
-            (inline) char encryptChar(char c, int key) {
+            char encryptChar(char c, int key) {
                 if(std::ascii::isUpper(c)) c = ((c + key - 'A') % (cast(char)26)) + 'A';
                 else if(std::ascii::isLower(c)) c = ((c + key - 'a') % (cast(char)26)) + 'a';
             } => c;
@@ -23,6 +23,22 @@ namespace std {
                     buffer.add(std::crypto::caesar::decryptChar(s.data[i], key));
                 }
             } => buffer;
+        }
+
+        namespace atbash {
+            const(char[26]) table = ['Z','Y','X','W','V','U','T','S','R','Q','P','O','N','M','L','K','J','I','H','G','F','E','D','C','B','A'];
+
+            char encryptChar(char c) {
+                if(std::ascii::isUpper(c)) return std::crypto::atbash::table[(c - 'A')];
+                else return std::ascii::toLower(std::crypto::atbash::table[(c - 'a')]);
+            }
+
+            std::string encrypt(std::string s) {
+                std::string buffer = "";
+                for(int i=0; i<s.length; i+=1) {
+                    buffer.add(std::crypto::atbash::encryptChar(s.data[i]));
+                }
+            }
         }
     }
 }

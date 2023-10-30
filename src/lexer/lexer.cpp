@@ -229,7 +229,7 @@ Lexer::Lexer(std::string text, int offset) {
                 break;
         }
     }
-    tokens.push_back(new Token(TokType::Eof, "", -1));
+    tokens.push_back(new Token(TokType::Eof, "EOF", -1));
 }
 
 std::string tokenToString(char type) {

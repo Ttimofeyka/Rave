@@ -1,7 +1,0 @@
-import <std/map> <std/memutil>
-
-namespace std {
-    namespace gc {
-        // TODO
-    }
-}
