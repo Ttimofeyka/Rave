@@ -242,6 +242,8 @@ std::string tokenToString(char type) {
         case TokType::Semicolon: return "';'";
         case TokType::Nequal: return "'!='";
         case TokType::Equ: return "'='";
+        case TokType::Lpar: return "')'";
+        case TokType::Rpar: return "'('";
         case TokType::String: return "string";
         case TokType::Char: return "char";
         case TokType::Identifier: return "identifier";
