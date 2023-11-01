@@ -203,6 +203,7 @@ LLVMValueRef NodeBuiltin::generate() {
         return nullptr;
     }
     if(this->name == "sizeOf") return LLVMConstInt(LLVMInt32TypeInContext(generator->context), (asType(0)->type)->getSize() / 8, false);
+    if(this->name == "argsLength") return (new NodeInt(AST::funcTable[currScope->funcName]->args.size()))->generate();
     if(this->name == "callWithArgs") {
         std::vector<Node*> nodes;
         for(int i=generator->currentBuiltinArg; i<AST::funcTable[currScope->funcName]->args.size(); i++) {
@@ -309,6 +310,7 @@ Node* NodeBuiltin::comptime() {
     if(this->name == "typesIsEquals") return new NodeBool(asType(0)->type->toString() == asType(1)->type->toString());
     if(this->name == "typesIsNequals") return new NodeBool(asType(0)->type->toString() != asType(1)->type->toString());
     if(this->name == "isStructure") return new NodeBool(instanceof<TypeStruct>(asType(0)->type));
+    if(this->name == "argsLength") return new NodeInt(AST::funcTable[currScope->funcName]->args.size());
     if(this->name == "typeIsArray") {
         Type* ty = this->asType(0)->type;
         while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
