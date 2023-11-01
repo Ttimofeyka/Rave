@@ -240,6 +240,10 @@ LLVMValueRef NodeBuiltin::generate() {
         else AST::addToImport.push_back(getDirectory3(AST::mainFile)+"/"+iden.substr(1, iden.size()-1)+".rave");
         return nullptr;
     }
+    if(this->name == "isStructure") {
+        if(instanceof<TypeStruct>(asType(0)->type)) return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 1, false);
+        return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 0, false);
+    }
     if(this->name == "echo") {
         std::string buffer = "";
         for(int i=0; i<this->args.size(); i++) buffer += this->asStringIden(i);
@@ -304,6 +308,7 @@ Node* NodeBuiltin::comptime() {
     if(this->name == "sizeOf") return new NodeInt((asType(0)->type->getSize()) / 8);
     if(this->name == "typesIsEquals") return new NodeBool(asType(0)->type->toString() == asType(1)->type->toString());
     if(this->name == "typesIsNequals") return new NodeBool(asType(0)->type->toString() != asType(1)->type->toString());
+    if(this->name == "isStructure") return new NodeBool(instanceof<TypeStruct>(asType(0)->type));
     if(this->name == "typeIsArray") {
         Type* ty = this->asType(0)->type;
         while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;

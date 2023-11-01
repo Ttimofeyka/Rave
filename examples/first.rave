@@ -1,5 +1,6 @@
-import <std/io> <std/crypto>
+import <std/io>
 
 void main {
-    std::println(std::crypto::atbash::encryptChar('z'));
+    void* jamal = std::malloc(100);
+    std::delete(jamal);
 }
