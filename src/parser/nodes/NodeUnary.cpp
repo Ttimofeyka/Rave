@@ -145,7 +145,7 @@ LLVMValueRef NodeUnary::generate() {
         }
         return (new NodeCall(this->loc, new NodeIden(AST::structTable[struc]->destructor->name, this->loc), {this->base}))->generate();
     }
-    std::cout << "There! Operator " << (int)this->type << std::endl;
+    std::cout << "NodeUnary undefined operator. Operator " << (int)this->type << std::endl;
     return nullptr;
 }
 

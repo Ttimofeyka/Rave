@@ -250,6 +250,15 @@ namespace std {
             }
         } => buffer;
 
+        std::u8string u8ReadLine {
+            std::u8string buffer = "";
+            char ch = this.getc();
+            while((ch != '\n') && (ch != -1)) {
+                buffer.add(ch);
+                ch = this.getc();
+            }
+        } => buffer;
+
         bool isEof => cast(bool)libc::feof(this._file);
 
         bool hasError => cast(bool)libc::fhasError(this._file);
