@@ -62,6 +62,9 @@ namespace std {
 
         (inline) void removeLast {this.remove(this.length-1);}
 
-        void ~this {std::free(cast(void*)this.data);}
+        void ~this {
+            std::free(cast(void*)this.data);
+            this.data = cast(T*)null;
+        }
     }
 }

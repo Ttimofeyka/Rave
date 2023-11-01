@@ -41,7 +41,10 @@ namespace std {
 
         void operator=(std::string* one, char* two) {one[0] = std::string(two);}
 
-        void ~this {std::free(this.data);}
+        void ~this {
+            std::free(this.data);
+            this.data = null;
+        }
 
         void setValue(char* a) {
             if(a != null) {
