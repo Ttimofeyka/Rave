@@ -149,7 +149,6 @@ Lexer::Lexer(std::string text, int offset) {
                 break;
             case '|':
                 if(next() == '|') {tokens.push_back(new Token(TokType::Or, "||", line)); idx += 1;}
-                else tokens.push_back(new Token(TokType::BitOr, "|", line));
                 break;
             case '(': tokens.push_back(new Token(TokType::Rpar,"(",line)); idx += 1; break;
             case ')': tokens.push_back(new Token(TokType::Lpar,")",line)); idx += 1; break;

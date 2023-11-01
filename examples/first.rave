@@ -1,6 +1,5 @@
-import <std/io>
+import <std/io> <std/utf8>
 
 void main {
-    void* jamal = std::malloc(100);
-    std::delete(jamal);
+    std::u8string str = "Привет, UTF-8!";
 }
