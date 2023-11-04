@@ -63,7 +63,7 @@ std::vector<LLVMValueRef> NodeCall::correctByLLVM(std::vector<LLVMValueRef> valu
     return params;
 }
 
-std::vector<LLVMValueRef> NodeCall::getParameters(bool isVararg, std::vector<FuncArgSet> fas) {
+std::vector<LLVMValueRef> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg, std::vector<FuncArgSet> fas) {
     std::vector<LLVMValueRef> params;
     if(this->args.size() != fas.size()) {
         for(int i=0; i<this->args.size(); i++) params.push_back(this->args[i]->generate());
@@ -89,6 +89,20 @@ std::vector<LLVMValueRef> NodeCall::getParameters(bool isVararg, std::vector<Fun
                 LLVMValueRef temp = LLVMBuildAlloca(generator->builder, type, "NodeCall_getParameters_temp");
                 LLVMBuildStore(generator->builder, params[i], temp);
                 params[i] = temp;
+            }
+            if(currScope->detectMemoryLeaks && nfunc != nullptr) {
+                if(instanceof<NodeIden>(this->args[i])) {
+                    if(currScope->has(((NodeIden*)this->args[i])->name) && nfunc->isReleased(i)) {
+                        currScope->getVar(((NodeIden*)this->args[i])->name)->isAllocated = false;
+                    }
+                }
+            }
+        }
+        else if(instanceof<TypeStruct>(fas[i].type) && LLVMGetTypeKind(LLVMTypeOf(params[i])) == LLVMStructTypeKind) {
+            if(currScope->detectMemoryLeaks && nfunc != nullptr) {
+                if(instanceof<NodeIden>(this->args[i])) {
+                    if(nfunc->isReleased(i)) currScope->getVar(((NodeIden*)this->args[i])->name)->isAllocated = false;
+                }
             }
         }
         else if(instanceof<TypeBasic>(fas[i].type) && LLVMGetTypeKind(LLVMTypeOf(params[i])) == LLVMIntegerTypeKind) {
@@ -144,9 +158,9 @@ LLVMValueRef NodeCall::generate() {
                 // Function with compile-time args (ctargs)
                 if(AST::funcTable[idenFunc->name]->isCtargs) {
                     if(generator->functions.find(idenFunc->name+sTypes) != generator->functions.end()) {
-                        return LLVMBuildCall(generator->builder, generator->functions[idenFunc->name+sTypes], this->getParameters(false).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
+                        return LLVMBuildCall(generator->builder, generator->functions[idenFunc->name+sTypes], this->getParameters(nullptr, false).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
                     }
-                    std::vector<LLVMValueRef> params = this->getParameters(false);
+                    std::vector<LLVMValueRef> params = this->getParameters(nullptr, false);
                     std::vector<LLVMTypeRef> types;
                     for(int i=0; i<params.size(); i++) types.push_back(LLVMTypeOf(params[i]));
                     return LLVMBuildCall(generator->builder, generator->functions[AST::funcTable[idenFunc->name]->generateWithCtargs(types)], params.data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
@@ -160,14 +174,14 @@ LLVMValueRef NodeCall::generate() {
             }
             if(AST::funcTable.find(idenFunc->name+sTypes) != AST::funcTable.end()) {
                 this->isCdecl64 = AST::funcTable[idenFunc->name+sTypes]->isCdecl64;
-                return LLVMBuildCall(generator->builder, generator->functions[idenFunc->name+sTypes], this->getParameters(false, AST::funcTable[idenFunc->name+sTypes]->args).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name+sTypes]->type) ? "" : "callFunc"));
+                return LLVMBuildCall(generator->builder, generator->functions[idenFunc->name+sTypes], this->getParameters(AST::funcTable[idenFunc->name+sTypes], false, AST::funcTable[idenFunc->name+sTypes]->args).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name+sTypes]->type) ? "" : "callFunc"));
             }
             this->isCdecl64 = AST::funcTable[idenFunc->name]->isCdecl64;
-            return LLVMBuildCall(generator->builder, generator->functions[idenFunc->name], this->getParameters(false, AST::funcTable[idenFunc->name]->args).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
+            return LLVMBuildCall(generator->builder, generator->functions[idenFunc->name], this->getParameters(AST::funcTable[idenFunc->name], false, AST::funcTable[idenFunc->name]->args).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
         }
         if(currScope->has(idenFunc->name)) {
             TypeFunc* fn = (TypeFunc*)(currScope->getVar(idenFunc->name)->type);
-            return LLVMBuildCall(generator->builder, currScope->get(idenFunc->name), this->getParameters(false, tfaToFas(fn->args)).data(), this->args.size(), (instanceof<TypeVoid>(fn->main) ? "" : "callFunc"));
+            return LLVMBuildCall(generator->builder, currScope->get(idenFunc->name), this->getParameters(nullptr, false, tfaToFas(fn->args)).data(), this->args.size(), (instanceof<TypeVoid>(fn->main) ? "" : "callFunc"));
         }
         if(idenFunc->name.find('<') != std::string::npos && AST::funcTable.find(idenFunc->name.substr(0, idenFunc->name.find('<'))) != AST::funcTable.end()) {
             std::string mainName = idenFunc->name.substr(0, idenFunc->name.find('<'));
@@ -210,7 +224,7 @@ LLVMValueRef NodeCall::generate() {
             }
 
             if(AST::structTable.find(structure->name) != AST::structTable.end()) {
-                std::vector<LLVMValueRef> params = this->getParameters(false);
+                std::vector<LLVMValueRef> params = this->getParameters(nullptr, false);
                 std::vector<Type*> types;
                 params.insert(params.begin(), currScope->getWithoutLoad(idenFunc->name));
                 for(int i=0; i<params.size(); i++) types.push_back(lTypeToType(LLVMTypeOf(params[i])));

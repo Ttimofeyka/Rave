@@ -20,6 +20,7 @@ public:
     long loc;
 
     NodeWhile(Node* cond, Node* body, long loc, std::string funcName);
+    bool isReleased(std::string varName);
     Type* getType() override;
     LLVMValueRef generate() override;
     Node* copy() override;

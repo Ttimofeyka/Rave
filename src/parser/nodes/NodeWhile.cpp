@@ -11,6 +11,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeIf.hpp"
 #include "../../include/parser/nodes/NodeFor.hpp"
 #include "../../include/parser/nodes/NodeVar.hpp"
+#include "../../include/parser/nodes/NodeUnary.hpp"
+#include "../../include/parser/nodes/NodeIden.hpp"
 #include "../../include/utils.hpp"
 
 NodeWhile::NodeWhile(Node* cond, Node* body, long loc, std::string funcName) {
@@ -72,4 +74,21 @@ LLVMValueRef NodeWhile::generate() {
     LLVMPositionBuilderAtEnd(generator->builder, generator->activeLoops[selfNumber].end);
     generator->activeLoops.erase(selfNumber);
     return nullptr;
+}
+
+bool NodeWhile::isReleased(std::string varName) {
+    if(instanceof<NodeBlock>(this->body)) {
+        NodeBlock* nblock = (NodeBlock*)this->body;
+        for(int i=0; i<nblock->nodes.size(); i++) {
+            if(instanceof<NodeUnary>(nblock->nodes[i]) && ((NodeUnary*)nblock->nodes[i])->type == TokType::Destructor
+            && instanceof<NodeIden>(((NodeUnary*)nblock->nodes[i])->base) && ((NodeIden*)((NodeUnary*)nblock->nodes[i])->base)->name == varName) return true;
+            if(instanceof<NodeWhile>(nblock->nodes[i])) {
+                if(((NodeWhile*)nblock->nodes[i])->isReleased(varName)) return true;
+            }
+            if(instanceof<NodeFor>(nblock->nodes[i])) {
+                if(((NodeFor*)nblock->nodes[i])->isReleased(varName)) return true;
+            }
+        }
+    }
+    return false;
 }

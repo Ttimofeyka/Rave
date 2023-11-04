@@ -24,6 +24,7 @@ public:
     long loc;
 
     NodeFor(std::vector<Node*> presets, NodeBinary* cond, std::vector<Node*> afters, NodeBlock* block, std::string funcName, long loc);
+    bool isReleased(std::string varName);
     Type* getType() override;
     void check() override;
     LLVMValueRef generate() override;

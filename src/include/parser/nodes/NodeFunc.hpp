@@ -27,6 +27,7 @@ public:
     std::vector<Type*> templateTypes;
 
     std::vector<FuncArgSet> args;
+    std::vector<FuncArgSet> origArgs;
     NodeBlock* block;
     std::vector<NodeRet*> rets;
     std::vector<RetGenStmt> genRets;
@@ -63,6 +64,7 @@ public:
     Node* comptime() override;
     Node* copy() override;
     void check() override;
+    bool isReleased(int n);
     std::string generateWithCtargs(std::vector<LLVMTypeRef> args);
     LLVMValueRef generateWithTemplate(std::vector<Type*> types, std::string all);
 };

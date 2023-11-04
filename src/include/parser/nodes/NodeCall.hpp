@@ -10,6 +10,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "Node.hpp"
 #include "../Types.hpp"
 
+class NodeFunc;
+
 class NodeCall : public Node {
 public:
     long loc;
@@ -24,7 +26,7 @@ public:
     LLVMValueRef generate() override;
     Type* getType() override;
     std::vector<Type*> getTypes();
-    std::vector<LLVMValueRef> getParameters(bool isVararg, std::vector<FuncArgSet> fas = std::vector<FuncArgSet>());
+    std::vector<LLVMValueRef> getParameters(NodeFunc* nfunc, bool isVararg, std::vector<FuncArgSet> fas = std::vector<FuncArgSet>());
     std::vector<LLVMValueRef> correctByLLVM(std::vector<LLVMValueRef> values, std::vector<FuncArgSet> fas);
     Node* comptime() override;
     Node* copy() override;

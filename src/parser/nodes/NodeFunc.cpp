@@ -17,6 +17,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeString.hpp"
 #include "../../include/parser/nodes/NodeIf.hpp"
 #include "../../include/parser/nodes/NodeWhile.hpp"
+#include "../../include/parser/nodes/NodeUnary.hpp"
 #include "../../include/parser/nodes/NodeFor.hpp"
 #include "../../include/llvm-c/Comdat.h"
 #include "../../include/llvm-c/Analysis.h"
@@ -25,6 +26,7 @@ NodeFunc::NodeFunc(std::string name, std::vector<FuncArgSet> args, NodeBlock* bl
     this->name = name;
     this->origName = name;
     this->args = std::vector<FuncArgSet>(args);
+    this->origArgs = std::vector<FuncArgSet>(args);
     this->block = new NodeBlock(block->nodes);
     this->isExtern = isExtern;
     this->mods = mods;
@@ -339,3 +341,21 @@ Node* NodeFunc::comptime() {return this;}
 Type* NodeFunc::getType() {return this->type;}
 
 Node* NodeFunc::copy() {return new NodeFunc(this->name, this->args, (NodeBlock*)this->block->copy(), this->isExtern, this->mods, this->loc, this->type->copy(), this->templateNames);}
+
+bool NodeFunc::isReleased(int n) {
+    for(int i=0; i<this->block->nodes.size(); i++) {
+        if(instanceof<NodeUnary>(this->block->nodes[i])) {
+            NodeUnary* nunary = (NodeUnary*)this->block->nodes[i];
+            if(nunary->type == TokType::Destructor && instanceof<NodeIden>(nunary->base)) {
+                if(((NodeIden*)nunary->base)->name == this->origArgs[n].name) return true;
+            }
+        }
+        else if(instanceof<NodeWhile>(this->block->nodes[i])) {
+            if(((NodeWhile*)this->block->nodes[i])->isReleased(this->origArgs[n].name)) return true;
+        }
+        else if(instanceof<NodeFor>(this->block->nodes[i])) {
+            if(((NodeFor*)this->block->nodes[i])->isReleased(this->origArgs[n].name)) return true;
+        }
+    }
+    return false;
+}
