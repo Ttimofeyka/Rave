@@ -10,6 +10,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeFunc.hpp"
 #include "../../include/parser/nodes/NodeIf.hpp"
 #include "../../include/parser/nodes/NodeFor.hpp"
+#include "../../include/parser/nodes/NodeVar.hpp"
 #include "../../include/utils.hpp"
 
 NodeWhile::NodeWhile(Node* cond, Node* body, long loc, std::string funcName) {
@@ -57,6 +58,16 @@ LLVMValueRef NodeWhile::generate() {
     generator->currBB = whileBlock;
     this->body->generate();
     if(!generator->activeLoops[selfNumber].hasEnd) LLVMBuildBr(generator->builder, condBlock);
+    if(instanceof<NodeBlock>(this->body)) {
+        NodeBlock* nb = (NodeBlock*)this->body;
+        for(int i=0; i<nb->nodes.size(); i++) {
+            if(instanceof<NodeVar>(nb->nodes[i])) {
+                if(((NodeVar*)nb->nodes[i])->isAllocated) {
+                    generator->warning("@detectMemoryLeaks: the variable '"+((NodeVar*)nb->nodes[i])->name+"' is not released!", ((NodeVar*)nb->nodes[i])->loc);
+                }
+            }
+        }
+    }
 
     LLVMPositionBuilderAtEnd(generator->builder, generator->activeLoops[selfNumber].end);
     generator->activeLoops.erase(selfNumber);

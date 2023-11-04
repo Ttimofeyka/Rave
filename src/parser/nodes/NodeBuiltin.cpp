@@ -129,6 +129,31 @@ std::string NodeBuiltin::asStringIden(int n) {
     return "";
 }
 
+NodeBool* NodeBuiltin::asBool(int n) {
+    if(instanceof<NodeIden>(args[n])) {
+        NodeIden* id = (NodeIden*)args[n];
+        while(AST::aliasTable.find(id->name) != AST::aliasTable.end()) {
+            Node* node = AST::aliasTable[id->name];
+            if(instanceof<NodeIden>(node)) id = ((NodeIden*)node);
+            else if(instanceof<NodeBool>(node)) return (NodeBool*)node;
+            else {
+                generator->error("NodeBuiltin::asBool assert!", this->loc);
+                return new NodeBool(false);
+            }
+        }
+        return new NodeBool(false);
+    }
+    else if(instanceof<NodeBool>(args[n])) return (NodeBool*)args[n];
+    else if(instanceof<NodeBuiltin>(args[n])) {
+        Node* nn = ((NodeBuiltin*)args[n])->comptime();
+        if(instanceof<NodeBool>(nn)) return (NodeBool*)nn;
+        generator->error("NodeBuiltin::asBool assert!", this->loc);
+        return new NodeBool(false);
+    }
+    generator->error("NodeBuiltin::asBool assert!", this->loc);
+    return new NodeBool(false);
+}
+
 std::string getDirectory3(std::string file) {
     return file.substr(0, file.find_last_of("/\\"));
 }
@@ -245,6 +270,10 @@ LLVMValueRef NodeBuiltin::generate() {
         if(instanceof<TypeStruct>(asType(0)->type)) return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 1, false);
         return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 0, false);
     }
+    if(this->name == "detectMemoryLeaks") {
+        if(currScope != nullptr) currScope->detectMemoryLeaks = asBool(0)->value;
+        return nullptr;
+    }
     if(this->name == "echo") {
         std::string buffer = "";
         for(int i=0; i<this->args.size(); i++) buffer += this->asStringIden(i);
@@ -320,6 +349,10 @@ Node* NodeBuiltin::comptime() {
         Type* ty = this->asType(0)->type;
         while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
         return new NodeBool(instanceof<TypePointer>(ty));
+    }
+    if(this->name == "detectMemoryLeaks") {
+        if(currScope != nullptr) currScope->detectMemoryLeaks = asBool(0)->value;
+        return nullptr;
     }
     if(this->name == "contains") return new NodeBool(asStringIden(0).find(asStringIden(1)) != std::string::npos);
     AST::checkError("builtin with name '"+this->name+"' does not exist!", this->loc);

@@ -111,16 +111,6 @@ LLVMValueRef NodeUnary::generate() {
     if(this->type == TokType::Ne) return LLVMBuildNot(generator->builder, this->base->generate(), "NodeUnary_not");
     if(this->type == TokType::Multiply) {
         LLVMValueRef _base = this->base->generate();
-        /*if(generator->settings.runtimeChecks) {
-            LLVMValueRef isNull = LLVMBuildICmp(
-                Generator.Builder,
-                LLVMIntNE,
-                LLVMBuildPtrToInt(Generator.Builder,_base,LLVMInt32TypeInContext(Generator.Context),toStringz("ptoi_")),
-                LLVMBuildPtrToInt(Generator.Builder,new NodeNull().generate(),LLVMInt32TypeInContext(Generator.Context),toStringz("ptoi_")),
-                toStringz("assert(p==null)_")
-            );
-            if(NeededFunctions["assert"].into(Generator.Functions)) LLVMBuildCall(Generator.Builder,Generator.Functions[NeededFunctions["assert"]],[isNull,new NodeString("Runtime error in '"~Generator.file~"' file on "~to!string(loc)~" line: attempt to use a null pointer in ptoi!\n",false).generate()].ptr,2,toStringz(""));
-        }*/
         return LLVMBuildLoad(generator->builder, _base, "NodeUnary_multiply_load");
     }
     if(this->type == TokType::Destructor) {
@@ -131,8 +121,8 @@ LLVMValueRef NodeUnary::generate() {
             if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(val2))) == LLVMPointerTypeKind) {
                 if(LLVMGetTypeKind(LLVMGetElementType(LLVMGetElementType(LLVMTypeOf(val2)))) == LLVMStructTypeKind) val2 = LLVMBuildLoad(generator->builder, val2, "NodeCall_destructor_load");
             }
-        }   
-        std::string struc = std::string(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(val2))));   
+        }
+        std::string struc = std::string(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(val2))));
         if(AST::structTable[struc]->destructor == nullptr) {
             if(instanceof<NodeIden>(this->base)) {
                 NodeIden* id = (NodeIden*)this->base;
@@ -142,6 +132,11 @@ LLVMValueRef NodeUnary::generate() {
                 return nullptr;
             }
             return (new NodeCall(this->loc, new NodeIden("std::free", this->loc), {base}))->generate();
+        }
+        if(instanceof<NodeIden>(this->base)) {
+            if(currScope->has(((NodeIden*)this->base)->name)) {
+                currScope->getVar(((NodeIden*)this->base)->name, this->loc)->isAllocated = false;
+            }
         }
         return (new NodeCall(this->loc, new NodeIden(AST::structTable[struc]->destructor->name, this->loc), {this->base}))->generate();
     }

@@ -14,6 +14,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <string>
 
 class NodeType;
+class NodeBool;
 
 class NodeBuiltin : public Node {
 public:
@@ -30,6 +31,7 @@ public:
     NodeBuiltin(std::string name, std::vector<Node*> args, long loc, NodeBlock* block, Type* type, bool isImport, bool isTopLevel, int CTId);
 
     NodeType* asType(int n, bool isCompTime = false);
+    NodeBool* asBool(int n);
     std::string getAliasName(int n);
     std::string asStringIden(int n);
     Type* getType() override;

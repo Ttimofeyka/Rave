@@ -1,5 +1,8 @@
 import <std/io> <std/utf8>
 
 void main {
-    std::u8string str = "Привет, UTF-8!";
+    @detectMemoryLeaks(true);
+    for(int i=0; i<100; i+=1) {
+        std::string s = "";
+    }
 }

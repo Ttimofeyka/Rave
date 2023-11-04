@@ -276,6 +276,7 @@ LLVMValueRef NodeBinary::generate() {
                 vSecond = this->second->generate();
                 std::pair<std::string, std::string> opOverload = isOperatorOverload(vFirst, vSecond, this->op);
                 if(opOverload.first != "") {
+                    nvar->isAllocated = currScope->detectMemoryLeaks && true; // @detectMemoryLeaks
                     if(opOverload.first[0] == '!') return (new NodeUnary(this->loc, TokType::Ne, (new NodeCall(
                         this->loc, new NodeIden(AST::structTable[opOverload.first.substr(1)]->operators[this->op][opOverload.second]->name, this->loc),
                         std::vector<Node*>({this->first, new NodeDone(vSecond)})))))->generate();
@@ -293,7 +294,9 @@ LLVMValueRef NodeBinary::generate() {
 
             if(vSecond == nullptr) vSecond = this->second->generate();
             vSecond = Binary::castValue(vSecond, LLVMTypeOf(currScope->get(id->name, this->loc)), this->loc);
-            
+            if(LLVMGetTypeKind(LLVMTypeOf(vSecond)) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(vSecond))) == LLVMStructTypeKind) {
+                nvar->isAllocated = currScope->detectMemoryLeaks && true; // @detectMemoryLeaks
+            }
             return LLVMBuildStore(generator->builder, vSecond, currScope->getWithoutLoad(id->name, this->loc));
         }
         else if(instanceof<NodeGet>(this->first)) {

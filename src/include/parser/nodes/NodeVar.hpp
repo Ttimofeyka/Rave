@@ -30,6 +30,7 @@ public:
     bool noZeroInit = false;
     bool isPrivate = false;
     bool isComdat = false;
+    bool isAllocated = false;
 
     NodeVar(std::string name, Node* value, bool isExtern, bool isConst, bool isGlobal, std::vector<DeclarMod> mods, long loc, Type* type, bool isVolatile = false);
     NodeVar(std::string name, Node* value, bool isExtern, bool isConst, bool isGlobal, std::vector<DeclarMod> mods, long loc, Type* type, bool isVolatile, bool isChanged, bool noZeroInit);
