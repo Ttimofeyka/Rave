@@ -33,6 +33,7 @@ NodeFunc::NodeFunc(std::string name, std::vector<FuncArgSet> args, NodeBlock* bl
     this->loc = loc;
     this->type = type;
     this->templateNames = templateNames;
+    this->localBuiltinBlock = new NodeBlock({});
     for(int i=0; i<mods.size(); i++) {
         if(mods[i].name == "private") this->isPrivate = true;
     }
@@ -267,16 +268,32 @@ LLVMValueRef NodeFunc::generate() {
                     LLVMBuildBr(generator->builder, this->exitBlock);
                     LLVMPositionBuilderAtEnd(generator->builder, this->exitBlock);
                 }
+                // Add local builtins destructors
+                for(int i=0; i<this->localBuiltinBlock->nodes.size(); i++) this->localBuiltinBlock->nodes[i]->generate();
+
                 LLVMBuildRet(generator->builder, LLVMConstNull(generator->genType(this->type, this->loc)));
             }
-            else if(retBlocks.size() == 1 || retBlocks[0] == nullptr) LLVMBuildRet(generator->builder, retValues[0]);
+            else if(retBlocks.size() == 1 || retBlocks[0] == nullptr) {
+                // Add local builtins destructors
+                for(int i=0; i<this->localBuiltinBlock->nodes.size(); i++) this->localBuiltinBlock->nodes[i]->generate();
+
+                LLVMBuildRet(generator->builder, retValues[0]);
+            }
             else {
+                // Add local builtins destructors
+                for(int i=0; i<this->localBuiltinBlock->nodes.size(); i++) this->localBuiltinBlock->nodes[i]->generate();
+
                 LLVMValueRef phi = LLVMBuildPhi(generator->builder, generator->genType(this->type, this->loc), "NodeFunc_retphi");
                 LLVMAddIncoming(phi, retValues.data(), retBlocks.data(), this->genRets.size());
                 LLVMBuildRet(generator->builder, phi);
             }
         }
-        else LLVMBuildRetVoid(generator->builder);
+        else {
+            // Add local builtins destructors
+            for(int i=0; i<this->localBuiltinBlock->nodes.size(); i++) this->localBuiltinBlock->nodes[i]->generate();
+            
+            LLVMBuildRetVoid(generator->builder);
+        }
 
         generator->builder = nullptr;
         currScope = nullptr;

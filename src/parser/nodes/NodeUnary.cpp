@@ -114,13 +114,18 @@ LLVMValueRef NodeUnary::generate() {
         return LLVMBuildLoad(generator->builder, _base, "NodeUnary_multiply_load");
     }
     if(this->type == TokType::Destructor) {
-        LLVMValueRef val2 = this->generatePtr();    
+        LLVMValueRef val2 = this->generatePtr();
         if(LLVMGetTypeKind(LLVMTypeOf(val2)) != LLVMPointerTypeKind
         && LLVMGetTypeKind(LLVMTypeOf(val2)) != LLVMStructTypeKind) generator->error("the attempt to call the destructor is not in the structure!", this->loc); 
         if(LLVMGetTypeKind(LLVMTypeOf(val2)) == LLVMPointerTypeKind) {
             if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(val2))) == LLVMPointerTypeKind) {
                 if(LLVMGetTypeKind(LLVMGetElementType(LLVMGetElementType(LLVMTypeOf(val2)))) == LLVMStructTypeKind) val2 = LLVMBuildLoad(generator->builder, val2, "NodeCall_destructor_load");
             }
+        }
+        if(LLVMGetTypeKind(LLVMTypeOf(val2)) != LLVMPointerTypeKind) {
+            LLVMValueRef temp = LLVMBuildAlloca(generator->builder, LLVMTypeOf(val2), "NodeUnary_temp");
+            LLVMBuildStore(generator->builder, val2, temp);
+            val2 = temp;
         }
         std::string struc = std::string(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(val2))));
         if(AST::structTable[struc]->destructor == nullptr) {

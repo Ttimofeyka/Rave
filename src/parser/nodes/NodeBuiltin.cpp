@@ -22,6 +22,9 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeVar.hpp"
 #include "../../include/parser/nodes/NodeStruct.hpp"
 #include "../../include/parser/nodes/NodeIf.hpp"
+#include "../../include/parser/nodes/NodeUnary.hpp"
+#include "../../include/parser/nodes/NodeDone.hpp"
+#include "../../include/parser/nodes/NodeRet.hpp"
 #include "../../include/parser/Types.hpp"
 
 NodeBuiltin::NodeBuiltin(std::string name, std::vector<Node*> args, long loc, NodeBlock* block) {
@@ -30,6 +33,7 @@ NodeBuiltin::NodeBuiltin(std::string name, std::vector<Node*> args, long loc, No
     this->loc = loc;
     this->block = block;
 }
+
 NodeBuiltin::NodeBuiltin(std::string name, std::vector<Node*> args, long loc, NodeBlock* block, Type* type, bool isImport, bool isTopLevel, int CTId) {
     this->name = name;
     this->args = std::vector<Node*>(args);
@@ -326,6 +330,25 @@ LLVMValueRef NodeBuiltin::generate() {
         }
         generator->error("constArrToVal assert!", this->loc);
         return nullptr;
+    }
+    else if(this->name == "local") {
+        if(currScope != nullptr) {
+            LLVMValueRef value;
+            if(instanceof<NodeIden>(this->args[0])) ((NodeIden*)this->args[0])->isMustBePtr = true;
+            value = this->args[0]->generate();
+            if(generator->activeLoops.size() > 0) {
+                // Inside NodeIf/NodeWhile/NodeFor
+                Loop lastLoop = generator->activeLoops[generator->activeLoops.size()-1];
+                
+            }
+            else {
+                // Just inside function
+                if(AST::funcTable.find(currScope->funcName) != AST::funcTable.end()) {
+                    AST::funcTable[currScope->funcName]->localBuiltinBlock->nodes.push_back(new NodeUnary(this->loc, TokType::Destructor, new NodeDone(value)));
+                }
+            }
+            return value;
+        }
     }
     generator->error("builtin with the name '"+this->name+"' does not exist!", this->loc);
     return nullptr;

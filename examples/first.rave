@@ -1,13 +1,6 @@
-import <std/io>
-
-void freeStr(std::string s) {
-    ~s;
-}
+import <std/io> <std/vector>
 
 void main {
-    @detectMemoryLeaks(true);
-    for(int i=0; i<100; i+=1) {
-        std::string s = "";
-        freeStr(s);
-    }
+    std::string s = @local(std::string("JAMAL"));
+    std::println(s);
 }
