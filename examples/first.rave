@@ -1,6 +1,8 @@
 import <std/io> <std/vector>
 
 void main {
-    std::string s = @local(std::string("JAMAL"));
-    std::println(s);
+    for(int i=0; i<100; i+=1) {
+        std::string s = @local(std::string("JAMAL"));
+        std::println(s);
+    }
 }

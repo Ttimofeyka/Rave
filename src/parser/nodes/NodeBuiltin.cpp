@@ -22,6 +22,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeVar.hpp"
 #include "../../include/parser/nodes/NodeStruct.hpp"
 #include "../../include/parser/nodes/NodeIf.hpp"
+#include "../../include/parser/nodes/NodeWhile.hpp"
 #include "../../include/parser/nodes/NodeUnary.hpp"
 #include "../../include/parser/nodes/NodeDone.hpp"
 #include "../../include/parser/nodes/NodeRet.hpp"
@@ -337,9 +338,13 @@ LLVMValueRef NodeBuiltin::generate() {
             if(instanceof<NodeIden>(this->args[0])) ((NodeIden*)this->args[0])->isMustBePtr = true;
             value = this->args[0]->generate();
             if(generator->activeLoops.size() > 0) {
-                // Inside NodeIf/NodeWhile/NodeFor
+                // Inside NodeIf/NodeWhile
                 Loop lastLoop = generator->activeLoops[generator->activeLoops.size()-1];
-                
+                if(instanceof<NodeWhile>(lastLoop.owner)) {
+                    NodeWhile* nwhile = (NodeWhile*)lastLoop.owner;
+                    if(instanceof<NodeBlock>(nwhile)) ((NodeBlock*)nwhile->body)->nodes.push_back(new NodeUnary(this->loc, TokType::Destructor, new NodeDone(value)));
+                    else nwhile->body = new NodeBlock({nwhile->body, new NodeUnary(this->loc, TokType::Destructor, new NodeDone(value))});
+                }
             }
             else {
                 // Just inside function

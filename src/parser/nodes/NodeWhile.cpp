@@ -55,7 +55,7 @@ LLVMValueRef NodeWhile::generate() {
     LLVMPositionBuilderAtEnd(generator->builder, whileBlock);
 
     int selfNumber = generator->activeLoops.size();
-    generator->activeLoops[selfNumber] = Loop{.isActive = true, .start = condBlock, .end = currScope->blockExit, .hasEnd = false, .isIf = false};
+    generator->activeLoops[selfNumber] = Loop{.isActive = true, .start = condBlock, .end = currScope->blockExit, .hasEnd = false, .isIf = false, .owner = this};
 
     generator->currBB = whileBlock;
     this->body->generate();

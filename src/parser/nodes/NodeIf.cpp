@@ -84,7 +84,7 @@ LLVMValueRef NodeIf::generate() {
     LLVMBuildCondBr(generator->builder, this->cond->generate(), thenBlock, elseBlock);
 
     int selfNum = generator->activeLoops.size();
-    generator->activeLoops[selfNum] = Loop{.isActive = true, .start = thenBlock, .end = endBlock, .hasEnd = false, .isIf = true, .loopRets = std::vector<LoopReturn>()};
+    generator->activeLoops[selfNum] = Loop{.isActive = true, .start = thenBlock, .end = endBlock, .hasEnd = false, .isIf = true, .loopRets = std::vector<LoopReturn>(), .owner = this};
 
     LLVMPositionBuilderAtEnd(generator->builder, thenBlock);
     generator->currBB = thenBlock;
@@ -95,7 +95,7 @@ LLVMValueRef NodeIf::generate() {
 
     bool hasEnd1 = generator->activeLoops[selfNum].hasEnd;
 
-    generator->activeLoops[selfNum] = Loop{.isActive = true, .start = elseBlock, .end = endBlock, .hasEnd = false, .isIf = true, .loopRets = std::vector<LoopReturn>()};
+    generator->activeLoops[selfNum] = Loop{.isActive = true, .start = elseBlock, .end = endBlock, .hasEnd = false, .isIf = true, .loopRets = std::vector<LoopReturn>(), .owner = this};
 
     LLVMPositionBuilderAtEnd(generator->builder, elseBlock);
 	generator->currBB = elseBlock;
