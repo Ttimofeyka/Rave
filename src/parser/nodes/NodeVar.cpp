@@ -122,7 +122,10 @@ LLVMValueRef NodeVar::generate() {
                 generator->genType(this->type, loc),
                 ((linkName == this->name && !noMangling) ? generator->mangle(name,false,false).c_str() : linkName.c_str())
             );
-            if(!this->isExtern && this->value != nullptr) LLVMSetInitializer(generator->globals[this->name], this->value->generate());
+            if(!this->isExtern && this->value != nullptr) {
+                LLVMSetInitializer(generator->globals[this->name], this->value->generate());
+                LLVMSetGlobalConstant(generator->globals[this->name], this->isConst);
+            }
         }
         else {
             LLVMValueRef val = nullptr;
@@ -135,6 +138,7 @@ LLVMValueRef NodeVar::generate() {
             );
             this->type = lTypeToType(LLVMTypeOf(val));
             LLVMSetInitializer(generator->globals[this->name], val);
+            LLVMSetGlobalConstant(generator->globals[this->name], this->isConst);
             LLVMSetAlignment(generator->globals[this->name], generator->getAlignment(this->type));
             if(isVolatile) LLVMSetVolatile(generator->globals[name],true);
             return nullptr;

@@ -395,6 +395,7 @@ LLVMValueRef Scope::get(std::string name, long loc) {
 }
 
 LLVMValueRef Scope::getWithoutLoad(std::string name, long loc) {
+    if(AST::aliasTable.find(name) != AST::aliasTable.end()) return AST::aliasTable[name]->generate();
     if(this->localScope.find(name) != this->localScope.end()) return this->localScope[name];
     if(generator->globals.find(name) != generator->globals.end()) return generator->globals[name];
     if(this->has("this") && this->args.find(name) == this->args.end()) {

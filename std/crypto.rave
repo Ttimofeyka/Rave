@@ -26,11 +26,9 @@ namespace std {
         }
 
         namespace atbash {
-            const(char[26]) table = ['Z','Y','X','W','V','U','T','S','R','Q','P','O','N','M','L','K','J','I','H','G','F','E','D','C','B','A'];
-
             char encryptChar(char c) {
-                if(std::ascii::isUpper(c)) return std::crypto::atbash::table[(c - 'A')];
-                else return std::ascii::toLower(std::crypto::atbash::table[(c - 'a')]);
+                if(std::ascii::isUpper(c)) return 'Z' - (c - 'A');
+                else return 'z' - (c - 'a');
             }
 
             std::string encrypt(std::string s) {
