@@ -1,19 +1,24 @@
 import <std/string> <std/memory> <std/io>
 
+namespace std {
+    namespace network {
+        alias AfInet = 2;
+        alias PfInet = 2;
+        alias AfInet6 = 2;
+        alias SockStream = 1;
+        alias ShutRD = 0;
+        alias ShutWR = 1;
+        alias ShutRDWR = 2;
+        alias InAddrAll = 0;
+        alias AiPassive = 1;
+        alias AiCanonName = 2;
+        alias SocketReuseAddr = 2;
+    }
+}
+
 @if((__RAVE_OS == "LINUX")) {
     namespace std {
         namespace network {
-            alias AfInet = 2;
-            alias PfInet = 2;
-            alias AfInet6 = 2;
-            alias SockStream = 1;
-            alias ShutRD = 0;
-            alias ShutWR = 1;
-            alias ShutRDWR = 2;
-            alias InAddrAll = 0;
-            alias AiPassive = 1;
-            alias AiCanonName = 2;
-
             struct sockaddr {
                 int sa_family;
                 char[14] sa_data;
@@ -116,6 +121,8 @@ import <std/string> <std/memory> <std/io>
                 hinfo.addrinfo = getaddrinfoRes;
                 hinfo.result = r;
             } => hinfo;
+
+            extern(linkname: "getnameinfo") int getNameInfo(std::network::sockaddr* sa, int salen, char* host, int hostlen, char* srv, int srvlen, int flags);
 
             namespace request {
                 void get(int fd, char* path, char* contentType, char* content) {

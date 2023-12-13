@@ -16,6 +16,7 @@ namespace std {
         else if(x >= 100) len = 3;
         else if(x >= 10) len = 2;
     } => len;
+    
     (inline) int lengthOfNumber(long x) {
         int len = 0;
         if(x < 0) len = std::_lengthOfNumber(-x) + 1;

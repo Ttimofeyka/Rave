@@ -172,6 +172,8 @@ LLVMValueRef NodeFunc::generate() {
         else if(this->mods[i].name == "fastcc") callConv = LLVMFastCallConv;
         else if(this->mods[i].name == "coldcc") callConv = LLVMColdCallConv;
         else if(this->mods[i].name == "stdcc") callConv = LLVMX86StdcallCallConv;
+        else if(this->mods[i].name == "armapcs") callConv = LLVMARMAPCSCallConv;
+        else if(this->mods[i].name == "armaapcs") callConv = LLVMARMAAPCSCallConv;
         else if(this->mods[i].name == "cdecl64") {callConv = -1; this->isCdecl64 = true;}
         else if(this->mods[i].name == "inline") this->isInline = true;
         else if(this->mods[i].name == "linkname") linkName = this->mods[i].value;
