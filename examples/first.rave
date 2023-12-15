@@ -1,5 +1,9 @@
-import <std/io> <std/crypto>
+import <std/io> <std/curl>
 
 void main {
+    std::file fl = "test.txt";
     
+    fl.open("wb");
+        std::fprint(fl, "Hello!");
+    fl.close();
 }

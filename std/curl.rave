@@ -39,6 +39,8 @@ namespace std {
             alias Post = 47;
             alias Header = 42;
             alias Append = 50;
+            alias WriteData = 10001;
+            alias WriteFunction = 20011;
         }
     }
 }

@@ -50,7 +50,7 @@ namespace std {
             }
 
             struct sockaddr_in {
-                int sa_family;
+                int sin_family;
                 short sin_port;
                 std::network::in_addr sin_addr;
             }
@@ -95,14 +95,7 @@ namespace std {
 
             (inline) int send(int s, char* buff, int len, int flags) => std::network::sendTo(s, buff, len, flags, cast(std::network::sockaddr*)null, 0);
 
-            short htons(short n) {
-                short netshort;
-                char* nptr = cast(char*)&n;
-                char* netshortptr = cast(char*)&netshortptr;
-                netshortptr[0] = nptr[1];
-                netshortptr[1] = nptr[0];
-            } => netshort;
-
+            extern(linkname: "htons") ushort htons(ushort host);
             extern(linkname: "htonl") uint htonl(uint host);
             extern(linkname: "inet_addr") int inetAddr(char* ip);
             extern(linkname: "getaddrinfo") int getAddrInfo(char* node, char* service, std::network::addrinfo* hints, std::network::addrinfo** res);
@@ -124,19 +117,19 @@ namespace std {
 
             extern(linkname: "getnameinfo") int getNameInfo(std::network::sockaddr* sa, int salen, char* host, int hostlen, char* srv, int srvlen, int flags);
 
+            (inline) int request(int fd, char* data) => std::network::send(fd, data, std::cstring::strlen(data), 0);
+
             namespace request {
-                void get(int fd, char* path, char* contentType, char* content) {
+                int get(int fd, char* path, char* contentType, char* content) {
                     if((contentType != null) && (std::cstring::strlen(contentType) > 0)) {
                         std::__sprint("GET ", path, " HTTP/1.0\r\nContent-type: ", contentType, "\r\nContent-length: ", std::cstring::strlen(content), "\r\n\r\n", content, "\r\n");
                     }
                     else std::__sprint("GET ", path, " HTTP/1.0\r\n\r\n");
-                    std::network::send(fd, std::sprintBuffer.c(), std::sprintBuffer.length, 0);
-                }
+                } => std::network::send(fd, std::sprintBuffer.c(), std::sprintBuffer.length, 0);
 
-                (inline) void post(int fd, char* path, char* contentType, char* content) {
+                int post(int fd, char* path, char* contentType, char* content) {
                     std::__sprint("POST ", path, " HTTP/1.0\r\nContent-type: ", contentType, "\r\nContent-length: ", std::cstring::strlen(content), "\r\n\r\n", content, "\r\n");
-                    std::network::send(fd, std::sprintBuffer.c(), std::sprintBuffer.length, 0);
-                }
+                } => std::network::send(fd, std::sprintBuffer.c(), std::sprintBuffer.length, 0);
             }
         }
     }

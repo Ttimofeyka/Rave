@@ -134,6 +134,31 @@ std::string NodeBuiltin::asStringIden(int n) {
     return "";
 }
 
+BigInt NodeBuiltin::asNumber(int n) {
+    if(instanceof<NodeIden>(args[n])) {
+        NodeIden* id = (NodeIden*)args[n];
+        while(AST::aliasTable.find(id->name) != AST::aliasTable.end()) {
+            Node* node = AST::aliasTable[id->name];
+            if(instanceof<NodeIden>(node)) id = ((NodeIden*)node);
+            else if(instanceof<NodeInt>(node)) return ((NodeInt*)node)->value;
+            else {
+                generator->error("NodeBuiltin::asNumber assert!", this->loc);
+                return BigInt(0);
+            }
+        }
+        return BigInt(0);
+    }
+    else if(instanceof<NodeBuiltin>(args[n])) {
+        Node* nn = ((NodeBuiltin*)args[n])->comptime();
+        if(instanceof<NodeInt>(nn)) return ((NodeInt*)nn)->value;
+        generator->error("NodeBuiltin::asBool assert!", this->loc);
+        return BigInt(0);
+    }
+    else if(instanceof<NodeInt>(args[n])) return ((NodeInt*)args[n])->value;
+    generator->error("NodeBuiltin::asNumber assert!", this->loc);
+    return BigInt(0);
+}
+
 NodeBool* NodeBuiltin::asBool(int n) {
     if(instanceof<NodeIden>(args[n])) {
         NodeIden* id = (NodeIden*)args[n];
@@ -261,6 +286,11 @@ LLVMValueRef NodeBuiltin::generate() {
         return LLVMConstInt(LLVMInt1TypeInContext(generator->context), instanceof<TypePointer>(ty), false);
     }
     if(this->name == "getCurrArg") return (new NodeCast(asType(0)->type, new NodeIden("_RaveArg"+std::to_string(generator->currentBuiltinArg), this->loc), this->loc))->generate();
+    if(this->name == "getArg") return (new NodeCast(asType(0)->type, new NodeIden("_RaveArg"+asNumber(1).to_string(), this->loc), this->loc))->generate();
+    if(this->name == "skipArg") {
+        generator->currentBuiltinArg += 1;
+        return nullptr;
+    }
     if(this->name == "getCurrArgType") {
         this->type = currScope->getVar("_RaveArg"+std::to_string(generator->currentBuiltinArg), this->loc)->type;
         return nullptr;

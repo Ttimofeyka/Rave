@@ -110,7 +110,7 @@ namespace std {
     }
 
     (ctargs, inline) void fprintln {
-        @callWithArgs(std::fprint,'\n');
+        @callWithArgs(std::fprint, '\n');
     }
 
     (ctargs, inline) void print {
@@ -215,6 +215,8 @@ namespace std {
             this.isOpen = false;
         } => this;
 
+        void operator=(std::file* one, char* two) {one[0] = std::file(two);}
+
         void open(char* mode) {
             this._file = libc::fopen(this.name, mode);
             this.isOpen = true;
@@ -266,7 +268,7 @@ namespace std {
         bool exists {
             bool toret = true;
             if(this.isOpen == false) {
-                libc::File* f = libc::fopen(this.name,"r");
+                libc::File* f = libc::fopen(this.name, "r");
                 if(f == cast(libc::File*)null) toret = false;
                 else this.close();
             }
