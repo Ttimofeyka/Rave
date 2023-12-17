@@ -147,6 +147,16 @@ namespace std {
             }
         } => temp;
 
+        std::string substring(int from, int to) {
+            std::string temp = "";
+
+            int i = from;
+            while(i<to) {
+                temp.add(this.data[i]);
+                i += 1;
+            }
+        } => temp;
+
         std::string operator+(std::string one, std::string two) {
             std::string third = "";
             for(int i=0; i<one.length; i+=1) {
@@ -184,16 +194,6 @@ namespace std {
             }
         } => isEqual;
 
-        std::string substring(int from, int to) {
-            std::string temp = "";
-
-            int i = from;
-            while(i<to) {
-                temp.add(this.data[i]);
-                i += 1;
-            }
-        } => temp;
-
         std::vector<std::string> split(char ch) {
             auto parts = std::vector<std::string>();
 
@@ -225,6 +225,20 @@ namespace std {
         } => this.substring(0, idx+1);
 
         (inline) std::string trim {std::string _l = this.ltrim();} => _l.rtrim();
+
+        std::string insert(int pos, char* str) {
+            std::string buffer = "";
+            int i = 0;
+            while(i < pos) {
+                buffer.add(this.data[i]);
+                i += 1;
+            }
+            buffer.appendC(str);
+            while(i < this.length) {
+                buffer.add(this.data[i]);
+                i += 1;
+            }
+        } => buffer;
     }
 
     namespace string {

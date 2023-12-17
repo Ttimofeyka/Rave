@@ -58,7 +58,9 @@ std::vector<LLVMValueRef> NodeCall::correctByLLVM(std::vector<LLVMValueRef> valu
                 params[i] = temp;
             }
         }
-        else if(!instanceof<TypePointer>(fas[i].type) && LLVMGetTypeKind(LLVMTypeOf(params[i])) == LLVMPointerTypeKind) params[i] = LLVMBuildLoad(generator->builder, params[i], "correctLoad");
+        else if(!instanceof<TypePointer>(fas[i].type) && LLVMGetTypeKind(LLVMTypeOf(params[i])) == LLVMPointerTypeKind) {
+            params[i] = LLVMBuildLoad(generator->builder, params[i], "correctLoad");
+        }
     }
     return params;
 }
@@ -230,20 +232,32 @@ LLVMValueRef NodeCall::generate() {
                 for(int i=0; i<params.size(); i++) types.push_back(lTypeToType(LLVMTypeOf(params[i])));
 
                 std::pair<std::string, std::string> method = std::pair<std::string, std::string>(structure->name, getFunc->field);
+                
                 if(AST::methodTable.find(method) != AST::methodTable.end() && hasIdenticallyArgs(types, AST::methodTable[method]->args)) {
+                    if(generator->functions[AST::methodTable[method]->name] == nullptr) {
+                        generator->error("using '"+AST::methodTable[method]->origName+"' method before declaring it!", this->loc);
+                        return nullptr;
+                    }
                     params = this->correctByLLVM(params, AST::methodTable[method]->args);
                     return LLVMBuildCall(generator->builder, generator->functions[AST::methodTable[method]->name], params.data(), params.size(), (instanceof<TypeVoid>(AST::methodTable[method]->type) ? "" : "callFunc"));
                 }
                 
                 method.second += typesToString(types);
                 if(AST::methodTable.find(method) != AST::methodTable.end()) {
-                    //for(auto const& x : generator->functions) std::cout << "\t\t" << x.first << std::endl;
+                    if(generator->functions[AST::methodTable[method]->name] == nullptr) {
+                        generator->error("using '"+AST::methodTable[method]->origName+"' method before declaring it!", this->loc);
+                        return nullptr;
+                    }
                     params = this->correctByLLVM(params, AST::methodTable[method]->args);
                     return LLVMBuildCall(generator->builder, generator->functions[AST::methodTable[method]->name], params.data(), params.size(), (instanceof<TypeVoid>(AST::methodTable[method]->type) ? "" : "callFunc"));
                 }
 
                 method.second = method.second.substr(0, method.second.find('['));
                 if(AST::methodTable.find(method) != AST::methodTable.end()) {
+                    if(generator->functions[AST::methodTable[method]->name] == nullptr) {
+                        generator->error("using '"+AST::methodTable[method]->origName+"' method before declaring it!", this->loc);
+                        return nullptr;
+                    }
                     params = this->correctByLLVM(params, AST::methodTable[method]->args);
                     return LLVMBuildCall(generator->builder, generator->functions[AST::methodTable[method]->name], params.data(), params.size(), (instanceof<TypeVoid>(AST::methodTable[method]->type) ? "" : "callFunc"));
                 }

@@ -1,9 +1,5 @@
-import <std/io> <std/curl>
+import <std/io>
 
 void main {
-    std::file fl = "test.txt";
     
-    fl.open("wb");
-        std::fprint(fl, "Hello!");
-    fl.close();
 }
