@@ -287,6 +287,10 @@ LLVMValueRef NodeBuiltin::generate() {
     }
     if(this->name == "getCurrArg") return (new NodeCast(asType(0)->type, new NodeIden("_RaveArg"+std::to_string(generator->currentBuiltinArg), this->loc), this->loc))->generate();
     if(this->name == "getArg") return (new NodeCast(asType(0)->type, new NodeIden("_RaveArg"+asNumber(1).to_string(), this->loc), this->loc))->generate();
+    if(this->name == "getArgType") {
+        this->type = currScope->getVar("_RaveArg"+asNumber(1).to_string())->type;
+        return nullptr;
+    }
     if(this->name == "skipArg") {
         generator->currentBuiltinArg += 1;
         return nullptr;

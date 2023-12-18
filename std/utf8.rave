@@ -181,7 +181,7 @@ namespace std {
         void add(char c) {
             this.length += 1;
             this.byteLength += 1;
-            if(this.byteLength == this.capacity) {
+            if(this.byteLength >= this.capacity) {
                 this.capacity = this.capacity * 2;
                 this.data = std::realloc(this.data,this.capacity);
             }
@@ -318,7 +318,22 @@ namespace std {
             std::format(cast(char*)((cast(int)buffer)+2), "%x", &hex);
             std::free(buffer);
         } => hex;
+
+        std::u8string insert(int pos, char* str) {
+            std::u8string buffer = "";
+            int i = 0;
+            while(i < pos) {
+                buffer.add(this.data[i]);
+                i += 1;
+            }
+            buffer.appendC(str);
+            while(i < this.length) {
+                buffer.add(this.data[i]);
+                i += 1;
+            }
+        } => buffer;
     }
+
     namespace u8string {
         (inline) std::u8string fromNumber(long n) {
             char* buf = std::malloc(std::lengthOfNumber(n)+2);

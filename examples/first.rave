@@ -1,4 +1,4 @@
-import <std/io>
+import <std/io> <std/utf8>
 
 void main {
     
