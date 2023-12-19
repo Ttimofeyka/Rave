@@ -267,20 +267,20 @@ LLVMValueRef NodeBuiltin::generate() {
         for(int i=1; i<args.size(); i++) nodes.push_back(args[i]);
         return (new NodeCall(this->loc, args[0], nodes))->generate();
     }
-    if(this->name == "typesIsEquals") {
+    if(this->name == "tEquals") {
         if(this->asType(0)->type->toString() == this->asType(1)->type->toString()) return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 1, false);
         return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 0, false);
     }
-    if(this->name == "typesIsNequals") {
+    if(this->name == "tNequals") {
         if(this->asType(0)->type->toString() != this->asType(1)->type->toString()) return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 1, false);
         return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 0, false);
     }
-    if(this->name == "typeIsArray") {
+    if(this->name == "tIsArray") {
         Type* ty = this->asType(0)->type;
         while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
         return LLVMConstInt(LLVMInt1TypeInContext(generator->context), instanceof<TypeArray>(ty), false);
     }
-    if(this->name == "typeIsPointer") {
+    if(this->name == "tIsPointer") {
         Type* ty = this->asType(0)->type;
         while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
         return LLVMConstInt(LLVMInt1TypeInContext(generator->context), instanceof<TypePointer>(ty), false);
@@ -307,6 +307,10 @@ LLVMValueRef NodeBuiltin::generate() {
     }
     if(this->name == "isStructure") {
         if(instanceof<TypeStruct>(asType(0)->type)) return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 1, false);
+        return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 0, false);
+    }
+    if(this->name == "isNumeric") {
+        if(instanceof<TypeBasic>(asType(0)->type)) return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 1, false);
         return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 0, false);
     }
     if(this->name == "detectMemoryLeaks") {
@@ -398,9 +402,10 @@ Node* NodeBuiltin::comptime() {
     if(this->name[0] == '@') this->name = this->name.substr(1);
     if(this->name == "aliasExists") return new NodeBool(AST::aliasTable.find(this->getAliasName(0)) != AST::aliasTable.end());
     if(this->name == "sizeOf") return new NodeInt((asType(0)->type->getSize()) / 8);
-    if(this->name == "typesIsEquals") return new NodeBool(asType(0)->type->toString() == asType(1)->type->toString());
-    if(this->name == "typesIsNequals") return new NodeBool(asType(0)->type->toString() != asType(1)->type->toString());
+    if(this->name == "tEquals") return new NodeBool(asType(0)->type->toString() == asType(1)->type->toString());
+    if(this->name == "tNequals") return new NodeBool(asType(0)->type->toString() != asType(1)->type->toString());
     if(this->name == "isStructure") return new NodeBool(instanceof<TypeStruct>(asType(0)->type));
+    if(this->name == "isNumeric") return new NodeBool(instanceof<TypeBasic>(asType(0)->type));
     if(this->name == "argsLength") return new NodeInt(AST::funcTable[currScope->funcName]->args.size());
     if(this->name == "typeIsArray") {
         Type* ty = this->asType(0)->type;

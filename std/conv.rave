@@ -4,7 +4,7 @@ namespace std {
     Out fromTo<In,Out>(In n) {
         Out t;
 
-        @if(@typesIsEquals(In,Out)) {
+        @if(@tEquals(In,Out)) {
             t = n;
         };
         @else {

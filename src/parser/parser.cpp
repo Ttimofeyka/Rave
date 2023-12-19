@@ -45,6 +45,7 @@ with this file, You can obtain one at htypep://mozilla.org/MPL/2.0/.
 #include "../include/parser/nodes/NodeCmpxchg.hpp"
 #include "../include/parser/nodes/NodeIf.hpp"
 #include "../include/parser/nodes/NodeWhile.hpp"
+#include "../include/parser/nodes/NodeLambda.hpp"
 #include "../include/parser/nodes/NodeFor.hpp"
 
 std::map<char, int> operators;
@@ -1101,7 +1102,26 @@ bool Parser::isDefinedLambda(bool updateIdx) {
 }
 
 Node* Parser::parseLambda() {
-    return nullptr;
+    int loc = peek()->line;
+    Type* type = this->parseType();
+    generator->lambdas += 1;
+    std::string name = "";
+    if(peek()->type == TokType::Identifier) {
+        name = peek()->value;
+        next();
+    }
+    if(peek()->type == TokType::ShortRet) {
+        next();
+        Node* value = this->parseExpr();
+        return new NodeLambda(loc, (TypeFunc*)type,new NodeBlock({new NodeRet(value, "lambda"+std::to_string(generator->lambdas-1), loc)}), name);
+    }
+    NodeBlock* b = this->parseBlock("lambda"+std::to_string(generator->lambdas));
+    if(peek()->type == TokType::ShortRet) {
+        next();
+        Node* value = this->parseExpr();
+        b->nodes.push_back(new NodeRet(value, "lambda"+std::to_string(generator->lambdas-1), loc));
+    }
+    return new NodeLambda(loc, (TypeFunc*)type, b, name);
 }
 
 std::vector<Node*> Parser::parseFuncCallArgs() {
