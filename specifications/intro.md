@@ -1,6 +1,6 @@
 # Introduction
 
-It contains all the information about Rave.
+It contains specifications of Rave.
 
 ## Lexical
 
