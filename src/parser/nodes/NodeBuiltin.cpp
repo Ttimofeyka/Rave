@@ -226,9 +226,7 @@ LLVMValueRef NodeBuiltin::generate() {
             );
             result = LLVMBuildFMul(generator->builder, LLVMBuildFSub(generator->builder, one, result, "NodeBuiltin_fmodf"), two, "NodeBuiltin_fmodf_fmul");
         }
-        else {
-            result = LLVMBuildSub(generator->builder, one, LLVMBuildMul(generator->builder, LLVMBuildSDiv(generator->builder, one, two, "NodeBuiltin_fmodf_sdiv"), two, "NodeBuiltin_fmodf_mul"), "NodeBuiltin_fmodf");
-        }
+        else result = LLVMBuildSub(generator->builder, one, LLVMBuildMul(generator->builder, LLVMBuildSDiv(generator->builder, one, two, "NodeBuiltin_fmodf_sdiv"), two, "NodeBuiltin_fmodf_mul"), "NodeBuiltin_fmodf");
         return result;
     }
     if(this->name == "if") {
@@ -393,6 +391,30 @@ LLVMValueRef NodeBuiltin::generate() {
             return value;
         }
     }
+    else if(this->name == "hasMethod") {
+        Type* ty = asType(0)->type;
+        if(!instanceof<TypeStruct>(ty)) return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 0, false);
+        TypeStruct* tstruct = (TypeStruct*)ty;
+        
+        std::string methodName = asStringIden(1);
+        TypeFunc* fnType = nullptr;
+
+        if(args.size() == 3) {
+            if(instanceof<NodeCall>(args[2])) fnType = callToTFunc(((NodeCall*)args[2]));
+            else if(instanceof<NodeType>(args[2])) fnType = (TypeFunc*)((NodeType*)args[2])->type;
+            else {
+                generator->error("undefined type of method '"+methodName+"'!", this->loc);
+                return nullptr;
+            }
+        }
+
+        for(auto &&x : AST::methodTable) {
+            if(x.first.first == tstruct->name && x.second->origName == methodName) {
+                if(fnType == nullptr) return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 1, false);
+            }
+        }
+        return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 0, false);
+    }
     generator->error("builtin with the name '"+this->name+"' does not exist!", this->loc);
     return nullptr;
 }
@@ -407,12 +429,12 @@ Node* NodeBuiltin::comptime() {
     if(this->name == "isStructure") return new NodeBool(instanceof<TypeStruct>(asType(0)->type));
     if(this->name == "isNumeric") return new NodeBool(instanceof<TypeBasic>(asType(0)->type));
     if(this->name == "argsLength") return new NodeInt(AST::funcTable[currScope->funcName]->args.size());
-    if(this->name == "typeIsArray") {
+    if(this->name == "tIsArray") {
         Type* ty = this->asType(0)->type;
         while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
         return new NodeBool(instanceof<TypeArray>(ty));
     }
-    if(this->name == "typeIsPointer") {
+    if(this->name == "tIsPointer") {
         Type* ty = this->asType(0)->type;
         while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
         return new NodeBool(instanceof<TypePointer>(ty));
@@ -422,6 +444,30 @@ Node* NodeBuiltin::comptime() {
         return nullptr;
     }
     if(this->name == "contains") return new NodeBool(asStringIden(0).find(asStringIden(1)) != std::string::npos);
+    if(this->name == "hasMethod") {
+        Type* ty = asType(0)->type;
+        if(!instanceof<TypeStruct>(ty)) return new NodeBool(false);
+        TypeStruct* tstruct = (TypeStruct*)ty;
+        
+        std::string methodName = asStringIden(1);
+        TypeFunc* fnType = nullptr;
+
+        if(args.size() == 3) {
+            if(instanceof<NodeCall>(args[2])) fnType = callToTFunc(((NodeCall*)args[2]));
+            else if(instanceof<NodeType>(args[2])) fnType = (TypeFunc*)((NodeType*)args[2])->type;
+            else {
+                generator->error("undefined type of method '"+methodName+"'!", this->loc);
+                return nullptr;
+            }
+        }
+
+        for(auto &&x : AST::methodTable) {
+            if(x.first.first == tstruct->name && x.second->origName == methodName) {
+                if(fnType == nullptr) return new NodeBool(true);
+            }
+        }
+        return new NodeBool(false);
+    }
     AST::checkError("builtin with name '"+this->name+"' does not exist!", this->loc);
     return nullptr;
 }

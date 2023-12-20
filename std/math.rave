@@ -20,12 +20,12 @@ namespace std {
             if(f < 0.0) result = -result;
         } => result;
 
-        (inline) char getsign(double d) {
+        (inline) char getSign(double d) {
             char result = 1;
             if(d < 0.0) result = -1;
         } => result;
 
-        double copysign(double d1, double d2) {
+        (inline) double copySign(double d1, double d2) {
             char sign = -1;
             if(d2 > 0.0) sign = 1;
         } => std::math::abs(d1) * sign;
@@ -125,7 +125,7 @@ namespace std {
             x = std::math::abs(x);
             double t = 1.0 / (1.0 + (0.3275911*x));
             double y = 1.0 - (((((1.061405429*t + (-1.453152027))*t) + 1.421413741)*t + (-0.284496736))*t + 0.254829592)*t*std::math::exp(-x*x);
-        } => std::math::getsign(x) * y;
+        } => std::math::getSign(x) * y;
 
         double pow(double f, double f2) {
             double result;

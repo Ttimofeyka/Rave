@@ -22,6 +22,8 @@ class NodeVar;
 class NodeFunc;
 class NodeLambda;
 class NodeStruct;
+class NodeCall;
+class TypeFunc;
 struct Loop;
 
 struct StructMember {
@@ -122,5 +124,5 @@ extern Scope* currScope;
 extern LLVMTargetDataRef dataLayout;
 
 extern Type* lTypeToType(LLVMTypeRef t);
-
+extern TypeFunc* callToTFunc(NodeCall* call);
 std::string typeToString(LLVMTypeRef type);

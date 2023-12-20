@@ -12,7 +12,10 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../include/parser/nodes/NodeVar.hpp"
 #include "../include/parser/nodes/NodeRet.hpp"
 #include "../include/parser/nodes/NodeLambda.hpp"
+#include "../include/parser/nodes/NodeIden.hpp"
 #include "../include/parser/nodes/NodeStruct.hpp"
+#include "../include/parser/nodes/NodeCall.hpp"
+#include "../include/parser/nodes/NodeType.hpp"
 #include <iostream>
 
 std::map<std::string, Type*> AST::aliasTypes;
@@ -33,6 +36,16 @@ bool AST::debugMode;
 LLVMGen* generator = nullptr;
 Scope* currScope;
 LLVMTargetDataRef dataLayout;
+
+TypeFunc* callToTFunc(NodeCall* call) {
+    std::vector<TypeFuncArg*> argTypes;
+    for(int i=0; i<call->args.size(); i++) {
+        if(instanceof<NodeCall>(call->args[i])) argTypes.push_back(new TypeFuncArg(callToTFunc((NodeCall*)call->args[i]), ""));
+        else if(instanceof<NodeIden>(call->args[i])) argTypes.push_back(new TypeFuncArg(getType(((NodeIden*)call->args[i])->name), ""));
+        else if(instanceof<NodeType>(call->args[i])) argTypes.push_back(new TypeFuncArg(((NodeType*)call->args[i])->type, ""));
+    }
+    return new TypeFunc(getType(((NodeIden*)call->func)->name), argTypes);
+}
 
 std::vector<Type*> parametersToTypes(std::vector<LLVMValueRef> params) {
     if(params.empty()) return {};
