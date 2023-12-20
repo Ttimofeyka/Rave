@@ -47,9 +47,9 @@ $ ./termux-llvm-patch
 ```
 3. Build using `make`.
 
-## Reference
+## Specifications
 
-The reference is in `reference` directory.
+The specifications is in `specifications` directory.
 
 <a href="https://github.com/Ttimofeyka/Rave/blob/main/bindings.md">Bindings</a>
 
