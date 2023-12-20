@@ -47,6 +47,15 @@ else {
 }
 ```
 
+**for(var; cond; expr) [body/{body}]** - The for loop is like in C, creating a local variable and executing the expression after the block and the block itself if the condition is met.
+
+Example:
+```d
+for(int i=0; i<100; i+=1) {
+    // ...
+}
+```
+
 **cast(type)expr** - Transformation of an expression from one type to another.
 
 Example:
@@ -58,19 +67,15 @@ int b = cast(float)a;
 
 ## Built-In-Functions
 
-**@baseType(type)** - Get the base type from the reduced type. If the type is not a pointer or an array, it is returned unchanged.
+**@sizeOf(type)** - Get the size of the type.
 
 Example:
 
 ```d
-macro new {
-    return cast(@baseType(#0)*)std::malloc(sizeof(#0));
-}
+int size = @sizeOf(int); // 4
 ```
 
-**va_arg(va_list, type)** - Get the next argument with the current type from va_list.
-
-**@random(minimum, maximum)** - Get a random number at compile-time.
+**@baseType(type)** - Get the base type from the reduced type. If the type is not a pointer or an array, it is returned unchanged.
 
 Example:
 
@@ -78,41 +83,36 @@ Example:
 import <std/io>
 
 void main {
-    std::println(@random(0,100));
+    std::println(@sizeOf(@baseType(int*))); // 4
 }
 ```
 
-**@sizeOf(type)** - Get the size of the type.
+**@tIsEquals(type1, type2), @tIsNequals(type1, type2)** - Compare the two types with each other.
 
 Example:
 
 ```d
-int size = @sizeOf(int);
-```
-
-**@typesIsEquals(type1, type2), @typesIsNequals(type1, type2)** - Compare the two types with each other.
-
-Example:
-
-```d
-@if(@typesIsEquals(int,char)) {
+@if(@tIsEquals(int,char)) {
     int a = 0;
 };
-@if(@typesIsNequals(int,char)) {
+@if(@tIsNequals(int,char)) {
     int a = 5;
 };
 ```
 
-**@isNumeric(type)** - Check whether the type is numerical.
+**@isNumeric, @tIsPointer, @tIsArray(type)** - Check whether the type is numerical, pointer or array
 
 Example:
 
 ```d
 @if(@isNumeric(int)) {
-    int a = 0;
+    // ...
 };
-@if(!@isNumeric(int)) {
-    // F
+@if(tIsPointer(int*)) {
+    // ...
+};
+@if(tIsArray(int[1])) {
+    // ...
 };
 ```
 
@@ -154,18 +154,6 @@ const(char)* _int = @typeToString(int);
 
 **@aliasExists(name)** - Check if there is an alias with this name.
 
-**@execute(string)** - Compile the code from a constant string.
-
-Example:
-
-```d
-void main {
-    int a = 0;
-    @execute("a = 5;");
-    // a = 5
-}
-```
-
 **@error(strings/aliases), @echo(strings/aliases), @warning(strings/aliases)** - Output strings and/or aliases.
 
 With @warning, only the color changes, but with @error, compilation ends.
@@ -202,7 +190,18 @@ Example:
 (ctargs) int sumOfTwo {
     int one = @getCurrArg(0, int);
     int two = @getArg(1, int);
-} => one+two;
+} => one + two;
+```
+
+**@skipArg()** - Skip the current argument.
+
+Example:
+
+```d
+(ctargs) int foo {
+    @skipArg(); // skip the first argument
+    int second = @getCurrArg(int); // getting the second argument as integer
+} => second / 2;
 ```
 
 **@getCurrArgType()** - Get the type of the current argument.
@@ -211,10 +210,34 @@ Example:
 
 ```d
 (ctargs) int bow {
-    @if(@typesIsEquals(@getCurrArgType(), int)) {
-        @echo("INT");
+    @if(@tIsEquals(@getCurrArgType(), int)) {
+        @echo("Integer");
     };
 }
 ```
 
+**@foreachArgs() {block};** - Generate code for each argument at compile-time.
+
+Example:
+
+```d
+(ctargs) int sum {
+    int result = 0;
+
+    @foreachArgs() {
+        result += @getCurrArg(int);
+    };
+} => result;
+```
+
 **@getArg(n, type), @getArgType(n)** - Functions similar to the top two, except for the need to add an argument number.
+
+Example:
+
+```d
+(ctargs) int sum2 {
+    @if(@tNequals(@getArgType(0), @getArgType(1))) {
+        @error("Different types!");
+    };
+} => @getArg(0, int) + @getArg(1, int);
+```
