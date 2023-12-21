@@ -141,8 +141,8 @@ namespace std {
         }
 
         (inline) uint at(int index) {
-            if((index >= 0) && (index < this.length)) return std::utf8::utfAt(this.data, index);
-            else return cast(uint)'\0';
+            if((index >= 0) && (index < this.length)) return = std::utf8::utfAt(this.data, index);
+            else return = cast(uint)'\0';
         }
 
         (inline) bool isDeleted => (this.data == null);

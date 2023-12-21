@@ -12,7 +12,7 @@ Examples:
 int sum(int a, int b) => a+b;
 
 int main {
-    return sum(1,1);
+    return = sum(1,1);
 }
 ```
 

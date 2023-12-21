@@ -391,6 +391,16 @@ LLVMValueRef NodeBuiltin::generate() {
             return value;
         }
     }
+    else if(this->name == "return") {
+        if(currScope != nullptr) {
+            if(currScope->fnEnd != nullptr) {
+                if(args.size() == 1) (new NodeBinary(TokType::Equ, new NodeIden("return", this->loc), args[0], this->loc))->generate();
+                LLVMBuildBr(generator->builder, currScope->fnEnd);
+                currScope->funcHasRet = true;
+            }
+        }
+        return nullptr;
+    }
     else if(this->name == "hasMethod") {
         Type* ty = asType(0)->type;
         if(!instanceof<TypeStruct>(ty)) return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 0, false);

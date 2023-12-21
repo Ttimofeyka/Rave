@@ -27,8 +27,8 @@ namespace std {
 
         namespace atbash {
             char encryptChar(char c) {
-                if(std::ascii::isUpper(c)) return 'Z' - (c - 'A');
-                else return 'z' - (c - 'a');
+                if(std::ascii::isUpper(c)) return = 'Z' - (c - 'A');
+                else return = 'z' - (c - 'a');
             }
 
             std::string encrypt(std::string s) {

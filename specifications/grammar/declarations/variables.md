@@ -21,7 +21,7 @@ int func(int arg) => 0;
 int main {
     int(int) f = func;
     f(1);
-    return 0;
+    return = 0;
 }
 ```
 

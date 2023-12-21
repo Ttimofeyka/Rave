@@ -107,6 +107,7 @@ public:
     std::map<std::string, NodeVar*> localVars;
     std::map<std::string, NodeVar*> argVars;
     bool inTry = false;
+    LLVMBasicBlockRef fnEnd;
     bool detectMemoryLeaks = false;
 
     Scope(std::string funcName, std::map<std::string, int> args, std::map<std::string, NodeVar*> argVars);

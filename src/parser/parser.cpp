@@ -983,15 +983,6 @@ Node* Parser::parseStmt(std::string f) {
         if(id == "while") return this->parseWhile(f);
         if(id == "for") return this->parseFor(f);
         if(id == "break") return this->parseBreak();
-        if(id == "return") {
-            auto tok = this->peek();
-            if(this->next()->type != TokType::Semicolon) {
-                Node* expr = this->parseExpr(f);
-                this->expect(TokType::Semicolon);
-                return new NodeRet(expr, f, tok->line);
-            } this->next();
-            return new NodeRet(nullptr, f, tok->line);
-        }
         if(id == "extern" || id == "volatile") return this->parseDecl(f);
         if(this->tokens[this->idx+1]->type == TokType::Rarr && this->tokens[this->idx+4]->type != TokType::Equ
            && this->tokens[this->idx+4]->type != TokType::Lpar && this->tokens[this->idx+4]->type != TokType::Rpar

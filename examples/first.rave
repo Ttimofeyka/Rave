@@ -1,5 +1,6 @@
 import <std/io>
 
-void main {
-    
+int main {
+    std::println("Hello, world!");
+    @return(4);
 }

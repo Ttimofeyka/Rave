@@ -19,6 +19,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeWhile.hpp"
 #include "../../include/parser/nodes/NodeUnary.hpp"
 #include "../../include/parser/nodes/NodeFor.hpp"
+#include "../../include/parser/nodes/NodeNull.hpp"
 #include "../../include/llvm-c/Comdat.h"
 #include "../../include/llvm-c/Analysis.h"
 
@@ -152,10 +153,7 @@ LLVMValueRef NodeFunc::generate() {
 
     if(this->name == "main") {
         linkName = "main";
-        if(instanceof<TypeVoid>(this->type)) {
-            this->type = new TypeBasic(BasicType::Int);
-            this->block->nodes.push_back(new NodeRet(new NodeInt(BigInt("0")), this->name, this->loc));
-        }
+        if(instanceof<TypeVoid>(this->type)) this->type = new TypeBasic(BasicType::Int);
     }
 
     for(int i=0; i<this->mods.size(); i++) {
@@ -240,55 +238,23 @@ LLVMValueRef NodeFunc::generate() {
 
         currScope = new Scope(this->name, indexes, vars);
         generator->currBB = entry;
+        currScope->fnEnd = this->exitBlock;
 
+        if(!instanceof<TypeVoid>(this->type)) this->block->nodes.insert(this->block->nodes.begin(), new NodeVar("return", new NodeNull(this->type, this->loc), false, false, false, {}, this->loc, this->type, false));
         this->block->generate();
 
-        if(instanceof<TypeVoid>(this->type) && !currScope->funcHasRet) LLVMBuildBr(generator->builder, this->exitBlock);
+        currScope->fnEnd = this->exitBlock;
+
+        if(!currScope->funcHasRet) LLVMBuildBr(generator->builder, this->exitBlock);
 
         LLVMMoveBasicBlockAfter(this->exitBlock, LLVMGetLastBasicBlock(generator->functions[this->name]));
         LLVMPositionBuilderAtEnd(generator->builder, this->exitBlock);
 
         if(!instanceof<TypeVoid>(this->type)) {
-            std::vector<RetGenStmt> newRets;
-            for(int i=0; i<this->genRets.size(); i++) {
-                if((i+1) < this->genRets.size() && (std::string(LLVMGetBasicBlockName(this->genRets[i+1].where))) == (std::string(LLVMGetBasicBlockName(this->genRets[i].where)))) {
-                    if(std::string(LLVMGetValueName(this->genRets[i+1].value)) != std::string(LLVMGetValueName(this->genRets[i].value))) newRets.push_back(this->genRets[i]);
-                }
-                else newRets.push_back(this->genRets[i]);
-            }
-            this->genRets = std::vector<RetGenStmt>(newRets);
+            // Add local builtins destructors
+            for(int i=0; i<this->localBuiltinBlock->nodes.size(); i++) this->localBuiltinBlock->nodes[i]->generate();
 
-            std::vector<LLVMValueRef> retValues;
-            std::vector<LLVMBasicBlockRef> retBlocks;
-            for(int i=0; i<this->genRets.size(); i++) {retValues.push_back(this->genRets[i].value); retBlocks.push_back(this->genRets[i].where);}
-
-            if(retBlocks.empty()) {
-                LLVMBasicBlockRef lastBlock = LLVMGetPreviousBasicBlock(LLVMGetLastBasicBlock(generator->functions[this->name]));
-                LLVMOpcode lastInstructionType = LLVMGetInstructionOpcode(LLVMGetLastInstruction(lastBlock));
-                if(lastInstructionType != LLVMPHI && lastInstructionType != LLVMBr && lastInstructionType != LLVMCallBr) {
-                    LLVMPositionBuilderAtEnd(generator->builder, lastBlock);
-                    LLVMBuildBr(generator->builder, this->exitBlock);
-                    LLVMPositionBuilderAtEnd(generator->builder, this->exitBlock);
-                }
-                // Add local builtins destructors
-                for(int i=0; i<this->localBuiltinBlock->nodes.size(); i++) this->localBuiltinBlock->nodes[i]->generate();
-
-                LLVMBuildRet(generator->builder, LLVMConstNull(generator->genType(this->type, this->loc)));
-            }
-            else if(retBlocks.size() == 1 || retBlocks[0] == nullptr) {
-                // Add local builtins destructors
-                for(int i=0; i<this->localBuiltinBlock->nodes.size(); i++) this->localBuiltinBlock->nodes[i]->generate();
-
-                LLVMBuildRet(generator->builder, retValues[0]);
-            }
-            else {
-                // Add local builtins destructors
-                for(int i=0; i<this->localBuiltinBlock->nodes.size(); i++) this->localBuiltinBlock->nodes[i]->generate();
-
-                LLVMValueRef phi = LLVMBuildPhi(generator->builder, generator->genType(this->type, this->loc), "NodeFunc_retphi");
-                LLVMAddIncoming(phi, retValues.data(), retBlocks.data(), this->genRets.size());
-                LLVMBuildRet(generator->builder, phi);
-            }
+            LLVMBuildRet(generator->builder, currScope->get("return", this->loc));
         }
         else {
             // Add local builtins destructors
@@ -302,9 +268,8 @@ LLVMValueRef NodeFunc::generate() {
     }
     if(this->isTemplate) generator->toReplace = std::map<std::string, Type*>(oldReplace);
 
-    #if(RAVE_DEBUG_MODE)
-        std::cout << LLVMPrintModuleToString(generator->lModule) << std::endl;
-    #endif
+    // std::cout << LLVMPrintValueToString(generator->functions[this->name]) << std::endl;
+
     LLVMVerifyFunction(generator->functions[this->name], LLVMPrintMessageAction);
     return generator->functions[this->name];
 }
