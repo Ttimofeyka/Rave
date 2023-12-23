@@ -250,22 +250,6 @@ LLVMValueRef NodeFunc::generate() {
         LLVMMoveBasicBlockAfter(this->exitBlock, LLVMGetLastBasicBlock(generator->functions[this->name]));
         LLVMPositionBuilderAtEnd(generator->builder, this->exitBlock);
 
-        uint32_t basicBlockRefsCnt = LLVMCountBasicBlocks(generator->functions[this->name]);
-        LLVMBasicBlockRef* basicBlockRefs = (LLVMBasicBlockRef*)malloc(sizeof(LLVMBasicBlockRef) * basicBlockRefsCnt);
-        LLVMGetBasicBlocks(generator->functions[this->name], basicBlockRefs);
-
-        for(uint32_t i=0; i<basicBlockRefsCnt; i++) {
-            if(std::string(LLVMGetBasicBlockName(basicBlockRefs[i])) != "exit") {
-                if(LLVMGetBasicBlockTerminator(basicBlockRefs[i]) == nullptr) {
-                    LLVMPositionBuilderAtEnd(generator->builder, basicBlockRefs[i]);
-                    LLVMBuildBr(generator->builder, this->exitBlock);
-                }
-            }
-        }
-
-        LLVMPositionBuilderAtEnd(generator->builder, this->exitBlock);
-        free(basicBlockRefs);
-
         if(!instanceof<TypeVoid>(this->type)) {
             // Add local builtins destructors
             for(int i=0; i<this->localBuiltinBlock->nodes.size(); i++) this->localBuiltinBlock->nodes[i]->generate();
