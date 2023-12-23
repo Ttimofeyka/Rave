@@ -79,7 +79,12 @@ LLVMValueRef NodeIf::generate() {
     }
     LLVMBasicBlockRef thenBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[currScope->funcName], "then");
 	LLVMBasicBlockRef elseBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[currScope->funcName], "else");
-	LLVMBasicBlockRef endBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[currScope->funcName], "end");
+	LLVMBasicBlockRef endBlock;
+    if(this->_else != nullptr && instanceof<NodeIf>(this->_else)) {
+        if(currScope->elseIfEnd == nullptr) currScope->elseIfEnd = LLVMAppendBasicBlockInContext(generator->context, generator->functions[currScope->funcName], "elseIfEnd");
+        endBlock = currScope->elseIfEnd;
+    }
+    else endBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[currScope->funcName], "end");
 
     LLVMBuildCondBr(generator->builder, this->cond->generate(), thenBlock, elseBlock);
 
@@ -89,7 +94,7 @@ LLVMValueRef NodeIf::generate() {
     LLVMPositionBuilderAtEnd(generator->builder, thenBlock);
     generator->currBB = thenBlock;
     if(this->body != nullptr) this->body->generate();
-    if(!generator->activeLoops[selfNum].hasEnd) LLVMBuildBr(generator->builder, endBlock);
+    if(!generator->activeLoops[selfNum].hasEnd && LLVMGetInstructionOpcode(LLVMGetLastInstruction(thenBlock)) != LLVMBr) LLVMBuildBr(generator->builder, endBlock);
 
     if(generator->activeLoops[selfNum].loopRets.size() > 0) AST::funcTable[currScope->funcName]->rets.push_back(generator->activeLoops[selfNum].loopRets[0].ret);
 
@@ -101,7 +106,7 @@ LLVMValueRef NodeIf::generate() {
 	generator->currBB = elseBlock;
     if(this->_else != nullptr) this->_else->generate();
 
-    if(!generator->activeLoops[selfNum].hasEnd) LLVMBuildBr(generator->builder, endBlock);
+    if(!generator->activeLoops[selfNum].hasEnd && LLVMGetInstructionOpcode(LLVMGetLastInstruction(endBlock)) != LLVMBr) LLVMBuildBr(generator->builder, endBlock);
 
     bool hasEnd2 = generator->activeLoops[selfNum].hasEnd;
 
@@ -110,6 +115,9 @@ LLVMValueRef NodeIf::generate() {
     LLVMPositionBuilderAtEnd(generator->builder, endBlock);
     generator->currBB = endBlock;
     generator->activeLoops.erase(selfNum);
+
+    LLVMValueRef lastInstr = LLVMGetLastInstruction(endBlock);
+    if(lastInstr != nullptr && LLVMGetInstructionOpcode(lastInstr) == LLVMBr && std::string(LLVMPrintValueToString(LLVMGetOperand(lastInstr, 0))).find("elseIfEnd") != std::string::npos) LLVMInstructionEraseFromParent(lastInstr);
 
     if(hasEnd1 && hasEnd2 && generator->activeLoops.size() == 0) LLVMBuildRet(generator->builder, LLVMConstNull(generator->genType(AST::funcTable[currScope->funcName]->type, this->loc)));
 

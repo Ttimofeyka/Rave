@@ -250,6 +250,22 @@ LLVMValueRef NodeFunc::generate() {
         LLVMMoveBasicBlockAfter(this->exitBlock, LLVMGetLastBasicBlock(generator->functions[this->name]));
         LLVMPositionBuilderAtEnd(generator->builder, this->exitBlock);
 
+        uint32_t basicBlockRefsCnt = LLVMCountBasicBlocks(generator->functions[this->name]);
+        LLVMBasicBlockRef* basicBlockRefs = (LLVMBasicBlockRef*)malloc(sizeof(LLVMBasicBlockRef) * basicBlockRefsCnt);
+        LLVMGetBasicBlocks(generator->functions[this->name], basicBlockRefs);
+
+        for(uint32_t i=0; i<basicBlockRefsCnt; i++) {
+            if(std::string(LLVMGetBasicBlockName(basicBlockRefs[i])) != "exit") {
+                if(LLVMGetBasicBlockTerminator(basicBlockRefs[i]) == nullptr) {
+                    LLVMPositionBuilderAtEnd(generator->builder, basicBlockRefs[i]);
+                    LLVMBuildBr(generator->builder, this->exitBlock);
+                }
+            }
+        }
+
+        LLVMPositionBuilderAtEnd(generator->builder, this->exitBlock);
+        free(basicBlockRefs);
+
         if(!instanceof<TypeVoid>(this->type)) {
             // Add local builtins destructors
             for(int i=0; i<this->localBuiltinBlock->nodes.size(); i++) this->localBuiltinBlock->nodes[i]->generate();
@@ -268,9 +284,9 @@ LLVMValueRef NodeFunc::generate() {
     }
     if(this->isTemplate) generator->toReplace = std::map<std::string, Type*>(oldReplace);
 
-    // std::cout << LLVMPrintValueToString(generator->functions[this->name]) << std::endl;
-
-    LLVMVerifyFunction(generator->functions[this->name], LLVMPrintMessageAction);
+    if(LLVMVerifyFunction(generator->functions[this->name], LLVMPrintMessageAction)) {
+        generator->error("LLVM errors into the function '"+this->name+"'! Content:\n"+LLVMPrintValueToString(generator->functions[this->name]), this->loc);
+    }
     return generator->functions[this->name];
 }
 
