@@ -183,7 +183,7 @@ Type* TypeFunc::copy() {
     std::vector<TypeFuncArg*> _copied;
 
     for(int i=0; i<this->args.size(); i++) _copied.push_back((TypeFuncArg*)this->args[i]->copy());
-    return new TypeFunc(this->main->copy(),_copied);
+    return new TypeFunc(this->main->copy(), _copied);
 }
 std::string TypeFunc::toString() {return "NotImplemented";}
 Type* TypeFunc::check(Type* parent) {return nullptr;}

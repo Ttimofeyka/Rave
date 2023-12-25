@@ -1,5 +1,5 @@
-import <std/io>
+import <std/io> <std/vector>
 
 int main {
-    std::println("Hello, ", 5.0);
+    
 }

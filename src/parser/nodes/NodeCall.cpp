@@ -182,7 +182,7 @@ LLVMValueRef NodeCall::generate() {
             return LLVMBuildCall(generator->builder, generator->functions[idenFunc->name], this->getParameters(AST::funcTable[idenFunc->name], false, AST::funcTable[idenFunc->name]->args).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
         }
         if(currScope->has(idenFunc->name)) {
-            TypeFunc* fn = (TypeFunc*)(currScope->getVar(idenFunc->name)->type);
+            TypeFunc* fn = (TypeFunc*)currScope->getVar(idenFunc->name, this->loc)->type;
             return LLVMBuildCall(generator->builder, currScope->get(idenFunc->name), this->getParameters(nullptr, false, tfaToFas(fn->args)).data(), this->args.size(), (instanceof<TypeVoid>(fn->main) ? "" : "callFunc"));
         }
         if(idenFunc->name.find('<') != std::string::npos && AST::funcTable.find(idenFunc->name.substr(0, idenFunc->name.find('<'))) != AST::funcTable.end()) {

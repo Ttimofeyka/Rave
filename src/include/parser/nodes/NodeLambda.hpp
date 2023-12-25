@@ -9,12 +9,12 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../llvm-c/Core.h"
 #include "Node.hpp"
 #include "NodeBlock.hpp"
+#include "NodeRet.hpp"
 #include "../../lexer/tokens.hpp"
+#include "../Type.hpp"
 #include "../Types.hpp"
 #include <vector>
 #include <string>
-
-class NodeRet;
 
 class NodeLambda : public Node {
 public:
@@ -30,4 +30,10 @@ public:
     std::vector<RetGenStmt> genRets;
 
     NodeLambda(long loc, TypeFunc* tf, NodeBlock* block, std::string name = "");
+    Type* getType() override;
+    LLVMValueRef generate() override;
+    Node* copy() override;
+    Node* comptime() override;
+    void check() override;
+    std::vector<LLVMTypeRef> generateTypes(); 
 };

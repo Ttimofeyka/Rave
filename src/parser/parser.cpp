@@ -504,6 +504,12 @@ Node* Parser::parseAtom(std::string f) {
                 return this->parseCall(new NodeIden(all, this->peek()->line));
             }
         }
+        else if(this->peek()->type == TokType::Rpar) {
+            this->idx -= 1;
+            if(isDefinedLambda()) {
+                return parseLambda();
+            } else this->idx += 1;
+        }
         return new NodeIden(t->value, this->peek()->line);
     }
     if(t->type == TokType::Rpar) {
@@ -1088,29 +1094,31 @@ bool Parser::isDefinedLambda(bool updateIdx) {
         else if(this->peek()->type == TokType::Rpar) cntOfRpars += 1;
     }
     this->next();
+    bool result = (this->peek()->type == TokType::Rbra || this->peek()->type == TokType::ShortRet);
     if(updateIdx) this->idx = oldIdx;
-    return (this->peek()->type == TokType::Rbra || this->peek()->type == TokType::ShortRet);
+    return result;
 }
 
 Node* Parser::parseLambda() {
     int loc = peek()->line;
     Type* type = this->parseType();
-    generator->lambdas += 1;
     std::string name = "";
+
     if(peek()->type == TokType::Identifier) {
         name = peek()->value;
         next();
     }
     if(peek()->type == TokType::ShortRet) {
-        next();
+        this->next();
         Node* value = this->parseExpr();
-        return new NodeLambda(loc, (TypeFunc*)type,new NodeBlock({new NodeRet(value, "lambda"+std::to_string(generator->lambdas-1), loc)}), name);
+        return new NodeLambda(loc, (TypeFunc*)type,new NodeBlock({new NodeRet(value, "lambda", loc)}), name);
     }
-    NodeBlock* b = this->parseBlock("lambda"+std::to_string(generator->lambdas));
+
+    NodeBlock* b = this->parseBlock("lambda");
     if(peek()->type == TokType::ShortRet) {
         next();
         Node* value = this->parseExpr();
-        b->nodes.push_back(new NodeRet(value, "lambda"+std::to_string(generator->lambdas-1), loc));
+        b->nodes.push_back(new NodeRet(value, "lambda", loc));
     }
     return new NodeLambda(loc, (TypeFunc*)type, b, name);
 }
@@ -1125,7 +1133,7 @@ std::vector<Node*> Parser::parseFuncCallArgs() {
              ||this->peek()->value == "uint" || this->peek()->value == "long" || this->peek()->value == "ulong"
              ||this->peek()->value == "cent" || this->peek()->value == "ucent" || this->peek()->value == "void") {
                 if(this->isDefinedLambda()) buffer.push_back(parseLambda());
-                buffer.push_back(new NodeType(this->parseType(),this->peek()->line));
+                buffer.push_back(new NodeType(this->parseType(), this->peek()->line));
             }
             else if(this->isDefinedLambda()) buffer.push_back(this->parseLambda());
             else buffer.push_back(this->parseExpr());

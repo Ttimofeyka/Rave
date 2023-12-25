@@ -275,7 +275,7 @@ LLVMTypeRef LLVMGen::genType(Type* type, long loc) {
         if(instanceof<TypeVoid>(tf->main)) {delete tf->main; tf->main = new TypeBasic(BasicType::Char);}
         std::vector<LLVMTypeRef> types;
         for(int i=0; i<tf->args.size(); i++) types.push_back(this->genType(tf->args[i]->type, loc));
-        return LLVMPointerType(LLVMFunctionType(this->genType(tf->main,loc),types.data(),types.size(),false),0);
+        return LLVMPointerType(LLVMFunctionType(this->genType(tf->main,loc), types.data(), types.size(), false), 0);
     }
     if(instanceof<TypeFuncArg>(type)) return this->genType(((TypeFuncArg*)type)->type, loc);
     if(instanceof<TypeBuiltin>(type)) {
@@ -389,7 +389,7 @@ LLVMValueRef Scope::get(std::string name, long loc) {
         /*if(AST::structTable.find(((TypeStruct*)varType)->name) != AST::structTable.end()) {
             TODO
         }*/
-        generator->error("TODO",loc);
+        generator->error("TODO", loc);
         return nullptr;
     }
     else if(generator->functions.find(this->funcName) != generator->functions.end()) {
