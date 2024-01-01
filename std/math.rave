@@ -3,8 +3,8 @@ namespace std {
         alias PI = 3.14159265358979323846;
         alias NAN = (0.0) / (0.0);
 
-        (inline) double degToRad(double d) => d * std::math::PI / 180;
-        (inline) double radToDeg(double r) => r * 180 / std::math::PI;
+        (inline) double degToRad(double d) => (d * std::math::PI / 180);
+        (inline) double radToDeg(double r) => (r * 180 / std::math::PI);
 
         long factorial(int n) {
             long fact = 1;

@@ -60,7 +60,9 @@ LLVMValueRef Binary::castValue(LLVMValueRef from, LLVMTypeRef to, long loc) {
         case LLVMPointerTypeKind:
             switch(kindTo) {
                 case LLVMIntegerTypeKind: return LLVMBuildPtrToInt(generator->builder, from, to, "castValuePtoI");
-                case LLVMFloatTypeKind: case LLVMDoubleTypeKind: generator->error("it is forbidden to cast pointers into floating-point numbers!", loc); return nullptr;
+                case LLVMFloatTypeKind: case LLVMDoubleTypeKind:
+                    if(std::string(LLVMPrintValueToString(from)).find("null") != std::string::npos) return LLVMConstReal(to, 0.0);
+                    generator->error("it is forbidden to cast pointers into floating-point numbers!", loc); return nullptr;
                 case LLVMArrayTypeKind: generator->error("it is forbidden to cast pointers into arrays!", loc); return nullptr;
                 case LLVMStructTypeKind: generator->error("it is forbidden to cast pointers into structures!", loc); return nullptr;
                 default: return from;
@@ -75,9 +77,7 @@ LLVMValueRef Binary::sum(LLVMValueRef one, LLVMValueRef two, long loc) {
     LLVMValueRef oneCasted = one;
     LLVMValueRef twoCasted = two;
     if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMGetTypeKind(LLVMTypeOf(two))) {
-        if(LLVMTypeOf(one) != LLVMTypeOf(two)) {
-            oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;
-        }
+        if(LLVMTypeOf(one) != LLVMTypeOf(two)) oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;
     }
     else {oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;}
     if(LLVMGetTypeKind(LLVMTypeOf(oneCasted)) == LLVMIntegerTypeKind) return LLVMBuildAdd(generator->builder, one, two, "sum");
@@ -88,9 +88,7 @@ LLVMValueRef Binary::sub(LLVMValueRef one, LLVMValueRef two, long loc) {
     LLVMValueRef oneCasted = one;
     LLVMValueRef twoCasted = two;
     if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMGetTypeKind(LLVMTypeOf(two))) {
-        if(LLVMTypeOf(one) != LLVMTypeOf(two)) {
-            oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;
-        }
+        if(LLVMTypeOf(one) != LLVMTypeOf(two)) oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;
     }
     else {oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;}
 

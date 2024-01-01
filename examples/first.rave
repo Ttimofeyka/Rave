@@ -1,4 +1,4 @@
-import <std/io> <std/vector>
+import <std/math>
 
 int main {
     
