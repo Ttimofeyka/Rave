@@ -63,11 +63,17 @@ LLVMValueRef Binary::castValue(LLVMValueRef from, LLVMTypeRef to, long loc) {
                 case LLVMFloatTypeKind: case LLVMDoubleTypeKind:
                     if(std::string(LLVMPrintValueToString(from)).find("null") != std::string::npos) return LLVMConstReal(to, 0.0);
                     generator->error("it is forbidden to cast pointers into floating-point numbers!", loc); return nullptr;
-                case LLVMArrayTypeKind: generator->error("it is forbidden to cast pointers into arrays!", loc); return nullptr;
-                case LLVMStructTypeKind: generator->error("it is forbidden to cast pointers into structures!", loc); return nullptr;
+                case LLVMArrayTypeKind:
+                    if(std::string(LLVMPrintValueToString(from)).find("null") != std::string::npos) return LLVMConstNull(to);
+                    generator->error("it is forbidden to cast pointers into arrays!", loc); return nullptr;
+                case LLVMStructTypeKind:
+                    if(std::string(LLVMPrintValueToString(from)).find("null") != std::string::npos) return LLVMConstNull(to);
+                    generator->error("it is forbidden to cast pointers into structures!", loc); return nullptr;
                 default: return from;
             }
-        case LLVMArrayTypeKind: generator->error("it is forbidden to casting arrays!", loc); return nullptr;
+        case LLVMArrayTypeKind:
+            if(std::string(LLVMPrintValueToString(from)).find("null") != std::string::npos) return LLVMConstNull(to);
+            generator->error("it is forbidden to casting arrays!", loc); return nullptr;
         case LLVMStructTypeKind: generator->error("it is forbidden to cast structures!",loc); return nullptr;
         default: return from;
     } return from;
