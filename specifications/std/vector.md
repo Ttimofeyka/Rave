@@ -55,6 +55,8 @@ auto vec2 = std::vector<int>();
 vec.add(10);
 vec2.add(20);
 vec.assign(vec2); // 10, 20
+~vec;
+~vec2;
 ```
 
 ### set
@@ -68,6 +70,21 @@ auto vec = std::vector<int>();
 vec.add(10);
 vec.add(20);
 vec.set(0, 100); // 100, 20
+~vec;
+```
+
+### swap
+
+Swap two values by indexes;
+
+Example:
+
+```d
+auto vec = std::vector<int>();
+vec.add(100);
+vec.add(200);
+vec.swap(0, 1); // 100, 200 -> 200, 100
+~vec;
 ```
 
 ### + operator

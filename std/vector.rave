@@ -41,6 +41,12 @@ namespace std {
 
         (inline) T operator[](std::vector<T>* v, int index) => v.data[index];
 
+        (inline) void swap(int first, int second) {
+            T temp = this.data[first];
+            this.data[first] = this.data[second];
+            this.data[second] = temp;
+        }
+
         T* c {
             T* cdata = cast(T*)std::malloc(this.length * sizeof(T) + 1);
             for(int i=0; i<this.length; i+=1) {
