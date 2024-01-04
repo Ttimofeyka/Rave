@@ -38,6 +38,7 @@ struct SafePtr<T> {
     int size = 0;
 
     SafePtr<T> this {
+        SafePtr<T> this;
         this.pointer = cast(T*)null;
         this.size = 0;
     } => this;

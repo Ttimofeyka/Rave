@@ -14,15 +14,11 @@ struct A {
     int b;
     
     A this(int f, int s) { // Constructor
-
         /*
-        There is no concept of 'new Struct()' in Rave: the control on whether a pointer to a structure is a list or not lies entirely with the author of the structure.
-
-        This may seem inconvenient, but it increases the efficiency of the constructor quite a lot.
-        
-        In this example, we return a direct value in the form of a structure from the stack.
+        Control over memory allocation is entirely in the hands of the author of the structure.
+        In our case, memory is allocated on the stack.
         */
-
+        A this;
         this.a = f;
         this.b = s;
     } => this; // We have to return the value from the constructor, as in all other functions.

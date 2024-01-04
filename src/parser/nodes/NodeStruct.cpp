@@ -81,7 +81,6 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 func->namespacesNames = std::vector<std::string>(this->namespacesNames);
                 func->isTemplatePart = this->isLinkOnce;
                 func->isComdat = this->isComdat;
-                if(func->args.size() > 0 && func->args[0].name == "this") func->args = std::vector<FuncArgSet>(func->args.begin() + 1, func->args.end());
                 if(this->isImported) {
                     func->isExtern = true;
                     func->check();
@@ -89,24 +88,6 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                     continue;
                 }
                 std::vector<Node*> toAdd;
-                if((!instanceof<TypeStruct>(func->type))) {
-                    toAdd.push_back(new NodeBinary(
-                        TokType::Equ,
-                        new NodeIden("this", func->loc),
-                        new NodeCast(new TypePointer(new TypeStruct(name)),
-                            new NodeCall(
-                                func->loc, new NodeIden("std::malloc", func->loc),
-                                std::vector<Node*>({new NodeCast(new TypeBasic(BasicType::Int), new NodeSizeof(new NodeType(new TypeStruct(name), func->loc), func->loc), func->loc)})
-                            ),
-                            func->loc
-                        ),
-                        func->loc
-                    ));
-                }
-                func->block->nodes.insert(func->block->nodes.begin(), (new NodeVar(
-                    "this", nullptr, false, false, false, std::vector<DeclarMod>(),
-                    func->loc, func->type
-                )));
                 for(int i=0; i<toAdd.size(); i++) func->block->nodes.insert(func->block->nodes.begin(), (toAdd[i]));
                 func->check();
                 this->constructors.push_back(func);

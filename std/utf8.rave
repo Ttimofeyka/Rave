@@ -82,6 +82,7 @@ namespace std {
         int capacity;
 
         std::u8string this(char* a) {
+            std::u8string this;
             if(a != null) {
                 this.length = std::utf8::utflen(a);
                 this.byteLength = std::cstring::strlen(a);

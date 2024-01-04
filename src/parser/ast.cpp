@@ -394,7 +394,7 @@ LLVMValueRef Scope::get(std::string name, long loc) {
     }
     else if(generator->functions.find(this->funcName) != generator->functions.end()) {
         if(this->args.find(name) == this->args.end()) {
-            if(generator->functions.find(name) == generator->functions.end()) generator->error("undefined identifier '"+name+"'!", loc);
+            if(generator->functions.find(name) == generator->functions.end()) generator->error("undefined identifier '"+name+"' at function '"+this->funcName+"'!", loc);
             return generator->functions[name];
         }
         return LLVMGetParam(generator->functions[this->funcName], this->args[name]);
@@ -424,7 +424,7 @@ LLVMValueRef Scope::getWithoutLoad(std::string name, long loc) {
         }*/
         return nullptr;
     }
-    if(this->args.find(name) == this->args.end()) generator->error("undefined identifier '"+name+"'!",loc);
+    if(this->args.find(name) == this->args.end()) generator->error("undefined identifier '"+name+"' at function '"+this->funcName+"'!",loc);
     return LLVMGetParam(generator->functions[this->funcName], this->args[name]);
 }
 

@@ -211,6 +211,7 @@ namespace std {
         bool isOpen;
 
         std::file this(const(char)* name) {
+            std::file this;
             this.name = name;
             this.isOpen = false;
         } => this;

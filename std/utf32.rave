@@ -167,6 +167,7 @@ namespace std {
         int capacity;
 
         std::u32string this(uint* a) {
+            std::u32string this;
             if(a != null) {
                 this.length = std::utf32::utflen(a);
                 this.capacity = this.length*4;

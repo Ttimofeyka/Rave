@@ -30,7 +30,7 @@ namespace std {
         struct Spinlock {
             int value;
 
-            std::thread::Spinlock this {this.value = 0;} => this;
+            std::thread::Spinlock this {std::thread::Spinlock this; this.value = 0;} => this;
 
             (inline) void lock {std::thread::spinlock::lock(this.&value);}
             (inline) void unlock {this.value = 0;}

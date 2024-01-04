@@ -10,6 +10,7 @@ namespace std {
         int capacity;
 
         std::string this(char* str) {
+            std::string this;
             if(str != null) {
                 this.length = std::cstring::strlen(str);
                 this.capacity = (this.length * 2) + 2;
@@ -32,6 +33,7 @@ namespace std {
         } => this;
 
         std::string this(int n) {
+            std::string this;
             this.length = 0;
             this.capacity = n+1;
             if(this.capacity <= 0) this.capacity = 2;
