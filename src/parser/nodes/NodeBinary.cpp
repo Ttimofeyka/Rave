@@ -172,13 +172,12 @@ NodeBinary::NodeBinary(char op, Node* first, Node* second, long loc, bool isStat
     this->isStatic = isStatic;
 }
 
-std::pair<std::string, std::string> isOperatorOverload(LLVMValueRef first, LLVMValueRef second, char op) {
+std::pair<std::string, std::string> NodeBinary::isOperatorOverload(LLVMValueRef first, LLVMValueRef second, char op) {
     if(first == nullptr || second ==  nullptr) return std::pair<std::string, std::string>("", "");
     LLVMTypeRef type = LLVMTypeOf(first);
     if(LLVMGetTypeKind(type) == LLVMStructTypeKind || (LLVMGetTypeKind(type) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVMGetElementType(type)) == LLVMStructTypeKind)) {
         std::string structName = std::string(LLVMGetStructName(type));
         if(AST::structTable.find(structName) != AST::structTable.end()) {
-            //std::cout << "StructName = " << structName << ", op = " << (int)op << std::endl;
             if(AST::structTable[structName]->operators.find(op) != AST::structTable[structName]->operators.end()) {
                 std::vector<Type*> types;
                 types.push_back(lTypeToType(type));
@@ -340,6 +339,22 @@ LLVMValueRef NodeBinary::generate() {
 
             LLVMValueRef ptr = ind->generate();
             if(ind->elementIsConst) generator->error("An attempt to change the constant element!", loc);
+
+            if(std::string(LLVMPrintValueToString(ptr)).find("([])") != std::string::npos) {
+                LLVMValueRef structPtr = LLVMGetOperand(ptr, 0);
+                LLVMValueRef structValue = structPtr;
+                while(LLVMGetTypeKind(LLVMTypeOf(structValue)) == LLVMPointerTypeKind) structValue = LLVMBuildLoad(generator->builder, structValue, "NodeBinary_NodeIndex_[]=_load");
+                std::string structName = std::string(LLVMGetStructName(LLVMTypeOf(structValue)));
+                if(AST::structTable.find(structName) != AST::structTable.end()) {
+                    if(AST::structTable[structName]->operators.find(TokType::Lbra) != AST::structTable[structName]->operators.end()) {
+                        std::map<std::string, NodeFunc*> opOv = AST::structTable[structName]->operators[TokType::Lbra];
+                        for(const auto& kv : opOv) {
+                            LLVMInstructionEraseFromParent(ptr);
+                            return (new NodeCall(this->loc, new NodeIden(kv.second->name, this->loc), {new NodeDone(structPtr), ind->indexes[0], this->second}))->generate();
+                        }
+                    }
+                }
+            }
 
             if(instanceof<NodeNull>(this->second)) {
                 ((NodeNull*)this->second)->type = nullptr;

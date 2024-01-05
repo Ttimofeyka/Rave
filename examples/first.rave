@@ -1,5 +1,9 @@
 import <std/vector> <std/io>
 
 void main {
-    
+    std::vector<int> vec = std::vector<int>();
+    vec.add(100);
+    std::println("Before: ", vec[0]);
+    vec[0] = 200;
+    std::println("After: ", vec[0]);
 }

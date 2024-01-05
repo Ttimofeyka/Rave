@@ -36,4 +36,5 @@ public:
     Node* comptime() override;
     Node* copy() override;
     void check() override;
+    std::pair<std::string, std::string> isOperatorOverload(LLVMValueRef first, LLVMValueRef second, char op);
 };

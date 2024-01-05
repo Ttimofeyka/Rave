@@ -59,7 +59,7 @@ vec.assign(vec2); // 10, 20
 ~vec2;
 ```
 
-### set
+### []= operator
 
 Set the value of the vector element.
 
@@ -69,7 +69,8 @@ Example:
 auto vec = std::vector<int>();
 vec.add(10);
 vec.add(20);
-vec.set(0, 100); // 100, 20
+vec[0] = 100; // 10 -> 100
+vec[1] = 200; // 20 -> 200
 ~vec;
 ```
 
