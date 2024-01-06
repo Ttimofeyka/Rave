@@ -14,6 +14,7 @@ namespace std {
         alias AiCanonName = 2;
         alias SocketReuseAddr = 2;
         alias SomAxConn = 128;
+        alias MsgNoSig = 16384;
     }
 }
 
@@ -150,6 +151,7 @@ namespace std {
 
             int bind => std::socket::bind(this.fd, cast(std::socket::sockaddr*)this.addr, sizeof(std::socket::sockaddr_in));
             int listen => std::socket::listen(this.fd, std::socket::SomAxConn);
+            int connect => std::socket::connect(this.fd, cast(std::socket::sockaddr*)this.addr, sizeof(std::socket::sockaddr_in));
 
             std::socket accept {
                 std::socket accepted = std::socket();
@@ -157,8 +159,8 @@ namespace std {
                 accepted.fd = std::socket::accept(this.fd, cast(std::socket::sockaddr*)this.addr, accepted.&addrlen);
             } => accepted;
 
-            int read(char* data, int length) => std::socket::recv(this.fd, data, length, 0);
-            int write(char* data) => std::socket::send(this.fd, data, std::cstring::strlen(data), 0);
+            int read(char* data, int length) => std::socket::recv(this.fd, data, length, std::socket::MsgNoSig);
+            int write(char* data) => std::socket::send(this.fd, data, std::cstring::strlen(data), std::socket::MsgNoSig);
 
             void close {
                 std::socket::close(this.fd);
