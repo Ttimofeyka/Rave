@@ -144,7 +144,7 @@ namespace std {
                     this.addr = cast(std::socket::sockaddr_in*)std::malloc(sizeof(std::socket::sockaddr_in));
                     this.addr.sin_family = std::socket::InAddrAny;
                     this.addr.sin_port = std::socket::htons(cast(ushort)port);
-                    return = std::socket::inetAton("127.0.0.1", this.addr.&sin_addr);
+                    return = std::socket::inetAton(ip, this.addr.&sin_addr);
                 }
             }
 
