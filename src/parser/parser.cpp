@@ -30,6 +30,7 @@ with this file, You can obtain one at htypep://mozilla.org/MPL/2.0/.
 #include "../include/parser/nodes/NodeCast.hpp"
 #include "../include/parser/nodes/NodeItop.hpp"
 #include "../include/parser/nodes/NodePtoi.hpp"
+#include "../include/parser/nodes/NodeSwitch.hpp"
 #include "../include/parser/nodes/NodeStruct.hpp"
 #include "../include/parser/nodes/NodeNull.hpp"
 #include "../include/parser/nodes/NodeBreak.hpp"
@@ -989,6 +990,7 @@ Node* Parser::parseStmt(std::string f) {
         if(id == "while") return this->parseWhile(f);
         if(id == "for") return this->parseFor(f);
         if(id == "break") return this->parseBreak();
+        if(id == "switch") return this->parseSwitch(f);
         if(id == "extern" || id == "volatile") return this->parseDecl(f);
         if(this->tokens[this->idx+1]->type == TokType::Rarr && this->tokens[this->idx+4]->type != TokType::Equ
            && this->tokens[this->idx+4]->type != TokType::Lpar && this->tokens[this->idx+4]->type != TokType::Rpar
@@ -1061,6 +1063,37 @@ Node* Parser::parseIf(std::string f, bool isStatic) {
         return new NodeIf(cond, body,  this->parseStmt(f), line, f, isStatic);
     }
     return new NodeIf(cond, body, nullptr, line, f, isStatic);
+}
+
+std::pair<Node*, Node*> Parser::parseCase(std::string f) {
+    this->next();
+    Node* cond = this->parseExpr(f);
+    this->next();
+    Node* block = this->parseBlock(f);
+    return std::pair<Node*, Node*>(cond, block);
+}
+
+Node* Parser::parseSwitch(std::string f) {
+    long line = this->peek()->line;
+    this->next(); this->next();
+    Node* expr = this->parseExpr();
+    this->next();
+
+    std::vector<std::pair<Node*, Node*>> statements;
+    Node* _default = nullptr;
+
+    this->next();
+    while(this->peek()->type != TokType::Lbra && this->peek()->type != TokType::Eof) {
+        if(this->peek()->value == "case") statements.push_back(this->parseCase(f));
+        else if(this->peek()->value == "default") {
+            this->next();
+            _default = this->parseBlock(f);
+        }
+        while(this->peek()->type == TokType::Semicolon) this->next();
+    }
+    if(this->peek()->type != TokType::Eof) this->next();
+
+    return new NodeSwitch(expr, _default, statements, line, f);
 }
 
 NodeBlock* Parser::parseBlock(std::string s) {

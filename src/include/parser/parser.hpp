@@ -60,6 +60,8 @@ public:
     Node* parseStmt(std::string f = "");
     Node* parseBuiltin(std::string f = "");
     Node* parseIf(std::string f, bool isStatic);
+    Node* parseSwitch(std::string f);
+    std::pair<Node*, Node*> parseCase(std::string f);
     Node* parseWhile(std::string f);
     Node* parseFor(std::string f);
     Node* parseOperatorOverload(Type* type, std::string s);

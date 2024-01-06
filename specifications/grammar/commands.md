@@ -56,6 +56,26 @@ for(int i=0; i<100; i+=1) {
 }
 ```
 
+**switch(expr) {case(expr) {} default {}}** - It works like a switch in C, except for one thing - break and continue are prohibited in switch.
+
+Example:
+```d
+int n;
+std::input(&n);
+
+switch(n) {
+    case(10) {
+        std::println("10");
+    }
+    case(20) {
+        std::println("20");
+    }
+    default {
+        std::println("Other");
+    }
+}
+```
+
 **cast(type)expr** - Transformation of an expression from one type to another.
 
 Example:
