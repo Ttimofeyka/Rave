@@ -30,7 +30,6 @@ public:
     std::vector<FuncArgSet> origArgs;
 
     NodeBlock* block;
-    NodeBlock* localBuiltinBlock;
 
     std::vector<NodeRet*> rets;
     std::vector<RetGenStmt> genRets;

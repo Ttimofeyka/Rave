@@ -368,29 +368,6 @@ LLVMValueRef NodeBuiltin::generate() {
         generator->error("constArrToVal assert!", this->loc);
         return nullptr;
     }
-    else if(this->name == "local") {
-        if(currScope != nullptr) {
-            LLVMValueRef value;
-            if(instanceof<NodeIden>(this->args[0])) ((NodeIden*)this->args[0])->isMustBePtr = true;
-            value = this->args[0]->generate();
-            if(generator->activeLoops.size() > 0) {
-                // Inside NodeIf/NodeWhile
-                Loop lastLoop = generator->activeLoops[generator->activeLoops.size()-1];
-                if(instanceof<NodeWhile>(lastLoop.owner)) {
-                    NodeWhile* nwhile = (NodeWhile*)lastLoop.owner;
-                    if(instanceof<NodeBlock>(nwhile)) ((NodeBlock*)nwhile->body)->nodes.push_back(new NodeUnary(this->loc, TokType::Destructor, new NodeDone(value)));
-                    else nwhile->body = new NodeBlock({nwhile->body, new NodeUnary(this->loc, TokType::Destructor, new NodeDone(value))});
-                }
-            }
-            else {
-                // Just inside function
-                if(AST::funcTable.find(currScope->funcName) != AST::funcTable.end()) {
-                    AST::funcTable[currScope->funcName]->localBuiltinBlock->nodes.push_back(new NodeUnary(this->loc, TokType::Destructor, new NodeDone(value)));
-                }
-            }
-            return value;
-        }
-    }
     else if(this->name == "return") {
         if(currScope != nullptr) {
             if(currScope->fnEnd != nullptr) {

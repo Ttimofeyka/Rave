@@ -34,7 +34,6 @@ NodeFunc::NodeFunc(std::string name, std::vector<FuncArgSet> args, NodeBlock* bl
     this->loc = loc;
     this->type = type;
     this->templateNames = templateNames;
-    this->localBuiltinBlock = new NodeBlock({});
     for(int i=0; i<mods.size(); i++) {
         if(mods[i].name == "private") this->isPrivate = true;
     }
@@ -251,15 +250,9 @@ LLVMValueRef NodeFunc::generate() {
         LLVMPositionBuilderAtEnd(generator->builder, this->exitBlock);
 
         if(!instanceof<TypeVoid>(this->type)) {
-            // Add local builtins destructors
-            for(int i=0; i<this->localBuiltinBlock->nodes.size(); i++) this->localBuiltinBlock->nodes[i]->generate();
-
             LLVMBuildRet(generator->builder, currScope->get("return", this->loc));
         }
         else {
-            // Add local builtins destructors
-            for(int i=0; i<this->localBuiltinBlock->nodes.size(); i++) this->localBuiltinBlock->nodes[i]->generate();
-            
             LLVMBuildRetVoid(generator->builder);
         }
 
