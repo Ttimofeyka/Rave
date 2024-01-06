@@ -402,6 +402,15 @@ LLVMValueRef NodeBuiltin::generate() {
         }
         return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 0, false);
     }
+    else if(this->name == "hasDestructor") {
+        Type* ty = asType(0)->type;
+        if(!instanceof<TypeStruct>(ty)) return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 0, false);
+        TypeStruct* tstruct = (TypeStruct*)ty;
+
+        if(AST::structTable.find(tstruct->name) == AST::structTable.end()) return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 0, false);
+        if(AST::structTable[tstruct->name]->destructor == nullptr) return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 0, false);
+        return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 1, false);
+    }
     generator->error("builtin with the name '"+this->name+"' does not exist!", this->loc);
     return nullptr;
 }
@@ -454,6 +463,14 @@ Node* NodeBuiltin::comptime() {
             }
         }
         return new NodeBool(false);
+    }
+    if(this->name == "hasDestructor") {
+        Type* ty = asType(0)->type;
+        if(!instanceof<TypeStruct>(ty)) return new NodeBool(false);
+        TypeStruct* tstruct = (TypeStruct*)ty;
+
+        if(AST::structTable.find(tstruct->name) == AST::structTable.end()) return new NodeBool(false);
+        return new NodeBool(AST::structTable[tstruct->name]->destructor == nullptr);
     }
     AST::checkError("builtin with name '"+this->name+"' does not exist!", this->loc);
     return nullptr;

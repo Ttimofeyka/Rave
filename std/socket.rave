@@ -1,0 +1,173 @@
+import <std/string> <std/memory>
+
+namespace std {
+    namespace socket {
+        alias AfInet = 2;
+        alias PfInet = 2;
+        alias AfInet6 = 2;
+        alias SockStream = 1;
+        alias ShutRD = 0;
+        alias ShutWR = 1;
+        alias ShutRDWR = 2;
+        alias InAddrAny = 0;
+        alias AiPassive = 1;
+        alias AiCanonName = 2;
+        alias SocketReuseAddr = 2;
+        alias SomAxConn = 128;
+    }
+}
+
+@if((__RAVE_OS == "LINUX")) {
+    namespace std {
+        namespace socket {
+            struct sockaddr {
+                ushort sa_family;
+                char* sa_data;
+            }
+
+            struct sockaddr_storage {
+                int sa_family;
+                long __ss_align;
+                char[120] __ss_padding;
+            }
+
+            struct in_addr {
+                long s_addr;
+            }
+
+            struct addrinfo {
+                int ai_flags;
+                int ai_family;
+                int ai_socktype;
+                int ai_protocol;
+                uint ai_addrlen;
+                std::socket::sockaddr* ai_addr;
+                std::socket::addrinfo* ai_next;
+            }
+
+            struct hostInfo {
+                std::socket::addrinfo* addrinfo;
+                int result;
+            }
+            
+            struct sockaddr_in {
+                short  sin_family;
+                ushort sin_port;
+                std::socket::in_addr sin_addr;
+                char[8] sin_zero;
+            }
+
+            struct iovec {
+                void* iov_base;
+                int iov_len;
+            }
+
+            struct msghdr {
+              void* msg_name;       
+              int msg_namelen;
+
+              std::socket::iovec* msg_iov;
+              int msg_iovlen;    
+
+              void* msg_control;    
+              int msg_controllen;
+
+              int msg_flags;
+            }
+
+            struct hostent {
+                char* h_name;
+                char** h_aliases;
+                int h_addrtype;
+                int h_length;
+                char** h_addr_list;
+                char* h_addr;
+            }
+        }
+    }
+
+    namespace std {
+        namespace socket {
+            extern(linkname: "accept") int accept(int sock std::socket::sockaddr* addr, int* length_ptr);
+            extern(linkname: "socket") int socket(int domain, int type, int protocol);
+            extern(linkname: "bind") int bind(int sock, std::socket::sockaddr* address, int address_len);
+            extern(linkname: "connect") int connect(int sock, std::socket::sockaddr* address, int address_len);
+            extern(linkname: "getpeername") int getPeerName(int sock, std::socket::sockaddr* address, int* address_len);
+            extern(linkname: "getsockname") int getSockName(int sock, std::socket::sockaddr* address, int* address_len);
+            extern(linkname: "getsockopt") int getSockOpt(int sock, int level, int option_name, void* option_value, int* option_len);
+            extern(linkname: "listen") int listen(int sock, int backlog);
+            extern(linkname: "recv") int recv(int sock, void* buffer, int length, int flags);
+            extern(linkname: "recvfrom") int recvfrom(int sock, void* buffer, int length, int flags, std::socket::sockaddr* address, int* address_len);
+            extern(linkname: "recvmsg") int recvmsg(int sock, std::socket::msghdr* message, int flags);
+            extern(linkname: "send") int send(int sock, void* message, int length, int flags);
+            extern(linkname: "sendmsg") int sendmsg(int sock, std::socket::msghdr* message, int flags);
+            extern(linkname: "sendto") int sendto(int sock, void* message, int length, int flags, std::socket::sockaddr* dest_addr, int dest_len);
+            extern(linkname: "setsockopt") int setSockOpt(int sock, int level, int option_name, void* option_value, int option_len);
+            extern(linkname: "shutdown") int shutdown(int sock, int how);
+            extern(linkname: "socketpair") int socketpair(int domain, int type, int protocol, int* socket_vector);
+            extern(linkname: "close") int close(int sock);
+
+            extern(linkname: "getaddrinfo") int getAddrInfo(char* node, char* service, std::socket::addrinfo* hints, std::socket::addrinfo** res);
+            extern(linkname: "freeaddrinfo") void freeAddrInfo(std::socket::addrinfo* res);
+            extern(linkname: "gai_strerror") char* getAddrInfoStrErr(int errcode);
+
+            extern(linkname: "htonl") uint htonl(uint hostlong);
+            extern(linkname: "htons") ushort htons(ushort hostshort);
+            extern(linkname: "htohl") uint ntohl(uint netlong);
+            extern(linkname: "htohs") ushort ntohs(ushort netshort);
+
+            extern(linkname: "gethostbyname") std::socket::hostent* getHostByName(char* name);
+            extern(linkname: "gethostbyaddr") std::socket::hostent* getHostByAddr(char* addr, int len, int type);
+
+            extern(linkname: "inet_aton") int inetAton(char* cp, std::socket::in_addr* inp);
+            extern(linkname: "inet_ntoa") char* inetNtoa(std::socket::in_addr in);
+
+            extern(vararg, linkname: "ioctl") int ioctl(int d, int request);  
+        }
+
+        struct socket {
+            int fd;
+            std::socket::sockaddr_in* addr;
+            int addrlen;
+
+            std::socket this {
+                std::socket this;
+                this.fd = 0;
+                this.addr = cast(std::socket::sockaddr_in*)null;
+                this.addrlen = 0;
+            } => this;
+
+            int open(const(char)* ip, int port) {
+                this.fd = std::socket::socket(std::socket::AfInet, std::socket::SockStream, 0);
+                if(this.fd < 0) return = this.fd;
+                else {
+                    this.addr = cast(std::socket::sockaddr_in*)std::malloc(sizeof(std::socket::sockaddr_in));
+                    this.addr.sin_family = std::socket::InAddrAny;
+                    this.addr.sin_port = std::socket::htons(cast(ushort)port);
+                    return = std::socket::inetAton("127.0.0.1", this.addr.&sin_addr);
+                }
+            }
+
+            int bind => std::socket::bind(this.fd, cast(std::socket::sockaddr*)this.addr, sizeof(std::socket::sockaddr_in));
+            int listen => std::socket::listen(this.fd, std::socket::SomAxConn);
+
+            std::socket accept {
+                std::socket accepted = std::socket();
+                accepted.addrlen = sizeof(std::socket::sockaddr_in);
+                accepted.fd = std::socket::accept(this.fd, cast(std::socket::sockaddr*)this.addr, accepted.&addrlen);
+            } => accepted;
+
+            int read(char* data, int length) => std::socket::recv(this.fd, data, length, 0);
+            int write(char* data) => std::socket::send(this.fd, data, std::cstring::strlen(data), 0);
+
+            void close {
+                std::socket::close(this.fd);
+                if(this.addr != cast(std::socket::sockaddr_in*)null) std::free(this.addr);
+            }
+
+            void ~this {
+                if(this.addr != cast(std::socket::sockaddr_in*)null) std::free(this.addr);
+            }
+        }
+    }
+};

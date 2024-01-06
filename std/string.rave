@@ -376,7 +376,7 @@ namespace std {
     std::string sprintBuffer;
     bool sbInitialized = false;
 
-    (ctargs) std::string __sprint {
+    (ctargs) std::string gsprint {
         std::thread::spinlock::lock(&std::sprintBufferSL);
 
         if(!std::sbInitialized) {

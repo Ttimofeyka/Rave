@@ -47,11 +47,11 @@ namespace std {
     } => dest;
     (nochecks, inline, ctargs) void delete {
         @foreachArgs() {
-            @if(@isStructure(@getCurrArgType())) {
+            @if(@isStructure(@getCurrArgType()) && @hasDestructor(@getCurrArgType())) {
                 auto s = @getCurrArg(@getCurrArgType());
                 ~s;
             };
-            @if(!@isStructure(@getCurrArgType())) {
+            @if(!@isStructure(@getCurrArgType()) || !@hasDestructor(@getCurrArgType())) {
                 std::free(@getCurrArg(void*));
             };
         };
