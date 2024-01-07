@@ -3,7 +3,7 @@ import <std/io> <std/socket>
 void main {
     std::socket server = std::socket();
 
-    if(server.open("127.0.0.1", 80) == -1) std::println("Open");
+    if(server.open("127.0.0.1", 80, std::socket::InAddrAny) == -1) std::println("Open");
     if(server.bind() == -1) std::println("Bind");
     if(server.listen() == -1) std::println("Listen");
 
