@@ -9,7 +9,10 @@ namespace std {
         alias ShutRD = 0;
         alias ShutWR = 1;
         alias ShutRDWR = 2;
-        alias InAddrAny = 0;
+
+        alias InAddrAny = cast(long)0;
+        alias InAddrBroadcast = 4294967295;
+
         alias AiPassive = 1;
         alias AiCanonName = 2;
         alias SocketReuseAddr = 2;
@@ -33,7 +36,7 @@ namespace std {
             }
 
             struct in_addr {
-                long s_addr;
+                int s_addr;
             }
 
             struct addrinfo {
@@ -52,7 +55,7 @@ namespace std {
             }
             
             struct sockaddr_in {
-                short  sin_family;
+                short sin_family;
                 ushort sin_port;
                 std::socket::in_addr sin_addr;
                 char[8] sin_zero;
@@ -122,6 +125,7 @@ namespace std {
 
             extern(linkname: "inet_aton") int inetAton(char* cp, std::socket::in_addr* inp);
             extern(linkname: "inet_ntoa") char* inetNtoa(std::socket::in_addr in);
+            extern(linkname: "inet_addr") std::socket::in_addr inetAddr(char* cp);
 
             extern(vararg, linkname: "ioctl") int ioctl(int d, int request);  
         }
@@ -138,14 +142,16 @@ namespace std {
                 this.addrlen = 0;
             } => this;
 
-            int open(const(char)* ip, int port) {
+            int open(const(char)* ip, int port, long flag) {
                 this.fd = std::socket::socket(std::socket::AfInet, std::socket::SockStream, 0);
                 if(this.fd < 0) return = this.fd;
                 else {
                     this.addr = cast(std::socket::sockaddr_in*)std::malloc(sizeof(std::socket::sockaddr_in));
                     this.addr.sin_family = std::socket::AfInet;
                     this.addr.sin_port = std::socket::htons(cast(ushort)port);
-                    return = std::socket::inetAton(ip, this.addr.&sin_addr);
+                    this.addr.sin_addr.s_addr = std::socket::htonl(flag);
+
+                    this.addr.sin_addr = std::socket::inetAddr(ip);
                 }
             }
 
@@ -156,7 +162,7 @@ namespace std {
                     this.addr = cast(std::socket::sockaddr_in*)std::malloc(sizeof(std::socket::sockaddr_in));
                     this.addr.sin_family = std::socket::AfInet;
                     this.addr.sin_port = std::socket::htons(cast(ushort)port);
-                    this.addr.sin_addr.s_addr = std::socket::htonl(std::socket::InAddrAny);
+                    this.addr.sin_addr.s_addr = std::socket::htonl(cast(int)0);
                 }
             } => 0;
 
