@@ -143,11 +143,22 @@ namespace std {
                 if(this.fd < 0) return = this.fd;
                 else {
                     this.addr = cast(std::socket::sockaddr_in*)std::malloc(sizeof(std::socket::sockaddr_in));
-                    this.addr.sin_family = std::socket::InAddrAny;
+                    this.addr.sin_family = std::socket::AfInet;
                     this.addr.sin_port = std::socket::htons(cast(ushort)port);
                     return = std::socket::inetAton(ip, this.addr.&sin_addr);
                 }
             }
+
+            int openAny(int port) {
+                this.fd = std::socket::socket(std::socket::AfInet, std::socket::SockStream, 0);
+                if(this.fd < 0) return = this.fd;
+                else {
+                    this.addr = cast(std::socket::sockaddr_in*)std::malloc(sizeof(std::socket::sockaddr_in));
+                    this.addr.sin_family = std::socket::AfInet;
+                    this.addr.sin_port = std::socket::htons(cast(ushort)port);
+                    this.addr.sin_addr.s_addr = std::socket::htonl(std::socket::InAddrAny);
+                }
+            } => 0;
 
             int bind => std::socket::bind(this.fd, cast(std::socket::sockaddr*)this.addr, sizeof(std::socket::sockaddr_in));
             int listen => std::socket::listen(this.fd, std::socket::SomAxConn);
@@ -161,6 +172,7 @@ namespace std {
 
             int read(char* data, int length) => std::socket::recv(this.fd, data, length, std::socket::MsgNoSig);
             int write(char* data) => std::socket::send(this.fd, data, std::cstring::strlen(data), std::socket::MsgNoSig);
+            int write(std::string str) => std::socket::send(this.fd, str.c(), str.length, std::socket::MsgNoSig);
 
             void close {
                 std::socket::close(this.fd);

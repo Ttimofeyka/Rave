@@ -1,0 +1,14 @@
+import <std/socket>
+
+namespace ssl {
+    extern(linkname: "SSL_CTX_new") void* ctxNew();
+    extern(linkname: "SSL_new") void* new(void* ctx);
+    extern(linkname: "SSL_free") void free(void* ssl);
+    extern(linkname: "SSL_shutdown") int shutdown(void* ssl);
+    extern(linkname: "SSL_set_fd") int setFd(void* conn, int sock);
+    extern(linkname: "SSL_connect") int connect(void* conn);
+    extern(linkname: "SSL_accept") int accept(void* conn);
+    extern(linkname: "SSLv23_method") void* methodV23();
+    extern(linkname: "SSL_read") int read(void* ssl, void* buffer, int num);
+    extern(linkname: "SSL_write") int write(void* ssl, void* buffer, int num);
+}
