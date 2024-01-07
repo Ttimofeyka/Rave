@@ -25,7 +25,7 @@ You can compile are examples using `rave directory/of/Rave/examples/necessary_ex
 
 ## Building/Running
 
-To install dependencies, you can try running `install.sh` (Arch Linux/Ubuntu/Debian) or `install.ps1` (Windows).
+To install dependencies, you can try running `install.sh` (Arch Linux/Ubuntu/Debian).
 
 If the installer does not work well on your system, you can try to install all the dependencies yourself.
 
