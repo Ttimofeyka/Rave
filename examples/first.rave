@@ -1,6 +1,17 @@
-import <std/io>
+import <std/io> <std/network>
 
 void main {
-    std::string str = std::string("JAM").substring(1, 2);
-    std::println(str);
+    std::network::URL url = std::network::URL("https://eth0.me");
+    std::println("Protocol: ", url.protocol);
+    std::println("Host: ", url.host);
+    std::println("Path: ", url.path);
+
+    std::println("HTTP GET the server");
+    std::network::Response resp = std::network::get(url);
+    if(resp.success == 0) {
+        std::print("Response text: ");
+        std::println(resp.text);
+    } else {
+        std::println("Failed!", resp.success);
+    }
 }

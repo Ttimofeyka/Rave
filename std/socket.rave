@@ -126,6 +126,8 @@ namespace std {
 
             extern(linkname: "inet_aton") int inetAton(char* cp, std::socket::in_addr* inp);
             extern(linkname: "inet_ntoa") char* inetNtoa(std::socket::in_addr in);
+            extern(linkname: "inet_pton") int inetPton(int af, char* src, void* dst);
+            extern(linkname: "inet_ntop") char* inetNtop(int af, void* src, char* dst, int cnt);
             extern(linkname: "inet_addr") std::socket::in_addr inetAddr(char* cp);
 
             extern(vararg, linkname: "ioctl") int ioctl(int d, int request);  

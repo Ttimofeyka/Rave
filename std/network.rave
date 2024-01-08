@@ -1,0 +1,304 @@
+// Original created via GeckoNerd - https://geckonerd.pw
+
+import <std/string>
+import <std/vector>
+import <std/socket>
+import <std/openssl>
+
+namespace std {
+    namespace network {
+        struct URL {
+            std::string protocol;
+            std::string host;
+            std::string path;
+
+            std::network::URL this(char* url) {
+              std::network::URL this;
+              this.protocol = std::string("");
+              this.host = std::string("");
+              this.path = std::string("/");
+
+              int p = 0;
+              int state = 0;
+              while(url[p] != '\0') {
+                if(state == 0) {
+                  if(url[p] != ':') {
+                    std::string protocol = this.protocol;
+                    protocol.add(url[p]);
+                    this.protocol = protocol;
+                    p += 1;
+                  } else {
+                    p += 3; // skip the double slash
+                    state += 1;
+                  }
+                } else {
+                  if(state == 1) {
+                    if(url[p] != "/") {
+                        std::string host = this.host; // TODO: fix into NodeCall (Ng + Ng error)
+                            host.add(url[p]);
+                        this.host = host;
+                        p += 1;
+                    } else {
+                        p += 1;
+                        state += 1;
+                    }
+                  } else {
+                    std::string path = this.path; // TODO: fix into NodeCall (Ng + Ng error)
+                        path.add(url[p]);
+                    this.path = path;
+                    p += 1;
+                  }
+                }
+              }
+            } => this;
+
+            std::network::URL this(std::string url) => std::network::URL(url.c());
+        }
+    }
+}
+
+namespace std {
+    namespace network {
+        bool isValidIPv4(char *ipAddress) {
+            std::socket::sockaddr_in sa;
+            int result = std::socket::inetPton(std::socket::AfInet, ipAddress, sa.&sin_addr);
+        } => result > 0;
+
+        std::string _determine_true_ip(std::string host, char* port) {
+            if(std::network::isValidIPv4(host.c())) return = host;
+            else {
+                std::socket::addrinfo* res;
+                bool found = false;
+                std::socket::getAddrInfo(host.c(), port, cast(std::socket::addrinfo*)0, &res);
+
+                for(std::socket::addrinfo* i = res; i != cast(std::socket::addrinfo*)0; i=i.ai_next)
+                {
+                    char[46] str;
+                    if(i.ai_addr.sa_family == std::socket::AfInet) {
+                        std::socket::sockaddr_in* p = cast(std::socket::sockaddr_in*)i.ai_addr;
+                        std::socket::inetNtop(std::socket::AfInet, p.&sin_addr, &str, 46);
+                        return = std::string(&str);
+                        found = true;
+                        break;
+                    }
+                    // TODO: IPv6
+                }
+                if(found == false) return = host;
+            }
+        }
+        struct Header {
+            // TODO
+        }
+
+        struct Response {
+            std::vector<std::network::Header> headers;
+            std::string text;
+            int status_code;
+            int success;
+
+            std::network::Response this() {
+                std::network::Response this;
+            } => this;
+        }
+
+        std::network::Response _do_http(std::network::URL url, char* method, std::string headers, std::string data) {
+            std::string reqline = "";
+            reqline.appendC(method);
+            reqline.appendC(" ");
+            reqline.append(url.path);
+            reqline.appendC(" HTTP/1.0\r\n");
+            reqline.appendC("Host: ");
+            reqline.append(url.host);
+            reqline.appendC("\r\n");
+            reqline.appendC("Connection: close\r\n");
+            reqline.append(headers);
+            reqline.appendC("\r\n");
+            reqline.append(data);
+
+            // init
+            std::socket sock = std::socket();
+
+            std::string trueip = std::network::_determine_true_ip(url.host, "80");
+
+            if(sock.open(trueip.c(), 80, std::socket::InAddrBroadcast) < 0) {
+                std::network::Response resp_fail_ssl = std::network::Response();
+                resp_fail_ssl.success = -5; // open failure
+                return = resp_fail_ssl;
+            } else {
+                if(sock.connect() < 0) {
+                    std::network::Response resp_fail_ssl = std::network::Response();
+                    resp_fail_ssl.success = -6; // connect failure
+                    return = resp_fail_ssl;
+                } else {
+                    sock.write(reqline.c());
+
+                    std::string buffer = "";
+                    char[513] char_buffer; // just in case 513 instead of 512
+
+                    while(sock.read(&char_buffer, 512) > 0) {
+                        buffer.appendC(&char_buffer);
+                        for(int i=0; i<512; i+=1) { char_buffer[i] = 0; } // clear it!
+                    }
+
+                    // parse data
+                    std::network::Response resp = std::network::Response();
+                    auto parts = buffer.split('\n');
+                    auto headline = parts[0];
+                    auto headline_parts = headline.split(' ');
+                    auto status = headline_parts[1];
+                    resp.status_code = status.toInt();
+
+                    // TODO: read headers
+                    int ip = 0; // point to first header actually
+                    while(buffer.c()[ip] != '\0') {
+                        if(buffer.c()[ip] == '\n') {
+                            ip += 1;
+                            if(buffer.c()[ip] == '\r') {
+                                ip += 2;
+                                break;
+                            }
+                        } else {
+                            ip += 1;
+                        }
+                    }
+
+                    std::string resptext = buffer.substring(ip, buffer.length);
+                    resp.text = resptext;
+                    resp.success = 0;
+                    return = resp;
+
+
+                    // free up
+                    ~parts;
+                    ~headline_parts;
+                    ~headline;
+                    ~status;
+                    sock.close();
+                }
+            }
+        }
+
+        std::network::Response _do_http_secure(std::network::URL url, char* method, std::string headers, std::string data) {
+            std::string reqline = "";
+            reqline.appendC(method);
+            reqline.appendC(" ");
+            reqline.append(url.path);
+            reqline.appendC(" HTTP/1.0\r\n");
+            reqline.appendC("Host: ");
+            reqline.append(url.host);
+            reqline.appendC("\r\n");
+            reqline.appendC("Connection: close\r\n");
+            reqline.append(headers);
+            reqline.appendC("\r\n");
+            reqline.append(data);
+
+            void* ssl_ctx = ssl::ctxNew(ssl::methodTLS1_2());
+            std::socket sock = std::socket();
+
+            std::string trueip = std::network::_determine_true_ip(url.host, "443");
+            if(sock.open(trueip.c(), 443, std::socket::InAddrBroadcast) < 0) {
+                std::network::Response resp_fail_ssl = std::network::Response();
+                resp_fail_ssl.success = -5; // open failure
+                return = resp_fail_ssl;
+            } else {
+                if(sock.connect() < 0) {
+                    std::network::Response resp_fail_ssl = std::network::Response();
+                    resp_fail_ssl.success = -6; // connect failure
+                    return = resp_fail_ssl;
+                } else {
+
+                    // attach ssl to socket
+                    void * conn = ssl::new(ssl_ctx);
+                    ssl::setFd(conn, sock.fd);
+
+                    // handshake ssl
+                    int err = ssl::connect(conn);
+                    if(err != 1) { 
+                        std::network::Response resp_fail_ssl = std::network::Response();
+                        resp_fail_ssl.success = -200; // handshake failed err
+                        return = resp_fail_ssl;
+                    } else {
+
+                        // do other stuff
+                        ssl::write(conn, reqline.c(), reqline.length);
+
+                        std::string buffer = "";
+                        char[513] char_buffer; // just in case 513 instead of 512
+
+                        while(ssl::read(conn, &char_buffer, 512) > 0) {
+                            buffer.appendC(&char_buffer);
+                            for(int i=0; i<512; i+=1) char_buffer[i] = 0; // clear it!
+                        }
+
+                        // parse data
+                        std::network::Response resp = std::network::Response();
+
+                        auto parts = buffer.split('\n');
+                        auto headline = parts[0];
+                        auto headline_parts = headline.split(' ');
+                        auto status = headline_parts[1];
+                        resp.status_code = status.toInt();
+
+                        // TODO: read headers
+                        int ip = 0; // point to first header actually
+                        while(buffer.c()[ip] != '\0') {
+                            if(buffer.c()[ip] == '\n') {
+                                ip += 1;
+                                if(buffer.c()[ip] == '\r') {
+                                    ip += 2;
+                                    break;
+                                }
+                            } else {
+                                ip += 1;
+                            }
+                        }
+
+                        std::string resptext = buffer.substring(ip, buffer.length);
+                        resp.text = resptext;
+                        resp.success = 0;
+                        return = resp;
+
+
+                        // free up and closing a socket
+                        ~parts;
+                        ~headline_parts;
+                        ~headline;
+                        ~status;
+                        ~buffer;
+                        sock.close();
+                        ssl::ctxFree(ssl_ctx);
+                    }
+                }
+            }
+        }
+
+        std::network::Response _http_wrap(std::network::URL url, char* method, std::string headers, std::string data) {
+            if(url.protocol == "http") {
+                return = std::network::_do_http(url, method, headers, data);
+            } else if(url.protocol == "https") {
+                return = std::network::_do_http_secure(url, method, headers, data);
+            } else {
+                // -100 = invalid protocol
+                std::network::Response resp = std::network::Response();
+                resp.success = -100;
+                return = resp;
+            }
+        }
+
+        std::network::Response get(std::network::URL url, std::string headers) {
+            return = std::network::_http_wrap(url, "GET", headers, std::string(""));
+        }
+
+        std::network::Response get(std::network::URL url) {
+            return = std::network::get(url, std::string(""));
+        }
+
+        std::network::Response post(std::network::URL url, std::string headers) {
+            return = std::network::_http_wrap(url, "POST", headers, std::string(""));
+        }
+
+        std::network::Response post(std::network::URL url) {
+            return = std::network::post(url, std::string(""));
+        }
+    }
+}
