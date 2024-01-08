@@ -46,6 +46,7 @@ namespace std {
                 int ai_protocol;
                 uint ai_addrlen;
                 std::socket::sockaddr* ai_addr;
+                char* ai_canonname;
                 std::socket::addrinfo* ai_next;
             }
 

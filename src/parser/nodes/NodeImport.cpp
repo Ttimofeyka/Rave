@@ -19,6 +19,13 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <fstream>
 
 #ifdef _WIN32
+   #include <io.h> 
+   #define access    _access_s
+#else
+   #include <unistd.h>
+#endif
+
+#ifdef _WIN32
 #include <windows.h>
 std::vector<std::string> filesFromDirectory(std::string path)
 {
@@ -108,6 +115,10 @@ LLVMValueRef NodeImport::generate() {
     }
 
     if(AST::parsed.find(this->file) == AST::parsed.end()) {
+        if(access(this->file.c_str(), 0) != 0) {
+            generator->error("file '"+this->file+"' does not exists!", this->loc);
+            return nullptr;
+        }
         std::ifstream fContent(this->file);
         std::string content = "";
         char c;

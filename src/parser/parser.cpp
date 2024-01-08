@@ -937,6 +937,7 @@ Node* Parser::parseWhile(std::string f) {
 }
 
 Node* Parser::parseFor(std::string f) {
+    int line = this->peek()->line;
     this->idx += 2;
 
     std::vector<Node*> presets;
@@ -972,7 +973,9 @@ Node* Parser::parseFor(std::string f) {
     }
     this->next();
 
-    return new NodeFor(presets, cond, afters, this->parseBlock(f), f, this->peek()->line);
+    Node* stmt = this->parseStmt(f);
+    if(!instanceof<NodeBlock>(stmt)) stmt = new NodeBlock(std::vector<Node*>({stmt}));
+    return new NodeFor(presets, cond, afters, (NodeBlock*)stmt, f, this->peek()->line);
 }
 
 Node* Parser::parseStmt(std::string f) {
