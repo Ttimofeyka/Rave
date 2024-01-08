@@ -1,5 +1,6 @@
 import <std/io>
 
 void main {
-    
+    std::string str = std::string("JAM").substring(1, 2);
+    std::println(str);
 }

@@ -269,6 +269,19 @@ LLVMValueRef NodeCall::generate() {
             generator->error("undefined structure '"+structure->name+"'!", this->loc);
             return nullptr;
         }
+        else if(instanceof<NodeCall>(getFunc->base)) {
+            NodeCall* ncall = (NodeCall*)getFunc->base;
+
+            // Creating a temp variable
+            currScope->localScope["__RAVE_NG_NG"] = ncall->generate();
+            currScope->localVars["__RAVE_NG_NG"] = new NodeVar(
+                "__RAVE_NG_NG", nullptr, false, false, false, {},
+                this->loc, lTypeToType(LLVMTypeOf(currScope->localScope["__RAVE_NG_NG"]))
+            );
+
+            NodeCall* ncall2 = new NodeCall(this->loc, new NodeGet(new NodeIden("__RAVE_NG_NG", this->loc), getFunc->field, getFunc->isMustBePtr, this->loc), this->args);
+            return ncall2->generate();
+        }
         generator->error("a call of this kind (NodeGet + "+std::string(typeid(this->func[0]).name())+") is temporarily unavailable!", this->loc);
     return nullptr;
     }
