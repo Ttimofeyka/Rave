@@ -272,6 +272,8 @@ LLVMValueRef NodeCall::generate() {
         else if(instanceof<NodeCall>(getFunc->base)) {
             NodeCall* ncall = (NodeCall*)getFunc->base;
 
+            if(currScope->localVars.find("__RAVE_NG_NG") != currScope->localVars.end() && currScope->localVars["__RAVE_NG_NG"] != nullptr) delete currScope->localVars["__RAVE_NG_NG"];
+
             // Creating a temp variable
             currScope->localScope["__RAVE_NG_NG"] = ncall->generate();
             currScope->localVars["__RAVE_NG_NG"] = new NodeVar(
