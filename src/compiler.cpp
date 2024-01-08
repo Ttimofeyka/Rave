@@ -297,7 +297,7 @@ void Compiler::compileAll() {
     std::vector<std::string> toRemove;
     for(int i=0; i<Compiler::files.size(); i++) {
         if(access(Compiler::files[i].c_str(), 0) != 0) {
-            generator->error("file '"+Compiler::files[i]+"' doesn't exists!", -1);
+            Compiler::error("file '"+Compiler::files[i]+"' does not exists!");
             return;
         }
         if(Compiler::files[i].size() > 2
@@ -325,7 +325,7 @@ void Compiler::compileAll() {
     }
     for(int i=0; i<Compiler::toImport.size(); i++) {
         if(access(Compiler::toImport[i].c_str(), 0) != 0) {
-            generator->error("file '"+Compiler::toImport[i]+"' doesn't exists!", -1);
+            Compiler::error("file '"+Compiler::files[i]+"' does not exists!");
             return;
         }
         if(Compiler::files[i].size() > 2 &&
