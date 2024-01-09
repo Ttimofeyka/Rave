@@ -86,7 +86,13 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
     }
     else {
         std::ofstream fOptions(exePath+"options.json");
-        fOptions << "{\n\t\"compiler\": \"clang\"\n}" << std::endl;
+        #if defined(_WIN32) || defined(WIN32)
+            fOptions << "{\n\t\"compiler\": \"clang\"\n}" << std::endl;
+        #else
+            ShellResult result = exec("which clang");
+            if(result.status != 0) fOptions << "{\n\t\"compiler\": \"gcc\"\n}" << std::endl;
+            else fOptions << "{\n\t\"compiler\": \"clang\"\n}" << std::endl;
+        #endif
         if(fOptions.is_open()) fOptions.close();
     }
     Compiler::linkString = Compiler::options["compiler"].template get<std::string>()+" ";
