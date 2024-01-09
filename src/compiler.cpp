@@ -355,7 +355,7 @@ void Compiler::compileAll() {
         }
     }
 
-    Compiler::outFile = (Compiler::outFile == "") ? "a" : getDirectory(Compiler::files[0])+"/"+Compiler::outFile;
+    Compiler::outFile = (Compiler::outFile == "") ? "a" : (Compiler::outFile[0] != '/' ? getDirectory(Compiler::files[0])+"/"+Compiler::outFile : Compiler::outFile);
     if(Compiler::settings.onlyObject) Compiler::linkString += "-r ";
     if(Compiler::settings.isStatic) Compiler::linkString += "-static ";
     if(Compiler::settings.isPIC) Compiler::linkString += "-no-pie ";
