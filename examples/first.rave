@@ -1,22 +1,5 @@
 import <std/io>
 
-struct Jam {
-    std::string* str;
-
-    Jam this(std::string* str) {
-        Jam this;
-        this.str = str;
-    } => this;
-
-    void ~this {
-        ~(this.str);
-    }
-}
-
 void main {
-    std::string str = "JAM";
-    std::println(str.isDeleted());
-        Jam jam = Jam(&str);
-        ~jam;
-    std::println(str.isDeleted());
+    
 }

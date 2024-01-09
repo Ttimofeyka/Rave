@@ -86,7 +86,7 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
     }
     else {
         std::ofstream fOptions(exePath+"options.json");
-        fOptions << "{\n\t\"compiler\": \"clang-11\"\n}" << std::endl;
+        fOptions << "{\n\t\"compiler\": \"clang\"\n}" << std::endl;
         if(fOptions.is_open()) fOptions.close();
     }
     Compiler::linkString = Compiler::options["compiler"].template get<std::string>()+" ";
@@ -269,7 +269,7 @@ void Compiler::compile(std::string file) {
 		"generic",
 		"",
 		LLVMCodeGenLevelDefault,
-        (Compiler::settings.isPIC ? LLVMRelocPIC : LLVMRelocDefault),
+        (Compiler::settings.isPIC ? LLVMRelocPIC : LLVMRelocDynamicNoPic),
 	LLVMCodeModelDefault);
 
     generator->targetData = LLVMCreateTargetDataLayout(machine);
@@ -348,6 +348,7 @@ void Compiler::compileAll() {
     Compiler::outFile = (Compiler::outFile == "") ? "a" : getDirectory(Compiler::files[0])+"/"+Compiler::outFile;
     if(Compiler::settings.onlyObject) Compiler::linkString += "-r ";
     if(Compiler::settings.isStatic) Compiler::linkString += "-static ";
+    if(Compiler::settings.isPIC) Compiler::linkString += "-no-pie ";
 
     Compiler::linkString += " "+Compiler::settings.linkParams+" ";
     if(outType != "") {

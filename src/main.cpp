@@ -26,7 +26,7 @@ genSettings analyzeArguments(std::vector<std::string>& arguments) {
         else if(arguments[i] == "-ne" || arguments[i] == "--noEntry") settings.noEntry = true;
         else if(arguments[i] == "-ns" || arguments[i] == "--noStd") settings.noStd = true;
         else if(arguments[i] == "-opt" || arguments[i] == "-O" || arguments[i] == "--optimizationLevel") {settings.optLevel = std::stoi(arguments[i+1]); i += 1;}
-        else if(arguments[i] == "-s" || arguments[i] == "--shared") settings.linkParams += "-shared ";
+        else if(arguments[i] == "-s" || arguments[i] == "--shared") {settings.linkParams += "-shared "; settings.isPIE = true; settings.isPIC = false;}
         else if(arguments[i] == "-sof" || arguments[i] == "--saveObjectFiles") settings.saveObjectFiles = true;
         else if(arguments[i] == "-dw" || arguments[i] == "--disableWarnings") settings.disableWarnings = true;
         else if(arguments[i] == "--debug") Compiler::debugMode = true;

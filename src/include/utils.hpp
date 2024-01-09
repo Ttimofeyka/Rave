@@ -63,7 +63,7 @@ typedef struct genSettings {
     bool noStd = false;
     int optLevel = 1;
     bool isPIE = false;
-    bool isPIC = false;
+    bool isPIC = true;
     bool disableWarnings = false;
     bool saveObjectFiles = false;
     bool isStatic = false;

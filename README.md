@@ -18,8 +18,7 @@ You can compile are examples using `rave directory/of/Rave/examples/necessary_ex
 
 * `llvm-15`
 **You can also use LLVM from 11 to 14.**
-* `clang-11`
-**You can also use Clang from 10 to 13.**
+* `clang` or `gcc`
 * Make
 * mingw (if you need cross-compilation or you are using Windows)
 
@@ -43,7 +42,7 @@ $ pkg i llvm-15
 ```
 2. Apply termux-specific patch for LLVM:
 ```bash
-$ ./termux-llvm-patch
+$ ./llvm-patch
 ```
 3. Build using `make`.
 

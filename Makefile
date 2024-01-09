@@ -4,11 +4,11 @@ OBJ = $(SRC:%.cpp=%.o)
 
 BIN = rave
 
-LLVM_LIB = -lLLVM-15
-
 LLVM_VERSION = 15
 
-COMPILER = clang++
+LLVM_LIB = -lLLVM-$(LLVM_VERSION)
+
+COMPILER = $(CXX)
 
 ifdef OS
 	BIN = rave.exe
@@ -21,5 +21,5 @@ $(BIN): $(OBJ)
 %.o: %.cpp
 	$(COMPILER) -c $< -o $@ -DLLVM_$(LLVM_VERSION) -std=c++11 -Wno-deprecated
 
-clean: 
+clean:
 	rm -rf src/*.o src/parser/*.o src/parser/nodes/*.o src/lexer/*.o
