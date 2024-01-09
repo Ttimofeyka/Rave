@@ -24,7 +24,7 @@
                 std::winapi::FreeLibrary(handle);
             } => 0;
             (inline) void* sym(void* handle, char* name) => std::winapi::GetProcAddress(handle, name);
-            (inline) char* error => null;
+            (inline) char* error => "";
         }
     }
 };
