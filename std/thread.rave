@@ -26,14 +26,5 @@ namespace std {
             }
             void unlock(int* sl) {sl[0] = 0;}
         }
-        
-        struct Spinlock {
-            int value;
-
-            std::thread::Spinlock this {std::thread::Spinlock this; this.value = 0;} => this;
-
-            (inline) void lock {std::thread::spinlock::lock(this.&value);}
-            (inline) void unlock {this.value = 0;}
-        }
     }
 }
