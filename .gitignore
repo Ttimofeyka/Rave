@@ -51,3 +51,5 @@ examples/*.o
 dcallgrind
 d-profile-viewer
 *.pdb
+
+options.json
