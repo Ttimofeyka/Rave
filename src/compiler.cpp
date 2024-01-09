@@ -94,6 +94,10 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
             else fOptions << "{\n\t\"compiler\": \"clang\"\n}" << std::endl;
         #endif
         if(fOptions.is_open()) fOptions.close();
+
+        std::ifstream rfOptions(exePath+"options.json");
+        Compiler::options = nlohmann::json::parse(rfOptions);
+        if(rfOptions.is_open()) rfOptions.close();
     }
     Compiler::linkString = Compiler::options["compiler"].template get<std::string>()+" ";
 
