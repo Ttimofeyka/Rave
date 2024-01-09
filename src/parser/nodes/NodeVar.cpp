@@ -154,6 +154,7 @@ LLVMValueRef NodeVar::generate() {
         if(isVolatile) LLVMSetVolatile(generator->globals[this->name], true);
 
         LLVMSetAlignment(generator->globals[this->name], generator->getAlignment(this->type));
+
         if(value != nullptr && !isExtern) {
             LLVMValueRef val;
             if(instanceof<NodeUnary>(this->value)) val = ((NodeUnary*)this->value)->generateConst();

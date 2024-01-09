@@ -1,17 +1,22 @@
-import <std/io> <std/network>
+import <std/io>
+
+struct Jam {
+    std::string* str;
+
+    Jam this(std::string* str) {
+        Jam this;
+        this.str = str;
+    } => this;
+
+    void ~this {
+        ~(this.str);
+    }
+}
 
 void main {
-    std::network::URL url = std::network::URL("https://eth0.me");
-    std::println("Protocol: ", url.protocol);
-    std::println("Host: ", url.host);
-    std::println("Path: ", url.path);
-
-    std::println("HTTP GET the server");
-    std::network::Response resp = std::network::get(url);
-    if(resp.success == 0) {
-        std::print("Response text: ");
-        std::println(resp.text);
-    } else {
-        std::println("Failed!", resp.success);
-    }
+    std::string str = "JAM";
+    std::println(str.isDeleted());
+        Jam jam = Jam(&str);
+        ~jam;
+    std::println(str.isDeleted());
 }

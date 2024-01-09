@@ -1168,8 +1168,8 @@ std::vector<Node*> Parser::parseFuncCallArgs() {
              ||this->peek()->value == "short" || this->peek()->value == "ushort" || this->peek()->value == "int"
              ||this->peek()->value == "uint" || this->peek()->value == "long" || this->peek()->value == "ulong"
              ||this->peek()->value == "cent" || this->peek()->value == "ucent" || this->peek()->value == "void") {
-                if(this->isDefinedLambda()) buffer.push_back(parseLambda());
-                buffer.push_back(new NodeType(this->parseType(), this->peek()->line));
+                if(this->isDefinedLambda()) buffer.push_back(this->parseLambda());
+                else buffer.push_back(new NodeType(this->parseType(), this->peek()->line));
             }
             else if(this->isDefinedLambda()) buffer.push_back(this->parseLambda());
             else buffer.push_back(this->parseExpr());
