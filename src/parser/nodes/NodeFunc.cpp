@@ -247,6 +247,18 @@ LLVMValueRef NodeFunc::generate() {
         if(!currScope->funcHasRet) LLVMBuildBr(generator->builder, this->exitBlock);
 
         LLVMMoveBasicBlockAfter(this->exitBlock, LLVMGetLastBasicBlock(generator->functions[this->name]));
+
+        uint32_t bbLength = LLVMCountBasicBlocks(generator->functions[currScope->funcName]);
+        LLVMBasicBlockRef* basicBlocks = (LLVMBasicBlockRef*)malloc(sizeof(LLVMBasicBlockRef)*bbLength);
+        LLVMGetBasicBlocks(generator->functions[currScope->funcName], basicBlocks);
+            for(int i=0; i<bbLength; i++) {
+                if(basicBlocks[i] != nullptr && std::string(LLVMGetBasicBlockName(basicBlocks[i])) != "exit" && LLVMGetBasicBlockTerminator(basicBlocks[i]) == nullptr) {
+                    LLVMPositionBuilderAtEnd(generator->builder, basicBlocks[i]);
+                    LLVMBuildBr(generator->builder, this->exitBlock);
+                }
+            }
+        free(basicBlocks);
+
         LLVMPositionBuilderAtEnd(generator->builder, this->exitBlock);
 
         if(!instanceof<TypeVoid>(this->type)) {

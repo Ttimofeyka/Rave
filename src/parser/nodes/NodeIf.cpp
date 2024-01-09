@@ -122,8 +122,13 @@ LLVMValueRef NodeIf::generate() {
     LLVMValueRef lastInstr = LLVMGetLastInstruction(endBlock);
     if(lastInstr != nullptr && LLVMGetInstructionOpcode(lastInstr) == LLVMBr && std::string(LLVMPrintValueToString(LLVMGetOperand(lastInstr, 0))).find("elseIfEnd") != std::string::npos) LLVMInstructionEraseFromParent(lastInstr);
 
-    if(hasEnd1 && hasEnd2 && generator->activeLoops.size() == 0) LLVMBuildRet(generator->builder, LLVMConstNull(generator->genType(AST::funcTable[currScope->funcName]->type, this->loc)));
+    lastInstr = LLVMGetLastInstruction(thenBlock);
+    if(lastInstr != nullptr && LLVMGetInstructionOpcode(lastInstr) == LLVMBr &&
+       LLVMGetPreviousInstruction(lastInstr) != nullptr &&
+       LLVMGetInstructionOpcode(LLVMGetPreviousInstruction(lastInstr)) == LLVMBr) LLVMInstructionEraseFromParent(lastInstr);
 
+    if(hasEnd1 && hasEnd2 && generator->activeLoops.size() == 0) LLVMBuildRet(generator->builder, LLVMConstNull(generator->genType(AST::funcTable[currScope->funcName]->type, this->loc)));
+    
     return nullptr;
 }
 
