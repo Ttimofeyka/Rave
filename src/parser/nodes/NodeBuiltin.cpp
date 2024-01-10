@@ -198,6 +198,7 @@ LLVMValueRef NodeBuiltin::generate() {
         else this->type = ty;
         return nullptr;
     }
+    if(this->name == "typeToString") return (new NodeString(this->asType(0)->type->toString(), false))->generate();
     if(this->name == "trunc") {
         LLVMValueRef value = this->args[0]->generate();
         if(LLVMGetTypeKind(LLVMTypeOf(value)) != LLVMFloatTypeKind && LLVMGetTypeKind(LLVMTypeOf(value)) != LLVMDoubleTypeKind) return value;
@@ -425,6 +426,14 @@ Node* NodeBuiltin::comptime() {
     if(this->name == "isStructure") return new NodeBool(instanceof<TypeStruct>(asType(0)->type));
     if(this->name == "isNumeric") return new NodeBool(instanceof<TypeBasic>(asType(0)->type));
     if(this->name == "argsLength") return new NodeInt(AST::funcTable[currScope->funcName]->args.size());
+    if(this->name == "typeToString") return new NodeString(this->asType(0)->type->toString(), false);
+    if(this->name == "baseType") {
+        Type* ty = this->asType(0)->type;
+        if(instanceof<TypeArray>(ty)) this->type = ((TypeArray*)ty)->element;
+        else if(instanceof<TypePointer>(ty)) this->type = ((TypePointer*)ty)->instance;
+        else this->type = ty;
+        return new NodeType(ty, this->loc);
+    }
     if(this->name == "tIsArray") {
         Type* ty = this->asType(0)->type;
         while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;

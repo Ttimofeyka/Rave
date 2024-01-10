@@ -186,8 +186,6 @@ Example:
 @error("Goodbye!");
 ```
 
-**@setRuntimeChecks(true/false)** - Enable/disable runtime checks.
-
 **@callWithArgs(args, functionName)** - Call a function with its own arguments and arguments when called.
 
 Example:
@@ -260,4 +258,53 @@ Example:
         @error("Different types!");
     };
 } => @getArg(0, int) + @getArg(1, int);
+```
+
+**@argsLength()** - Get the number of compile-time arguments.
+
+Example:
+
+```d
+(ctargs) int sum0to2 {
+    @if(@argsLength() == 0) {
+        return = 0;
+    };
+    @if(@argsLength() == 1) {
+        return = @getArg(int, 0);
+    };
+    @if(@argsLength() == 2) {
+        return = @getArg(int, 0) + @getArg(int, 1);
+    };
+}
+```
+
+**@hasMethod(type, methodName)** - returns true if a structure with a method from the second argument is passed to the first argument.
+
+**@hasDestructor(type)** - returns true if a structure with a destructor is passed to the first argument.
+
+Example:
+
+```d
+struct Example {
+    Example this {Example this;} => this;
+
+    void foo {}
+    int bow => 0;
+}
+
+void main {
+    auto ex = Example();
+
+    @if(@hasMethod(Example, foo)) {
+        if(@hasMethod(Example, bow)) {
+            // Has foo and bow
+            if(@hasDestructor(Example)) {
+                // Has destructor
+            };
+            if(!@hasDestructor(Example)) {
+                // Do not has destructor
+            };
+        };
+    };
+}
 ```

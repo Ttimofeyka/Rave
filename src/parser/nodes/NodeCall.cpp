@@ -222,6 +222,9 @@ LLVMValueRef NodeCall::generate() {
             }
 
             idenFunc->name = mainName+"<"+sTypes.substr(0, sTypes.size()-1)+">";
+            
+            delete tLexer;
+            delete tParser;
             return this->generate();
         }
         if(AST::debugMode) {
