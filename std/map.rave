@@ -6,7 +6,8 @@ namespace std {
         std::vector<std::pair<K,V>> second;
         int length;
 
-        std::map<K,V>* this {
+        std::map<K,V> this {
+            std::map<K,V> this;
             this.first = std::vector<std::pair<K,V>>();
             this.second = std::vector<std::pair<K,V>>();
             this.length = 0;

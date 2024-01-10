@@ -1,5 +1,5 @@
-import <std/io> <std/thread>
+import <std/io> <std/map>
 
 void main {
-    std::thread::Spinlock<int> spinned = std::thread::Spinlock<int>();
+    
 }

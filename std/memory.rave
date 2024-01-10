@@ -58,4 +58,15 @@ namespace std {
     }
     extern(linkname: "llvm.frameaddress.p0i8") void* frameAddress(int level);
     extern(linkname: "llvm.eh.sjlj.setjmp") int setjmp(char* buff);
+
+    struct pair<P1, P2> {
+        P1 first;
+        P2 second;
+
+        std::pair<P1, P2> this(P1 first, P2 second) {
+            std::pair<P1, P2> this;
+            this.first = first;
+            this.second = second;
+        } => this;
+    }
 }

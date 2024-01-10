@@ -198,11 +198,35 @@ LLVMValueRef NodeCall::generate() {
             }
 
             AST::funcTable[mainName]->generateWithTemplate(types, idenFunc->name);
+
+            delete tLexer;
+            delete tParser;
+            return this->generate();
+        }
+        if(idenFunc->name.find('<') != std::string::npos) {
+            std::string mainName = idenFunc->name.substr(0, idenFunc->name.find('<'));
+            std::string sTypes = idenFunc->name.substr(idenFunc->name.find('<')+1);
+            Lexer* tLexer = new Lexer(sTypes.substr(0, sTypes.size()-1), 1);
+            Parser* tParser = new Parser(tLexer->tokens, "(builtin)");
+
+            std::vector<Type*> types;
+            sTypes = "";
+            while(tParser->peek()->type != TokType::Eof) {
+                types.push_back(tParser->parseType(true));
+                if(tParser->peek()->type == TokType::Comma) tParser->next();
+            }
+
+            for(int i=0; i<types.size(); i++) {
+                while(generator->toReplace.find(types[i]->toString()) != generator->toReplace.end()) types[i] = generator->toReplace[types[i]->toString()];
+                sTypes += types[i]->toString()+",";
+            }
+
+            idenFunc->name = mainName+"<"+sTypes.substr(0, sTypes.size()-1)+">";
             return this->generate();
         }
         if(AST::debugMode) {
             for(auto const& x : AST::funcTable) std::cout << "\t" << x.first << std::endl;
-            std::cout << "DEBUG_MODE: undefined function!" << std::endl;
+            std::cout << "DEBUG_MODE 2: undefined function!" << std::endl;
         }
         generator->error("undefined function '"+idenFunc->name+"'!", this->loc);
         return nullptr;
@@ -272,10 +296,25 @@ LLVMValueRef NodeCall::generate() {
         else if(instanceof<NodeCall>(getFunc->base)) {
             NodeCall* ncall = (NodeCall*)getFunc->base;
 
+            if(currScope->localVars.find("__RAVE_NG_NGC") != currScope->localVars.end() && currScope->localVars["__RAVE_NG_NGC"] != nullptr) delete currScope->localVars["__RAVE_NG_NGC"];
+
+            // Creating a temp variable
+            currScope->localScope["__RAVE_NG_NGC"] = ncall->generate();
+            currScope->localVars["__RAVE_NG_NGC"] = new NodeVar(
+                "__RAVE_NG_NGC", nullptr, false, false, false, {},
+                this->loc, lTypeToType(LLVMTypeOf(currScope->localScope["__RAVE_NG_NGC"]))
+            );
+
+            NodeCall* ncall2 = new NodeCall(this->loc, new NodeGet(new NodeIden("__RAVE_NG_NGC", this->loc), getFunc->field, getFunc->isMustBePtr, this->loc), this->args);
+            return ncall2->generate();
+        }
+        else if(instanceof<NodeGet>(getFunc->base)) {
+            NodeGet* nget = (NodeGet*)getFunc->base;
+
             if(currScope->localVars.find("__RAVE_NG_NG") != currScope->localVars.end() && currScope->localVars["__RAVE_NG_NG"] != nullptr) delete currScope->localVars["__RAVE_NG_NG"];
 
             // Creating a temp variable
-            currScope->localScope["__RAVE_NG_NG"] = ncall->generate();
+            currScope->localScope["__RAVE_NG_NG"] = nget->generate();
             currScope->localVars["__RAVE_NG_NG"] = new NodeVar(
                 "__RAVE_NG_NG", nullptr, false, false, false, {},
                 this->loc, lTypeToType(LLVMTypeOf(currScope->localScope["__RAVE_NG_NG"]))
