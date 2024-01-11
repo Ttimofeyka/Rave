@@ -27,6 +27,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeDone.hpp"
 #include "../../include/parser/nodes/NodeRet.hpp"
 #include "../../include/parser/Types.hpp"
+#include "../../include/compiler.hpp"
 
 NodeBuiltin::NodeBuiltin(std::string name, std::vector<Node*> args, long loc, NodeBlock* block) {
     this->name = name;
@@ -333,6 +334,10 @@ LLVMValueRef NodeBuiltin::generate() {
         std::string buffer = "";
         for(int i=0; i<this->args.size(); i++) buffer += this->asStringIden(i);
         generator->error(buffer, this->loc);
+        return nullptr;
+    }
+    if(this->name == "addLibrary") {
+        Compiler::linkString += " -l"+asStringIden(0)+" ";
         return nullptr;
     }
     if(this->name == "constArrToVal") {

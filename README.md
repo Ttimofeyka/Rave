@@ -24,7 +24,7 @@ You can compile are examples using `rave directory/of/Rave/examples/necessary_ex
 
 ## Building/Running
 
-To install dependencies, you can try running `install.sh` (Arch Linux/Ubuntu/Debian).
+To install dependencies, you can try running `install.sh` (Arch Linux/Ubuntu/Debian) or `install.bat` (only Windows 64-bit using [choco](https://chocolatey.org))
 
 If the installer does not work well on your system, you can try to install all the dependencies yourself.
 
@@ -55,4 +55,3 @@ The specifications is in `specifications` directory.
 <a href="https://discord.gg/AfEtyArvsM">Discord</a>
 
 <a href="https://ravelang.space">Web-site</a>
-

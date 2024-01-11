@@ -17,15 +17,7 @@
     }
 };
 
-@if(((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64")) && (!@aliasExists(__RAVE_USELIBC))) {
-    namespace std {
-        (inline) void exit(int code) {
-            std::winapi::ExitProcess(code);
-        }
-    }
-};
-
-@if((@aliasExists(__RAVE_USELIBC)) || (__RAVE_OS == "DARWIN") || (__RAVE_OS == "ARDUINO")) {
+@if((@aliasExists(__RAVE_USELIBC)) || (__RAVE_OS == "DARWIN") || (__RAVE_OS == "ARDUINO") || (__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64")) {
     namespace std {
         extern(linkname: "exit") void exit(int code);
     }

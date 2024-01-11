@@ -371,6 +371,9 @@ LLVMValueRef NodeBinary::generate() {
                 if(LLVMGetTypeKind(LLVMTypeOf(value)) == LLVMIntegerTypeKind) value = LLVMBuildIntCast(generator->builder, value, LLVMGetElementType(LLVMTypeOf(ptr)), "NodeBinary_NodeIndex_intc");
             }
 
+            if(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) == LLVMFloatTypeKind
+             &&LLVMGetTypeKind(LLVMTypeOf(value)) == LLVMDoubleTypeKind) value = LLVMBuildFPCast(generator->builder, value, LLVMFloatTypeInContext(generator->context), "NodeBinary_dtof");
+            
             return LLVMBuildStore(generator->builder, value, ptr);
         }
         else if(instanceof<NodeDone>(this->first)) return LLVMBuildStore(generator->builder, this->second->generate(), this->first->generate());

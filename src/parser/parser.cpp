@@ -48,6 +48,8 @@ with this file, You can obtain one at htypep://mozilla.org/MPL/2.0/.
 #include "../include/parser/nodes/NodeWhile.hpp"
 #include "../include/parser/nodes/NodeLambda.hpp"
 #include "../include/parser/nodes/NodeFor.hpp"
+#include <inttypes.h>
+#include <sstream>
 
 std::map<char, int> operators;
 
@@ -415,7 +417,13 @@ Node* Parser::parseAtom(std::string f) {
         }
         return new NodeFloat(std::stof(t->value));
     }
-    if(t->type == TokType::HexNumber) return new NodeInt(BigInt(std::stol(t->value, nullptr, 16)));
+    if(t->type == TokType::HexNumber) {
+        long number;
+        std::stringstream ss;
+        ss << std::hex << "fffefffe";
+        ss >> number;
+        return new NodeInt(BigInt(number));
+    }
     if(t->type == TokType::True) return new NodeBool(true);
     if(t->type == TokType::False) return new NodeBool(false);
     if(t->type == TokType::String) {
@@ -870,8 +878,8 @@ Node* Parser::parseBasic(std::string f) {return this->parseSuffix(this->parsePre
 Node* Parser::parseExpr(std::string f) {
     std::vector<Token*> operatorStack;
 	std::vector<Node*> nodeStack;
-	uint nodeStackSize = 0;
-	uint operatorStackSize = 0;
+	uint32_t nodeStackSize = 0;
+	uint32_t operatorStackSize = 0;
 
 	nodeStack.insert(nodeStack.begin(), this->parseBasic(f));
 	nodeStackSize += 1;

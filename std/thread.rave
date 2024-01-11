@@ -8,14 +8,6 @@ import <std/process>
     }
 };
 
-@if((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64")) {
-    namespace std {
-        namespace thread {
-            (inline) int getCurrentID => std::winapi::GetCurrentThreadId();
-        }
-    }
-};
-
 namespace std {
     namespace thread {
         namespace spinlock {

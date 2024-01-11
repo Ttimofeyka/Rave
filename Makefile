@@ -1,7 +1,3 @@
-SRC = $(shell find . -name *.cpp)
-
-OBJ = $(SRC:%.cpp=%.o)
-
 BIN = rave
 
 LLVM_VERSION = 15
@@ -12,7 +8,13 @@ COMPILER = $(CXX)
 
 ifdef OS
 	BIN = rave.exe
+	SRC = $(patsubst ".\\%",$ .\src\\%, $(shell FORFILES /P src /S /M *.cpp /C "CMD /C ECHO @relpath"))
+	LLVM_LIB = ./LLVM-15/lib/LLVM-C.lib
+else
+	SRC = $(shell find . -name *.cpp)
 endif
+
+OBJ = $(SRC:%.cpp=%.o)
 
 all: $(BIN)
 

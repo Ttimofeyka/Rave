@@ -394,28 +394,3 @@ the result of a call with the same parameters and the same number will be the sa
         }
     };
 };
-
-@if((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64")) {
-    @addLibrary("user32", "kernel32");
-
-    namespace std {
-        namespace winapi {
-            extern(stdcall, linkname: "MessageBoxA") int MessageBoxA(void* h, const(char)* s, const(char)* s2, uint d);
-            extern(stdcall, linkname: "ExitProcess") void ExitProcess(int v);
-            extern(stdcall, linkname: "LoadLibraryA") void* LoadLibrary(const(char)* name);
-            extern(stdcall, linkname: "FreeLibrary") void FreeLibrary(void* library);
-            extern(stdcall, linkname: "GetProcAddress") void* GetProcAddress(void* library, const(char)* name);
-            extern(stdcall, linkname: "DeleteFileW") bool DeleteFileW(const(ushort)* name);
-            extern(stdcall, linkname: "DeleteFileA") bool DeleteFileA(const(char)* name);
-            extern(stdcall, linkname: "MultiByteToWideChar") int MultiByteToWideChar(uint codepage, int flags, char* str, int strLen, ushort* wstr, int wstrLen);
-            extern(stdcall, linkname: "WideCharToMultiByte") int WideCharToMultiByte(uint codepage, int flags, ushort* wstr, int wstrLen, char* str, int strLen, void* defC, void* usedDefC);
-            extern(stdcall, linkname: "GetLastError") int GetLastError();
-            extern(stdcall, linkname: "GetProcessHeap") void* GetProcessHeap();
-            extern(stdcall, linkname: "HeapAlloc") void* HeapAlloc(void* heap, int flags, uint size);
-            extern(stdcall, linkname: "HeapFree") bool HeapFree(void* heap, int flags, void* ptr);
-            extern(stdcall, linkname: "HeapReAlloc") void* HeapReAlloc(void* heap, int flags, void* ptr, uint size);
-            extern(stdcall, linkname: "GetCurrentProcessId") int GetCurrentProcessId();
-            extern(stdcall, linkname: "GetCurrentThreadId") int GetCurrentThreadId();
-        }
-    }
-};

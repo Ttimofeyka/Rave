@@ -32,8 +32,9 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "./include/llvm-c/Target.h"
 
 #ifdef _WIN32
-   #include <io.h> 
+   #include <io.h>
    #define access    _access_s
+   #define WEXITSTATUS(w) (((w) >> 8) & 0377)
 #else
    #include <unistd.h>
 #endif
@@ -156,8 +157,18 @@ void Compiler::compile(std::string file) {
             raveOs = "ARDUINO";
         }
 
-        if(outType.find("win32") != std::string::npos) raveOs = "WINDOWS32";
-        else if(outType.find("win64") != std::string::npos) raveOs = "WINDOWS64";
+        if(outType.find("win32") != std::string::npos) {
+            #if _WIN32
+                Compiler::linkString += " --target=i686-pc-windows-gnu ";
+            #endif
+            raveOs = "WINDOWS32";
+        }
+        else if(outType.find("win64") != std::string::npos || outType.find("windows") != std::string::npos) {
+            #if _WIN32
+                Compiler::linkString += " --target=x86_64-pc-windows-gnu ";
+            #endif
+            raveOs = "WINDOWS64";
+        }
         else if(outType.find("linux") != std::string::npos) raveOs = "LINUX";
         else if(outType.find("darwin") != std::string::npos || outType.find("macos") != std::string::npos) raveOs = "DARWIN";
         else if(outType.find("android") != std::string::npos) raveOs = "ANDROID";
@@ -202,7 +213,7 @@ void Compiler::compile(std::string file) {
             else Compiler::outType = "linux-unknown";
         }
         else if(RAVE_OS == "WINDOWS") {
-            if(RAVE_PLATFORM == "X86_64") Compiler::outType = "x86_64-win32-gnu";
+            if(RAVE_PLATFORM == "X86_64") Compiler::outType = "x86_64-pc-windows-gnu";
             else Compiler::outType = "i686-win32-gnu";
         }
         else Compiler::outType = "unknown";
@@ -360,7 +371,7 @@ void Compiler::compileAll() {
     if(Compiler::settings.isStatic) Compiler::linkString += "-static ";
     if(Compiler::settings.isPIC) Compiler::linkString += "-no-pie ";
 
-    Compiler::linkString += " "+Compiler::settings.linkParams+" ";
+    Compiler::linkString += " "+Compiler::settings.linkParams+" -Wno-unused-command-line-argument ";
     if(outType != "") {
         /*if(Compiler::options["compiler"].template get<std::string>().find("gcc") == std::string::npos) {
             Compiler::linkString += "-target "+Compiler::outType+" ";
@@ -369,6 +380,10 @@ void Compiler::compileAll() {
         }*/
     }
 
+    #ifdef _WIN32
+        Compiler::linkString += " -fuse-ld=ld ";
+    #endif
+
     ShellResult result = exec(Compiler::linkString+" -o "+Compiler::outFile);
     if(result.status != 0) {
         Compiler::error("error when linking!\nLinking string: '"+Compiler::linkString+" -o "+Compiler::outFile+"'");
@@ -376,5 +391,5 @@ void Compiler::compileAll() {
         return;
     }
     for(int i=0; i<toRemove.size(); i++) std::remove(toRemove[i].c_str());
-    std::cout << "Time spent by lexer: " << std::to_string(Compiler::lexTime) << "ms\nTime spent by parser: " << std::to_string(Compiler::parseTime) << "ms\nTime spent by generator: " << std::to_string(Compiler::genTime) << "ms\n";
+    std::cout << "Time spent by lexer: " << std::to_string(Compiler::lexTime) << "ms\nTime spent by parser: " << std::to_string(Compiler::parseTime) << "ms\nTime spent by generator: " << std::to_string(Compiler::genTime) << "ms" << std::endl;
 }
