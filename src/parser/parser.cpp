@@ -420,7 +420,7 @@ Node* Parser::parseAtom(std::string f) {
     if(t->type == TokType::HexNumber) {
         long number;
         std::stringstream ss;
-        ss << std::hex << "fffefffe";
+        ss << std::hex << t->value;
         ss >> number;
         return new NodeInt(BigInt(number));
     }
