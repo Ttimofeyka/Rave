@@ -1,25 +1,28 @@
-import <std/time>
+import <std/time> <std/memory>
 
-namespace std {
-    int randomInt(int min, int max) {
-        int result = 0;
+@if((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64")) {
+    namespace libc {
+        extern(linkname: "rand") int random();
+        extern(linkname: "srand") void srandom(int seed);
+    }
 
-        std::timeSpec ts;
-        std::getCurrentTime(&ts);
+    namespace std {
+        short randomShort(short min, short max) {
+            winapi::systemTime tm;
+            winapi::GetSystemTime(&tm);
 
-        result = cast(int)ts.nsec;
-    } => (result % ((max+1)-min))+min;
+            short* rndBytes = cast(short*)std::malloc(2);
+                tm.wMilliseconds -= (rndBytes[0] % tm.wMilliseconds);
+            std::free(cast(void*)rndBytes);
+        } => ((tm.wMilliseconds * cast(short)10) % ((max+1)-min))+min;
+    }
+};
 
-    long randomLong(long min, long max) {
-        long result = 0;
-
-        std::timeSpec ts;
-        std::getCurrentTime(&ts);
-        int first = cast(int)ts.nsec;
-
-        std::getCurrentTime(&ts);
-        int second = cast(int)ts.nsec;
-
-        result = cast(long)(first+second);
-    } => (result % ((max+1)-min))+min;
-}
+@if((__RAVE_OS != "WINDOWS32") && (__RAVE_OS != "WINDOWS64")) {
+    namespace std {
+        short randomShort(short min, short max) {
+            std::timeSpec ts;
+            std::getCurrentTime(&ts);
+        } => ((cast(short)ts.nsec) % ((max+1)-min))+min;
+    }
+};

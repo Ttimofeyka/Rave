@@ -1,21 +1,5 @@
-import <std/io> <std/opencl> <std/random>
+import <std/io> <std/random>
 
 void main {
-    void* deviceID;
-    void* context;
-    void* commands;
-    void* program;
-    void* kernel;
-
-    void* input;
-    void* output;
-
-    float[1024] data;
-    float[1024] results;
-
-    for(int i=0; i<1024; i+=1) {
-        data[i] = (std::randomInt(0, 1000) / 1000.0);
-    }
-
     
 }

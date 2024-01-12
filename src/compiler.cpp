@@ -323,7 +323,8 @@ void Compiler::compileAll() {
         }
         if(Compiler::files[i].size() > 2
             && (Compiler::files[i].substr(Compiler::files[i].size()-2, Compiler::files[i].size()) == ".a"
-             ||Compiler::files[i].substr(Compiler::files[i].size()-2, Compiler::files[i].size()) == ".o")) {
+             ||Compiler::files[i].substr(Compiler::files[i].size()-2, Compiler::files[i].size()) == ".o"
+             ||Compiler::files[i].substr(Compiler::files[i].size()-4, Compiler::files[i].size()) == ".lib")) {
                 Compiler::linkString += Compiler::files[i]+" ";
         }
         else {
@@ -351,6 +352,7 @@ void Compiler::compileAll() {
         }
         if(Compiler::files[i].size() > 2 &&
             Compiler::toImport[i].substr(Compiler::toImport[i].size()-2, Compiler::toImport[i].size()) == ".a" ||
+            Compiler::toImport[i].substr(Compiler::toImport[i].size()-4, Compiler::toImport[i].size()) == ".lib" ||
             Compiler::toImport[i].substr(Compiler::toImport[i].size()-2, Compiler::toImport[i].size()) == ".o") {
                 Compiler::linkString += Compiler::toImport[i]+" ";
         }

@@ -31,6 +31,13 @@ namespace std {
         int tz_minuteswest;
         int tz_dsttime;
     }
+
+    struct timeb {
+        int time;
+        short millitm;
+        short timezone;
+        short dstflag;
+    };
 }
 
 @if((__RAVE_OS == "LINUX") && (!@aliasExists(__RAVE_USELIBC))) {
@@ -39,9 +46,35 @@ namespace std {
     }
 };
 
-@if((__RAVE_OS != "LINUX") || (@aliasExists(__RAVE_USELIBC))) {
+@if((__RAVE_OS != "LINUX") && ((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64"))) {
+    namespace winapi {
+        struct systemTime {
+            short wYear;
+            short wMonth;
+            short wDayOfWeek;
+            short wDay;
+            short wHour;
+            short wMinute;
+            short wSecond;
+            short wMilliseconds;
+        }
+
+        struct fileTime {
+            int low;
+            int high;
+        }
+
+        extern(linkname: "GetSystemTime") void GetSystemTime(winapi::systemTime* tm);
+        extern(linkname: "GetTickCount64") ulong GetTickCount();
+        extern(linkname: "GetSystemTimeAsFileTime") void GetSystemTimeAsFileTime(winapi::fileTime* tm);
+        extern(linkname: "ProcessPrng") int ProcessPrng(char* data, int size);
+    }
+};
+
+@if(((__RAVE_OS != "LINUX") && (__RAVE_OS != "WINDOWS32") && (__RAVE_OS != "WINDOWS64")) || (@aliasExists(__RAVE_USELIBC))) {
     namespace libc {
         extern(linkname: "time") long getTime(void* v);
+        extern(linkname: "ftime") void getFTime(std::timeb* tm);
     }
 
     namespace std {
