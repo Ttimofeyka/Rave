@@ -12,6 +12,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeGet.hpp"
 #include "../../include/parser/nodes/NodeIndex.hpp"
 #include "../../include/parser/nodes/NodeBuiltin.hpp"
+#include "../../include/llvm.hpp"
 
 NodeCast::NodeCast(Type* type, Node* value, long loc) {
     this->type = type;
@@ -45,7 +46,7 @@ LLVMValueRef NodeCast::generate() {
 
         if(LLVMGetTypeKind(LLVMTypeOf(result)) == LLVMPointerTypeKind) {
             if(!tbasic->isFloat()) return LLVMBuildPtrToInt(generator->builder, result, generator->genType(tbasic, this->loc), "NodeCast_ptoi");
-            return LLVMBuildLoad(generator->builder, LLVMBuildPointerCast(generator->builder, result, LLVMPointerType(generator->genType(this->type, this->loc), 0), "NodeCast_ptofLoad"), "NodeCast_ptofLoadC");
+            return LLVM::load(LLVMBuildPointerCast(generator->builder, result, LLVMPointerType(generator->genType(this->type, this->loc), 0), "NodeCast_ptofLoad"), "NodeCast_ptofLoadC");
         }
 
         if(LLVMGetTypeKind(LLVMTypeOf(result)) == LLVMStructTypeKind) {
@@ -79,7 +80,7 @@ LLVMValueRef NodeCast::generate() {
         if(generator->toReplace.find(tstruct->name) != generator->toReplace.end()) return (new NodeCast(generator->toReplace[tstruct->name], this->value, this->loc))->generate();
         LLVMValueRef ptrResult = LLVMBuildAlloca(generator->builder, LLVMTypeOf(result), "NodeCast_ptrResult");
         LLVMBuildStore(generator->builder, result, ptrResult);
-        return LLVMBuildLoad(generator->builder, LLVMBuildBitCast(generator->builder, ptrResult, LLVMPointerType(generator->genType(tstruct, this->loc), 0), "NodeCast_tempFn"), "NodeCast_fnload");
+        return LLVM::load(LLVMBuildBitCast(generator->builder, ptrResult, LLVMPointerType(generator->genType(tstruct, this->loc), 0), "NodeCast_tempFn"), "NodeCast_fnload");
     }
     if(instanceof<TypeBuiltin>(this->type)) {
         TypeBuiltin* tbuiltin = (TypeBuiltin*)this->type;

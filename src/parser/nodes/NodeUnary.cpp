@@ -19,6 +19,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeFloat.hpp"
 #include "../../include/parser/nodes/NodeBuiltin.hpp"
 #include "../../include/parser/ast.hpp"
+#include "../../include/llvm.hpp"
 
 NodeUnary::NodeUnary(long loc, char type, Node* base) {
     this->loc = loc;
@@ -111,7 +112,7 @@ LLVMValueRef NodeUnary::generate() {
     if(this->type == TokType::Ne) return LLVMBuildNot(generator->builder, this->base->generate(), "NodeUnary_not");
     if(this->type == TokType::Multiply) {
         LLVMValueRef _base = this->base->generate();
-        return LLVMBuildLoad(generator->builder, _base, "NodeUnary_multiply_load");
+        return LLVM::load(_base, "NodeUnary_multiply_load");
     }
     if(this->type == TokType::Destructor) {
         LLVMValueRef val2 = this->generatePtr();
@@ -119,7 +120,7 @@ LLVMValueRef NodeUnary::generate() {
         && LLVMGetTypeKind(LLVMTypeOf(val2)) != LLVMStructTypeKind) generator->error("the attempt to call the destructor is not in the structure!", this->loc); 
         if(LLVMGetTypeKind(LLVMTypeOf(val2)) == LLVMPointerTypeKind) {
             if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(val2))) == LLVMPointerTypeKind) {
-                if(LLVMGetTypeKind(LLVMGetElementType(LLVMGetElementType(LLVMTypeOf(val2)))) == LLVMStructTypeKind) val2 = LLVMBuildLoad(generator->builder, val2, "NodeCall_destructor_load");
+                if(LLVMGetTypeKind(LLVMGetElementType(LLVMGetElementType(LLVMTypeOf(val2)))) == LLVMStructTypeKind) val2 = LLVM::load(val2, "NodeCall_destructor_load");
             }
         }
         if(LLVMGetTypeKind(LLVMTypeOf(val2)) != LLVMPointerTypeKind) {

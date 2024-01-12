@@ -19,6 +19,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <string>
 #include "../../include/utils.hpp"
 #include "../../include/parser/Types.hpp"
+#include "../../include/llvm.hpp"
 
 NodeIndex::NodeIndex(Node* element, std::vector<Node*> indexes, long loc) {
     this->element = element;
@@ -102,16 +103,7 @@ LLVMValueRef NodeIndex::generate() {
         }
         else if(instanceof<TypeConst>(_t)) this->elementIsConst = this->isElementConst(((TypeConst*)_t)->instance);
         LLVMValueRef ptr = currScope->get(id->name, this->loc);
-        /*if(Generator.opts.runtimeChecks && LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMPointerTypeKind && !FuncTable[currScope.func].isNoChecks) {
-            LLVMValueRef isNull = LLVMBuildICmp(
-                generator->builder,
-                LLVMIntNE,
-                LLVMBuildPtrToInt(generator->builder,ptr,LLVMInt32TypeInContext(Generator.Context),toStringz("ptoi_")),
-                LLVMBuildPtrToInt(generator->builder,new NodeNull().generate(),LLVMInt32TypeInContext(Generator.Context),toStringz("ptoi_")),
-                toStringz("assert(p==null)_")
-            );
-            if(NeededFunctions["assert"].into(Generator.Functions)) LLVMBuildCall(generator->builder,Generator.Functions[NeededFunctions["assert"]],[isNull,new NodeString("Runtime error in '"~Generator.file~"' file on "~to!string(loc)~" line: attempt to use a null pointer in ptoi!\n",false).generate()].ptr,2,toStringz(""));
-        }*/
+
         if(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMArrayTypeKind && LLVMGetTypeKind(LLVMTypeOf(currScope->getWithoutLoad(id->name, this->loc))) == LLVMArrayTypeKind) {
             LLVMValueRef copyVal = LLVMBuildAlloca(generator->builder, LLVMTypeOf(ptr), ("NodeIndex_copyVal_"+std::to_string(this->loc)+"_").c_str());
             LLVMBuildStore(generator->builder, ptr, copyVal);
@@ -141,24 +133,24 @@ LLVMValueRef NodeIndex::generate() {
         }*/
         LLVMValueRef index = generator->byIndex(ptr, this->generateIndexes());
         if(isMustBePtr) return index;
-        return LLVMBuildLoad(generator->builder, index, ("NodeIndex_NodeIden_load_"+std::to_string(this->loc)+"_").c_str());
+        return LLVM::load(index, ("NodeIndex_NodeIden_load_"+std::to_string(this->loc)+"_").c_str());
     }
     if(instanceof<NodeGet>(this->element)) {
         NodeGet* nget = (NodeGet*)this->element;
         nget->isMustBePtr = true;
         LLVMValueRef ptr = nget->generate();
         this->elementIsConst = nget->elementIsConst;
-        if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) != LLVMArrayTypeKind) {ptr = LLVMBuildLoad(generator->builder, ptr, ("NodeIndex_NodeGet_load"+std::to_string(this->loc)+"_").c_str());}
+        if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) != LLVMArrayTypeKind) {ptr = LLVM::load(ptr, ("NodeIndex_NodeGet_load"+std::to_string(this->loc)+"_").c_str());}
         LLVMValueRef index = generator->byIndex(ptr, this->generateIndexes());
         if(isMustBePtr) return index;
-        return LLVMBuildLoad(generator->builder,index, ("NodeIndex_NodeGet"+std::to_string(this->loc)+"_").c_str());
+        return LLVM::load(index, ("NodeIndex_NodeGet"+std::to_string(this->loc)+"_").c_str());
     }
     if(instanceof<NodeCall>(this->element)) {
         NodeCall* ncall = (NodeCall*)this->element;
         LLVMValueRef vr = ncall->generate();
         LLVMValueRef index = generator->byIndex(vr, this->generateIndexes());
         if(isMustBePtr) return index;
-        return LLVMBuildLoad(generator->builder, index, ("NodeIndex_NodeCall_load"+std::to_string(this->loc)+"_").c_str());
+        return LLVM::load(index, ("NodeIndex_NodeCall_load"+std::to_string(this->loc)+"_").c_str());
     }
     /*if(NodeDone nd = element.instanceof!NodeDone) {
         LLVMValueRef val = nd.generate();
@@ -171,7 +163,7 @@ LLVMValueRef NodeIndex::generate() {
         LLVMValueRef val = ncast->generate();
         LLVMValueRef index = generator->byIndex(val, this->generateIndexes());
         if(isMustBePtr) return index;
-        return LLVMBuildLoad(generator->builder, index, "NodeIndex_NodeCast_load");
+        return LLVM::load(index, "NodeIndex_NodeCast_load");
     }
     if(instanceof<NodeUnary>(this->element)) {
         NodeUnary* nunary = (NodeUnary*)this->element;

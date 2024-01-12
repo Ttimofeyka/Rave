@@ -25,6 +25,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeCall.hpp"
 #include "../../include/parser/nodes/NodeFunc.hpp"
 #include "../../include/parser/nodes/NodeUnary.hpp"
+#include "../../include/llvm.hpp"
 #include <iostream>
 
 LLVMValueRef Binary::castValue(LLVMValueRef from, LLVMTypeRef to, long loc) {
@@ -316,13 +317,13 @@ LLVMValueRef NodeBinary::generate() {
             LLVMValueRef sValue = this->second->generate();
             std::string sValueStr = std::string(LLVMPrintTypeToString(LLVMTypeOf(sValue)));
 
-            if(sValueStr.substr(0,sValueStr.size()-1) == fValueStr) sValue = LLVMBuildLoad(generator->builder, sValue, "NodeBinary_NodeGet_load");
+            if(sValueStr.substr(0,sValueStr.size()-1) == fValueStr) sValue = LLVM::load(sValue, "NodeBinary_NodeGet_load");
 
             nget->isMustBePtr = true;
             fValue = nget->generate();
 
             if(LLVMTypeOf(sValue) == LLVMTypeOf(fValue)) {
-                if(instanceof<NodeNull>(this->second)) sValue = LLVMBuildLoad(generator->builder, sValue, "NodeBinary_NodeGet_loadnull");
+                if(instanceof<NodeNull>(this->second)) sValue = LLVM::load(sValue, "NodeBinary_NodeGet_loadnull");
             }
 
             if(nget->elementIsConst) {
@@ -346,7 +347,7 @@ LLVMValueRef NodeBinary::generate() {
             if(std::string(LLVMPrintValueToString(ptr)).find("([])") != std::string::npos) {
                 LLVMValueRef structPtr = LLVMGetOperand(ptr, 0);
                 LLVMValueRef structValue = structPtr;
-                while(LLVMGetTypeKind(LLVMTypeOf(structValue)) == LLVMPointerTypeKind) structValue = LLVMBuildLoad(generator->builder, structValue, "NodeBinary_NodeIndex_[]=_load");
+                while(LLVMGetTypeKind(LLVMTypeOf(structValue)) == LLVMPointerTypeKind) structValue = LLVM::load(structValue, "NodeBinary_NodeIndex_[]=_load");
                 std::string structName = std::string(LLVMGetStructName(LLVMTypeOf(structValue)));
                 if(AST::structTable.find(structName) != AST::structTable.end()) {
                     if(AST::structTable[structName]->operators.find(TokType::Lbra) != AST::structTable[structName]->operators.end()) {
@@ -365,7 +366,7 @@ LLVMValueRef NodeBinary::generate() {
             }
             LLVMValueRef value = this->second->generate();
 
-            if(LLVMTypeOf(ptr) == LLVMPointerType(LLVMPointerType(LLVMTypeOf(value),0),0)) ptr = LLVMBuildLoad(generator->builder, ptr, "NodeBinary_NodeIndex_load");
+            if(LLVMTypeOf(ptr) == LLVMPointerType(LLVMPointerType(LLVMTypeOf(value),0),0)) ptr = LLVM::load(ptr, "NodeBinary_NodeIndex_load");
 
             if(LLVMGetElementType(LLVMTypeOf(ptr)) != LLVMTypeOf(value) && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) == LLVMGetTypeKind(LLVMTypeOf(value))) {
                 if(LLVMGetTypeKind(LLVMTypeOf(value)) == LLVMIntegerTypeKind) value = LLVMBuildIntCast(generator->builder, value, LLVMGetElementType(LLVMTypeOf(ptr)), "NodeBinary_NodeIndex_intc");
@@ -415,8 +416,8 @@ LLVMValueRef NodeBinary::generate() {
         }
     }
 
-    if(vFirstStr.substr(0, vFirstStr.size()-1) == vSecondStr) vFirst = LLVMBuildLoad(generator->builder, vFirst, "NodeBinary_firstload");
-    if(vSecondStr.substr(0, vSecondStr.size()-1) == vFirstStr) vSecond = LLVMBuildLoad(generator->builder, vSecond, "NodeBinary_secondload");
+    if(vFirstStr.substr(0, vFirstStr.size()-1) == vSecondStr) vFirst = LLVM::load(vFirst, "NodeBinary_firstload");
+    if(vSecondStr.substr(0, vSecondStr.size()-1) == vFirstStr) vSecond = LLVM::load(vSecond, "NodeBinary_secondload");
 
     if(LLVMGetTypeKind(LLVMTypeOf(vFirst)) == LLVMGetTypeKind(LLVMTypeOf(vSecond)) && LLVMTypeOf(vFirst) != LLVMTypeOf(vSecond)) {
         if(LLVMGetTypeKind(LLVMTypeOf(vFirst)) == LLVMIntegerTypeKind) vFirst = LLVMBuildIntCast(

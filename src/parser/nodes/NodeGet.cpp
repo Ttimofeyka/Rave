@@ -11,6 +11,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeIndex.hpp"
 #include "../../include/parser/nodes/NodeCall.hpp"
 #include "../../include/parser/ast.hpp"
+#include "../../include/llvm.hpp"
 #include <vector>
 #include <string>
 
@@ -57,7 +58,7 @@ LLVMValueRef NodeGet::checkStructure(LLVMValueRef ptr) {
         return temp;
     }
     while(sType.substr(sType.size()-2) == "**") {
-        ptr = LLVMBuildLoad(generator->builder, ptr, "NodeGet_checkStructure_load");
+        ptr = LLVM::load(ptr, "NodeGet_checkStructure_load");
         sType = typeToString(LLVMTypeOf(ptr));
     }
     return ptr;
@@ -103,7 +104,7 @@ LLVMValueRef NodeGet::generate() {
             AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
             "NodeGet_generate_Iden_ptr"
         );
-        return LLVMBuildLoad(generator->builder, LLVMBuildStructGEP(
+        return LLVM::load(LLVMBuildStructGEP(
             generator->builder,
             ptr,
             AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
@@ -125,7 +126,7 @@ LLVMValueRef NodeGet::generate() {
             AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
             "NodeGet_generate_Index_ptr"
         );
-        return LLVMBuildLoad(generator->builder, LLVMBuildStructGEP(
+        return LLVM::load(LLVMBuildStructGEP(
             generator->builder,
             ptr,
             AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
@@ -150,45 +151,13 @@ LLVMValueRef NodeGet::generate() {
             AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
             "NodeGet_generate_Index_ptr"
         );
-        return LLVMBuildLoad(generator->builder, LLVMBuildStructGEP(
+        return LLVM::load(LLVMBuildStructGEP(
             generator->builder,
             ptr,
             AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
             "NodeGet_generate_Index_preload"
         ), "NodeGet_generate_Index_load");
     }
-    /*if(NodeBuiltin nb = base.instanceof!NodeBuiltin) {
-        LLVMValueRef v = nb.generate();
-        string structName;
-        if(v is null) {
-            Generator.error(loc, "The built-in function '"~nb.name~"' does not return values!");
-        }
-        LLVMValueRef ptr = checkStructure(v);
-        structName = cast(string)fromStringz(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(ptr))));
-        LLVMValueRef f = checkIn(structName);
-        if(f !is null) return f;
-        if(isMustBePtr) return LLVMBuildStructGEP(
-            Generator.Builder, ptr, cast(uint)structsNumbers[cast(immutable)[structName,field]].number, toStringz("sgep1760_")
-        );
-        return LLVMBuildLoad(Generator.Builder, LLVMBuildStructGEP(
-            Generator.Builder, ptr, cast(uint)structsNumbers[cast(immutable)[structName,field]].number, toStringz("sgep1760_")
-        ), toStringz("load1760_"));
-    }
-    if(NodeDone nd = base.instanceof!NodeDone) {
-        LLVMValueRef done = nd.generate();
-        LLVMValueRef _nakedDone = done;
-        while(LLVMGetTypeKind(LLVMTypeOf(_nakedDone)) == LLVMPointerTypeKind) _nakedDone = LLVMBuildLoad(Generator.Builder, _nakedDone, toStringz("_nakedDone_"));
-        string structName = cast(string)fromStringz(LLVMGetStructName(LLVMTypeOf(_nakedDone)));
-        LLVMValueRef ptr = checkStructure(done);
-        LLVMValueRef f = checkIn(structName);
-        if(f !is null) return f;
-        if(isMustBePtr) return LLVMBuildStructGEP(
-            Generator.Builder, ptr, cast(uint)structsNumbers[cast(immutable)[structName,field]].number, toStringz("sgep1760_")
-        );
-        return LLVMBuildLoad(Generator.Builder, LLVMBuildStructGEP(
-            Generator.Builder, ptr, cast(uint)structsNumbers[cast(immutable)[structName,field]].number, toStringz("sgep1760_")
-        ), toStringz("load1780_"));
-    }*/
     generator->error("Assert into NodeGet ("+std::string(typeid(this->base[0]).name())+")", this->loc);
     return nullptr;
 }

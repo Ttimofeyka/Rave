@@ -17,6 +17,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../include/parser/nodes/NodeCall.hpp"
 #include "../include/parser/nodes/NodeType.hpp"
 #include <iostream>
+#include "../include/llvm.hpp"
 
 std::map<std::string, Type*> AST::aliasTypes;
 std::map<std::string, Node*> AST::aliasTable;
@@ -403,7 +404,7 @@ LLVMValueRef Scope::get(std::string name, long loc) {
         generator->error("undefined variable '"+name+"'!", loc);
         return nullptr;
     }
-    if(LLVMGetTypeKind(LLVMTypeOf(value)) == LLVMPointerTypeKind) value = LLVMBuildLoad(generator->builder, value, "scopeGetLoad");
+    if(LLVMGetTypeKind(LLVMTypeOf(value)) == LLVMPointerTypeKind) value = LLVM::load(value, "scopeGetLoad");
     return value;
 }
 

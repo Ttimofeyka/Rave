@@ -21,6 +21,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/Types.hpp"
 #include "../../include/parser/ast.hpp"
 #include "../../include/lexer/lexer.hpp"
+#include "../../include/llvm.hpp"
 
 NodeCall::NodeCall(long loc, Node* func, std::vector<Node*> args) {
     this->loc = loc;
@@ -59,7 +60,7 @@ std::vector<LLVMValueRef> NodeCall::correctByLLVM(std::vector<LLVMValueRef> valu
             }
         }
         else if(!instanceof<TypePointer>(fas[i].type) && LLVMGetTypeKind(LLVMTypeOf(params[i])) == LLVMPointerTypeKind) {
-            params[i] = LLVMBuildLoad(generator->builder, params[i], "correctLoad");
+            params[i] = LLVM::load(params[i], "correctLoad");
         }
     }
     return params;
@@ -122,7 +123,7 @@ std::vector<LLVMValueRef> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg
                 LLVMValueRef temp = LLVMBuildAlloca(generator->builder, LLVMTypeOf(params[i]), "StructToI_cdecl64_getParameters_temp");
                 LLVMBuildStore(generator->builder, params[i], temp);
                 temp = LLVMBuildPointerCast(generator->builder, temp, LLVMPointerType(generator->genType(tbasic, this->loc), 0), "StructToI_cdecl64_getParameters");
-                params[i] = LLVMBuildLoad(generator->builder, temp, "StructToI_cdecl64_getParameters_load");
+                params[i] = LLVM::load(temp, "StructToI_cdecl64_getParameters_load");
             }
         }
     }
@@ -160,12 +161,12 @@ LLVMValueRef NodeCall::generate() {
                 // Function with compile-time args (ctargs)
                 if(AST::funcTable[idenFunc->name]->isCtargs) {
                     if(generator->functions.find(idenFunc->name+sTypes) != generator->functions.end()) {
-                        return LLVMBuildCall(generator->builder, generator->functions[idenFunc->name+sTypes], this->getParameters(nullptr, false).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
+                        return LLVM::call(generator->functions[idenFunc->name+sTypes], this->getParameters(nullptr, false).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
                     }
                     std::vector<LLVMValueRef> params = this->getParameters(nullptr, false);
                     std::vector<LLVMTypeRef> types;
                     for(int i=0; i<params.size(); i++) types.push_back(LLVMTypeOf(params[i]));
-                    return LLVMBuildCall(generator->builder, generator->functions[AST::funcTable[idenFunc->name]->generateWithCtargs(types)], params.data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
+                    return LLVM::call(generator->functions[AST::funcTable[idenFunc->name]->generateWithCtargs(types)], params.data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
                 }
                 if(AST::debugMode) {
                     for(auto const& x : AST::funcTable) std::cout << "\t" << x.first << std::endl;
@@ -176,14 +177,14 @@ LLVMValueRef NodeCall::generate() {
             }
             if(AST::funcTable.find(idenFunc->name+sTypes) != AST::funcTable.end()) {
                 this->isCdecl64 = AST::funcTable[idenFunc->name+sTypes]->isCdecl64;
-                return LLVMBuildCall(generator->builder, generator->functions[idenFunc->name+sTypes], this->getParameters(AST::funcTable[idenFunc->name+sTypes], false, AST::funcTable[idenFunc->name+sTypes]->args).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name+sTypes]->type) ? "" : "callFunc"));
+                return LLVM::call(generator->functions[idenFunc->name+sTypes], this->getParameters(AST::funcTable[idenFunc->name+sTypes], false, AST::funcTable[idenFunc->name+sTypes]->args).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name+sTypes]->type) ? "" : "callFunc"));
             }
             this->isCdecl64 = AST::funcTable[idenFunc->name]->isCdecl64;
-            return LLVMBuildCall(generator->builder, generator->functions[idenFunc->name], this->getParameters(AST::funcTable[idenFunc->name], false, AST::funcTable[idenFunc->name]->args).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
+            return LLVM::call(generator->functions[idenFunc->name], this->getParameters(AST::funcTable[idenFunc->name], false, AST::funcTable[idenFunc->name]->args).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
         }
         if(currScope->has(idenFunc->name)) {
             TypeFunc* fn = (TypeFunc*)currScope->getVar(idenFunc->name, this->loc)->type;
-            return LLVMBuildCall(generator->builder, currScope->get(idenFunc->name), this->getParameters(nullptr, false, tfaToFas(fn->args)).data(), this->args.size(), (instanceof<TypeVoid>(fn->main) ? "" : "callFunc"));
+            return LLVM::call(currScope->get(idenFunc->name), this->getParameters(nullptr, false, tfaToFas(fn->args)).data(), this->args.size(), (instanceof<TypeVoid>(fn->main) ? "" : "callFunc"));
         }
         if(idenFunc->name.find('<') != std::string::npos && AST::funcTable.find(idenFunc->name.substr(0, idenFunc->name.find('<'))) != AST::funcTable.end()) {
             std::string mainName = idenFunc->name.substr(0, idenFunc->name.find('<'));
@@ -266,7 +267,7 @@ LLVMValueRef NodeCall::generate() {
                         return nullptr;
                     }
                     params = this->correctByLLVM(params, AST::methodTable[method]->args);
-                    return LLVMBuildCall(generator->builder, generator->functions[AST::methodTable[method]->name], params.data(), params.size(), (instanceof<TypeVoid>(AST::methodTable[method]->type) ? "" : "callFunc"));
+                    return LLVM::call(generator->functions[AST::methodTable[method]->name], params.data(), params.size(), (instanceof<TypeVoid>(AST::methodTable[method]->type) ? "" : "callFunc"));
                 }
                 
                 method.second += typesToString(types);
@@ -276,7 +277,7 @@ LLVMValueRef NodeCall::generate() {
                         return nullptr;
                     }
                     params = this->correctByLLVM(params, AST::methodTable[method]->args);
-                    return LLVMBuildCall(generator->builder, generator->functions[AST::methodTable[method]->name], params.data(), params.size(), (instanceof<TypeVoid>(AST::methodTable[method]->type) ? "" : "callFunc"));
+                    return LLVM::call(generator->functions[AST::methodTable[method]->name], params.data(), params.size(), (instanceof<TypeVoid>(AST::methodTable[method]->type) ? "" : "callFunc"));
                 }
 
                 method.second = method.second.substr(0, method.second.find('['));
@@ -286,7 +287,7 @@ LLVMValueRef NodeCall::generate() {
                         return nullptr;
                     }
                     params = this->correctByLLVM(params, AST::methodTable[method]->args);
-                    return LLVMBuildCall(generator->builder, generator->functions[AST::methodTable[method]->name], params.data(), params.size(), (instanceof<TypeVoid>(AST::methodTable[method]->type) ? "" : "callFunc"));
+                    return LLVM::call(generator->functions[AST::methodTable[method]->name], params.data(), params.size(), (instanceof<TypeVoid>(AST::methodTable[method]->type) ? "" : "callFunc"));
                 }
 
                 generator->error("undefined method '"+method.second.substr(0, method.second.find('['))+"' of structure '"+structure->name+"'!", this->loc);

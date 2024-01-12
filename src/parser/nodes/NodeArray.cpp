@@ -7,6 +7,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeArray.hpp"
 #include "../../include/utils.hpp"
 #include "../../include/parser/ast.hpp"
+#include "../../include/llvm.hpp"
 
 NodeArray::NodeArray(long loc, std::vector<Node*> values) {
     this->loc = loc;
@@ -38,7 +39,7 @@ LLVMValueRef NodeArray::generate() {
             generator->byIndex(arr, std::vector<LLVMValueRef>({LLVMConstInt(LLVMInt32TypeInContext(generator->context),i,false)}))
         );
     }
-    return LLVMBuildLoad(generator->builder,arr,"loadNodeArray");
+    return LLVM::load(arr, "loadNodeArray");
 }
 
 void NodeArray::check() {this->isChecked = true;}
