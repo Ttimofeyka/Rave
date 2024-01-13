@@ -17,6 +17,7 @@ namespace Space {
         int temperature;
 
         Sun this(int base) {
+            Space::Sun this;
             this.temperature = base;
         } => this;
     }
