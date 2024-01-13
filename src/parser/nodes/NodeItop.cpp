@@ -28,16 +28,6 @@ void NodeItop::check() {
 
 LLVMValueRef NodeItop::generate() {
     LLVMValueRef _int = this->value->generate();
-    /*if(Generator.opts.runtimeChecks && !FuncTable[currScope.func].isNoChecks) {
-        LLVMValueRef isNull = LLVMBuildICmp(
-            Generator.Builder,
-            LLVMIntNE,
-            _int,
-            LLVMConstInt(LLVMTypeOf(_int),0,false),
-            toStringz("assert(number==0)_")
-        );
-        LLVMBuildCall(Generator.Builder,Generator.Functions[NeededFunctions["assert"]],[isNull,new NodeString("Runtime error in '"~Generator.file~"' file on "~to!string(loc)~" line: an attempt to turn a number into a null pointer in itop!\n",false).generate()].ptr,2,toStringz(""));
-    }*/
     return LLVMBuildIntToPtr(
         generator->builder,
         _int,

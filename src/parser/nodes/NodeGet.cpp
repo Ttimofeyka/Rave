@@ -98,14 +98,12 @@ LLVMValueRef NodeGet::generate() {
         std::string structName = std::string(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(ptr))));
         LLVMValueRef f = this->checkIn(structName);
         if(f != nullptr) return f;
-        if(this->isMustBePtr) return LLVMBuildStructGEP(
-            generator->builder,
+        if(this->isMustBePtr) return LLVM::structGep(
             ptr,
             AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
             "NodeGet_generate_Iden_ptr"
         );
-        return LLVM::load(LLVMBuildStructGEP(
-            generator->builder,
+        return LLVM::load(LLVM::structGep(
             ptr,
             AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
             "NodeGet_generate_Iden_preload"
@@ -120,14 +118,12 @@ LLVMValueRef NodeGet::generate() {
         LLVMValueRef f = checkIn(structName);
 
         if(f != nullptr) return f;
-        if(this->isMustBePtr) return LLVMBuildStructGEP(
-            generator->builder,
+        if(this->isMustBePtr) return LLVM::structGep(
             ptr,
             AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
             "NodeGet_generate_Index_ptr"
         );
-        return LLVM::load(LLVMBuildStructGEP(
-            generator->builder,
+        return LLVM::load(LLVM::structGep(
             ptr,
             AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
             "NodeGet_generate_Index_preload"
@@ -145,14 +141,12 @@ LLVMValueRef NodeGet::generate() {
         LLVMValueRef ptr = checkStructure(ncall->generate());
         if(structName == "") structName = std::string(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(ptr))));
 
-        if(this->isMustBePtr) return LLVMBuildStructGEP(
-            generator->builder,
+        if(this->isMustBePtr) return LLVM::structGep(
             ptr,
             AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
             "NodeGet_generate_Index_ptr"
         );
-        return LLVM::load(LLVMBuildStructGEP(
-            generator->builder,
+        return LLVM::load(LLVM::structGep(
             ptr,
             AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
             "NodeGet_generate_Index_preload"

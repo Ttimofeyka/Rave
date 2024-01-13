@@ -293,16 +293,16 @@ LLVMTypeRef LLVMGen::genType(Type* type, long loc) {
 
 LLVMValueRef LLVMGen::byIndex(LLVMValueRef value, std::vector<LLVMValueRef> indexes) {
     if(LLVMGetTypeKind(LLVMTypeOf(value)) == LLVMArrayTypeKind) return byIndex(
-        LLVMBuildGEP(generator->builder,value,std::vector<LLVMValueRef>({LLVMConstInt(LLVMInt32TypeInContext(generator->context),0,false)}).data(),2,"gep_byIndex"),indexes
+        LLVM::gep(value, std::vector<LLVMValueRef>({LLVMConstInt(LLVMInt32TypeInContext(generator->context), 0, false)}).data(), 2, "gep_byIndex"), indexes
     );
     if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(value))) == LLVMArrayTypeKind) value = LLVMBuildPointerCast(
         generator->builder,value,LLVMPointerType(LLVMGetElementType(LLVMGetElementType(LLVMTypeOf(value))),0),"ptrc_byIndex"
     );
     if(indexes.size() > 1) {
-        LLVMValueRef oneGep = LLVMBuildGEP(generator->builder,value,std::vector<LLVMValueRef>({indexes[0]}).data(),1,"gep2_byIndex");
+        LLVMValueRef oneGep = LLVM::gep(value, std::vector<LLVMValueRef>({indexes[0]}).data(), 1, "gep2_byIndex");
         return byIndex(oneGep,std::vector<LLVMValueRef>(indexes.begin() + 1, indexes.end()));
     }
-    return LLVMBuildGEP(generator->builder,value,indexes.data(),indexes.size(),"gep3_byIndex");
+    return LLVM::gep(value,indexes.data(), indexes.size(), "gep3_byIndex");
 }
 
 void LLVMGen::addAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, long loc, unsigned long value) {

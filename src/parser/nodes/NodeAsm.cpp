@@ -7,6 +7,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeAsm.hpp"
 #include "../../include/utils.hpp"
 #include "../../include/parser/ast.hpp"
+#include "../../include/llvm.hpp"
 
 NodeAsm::NodeAsm(std::string line, bool isVolatile, Type* type, std::string additions, std::vector<Node*> values, long loc) {
     this->line = line;
@@ -37,7 +38,7 @@ LLVMValueRef NodeAsm::generate() {
         types.push_back(LLVMTypeOf(value));
     }
 
-    return LLVMBuildCall(generator->builder, LLVMGetInlineAsm(
+    return LLVM::call(LLVMGetInlineAsm(
         LLVMFunctionType(generator->genType(this->type, this->loc), types.data(), types.size(), false),
         (char*)this->line.c_str(),
         this->line.size(),
