@@ -12,6 +12,13 @@ else
         sudo apt install llvm-15 llvm-15-dev clang-15 gcc-mingw-w64 binutils-mingw-w64
         echo Done.
     else
-        echo Unsupported platform detected.
+        if [ ! -z "$(command -v xbps-install)" ]; then
+            echo Void Linux detected.
+            doas xbps-install -S clang llvm
+            ./llvm-patch.sh
+            echo Done.
+        else
+            echo Unsupported platform detected.
+        fi
     fi
 fi
