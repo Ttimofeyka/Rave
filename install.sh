@@ -13,8 +13,12 @@ else
         echo Done.
     else
         if [ ! -z "$(command -v xbps-install)" ]; then
+            SUDO=sudo
+            if [ -z "$(command -v sudo)" ]; then
+                SUDO=doas
+            fi
             echo Void Linux detected.
-            doas xbps-install -S clang llvm
+            $SUDO xbps-install -S clang llvm
             ./llvm-patch.sh
             echo Done.
         else
