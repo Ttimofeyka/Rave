@@ -9,7 +9,7 @@ COMPILER = $(CXX)
 ifdef OS
 	BIN = rave.exe
 	SRC = $(patsubst ".\\%",$ .\src\\%, $(shell FORFILES /P src /S /M *.cpp /C "CMD /C ECHO @relpath"))
-	LLVM_LIB = ./LLVM-16/lib/LLVM-C.lib
+	LLVM_LIB = ./LLVM/lib/LLVM-C.lib
 else
 	ifeq (, $(shell which llvm-config-16))
  		LLVM_VERSION = 15
