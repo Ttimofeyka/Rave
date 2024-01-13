@@ -57,7 +57,11 @@ void NodeUnary::check() {
 LLVMValueRef NodeUnary::generateConst() {
     if(this->type == TokType::Minus) {
         LLVMValueRef bs = this->base->generate();
-        return (LLVMGetTypeKind(LLVMTypeOf(bs)) == LLVMIntegerTypeKind) ? LLVMConstNeg(bs) : LLVMConstFNeg(bs);
+        #if LLVM_VERSION_MAJOR >= 15
+            return (LLVMGetTypeKind(LLVMTypeOf(bs)) == LLVMIntegerTypeKind) ? LLVMBuildNeg(generator->builder, bs, "") : LLVMBuildFNeg(generator->builder, bs, "");
+        #else
+            return (LLVMGetTypeKind(LLVMTypeOf(bs)) == LLVMIntegerTypeKind) ? LLVMConstNeg(bs) : LLVMConstFNeg(bs);
+        #endif
     }
     return nullptr;
 }
@@ -88,7 +92,7 @@ LLVMValueRef NodeUnary::generate() {
         else if(instanceof<NodeIden>(this->base)) {
             NodeIden* id = ((NodeIden*)this->base);
             if(instanceof<TypeArray>(currScope->getVar(id->name, this->loc)->type)) {
-                LLVMValueRef ptr = LLVMBuildInBoundsGEP(generator->builder, currScope->getWithoutLoad(id->name),
+                LLVMValueRef ptr = LLVM::inboundsGep(currScope->getWithoutLoad(id->name),
                     std::vector<LLVMValueRef>({LLVMConstInt(LLVMInt32Type(),0,false),LLVMConstInt(LLVMInt32Type(),0,false)}).data(),
                 2, "NodeUnary_ingep");
                 val = ptr;

@@ -29,7 +29,23 @@ LLVMValueRef LLVM::gep(LLVMValueRef ptr, LLVMValueRef* indices, unsigned int ind
     #if LLVM_VERSION_MAJOR >= 15
         return LLVMBuildGEP2(generator->builder, LLVMGetElementType(LLVMTypeOf(ptr)), ptr, indices, indicesCount, name);
     #else
-        return LLVMBuildGEP(ptr, indices, indicesCount, name);
+        return LLVMBuildGEP(generator->builder, ptr, indices, indicesCount, name);
+    #endif
+}
+
+LLVMValueRef LLVM::inboundsGep(LLVMValueRef ptr, LLVMValueRef* indices, unsigned int indicesCount, const char* name) {
+    #if LLVM_VERSION_MAJOR >= 15
+        return LLVMBuildInBoundsGEP2(generator->builder, LLVMGetElementType(LLVMTypeOf(ptr)), ptr, indices, indicesCount, name);
+    #else
+        return LLVMBuildInBoundsGEP(generator->builder, ptr, indices, indicesCount, name);
+    #endif
+}
+
+LLVMValueRef LLVM::constInboundsGep(LLVMValueRef ptr, LLVMValueRef* indices, unsigned int indicesCount) {
+    #if LLVM_VERSION_MAJOR >= 15
+        return LLVMConstInBoundsGEP2(LLVMGetElementType(LLVMTypeOf(ptr)), ptr, indices, indicesCount);
+    #else
+        return LLVMConstInBoundsGEP(ptr, indices, indicesCount);
     #endif
 }
 

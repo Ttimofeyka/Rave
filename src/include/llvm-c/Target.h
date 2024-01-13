@@ -21,7 +21,22 @@
 
 #include "./ExternC.h"
 #include "./Types.h"
-#include <llvm-15/llvm/Config/llvm-config.h>
+
+#if LLVM_VERSION == 16
+  #include <llvm-16/llvm/Config/llvm-config.h>
+#elif LLVM_VERSION == 15
+  #include <llvm-15/llvm/Config/llvm-config.h>
+#elif LLVM_VERSION == 14
+  #include <llvm-14/llvm/Config/llvm-config.h>
+#elif LLVM_VERSION == 13
+  #include <llvm-13/llvm/Config/llvm-config.h>
+#elif LLVM_VERSION == 12
+  #include <llvm-12/llvm/Config/llvm-config.h>
+#elif LLVM_VERSION == 11
+  #include <llvm-11/llvm/Config/llvm-config.h>
+#else
+  #error LLVM-11 or higher required.
+#endif
 
 LLVM_C_EXTERN_C_BEGIN
 
@@ -40,34 +55,106 @@ typedef struct LLVMOpaqueTargetLibraryInfotData *LLVMTargetLibraryInfoRef;
 /* Declare all of the target-initialization functions that are available. */
 #define LLVM_TARGET(TargetName) \
   void LLVMInitialize##TargetName##TargetInfo(void);
-#include <llvm-15/llvm/Config/Targets.def>
+#if LLVM_VERSION == 16
+  #include <llvm-16/llvm/Config/Targets.def>
+#elif LLVM_VERSION == 15
+  #include <llvm-15/llvm/Config/Targets.def>
+#elif LLVM_VERSION == 14
+  #include <llvm-14/llvm/Config/Targets.def>
+#elif LLVM_VERSION == 13
+  #include <llvm-13/llvm/Config/Targets.def>
+#elif LLVM_VERSION == 12
+  #include <llvm-12/llvm/Config/Targets.def>
+#else
+  #include <llvm-11/llvm/Config/Targets.def>
+#endif
 #undef LLVM_TARGET  /* Explicit undef to make SWIG happier */
 
 #define LLVM_TARGET(TargetName) void LLVMInitialize##TargetName##Target(void);
-#include <llvm-15/llvm/Config/Targets.def>
+#if LLVM_VERSION == 16
+  #include <llvm-16/llvm/Config/Targets.def>
+#elif LLVM_VERSION == 15
+  #include <llvm-15/llvm/Config/Targets.def>
+#elif LLVM_VERSION == 14
+  #include <llvm-14/llvm/Config/Targets.def>
+#elif LLVM_VERSION == 13
+  #include <llvm-13/llvm/Config/Targets.def>
+#elif LLVM_VERSION == 12
+  #include <llvm-12/llvm/Config/Targets.def>
+#else
+  #include <llvm-11/llvm/Config/Targets.def>
+#endif
 #undef LLVM_TARGET  /* Explicit undef to make SWIG happier */
 
 #define LLVM_TARGET(TargetName) \
   void LLVMInitialize##TargetName##TargetMC(void);
-#include <llvm-15/llvm/Config/Targets.def>
+#if LLVM_VERSION == 16
+  #include <llvm-16/llvm/Config/Targets.def>
+#elif LLVM_VERSION == 15
+  #include <llvm-15/llvm/Config/Targets.def>
+#elif LLVM_VERSION == 14
+  #include <llvm-14/llvm/Config/Targets.def>
+#elif LLVM_VERSION == 13
+  #include <llvm-13/llvm/Config/Targets.def>
+#elif LLVM_VERSION == 12
+  #include <llvm-12/llvm/Config/Targets.def>
+#else
+  #include <llvm-11/llvm/Config/Targets.def>
+#endif
 #undef LLVM_TARGET  /* Explicit undef to make SWIG happier */
 
 /* Declare all of the available assembly printer initialization functions. */
 #define LLVM_ASM_PRINTER(TargetName) \
   void LLVMInitialize##TargetName##AsmPrinter(void);
-#include <llvm-15/llvm/Config/AsmPrinters.def>
+#if LLVM_VERSION == 16
+  #include <llvm-16/llvm/Config/AsmPrinters.def>
+#elif LLVM_VERSION == 15
+  #include <llvm-15/llvm/Config/AsmPrinters.def>
+#elif LLVM_VERSION == 14
+  #include <llvm-14/llvm/Config/AsmPrinters.def>
+#elif LLVM_VERSION == 13
+  #include <llvm-13/llvm/Config/AsmPrinters.def>
+#elif LLVM_VERSION == 12
+  #include <llvm-12/llvm/Config/AsmPrinters.def>
+#else
+  #include <llvm-11/llvm/Config/AsmPrinters.def>
+#endif
 #undef LLVM_ASM_PRINTER  /* Explicit undef to make SWIG happier */
 
 /* Declare all of the available assembly parser initialization functions. */
 #define LLVM_ASM_PARSER(TargetName) \
   void LLVMInitialize##TargetName##AsmParser(void);
-#include <llvm-15/llvm/Config/AsmParsers.def>
+#if LLVM_VERSION == 16
+  #include <llvm-16/llvm/Config/AsmParsers.def>
+#elif LLVM_VERSION == 15
+  #include <llvm-15/llvm/Config/AsmParsers.def>
+#elif LLVM_VERSION == 14
+  #include <llvm-14/llvm/Config/AsmParsers.def>
+#elif LLVM_VERSION == 13
+  #include <llvm-13/llvm/Config/AsmParsers.def>
+#elif LLVM_VERSION == 12
+  #include <llvm-12/llvm/Config/AsmParsers.def>
+#else
+  #include <llvm-11/llvm/Config/AsmParsers.def>
+#endif
 #undef LLVM_ASM_PARSER  /* Explicit undef to make SWIG happier */
 
 /* Declare all of the available disassembler initialization functions. */
 #define LLVM_DISASSEMBLER(TargetName) \
   void LLVMInitialize##TargetName##Disassembler(void);
-#include <llvm-15/llvm/Config/Disassemblers.def>
+#if LLVM_VERSION == 16
+  #include <llvm-16/llvm/Config/Disassemblers.def>
+#elif LLVM_VERSION == 15
+  #include <llvm-15/llvm/Config/Disassemblers.def>
+#elif LLVM_VERSION == 14
+  #include <llvm-14/llvm/Config/Disassemblers.def>
+#elif LLVM_VERSION == 13
+  #include <llvm-13/llvm/Config/Disassemblers.def>
+#elif LLVM_VERSION == 12
+  #include <llvm-12/llvm/Config/Disassemblers.def>
+#else
+  #include <llvm-11/llvm/Config/Disassemblers.def>
+#endif
 #undef LLVM_DISASSEMBLER  /* Explicit undef to make SWIG happier */
 
 /** LLVMInitializeAllTargetInfos - The main program should call this function if
@@ -75,7 +162,19 @@ typedef struct LLVMOpaqueTargetLibraryInfotData *LLVMTargetLibraryInfoRef;
     support. */
 static inline void LLVMInitializeAllTargetInfos(void) {
 #define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##TargetInfo();
-#include <llvm-15/llvm/Config/Targets.def>
+#if LLVM_VERSION == 16
+  #include <llvm-16/llvm/Config/Targets.def>
+#elif LLVM_VERSION == 15
+  #include <llvm-15/llvm/Config/Targets.def>
+#elif LLVM_VERSION == 14
+  #include <llvm-14/llvm/Config/Targets.def>
+#elif LLVM_VERSION == 13
+  #include <llvm-13/llvm/Config/Targets.def>
+#elif LLVM_VERSION == 12
+  #include <llvm-12/llvm/Config/Targets.def>
+#else
+  #include <llvm-11/llvm/Config/Targets.def>
+#endif
 #undef LLVM_TARGET  /* Explicit undef to make SWIG happier */
 }
 
@@ -84,7 +183,19 @@ static inline void LLVMInitializeAllTargetInfos(void) {
     support. */
 static inline void LLVMInitializeAllTargets(void) {
 #define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##Target();
-#include <llvm-15/llvm/Config/Targets.def>
+#if LLVM_VERSION == 16
+  #include <llvm-16/llvm/Config/Targets.def>
+#elif LLVM_VERSION == 15
+  #include <llvm-15/llvm/Config/Targets.def>
+#elif LLVM_VERSION == 14
+  #include <llvm-14/llvm/Config/Targets.def>
+#elif LLVM_VERSION == 13
+  #include <llvm-13/llvm/Config/Targets.def>
+#elif LLVM_VERSION == 12
+  #include <llvm-12/llvm/Config/Targets.def>
+#else
+  #include <llvm-11/llvm/Config/Targets.def>
+#endif
 #undef LLVM_TARGET  /* Explicit undef to make SWIG happier */
 }
 
@@ -93,7 +204,19 @@ static inline void LLVMInitializeAllTargets(void) {
     support. */
 static inline void LLVMInitializeAllTargetMCs(void) {
 #define LLVM_TARGET(TargetName) LLVMInitialize##TargetName##TargetMC();
-#include <llvm-15/llvm/Config/Targets.def>
+#if LLVM_VERSION == 16
+  #include <llvm-16/llvm/Config/Targets.def>
+#elif LLVM_VERSION == 15
+  #include <llvm-15/llvm/Config/Targets.def>
+#elif LLVM_VERSION == 14
+  #include <llvm-14/llvm/Config/Targets.def>
+#elif LLVM_VERSION == 13
+  #include <llvm-13/llvm/Config/Targets.def>
+#elif LLVM_VERSION == 12
+  #include <llvm-12/llvm/Config/Targets.def>
+#else
+  #include <llvm-11/llvm/Config/Targets.def>
+#endif
 #undef LLVM_TARGET  /* Explicit undef to make SWIG happier */
 }
 
@@ -102,7 +225,19 @@ static inline void LLVMInitializeAllTargetMCs(void) {
     available via the TargetRegistry. */
 static inline void LLVMInitializeAllAsmPrinters(void) {
 #define LLVM_ASM_PRINTER(TargetName) LLVMInitialize##TargetName##AsmPrinter();
-#include <llvm-15/llvm/Config/AsmPrinters.def>
+#if LLVM_VERSION == 16
+  #include <llvm-16/llvm/Config/AsmPrinters.def>
+#elif LLVM_VERSION == 15
+  #include <llvm-15/llvm/Config/AsmPrinters.def>
+#elif LLVM_VERSION == 14
+  #include <llvm-14/llvm/Config/AsmPrinters.def>
+#elif LLVM_VERSION == 13
+  #include <llvm-13/llvm/Config/AsmPrinters.def>
+#elif LLVM_VERSION == 12
+  #include <llvm-12/llvm/Config/AsmPrinters.def>
+#else
+  #include <llvm-11/llvm/Config/AsmPrinters.def>
+#endif
 #undef LLVM_ASM_PRINTER  /* Explicit undef to make SWIG happier */
 }
 
@@ -111,7 +246,19 @@ static inline void LLVMInitializeAllAsmPrinters(void) {
     available via the TargetRegistry. */
 static inline void LLVMInitializeAllAsmParsers(void) {
 #define LLVM_ASM_PARSER(TargetName) LLVMInitialize##TargetName##AsmParser();
-#include <llvm-15/llvm/Config/AsmParsers.def>
+#if LLVM_VERSION == 16
+  #include <llvm-16/llvm/Config/AsmParsers.def>
+#elif LLVM_VERSION == 15
+  #include <llvm-15/llvm/Config/AsmParsers.def>
+#elif LLVM_VERSION == 14
+  #include <llvm-14/llvm/Config/AsmParsers.def>
+#elif LLVM_VERSION == 13
+  #include <llvm-13/llvm/Config/AsmParsers.def>
+#elif LLVM_VERSION == 12
+  #include <llvm-12/llvm/Config/AsmParsers.def>
+#else
+  #include <llvm-11/llvm/Config/AsmParsers.def>
+#endif
 #undef LLVM_ASM_PARSER  /* Explicit undef to make SWIG happier */
 }
 
@@ -121,7 +268,19 @@ static inline void LLVMInitializeAllAsmParsers(void) {
 static inline void LLVMInitializeAllDisassemblers(void) {
 #define LLVM_DISASSEMBLER(TargetName) \
   LLVMInitialize##TargetName##Disassembler();
-#include <llvm-15/llvm/Config/Disassemblers.def>
+#if LLVM_VERSION == 16
+  #include <llvm-16/llvm/Config/Disassemblers.def>
+#elif LLVM_VERSION == 15
+  #include <llvm-15/llvm/Config/Disassemblers.def>
+#elif LLVM_VERSION == 14
+  #include <llvm-14/llvm/Config/Disassemblers.def>
+#elif LLVM_VERSION == 13
+  #include <llvm-13/llvm/Config/Disassemblers.def>
+#elif LLVM_VERSION == 12
+  #include <llvm-12/llvm/Config/Disassemblers.def>
+#else
+  #include <llvm-11/llvm/Config/Disassemblers.def>
+#endif
 #undef LLVM_DISASSEMBLER  /* Explicit undef to make SWIG happier */
 }
 

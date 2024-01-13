@@ -8,6 +8,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/utils.hpp"
 #include "../../include/parser/ast.hpp"
 #include "../../include/utf8.h"
+#include "../../include/llvm.hpp"
 
 NodeString::NodeString(std::string value, bool isWide) {
     this->value = value;
@@ -37,9 +38,9 @@ LLVMValueRef NodeString::generate() {
         for(int i=0; i<u32Str.size(); i++) values.push_back(LLVMConstInt(LLVMInt32TypeInContext(generator->context), u32Str[i], false));
         LLVMSetInitializer(globalStr, LLVMConstArray(LLVMInt32TypeInContext(generator->context), values.data(), values.size()));
     }
-    return LLVMConstInBoundsGEP(
+    return LLVM::constInboundsGep(
         globalStr,
-        std::vector<LLVMValueRef>({LLVMConstInt(LLVMInt32TypeInContext(generator->context),0,false), LLVMConstInt(LLVMInt32TypeInContext(generator->context),0,false)}).data(),
+        std::vector<LLVMValueRef>({LLVMConstInt(LLVMInt32TypeInContext(generator->context), 0, false), LLVMConstInt(LLVMInt32TypeInContext(generator->context),0,false)}).data(),
         2
     );
 }

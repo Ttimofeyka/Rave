@@ -13,5 +13,7 @@ namespace LLVM {
     extern LLVMValueRef load(LLVMValueRef value, const char* name);
     extern LLVMValueRef call(LLVMValueRef fn, LLVMValueRef* args, unsigned int argsCount, const char* name);
     extern LLVMValueRef gep(LLVMValueRef ptr, LLVMValueRef* indices, unsigned int indicesCount, const char* name);
+    extern LLVMValueRef inboundsGep(LLVMValueRef ptr, LLVMValueRef* indices, unsigned int indicesCount, const char* name);
+    extern LLVMValueRef constInboundsGep(LLVMValueRef ptr, LLVMValueRef* indices, unsigned int indicesCount);
     extern LLVMValueRef structGep(LLVMValueRef ptr, unsigned int idx, const char* name);
 }

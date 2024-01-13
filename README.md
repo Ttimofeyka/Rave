@@ -16,8 +16,8 @@ You can compile are examples using `rave directory/of/Rave/examples/necessary_ex
 
 ## Dependencies
 
-* `llvm-15`
-**You can also use LLVM from 11 to 14.**
+* `llvm-16`
+**You can also use LLVM from 11 to 15.**
 * `clang` or `gcc`
 * Make
 * mingw (if you need cross-compilation or you are using Windows)
@@ -36,13 +36,13 @@ You just need to set the compiler "i686-w64-mingw32-gcc-win32" in options.json, 
 
 ### Building in Termux
 
-1. Install llvm-15 from [Termux User Repository](https://github.com/termux-user-repository/tur):
+1. Install llvm-16 from [Termux User Repository](https://github.com/termux-user-repository/tur):
 ```bash
-$ pkg i llvm-15
+$ pkg i llvm-16
 ```
 2. Apply termux-specific patch for LLVM:
 ```bash
-$ ./llvm-patch
+$ ./llvm-patch.sh
 ```
 3. Build using `make`.
 
