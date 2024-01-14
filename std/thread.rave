@@ -11,12 +11,8 @@ import <std/process>
 namespace std {
     namespace thread {
         namespace spinlock {
-            (inline) int tas(int* sl) => (cast(int)cmpxchg(sl, 0, 1));
-            (inline) void lock(int* sl) {
-                sl[0] = 1;
-                while(std::thread::spinlock::tas(sl) == 0) {}
-            }
-            (inline) void unlock(int* sl) {sl[0] = 0;}
+            (inline) void lock(char* sl) {while((@atomicTAS(sl, 1)) == 0) {}}
+            (inline) void unlock(char* sl) {@atomicClear(sl);}
         }
     }
 }

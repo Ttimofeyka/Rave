@@ -417,6 +417,20 @@ LLVMValueRef NodeBuiltin::generate() {
         if(AST::structTable[tstruct->name]->destructor == nullptr) return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 0, false);
         return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 1, false);
     }
+    else if(this->name == "atomicTAS") {
+        LLVMValueRef result = LLVMBuildAtomicRMW(generator->builder, LLVMAtomicRMWBinOpXchg, this->args[0]->generate(),
+            (new NodeCast(new TypeBasic(BasicType::Char), this->args[1], this->loc))->generate(), LLVMAtomicOrderingSequentiallyConsistent, false
+        );
+        LLVMSetVolatile(result, true);
+        return result;
+    }
+    else if(this->name == "atomicClear") {
+        LLVMValueRef ptr = this->args[0]->generate();
+        LLVMValueRef store = LLVMBuildStore(generator->builder, LLVMConstNull(LLVMGetElementType(LLVMTypeOf(ptr))), this->args[0]->generate());
+        LLVMSetOrdering(store, LLVMAtomicOrderingSequentiallyConsistent);
+        LLVMSetVolatile(store, true);
+        return store;
+    }
     generator->error("builtin with the name '"+this->name+"' does not exist!", this->loc);
     return nullptr;
 }

@@ -1,3 +1,18 @@
+import <std/io> <std/pthread>
+
+(volatile) char sl;
+void* threadFunc(void* ptr) {
+    std::thread::spinlock::lock(&sl);
+    std::println("Hello from thread!");
+    std::thread::spinlock::unlock(&sl);
+} => null;
+
 void main {
-    
+    ulong thread;
+    ulong thread2;
+
+    pthread::create(&thread, cast(pthread::attribute*)null, threadFunc, null);
+    pthread::create(&thread2, cast(pthread::attribute*)null, threadFunc, null);
+    pthread::join(thread, cast(void**)null);
+    pthread::join(thread2, cast(void**)null);
 }
