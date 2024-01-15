@@ -4,6 +4,8 @@ LLVM_VERSION = 16
 
 LLVM_LIB = -lLLVM-$(LLVM_VERSION)
 
+LLVM_STATIC = 0
+
 COMPILER = $(CXX)
 
 ifdef OS
@@ -13,8 +15,12 @@ ifdef OS
 else
 	ifeq (, $(shell which llvm-config-16))
  		LLVM_VERSION = 15
-		LLVM_LIB = -lLLVM-$(LLVM_VERSION)
  	endif
+	ifeq ($(LLVM_STATIC), 1)
+		LLVM_LIB = `llvm-config-$(LLVM_VERSION) --ldflags --link-static --libs --system-libs`
+	else
+		LLVM_LIB = -lLLVM-$(LLVM_VERSION)
+	endif
 	SRC = $(shell find . -name *.cpp)
 endif
 
