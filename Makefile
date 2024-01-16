@@ -17,7 +17,7 @@ else
  		LLVM_VERSION = 15
  	endif
 	ifeq ($(LLVM_STATIC), 1)
-		LLVM_LIB = `llvm-config-$(LLVM_VERSION) --ldflags --link-static --libs --system-libs`
+		LLVM_LIB = `llvm-config-$(LLVM_VERSION) --ldflags --link-static --libs --system-libs` -static
 	else
 		LLVM_LIB = -lLLVM-$(LLVM_VERSION)
 	endif
