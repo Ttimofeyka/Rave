@@ -69,6 +69,43 @@ namespace libc {
     extern(linkname: "getline") int getline(char** buffer, int* len, int fd);
 }
 
+@if(__RAVE_OS == "LINUX") {
+    namespace std {
+        namespace file {
+            extern(linkname: "access") int __access(char* fname, int flag);
+        }
+    }
+};
+
+@if((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64")) {
+    namespace std {
+        namespace file {
+            extern(linkname: "_access") int __access(char* fname, int flag);
+        }
+    }
+};
+
+@if((__RAVE_OS != "LINUX") && (__RAVE_OS != "WINDOWS32") && (__RAVE_OS != "WINDOWS64")) {
+    namespace std {
+        namespace file {
+            int __access(char* fname, int flag) {
+                libc::File* f = libc::fopen(fname, "r");
+                if(f == cast(libc::File*)null) return = -1;
+                else {
+                    libc::fclose(f);
+                    return = 0;
+                }
+            }
+        }
+    }
+};
+
+namespace std {
+    namespace file {
+        (inline) bool exists(char* fname) => (std::file::__access(fname, 0) == 0);
+    }
+}
+
 namespace std {
     extern(vararg, linkname: "scanf") int scanf(char* fmt);
     extern(linkname: "getchar") char getchar();
@@ -220,7 +257,7 @@ namespace std {
 
         void open(char* mode) {
             this._file = libc::fopen(this.name, mode);
-            this.isOpen = true;
+            this.isOpen = (this._file != cast(libc::File*)null);
         }
 
         void close {
@@ -267,13 +304,9 @@ namespace std {
         bool hasError => cast(bool)libc::fhasError(this._file);
 
         bool exists {
-            bool toret = true;
-            if(this.isOpen == false) {
-                libc::File* f = libc::fopen(this.name, "r");
-                if(f == cast(libc::File*)null) toret = false;
-                else this.close();
-            }
-        } => toret;
+            if(this.isOpen == false) return = std::file::exists(this.name);
+            else return = true;
+        }
 
         int flush => libc::fflush(this._file);
     }
