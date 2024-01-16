@@ -5,6 +5,10 @@ import <std/vector>
 import <std/socket>
 import <std/openssl>
 
+import <std/io>
+
+extern(C) char* explain_connect(int fildes, std::socket::sockaddr* serv_addr, int serv_addr_size);
+
 namespace std {
     namespace network {
         struct URL {
@@ -71,8 +75,7 @@ namespace std {
                 bool found = false;
                 std::socket::getAddrInfo(host.c(), port, cast(std::socket::addrinfo*)0, &res);
 
-                for(std::socket::addrinfo* i = res; i != cast(std::socket::addrinfo*)0; i=i.ai_next)
-                {
+                for(std::socket::addrinfo* i = res; i != cast(std::socket::addrinfo*)0; i=i.ai_next) {
                     char[46] str;
                     if(i.ai_addr.sa_family == std::socket::AfInet) {
                         std::socket::sockaddr_in* p = cast(std::socket::sockaddr_in*)i.ai_addr;
@@ -101,7 +104,7 @@ namespace std {
             } => this;
         }
 
-        std::network::Response _do_http(std::network::URL url, char* method, std::string headers, std::string data) {
+        std::network::Response _do_http(std::network::URL url, char* method, std::string headers, std::string data, std::string port) {
             std::string reqline = "";
             reqline.appendC(method);
             reqline.appendC(" ");
@@ -118,9 +121,10 @@ namespace std {
             // init
             std::socket sock = std::socket();
 
-            std::string trueip = std::network::_determine_true_ip(url.host, "80");
+            if(port == "") port = "80";
+            std::string trueip = std::network::_determine_true_ip(url.host, port.c());
 
-            if(sock.open(trueip.c(), 80, std::socket::InAddrBroadcast) < 0) {
+            if(sock.open(trueip.c(), port.toInt(), std::socket::InAddrBroadcast) < 0) {
                 std::network::Response resp_fail_ssl = std::network::Response();
                 resp_fail_ssl.success = -5; // open failure
                 return = resp_fail_ssl;
@@ -128,6 +132,7 @@ namespace std {
                 if(sock.connect() < 0) {
                     std::network::Response resp_fail_ssl = std::network::Response();
                     resp_fail_ssl.success = -6; // connect failure
+                    std::println(explain_connect(sock.fd, cast(std::socket::sockaddr*)sock.addr, sizeof(std::socket::sockaddr_in)));
                     return = resp_fail_ssl;
                 } else {
                     sock.write(reqline.c());
@@ -176,9 +181,10 @@ namespace std {
                     sock.close();
                 }
             }
+            ~port;
         }
 
-        std::network::Response _do_http_secure(std::network::URL url, char* method, std::string headers, std::string data) {
+        std::network::Response _do_http_secure(std::network::URL url, char* method, std::string headers, std::string data, std::string port) {
             std::string reqline = "";
             reqline.appendC(method);
             reqline.appendC(" ");
@@ -195,8 +201,9 @@ namespace std {
             void* ssl_ctx = ssl::ctxNew(ssl::methodTLS1_2());
             std::socket sock = std::socket();
 
-            std::string trueip = std::network::_determine_true_ip(url.host, "443");
-            if(sock.open(trueip.c(), 443, std::socket::InAddrBroadcast) < 0) {
+            if(port == "") port = "443";
+            std::string trueip = std::network::_determine_true_ip(url.host, port.c());
+            if(sock.open(trueip.c(), port.toInt(), std::socket::InAddrBroadcast) < 0) {
                 std::network::Response resp_fail_ssl = std::network::Response();
                 resp_fail_ssl.success = -5; // open failure
                 return = resp_fail_ssl;
@@ -270,13 +277,14 @@ namespace std {
                     }
                 }
             }
+            ~port;
         }
 
-        std::network::Response _http_wrap(std::network::URL url, char* method, std::string headers, std::string data) {
+        std::network::Response _http_wrap(std::network::URL url, char* method, std::string headers, std::string data, char* port) {
             if(url.protocol == "http") {
-                return = std::network::_do_http(url, method, headers, data);
+                return = std::network::_do_http(url, method, headers, data, std::string(port));
             } else if(url.protocol == "https") {
-                return = std::network::_do_http_secure(url, method, headers, data);
+                return = std::network::_do_http_secure(url, method, headers, data, std::string(port));
             } else {
                 // -100 = invalid protocol
                 std::network::Response resp = std::network::Response();
@@ -285,20 +293,20 @@ namespace std {
             }
         }
 
-        std::network::Response get(std::network::URL url, std::string headers) {
-            return = std::network::_http_wrap(url, "GET", headers, std::string(""));
+        std::network::Response get(std::network::URL url, std::string headers, char* port) {
+            return = std::network::_http_wrap(url, "GET", headers, std::string(""), port);
         }
 
-        std::network::Response get(std::network::URL url) {
-            return = std::network::get(url, std::string(""));
+        std::network::Response get(std::network::URL url, char* port) {
+            return = std::network::get(url, std::string(""), port);
         }
 
-        std::network::Response post(std::network::URL url, std::string headers) {
-            return = std::network::_http_wrap(url, "POST", headers, std::string(""));
+        std::network::Response post(std::network::URL url, std::string headers, char* port) {
+            return = std::network::_http_wrap(url, "POST", headers, std::string(""), port);
         }
 
-        std::network::Response post(std::network::URL url) {
-            return = std::network::post(url, std::string(""));
+        std::network::Response post(std::network::URL url, char* port) {
+            return = std::network::post(url, std::string(""), port);
         }
     }
 }
