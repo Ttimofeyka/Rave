@@ -1,8 +1,5 @@
-import <std/io> <std/network>
+import <std/io>
 
 void main {
-    std::network::URL koboldcpp = std::network::URL("http://localhost");
-
-    auto res = std::network::get(koboldcpp, "5001");
-    std::println(res.success);
+    std::println(std::cstring::strlen("HELLO"));
 }

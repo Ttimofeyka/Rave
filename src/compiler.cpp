@@ -273,16 +273,19 @@ void Compiler::compile(std::string file) {
 
     for(int i=0; i<parser->nodes.size(); i++) parser->nodes[i]->generate();
 
+    LLVMPassManagerRef pm = LLVMCreatePassManager();
+    LLVMAddAlwaysInlinerPass(pm);
+
     if(Compiler::settings.optLevel > 0) {
-        LLVMPassManagerRef pm = LLVMCreatePassManager();
-        LLVMAddAlwaysInlinerPass(pm);
         LLVMAddInstructionCombiningPass(pm);
+        LLVMAddConstantMergePass(pm);
 
         LLVMPassManagerBuilderRef pmb = LLVMPassManagerBuilderCreate();
         LLVMPassManagerBuilderSetOptLevel(pmb, Compiler::settings.optLevel);
         LLVMPassManagerBuilderPopulateModulePassManager(pmb, pm);
-        LLVMRunPassManager(pm, generator->lModule);
     }
+
+    LLVMRunPassManager(pm, generator->lModule);
 
     LLVMTargetMachineRef machine = LLVMCreateTargetMachine(
 		target,

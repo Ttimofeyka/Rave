@@ -7,14 +7,13 @@ namespace libc {
 namespace std {
     namespace cstring {
         int strlen(const(char)* s) {
-            int i = 0;
-            while(s[i] != '\0') i += 1;
-        } => i;
+            while(s[return] != '\0') return += 1;
+        }
 
         (inline) const(char)* fromBool(bool b) {
-            const(char)* s = "false";
-            if(b) s = "true";
-        } => s;
+            return = "false";
+            if(b) return = "true";
+        }
 
         (inline) bool strncmp(const(char)* s1, const(char)* s2, int n) {
             int i = 0;

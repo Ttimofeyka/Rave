@@ -12,18 +12,18 @@ namespace std {
             int i = 0;
             while(wstr[i] != cast(ushort)'\0') i += 1;
         } => i;
+
         (inline, nochecks) int utflen(ushort* wstr) {
             int bytes = std::utf16::strlen(wstr);
-            int cnt = 0;
             int pos = 0;
 
             while(pos < bytes) {
                 ushort codeUnit = wstr[pos];
-                cnt += 1;
+                return += 1;
                 if((codeUnit >= 0xD800) && (codeUnit <= 0xDBFF)) pos += 2;
                 else pos += 1;
             }
-        } => cnt;
+        }
     }
 }
 
