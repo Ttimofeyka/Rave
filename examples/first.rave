@@ -1,4 +1,4 @@
-import <std/io>
+import <std/io> <std/library>
 
 void main {
     std::println(std::cstring::strlen("HELLO"));

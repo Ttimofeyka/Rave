@@ -20,9 +20,7 @@
             alias RtldLazy = 0x00001;
         
             (inline) void* open(char* filename) => std::winapi::LoadLibrary(filename);
-            (inline) int close(void* handle) {
-                std::winapi::FreeLibrary(handle);
-            } => 0;
+            (inline) int close(void* handle) {std::winapi::FreeLibrary(handle);}
             (inline) void* sym(void* handle, char* name) => std::winapi::GetProcAddress(handle, name);
             (inline) char* error => "";
         }

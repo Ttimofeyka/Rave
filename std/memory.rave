@@ -22,14 +22,14 @@ namespace std {
         std::free(temp);
     } => dest;
     (nochecks) bool memcmp(void* one, void* two, int n) {
-        bool result = true;
+        return = true;
         for(int i=0; i<n; i+=1) {
             if(one[i] != two[i]) {
-                result = false;
+                return = false;
                 break;
             }
         }
-    } => result;
+    }
     (nochecks) void* memset(void* dest, int c, int n) {
         for(int i=0; i<n; i+=1) {
             dest[i] = cast(char)c;
