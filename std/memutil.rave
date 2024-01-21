@@ -1,38 +1,5 @@
 import <std/io> <std/error>
 
-namespace std {
-    bool _isValidPtr(void* ptr, const(char)* type) {
-        int length = std::cstring::strlen(type)-1;
-        bool result = true;
-
-        if(ptr == null) {
-            result = false;
-        }
-        else if(type[length-1] == '*') {
-            char* data = type[0->(length-2)];
-                result = std::_isValidPtr(cast(void*)(ptr[0]),data);
-            std::free(data);
-        }
-    } => result;
-
-    (ctargs) bool isValidPtr {
-        void* ptr = @getCurrArg(void*);
-        char* type = @typeToString(@getCurrArgType());
-
-        int length = libc::strlen(type)-1;
-        bool result = true;
-
-        if(ptr == null) {
-            result = false;
-        }
-        else if(type[length-1] == '*') {
-            char* data = type[0->(length-2)];
-                result = std::_isValidPtr(cast(void*)ptr[0],data);
-            std::free(data);
-        }
-    } => result;
-}
-
 struct SafePtr<T> {
     T* pointer;
     int size = 0;

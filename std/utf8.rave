@@ -13,12 +13,11 @@ namespace std {
 
         int utflen(uchar* str) {
             int i = 0;
-            int len = 0;
             while(str[i] != '\0') {
-                if((str[i] && 0xC0) != 0x80) len += 1;
+                if((str[i] && 0xC0) != 0x80) return += 1;
                 i += 1;
             }
-        } => len;
+        }
 
         int charlen(uchar* ch, int idx) => cast(int)(std::utf8::utfLength[(ch[idx] && 0xFF) >. 4]);
 
@@ -35,44 +34,43 @@ namespace std {
         uint utfAt(uchar* str, int at) {
             int i = 0;
             int idx = 0;
-            uint value = 0;
             uchar* ptr = str;
             while(i<at) {
                 std::utf8::nextChar(ptr, &idx);
                 i += 1;
             }
-            if((ptr[idx] && 0x80) == 0) value = cast(uint)ptr[idx];
+            if((ptr[idx] && 0x80) == 0) return = cast(uint)ptr[idx];
             else if((ptr[idx] && 0xE0) == 0xC0) {
-                value = (ptr[idx] && 0x1F) <. 6;
-                value = value || (ptr[idx+1] && 0x3F);
+                return = (ptr[idx] && 0x1F) <. 6;
+                return = return || (ptr[idx+1] && 0x3F);
             }
             else if((ptr[idx] && 0xF0) == 0xE0) {
-                value = (ptr[idx] && 0xF) <. 12;
-                value = value || (ptr[idx+1] && 0x3F) <. 6;
-                value = value || (ptr[idx+2] && 0x3F);
+                return = (ptr[idx] && 0xF) <. 12;
+                return = return || (ptr[idx+1] && 0x3F) <. 6;
+                return = return || (ptr[idx+2] && 0x3F);
             }
             else if((ptr[idx] && 0xF8) == 0xF0) {
-                value = (ptr[idx] && 0x7) <. 18;
-                value = value || (ptr[idx+1] && 0x3F) <. 12;
-                value = value || (ptr[idx+2] && 0x3F) <. 6;
-                value = value || (ptr[idx+3] && 0x3F);
+                return = (ptr[idx] && 0x7) <. 18;
+                return = return || (ptr[idx+1] && 0x3F) <. 12;
+                return = return || (ptr[idx+2] && 0x3F) <. 6;
+                return = return || (ptr[idx+3] && 0x3F);
             }
             else if((ptr[idx] && 0xFC) == 0xF8) {
-                value = (ptr[idx] && 0x3) <. 24;
-                value = value || (ptr[idx] && 0x3F) <. 18;
-                value = value || (ptr[idx] && 0x3F) <. 12;
-                value = value || (ptr[idx] && 0x3F) <. 6;
-                value = value || (ptr[idx] && 0x3F);
+                return = (ptr[idx] && 0x3) <. 24;
+                return = return || (ptr[idx] && 0x3F) <. 18;
+                return = return || (ptr[idx] && 0x3F) <. 12;
+                return = return || (ptr[idx] && 0x3F) <. 6;
+                return = return || (ptr[idx] && 0x3F);
             }
             else if((ptr[idx] && 0xFE) == 0xFC) {
-                value = (ptr[idx] && 0x1) <. 30;
-                value = value || (ptr[idx] && 0x3F) <. 24;
-                value = value || (ptr[idx] && 0x3F) <. 18;
-                value = value || (ptr[idx] && 0x3F) <. 12;
-                value = value || (ptr[idx] && 0x3F) <. 6;
-                value = value || (ptr[idx] && 0x3F);
+                return = (ptr[idx] && 0x1) <. 30;
+                return = return || (ptr[idx] && 0x3F) <. 24;
+                return = return || (ptr[idx] && 0x3F) <. 18;
+                return = return || (ptr[idx] && 0x3F) <. 12;
+                return = return || (ptr[idx] && 0x3F) <. 6;
+                return = return || (ptr[idx] && 0x3F);
             }
-        } => value;
+        }
     }
     
     struct u8string {

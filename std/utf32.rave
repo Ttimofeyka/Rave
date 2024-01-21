@@ -27,18 +27,6 @@ namespace std {
     }
 }
 
-@if((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64")) {
-    namespace std {
-        namespace utf16 {
-            (noOptimize) ushort* _fromUtf8(const(char)* str) {
-                int utf16Length = std::winapi::MultiByteToWideChar(65001, 0, str, std::cstring::strlen(str), cast(ushort*)null, 0);
-                ushort* buffer = cast(ushort*)std::malloc(@sizeOf(ushort) * utf16Length);
-                std::winapi::MultiByteToWideChar(65001, 0, str, std::cstring::strlen(str), buffer, utf16Length);
-            } => buffer;
-        }
-    }
-};
-
 namespace std {
     namespace utf32 {
         (inline) int encode(uint c, char* buf) {
