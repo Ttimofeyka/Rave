@@ -6,14 +6,14 @@
         void* reg_save_area;
     }
 }
-@if(
-    (__RAVE_PLATFORM == "X86") || (__RAVE_PLATFORM == "POWERPC64")
-    || (__RAVE_PLATFORM == "MIPS") || (__RAVE_PLATFORM == "MIPS64")
+@if((__RAVE_PLATFORM == "X86") || (__RAVE_PLATFORM == "POWERPC64") ||
+    (__RAVE_PLATFORM == "MIPS") || (__RAVE_PLATFORM == "MIPS64")
 ) {
     struct va_list {
         void* __ap;
     }
 }
+
 @if(__RAVE_PLATFORM == "AARCH64") {
     struct va_list {
         void* __stack;
@@ -23,6 +23,7 @@
         int __vr_offs;
     }
 }
+
 @if(__RAVE_PLATFORM == "POWERPC") {
     struct va_list {
         char f;
@@ -32,6 +33,7 @@
         char* s;
     }
 }
+
 @if(__RAVE_PLATFORM == "S390X") {
     struct va_list {
         long f;

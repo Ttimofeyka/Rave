@@ -386,7 +386,7 @@ void Compiler::compileAll() {
     }
 
     #ifdef _WIN32
-        Compiler::linkString += " -fuse-ld=ld ";
+        if(Compiler::options["compiler"].template get<std::string>().find("clang") != std::string::npos) Compiler::linkString += " -fuse-ld=ld ";
     #endif
 
     ShellResult result = exec(Compiler::linkString+" -o "+Compiler::outFile);
