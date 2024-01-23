@@ -12,18 +12,21 @@ namespace std {
         int code;
 
         std::error<T> this {std::error<T> this;} => this;
+        
         std::error<T> this(T value) {
             std::error<T> this;
             this.value = value;
             this.message = null;
             this.code = 0;
         } => this;
+
         std::error<T> this(T value, char* message) {
             std::error<T> this;
             this.value = value;
             this.message = message;
             this.code = 0;
         } => this;
+
         std::error<T> this(T value, char* message, int code) {
             std::error<T> this;
             this.value = value;

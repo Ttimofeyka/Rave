@@ -225,12 +225,8 @@ namespace std {
 
         std::u8string operator+(std::u8string one, std::u8string two) {
             std::u8string third = "";
-            for(int i=0; i<one.length; i+=1) {
-                third.add(one.data[i]);
-            }
-            for(int i=0; i<two.length; i+=1) {
-                third.add(two.data[i]);
-            }
+            for(int i=0; i<one.length; i+=1) third.add(one.data[i]);
+            for(int i=0; i<two.length; i+=1) third.add(two.data[i]);
         } => third;
 
         bool operator==(std::u8string one, std::u8string two) {
@@ -307,15 +303,12 @@ namespace std {
             while(std::ascii::isSpace(this.data[idx])) idx -= 1;
         } => this.substring(0, idx+1);
 
-        std::u8string trim {
-            std::u8string _l = this.ltrim();
-        } => _l.rtrim();
+        std::u8string trim => this.ltrim().rtrim();
 
         int fromHex {
             int hex = 0;
             char* buffer = this.c();
             std::format(cast(char*)((cast(int)buffer)+2), "%x", &hex);
-            std::free(buffer);
         } => hex;
 
         std::u8string insert(int pos, char* str) {

@@ -1,4 +1,4 @@
-import <std/memory> <std/ascii> <std/cstring> <std/vector>
+import <std/memory> <std/ascii> <std/cstring> <std/vector> <std/unicode>
 
 namespace std {
     namespace utf8 {
@@ -66,53 +66,6 @@ namespace std {
             int i = 0;
             while(str[i] != '\0') i += 1;
         } => i;
-        (inline) bool isSpace(uint c) => (c == ' ') || (c == '\r') || (c == '\t') || (c == '\n') || (c == '\v');
-        (inline) bool isDigit(uint c) => (c >= '0') && (c <= '9');
-        (inline) uint* charInChars(uint* chars, uint c) {
-            int i = 0;
-            uint* ptr = null;
-            bool active = true;
-            while((chars[i] != '\0') && active) {
-                if(chars[i] == c) {
-                    ptr = &chars[i];
-                    active = false;
-                }
-                i += 1;
-            }
-        } => ptr;
-        (inline) bool isLower(uint c) {
-            bool result = false;
-            if(c < 128) result = (c > 96) && (c < 123);
-            else {
-                if((c > 1071) && (c < 1104)) result = true; // Cyrillic (russian)
-                // TODO: add completely support of cyrillic
-            }
-        } => result;
-        (inline) bool isUpper(uint c) {
-            bool result = false;
-            if(c < 128) result = (c > 64) && (c < 91);
-            else {
-                if((c > 1039) && (c < 1072)) result = true; // Cyrillic (russian)
-                // TODO: add completely support of cyrillic
-            }
-        } => result;
-        (inline) uint toLower(uint c) {
-            uint tmp = c;
-            if(c < 128) tmp = std::ascii::toLower(c);
-            else {
-                if((c > 1039) && (c < 1072)) tmp = c + 32; // Cyrillic (russian)
-                // TODO: add completely support of cyrillic
-            }
-        } => tmp;
-        (inline) uint toUpper(uint c) {
-            uint tmp = c;
-            if(c < 128) tmp = std::ascii::toUpper(c);
-            else {
-                if((c > 1071) && (c < 1104)) tmp = c - 32; // Cyrillic (russian)
-                // TODO: add completely support of cyrillic
-            }
-        } => tmp;
-        
         ushort* toUtf16(uint* codepoints) {
             ushort* result;
             int len = 0;
@@ -233,12 +186,12 @@ namespace std {
 
         std::u32string ltrim {
             int idx = 0;
-            while((idx < this.length) && (std::utf32::isSpace(this.data[idx]))) idx += 1;
+            while((idx < this.length) && (std::unicode::isSpace(this.data[idx]))) idx += 1;
         } => this.substring(idx, this.length);
 
         std::u32string rtrim {
             int idx = this.length - 1;
-            while(std::utf32::isSpace(this.data[idx])) idx -= 1;
+            while(std::unicode::isSpace(this.data[idx])) idx -= 1;
         } => this.substring(0, idx+1);
 
         std::u32string trim {
