@@ -27,8 +27,8 @@ int main {
 
 ## Parameters
 
-###### [Parameters](declarations/funcvarparams.md)
+###### [Parameters](funcvarparams.md)
 
 ## Variables in compile-time
 
-##### [Aliases](declarations/aliases.md)
+##### [Aliases](aliases.md)

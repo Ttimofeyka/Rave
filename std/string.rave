@@ -222,7 +222,7 @@ namespace std {
             while(std::ascii::isSpace(this.data[idx])) idx -= 1;
         } => this.substring(0, idx+1);
 
-        (inline) std::string trim {std::string _l = this.ltrim();} => _l.rtrim();
+        (inline) std::string trim => this.ltrim().rtrim();
 
         std::string insert(int pos, char* str) {
             std::string buffer = "";

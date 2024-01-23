@@ -25,8 +25,8 @@ float sum(float a, float b) => a+b;
 
 ## Parameters
 
-###### [Parameters](declarations/funcvarparams.md)
+###### [Parameters](funcvarparams.md)
 
 ## Methods
 
-##### [Structures](declarations/structures.md)
+##### [Structures](structures.md)

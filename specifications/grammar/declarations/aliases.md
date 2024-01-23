@@ -6,6 +6,8 @@ You can change them (but necessarily outside of the functions!).
 
 ```cpp
 alias None = 0;
+alias Three = 3;
+alias Four = 4;
 
 namespace A { // Works as an enum in C/C++
     alias One = 0;
