@@ -117,10 +117,12 @@ Lexer::Lexer(std::string text, int offset) {
         switch(peek()) {
             case '+':
                 if(next() == '=') {tokens.push_back(new Token(TokType::PluEqu, "+=", line)); idx += 1;}
+                else if(peek() == '+') {tokens.push_back(new Token(TokType::PluEqu)); tokens.push_back(new Token(TokType::Number, "1")); idx += 1;}
                 else tokens.push_back(new Token(TokType::Plus, "+", line));
                 break;
             case '-':
                 if(next() == '=') {tokens.push_back(new Token(TokType::MinEqu, "-=", line)); idx += 1;}
+                else if(peek() == '-') {tokens.push_back(new Token(TokType::MinEqu)); tokens.push_back(new Token(TokType::Number, "1")); idx += 1;}
                 else if(peek() == '>') {tokens.push_back(new Token(TokType::SlicePtrOper, "->", line)); idx += 1;}
                 else tokens.push_back(new Token(TokType::Minus, "-", line));
                 break;

@@ -1,5 +1,7 @@
-import <std/io> <std/utf32>
+import <std/io>
 
 void main {
-    
+    for(int i=0; i<10; i++) {
+        std::println(i);
+    }
 }
