@@ -51,7 +51,15 @@ else {
 
 Example:
 ```d
-for(int i=0; i<100; i+=1) {
+for(int i=0; i<100; i++) {
+    // ...
+}
+
+for(int j=100; j>0; j--) {
+    // ...
+}
+
+for(short z=0; z<20; z+=2) {
     // ...
 }
 ```

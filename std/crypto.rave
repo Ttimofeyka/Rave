@@ -4,8 +4,8 @@ namespace std {
     namespace crypto {
         namespace caesar {
             char encryptChar(char c, int key) {
-                if(std::ascii::isUpper(c)) c = ((c + key - 'A') % (cast(char)26)) + 'A';
-                else if(std::ascii::isLower(c)) c = ((c + key - 'a') % (cast(char)26)) + 'a';
+                if(std::ascii::isUpper(c)) return = ((c + key - 'A') % (cast(char)26)) + 'A';
+                else if(std::ascii::isLower(c)) return = ((c + key - 'a') % (cast(char)26)) + 'a';
             } => c;
 
             (inline) char decryptChar(char c, int key) => std::crypto::caesar::encryptChar(c, 26 - key);
