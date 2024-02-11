@@ -16,4 +16,6 @@ namespace LLVM {
     extern LLVMValueRef inboundsGep(LLVMValueRef ptr, LLVMValueRef* indices, unsigned int indicesCount, const char* name);
     extern LLVMValueRef constInboundsGep(LLVMValueRef ptr, LLVMValueRef* indices, unsigned int indicesCount);
     extern LLVMValueRef structGep(LLVMValueRef ptr, unsigned int idx, const char* name);
+    extern bool isPointerType(LLVMTypeRef type);
+    extern bool isPointer(LLVMValueRef value);
 }

@@ -55,7 +55,7 @@ std::vector<Type*> parametersToTypes(std::vector<LLVMValueRef> params) {
     for(int i=0; i<params.size(); i++) {
         if(params[i] == nullptr) continue;
         LLVMTypeRef t = LLVMTypeOf(params[i]);
-        if(LLVMGetTypeKind(t) == LLVMPointerTypeKind) {
+        if(LLVM::isPointerType(t)) {
             if(LLVMGetTypeKind(LLVMGetElementType(t)) == LLVMStructTypeKind) types.push_back(new TypeStruct(std::string(LLVMGetStructName(LLVMGetElementType(t)))));
             else types.push_back(new TypePointer(nullptr));
         }
@@ -329,7 +329,7 @@ Type* lTypeToType(LLVMTypeRef t) {
     }
     else if(LLVMGetTypeKind(t) == LLVMFloatTypeKind) return new TypeBasic((t == LLVMFloatTypeInContext(generator->context)) ? BasicType::Float : BasicType::Double);
     else if(LLVMGetTypeKind(t) == LLVMDoubleTypeKind) return new TypeBasic(BasicType::Double);
-    else if(LLVMGetTypeKind(t) == LLVMPointerTypeKind) {
+    else if(LLVM::isPointerType(t)) {
         if(LLVMGetTypeKind(LLVMGetElementType(t)) == LLVMStructTypeKind) return new TypeStruct(std::string(LLVMGetStructName(LLVMGetElementType(t))));
         return new TypePointer(lTypeToType(LLVMGetElementType(t)));
     }
@@ -404,7 +404,7 @@ LLVMValueRef Scope::get(std::string name, long loc) {
         generator->error("undefined variable '"+name+"'!", loc);
         return nullptr;
     }
-    if(LLVMGetTypeKind(LLVMTypeOf(value)) == LLVMPointerTypeKind) value = LLVM::load(value, "scopeGetLoad");
+    if(LLVM::isPointer(value)) value = LLVM::load(value, "scopeGetLoad");
     return value;
 }
 

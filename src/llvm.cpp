@@ -9,6 +9,18 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "./include/parser/ast.hpp"
 #include <iostream>
 
+bool LLVM::isPointerType(LLVMTypeRef type) {
+    return LLVMGetTypeKind(type) == LLVMPointerTypeKind;
+}
+
+bool LLVM::isPointer(LLVMValueRef value) {
+    #if LLVM_VERSION_MAJOR <= 16
+        return LLVM::isPointerType(LLVMTypeOf(value));
+    #else
+        return LLVMIsAGlobalVariable(value) || LLVMIsAAllocaInst(value); // TODO
+    #endif
+}
+
 LLVMValueRef LLVM::load(LLVMValueRef value, const char* name) {
     #if LLVM_VERSION_MAJOR >= 15
         return LLVMBuildLoad2(generator->builder, LLVMGetElementType(LLVMTypeOf(value)), value, name);
