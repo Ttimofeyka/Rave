@@ -17,7 +17,7 @@ bool LLVM::isPointer(LLVMValueRef value) {
     #if LLVM_VERSION_MAJOR <= 16
         return LLVM::isPointerType(LLVMTypeOf(value));
     #else
-        return LLVMIsAGlobalVariable(value) || LLVMIsAAllocaInst(value); // TODO
+        return LLVMIsAGlobalVariable(value) || LLVMIsAAllocaInst(value); || LLVMIsAIntToPtrInst(value); // TODO
     #endif
 }
 

@@ -610,7 +610,8 @@ Node* Parser::parseStruct(std::vector<DeclarMod> mods) {
 }
 
 Node* Parser::parseUsing() {
-
+    // TODO
+    return nullptr;
 }
 
 std::string getDirectory2(std::string file) {
@@ -951,8 +952,16 @@ Node* Parser::parseFor(std::string f) {
     std::vector<Node*> presets;
     std::vector<Node*> afters;
     NodeBinary* cond;
-
     int curr = 0;
+
+    if(this->peek()->type == TokType::Semicolon && this->tokens[this->idx+1]->type == TokType::Semicolon) {
+        // Infinite loop
+        this->idx += 3;
+
+        Node* stmt = this->parseStmt(f);
+        if(!instanceof<NodeBlock>(stmt)) stmt = new NodeBlock(std::vector<Node*>({stmt}));
+        return new NodeWhile(new NodeBool(true), (NodeBlock*)stmt, line, f);
+    }
 
     while(this->peek()->type != TokType::Lpar) {
         if(this->peek()->type == TokType::Semicolon) {
@@ -983,7 +992,7 @@ Node* Parser::parseFor(std::string f) {
 
     Node* stmt = this->parseStmt(f);
     if(!instanceof<NodeBlock>(stmt)) stmt = new NodeBlock(std::vector<Node*>({stmt}));
-    return new NodeFor(presets, cond, afters, (NodeBlock*)stmt, f, this->peek()->line);
+    return new NodeFor(presets, cond, afters, (NodeBlock*)stmt, f, line);
 }
 
 Node* Parser::parseStmt(std::string f) {

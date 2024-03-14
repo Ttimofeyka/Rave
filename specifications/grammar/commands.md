@@ -64,6 +64,22 @@ for(short z=0; z<20; z+=2) {
 }
 ```
 
+Also, you can use a **for(;;)** expression for the infinite loop.
+
+Example:
+
+```d
+while(true) {
+
+}
+
+// Or
+
+for(;;) {
+    
+}
+```
+
 **switch(expr) {case(expr) {} default {}}** - It works like a switch in C, except for one thing - break and continue are prohibited in switch.
 
 Example:
