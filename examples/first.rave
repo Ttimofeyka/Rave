@@ -1,7 +1,5 @@
 import <std/io>
 
 void main {
-    for(;;) {
-        
-    }
+    half a = 0.0;
 }

@@ -24,14 +24,14 @@ int TypeBasic::getSize() {
     switch(this->type) {
         case BasicType::Bool: return 1;
         case BasicType::Char: case BasicType::Uchar: return 8;
-        case BasicType::Short: case BasicType::Ushort: return 16;
+        case BasicType::Short: case BasicType::Ushort: case BasicType::Half: return 16;
         case BasicType::Int: case BasicType::Uint: case BasicType::Float: return 32;
         case BasicType::Long: case BasicType::Ulong: case BasicType::Double: return 64;
         case BasicType::Cent: case BasicType::Ucent: return 128;
         default: return 0;
     }
 }
-bool TypeBasic::isFloat() {return (this->type == BasicType::Float) || (this->type == BasicType::Double);}
+bool TypeBasic::isFloat() {return (this->type == BasicType::Float) || (this->type == BasicType::Double || this->type == BasicType::Half);}
 std::string TypeBasic::toString() {
     switch(this->type) {
         case BasicType::Bool: return "bool";
@@ -42,6 +42,7 @@ std::string TypeBasic::toString() {
         case BasicType::Long: return "long"; case BasicType::Ulong: return "ulong";
         case BasicType::Double: return "double";
         case BasicType::Cent: return "cent"; case BasicType::Ucent: return "cent";
+        case BasicType::Half: return "half";
         default: return "BasicUnknown";
     }
 }
@@ -235,6 +236,7 @@ Type* getType(std::string id) {
     else if(id == "ulong") return new TypeBasic(BasicType::Ulong);
     else if(id == "cent") return new TypeBasic(BasicType::Cent);
     else if(id == "ucent") return new TypeBasic(BasicType::Ucent);
+    else if(id == "half") return new TypeBasic(BasicType::Half);
     else if(id == "float") return new TypeBasic(BasicType::Float);
     else if(id == "double") return new TypeBasic(BasicType::Double);
     else if(id == "void") return new TypeVoid();
