@@ -415,6 +415,16 @@ Node* Parser::parseAtom(std::string f) {
             this->next();
             return new NodeFloat(std::stod(t->value), true);
         }
+        if(this->peek()->type == TokType::Identifier && this->peek()->value == "h") {
+            // Half-type
+            this->next();
+            return new NodeFloat(std::stof(t->value), new TypeBasic(BasicType::Half));
+        }
+        else if(this->peek()->type == TokType::Identifier && this->peek()->value == "bh") {
+            // Half-type
+            this->next();
+            return new NodeFloat(std::stof(t->value), new TypeBasic(BasicType::Bhalf));
+        }
         return new NodeFloat(std::stof(t->value));
     }
     if(t->type == TokType::HexNumber) {

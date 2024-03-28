@@ -1,5 +1,5 @@
 import <std/io>
 
 void main {
-    bhalf a = 0.0;
+    
 }
