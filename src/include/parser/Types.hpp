@@ -29,7 +29,8 @@ enum BasicType : char {
     Ulong,
     Uchar,
     Ucent,
-    Half
+    Half,
+    Bhalf,
 };
 }
 

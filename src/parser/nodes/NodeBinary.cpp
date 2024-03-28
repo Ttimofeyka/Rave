@@ -35,7 +35,7 @@ LLVMValueRef Binary::castValue(LLVMValueRef from, LLVMTypeRef to, long loc) {
     if(kindFrom == kindTo) {
         switch(kindFrom) {
             case LLVMIntegerTypeKind: return LLVMBuildIntCast(generator->builder, from, to, "castValueItoI");
-            case LLVMFloatTypeKind: case LLVMDoubleTypeKind: case LLVMHalfTypeKind: return LLVMBuildFPCast(generator->builder, from, to, "castValueFtoF");
+            case LLVMFloatTypeKind: case LLVMDoubleTypeKind: case LLVMHalfTypeKind: case LLVMBFloatTypeKind: return LLVMBuildFPCast(generator->builder, from, to, "castValueFtoF");
             case LLVMPointerTypeKind: return LLVMBuildPointerCast(generator->builder, from, to, "castValuePtoP");
             case LLVMArrayTypeKind: generator->error("the ability to use cast to arrays is temporarily impossible!",loc); return nullptr;
             default: return from;
@@ -44,7 +44,7 @@ LLVMValueRef Binary::castValue(LLVMValueRef from, LLVMTypeRef to, long loc) {
     switch(kindFrom) {
         case LLVMIntegerTypeKind:
             switch(kindTo) {
-                case LLVMFloatTypeKind: case LLVMDoubleTypeKind: case LLVMHalfTypeKind: return LLVMBuildSIToFP(generator->builder, from, to, "castValueItoF");
+                case LLVMFloatTypeKind: case LLVMDoubleTypeKind: case LLVMHalfTypeKind: case LLVMBFloatTypeKind: return LLVMBuildSIToFP(generator->builder, from, to, "castValueItoF");
                 case LLVMPointerTypeKind: return LLVMBuildIntToPtr(generator->builder, from, to, "castValueItoP");
                 case LLVMArrayTypeKind: generator->error("it is forbidden to cast numbers into arrays!",loc); return nullptr;
                 case LLVMStructTypeKind: generator->error("it is forbidden to cast numbers into structures!",loc); return nullptr;
@@ -53,7 +53,7 @@ LLVMValueRef Binary::castValue(LLVMValueRef from, LLVMTypeRef to, long loc) {
         case LLVMFloatTypeKind: case LLVMDoubleTypeKind:
             switch(kindTo) {
                 case LLVMIntegerTypeKind: case LLVMDoubleTypeKind: return LLVMBuildFPToSI(generator->builder, from, to, "castValueFtoI");
-                case LLVMHalfTypeKind: return LLVMBuildFPCast(generator->builder, from, to, "castValueFtoH");
+                case LLVMHalfTypeKind: case LLVMBFloatTypeKind: return LLVMBuildFPCast(generator->builder, from, to, "castValueFtoH");
                 case LLVMPointerTypeKind: generator->error("it is forbidden to cast floating-point numbers into pointers!", loc); return nullptr;
                 case LLVMArrayTypeKind: generator->error("it is forbidden to cast numbers into arrays!", loc); return nullptr;
                 case LLVMStructTypeKind: generator->error("it is forbidden to cast numbers into structures!", loc); return nullptr;
@@ -62,7 +62,7 @@ LLVMValueRef Binary::castValue(LLVMValueRef from, LLVMTypeRef to, long loc) {
         case LLVMPointerTypeKind:
             switch(kindTo) {
                 case LLVMIntegerTypeKind: return LLVMBuildPtrToInt(generator->builder, from, to, "castValuePtoI");
-                case LLVMFloatTypeKind: case LLVMDoubleTypeKind: case LLVMHalfTypeKind:
+                case LLVMFloatTypeKind: case LLVMDoubleTypeKind: case LLVMHalfTypeKind: case LLVMBFloatTypeKind:
                     if(std::string(LLVMPrintValueToString(from)).find("null") != std::string::npos) return LLVMConstReal(to, 0.0);
                     generator->error("it is forbidden to cast pointers into floating-point numbers!", loc); return nullptr;
                 case LLVMArrayTypeKind:

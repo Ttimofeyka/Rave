@@ -24,25 +24,25 @@ int TypeBasic::getSize() {
     switch(this->type) {
         case BasicType::Bool: return 1;
         case BasicType::Char: case BasicType::Uchar: return 8;
-        case BasicType::Short: case BasicType::Ushort: case BasicType::Half: return 16;
+        case BasicType::Short: case BasicType::Ushort: case BasicType::Half:case BasicType::Bhalf: return 16;
         case BasicType::Int: case BasicType::Uint: case BasicType::Float: return 32;
         case BasicType::Long: case BasicType::Ulong: case BasicType::Double: return 64;
         case BasicType::Cent: case BasicType::Ucent: return 128;
         default: return 0;
     }
 }
-bool TypeBasic::isFloat() {return (this->type == BasicType::Float) || (this->type == BasicType::Double || this->type == BasicType::Half);}
+bool TypeBasic::isFloat() {return (this->type == BasicType::Float) || (this->type == BasicType::Double || this->type == BasicType::Half || this->type == BasicType::Bhalf);}
 std::string TypeBasic::toString() {
     switch(this->type) {
         case BasicType::Bool: return "bool";
         case BasicType::Char: return "char"; case BasicType::Uchar: return "uchar";
         case BasicType::Short: return "short"; case BasicType::Ushort: return "ushort";
-        case BasicType::Int: return "int"; case BasicType::Uint: return "uint"; 
+        case BasicType::Int: return "int"; case BasicType::Uint: return "uint";
         case BasicType::Float: return "float";
         case BasicType::Long: return "long"; case BasicType::Ulong: return "ulong";
         case BasicType::Double: return "double";
         case BasicType::Cent: return "cent"; case BasicType::Ucent: return "cent";
-        case BasicType::Half: return "half";
+        case BasicType::Half: return "half"; case BasicType::Bhalf: return "bhalf";
         default: return "BasicUnknown";
     }
 }
@@ -237,6 +237,7 @@ Type* getType(std::string id) {
     else if(id == "cent") return new TypeBasic(BasicType::Cent);
     else if(id == "ucent") return new TypeBasic(BasicType::Ucent);
     else if(id == "half") return new TypeBasic(BasicType::Half);
+    else if(id == "bhalf") return new TypeBasic(BasicType::Bhalf);
     else if(id == "float") return new TypeBasic(BasicType::Float);
     else if(id == "double") return new TypeBasic(BasicType::Double);
     else if(id == "void") return new TypeVoid();

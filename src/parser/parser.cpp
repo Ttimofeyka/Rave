@@ -1025,7 +1025,7 @@ Node* Parser::parseStmt(std::string f) {
                     id == "void" || id == "bool" || id == "int" || id == "uint" ||
                     id == "short" || id == "ushort" || id == "char" || id == "uchar" ||
                     id == "long" || id == "ulong" || id == "cent" || id == "ucent"|| id == "const"
-                    || id == "half"
+                    || id == "half" || id == "bhalf"
                 ) {this->idx -= 1; return this->parseDecl(f);}
             } this->idx -= 1;
             if(this->peek()->type == TokType::Builtin) return this->parseBuiltin(f);
@@ -1186,7 +1186,7 @@ std::vector<Node*> Parser::parseFuncCallArgs() {
              ||this->peek()->value == "short" || this->peek()->value == "ushort" || this->peek()->value == "int"
              ||this->peek()->value == "uint" || this->peek()->value == "long" || this->peek()->value == "ulong"
              ||this->peek()->value == "cent" || this->peek()->value == "ucent" || this->peek()->value == "void"
-             ||this->peek()->value == "half") {
+             ||this->peek()->value == "half" || this->peek()->value == "bhalf") {
                 if(this->isDefinedLambda()) buffer.push_back(this->parseLambda());
                 else buffer.push_back(new NodeType(this->parseType(), this->peek()->line));
             }

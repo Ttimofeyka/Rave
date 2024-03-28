@@ -67,6 +67,8 @@ std::vector<Type*> parametersToTypes(std::vector<LLVMValueRef> params) {
             else if(t == LLVMInt1TypeInContext(generator->context)) types.push_back(new TypeBasic(BasicType::Bool));
             else types.push_back(new TypeBasic(BasicType::Cent));
         }
+        else if(LLVMGetTypeKind(t) == LLVMHalfTypeKind) types.push_back(new TypeBasic(BasicType::Half));
+        else if(LLVMGetTypeKind(t) == LLVMHalfTypeKind) types.push_back(new TypeBasic(BasicType::Bhalf));
         else if(LLVMGetTypeKind(t) == LLVMFloatTypeKind) types.push_back(new TypeBasic(BasicType::Float));
         else if(LLVMGetTypeKind(t) == LLVMDoubleTypeKind) types.push_back(new TypeBasic(BasicType::Double));
         else if(LLVMGetTypeKind(t) == LLVMStructTypeKind) types.push_back(new TypeStruct(std::string(LLVMGetStructName(t))));
@@ -82,6 +84,7 @@ std::string typesToString(std::vector<FuncArgSet> args) {
         if(instanceof<TypeBasic>(ty)) {
             switch(((TypeBasic*)ty)->type) {
                 case BasicType::Half: data += "_hf"; break;
+                case BasicType::Bhalf: data += "_bf"; break;
                 case BasicType::Float: data += "_f"; break;
                 case BasicType::Double: data += "_d"; break;
                 case BasicType::Int: data += "_i"; break;
@@ -125,6 +128,7 @@ std::string typesToString(std::vector<Type*> args) {
         if(instanceof<TypeBasic>(args[i])) {
             switch(((TypeBasic*)args[i])->type) {
                 case BasicType::Half: data += "_hf"; break;
+                case BasicType::Bhalf: data += "_bf"; break;
                 case BasicType::Float: data += "_f"; break;
                 case BasicType::Double: data += "_d"; break;
                 case BasicType::Int: data += "_i"; break;
@@ -234,6 +238,7 @@ LLVMTypeRef LLVMGen::genType(Type* type, long loc) {
         case BasicType::Char: case BasicType::Uchar: return LLVMInt8TypeInContext(this->context);
         case BasicType::Short: case BasicType::Ushort: return LLVMInt16TypeInContext(this->context);
         case BasicType::Half: return LLVMHalfTypeInContext(this->context);
+        case BasicType::Bhalf: return LLVMBFloatTypeInContext(this->context);
         case BasicType::Int: case BasicType::Uint: return LLVMInt32TypeInContext(this->context);
         case BasicType::Long: case BasicType::Ulong: return LLVMInt64TypeInContext(this->context);
         case BasicType::Cent: case BasicType::Ucent: return LLVMInt128TypeInContext(this->context);
@@ -330,6 +335,7 @@ Type* lTypeToType(LLVMTypeRef t) {
         if(t == LLVMInt1TypeInContext(generator->context)) return new TypeBasic(BasicType::Bool);
         return new TypeBasic(BasicType::Cent);
     }
+    else if(LLVMGetTypeKind(t) == LLVMBFloatTypeKind) return new TypeBasic(BasicType::Bhalf);
     else if(LLVMGetTypeKind(t) == LLVMHalfTypeKind) return new TypeBasic(BasicType::Half);
     else if(LLVMGetTypeKind(t) == LLVMFloatTypeKind) return new TypeBasic((t == LLVMFloatTypeInContext(generator->context)) ? BasicType::Float : BasicType::Double);
     else if(LLVMGetTypeKind(t) == LLVMDoubleTypeKind) return new TypeBasic(BasicType::Double);
@@ -352,7 +358,7 @@ int LLVMGen::getAlignment(Type* type) {
     if(instanceof<TypeBasic>(type)) {
         switch(((TypeBasic*)type)->type) {
             case BasicType::Bool: case BasicType::Char: case BasicType::Uchar: return 1;
-            case BasicType::Short: case BasicType::Ushort: case BasicType::Half: return 2;
+            case BasicType::Short: case BasicType::Ushort: case BasicType::Half: case BasicType::Bhalf: return 2;
             case BasicType::Int: case BasicType::Uint: case BasicType::Float: return 4;
             case BasicType::Long: case BasicType::Ulong: case BasicType::Double: return 8;
             case BasicType::Cent: case BasicType::Ucent: return 16;

@@ -1,5 +1,5 @@
 import <std/io>
 
 void main {
-    half a = 0.0;
+    bhalf a = 0.0;
 }
