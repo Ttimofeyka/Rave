@@ -4,6 +4,8 @@ LLVM_VERSION = 16
 
 LLVM_LIB = -lLLVM-$(LLVM_VERSION)
 
+FLAGS = -O2
+
 LLVM_STATIC = 0
 
 COMPILER = $(CXX)
@@ -31,7 +33,7 @@ all: $(BIN)
 $(BIN): $(OBJ)
 	$(COMPILER) $(OBJ) -o $@ $(LLVM_LIB) -DLLVM_VERSION=$(LLVM_VERSION)
 %.o: %.cpp
-	$(COMPILER) -c $< -o $@ -DLLVM_VERSION=$(LLVM_VERSION) -std=c++11 -Wno-deprecated
+	$(COMPILER) -c $< -o $@ -DLLVM_VERSION=$(LLVM_VERSION) -std=c++11 -Wno-deprecated $(FLAGS)
 
 clean:
 	rm -rf src/*.o src/parser/*.o src/parser/nodes/*.o src/lexer/*.o

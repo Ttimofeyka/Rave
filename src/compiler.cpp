@@ -258,7 +258,7 @@ void Compiler::compile(std::string file) {
     LLVMTargetRef target;
     char* triple = LLVMNormalizeTargetTriple(Compiler::outType.c_str());
     if(errors != nullptr) {
-        Compiler::error("Normalize target triple: "+std::string(errors));
+        Compiler::error("normalize target triple: "+std::string(errors));
         std::exit(1);
     }
     else LLVMDisposeErrorMessage(errors);
@@ -266,7 +266,7 @@ void Compiler::compile(std::string file) {
 
     LLVMGetTargetFromTriple(triple, &target, &errors);
     if(errors != nullptr) {
-        Compiler::error("Target from triple: "+std::string(errors));
+        Compiler::error("target from triple: "+std::string(errors));
         std::exit(1);
     }
     else LLVMDisposeErrorMessage(errors);
@@ -303,7 +303,7 @@ void Compiler::compile(std::string file) {
 
     LLVMTargetMachineEmitToFile(machine, generator->lModule, (std::regex_replace(file, std::regex(".rave"), ".o")).c_str(), LLVMObjectFile, &errors);
     if(errors != nullptr) {
-        Compiler::error("Target machine emit to file: "+std::string(errors));
+        Compiler::error("target machine emit to file: "+std::string(errors));
         std::exit(1);
     }
     end = std::chrono::system_clock::now();

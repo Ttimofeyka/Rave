@@ -103,9 +103,7 @@ std::vector<LLVMValueRef> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg
         }
         else if(instanceof<TypeStruct>(fas[i].type) && LLVMGetTypeKind(LLVMTypeOf(params[i])) == LLVMStructTypeKind) {
             if(currScope->detectMemoryLeaks && nfunc != nullptr) {
-                if(instanceof<NodeIden>(this->args[i])) {
-                    if(nfunc->isReleased(i)) currScope->getVar(((NodeIden*)this->args[i])->name)->isAllocated = false;
-                }
+                if(instanceof<NodeIden>(this->args[i]) && nfunc->isReleased(i)) currScope->getVar(((NodeIden*)this->args[i])->name)->isAllocated = false;
             }
         }
         else if(instanceof<TypeBasic>(fas[i].type) && LLVMGetTypeKind(LLVMTypeOf(params[i])) == LLVMIntegerTypeKind) {
@@ -124,6 +122,16 @@ std::vector<LLVMValueRef> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg
                 LLVMBuildStore(generator->builder, params[i], temp);
                 temp = LLVMBuildPointerCast(generator->builder, temp, LLVMPointerType(generator->genType(tbasic, this->loc), 0), "StructToI_cdecl64_getParameters");
                 params[i] = LLVM::load(temp, "StructToI_cdecl64_getParameters_load");
+            }
+        }
+        else if(instanceof<TypeFunc>(fas[i].type)) {
+            TypeFunc* tfunc = (TypeFunc*)(fas[i].type);
+            if(instanceof<TypeBasic>(tfunc->main) && ((TypeBasic*)(tfunc->main))->type == BasicType::Char) {
+                if(LLVM::isPointer(params[i]) && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(params[i]))) == LLVMFunctionTypeKind
+                && typeToString(LLVMTypeOf(params[i])).find("void ") == 0) {
+                    // Casting void(...) to char(...)
+                    params[i] = LLVMBuildPointerCast(generator->builder, params[i], generator->genType(fas[i].type, this->loc), "castVFtoCF");
+                }
             }
         }
     }

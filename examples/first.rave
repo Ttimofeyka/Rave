@@ -1,5 +1,11 @@
 import <std/io>
 
+void test(void() func) {
+    func();
+}
+
 void main {
-    
+    test(void() {
+        std::println("Hello, world!");
+    });
 }
