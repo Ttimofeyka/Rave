@@ -35,7 +35,6 @@ public:
     void warning(std::string msg);
     Token* peek();
     Token* next();
-    Token* expect(char type);
 
     Parser(std::vector<Token*> tokens, std::string file);
 

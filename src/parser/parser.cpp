@@ -93,11 +93,6 @@ void Parser::warning(std::string msg) {
 
 Token* Parser::peek() {return this->tokens[this->idx];}
 Token* Parser::next() {this->idx += 1; return this->tokens[this->idx];}
-Token* Parser::expect(char type) {
-    if(this->peek()->type != type) this->error("expected token "+tokenToString(type)+", not "+tokenToString(this->peek()->type));
-    else this->next();
-    return this->peek();
-}
 
 void Parser::parseAll() {
     while(this->peek()->type != TokType::Eof) {
@@ -165,11 +160,17 @@ Node* Parser::parseTopLevel(std::string s) {
 Node* Parser::parseNamespace(std::string s) {
     long loc = this->peek()->line; this->next();
     std::string name = this->peek()->value; this->next();
-    this->expect(TokType::Rbra);
+
+    if(this->peek()->type != TokType::Rbra) this->error("expected token '{'");
+    this->next();
+
     std::vector<Node*> nNodes;
     Node* currNode = nullptr;
     while((currNode = this->parseTopLevel(s)) != nullptr) nNodes.push_back(currNode);
-    this->expect(TokType::Lbra);
+
+    if(this->peek()->type != TokType::Lbra) this->error("expected token '}'");
+    this->next();
+
     return new NodeNamespace(name, nNodes, loc);
 }
 
@@ -323,13 +324,14 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
         if(this->peek()->type == TokType::ShortRet) {
             this->next();
             Node* expr = this->parseExpr();
-            if(this->peek()->type != TokType::Lpar) expect(TokType::Semicolon);
-            //_templateNamesF = [];
+            if(this->peek()->type != TokType::Lpar) {
+                if(this->peek()->type != TokType::Semicolon) this->error("expected token ';'");
+                this->next();
+            }
             return new NodeFunc(name, args, new NodeBlock({new NodeRet(expr, name, loc)}), isExtern, mods, loc, type, templates);
         }
         else if(this->peek()->type == TokType::Semicolon) {
             this->next();
-            //_templateNamesF = [];
             return new NodeFunc(name, args, new NodeBlock({}), isExtern, mods, loc, type, templates);
         }
         NodeBlock* block = this->parseBlock(name);
@@ -341,7 +343,6 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
             if(instanceof<TypeVoid>(type)) block->nodes.push_back(n);
             else block->nodes.push_back(new NodeRet(n, name, loc));
         }
-        //_templateNamesF = [];
         return new NodeFunc(name, args, block, isExtern, mods, loc, type, templates);
     }
     else if(this->peek()->type == TokType::Rbra) {
@@ -353,14 +354,15 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
             if(instanceof<TypeVoid>(type)) block->nodes.push_back(n);
             else block->nodes.push_back(new NodeRet(n,name,this->peek()->line));
         }
-        //_templateNamesF = [];
         return new NodeFunc(name,{},block,isExtern,mods,loc,type,templates);
     }
     else if(this->peek()->type == TokType::ShortRet) {
         this->next();
         Node* n = this->parseExpr();
-        if(this->peek()->type != TokType::Lpar) expect(TokType::Semicolon);
-        //_templateNamesF = [];
+        if(this->peek()->type != TokType::Lpar) {
+            if(this->peek()->type != TokType::Semicolon) this->error("expected token ';'");
+            this->next();
+        }
 
         if(!instanceof<TypeVoid>(type)) return new NodeFunc(name,{},new NodeBlock({new NodeRet(n,name,loc)}),isExtern,mods,loc,type,templates);
         return new NodeFunc(name,{},new NodeBlock({n}),isExtern,mods,loc,type,templates);
@@ -372,7 +374,10 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
     else if(this->peek()->type == TokType::Equ) {
         this->next();
         Node* n = this->parseExpr();
-        if(this->peek()->type != TokType::Lpar) this->expect(TokType::Semicolon);
+        if(this->peek()->type != TokType::Lpar) {
+            if(this->peek()->type != TokType::Semicolon) this->error("expected token ';'");
+            this->next();
+        }
         return new NodeVar(name, n, isExtern, instanceof<TypeConst>(type), (s==""), mods, loc, type, isVolatile);
     }
     NodeBlock* _b = this->parseBlock(name);
@@ -533,7 +538,8 @@ Node* Parser::parseAtom(std::string f) {
     }
     if(t->type == TokType::Rpar) {
         auto e = this->parseExpr();
-        this->expect(TokType::Lpar);
+        if(this->peek()->type != TokType::Lpar) this->error("expected token ')'");
+        this->next();
         return e;
     }
     if(t->type == TokType::Rarr) {
@@ -583,7 +589,7 @@ Node* Parser::parseAtom(std::string f) {
         }
         return new NodeBuiltin(name, args, t->line, block);
     }
-    this->error("Expected a number, true/false, char, variable or expression. Got: '"+t->value+"' on "+std::to_string(t->line)+" line.");
+    this->error("expected a number, true/false, char, variable or expression. Got: '"+t->value+"' on "+std::to_string(t->line)+" line.");
     return nullptr;
 }
 
@@ -610,11 +616,16 @@ Node* Parser::parseStruct(std::vector<DeclarMod> mods) {
         _exs = this->peek()->value;
         next();
     }
-    expect(TokType::Rbra); // skip {
+
+    if(this->peek()->type != TokType::Rbra) this->error("expected token '{'");
+    this->next(); // skip {
+    
     std::vector<Node*> nodes;
     Node* currNode = nullptr;
     while((currNode = this->parseTopLevel(name)) != nullptr) nodes.push_back(currNode);
-    expect(TokType::Lbra); // skip }
+
+    if(this->peek()->type != TokType::Lbra) this->error("expected token '}'");
+    this->next(); // skip }
 
     return new NodeStruct(name, nodes, loc, _exs, templateNames, mods);
 }
@@ -663,7 +674,10 @@ Node* Parser::parseAliasType() {
     this->next();
     std::string name = this->peek()->value;
     this->next();
-    this->expect(TokType::Equ);
+    
+    if(this->peek()->type != TokType::Equ) this->error("expected token '='");
+    this->next();
+
     Type* childType = this->parseType();
     if(this->peek()->type == TokType::Semicolon) this->next();
     return new NodeAliasType(name, childType, loc);
@@ -723,7 +737,10 @@ Type* Parser::parseType(bool cannotBeTemplate) {
             this->next();
             if(this->peek()->type == TokType::Number) cnt = std::stoi(this->peek()->value);
             this->next();
-            this->expect(TokType::Larr);
+            
+            if(this->peek()->type != TokType::Larr) this->error("expected token ']'");
+            this->next();
+
             ty = new TypeArray(cnt, ty);
         }
         else if(this->peek()->type == TokType::Rpar) ty = new TypeFunc(ty, this->parseFuncArgs());
@@ -1040,7 +1057,10 @@ Node* Parser::parseStmt(std::string f) {
             } this->idx -= 1;
             if(this->peek()->type == TokType::Builtin) return this->parseBuiltin(f);
             Node* expr = this->parseExpr(f);
-            if(this->peek()->type != TokType::Lbra) this->expect(TokType::Semicolon);
+            if(this->peek()->type != TokType::Lbra) {
+                if(this->peek()->type != TokType::Semicolon) this->error("expected token ';'");
+                this->next();
+            }
             else this->next();
             return expr;
         } this->idx -= 1;
@@ -1056,7 +1076,11 @@ Node* Parser::parseStmt(std::string f) {
                 if(this->peek()->type == TokType::Comma) this->next();
                 continue;
             }
-            std::string name = this->expect(TokType::Identifier)->value;
+
+            if(this->peek()->type != TokType::Identifier) this->error("expected identifier");
+            this->next();
+
+            std::string name = this->peek()->value;
             std::string value = "";
             if(this->peek()->type == TokType::ValSel) {
                 this->next();
@@ -1072,7 +1096,10 @@ Node* Parser::parseStmt(std::string f) {
     if(this->peek()->type == TokType::Builtin) return this->parseBuiltin(f);
     Node* expr = this->parseExpr(f);
     if(this->peek()->type == TokType::Lbra) this->next();
-    else this->expect(TokType::Semicolon);
+    else {
+        if(this->peek()->type != TokType::Semicolon) this->error("expected token ';'");
+        this->next();
+    }
     return expr;
 }
 
@@ -1085,7 +1112,9 @@ Node* Parser::parseBreak() {
 
 Node* Parser::parseIf(std::string f, bool isStatic) {
     long line = this->peek()->line;
-    this->next(); this->next();
+    this->next();
+    if(this->peek()->type != TokType::Rpar) this->error("expected token '('");
+    this->next();
     Node* cond = this->parseExpr();
     this->next();
     Node* body = this->parseStmt(f);
