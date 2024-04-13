@@ -1,0 +1,15 @@
+namespace std {
+    namespace opencl {
+        alias CPU = (1 <. 1);
+        alias GPU = (1 <. 2);
+        alias success = 0;
+        alias deviceName = 4139;
+        alias deviceVersion = 4143;
+        alias driverVersion = 4141;
+        alias deviceOpenCLVersion = 4157;
+        alias deviceMaxComputeUnits = 4098;
+
+        extern(linkname: "clGetDeviceIDs") int getDeviceIDs(void* platform, ulong devType, uint numEntries, void** devices, uint* numDevices);
+        extern(linkname: "clGetDeviceInfo") int getDeviceInfo(void* device, uint paramName, uint paramValSize, void* paramVal, uint* paramValueSizeRet);
+    }
+}
