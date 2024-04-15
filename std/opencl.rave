@@ -11,5 +11,6 @@ namespace std {
 
         extern(linkname: "clGetDeviceIDs") int getDeviceIDs(void* platform, ulong devType, uint numEntries, void** devices, uint* numDevices);
         extern(linkname: "clGetDeviceInfo") int getDeviceInfo(void* device, uint paramName, uint paramValSize, void* paramVal, uint* paramValueSizeRet);
+        extern(linkname: "clCreateContext") void* createContext(int* properties, uint numDevices, void** devices, void(char*, void*, int, void*) callback, void* userData, int* errRet);
     }
 }

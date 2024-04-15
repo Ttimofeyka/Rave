@@ -1,5 +1,5 @@
-import <std/io> <std/vector>
+import <std/io>
 
 void main {
-    auto vint = std::vector<int>();
+    
 }
