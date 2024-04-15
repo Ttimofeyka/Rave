@@ -1,6 +1,6 @@
 import <std/io> <std/error>
 
-struct SafePtr<T> {
+(data: "pointer", size: "size") struct SafePtr<T> {
     T* pointer;
     int size = 0;
 
