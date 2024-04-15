@@ -231,6 +231,13 @@ LLVMValueRef NodeCall::generate() {
             }
 
             idenFunc->name = mainName+"<"+sTypes.substr(0, sTypes.size()-1)+">";
+
+            if(AST::funcTable.find(idenFunc->name.substr(0, idenFunc->name.find('<'))) == AST::funcTable.end()) {
+                // Not working... maybe generate structure?
+                if(AST::structTable.find(idenFunc->name.substr(0, idenFunc->name.find('<'))) != AST::structTable.end()) {
+                    AST::structTable[idenFunc->name.substr(0, idenFunc->name.find('<'))]->genWithTemplate("<"+sTypes.substr(0, sTypes.size()-1)+">", types);
+                }
+            }
             
             delete tLexer;
             delete tParser;
