@@ -322,6 +322,11 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
         return nullptr;
     }
 
+    if(this->peek()->type == TokType::Rbra && s.find("__RAVE_PARSER_FUNCTION_") != std::string::npos) {
+        this->error("function declarations cannot be inside other functions!", loc);
+        return nullptr;
+    }
+
     std::vector<std::string> templates;
     if(this->peek()->type == TokType::Less) {
         this->next();
@@ -361,7 +366,7 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
         return new NodeFunc(name, args, block, isExtern, mods, loc, type, templates);
     }
     else if(this->peek()->type == TokType::Rbra) {
-        NodeBlock* block = this->parseBlock(name);
+        NodeBlock* block = this->parseBlock("__RAVE_PARSER_FUNCTION_"+name);
         if(this->peek()->type == TokType::ShortRet) {
             this->next();
             Node* n = this->parseExpr();
