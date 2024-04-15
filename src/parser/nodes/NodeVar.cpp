@@ -82,19 +82,22 @@ void NodeVar::check() {
 }
 
 LLVMValueRef NodeVar::generate() {
+    if(instanceof<TypeVoid>(this->type)) {
+        // error: variable cannot be void
+        generator->error("using 'void' for variables is prohibited!", this->loc);
+        return nullptr;
+    }
+
     if(instanceof<TypeAlias>(this->type)) {
         AST::aliasTable[this->name] = this->value;
         return nullptr;
     }
-    if(instanceof<TypeBuiltin>(this->type)) {
-        /*NodeBuiltin nb = new NodeBuiltin(tb.name,tb.args.dup,loc,tb.block);
-        nb.generate();
-        this.t = nb.ty;*/
-    }
+
     if(instanceof<TypeAuto>(this->type) && value == nullptr) {
-        generator->error("using 'auto' without an explicit value is prohibited!",loc);
+        generator->error("using 'auto' without an explicit value is prohibited!", this->loc);
         return nullptr;
     }
+
     if(instanceof<TypeStruct>(this->type)) {
         while(generator->toReplace.find(((TypeStruct*)this->type)->name) != generator->toReplace.end()) this->type = generator->toReplace[((TypeStruct*)this->type)->name];
     }

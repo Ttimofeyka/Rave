@@ -480,19 +480,19 @@ namespace std {
         std::string result = "";
 
         @foreachArgs() {
-            @if(@tNequals(@getCurrArgType(),float)) {
-                @if(@tNequals(@getCurrArgType(),double)) {
-                    @if(@tNequals(@getCurrArgType(),std::string)) {
-                        @if(@tNequals(@getCurrArgType(),char)) {
-                            @if(@tEquals(@getCurrArgType(),short) || @tEquals(@getCurrArgType(),int) || @tEquals(@getCurrArgType(),long)) {
+            @if(@tNequals(@getCurrArgType(), float)) {
+                @if(@tNequals(@getCurrArgType(), double)) {
+                    @if(@tNequals(@getCurrArgType(), std::string)) {
+                        @if(@tNequals(@getCurrArgType(), char)) {
+                            @if(@tEquals(@getCurrArgType(), short) || @tEquals(@getCurrArgType(), int) || @tEquals(@getCurrArgType(), long)) {
                                 std::string s = std::string::fromNumber(@getCurrArg(long));
                                     result.append(s);
                                 ~s;
                             };
-                            @if(@tEquals(@getCurrArgType(),bool)) {
+                            @if(@tEquals(@getCurrArgType(), bool)) {
                                 result.appendC(std::cstring::fromBool(@getCurrArg(bool)));
                             };
-                            @if(@tEquals(@getCurrArgType(),std::u32string)) {
+                            @if(@tEquals(@getCurrArgType(), std::u32string)) {
                                 std::u32string us = @getCurrArg(std::u32string);
                                 for(int i=0; i<us.length; i+=1) {
                                     char[4] buf;
@@ -515,13 +515,13 @@ namespace std {
                                     }
                                 }
                             };
-                            @if(@tEquals(@getCurrArgType(),std::u8string)) {
+                            @if(@tEquals(@getCurrArgType(), std::u8string)) {
                                 std::u8string u8s = @getCurrArg(std::u8string);
                                 for(int i=0; i<u8s.byteLength; i+=1) {
                                     result.add(u8s.data[i]);
                                 }
                             };
-                            @if(@tEquals(@getCurrArgType(),int*)) {
+                            @if(@tEquals(@getCurrArgType(), int*)) {
                                 uint* utf8Text = @getCurrArg(uint*);
                                 for(int i=0; utf8Text[i] != '\0'; i+=1) {
                                     char[4] buf;
@@ -548,23 +548,23 @@ namespace std {
                                 result.appendC(@getCurrArg(void*));
                             };
                         };
-                        @if(@tEquals(@getCurrArgType(),char)) {
+                        @if(@tEquals(@getCurrArgType(), char)) {
                             result.add(@getCurrArg(char));
                         };
                     };
-                    @if(@tEquals(@getCurrArgType(),std::string)) {
+                    @if(@tEquals(@getCurrArgType(), std::string)) {
                         std::string s = @getCurrArg(std::string);
                         result.append(s);
                     };
                 };
-                @if(@tEquals(@getCurrArgType(),double)) {
+                @if(@tEquals(@getCurrArgType(), double)) {
                     double d = @getCurrArg(double);
                     std::string s = std::string::fromDouble(d);
                         result.append(s);
                     ~s;
                 };
             };
-            @if(@tEquals(@getCurrArgType(),float)) {
+            @if(@tEquals(@getCurrArgType(), float)) {
                 double f = @getCurrArg(double);
                 std::string s = std::string::fromDouble(f);
                     result.append(s);

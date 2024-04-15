@@ -53,19 +53,23 @@ namespace std {
                 n = 4;
             }
         } => n;
+
         (inline) uint decode(int n, char* buf) {
             uint result;
             if(n == 1) result = cast(uint)(buf[0]);
             else result = -1;
         } => result;
+
         (inline) int strlen(uint* str) {
             int i = 0;
             while(str[i] != '\0'w) i += 1;
         } => i;
+
         (inline) int utflen(uint* str) {
             int i = 0;
             while(str[i] != '\0') i += 1;
         } => i;
+        
         ushort* toUtf16(uint* codepoints) {
             ushort* result;
             int len = 0;

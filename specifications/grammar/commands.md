@@ -131,20 +131,20 @@ void main {
 }
 ```
 
-**@tIsEquals(type1, type2), @tIsNequals(type1, type2)** - Compare the two types with each other.
+**@tEquals(type1, type2), @tNequals(type1, type2)** - Compare the two types with each other.
 
 Example:
 
 ```d
-@if(@tIsEquals(int,char)) {
+@if(@tEquals(int,char)) {
     int a = 0;
 };
-@if(@tIsNequals(int,char)) {
+@if(@tNequals(int,char)) {
     int a = 5;
 };
 ```
 
-**@isNumeric, @tIsPointer, @tIsArray(type)** - Check whether the type is numerical, pointer or array
+**@isNumeric, @isStructure, @isPointer, @isArray (type)** - Check whether the type is numerical, pointer, array or structure
 
 Example:
 
@@ -152,10 +152,10 @@ Example:
 @if(@isNumeric(int)) {
     // ...
 };
-@if(tIsPointer(int*)) {
+@if(isPointer(int*)) {
     // ...
 };
-@if(tIsArray(int[1])) {
+@if(isArray(int[1])) {
     // ...
 };
 ```
@@ -252,7 +252,7 @@ Example:
 
 ```d
 (ctargs) int bow {
-    @if(@tIsEquals(@getCurrArgType(), int)) {
+    @if(@tEquals(@getCurrArgType(), int)) {
         @echo("Integer");
     };
 }

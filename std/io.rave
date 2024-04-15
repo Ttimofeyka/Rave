@@ -159,6 +159,42 @@ namespace std {
         @callWithArgs(std::print, '\n');
     }
 
+    (inline, ctargs) void input {
+        @foreachArgs() {
+            @if(@tNequals(@getCurrArgType(), float*)) {
+                @if(@tNequals(@getCurrArgType(), double*)) {
+                    @if(@tNequals(@getCurrArgType(), char*)) {
+                        @if(@tNequals(@getCurrArgType(), short*)) {
+                            @if(@tNequals(@getCurrArgType(), int*)) {
+                                @if(@tNequals(@getCurrArgType(), long*)) {
+                                    
+                                };
+                                @if(@tEquals(@getCurrArgType(), long*)) {
+                                    std::scanf("%ld", @getCurrArg(long*));
+                                };
+                            };
+                            @if(@tEquals(@getCurrArgType(), int*)) {
+                                std::scanf("%d", @getCurrArg(int*));
+                            };
+                        };
+                        @if(@tEquals(@getCurrArgType(), short*)) {
+                            std::scanf("%hd", @getCurrArg(short*));
+                        };
+                    };
+                    @if(@tEquals(@getCurrArgType(), char*)) {
+                        std::scanf("%c", @getCurrArg(char*));
+                    };
+                };
+                @if(@tEquals(@getCurrArgType(), double*)) {
+                    std::scanf("%lf", @getCurrArg(double*));
+                };
+            };
+            @if(@tEquals(@getCurrArgType(), float*)) {
+                std::scanf("%f", @getCurrArg(float*));
+            };
+        };
+    }
+
     (inline, ctargs) void finput {
         std::file f = @getArg(std::file, 0);
         @skipArg();
@@ -205,42 +241,6 @@ namespace std {
             ch = std::getchar();
         }
     } => buffer;
-
-    (inline, ctargs) void input {
-        @foreachArgs() {
-            @if(@tNequals(@getCurrArgType(), float*)) {
-                @if(@tNequals(@getCurrArgType(), double*)) {
-                    @if(@tNequals(@getCurrArgType(), char*)) {
-                        @if(@tNequals(@getCurrArgType(), short*)) {
-                            @if(@tNequals(@getCurrArgType(), int*)) {
-                                @if(@tNequals(@getCurrArgType(), long*)) {
-                                    
-                                };
-                                @if(@tEquals(@getCurrArgType(), long*)) {
-                                    std::scanf("%ld", @getCurrArg(long*));
-                                };
-                            };
-                            @if(@tEquals(@getCurrArgType(), int*)) {
-                                std::scanf("%d", @getCurrArg(int*));
-                            };
-                        };
-                        @if(@tEquals(@getCurrArgType(), short*)) {
-                            std::scanf("%hd", @getCurrArg(short*));
-                        };
-                    };
-                    @if(@tEquals(@getCurrArgType(), char*)) {
-                        std::scanf("%c", @getCurrArg(char*));
-                    };
-                };
-                @if(@tEquals(@getCurrArgType(), double*)) {
-                    std::scanf("%lf", @getCurrArg(double*));
-                };
-            };
-            @if(@tEquals(@getCurrArgType(), float*)) {
-                std::scanf("%f", @getCurrArg(float*));
-            };
-        };
-    }
 
     struct file {
         libc::File* _file;

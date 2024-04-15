@@ -8,7 +8,7 @@
 - int
 - long
 - cent
-- alias(only for variables)
+- alias (only for variables)
 
 ## Pointers
 
@@ -22,7 +22,7 @@ Examples:
 Examples:
 
 - char*[512]
-- bool**[2]
+- bool[10]
 
 ## Structures
 
@@ -31,16 +31,14 @@ Examples:
 - A
 - B
 - std::string
-- etc.
 
 ## Function-Pointers
 
 Examples:
 
 - void()
-- int(int,int)
-- float(std::string,char*)
-- etc.
+- int(int, int)
+- float(std::string, char*)
 
 # Creating new types
 

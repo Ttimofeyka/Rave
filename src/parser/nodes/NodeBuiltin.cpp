@@ -275,12 +275,12 @@ LLVMValueRef NodeBuiltin::generate() {
         if(this->asType(0)->type->toString() != this->asType(1)->type->toString()) return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 1, false);
         return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 0, false);
     }
-    if(this->name == "tIsArray") {
+    if(this->name == "isArray") {
         Type* ty = this->asType(0)->type;
         while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
         return LLVMConstInt(LLVMInt1TypeInContext(generator->context), instanceof<TypeArray>(ty), false);
     }
-    if(this->name == "tIsPointer") {
+    if(this->name == "isPointer") {
         Type* ty = this->asType(0)->type;
         while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
         return LLVMConstInt(LLVMInt1TypeInContext(generator->context), instanceof<TypePointer>(ty), false);
@@ -309,7 +309,7 @@ LLVMValueRef NodeBuiltin::generate() {
         if(instanceof<TypeStruct>(asType(0)->type)) return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 1, false);
         return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 0, false);
     }
-    if(this->name == "isNumeric") {
+    if(this->name == "tsNumeric") {
         if(instanceof<TypeBasic>(asType(0)->type)) return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 1, false);
         return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 0, false);
     }
@@ -453,12 +453,12 @@ Node* NodeBuiltin::comptime() {
         else this->type = ty;
         return new NodeType(ty, this->loc);
     }
-    if(this->name == "tIsArray") {
+    if(this->name == "isArray") {
         Type* ty = this->asType(0)->type;
         while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
         return new NodeBool(instanceof<TypeArray>(ty));
     }
-    if(this->name == "tIsPointer") {
+    if(this->name == "isPointer") {
         Type* ty = this->asType(0)->type;
         while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
         return new NodeBool(instanceof<TypePointer>(ty));

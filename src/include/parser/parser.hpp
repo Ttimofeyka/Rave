@@ -32,7 +32,9 @@ public:
     std::string file;
     
     void error(std::string msg);
+    void error(std::string msg, int line);
     void warning(std::string msg);
+    void warning(std::string msg, int line);
     Token* peek();
     Token* next();
 
