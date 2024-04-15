@@ -10,6 +10,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeFunc.hpp"
 #include "../../include/parser/nodes/NodeIf.hpp"
 #include "../../include/parser/nodes/NodeFor.hpp"
+#include "../../include/parser/nodes/NodeForeach.hpp"
 #include "../../include/parser/nodes/NodeVar.hpp"
 #include "../../include/parser/nodes/NodeUnary.hpp"
 #include "../../include/parser/nodes/NodeIden.hpp"
@@ -87,6 +88,9 @@ bool NodeWhile::isReleased(std::string varName) {
             }
             if(instanceof<NodeFor>(nblock->nodes[i])) {
                 if(((NodeFor*)nblock->nodes[i])->isReleased(varName)) return true;
+            }
+            if(instanceof<NodeForeach>(nblock->nodes[i])) {
+                if(((NodeForeach*)nblock->nodes[i])->isReleased(varName)) return true;
             }
         }
     }

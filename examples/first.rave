@@ -1,5 +1,13 @@
-import <std/io>
+import <std/io> <std/vector>
 
 void main {
-    
+    std::vector<int> vint = std::vector<int>();
+
+    vint.add(10);
+    vint.add(20);
+    vint.add(30);
+
+    foreach(element; vint) {
+        std::println(element);
+    }
 }

@@ -33,18 +33,21 @@ public:
     NodeFunc* destructor;
     NodeFunc* with;
     std::vector<NodeFunc*> methods;
-    bool isImported = false;
     std::string extends;
     std::map<char, std::map<std::string, NodeFunc*>> operators;
     std::vector<Node*> oldElements;
     std::vector<std::string> templateNames;
+    std::vector<DeclarMod> mods;
+    std::string dataVar;
+    std::string lengthVar;
+
     bool noCompile = false;
     bool isComdat = false;
     bool isPacked = false;
     bool isTemplated = false;
     bool isLinkOnce = false;
     bool hasDefaultConstructor = false;
-    std::vector<DeclarMod> mods;
+    bool isImported = false;
 
     NodeStruct(std::string name, std::vector<Node*> elements, long loc, std::string extends, std::vector<std::string> templateNames, std::vector<DeclarMod> mods);
     

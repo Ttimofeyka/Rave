@@ -35,6 +35,8 @@ NodeStruct::NodeStruct(std::string name, std::vector<Node*> elements, long loc, 
     this->namespacesNames = std::vector<std::string>();
     this->mods = mods;
     this->destructor = nullptr;
+    this->dataVar = "";
+    this->lengthVar = "";
 }
 
 Node* NodeStruct::comptime() {return this;}
@@ -230,6 +232,8 @@ LLVMValueRef NodeStruct::generate() {
             else this->mods[i].name = ((NodeString*)((NodeArray*)AST::aliasTable[this->mods[i].name]))->value;
         }
         if(this->mods[i].name == "packed") this->isPacked = true;
+        else if(this->mods[i].name == "data") this->dataVar = this->mods[i].value;
+        else if(this->mods[i].name == "length") this->lengthVar = this->mods[i].value;
     }
     generator->structures[this->name] = LLVMStructCreateNamed(generator->context, this->name.c_str());
 

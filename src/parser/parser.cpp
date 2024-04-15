@@ -48,6 +48,7 @@ with this file, You can obtain one at htypep://mozilla.org/MPL/2.0/.
 #include "../include/parser/nodes/NodeWhile.hpp"
 #include "../include/parser/nodes/NodeLambda.hpp"
 #include "../include/parser/nodes/NodeFor.hpp"
+#include "../include/parser/nodes/NodeForeach.hpp"
 #include <inttypes.h>
 #include <sstream>
 
@@ -1042,6 +1043,41 @@ Node* Parser::parseFor(std::string f) {
     return new NodeFor(presets, cond, afters, (NodeBlock*)stmt, f, line);
 }
 
+Node* Parser::parseForeach(std::string f) {
+    int line = this->peek()->line;
+    this->idx += 2;
+
+    NodeIden* elName = new NodeIden(this->peek()->value, line);
+    this->idx += 1;
+
+    if(this->peek()->type != TokType::Semicolon) {
+        this->error("expected token ';'!");
+        return nullptr;
+    } this->idx += 1;
+
+    Node* dataVar = this->parseExpr(f);
+    
+    if(this->peek()->type == TokType::Lpar) {
+        this->idx += 1;
+        Node* stmt = this->parseStmt(f);
+        if(!instanceof<NodeBlock>(stmt)) stmt = new NodeBlock(std::vector<Node*>({stmt}));
+        return new NodeForeach(elName, dataVar, nullptr, (NodeBlock*)stmt, f, line);
+    }
+
+    if(this->peek()->type != TokType::Semicolon) {
+        this->error("expected token ';'!");
+        return nullptr;
+    } this->idx += 1;
+
+    Node* lengthVar = this->parseExpr(f);
+
+    this->idx += 1;
+
+    Node* stmt = this->parseStmt(f);
+    if(!instanceof<NodeBlock>(stmt)) stmt = new NodeBlock(std::vector<Node*>({stmt}));
+    return new NodeForeach(elName, dataVar, lengthVar, (NodeBlock*)stmt, f, line);
+}
+
 Node* Parser::parseStmt(std::string f) {
     bool isStatic = false;
     if(this->peek()->value == "static") {isStatic = true; this->next();}
@@ -1056,6 +1092,7 @@ Node* Parser::parseStmt(std::string f) {
         if(id == "if") return this->parseIf(f, isStatic);
         if(id == "while") return this->parseWhile(f);
         if(id == "for") return this->parseFor(f);
+        if(id == "foreach") return this->parseForeach(f);
         if(id == "break") return this->parseBreak();
         if(id == "switch") return this->parseSwitch(f);
         if(id == "extern" || id == "volatile") return this->parseDecl(f);

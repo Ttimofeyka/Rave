@@ -1,7 +1,7 @@
 import <std/memory>
 
 namespace std {
-    struct vector<T> {
+    (data: "data", length: "length") struct vector<T> {
         T* data;
         int capacity;
         int length;

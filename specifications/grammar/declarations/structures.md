@@ -4,6 +4,11 @@ Structures are a full-fledged type that has a designation like class in C++.
 
 A structure can have a constructor, a destructor, methods, and operator overloading.
 
+List of possible parameters:
+- packed - the structure is not aligned for optimization.
+- data: "name" - set a variable with values stored for foreach.
+- length: "name" - set a variable with count of values stored for foreach.
+
 Example:
 
 ```d
@@ -43,5 +48,10 @@ struct A {
         pointer.a = values[0];
         pointer.b = values[1];
     }
+}
+
+(packed, data: "one", length: "two") struct B {
+    int* one;
+    int two;
 }
 ```

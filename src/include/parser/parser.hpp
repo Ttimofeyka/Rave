@@ -65,6 +65,7 @@ public:
     std::pair<Node*, Node*> parseCase(std::string f);
     Node* parseWhile(std::string f);
     Node* parseFor(std::string f);
+    Node* parseForeach(std::string f);
     Node* parseOperatorOverload(Type* type, std::string s);
     Node* parseBreak();
     std::vector<FuncArgSet> parseFuncArgSets();

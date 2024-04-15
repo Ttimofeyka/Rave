@@ -80,6 +80,27 @@ for(;;) {
 }
 ```
 
+**foreach(varElement; var) [body/{body}]** or **foreach(varElement; varWithData; varWithLength)** - the for version, created as a result of new trends in reducing unnecessary constructions.
+
+Example:
+```d
+std::vector<int> vint = std::vector<int>();
+
+vint.add(10);
+vint.add(20);
+vint.add(30);
+
+foreach(el; vint) {
+    std::println(el);
+}
+
+// Or
+
+foreach(el; vint.data; vint.length) {
+    std::println(el);
+}
+```
+
 **switch(expr) {case(expr) {} default {}}** - It works like a switch in C, except for one thing - break and continue are prohibited in switch.
 
 Example:
