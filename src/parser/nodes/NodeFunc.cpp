@@ -116,6 +116,7 @@ LLVMTypeRef* NodeFunc::getParameters(int callConv) {
                         case 8: ty = new TypeBasic(BasicType::Char); break;
                         case 16: ty = new TypeBasic(BasicType::Short); break;
                         case 32: ty = new TypeBasic(BasicType::Int); break;
+                        case 40: ty = new TypeBasic(BasicType::Long); break;
                         default: this->block->nodes.insert(this->block->nodes.begin(), new NodeVar(oldName, new NodeIden(this->args[i].name, this->loc), false, false, false, {}, this->loc, this->args[i].type)); break;
                     }
                     if(ty != nullptr) {
