@@ -570,7 +570,7 @@ void gpt2BuildFromCheckpoint(GPT2* model, char* checkpoint_path) {
     // count the number of parameters
     int num_parameters = 0;
     for(int i=0; i<16; i++) num_parameters += model.param_sizes[i];
-    std::println("num_parameters: ", num_parameters);
+    std::println("num_parameters: ", num_parameters / cast(float)1000000, "M");
     model.num_parameters = num_parameters;
 
     // read in all the parameters from file
@@ -1047,4 +1047,11 @@ void tokenizerFree(Tokenizer* tokenizer) {
 void main {
     GPT2 model;
     gpt2BuildFromCheckpoint(&model, "gpt2_124M.bin");
+
+    int B = 4;
+    int T = 64;
+
+    // TODO
+
+    std::println("Garbage segfault, ignore it.");
 }
