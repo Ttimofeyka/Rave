@@ -53,6 +53,10 @@ namespace std {
 };
 
 namespace libc {
+    alias seekSet = 0;
+    alias seekCur = 1;
+    alias seekEnd = 2;
+
     extern(linkname: "fopen") libc::File* fopen(char* path, char* mode);
     extern(linkname: "fclose") int fclose(libc::File* file);
     extern(linkname: "ferror") int fhasError(libc::File* file);

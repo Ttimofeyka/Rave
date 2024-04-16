@@ -275,7 +275,9 @@ LLVMValueRef NodeFunc::generate() {
     if(this->isTemplate) generator->toReplace = std::map<std::string, Type*>(oldReplace);
 
     if(LLVMVerifyFunction(generator->functions[this->name], LLVMPrintMessageAction)) {
-        generator->error("LLVM errors into the function '"+this->name+"'! Content:\n"+LLVMPrintValueToString(generator->functions[this->name]), this->loc);
+        std::string content = LLVMPrintValueToString(generator->functions[this->name]);
+        if(content.length() > 12000) content = content.substr(0, 12000)+"...";
+        generator->error("LLVM errors into the function '"+this->name+"'! Content:\n"+content, this->loc);
     }
     return generator->functions[this->name];
 }
