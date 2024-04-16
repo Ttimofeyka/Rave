@@ -1,5 +1,5 @@
 namespace std {
-    namespace opencl {
+    namespace ocl {
         alias CPU = (1 <. 1);
         alias GPU = (1 <. 2);
         alias success = 0;
@@ -8,9 +8,13 @@ namespace std {
         alias driverVersion = 4141;
         alias deviceOpenCLVersion = 4157;
         alias deviceMaxComputeUnits = 4098;
+        alias programBuildLog = 4483;
 
         extern(linkname: "clGetDeviceIDs") int getDeviceIDs(void* platform, ulong devType, uint numEntries, void** devices, uint* numDevices);
         extern(linkname: "clGetDeviceInfo") int getDeviceInfo(void* device, uint paramName, uint paramValSize, void* paramVal, uint* paramValueSizeRet);
         extern(linkname: "clCreateContext") void* createContext(int* properties, uint numDevices, void** devices, void(char*, void*, int, void*) callback, void* userData, int* errRet);
+        extern(linkname: "clCreateProgramWithSource") void* createProgramWithSource(void* context, uint count, char** strings, int* lengths, int* errRet);
+        extern(linkname: "clGetProgramBuildInfo") int getProgramBuildInfo(void* program, void* deviceId, uint paramName, int paramValSize, void* paramVal, int* paramValSizeRet);
+        extern(linkname: "clCreateBuffer") void* createBuffer(void* context, ulong flags, int size, void* host_ptr, int* errRet);
     }
 }

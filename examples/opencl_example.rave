@@ -2,14 +2,14 @@ import <std/io> <std/opencl>
 
 void main {
     void* devIds;
-    int err = std::opencl::getDeviceIDs(null, std::opencl::CPU, 1, &devIds, cast(uint*)null);
+    int err = std::ocl::getDeviceIDs(null, std::ocl::CPU, 1, &devIds, cast(uint*)null);
     if(err != 0) std::exit(1);
 
     uint valSize;
 
-    std::opencl::getDeviceInfo(devIds, std::opencl::deviceName, 0, null, &valSize);
+    std::ocl::getDeviceInfo(devIds, std::ocl::deviceName, 0, null, &valSize);
     char* value = std::malloc(valSize);
-    std::opencl::getDeviceInfo(devIds, std::opencl::deviceName, valSize, value, cast(uint*)null);
+    std::ocl::getDeviceInfo(devIds, std::ocl::deviceName, valSize, value, cast(uint*)null);
 
     std::println("Device: ", value);
     std::free(value);
