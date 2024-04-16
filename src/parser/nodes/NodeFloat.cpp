@@ -16,7 +16,8 @@ NodeFloat::NodeFloat(double value, TypeBasic* type) {this->value = value; this->
 
 Type* NodeFloat::getType() {
     if(this->type != nullptr) return this->type;
-    this->type = new TypeBasic((this->value > std::numeric_limits<float>::max()) ? BasicType::Double : BasicType::Float);
+    this->type = new TypeBasic((this->value > std::numeric_limits<float>::max()) ? BasicType::Double :
+        (BasicType::Float));
     return this->type;
 }
 
