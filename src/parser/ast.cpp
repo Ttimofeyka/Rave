@@ -92,11 +92,11 @@ std::string typesToString(std::vector<FuncArgSet> args) {
                 case BasicType::Char: data += "_c"; break;
                 case BasicType::Long: data += "_l"; break;
                 case BasicType::Short: data += "_h"; break;
-                case BasicType::Ushort: data += "_uh"; break;
-                case BasicType::Uchar: data += "_uc"; break;
-                case BasicType::Uint: data += "_ui"; break;
-                case BasicType::Ulong: data += "_ul"; break;
-                case BasicType::Ucent: data += "_ut"; break;
+                case BasicType::Ushort: data += "_h"; break;
+                case BasicType::Uchar: data += "_c"; break;
+                case BasicType::Uint: data += "_i"; break;
+                case BasicType::Ulong: data += "_l"; break;
+                case BasicType::Ucent: data += "_t"; break;
                 default: data += "_b"; break;
             }
         }
@@ -136,11 +136,11 @@ std::string typesToString(std::vector<Type*> args) {
                 case BasicType::Char: data += "_c"; break;
                 case BasicType::Long: data += "_l"; break;
                 case BasicType::Short: data += "_h"; break;
-                case BasicType::Ushort: data += "_uh"; break;
-                case BasicType::Uchar: data += "_uc"; break;
-                case BasicType::Uint: data += "_ui"; break;
-                case BasicType::Ulong: data += "_ul"; break;
-                case BasicType::Ucent: data += "_ut"; break;
+                case BasicType::Ushort: data += "_h"; break;
+                case BasicType::Uchar: data += "_c"; break;
+                case BasicType::Uint: data += "_i"; break;
+                case BasicType::Ulong: data += "_l"; break;
+                case BasicType::Ucent: data += "_t"; break;
                 default: data += "_b"; break;
             }
         }

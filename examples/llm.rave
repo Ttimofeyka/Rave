@@ -1,6 +1,6 @@
 // Implementation on C taked from https://github.com/karpathy/llm.c/blob/master/train_gpt2.c
 
-import <std/io> <std/math> <std/ascii>
+import <std/io> <std/math> <std/ascii> <std/time>
 
 void encoderForward(float* out, int* inp, float* wte, float* wpe, int B, int T, int C) {
     // out is (B,T,C). At each position (b,t), a C-dimensional vector summarizing token & position
@@ -662,7 +662,8 @@ void gpt2Forward(GPT2* model, int* inputs, int* targets, int B, int T) {
     ParameterTensors params = model.params; // for brevity
     ActivationTensors acts = model.acts;
     float* residual;
-    encoderForward(acts.encoded, inputs, params.wte, params.wpe, B, T, C); // encoding goes into residual[0
+    encoderForward(acts.encoded, inputs, params.wte, params.wpe, B, T, C); // encoding goes into residual[0]
+
     for(int l=0; l<L; l++) {
         if(l == 0) residual = acts.encoded;
         else residual = itop(float*, ptoi(acts.residual3) + (l-1) * B * T * C);
@@ -907,10 +908,10 @@ void dataloaderInit(DataLoader* loader, char* filename, int B, int T) {
     loader.T = T;
 
     // open the input file for reading
-    loader.tokens_file = std::file(filename);
-    loader.tokens_file.open("rb");
+    std::file tf = std::file(filename);
+    tf.open("rb");
+    loader.tokens_file = tf;
     if(!(loader.tokens_file.isOpen)) {
-        std::println(loader.tokens_file._file == null);
         std::println("Error opening tokens file");
         std::exit(1);
     }
@@ -1013,16 +1014,21 @@ void tokenizerInit(Tokenizer *tokenizer, const char *filename) {
     uint[256] header;
     file.read(cast(void*)&header, sizeof(uint), 256);
     tokenizer.vocab_size = header[2];
+
     // read in all the tokens
     uchar length;
     tokenizer.token_table = cast(char**)std::malloc(tokenizer.vocab_size * sizeof(char*));
+
     for(uint i=0; i<tokenizer.vocab_size; i++) {
         file.read(cast(void*)(&length), sizeof(uchar), 1);
-        char* token_bytes = cast(char*)std::malloc(length + 1);
+        if(length < 0) length += 128; // Unsigned handling
+
+        char* token_bytes = cast(char*)std::malloc(cast(int)length + 1);
         file.read(token_bytes, sizeof(char), cast(int)length);
         token_bytes[length] = '\0';  // Add null terminator for printing
         tokenizer.token_table[i] = token_bytes;
     }
+
     // cleanups
     file.close();
     tokenizer.init_ok = 1;
@@ -1050,10 +1056,22 @@ void main {
     gpt2BuildFromCheckpoint(&model, "gpt2_124M.bin");
 
     // build the DataLoaders from tokens files. for now use tiny_shakespeare if available, else tiny_stories
-    char* tiny_shakespeare_train = "ttrain.bin";
-    char* tiny_shakespeare_val = "tval.bin";
     int B = 4; // batch size 4 (i.e. 4 independent token sequences will be trained on)
     int T = 64; // sequence length 64 (i.e. each sequence is 64 tokens long). must be <= maxT, which is 1024 for GPT-2
 
+    DataLoader train_loader;
+    dataloaderInit(&train_loader, "ttrain.bin", B, T);
+    std::println("train dataset num_batches: ", train_loader.num_batches);
+
+    DataLoader val_loader;
+    dataloaderInit(&val_loader, "tval.bin", B, T);
+    std::println("val dataset num_batches: ", val_loader.num_batches);
+
+    int val_num_batches = 10;
+
+    // build the Tokenizer
+    Tokenizer tokenizer;
+    tokenizerInit(&tokenizer, "gpt2_tokenizer.bin");
+    
     std::exit(0); // Avoid segfault
 }

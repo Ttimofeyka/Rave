@@ -21,6 +21,7 @@ namespace std {
     }
 
     alias RealTime = 0;
+    alias Monotonic = 1;
 
     struct timeval {
         int tv_sec;
@@ -42,7 +43,8 @@ namespace std {
 
 @if((__RAVE_OS == "LINUX") && (!@aliasExists(__RAVE_USELIBC))) {
     namespace std {
-        (inline) int getCurrentTime(std::timeSpec* tc) => cast(int)std::syscall(std::sysctable::ClockGetTime, std::RealTime, tc);
+        (inline) int __clock_gettime(int flag, std::timeSpec* tc) => cast(int)std::syscall(std::sysctable::ClockGetTime, flag, tc);
+        int getCurrentTime(std::timeSpec* tc) => std::__clock_gettime(std::RealTime, tc);
     }
 };
 
