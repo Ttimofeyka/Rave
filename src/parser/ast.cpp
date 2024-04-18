@@ -77,93 +77,97 @@ std::vector<Type*> parametersToTypes(std::vector<LLVMValueRef> params) {
     return types;
 }
 
-std::string typesToString(std::vector<FuncArgSet> args) {
-    std::string data = "[";
-    for(int i=0; i<args.size(); i++) {
-        Type* ty = args[i].type;
-        if(instanceof<TypeBasic>(ty)) {
-            switch(((TypeBasic*)ty)->type) {
-                case BasicType::Half: data += "_hf"; break;
-                case BasicType::Bhalf: data += "_bf"; break;
-                case BasicType::Float: data += "_f"; break;
-                case BasicType::Double: data += "_d"; break;
-                case BasicType::Int: data += "_i"; break;
-                case BasicType::Cent: data += "_t"; break;
-                case BasicType::Char: data += "_c"; break;
-                case BasicType::Long: data += "_l"; break;
-                case BasicType::Short: data += "_h"; break;
-                case BasicType::Ushort: data += "_h"; break;
-                case BasicType::Uchar: data += "_c"; break;
-                case BasicType::Uint: data += "_i"; break;
-                case BasicType::Ulong: data += "_l"; break;
-                case BasicType::Ucent: data += "_t"; break;
-                default: data += "_b"; break;
-            }
-        }
-        else if(instanceof<TypePointer>(ty)) {
-            if(instanceof<TypeStruct>(((TypePointer*)ty)->instance)) {
-                TypeStruct* ts = (TypeStruct*)(((TypePointer*)ty)->instance);
-                if(ts->name.find('<') == std::string::npos) data += "_s-"+ts->name;
-                else data += "_s-"+ts->name.substr(0,ts->name.find('<'));
-            }
-            else data += "_p";
-        }
-        else if(instanceof<TypeArray>(ty)) data += "_a";
-        else if(instanceof<TypeStruct>(ty)) {
-            if(((TypeStruct*)ty)->name.find('<') == std::string::npos) data += "_s-"+((TypeStruct*)ty)->name;
-            else data += "_s-"+((TypeStruct*)ty)->name.substr(0,((TypeStruct*)ty)->name.find('<'));
-        }
-        else if(instanceof<TypeFunc>(ty)) data += "_func";
-        else if(instanceof<TypeConst>(ty)) {
-            std::string constVal = typesToString({FuncArgSet{.name = "", .type = ((TypeConst*)ty)->instance}});
-            data += constVal.substr(1, constVal.size()-1);
+std::string typeToString(Type* arg) {
+    if(instanceof<TypeBasic>(arg)) {
+        switch(((TypeBasic*)arg)->type) {
+            case BasicType::Half: return "hf";
+            case BasicType::Bhalf: return "bf";
+            case BasicType::Float: return "f";
+            case BasicType::Double: return "d";
+            case BasicType::Int: return "i";
+            case BasicType::Cent: return "t";
+            case BasicType::Char: return "c";
+            case BasicType::Long: return "l";
+            case BasicType::Short: return "h";
+            case BasicType::Ushort: return "h";
+            case BasicType::Uchar: return "c";
+            case BasicType::Uint: return "i";
+            case BasicType::Ulong: return "l";
+            case BasicType::Ucent: return "t";
+            default: return "b";
         }
     }
-    return data + "]";
+    else if(instanceof<TypePointer>(arg)) {
+        if(instanceof<TypeStruct>(((TypePointer*)arg)->instance)) {
+            TypeStruct* ts = (TypeStruct*)(((TypePointer*)arg)->instance);
+            if(ts->name.find('<') == std::string::npos) return "s-"+ts->name;
+            else return "s-"+ts->name.substr(0,ts->name.find('<'));
+        }
+        else {
+            std::string buffer = "p";
+            Type* element = ((TypePointer*)arg)->instance;
+
+            while(!instanceof<TypeBasic>(element) && !instanceof<TypeVoid>(element) && !instanceof<TypeFunc>(element) && !instanceof<TypeStruct>(element)) {
+                if(instanceof<TypeConst>(element)) {element = ((TypeConst*)element)->instance; continue;}
+
+                if(instanceof<TypeArray>(element)) {
+                    buffer += "a";
+                    element = ((TypeArray*)element)->element;
+                }
+                else if(instanceof<TypePointer>(element)) {
+                    buffer += "p";
+                    element = ((TypePointer*)element)->instance;
+                }
+            }
+
+            buffer += typeToString(element);
+            return buffer;
+        }
+    }
+    else if(instanceof<TypeArray>(arg)) {
+        std::string buffer = "a";
+        Type* element = ((TypeArray*)arg)->element;
+
+        while(element != nullptr && !instanceof<TypeBasic>(element) && !instanceof<TypeFunc>(element) && !instanceof<TypeStruct>(element)) {
+            if(instanceof<TypeConst>(element)) {element = ((TypeConst*)element)->instance; continue;}
+
+            if(instanceof<TypeArray>(element)) {
+                buffer += "a";
+                if(!instanceof<TypeVoid>(((TypeArray*)element)->element)) element = ((TypeArray*)element)->element;
+            }
+            else if(instanceof<TypePointer>(element)) {
+                buffer += "p";
+                if(!instanceof<TypeVoid>(((TypePointer*)element)->instance)) element = ((TypePointer*)element)->instance;
+            }
+        }
+
+        if(element != nullptr) buffer += typeToString(element);
+        return buffer;
+    }
+    else if(instanceof<TypeStruct>(arg)) {
+        if(((TypeStruct*)arg)->name.find('<') == std::string::npos) return "s-"+((TypeStruct*)arg)->name;
+        else return "s-"+((TypeStruct*)arg)->name.substr(0,((TypeStruct*)arg)->name.find('<'));
+    }
+    else if(instanceof<TypeFunc>(arg)) return "func";
+    else if(instanceof<TypeConst>(arg)) {
+        std::string constVal = typesToString({((TypeConst*)arg)->instance});
+        return constVal.substr(1, constVal.size()-1);
+    }
+    return "";
 }
 
 std::string typesToString(std::vector<Type*> args) {
     std::string data = "[";
     for(int i=0; i<args.size(); i++) {
-        if(instanceof<TypeBasic>(args[i])) {
-            switch(((TypeBasic*)args[i])->type) {
-                case BasicType::Half: data += "_hf"; break;
-                case BasicType::Bhalf: data += "_bf"; break;
-                case BasicType::Float: data += "_f"; break;
-                case BasicType::Double: data += "_d"; break;
-                case BasicType::Int: data += "_i"; break;
-                case BasicType::Cent: data += "_t"; break;
-                case BasicType::Char: data += "_c"; break;
-                case BasicType::Long: data += "_l"; break;
-                case BasicType::Short: data += "_h"; break;
-                case BasicType::Ushort: data += "_h"; break;
-                case BasicType::Uchar: data += "_c"; break;
-                case BasicType::Uint: data += "_i"; break;
-                case BasicType::Ulong: data += "_l"; break;
-                case BasicType::Ucent: data += "_t"; break;
-                default: data += "_b"; break;
-            }
-        }
-        else if(instanceof<TypePointer>(args[i])) {
-            if(instanceof<TypeStruct>(((TypePointer*)args[i])->instance)) {
-                TypeStruct* ts = (TypeStruct*)(((TypePointer*)args[i])->instance);
-                if(ts->name.find('<') == std::string::npos) data += "_s-"+ts->name;
-                else data += "_s-"+ts->name.substr(0,ts->name.find('<'));
-            }
-            else data += "_p";
-        }
-        else if(instanceof<TypeArray>(args[i])) data += "_a";
-        else if(instanceof<TypeStruct>(args[i])) {
-            if(((TypeStruct*)args[i])->name.find('<') == std::string::npos) data += "_s-"+((TypeStruct*)args[i])->name;
-            else data += "_s-"+((TypeStruct*)args[i])->name.substr(0,((TypeStruct*)args[i])->name.find('<'));
-        }
-        else if(instanceof<TypeFunc>(args[i])) data += "_func";
-        else if(instanceof<TypeConst>(args[i])) {
-            std::string constVal = typesToString({FuncArgSet{.name = "", .type = ((TypeConst*)args[i])->instance}});
-            data += constVal.substr(1, constVal.size()-1);
-        }
+        data += "_"+typeToString(args[i]);
     }
     return data + "]";
+}
+
+std::string typesToString(std::vector<FuncArgSet> args) {
+    std::vector<Type*> types;
+    for(int i=0; i<args.size(); i++) types.push_back(args[i].type);
+    return typesToString(types);
 }
 
 void AST::checkError(std::string message, long loc) {

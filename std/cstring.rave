@@ -54,7 +54,7 @@ namespace std {
             if(!done) ptr = null;
         } => ptr;
 
-        (nochecks) int indexOf(const(char*) str, char ch) {
+        (nochecks) int indexOf(const(char)* str, char ch) {
             while((str[return] != '\0') && (str[return] != ch)) return += 1;
             if(str[return] == '\0') return = -1;
         }

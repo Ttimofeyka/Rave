@@ -80,7 +80,7 @@ for(;;) {
 }
 ```
 
-**foreach(varElement; var) [body/{body}]** or **foreach(varElement; varWithData; varWithLength)** - the for version, created as a result of new trends in reducing unnecessary constructions.
+**foreach(varElement; var) [body/{body}]** or **foreach(varElement; varWithData; varWithLength) [body/{body}]** - the for version, created as a result of new trends in reducing unnecessary constructions.
 
 Example:
 ```d
@@ -127,12 +127,12 @@ Example:
 
 ```d
 float a = 0;
-int b = cast(float)a;
+int b = cast(int)a;
 ```
 
 ## Built-In-Functions
 
-**@sizeOf(type)** - Get the size of the type.
+**@sizeOf(type)** - Get the size of the type (in bytes).
 
 Example:
 
@@ -243,6 +243,37 @@ void two(int one, int _two) => one + _two;
 }
 ```
 
+**@hasMethod(type, methodName)** - returns true if a structure with a method from the second argument is passed to the first argument.
+
+**@hasDestructor(type)** - returns true if a structure with a destructor is passed to the first argument.
+
+Example:
+
+```d
+struct Example {
+    Example this {Example this;} => this;
+
+    void foo {}
+    int bow => 0;
+}
+
+void main {
+    auto ex = Example();
+
+    @if(@hasMethod(Example, foo)) {
+        if(@hasMethod(Example, bow)) {
+            // Has foo and bow
+            if(@hasDestructor(Example)) {
+                // Has destructor
+            };
+            if(!@hasDestructor(Example)) {
+                // Do not has destructor
+            };
+        };
+    };
+}
+```
+
 ### Compile-time arguments
 
 **@getCurrArg(type)** - Get the value of the current argument, leading to the required type.
@@ -319,37 +350,6 @@ Example:
     };
     @if(@argsLength() == 2) {
         return = @getArg(int, 0) + @getArg(int, 1);
-    };
-}
-```
-
-**@hasMethod(type, methodName)** - returns true if a structure with a method from the second argument is passed to the first argument.
-
-**@hasDestructor(type)** - returns true if a structure with a destructor is passed to the first argument.
-
-Example:
-
-```d
-struct Example {
-    Example this {Example this;} => this;
-
-    void foo {}
-    int bow => 0;
-}
-
-void main {
-    auto ex = Example();
-
-    @if(@hasMethod(Example, foo)) {
-        if(@hasMethod(Example, bow)) {
-            // Has foo and bow
-            if(@hasDestructor(Example)) {
-                // Has destructor
-            };
-            if(!@hasDestructor(Example)) {
-                // Do not has destructor
-            };
-        };
     };
 }
 ```

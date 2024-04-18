@@ -1,0 +1,14 @@
+import <std/io>
+
+void main {
+    int first;
+    int second;
+
+    std::print("First number: ");
+    std::input(&first);
+    
+    std::print("Second number: ");
+    std::input(&second);
+
+    std::println("Result: ", first + second);
+}

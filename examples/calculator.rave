@@ -1,0 +1,34 @@
+import <std/io>
+
+void main {
+    int first;
+    int second;
+    char op;
+
+    while(true) {
+        std::println("- - - - - - - - - - - - - -");
+
+        std::println("First number: ");
+        std::input(&first);
+
+        std::println("Second number: ");
+        std::input(&second);
+
+        std::println("op: ");
+        std::input(&op); // for space, enter, etc.
+        std::input(&op);
+
+        if(op != '+' && op != '-' && op != '*' && op != '/') {
+            std::println("Undefined op!");
+            std::println("- - - - - - - - - - - - - -");
+            break;
+        }
+
+        if(op == '+') first += second;
+        else if(op == '-') first -= second;
+        else if(op == '*') first = first * second;
+        else if(op == '/') first = first / second;
+
+        std::println("Result: ", first);
+    }
+}

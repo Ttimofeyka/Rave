@@ -175,24 +175,24 @@ namespace std {
         } => result;
 
         double min(double one, double two) {
-            double result = one;
-            if(two < one) result = two;
-        } => result;
+            return = one;
+            if(two < one) return = two;
+        }
 
         int min(int one, int two) {
-            int result = one;
-            if(two < one) result = two;
-        } => result;
+            return = one;
+            if(two < one) return = two;
+        }
 
         double max(double one, double two) {
-            double result = one;
-            if(two > one) result = two;
-        } => result;
+            return = one;
+            if(two > one) return = two;
+        }
 
         int max(int one, int two) {
-            int result = one;
-            if(two > one) result = two;
-        } => result;
+            return = one;
+            if(two > one) return = two;
+        }
 
         double sin(double x) {
             double t = x;

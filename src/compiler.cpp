@@ -96,7 +96,7 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
         #endif
         if(fOptions.is_open()) fOptions.close();
 
-        std::ifstream rfOptions(exePath+"options.json");
+        std::ifstream rfOptions(exePath + "options.json");
         Compiler::options = nlohmann::json::parse(rfOptions);
         if(rfOptions.is_open()) rfOptions.close();
     }
@@ -180,6 +180,7 @@ void Compiler::compile(std::string file) {
     }
     content = "alias __RAVE_PLATFORM = \""+ravePlatform+"\"; ";
     content = "alias __RAVE_OS = \""+raveOs+"\"; "+content;
+    content = "alias __RAVE_OPTIMIZATION_LEVEL = "+std::to_string(settings.optLevel)+";"+content;
     if(!Compiler::settings.noPrelude && file != "std/prelude.rave" && file != "std/memory.rave") {
         content = content+" import <std/prelude> <std/memory>";
     }
@@ -192,7 +193,7 @@ void Compiler::compile(std::string file) {
     auto end = std::chrono::system_clock::now();
     Compiler::lexTime += std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
 
-    //for(int i=0; i<lexer->tokens.size(); i++) std::cout << "Token '" << lexer->tokens[i]->value << "', type: " << std::to_string(lexer->tokens[i]->type) << std::endl;
+    // for(int i=0; i<lexer->tokens.size(); i++) std::cout << "Token '" << lexer->tokens[i]->value << "', type: " << std::to_string(lexer->tokens[i]->type) << std::endl;
     
     start = end;
     Parser* parser = new Parser(lexer->tokens, file);
