@@ -87,6 +87,7 @@ std::string Lexer::getChar() {
             buffer += replaceAllEscapes(buffer2);
             buffer2 = "";
         }
+        else if(peek() == '\\' && text[idx+1] == '\\') {buffer += "\\"; idx += 2;}
         else {buffer += peek(); idx += 1;}
     } next();
     return replaceAllEscapes(buffer);

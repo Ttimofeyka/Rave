@@ -87,7 +87,7 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
     }
     else {
         std::ofstream fOptions(exePath+"options.json");
-        #if defined(_WIN32) || defined(WIN32)
+        #if defined(_WIN32)
             fOptions << "{\n\t\"compiler\": \"clang\"\n}" << std::endl;
         #else
             ShellResult result = exec("which clang");
