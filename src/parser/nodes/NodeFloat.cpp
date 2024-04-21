@@ -22,6 +22,10 @@ Type* NodeFloat::getType() {
 }
 
 LLVMValueRef NodeFloat::generate() {
+    if(this->isMustBeFloat) {
+        if(this->type == nullptr || ((TypeBasic*)this->type)->type != BasicType::Float) this->type = new TypeBasic(BasicType::Float);
+        return LLVMConstReal(LLVMFloatTypeInContext(generator->context), this->value);
+    }
     if(this->type == nullptr) this->type = new TypeBasic(BasicType::Double);
     else if(this->type->type == BasicType::Half) return LLVMConstReal(LLVMHalfTypeInContext(generator->context), this->value);
     else if(this->type->type == BasicType::Bhalf) return LLVMConstReal(LLVMBFloatTypeInContext(generator->context), this->value);

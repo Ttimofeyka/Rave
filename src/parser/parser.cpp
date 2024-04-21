@@ -423,35 +423,52 @@ Node* Parser::parseAtom(std::string f) {
     int size = this->peek()->value.size();
     if(t->type == TokType::Number) {
         if(size > 0 && std::tolower(this->peek()->value[0]) == 'u') {
+            // Unsigned-type
             this->next();
             NodeInt* _int = new NodeInt(BigInt(t->value));
             _int->isUnsigned = true;
             return _int;
         }
         else if(size > 0 && std::tolower(this->peek()->value[0]) == 'l') {
+            // Long-type
             this->next();
             NodeInt* _int = new NodeInt(BigInt(t->value));
             _int->isMustBeLong = true;
             return _int;
         }
+        else if(size > 0 && std::tolower(this->peek()->value[0]) == 'f') {
+            // Float-type
+            this->next();
+            NodeFloat* nfloat = new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Float));
+            nfloat->isMustBeFloat = true;
+            return nfloat;
+        }
         return new NodeInt(BigInt(t->value));
     }
     if(t->type == TokType::FloatNumber) {
         if(size > 0 && std::tolower(this->peek()->value[0]) == 'd') {
+            // Double-type
             this->next();
-            return new NodeFloat(std::stod(t->value), true);
+            return new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Double));
+        }
+        else if(this->peek()->type == TokType::Identifier && this->peek()->value == "f") {
+            // Float-type
+            this->next();
+            NodeFloat* nfloat = new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Float));
+            nfloat->isMustBeFloat = true;
+            return nfloat;
         }
         if(this->peek()->type == TokType::Identifier && this->peek()->value == "h") {
             // Half-type
             this->next();
-            return new NodeFloat(std::stof(t->value), new TypeBasic(BasicType::Half));
+            return new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Half));
         }
         else if(this->peek()->type == TokType::Identifier && this->peek()->value == "bh") {
-            // Half-type
+            // Bhalf-type
             this->next();
-            return new NodeFloat(std::stof(t->value), new TypeBasic(BasicType::Bhalf));
+            return new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Bhalf));
         }
-        return new NodeFloat(std::stof(t->value));
+        return new NodeFloat(std::stod(t->value));
     }
     if(t->type == TokType::HexNumber) {
         long number;

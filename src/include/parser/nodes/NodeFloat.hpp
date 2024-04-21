@@ -16,6 +16,7 @@ class NodeFloat : public Node {
 public:
     double value;
     TypeBasic* type = nullptr;
+    bool isMustBeFloat = false;
 
     NodeFloat(double value);
     NodeFloat(double value, bool isDouble);

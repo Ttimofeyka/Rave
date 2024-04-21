@@ -10,13 +10,13 @@ void encoderForward(float* out, int* inp, float* wte, float* wpe, int B, int T, 
     for(int b=0; b<B; b++) {
         for(int t=0; t<T; t++) {
             // seek to the output position in out[b,t,:]
-            float* out_bt = itop(float*, ptoi(out_bt) + b * T * C + t * C);
+            float* out_bt = itop(float*, ptoi(out_bt) + (b * T * C) + (t * C));
             // get the index of the token at inp[b, t]
-            int ix = inp[b * T + t];
+            int ix = inp[(b * T) + t];
             // seek to the position in wte corresponding to the token
-            float* wte_ix = itop(float*, ptoi(wte) + ix * C);
+            float* wte_ix = itop(float*, ptoi(wte) + (ix * C));
             // seek to the position in wpe corresponding to the position
-            float* wpe_t = itop(float*, ptoi(wpe) + t * C);
+            float* wpe_t = itop(float*, ptoi(wpe) + (t * C));
             // add the two vectors and store the result in out[b,t,:]
             for(int i=0; i<C; i++) out_bt[i] = wte_ix[i] + wpe_t[i];
         }
@@ -45,24 +45,24 @@ void layernormForward(float* out, float* mean, float* rstd, float* inp, float* w
     // mean and rstd are (B,T) buffers, to be used later in backward pass
     // at each position (b,t) of the input, the C-dimensional vector
     // of activations gets normalized, then scaled and shifted
-    float eps = cast(float)0.00001;
+    float eps = 0.00001f;
     for(int b=0; b<B; b++) {
         for(int t=0; t<T; t++) {
             // seek to the input position inp[b,t,:]
             float* x = itop(float*, ptoi(inp) + b * T * C + t * C);
             // calculate the mean
-            float m = cast(float)0.0;
+            float m;
             for(int i=0; i<C; i++) m += x[i];
             m = m/C;
             // calculate the variance (without any bias correction)
-            float v = cast(float)0.0;
+            float v;
             for(int i=0; i<C; i++) {
                 float xshift = x[i] - m;
                 v += xshift * xshift;
             }
             v = v/C;
             // calculate the rstd (reciprocal standard deviation)
-            float s = cast(float)1.0 / cast(float)std::math::sqrt(cast(double)(v + eps));
+            float s = 1f / cast(float)std::math::sqrt(cast(double)(v + eps));
             // seek to the output position in out[b,t,:]
             float* out_bt = itop(float*, ptoi(out) + b * T * C + t * C);
             for(int i=0; i<C; i++) {
@@ -87,8 +87,8 @@ void layernormBackward(float* dinp, float* dweight, float* dbias, float* dout, f
             float rstd_bt = rstd[b * T + t];
 
             // first: two reduce operations
-            float dnorm_mean = cast(float)0.0;
-            float dnorm_norm_mean = cast(float)0.0;
+            float dnorm_mean;
+            float dnorm_norm_mean;
             for(int i=0; i<C; i++) {
                 float norm_bti = (inp_bt[i] - mean_bt) * rstd_bt;
                 float dnorm_i = weight[i] * dout_bt[i];
@@ -107,7 +107,7 @@ void layernormBackward(float* dinp, float* dweight, float* dbias, float* dout, f
                 // gradient contribution to weight
                 dweight[i] += norm_bti * dout_bt[i];
                 // gradient contribution to input
-                float dval = cast(float)0.0;
+                float dval;
                 dval += dnorm_i; // term 1
                 dval -= dnorm_mean; // term 2
                 dval -= norm_bti * dnorm_norm_mean; // term 3
@@ -184,7 +184,7 @@ void attentionForward(float* out, float* preatt, float* att, float* inp, int B, 
     // (and of course, no layer mixes information across batch)
     int C3 = C*3;
     int hs = C / NH; // head size
-    float scale = cast(float)(1.0 / std::math::sqrt(cast(double)hs));
+    float scale = cast(float)(1f / std::math::sqrt(cast(double)hs));
 
     for(int b= 0; b<B; b++) {
         for(int t=0; t<T; t++) {
@@ -194,7 +194,7 @@ void attentionForward(float* out, float* preatt, float* att, float* inp, int B, 
                 float* att_bth = itop(float*, ptoi(att) + b*NH*T*T + h*T*T + t*T);
 
                 // pass 1: calculate query dot key and maxval
-                float maxval = cast(float)(-10000.0); // TODO something better
+                float maxval = -10000f; // TODO something better
                 for(int t2=0; t2<=t; t2++) {
                     float* key_t2 = itop(float*, ptoi(inp) + b * T * C3 + t2 * C3 + h * hs + C); // +C because it's key
 
@@ -215,7 +215,7 @@ void attentionForward(float* out, float* preatt, float* att, float* inp, int B, 
                     att_bth[t2] = expv;
                 }
                 float expsum_inv;
-                if(expsum != 0.0) expsum_inv = cast(float)(1.0 / expsum);
+                if(expsum != 0.0) expsum_inv = 1f / expsum;
 
                 // pass 3: normalize to get the softmax
                 for(int t2=0; t2<T; t2++) {
@@ -224,13 +224,13 @@ void attentionForward(float* out, float* preatt, float* att, float* inp, int B, 
                     } else {
                         // causal attention mask. not strictly necessary to set to zero here
                         // only doing this explicitly for debugging and checking to PyTorch
-                        att_bth[t2] = cast(float)0.0;
+                        att_bth[t2] = 0f;
                     }
                 }
 
                 // pass 4: accumulate weighted values into the output of attention
                 float* out_bth = itop(float*, ptoi(out) + b * T * C + t * C + h * hs);
-                for(int i=0; i<hs; i++) out_bth[i] = cast(float)0.0;
+                for(int i=0; i<hs; i++) out_bth[i] = 0f;
                 for(int t2=0; t2<=t; t2++) {
                     float* value_t2 = itop(float*, ptoi(inp) + b * T * C3 + t2 * C3 + h * hs + C*2); // +C*2 because it's value
                     float att_btht2 = att_bth[t2];
@@ -247,7 +247,7 @@ void attentionBackward(float* dinp, float* dpreatt, float* datt, float* dout, fl
     // dout is (B, T, C)
     int C3 = C*3;
     int hs = C / NH; // head size
-    float scale = cast(float)(1.0 / std::math::sqrt(cast(double)hs));
+    float scale = cast(float)(1f / std::math::sqrt(cast(double)hs));
 
     for(int b=0; b<B; b++) {
         for(int t=0; t<T; t++) {
@@ -277,7 +277,7 @@ void attentionBackward(float* dinp, float* dpreatt, float* datt, float* dout, fl
                 for(int t2=0; t2<=t; t2++) {
                     for(int t3=0; t3<=t; t3++) {
                         float indicator;
-                        if(t2 == t3) indicator = cast(float)1.0;
+                        if(t2 == t3) indicator = 1f;
                         float local_derivative = att_bth[t2] * (indicator - att_bth[t3]);
                         dpreatt_bth[t3] += local_derivative * datt_bth[t2];
                     }
@@ -306,20 +306,20 @@ void geluForward(float* out, float* inp, int N) {
     // (approximate) GeLU elementwise non-linearity in the MLP block of Transformer
     for(int i=0; i<N; i++) {
         float x = inp[i];
-        float cube = cast(float)0.044715 * x * x * x;
-        out[i] = cast(float)0.5 * x * (cast(float)1.0 + std::math::tanh(cast(double)(geluScalingFactor * (x + cube))));
+        float cube = 0.044715f * x * x * x;
+        out[i] = 0.5f * x * (1f + std::math::tanh(cast(double)(geluScalingFactor * (x + cube))));
     }
 }
 
 void geluBackward(float* dinp, float* inp, float* dout, int N) {
     for(int i=0; i<N; i++) {
         float x = inp[i];
-        float cube = cast(float)0.044715 * x * x * x;
+        float cube = 0.044715f * x * x * x;
         float tanh_arg = geluScalingFactor * (x + cube);
         float tanh_out = std::math::tanh(cast(double)tanh_arg);
         float coshf_out = std::math::cosh(cast(double)tanh_arg);
-        float sech_out = cast(float)1.0 / (coshf_out * coshf_out);
-        float local_grad = cast(float)0.5 * (cast(float)1.0 + tanh_out) + x * cast(float)0.5 * sech_out * geluScalingFactor * (cast(float)1.0 + cast(float)3.0 * cast(float)0.044715 * x * x);
+        float sech_out = 1f / (coshf_out * coshf_out);
+        float local_grad = 0.5f * (1.0f + tanh_out) + x * 0.5f * sech_out * geluScalingFactor * (1f + 3f * 0.044715f * x * x);
         dinp[i] += local_grad * dout[i];
     }
 }
@@ -345,7 +345,7 @@ void softmaxForward(float* probs, float* logits, int B, int T, int V) {
             float* probs_bt = itop(float*, ptoi(probs) + b * T * V + t * V);
 
             // maxval is only calculated and subtracted for numerical stability
-            float maxval = cast(float)-10000.0; // TODO something better
+            float maxval = -10000f; // TODO something better
             for(int i = 0; i < V; i++) {
                 if(logits_bt[i] > maxval) maxval = logits_bt[i];
             }
@@ -384,7 +384,7 @@ void crossentropySoftmaxBackward(float* dlogits, float* dlosses, float* probs, i
             for(int i=0; i<V; i++) {
                 float p = probs_bt[i];
                 float indicator;
-                if(i == ix) indicator = cast(float)1.0;
+                if(i == ix) indicator = 1f;
                 dlogits_bt[i] += (p - indicator) * dloss;
             }
         }
@@ -458,19 +458,19 @@ struct ActivationTensors {
 float* mallocAndPointActivations(ActivationTensors* acts, int* act_sizes) {
     int num_activations = 0;
     for(int i=0; i<23; i++) num_activations += act_sizes[i];
-    return = cast(float*)std::malloc(num_activations * sizeof(float));
+    float* mem = cast(float*)std::malloc(num_activations * sizeof(float));
     float**[23] ptrs = [
         acts.&encoded, acts.&ln1, acts.&ln1_mean, acts.&ln1_rstd, acts.&qkv, acts.&atty,
         acts.&preatt, acts.&att, acts.&attproj, acts.&residual2, acts.&ln2, acts.&ln2_mean,
         acts.&ln2_rstd, acts.&fch, acts.&fch_gelu, acts.&fcproj, acts.&residual3, acts.&lnf,
         acts.&lnf_mean, acts.&lnf_rstd, acts.&logits, acts.&probs, acts.&losses
     ];
-    float* acts_memory_iterator = return;
+    float* acts_memory_iterator = mem;
     for(int i=0; i<23; i++) {
         ptrs[i][0] = acts_memory_iterator;
         acts_memory_iterator = itop(float*, ptoi(acts_memory_iterator) + act_sizes[i]);
     }
-}
+} => return;
 
 
 struct GPT2Config {
@@ -513,12 +513,11 @@ struct GPT2 {
 void gpt2BuildFromCheckpoint(GPT2* model, char* checkpoint_path) {
 
     // read in model from a checkpoint file
-    std::file modelFile = std::file(checkpoint_path);
+    auto modelFile = std::file(checkpoint_path);
     modelFile.open("rb");
 
     if(!(modelFile.isOpen)) {std::println("Error opening model file"); std::exit(1);}
     int[256] model_header;
-
 
     modelFile.read(cast(void*)&model_header, sizeof(int), 256);
 
@@ -570,12 +569,13 @@ void gpt2BuildFromCheckpoint(GPT2* model, char* checkpoint_path) {
     // count the number of parameters
     int num_parameters = 0;
     for(int i=0; i<16; i++) num_parameters += model.param_sizes[i];
-    std::println("num_parameters: ", num_parameters / cast(float)1000000, "M");
+    std::println("num_parameters: ", num_parameters / 1000000f, "M");
     model.num_parameters = num_parameters;
 
     // read in all the parameters from file
+    // ERROR THERE
     model.params_memory = mallocAndPointParameters(model.&params, cast(int*)(model.&param_sizes));
-    modelFile.read(cast(void*)(model.&params_memory), sizeof(float), num_parameters);
+    modelFile.read(cast(void*)(model.params_memory), sizeof(float), num_parameters);
     modelFile.close();
 
     // other inits
@@ -588,7 +588,7 @@ void gpt2BuildFromCheckpoint(GPT2* model, char* checkpoint_path) {
     model.targets = cast(int*)null;
     model.batch_size = 0;
     model.seq_len = 0;
-    model.mean_loss = cast(float)-1.0; // -1.0f will designate no loss
+    model.mean_loss = -1f; // -1.0f will designate no loss
 }
 
 void gpt2Forward(GPT2* model, int* inputs, int* targets, int B, int T) {
@@ -728,7 +728,7 @@ void gpt2Forward(GPT2* model, int* inputs, int* targets, int B, int T) {
         model.mean_loss = mean_loss;
     } else {
         // if we don't have targets, we don't have a loss
-        model.mean_loss = cast(float)(-1.0);
+        model.mean_loss = -1f;
     }
 }
 
@@ -738,7 +738,7 @@ void gpt2ZeroGrad(GPT2* model) {
 }
 
 void gpt2Backward(GPT2* model) {
-    if(model.mean_loss == cast(float)-1.0) {
+    if(model.mean_loss == -1f) {
         std::println("Error: must forward with targets before backward");
         std::exit(1);
     }
@@ -767,7 +767,7 @@ void gpt2Backward(GPT2* model) {
     // we kick off the chain rule by filling in dlosses with 1.0f/(B*T)
     // technically this is a small, inline backward() pass of calculating
     // total, final loss as the mean over all losses over all (B,T) positions in the batch
-    float dloss_mean = cast(float)1.0 / (B*T);
+    float dloss_mean = 1f / (B*T);
     for (int i=0; i<(B*T); i++) grads_acts.losses[i] = dloss_mean;
 
     crossentropySoftmaxBackward(grads_acts.logits, grads_acts.losses, acts.probs, model.targets, B, T, V);
@@ -962,9 +962,9 @@ uint randomU32(ulong* state) {
     state[0] = state[0] !! state[0] >. 12;
     state[0] = state[0] !! state[0] <. 25;
     state[0] = state[0] !! state[0] >. 27;
-} => (state[0] * cast(ulong)2685821657736338717) >. 32;
+} => (state[0] * 2685821657736338717ul) >. 32;
 
-float randomF32(ulong* state) => (randomU32(state) >. 8) / cast(float)16777216.0;
+float randomF32(ulong* state) => cast(float)((randomU32(state) >. 8) / 16777216f);
 
 int sampleMult(float* probabilities, int n, float coin) {
     // sample index from probabilities (they must sum to 1!)
@@ -1072,6 +1072,9 @@ void main {
     // build the Tokenizer
     Tokenizer tokenizer;
     tokenizerInit(&tokenizer, "gpt2_tokenizer.bin");
-    
-    std::exit(0); // Avoid segfault
+
+    // some memory for generating samples from the model
+    ulong rng_state = 1337;
+    int* gen_tokens = cast(int*)std::malloc(B * T * sizeof(int));
+    int genT = 64; // number of steps of inference we will do
 }

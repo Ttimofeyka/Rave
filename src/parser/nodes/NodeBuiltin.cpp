@@ -208,6 +208,7 @@ LLVMValueRef NodeBuiltin::generate() {
         );
     }
     if(this->name == "fmodf") {
+        // one = step, two = 0
         LLVMValueRef one = this->args[0]->generate(), two = this->args[1]->generate();
         LLVMTypeRef ty = LLVMTypeOf(one);
         LLVMValueRef result = nullptr;
@@ -228,7 +229,7 @@ LLVMValueRef NodeBuiltin::generate() {
             );
             result = LLVMBuildFMul(generator->builder, LLVMBuildFSub(generator->builder, one, result, "NodeBuiltin_fmodf"), two, "NodeBuiltin_fmodf_fmul");
         }
-        else result = LLVMBuildSub(generator->builder, one, LLVMBuildMul(generator->builder, LLVMBuildSDiv(generator->builder, one, two, "NodeBuiltin_fmodf_sdiv"), two, "NodeBuiltin_fmodf_mul"), "NodeBuiltin_fmodf");
+        else result = LLVMBuildSRem(generator->builder, one, two, "NodeBuiltin_fmodf_srem");
         return result;
     }
     if(this->name == "if") {
