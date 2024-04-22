@@ -17,6 +17,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeIden.hpp"
 #include "../../include/parser/nodes/NodeFunc.hpp"
 #include "../../include/parser/nodes/NodeCall.hpp"
+#include "../../include/lexer/lexer.hpp"
+#include "../../include/parser/parser.hpp"
 
 NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, bool isGlobal, std::vector<DeclarMod> mods, long loc, Type* type, bool isVolatile) {
     this->name = name;
@@ -175,12 +177,50 @@ LLVMValueRef NodeVar::generate() {
         currScope->localVars[this->name] = this;
 
         if(instanceof<TypeAuto>(this->type)) {
-            LLVMValueRef val = this->value->generate();
-            currScope->localScope[this->name] = LLVMBuildAlloca(generator->builder, LLVMTypeOf(val), name.c_str());
-            this->type = lTypeToType(LLVMTypeOf(val));
-            LLVMSetAlignment(currScope->localScope[this->name], generator->getAlignment(this->type));
-            LLVMBuildStore(generator->builder,val,currScope->localScope[this->name]);
-            return currScope->localScope[this->name];
+            if(instanceof<NodeCall>(this->value)) {
+                // Constructor?
+                NodeCall* ncall = (NodeCall*)this->value;
+                if(instanceof<NodeIden>(ncall->func)) {
+                    NodeIden* niden = (NodeIden*)ncall->func;
+                    if(niden->name.find('<') != std::string::npos && AST::structTable.find(niden->name.substr(0, niden->name.find('<'))) != AST::structTable.end()) {
+                        // Excellent!
+                        if(AST::structTable.find(niden->name) != AST::structTable.end()) this->type = new TypeStruct(niden->name);
+                        else {
+                            // Generate structure with template
+                            std::string sTypes = niden->name.substr(niden->name.find('<')+1, niden->name.find('>'));
+                            sTypes.pop_back();
+
+                            Lexer* lexer = new Lexer(sTypes, 0);
+                            Parser* parser = new Parser(lexer->tokens, "(BUILTIN)");
+                            std::vector<Type*> types;
+
+                            while(true) {
+                                if(parser->peek()->type == TokType::Comma) parser->next();
+                                else if(parser->peek()->type == TokType::Eof) break;
+                                types.push_back(parser->parseType());
+                            }
+                            AST::structTable[niden->name.substr(0, niden->name.find('<'))]->genWithTemplate("<"+sTypes+">", types);
+                            this->type = new TypeStruct(niden->name);
+                        }
+                    }
+                    else {
+                        LLVMValueRef val = this->value->generate();
+                        currScope->localScope[this->name] = LLVMBuildAlloca(generator->builder, LLVMTypeOf(val), name.c_str());
+                        this->type = lTypeToType(LLVMTypeOf(val));
+                        LLVMSetAlignment(currScope->localScope[this->name], generator->getAlignment(this->type));
+                        LLVMBuildStore(generator->builder,val,currScope->localScope[this->name]);
+                        return currScope->localScope[this->name];
+                    }
+                }
+                else {
+                    LLVMValueRef val = this->value->generate();
+                    currScope->localScope[this->name] = LLVMBuildAlloca(generator->builder, LLVMTypeOf(val), name.c_str());
+                    this->type = lTypeToType(LLVMTypeOf(val));
+                    LLVMSetAlignment(currScope->localScope[this->name], generator->getAlignment(this->type));
+                    LLVMBuildStore(generator->builder,val,currScope->localScope[this->name]);
+                    return currScope->localScope[this->name];
+                }
+            }
         }
         if(instanceof<NodeInt>(this->value)) ((NodeInt*)this->value)->isVarVal = this->type;
 

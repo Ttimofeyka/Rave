@@ -1,6 +1,6 @@
 import <std/io> <std/math> <std/vector>
 
 void main {
-    std::matrix<float> m = std::matrix<float>(10, 10);
-    std::vector<int> v = std::vector<int>();
+    auto m = std::matrix<float>(10, 10);
+    auto v = std::vector<int>();
 }
