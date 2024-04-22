@@ -233,4 +233,22 @@ namespace std {
             }
         } => result;
     }
+
+    struct matrix<T> {
+        T* data;
+        int rows;
+        int columns;
+
+        std::matrix<T> this(int rows, int columns) {
+            std::matrix<T> this;
+            this.data = cast(T*)std::malloc(sizeof(T) * rows * columns);
+            for(int i=0; i<(rows * columns); i++) this.data[i] = cast(T)0;
+            this.rows = rows;
+            this.columns = columns;
+        } => this;
+
+        void every(T(T) fn) {
+            for(int i=0; i<(this.rows * this.columns); i++) this.data[i] = fn(this.data[i]);
+        }
+    }
 }

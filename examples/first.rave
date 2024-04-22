@@ -1,5 +1,5 @@
-import <std/io>
+import <std/io> <std/math>
 
 void main {
-    
+    auto m = std::matrix<float>(10, 10);
 }

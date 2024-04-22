@@ -60,7 +60,7 @@ std::vector<LLVMValueRef> NodeCall::correctByLLVM(std::vector<LLVMValueRef> valu
             }
         }
         else if(!instanceof<TypePointer>(fas[i].type) && LLVMGetTypeKind(LLVMTypeOf(params[i])) == LLVMPointerTypeKind) {
-            params[i] = LLVM::load(params[i], "correctLoad");
+            if(LLVMIsAFunction(params[i]) == nullptr) params[i] = LLVM::load(params[i], "correctLoad");
         }
     }
     return params;
