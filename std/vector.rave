@@ -75,5 +75,9 @@ namespace std {
             std::free(cast(void*)this.data);
             this.data = cast(T*)null;
         }
+
+        void filter(T(T) fn) {
+            for(int i=0; i<this.length; i++) this.data[i] = fn(this.data[i]);
+        }
     }
 }

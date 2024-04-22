@@ -143,7 +143,7 @@ LLVMValueRef NodeVar::generate() {
             LLVMSetInitializer(generator->globals[this->name], val);
             LLVMSetGlobalConstant(generator->globals[this->name], this->isConst);
             LLVMSetAlignment(generator->globals[this->name], generator->getAlignment(this->type));
-            if(isVolatile) LLVMSetVolatile(generator->globals[name],true);
+            if(isVolatile) LLVMSetVolatile(generator->globals[name], true);
             return nullptr;
         }
 
