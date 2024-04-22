@@ -13,12 +13,8 @@ namespace std {
     } => dest;
     (nochecks) void* memmove(void* dest, void* src, int n) {
         void* temp = std::malloc(n);
-        for(int i=0; i<n; i+=1) {
-            temp[i] = src[i];
-        }
-        for(int i=0; i<n; i+=1) {
-            dest[i] = temp[i];
-        }
+        for(int i=0; i<n; i+=1) temp[i] = src[i];
+        for(int i=0; i<n; i+=1) dest[i] = temp[i];
         std::free(temp);
     } => dest;
     (nochecks) bool memcmp(void* one, void* two, int n) {
@@ -31,9 +27,7 @@ namespace std {
         }
     }
     (nochecks) void* memset(void* dest, int c, int n) {
-        for(int i=0; i<n; i+=1) {
-            dest[i] = cast(char)c;
-        }
+        for(int i=0; i<n; i+=1) dest[i] = cast(char)c;
     } => dest;
     (nochecks, inline, ctargs) void delete {
         @foreachArgs() {

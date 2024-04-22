@@ -10,7 +10,7 @@ void encoderForward(float* out, int* inp, float* wte, float* wpe, int B, int T, 
     for(int b=0; b<B; b++) {
         for(int t=0; t<T; t++) {
             // seek to the output position in out[b,t,:]
-            float* out_bt = itop(float*, ptoi(out_bt) + (b * T * C) + (t * C));
+            float* out_bt = itop(float*, ptoi(out) + (b * T * C) + (t * C));
             // get the index of the token at inp[b, t]
             int ix = inp[(b * T) + t];
             // seek to the position in wte corresponding to the token
@@ -1077,4 +1077,18 @@ void main {
     ulong rng_state = 1337;
     int* gen_tokens = cast(int*)std::malloc(B * T * sizeof(int));
     int genT = 64; // number of steps of inference we will do
+
+    for(int step=1; step<=40; step++) {
+        if(step % 10 == 0) {
+            float val_loss;
+            dataloaderReset(&val_loader);
+            for(int i=0; i<val_num_batches; i++) {
+                dataloaderNextBatch(&val_loader);
+                gpt2Forward(&model, val_loader.inputs, val_loader.targets, B, T);
+                val_loss += model.mean_loss;
+            }
+            val_loss = val_loss / val_num_batches;
+            std::println("val loss ", val_loss);
+        }
+    }
 }

@@ -4,7 +4,7 @@ import <std/thread> <std/strutil>
 namespace std {
     extern(private,linkname: "sscanf") int format(char* buff, char* fmt);
 
-    struct string {
+    (data: "data", length: "length") struct string {
         char* data;
         int length;
         int capacity;

@@ -443,6 +443,21 @@ Node* Parser::parseAtom(std::string f) {
             nfloat->isMustBeFloat = true;
             return nfloat;
         }
+        else if(size > 0 && std::tolower(this->peek()->value[0]) == 'd') {
+            // Double-type
+            this->next();
+            return new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Double));
+        }
+        else if(size > 0 && std::tolower(this->peek()->value[0]) == 'h') {
+            // Bhalf-type
+            this->next();
+            return new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Bhalf));
+        }
+        else if(size > 0 && std::tolower(this->peek()->value[0]) == 'b' && std::tolower(this->peek()->value[1]) == 'h') {
+            // Half-type
+            this->next();
+            return new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Half));
+        }
         return new NodeInt(BigInt(t->value));
     }
     if(t->type == TokType::FloatNumber) {
