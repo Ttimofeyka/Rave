@@ -4,7 +4,7 @@ namespace std {
     extern(linkname: "system") int system(char* cmd);
 }
 
-@if((__RAVE_OS == "LINUX") && (!@aliasExists(__RAVE_USELIBC))) {
+@if((__RAVE_OS == "LINUX")) {
     import <std/sysc>
 
     namespace std {
@@ -15,11 +15,11 @@ namespace std {
     }
 };
 
-@if((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64")) && (!@aliasExists(__RAVE_USELIBC)) {
+@if((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64"))) {
     namespace std {
         namespace system {
             extern(linkname: "reboot") int reboot(int cmd);
-            extern(linkname: "GetCurrentDirectory") int __getCurrentDirectory(int size, ushort* buffer);
+            extern(linkname: "GetCurrentDirectoryW") int __getCurrentDirectory(int size, ushort* buffer);
 
             (inline) char* getCwd(char* cbuffer, int size) {
                 int bufferSize = std::system::__getCurrentDirectory(0, cast(ushort*)null);
