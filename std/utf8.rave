@@ -348,7 +348,7 @@ namespace std {
             } => buffer;
 
             uchar* fromUtf32(ushort* wstr) {
-                int bufferSize = std::utf8::__WideCharToMultiByte(65001, 0, wstr, -1, cast(ushort*)null, -1, null, cast(int*)null);
+                int bufferSize = std::utf8::__WideCharToMultiByte(65001, 0, wstr, -1, null, -1, null, cast(int*)null);
                 uchar* buffer = std::malloc(bufferSize);
                 std::utf8::__WideCharToMultiByte(65001, 0, wstr, -1, buffer, bufferSize, null, cast(int*)null);
             } => buffer;
