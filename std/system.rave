@@ -15,10 +15,9 @@ namespace std {
     }
 };
 
-@if((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64"))) {
+@if((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64")) {
     namespace std {
         namespace system {
-            extern(linkname: "reboot") int reboot(int cmd);
             extern(linkname: "GetCurrentDirectoryW") int __getCurrentDirectory(int size, ushort* buffer);
 
             (inline) char* getCwd(char* cbuffer, int size) {
