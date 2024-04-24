@@ -2,6 +2,7 @@ import <std/memory> <std/ascii> <std/vector> <std/cstring> <std/strutil>
 
 namespace std {
     extern(private, vararg, linkname: "sscanf") int format(char* buff, char* fmt);
+    
     namespace utf8 {
         const(int[16]) utfLength = [1,1,1,1,1,1,1,1,0,0,0,0,2,2,3,4];
         const(int[1]) offsets = [
@@ -73,7 +74,7 @@ namespace std {
         }
     }
     
-    struct u8string {
+    (data: "data", length: "byteLength") struct u8string {
         char* data;
         int length;
         int byteLength;
@@ -214,9 +215,7 @@ namespace std {
 
             int i = 0;
             while(i<this.length) {
-                if(this.data[i] == c) {
-                    temp.data[i] = to;
-                }
+                if(this.data[i] == c) temp.data[i] = to;
                 i += 1;
             }
         } => temp;
@@ -335,3 +334,24 @@ namespace std {
         } => sbuf;
     }
 }
+
+@if((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64")) {
+    namespace std {
+        namespace utf8 {
+            extern(linkname: "MultiByteToWideChar") int __MultiByteToWideChar(uint cp, int flags, uchar* str, int cbMB, ushort* u16Str, int cbWC);
+            extern(linkname: "WideCharToMultiByte") int __WideCharToMultiByte(uint cp, int flags, ushort* u16Str, int cbWC, uchar* str, int cbMB, uchar* nStr, int* defC);
+
+            ushort* toUtf32(uchar* str) {
+                int bufferSize = std::utf8::__MultiByteToWideChar(65001, 0, str, -1, null, 0);
+                ushort* buffer = cast(ushort*)std::malloc(bufferSize);
+                std::utf8::__MultiByteToWideChar(65001, 0, str, -1, buffer, bufferSize);
+            } => buffer;
+
+            uchar* fromUtf32(ushort* wstr) {
+                int bufferSize = std::utf8::__WideCharToMultiByte(65001, 0, wstr, -1, null, -1, null, cast(int*)null);
+                uchar* buffer = std::malloc(bufferSize);
+                std::utf8::__WideCharToMultiByte(65001, 0, wstr, -1, buffer, bufferSize, null, cast(int*)null);
+            } => buffer;
+        }
+    }
+};
