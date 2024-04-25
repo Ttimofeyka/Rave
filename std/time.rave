@@ -49,8 +49,8 @@ namespace std {
 };
 
 @if(__RAVE_OS == "WINDOWS") {
-    namespace winapi {
-        struct systemTime {
+    namespace std {
+        struct __systemTime {
             short wYear;
             short wMonth;
             short wDayOfWeek;
@@ -61,15 +61,28 @@ namespace std {
             short wMilliseconds;
         }
 
-        struct fileTime {
+        struct __fileTime {
             int low;
             int high;
         }
 
-        extern(linkname: "GetSystemTime") void GetSystemTime(winapi::systemTime* tm);
-        extern(linkname: "GetTickCount64") ulong GetTickCount();
-        extern(linkname: "GetSystemTimeAsFileTime") void GetSystemTimeAsFileTime(winapi::fileTime* tm);
-        extern(linkname: "ProcessPrng") int ProcessPrng(char* data, int size);
+        extern(linkname: "GetSystemTime") void __GetSystemTime(winapi::systemTime* tm);
+        extern(linkname: "GetTickCount64") ulong __GetTickCount();
+        extern(linkname: "GetSystemTimeAsFileTime") void __GetSystemTimeAsFileTime(winapi::fileTime* tm);
+        extern(linkname: "ProcessPrng") int __ProcessPrng(char* data, int size);
+
+        int getCurrentTime(std::timeSpec* tc) {
+           std::__fileTime ftm;
+           std::__GetSystemTimeAsFileTime(&ftm);
+
+           long li;
+           int* liPtr = cast(int*)&li;
+           liPtr[0] = ftm.low;
+           liPtr[1] = ftm.high;
+
+           tc.sec = (li - 116444736000000000) / 10000000;
+           tc.nsec = tc.sec;
+        } => 0;
     }
 };
 
