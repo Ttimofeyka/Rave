@@ -4,22 +4,25 @@ namespace std {
         (inline) bool isPrint(char c) => (c >= 32) && (c <= 126);
         (inline) bool isLower(char c) => (c > 96) && (c < 123);
         (inline) bool isUpper(char c) => (c > 64) && (c < 91);
-        (inline) char toLower(char c) {
-            char tmp = c;
-            if(std::ascii::isUpper(c)) tmp = (tmp + 32);
-        } => tmp;
-        (inline) char toUpper(char c) {
-            char tmp = c;
-            if(std::ascii::isLower(c)) tmp = (tmp - 32); 
-        } => tmp;
         (inline) bool isDigit(char c) => (c >= '0') && (c <= '9');
+
+        (inline) char toLower(char c) {
+            return = c;
+            if(std::ascii::isUpper(c)) return = (return + 32);
+        }
+
+        (inline) char toUpper(char c) {
+            return = c;
+            if(std::ascii::isLower(c)) return = (return - 32); 
+        } => tmp;
+
         (inline) char* charInChars(char* chars, char c) {
             int i = 0;
-            char* ptr = null;
+            return = null;
             bool active = true;
             while((chars[i] != '\0') && active) {
                 if(chars[i] == c) {
-                    ptr = &chars[i];
+                    return = &chars[i];
                     active = false;
                 }
                 i += 1;

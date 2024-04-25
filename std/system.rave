@@ -25,10 +25,10 @@ namespace std {
                 ushort* buffer = cast(ushort*)std::malloc(bufferSize);
 
                 std::system::__getCurrentDirectory(bufferSize, buffer);
-                if(cbuffer == null) return = std::utf8::fromUtf32(buffer);
+                if(cbuffer == null) return = std::utf8::fromUtf16(buffer);
                 else {
                     // For compability with libc
-                    char* u8Buffer = std::utf8::fromUtf32(buffer);
+                    char* u8Buffer = std::utf8::fromUtf16(buffer);
                     for(int i=0; i<size; i++) cbuffer[i] = u8Buffer[i];
                     return = cbuffer;
                     std::free(u8Buffer);

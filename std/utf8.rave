@@ -341,13 +341,13 @@ namespace std {
             extern(linkname: "MultiByteToWideChar") int __MultiByteToWideChar(uint cp, int flags, uchar* str, int cbMB, ushort* u16Str, int cbWC);
             extern(linkname: "WideCharToMultiByte") int __WideCharToMultiByte(uint cp, int flags, ushort* u16Str, int cbWC, uchar* str, int cbMB, uchar* nStr, int* defC);
 
-            ushort* toUtf32(uchar* str) {
+            ushort* toUtf16(uchar* str) {
                 int bufferSize = std::utf8::__MultiByteToWideChar(65001, 0, str, -1, cast(ushort*)null, 0);
                 ushort* buffer = cast(ushort*)std::malloc(bufferSize);
                 std::utf8::__MultiByteToWideChar(65001, 0, str, -1, buffer, bufferSize);
             } => buffer;
 
-            uchar* fromUtf32(ushort* wstr) {
+            uchar* fromUtf16(ushort* wstr) {
                 int bufferSize = std::utf8::__WideCharToMultiByte(65001, 0, wstr, -1, null, -1, null, cast(int*)null);
                 uchar* buffer = std::malloc(bufferSize);
                 std::utf8::__WideCharToMultiByte(65001, 0, wstr, -1, buffer, bufferSize, null, cast(int*)null);
