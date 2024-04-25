@@ -1,6 +1,6 @@
 import <std/time> <std/memory>
 
-@if((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64")) {
+@if(__RAVE_OS == "WINDOWS") {
     namespace libc {
         extern(linkname: "rand") int random();
         extern(linkname: "srand") void srandom(int seed);
@@ -18,7 +18,7 @@ import <std/time> <std/memory>
     }
 };
 
-@if((__RAVE_OS != "WINDOWS32") && (__RAVE_OS != "WINDOWS64")) {
+@if(__RAVE_OS != "WINDOWS") {
     namespace std {
         short randomShort(short min, short max) {
             std::timeSpec ts;

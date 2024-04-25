@@ -12,7 +12,7 @@
     }
 };
 
-@if((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64")) {
+@if(__RAVE_OS == "WINDOWS") {
     import <std/sysc>
 
     namespace std {
@@ -27,7 +27,7 @@
     }
 };
 
-@if((__RAVE_OS != "LINUX") && (__RAVE_OS != "WINDOWS32") && (__RAVE_OS != "WINDOWS64")) {
+@if((__RAVE_OS != "LINUX") && (__RAVE_OS != "WINDOWS")) {
     namespace std {
         namespace library {
             alias RtldLazy = 0x00001;

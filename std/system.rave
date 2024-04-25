@@ -15,7 +15,7 @@ namespace std {
     }
 };
 
-@if((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64")) {
+@if(__RAVE_OS == "WINDOWS") {
     namespace std {
         namespace system {
             extern(linkname: "GetCurrentDirectoryW") int __getCurrentDirectory(int size, ushort* buffer);
@@ -39,7 +39,7 @@ namespace std {
     }
 };
 
-@if(((__RAVE_OS != "LINUX") && (__RAVE_OS != "WINDOWS32") && (__RAVE_OS != "WINDOWS64"))) {
+@if(((__RAVE_OS != "LINUX") && (__RAVE_OS != "WINDOWS"))) {
     namespace std {
         namespace system {
             extern(linkname: "reboot") int reboot(int cmd);

@@ -161,13 +161,13 @@ void Compiler::compile(std::string file) {
             #if _WIN32
                 Compiler::linkString += " --target=i686-pc-windows-gnu ";
             #endif
-            raveOs = "WINDOWS32";
+            raveOs = "WINDOWS";
         }
         else if(outType.find("win64") != std::string::npos || outType.find("windows") != std::string::npos) {
             #if _WIN32
                 Compiler::linkString += " --target=x86_64-pc-windows-gnu ";
             #endif
-            raveOs = "WINDOWS64";
+            raveOs = "WINDOWS";
         }
         else if(outType.find("linux") != std::string::npos) raveOs = "LINUX";
         else if(outType.find("darwin") != std::string::npos || outType.find("macos") != std::string::npos) raveOs = "DARWIN";

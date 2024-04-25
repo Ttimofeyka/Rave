@@ -335,7 +335,7 @@ namespace std {
     }
 }
 
-@if((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64")) {
+@if(__RAVE_OS == "WINDOWS") {
     namespace std {
         namespace utf8 {
             extern(linkname: "MultiByteToWideChar") int __MultiByteToWideChar(uint cp, int flags, uchar* str, int cbMB, ushort* u16Str, int cbWC);

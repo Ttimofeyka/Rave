@@ -81,7 +81,7 @@ namespace libc {
     }
 };
 
-@if((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64")) {
+@if(__RAVE_OS == "WINDOWS") {
     namespace std {
         namespace file {
             extern(linkname: "_access") int __access(char* fname, int flag);
@@ -89,7 +89,7 @@ namespace libc {
     }
 };
 
-@if((__RAVE_OS != "LINUX") && (__RAVE_OS != "WINDOWS32") && (__RAVE_OS != "WINDOWS64")) {
+@if((__RAVE_OS != "LINUX") && (__RAVE_OS != "WINDOWS32")) {
     namespace std {
         namespace file {
             int __access(char* fname, int flag) {
