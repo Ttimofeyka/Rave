@@ -66,9 +66,9 @@ namespace std {
             int high;
         }
 
-        extern(linkname: "GetSystemTime") void __GetSystemTime(winapi::systemTime* tm);
+        extern(linkname: "GetSystemTime") void __GetSystemTime(std::__systemTime* tm);
         extern(linkname: "GetTickCount64") ulong __GetTickCount();
-        extern(linkname: "GetSystemTimeAsFileTime") void __GetSystemTimeAsFileTime(winapi::fileTime* tm);
+        extern(linkname: "GetSystemTimeAsFileTime") void __GetSystemTimeAsFileTime(std::__fileTime* tm);
         extern(linkname: "ProcessPrng") int __ProcessPrng(char* data, int size);
 
         int getCurrentTime(std::timeSpec* tc) {
