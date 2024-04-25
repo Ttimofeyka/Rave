@@ -221,6 +221,14 @@ LLVMValueRef NodeVar::generate() {
                     return currScope->localScope[this->name];
                 }
             }
+            else {
+                LLVMValueRef val = this->value->generate();
+                currScope->localScope[this->name] = LLVMBuildAlloca(generator->builder, LLVMTypeOf(val), name.c_str());
+                this->type = lTypeToType(LLVMTypeOf(val));
+                LLVMSetAlignment(currScope->localScope[this->name], generator->getAlignment(this->type));
+                LLVMBuildStore(generator->builder,val,currScope->localScope[this->name]);
+                return currScope->localScope[this->name];
+            }
         }
         if(instanceof<NodeInt>(this->value)) ((NodeInt*)this->value)->isVarVal = this->type;
 
