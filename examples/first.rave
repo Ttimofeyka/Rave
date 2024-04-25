@@ -1,6 +1,5 @@
-import <std/io> <std/math> <std/vector> <std/utf8>
+import <std/io>
 
 void main {
-    auto m = std::matrix<float>(10, 10);
-    auto v = std::vector<int>();
+    
 }

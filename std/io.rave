@@ -28,7 +28,7 @@ namespace std {
     }
 }
 
-@if((__RAVE_OS == "LINUX") && (!@aliasExists(__RAVE_USELIBC))) {
+@if(__RAVE_OS == "LINUX") {
     namespace std {
         namespace file {
             int rename(char* oldpath, char* newpath) => cast(int)std::syscall(std::sysctable::RenameTo, -100, oldpath, -100, newpath);
@@ -43,7 +43,7 @@ namespace std {
     }
 };
 
-@if((__RAVE_OS != "LINUX") || @aliasExists(__RAVE_USELIBC)) {
+@if(__RAVE_OS != "LINUX") {
     namespace std {
         namespace file {
             extern(linkname: "rename") int rename(char* oldpath, char* newpath);

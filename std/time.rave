@@ -41,14 +41,14 @@ namespace std {
     };
 }
 
-@if((__RAVE_OS == "LINUX") && (!@aliasExists(__RAVE_USELIBC))) {
+@if((__RAVE_OS == "LINUX")) {
     namespace std {
         (inline) int __clock_gettime(int flag, std::timeSpec* tc) => cast(int)std::syscall(std::sysctable::ClockGetTime, flag, tc);
         int getCurrentTime(std::timeSpec* tc) => std::__clock_gettime(std::RealTime, tc);
     }
 };
 
-@if((__RAVE_OS != "LINUX") && ((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64"))) {
+@if((__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64")) {
     namespace winapi {
         struct systemTime {
             short wYear;
@@ -73,7 +73,7 @@ namespace std {
     }
 };
 
-@if(((__RAVE_OS != "LINUX") && (__RAVE_OS != "WINDOWS32") && (__RAVE_OS != "WINDOWS64")) || (@aliasExists(__RAVE_USELIBC))) {
+@if(((__RAVE_OS != "LINUX") && (__RAVE_OS != "WINDOWS32") && (__RAVE_OS != "WINDOWS64"))) {
     namespace libc {
         extern(linkname: "time") long getTime(void* v);
         extern(linkname: "ftime") void getFTime(std::timeb* tm);

@@ -9,7 +9,7 @@
     import <std/sysc>
 };
 
-@if((__RAVE_OS == "LINUX") && (!@aliasExists(__RAVE_USELIBC))) {
+@if(__RAVE_OS == "LINUX") {
     namespace std {
         (inline) void exit(int code) {
             std::syscall(std::sysctable::Exit, code);
@@ -17,7 +17,7 @@
     }
 };
 
-@if((@aliasExists(__RAVE_USELIBC)) || (__RAVE_OS == "DARWIN") || (__RAVE_OS == "ARDUINO") || (__RAVE_OS == "WINDOWS32") || (__RAVE_OS == "WINDOWS64")) {
+@if(__RAVE_OS != "LINUX") {
     namespace std {
         extern(linkname: "exit") void exit(int code);
     }

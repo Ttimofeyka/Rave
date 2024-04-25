@@ -1,22 +1,3 @@
-@if((__RAVE_OS == "LINUX") && (!@aliasExists(__RAVE_USELIBC))) {
-    import <std/sysc>
-
-    namespace std {
-        namespace process {
-            (inline) int getPID => cast(int)std::syscall(std::sysctable::GetPID);
-            (inline) int getPPID => cast(int)std::syscall(std::sysctable::GetPPID);
-        }
-    }
-};
-
-@if(((__RAVE_OS != "LINUX")) || (@aliasExists(__RAVE_USELIBC))) {
-    namespace std {
-        namespace process {
-            extern(linkname: "getpid") int getPID();
-        }
-    }
-};
-
 @if(__RAVE_OS == "LINUX") {
     import <std/sysc>
 
@@ -37,7 +18,17 @@
             alias cloneParentSetTID = 0x00100000;
             alias cloneChildClearTID = 0x00200000;
 
+            (inline) int getPID => cast(int)std::syscall(std::sysctable::GetPID);
+            (inline) int getPPID => cast(int)std::syscall(std::sysctable::GetPPID);
             (vararg, inline) int clone(int(void*) fn, void* stack, int flags, void* arg) => cast(int)std::syscall(std::sysctable::Clone, fn, stack, flags, arg);
+        }
+    }
+};
+
+@if(__RAVE_OS != "LINUX") {
+    namespace std {
+        namespace process {
+            extern(linkname: "getpid") int getPID();
         }
     }
 };
