@@ -1,28 +1,8 @@
 import <std/time> <std/memory>
 
-@if(__RAVE_OS == "WINDOWS") {
-    namespace libc {
-        extern(linkname: "rand") int random();
-        extern(linkname: "srand") void srandom(int seed);
-    }
-
-    namespace std {
-        short randomShort(short min, short max) {
-            winapi::systemTime tm;
-            winapi::GetSystemTime(&tm);
-
-            short* rndBytes = cast(short*)std::malloc(2);
-                tm.wMilliseconds -= (rndBytes[0] % tm.wMilliseconds);
-            std::free(cast(void*)rndBytes);
-        } => ((tm.wMilliseconds * cast(short)10) % ((max+1)-min))+min;
-    }
-};
-
-@if(__RAVE_OS != "WINDOWS") {
-    namespace std {
-        short randomShort(short min, short max) {
-            std::timeSpec ts;
-            std::getCurrentTime(&ts);
-        } => ((cast(short)ts.nsec) % ((max+1)-min))+min;
-    }
-};
+namespace std {
+    short randomShort(short min, short max) {
+        std::timeSpec ts;
+        std::getCurrentTime(&ts);
+    } => ((cast(short)ts.nsec) % ((max+1)-min))+min;
+}
