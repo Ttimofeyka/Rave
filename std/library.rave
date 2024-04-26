@@ -18,10 +18,14 @@
     namespace std {
         namespace library {
             alias RtldLazy = 0x00001;
+
+            extern(linkname: "LoadLibraryA") void* __LoadLibraryA(char* str);
+            extern(linkname: "FreeLibrary") int __FreeLibrary(void* ptr);
+            extern(linkname: "GetProcAddressA") void* __GetProcAddress(void* handle, char* name);
         
-            (inline) void* open(char* filename) => std::winapi::LoadLibrary(filename);
-            (inline) int close(void* handle) {std::winapi::FreeLibrary(handle);}
-            (inline) void* sym(void* handle, char* name) => std::winapi::GetProcAddress(handle, name);
+            (inline) void* open(char* filename) => std::library::__LoadLibraryA(filename);
+            (inline) int close(void* handle) => std::library::__FreeLibrary(handle);
+            (inline) void* sym(void* handle, char* name) => std::library::__GetProcAddress(handle, name);
             (inline) char* error => "";
         }
     }
