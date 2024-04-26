@@ -14,7 +14,7 @@ namespace std {
         (inline) char toUpper(char c) {
             return = c;
             if(std::ascii::isLower(c)) return = (return - 32); 
-        } => tmp;
+        }
 
         (inline) char* charInChars(char* chars, char c) {
             int i = 0;
@@ -27,6 +27,6 @@ namespace std {
                 }
                 i += 1;
             }
-        } => ptr;
+        }
     }
 }

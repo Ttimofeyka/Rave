@@ -432,6 +432,16 @@ LLVMValueRef NodeBuiltin::generate() {
         LLVMSetVolatile(store, true);
         return store;
     }
+    else if(this->name == "getLinkName") {
+        if(instanceof<NodeIden>(this->args[0])) {
+            NodeIden* niden = (NodeIden*)this->args[0];
+
+            if(currScope->has(niden->name)) return (new NodeString(currScope->getVar(niden->name, this->loc)->linkName, false))->generate();
+            if(AST::funcTable.find(niden->name) != AST::funcTable.end()) return (new NodeString(AST::funcTable[niden->name]->linkName, false))->generate();
+        }
+        generator->error("cannot get the link name of this value!", this->loc);
+        return nullptr;
+    }
     generator->error("builtin with the name '"+this->name+"' does not exist!", this->loc);
     return nullptr;
 }
@@ -440,6 +450,16 @@ Node* NodeBuiltin::comptime() {
     this->name = trim(this->name);
     if(this->name[0] == '@') this->name = this->name.substr(1);
     if(this->name == "aliasExists") return new NodeBool(AST::aliasTable.find(this->getAliasName(0)) != AST::aliasTable.end());
+    if(this->name == "getLinkName") {
+        if(instanceof<NodeIden>(this->args[0])) {
+            NodeIden* niden = (NodeIden*)this->args[0];
+
+            if(currScope->has(niden->name)) return new NodeString(currScope->getVar(niden->name, this->loc)->linkName, false);
+            if(AST::funcTable.find(niden->name) != AST::funcTable.end()) return new NodeString(AST::funcTable[niden->name]->linkName, false);
+        }
+        generator->error("cannot get the link name of this value!", this->loc);
+        return nullptr;
+    }
     if(this->name == "sizeOf") return new NodeInt((asType(0)->type->getSize()) / 8);
     if(this->name == "tEquals") return new NodeBool(asType(0)->type->toString() == asType(1)->type->toString());
     if(this->name == "tNequals") return new NodeBool(asType(0)->type->toString() != asType(1)->type->toString());

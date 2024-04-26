@@ -17,6 +17,7 @@ class NodeVar : public Node {
 public:
     std::string name;
     std::string origName;
+    std::string linkName;
     Node* value;
     std::vector<DeclarMod> mods;
     long loc;

@@ -23,6 +23,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, bool isGlobal, std::vector<DeclarMod> mods, long loc, Type* type, bool isVolatile) {
     this->name = name;
     this->origName = name;
+    this->linkName = this->name;
     this->value = value;
     this->isExtern = isExtern;
     this->isConst = isConst;
@@ -36,6 +37,7 @@ NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, boo
 NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, bool isGlobal, std::vector<DeclarMod> mods, long loc, Type* type, bool isVolatile, bool isChanged, bool noZeroInit) {
     this->name = name;
     this->origName = name;
+    this->linkName = this->name;
     this->value = value;
     this->isExtern = isExtern;
     this->isConst = isConst;
@@ -103,10 +105,11 @@ LLVMValueRef NodeVar::generate() {
     if(instanceof<TypeStruct>(this->type)) {
         while(generator->toReplace.find(((TypeStruct*)this->type)->name) != generator->toReplace.end()) this->type = generator->toReplace[((TypeStruct*)this->type)->name];
     }
+
+    linkName = this->name;
  
     if(currScope == nullptr) {
         bool noMangling = false;
-        std::string linkName = this->name;
 
         for(int i=0; i<this->mods.size(); i++) {
             while(AST::aliasTable.find(this->mods[i].name) != AST::aliasTable.end()) {
@@ -122,10 +125,11 @@ LLVMValueRef NodeVar::generate() {
         }
         if(!instanceof<TypeAuto>(this->type)) {
             if(instanceof<NodeInt>(this->value)) ((NodeInt*)this->value)->isVarVal = this->type;
+            linkName = ((linkName == this->name && !noMangling) ? generator->mangle(name, false, false) : linkName);
             generator->globals[this->name] = LLVMAddGlobal(
                 generator->lModule,
                 generator->genType(this->type, loc),
-                ((linkName == this->name && !noMangling) ? generator->mangle(name,false,false).c_str() : linkName.c_str())
+                linkName.c_str()
             );
             if(!this->isExtern && this->value != nullptr) {
                 LLVMSetInitializer(generator->globals[this->name], this->value->generate());
@@ -136,10 +140,11 @@ LLVMValueRef NodeVar::generate() {
             LLVMValueRef val = nullptr;
             if(instanceof<NodeUnary>(this->value)) val = ((NodeUnary*)this->value)->generateConst();
             else val = this->value->generate();
+            linkName = ((linkName == this->name && !noMangling) ? generator->mangle(name,false,false) : linkName);
             generator->globals[this->name] = LLVMAddGlobal(
                 generator->lModule,
                 LLVMTypeOf(val),
-                ((linkName == this->name && !noMangling) ? generator->mangle(name,false,false).c_str() : linkName.c_str())
+                linkName.c_str()
             );
             this->type = lTypeToType(LLVMTypeOf(val));
             LLVMSetInitializer(generator->globals[this->name], val);

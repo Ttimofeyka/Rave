@@ -274,6 +274,20 @@ void main {
 }
 ```
 
+**@getLinkName** - returns the name of the function/variable for the linker.
+
+Example:
+
+```d
+import <std/io>
+
+int sum(int x, int y) => x + y;
+
+void main {
+    std::println(@getLinkName(sum)); // _RaveF3sum
+}
+```
+
 ### Compile-time arguments
 
 **@getCurrArg(type)** - Get the value of the current argument, leading to the required type.
