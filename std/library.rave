@@ -21,11 +21,11 @@
 
             extern(linkname: "LoadLibraryA") void* __LoadLibraryA(char* str);
             extern(linkname: "FreeLibrary") int __FreeLibrary(void* ptr);
-            extern(linkname: "GetProcAddressA") void* __GetProcAddress(void* handle, char* name);
+            extern(linkname: "GetProcAddressA") void* __GetProcAddressA(void* handle, char* name);
         
             (inline) void* open(char* filename) => std::library::__LoadLibraryA(filename);
             (inline) int close(void* handle) => std::library::__FreeLibrary(handle);
-            (inline) void* sym(void* handle, char* name) => std::library::__GetProcAddress(handle, name);
+            (inline) void* sym(void* handle, char* name) => std::library::__GetProcAddressA(handle, name);
             (inline) char* error => "";
         }
     }
