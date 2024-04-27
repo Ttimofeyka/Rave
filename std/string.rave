@@ -107,12 +107,14 @@ namespace std {
         (inline) int indexOf(std::string s) => this.indexOf(s.c());
 
         void add(char c) {
-            this.length += 1;
-            if(this.length == this.capacity) {
-                this.capacity = this.capacity * 2;
-                this.data = std::realloc(this.data, this.capacity);
+            if(this.data != null) {
+                this.length += 1;
+                if(this.length == this.capacity) {
+                    this.capacity = this.capacity * 2;
+                    this.data = std::realloc(this.data, this.capacity);
+                }
+                this.data[this.length-1] = c;
             }
-            this.data[this.length-1] = c;
         }
 
         void append(std::string str) {
@@ -240,12 +242,7 @@ namespace std {
     }
 
     namespace string {
-        (inline) std::string fromNumber(long n) {
-            char[24] buffer;
-            libc::cformat(&buffer, "%ld", n);
-            std::string sbuffer = std::string(&buffer);
-        } => sbuffer;
-        
+        (inline) std::string fromNumber(long n) {char[24] buffer = std::cstring::ltos24(n);} => std::string(&buffer);
         (inline) std::string fromNumber(int n) => std::string::fromNumber(cast(long)n);
         (inline) std::string fromNumber(short n) => std::string::fromNumber(cast(long)n);
         (inline) std::string fromNumber(char n) => std::string::fromNumber(cast(long)n);

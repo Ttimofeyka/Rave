@@ -125,7 +125,7 @@ std::string typeToString(Type* arg) {
         }
     }
     else if(instanceof<TypeArray>(arg)) {
-        std::string buffer = "a";
+        std::string buffer = "a" + std::to_string(((TypeArray*)arg)->count);
         Type* element = ((TypeArray*)arg)->element;
 
         while(element != nullptr && !instanceof<TypeBasic>(element) && !instanceof<TypeFunc>(element) && !instanceof<TypeStruct>(element)) {
@@ -354,6 +354,7 @@ Type* lTypeToType(LLVMTypeRef t) {
         sT = sT.substr(0, sT.find_last_of('('));
         return getType(trim(sT));
     }
+    else if(LLVMGetTypeKind(t) == LLVMVoidTypeKind) return new TypeVoid();
     generator->error("assert: lTypeToType",-1);
     return nullptr;
 }

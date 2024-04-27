@@ -58,5 +58,36 @@ namespace std {
             while((str[return] != '\0') && (str[return] != ch)) return += 1;
             if(str[return] == '\0') return = -1;
         }
+
+        char[24] ltos24(long number) {
+            char[24] buffer;
+            char[24] endBuffer;
+
+            bool isNegative = false;
+            if(number < 0) {
+                isNegative = true;
+                number = -number;
+            }
+
+            int index = 0;
+            while(number > 0) {
+                buffer[index] = ((number % cast(long)10) + '0');
+                number = number / 10;
+                index += 1;
+            }
+
+            if(isNegative) {
+                buffer[index] = '-';
+                index += 1;
+            }
+
+            endBuffer[index] = '\0';
+
+            int endI = 0;
+            for(int i=index-1; i>=0; i--) {
+                endBuffer[endI] = buffer[i];
+                endI += 1;
+            }
+        } => endBuffer;
     }
 }
