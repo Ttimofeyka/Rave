@@ -5,4 +5,9 @@ namespace std {
         std::timeSpec ts;
         std::getCurrentTime(&ts);
     } => ((cast(short)ts.nsec) % ((max+1)-min))+min;
+
+    int randomInt(int min, int max) {
+        std::timeSpec ts;
+        std::getCurrentTime(&ts);
+    } => ((cast(int)ts.nsec) % ((max+1)-min))+min;
 }

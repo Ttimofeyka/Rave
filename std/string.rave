@@ -2,7 +2,7 @@ import <std/vector> <std/cstring> <std/ascii> <std/utf8>
 import <std/thread> <std/strutil>
 
 namespace std {
-    extern(private,linkname: "sscanf") int format(char* buff, char* fmt);
+    extern(private, linkname: "sscanf") int format(char* buff, char* fmt);
 
     (data: "data", length: "length") struct string {
         char* data;
