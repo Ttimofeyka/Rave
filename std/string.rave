@@ -241,11 +241,10 @@ namespace std {
 
     namespace string {
         (inline) std::string fromNumber(long n) {
-            char* buf = std::malloc(std::lengthOfNumber(n)+2);
-            libc::cformat(buf,"%ld",n);
-            std::string sbuf = std::string(buf);
-            std::free(buf);
-        } => sbuf;
+            char[24] buffer;
+            libc::cformat(&buffer, "%ld", n);
+            std::string sbuffer = std::string(&buffer);
+        } => sbuffer;
         
         (inline) std::string fromNumber(int n) => std::string::fromNumber(cast(long)n);
         (inline) std::string fromNumber(short n) => std::string::fromNumber(cast(long)n);
@@ -253,137 +252,114 @@ namespace std {
         (inline) std::string fromNumber(bool n) => std::string::fromNumber(cast(long)n);
 
         (inline) std::string fromFloat(float n) {
-            char* buf = std::malloc(128);
-            libc::cformat(buf,"%f",cast(double)n);
-            std::string sbuf = std::string(buf);
-            std::free(buf);
-        } => sbuf;
+            char[24] buffer;
+            libc::cformat(&buffer, "%f", cast(double)n);
+            std::string sbuffer = std::string(&buffer);
+        } => sbuffer;
 
         (inline) std::string fromFloat1(float n) {
-            char* buf = std::malloc(128);
-            libc::cformat(buf,"%.1f",cast(double)n);
-            std::string sbuf = std::string(buf);
-            std::free(buf);
-        } => sbuf;
+            char[24] buffer;
+            libc::cformat(&buffer, "%.1f", cast(double)n);
+            std::string sbuffer = std::string(&buffer);
+        } => sbuffer;
 
         (inline) std::string fromFloat2(float n) {
-            char* buf = std::malloc(128);
-            libc::cformat(buf,"%.2f",cast(double)n);
-            std::string sbuf = std::string(buf);
-            std::free(buf);
-        } => sbuf;
+            char[24] buffer;
+            libc::cformat(&buffer, "%.2f", cast(double)n);
+            std::string sbuffer = std::string(&buffer);
+        } => sbuffer;
 
         (inline) std::string fromFloat3(float n) {
-            char* buf = std::malloc(128);
-            libc::cformat(buf,"%.3f",cast(double)n);
-            std::string sbuf = std::string(buf);
-            std::free(buf);
-        } => sbuf;
+            char[24] buffer;
+            libc::cformat(&buffer, "%.3f", cast(double)n);
+            std::string sbuffer = std::string(&buffer);
+        } => sbuffer;
         
         (inline) std::string fromFloat4(float n) {
-            char* buf = std::malloc(128);
-            libc::cformat(buf,"%.4f",cast(double)n);
-            std::string sbuf = std::string(buf);
-            std::free(buf);
-        } => sbuf;
+            char[24] buffer;
+            libc::cformat(&buffer, "%.4f", cast(double)n);
+            std::string sbuffer = std::string(&buffer);
+        } => sbuffer;
 
         (inline) std::string fromFloat5(float n) {
-            char* buf = std::malloc(128);
-            libc::cformat(buf,"%.5f",cast(double)n);
-            std::string sbuf = std::string(buf);
-            std::free(buf);
-        } => sbuf;
+            char[24] buffer;
+            libc::cformat(&buffer, "%.5f", cast(double)n);
+            std::string sbuffer = std::string(&buffer);
+        } => sbuffer;
 
         (inline) std::string fromDouble(double n) {
-            char* buf = std::malloc(128);
-            libc::cformat(buf,"%f",n);
-            std::string sbuf = std::string(buf);
-            std::free(buf);
-        } => sbuf;
+            char[24] buffer;
+            libc::cformat(&buffer, "%f", n);
+            std::string sbuffer = std::string(&buffer);
+        } => sbuffer;
 
         (inline) std::string fromDouble1(double n) {
-            char* buf = std::malloc(128);
-            libc::cformat(buf,"%.1f",n);
-            std::string sbuf = std::string(buf);
-            std::free(buf);
-        } => sbuf;
+            char[24] buffer;
+            libc::cformat(&buffer, "%.1f", n);
+            std::string sbuffer = std::string(&buffer);
+        } => sbuffer;
 
         (inline) std::string fromDouble2(double n) {
-            char* buf = std::malloc(128);
-            libc::cformat(buf,"%.2f",n);
-            std::string sbuf = std::string(buf);
-            std::free(buf);
-        } => sbuf;
+            char[24] buffer;
+            libc::cformat(&buffer, "%.2f", n);
+            std::string sbuffer = std::string(&buffer);
+        } => sbuffer;
 
         (inline) std::string fromDouble3(double n) {
-            char* buf = std::malloc(128);
-            libc::cformat(buf,"%.3f",n);
-            std::string sbuf = std::string(buf);
-            std::free(buf);
-        } => sbuf;
+            char[24] buffer;
+            libc::cformat(&buffer, "%.3f", n);
+            std::string sbuffer = std::string(&buffer);
+        } => sbuffer;
         
         (inline) std::string fromDouble4(double n) {
-            char* buf = std::malloc(128);
-            libc::cformat(buf,"%.4f",n);
-            std::string sbuf = std::string(buf);
-            std::free(buf);
-        } => sbuf;
+            char[24] buffer;
+            libc::cformat(&buffer, "%.4f", n);
+            std::string sbuffer = std::string(&buffer);
+        } => sbuffer;
 
         (inline) std::string fromDouble5(double n) {
-            char* buf = std::malloc(128);
-            libc::cformat(buf,"%.5f",n);
-            std::string sbuf = std::string(buf);
-            std::free(buf);
-        } => sbuf;
+            char[24] buffer;
+            libc::cformat(&buffer, "%.5f", n);
+            std::string sbuffer = std::string(&buffer);
+        } => sbuffer;
 
         (inline) std::string fromDouble6(double n) {
-            char* buf = std::malloc(128);
-            libc::cformat(buf,"%.6f",n);
-            std::string sbuf = std::string(buf);
-            std::free(buf);
-        } => sbuf;
+            char[24] buffer;
+            libc::cformat(&buffer, "%.6f", n);
+            std::string sbuffer = std::string(&buffer);
+        } => sbuffer;
 
         (inline) std::string fromDouble7(double n) {
-            char* buf = std::malloc(128);
-            libc::cformat(buf,"%.7f",n);
-            std::string sbuf = std::string(buf);
-            std::free(buf);
-        } => sbuf;
+            char[24] buffer;
+            libc::cformat(&buffer, "%.7f", n);
+            std::string sbuffer = std::string(&buffer);
+        } => sbuffer;
 
         (inline) std::string fromDouble8(double n) {
-            char* buf = std::malloc(128);
-            libc::cformat(buf,"%.8f",n);
-            std::string sbuf = std::string(buf);
-            std::free(buf);
-        } => sbuf;
+            char[24] buffer;
+            libc::cformat(&buffer, "%.8f", n);
+            std::string sbuffer = std::string(&buffer);
+        } => sbuffer;
 
         (inline) std::string fromUNumber(long n) {
-            char* buf = std::malloc((std::lengthOfNumber(n)*2)+2);
-            libc::cformat(buf,"%lu",n);
-            std::string sbuf = std::string(buf);
-            std::free(buf);
-        } => sbuf;
+            char[36] buffer;
+            libc::cformat(&buffer, "%lu", n);
+            std::string sbuffer = std::string(&buffer);
+        } => sbuffer;
 
         (inline) std::string fromUNumber(int n) {
-            char* buf = std::malloc((std::lengthOfNumber(cast(long)n)*2)+2);
-            libc::cformat(buf,"%u",n);
-            std::string sbuf = std::string(buf);
-            std::free(buf);
-        } => sbuf;
+            char[36] buffer;
+            libc::cformat(&buffer, "%u", n);
+            std::string sbuffer = std::string(&buffer);
+        } => sbuffer;
 
         (inline) std::string fromUNumber(short n) {
-            char* buf = std::malloc((std::lengthOfNumber(cast(long)n)*2)+2);
-            libc::cformat(buf,"%d",n);
-            std::string sbuf = std::string(buf);
-            std::free(buf);
-        } => sbuf;
+            char[36] buffer;
+            libc::cformat(&buffer, "%d", n);
+            std::string sbuffer = std::string(&buffer);
+        } => sbuffer;
 
-        (inline) std::string fromUNumber(char n) {
-            char* buf = std::malloc((std::lengthOfNumber(cast(long)n)*2)+2);
-            libc::cformat(buf,"%d",n);
-            std::string sbuf = std::string(buf);
-            std::free(buf);
-        } => sbuf;
+        (inline) std::string fromUNumber(char n) => std::string::fromUNumber(cast(short)n);
     }
 
     (volatile) char sprintBufferSL = 0;
