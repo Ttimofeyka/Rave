@@ -60,9 +60,9 @@ namespace libc {
     extern(linkname: "fopen") libc::File* fopen(char* path, char* mode);
     extern(linkname: "fclose") int fclose(libc::File* file);
     extern(linkname: "ferror") int fhasError(libc::File* file);
-    extern(vararg, linkname: "fprintf") int fprintf(libc::File* file, char* str);
+    extern(linkname: "fprintf", vararg) int fprintf(libc::File* file, char* str);
     extern(linkname: "fflush") int fflush(libc::File* file);
-    extern(vararg, linkname: "fscanf") int fscanf(libc::File* file, char* fmt);
+    extern(linkname: "fscanf", vararg) int fscanf(libc::File* file, char* fmt);
     extern(linkname: "feof") int feof(libc::File* file);
     extern(linkname: "fgetc") char fgetc(libc::File* file);
     extern(linkname: "fgets") char* fgets(char* s, int size, libc::File* file);
