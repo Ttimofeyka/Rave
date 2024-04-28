@@ -67,7 +67,8 @@ namespace std {
             if(number == 0) {
                 endBuffer[0] = '0';
                 std::free(buffer);
-                @return(buffer);
+                buffer = null;
+                @return(endBuffer);
             }
 
             bool isNegative = false;
@@ -96,7 +97,7 @@ namespace std {
                 endI += 1;
             }
 
-            std::free(buffer);
+            if(buffer != null) std::free(buffer);
         } => endBuffer;
         
         char* dtos(double number, int precision, char* buffer) {
