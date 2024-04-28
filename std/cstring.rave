@@ -61,6 +61,13 @@ namespace std {
 
         char[24] ltos24(long number) {
             char[24] buffer;
+
+            if(number == 0) {
+                buffer[0] = '0';
+                buffer[1] = '\0';
+                @return(buffer);
+            }
+            
             char[24] endBuffer;
 
             bool isNegative = false;
@@ -89,5 +96,37 @@ namespace std {
                 endI += 1;
             }
         } => endBuffer;
+
+        
+        char[24] dtos24(double number, int precision) {
+            long lPart;
+            int i;
+            int len;
+            char[24] temp;
+            char[24] buffer;
+            int decimals;
+
+            lPart = cast(long)number;
+            temp = std::cstring::ltos24(lPart);
+            i = 0;
+            len = std::cstring::strlen(&temp);
+            while(i < len) {
+                buffer[i] = temp[i];
+                i += 1;
+            }
+            number = number - cast(double)lPart;
+            buffer[i] = '.';
+            i += 1;
+            decimals = 0;
+            while(decimals < precision) {
+                number = number * 10;
+                lPart = cast(long)number;
+                buffer[i] = lPart + '0';
+                i += 1;
+                decimals += 1;
+                number = number - cast(double)lPart;
+            }
+            buffer[i] = '\0';
+        } => buffer;
     }
 }

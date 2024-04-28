@@ -248,95 +248,11 @@ namespace std {
         (inline) std::string fromNumber(char n) => std::string::fromNumber(cast(long)n);
         (inline) std::string fromNumber(bool n) => std::string::fromNumber(cast(long)n);
 
-        (inline) std::string fromFloat(float n) {
-            char[24] buffer;
-            libc::cformat(&buffer, "%f", cast(double)n);
-            std::string sbuffer = std::string(&buffer);
-        } => sbuffer;
+        (inline) std::string fromFloatN(float n, int precision) {char[24] buffer = std::cstring::dtos24(cast(double)n, precision);} => std::string(&buffer);
+        (inline) std::string fromFloat(float n) => std::string::fromFloatN(n, 6);
 
-        (inline) std::string fromFloat1(float n) {
-            char[24] buffer;
-            libc::cformat(&buffer, "%.1f", cast(double)n);
-            std::string sbuffer = std::string(&buffer);
-        } => sbuffer;
-
-        (inline) std::string fromFloat2(float n) {
-            char[24] buffer;
-            libc::cformat(&buffer, "%.2f", cast(double)n);
-            std::string sbuffer = std::string(&buffer);
-        } => sbuffer;
-
-        (inline) std::string fromFloat3(float n) {
-            char[24] buffer;
-            libc::cformat(&buffer, "%.3f", cast(double)n);
-            std::string sbuffer = std::string(&buffer);
-        } => sbuffer;
-        
-        (inline) std::string fromFloat4(float n) {
-            char[24] buffer;
-            libc::cformat(&buffer, "%.4f", cast(double)n);
-            std::string sbuffer = std::string(&buffer);
-        } => sbuffer;
-
-        (inline) std::string fromFloat5(float n) {
-            char[24] buffer;
-            libc::cformat(&buffer, "%.5f", cast(double)n);
-            std::string sbuffer = std::string(&buffer);
-        } => sbuffer;
-
-        (inline) std::string fromDouble(double n) {
-            char[24] buffer;
-            libc::cformat(&buffer, "%f", n);
-            std::string sbuffer = std::string(&buffer);
-        } => sbuffer;
-
-        (inline) std::string fromDouble1(double n) {
-            char[24] buffer;
-            libc::cformat(&buffer, "%.1f", n);
-            std::string sbuffer = std::string(&buffer);
-        } => sbuffer;
-
-        (inline) std::string fromDouble2(double n) {
-            char[24] buffer;
-            libc::cformat(&buffer, "%.2f", n);
-            std::string sbuffer = std::string(&buffer);
-        } => sbuffer;
-
-        (inline) std::string fromDouble3(double n) {
-            char[24] buffer;
-            libc::cformat(&buffer, "%.3f", n);
-            std::string sbuffer = std::string(&buffer);
-        } => sbuffer;
-        
-        (inline) std::string fromDouble4(double n) {
-            char[24] buffer;
-            libc::cformat(&buffer, "%.4f", n);
-            std::string sbuffer = std::string(&buffer);
-        } => sbuffer;
-
-        (inline) std::string fromDouble5(double n) {
-            char[24] buffer;
-            libc::cformat(&buffer, "%.5f", n);
-            std::string sbuffer = std::string(&buffer);
-        } => sbuffer;
-
-        (inline) std::string fromDouble6(double n) {
-            char[24] buffer;
-            libc::cformat(&buffer, "%.6f", n);
-            std::string sbuffer = std::string(&buffer);
-        } => sbuffer;
-
-        (inline) std::string fromDouble7(double n) {
-            char[24] buffer;
-            libc::cformat(&buffer, "%.7f", n);
-            std::string sbuffer = std::string(&buffer);
-        } => sbuffer;
-
-        (inline) std::string fromDouble8(double n) {
-            char[24] buffer;
-            libc::cformat(&buffer, "%.8f", n);
-            std::string sbuffer = std::string(&buffer);
-        } => sbuffer;
+        (inline) std::string fromDoubleN(double n, int precision) {char[24] buffer = std::cstring::dtos24(cast(double)n, precision);} => std::string(&buffer);
+        (inline) std::string fromDouble(double n) => std::string::fromDoubleN(n, 6);
 
         (inline) std::string fromUNumber(long n) {
             char[36] buffer;
@@ -372,15 +288,16 @@ namespace std {
         }
         else std::sprintBuffer.length = 0;
 
+        char[24] nBuffer;
+
         @foreachArgs() {
             @if(@tNequals(@getCurrArgType(), float)) {
                 @if(@tNequals(@getCurrArgType(), double)) {
                     @if(@tNequals(@getCurrArgType(), std::string)) {
                         @if(@tNequals(@getCurrArgType(), char)) {
                             @if(@tEquals(@getCurrArgType(), short) || @tEquals(@getCurrArgType(), int) || @tEquals(@getCurrArgType(), long)) {
-                                std::string s = std::string::fromNumber(@getCurrArg(long));
-                                    std::sprintBuffer.append(s);
-                                ~s;
+                                nBuffer = std::cstring::ltos24(@getCurrArg(long));
+                                std::sprintBuffer.appendC(cast(char*)&nBuffer);
                             };
                             @if(@tEquals(@getCurrArgType(), bool)) {
                                 std::sprintBuffer.appendC(std::cstring::fromBool(@getCurrArg(bool)));
@@ -451,17 +368,13 @@ namespace std {
                     };
                 };
                 @if(@tEquals(@getCurrArgType(), double)) {
-                    double d = @getCurrArg(double);
-                    std::string s = std::string::fromDouble(d);
-                        std::sprintBuffer.append(s);
-                    ~s;
+                    nBuffer = std::cstring::dtos24(@getCurrArg(double), 6);
+                    std::sprintBuffer.appendC(cast(char*)&nBuffer);
                 };
             };
             @if(@tEquals(@getCurrArgType(), float)) {
-                double f = @getCurrArg(double);
-                std::string s = std::string::fromDouble(f);
-                    std::sprintBuffer.append(s);
-                ~s; 
+                nBuffer = std::cstring::dtos24(@getCurrArg(double), 6);
+                std::sprintBuffer.appendC(cast(char*)&nBuffer);
             };
         };
         std::thread::spinlock::unlock(&std::sprintBufferSL);
@@ -476,9 +389,8 @@ namespace std {
                     @if(@tNequals(@getCurrArgType(), std::string)) {
                         @if(@tNequals(@getCurrArgType(), char)) {
                             @if(@tEquals(@getCurrArgType(), short) || @tEquals(@getCurrArgType(), int) || @tEquals(@getCurrArgType(), long)) {
-                                std::string s = std::string::fromNumber(@getCurrArg(long));
-                                    result.append(s);
-                                ~s;
+                                nBuffer = std::cstring::ltos24(@getCurrArg(long));
+                                std::sprintBuffer.appendC(cast(char*)&nBuffer);
                             };
                             @if(@tEquals(@getCurrArgType(), bool)) {
                                 result.appendC(std::cstring::fromBool(@getCurrArg(bool)));
@@ -549,17 +461,13 @@ namespace std {
                     };
                 };
                 @if(@tEquals(@getCurrArgType(), double)) {
-                    double d = @getCurrArg(double);
-                    std::string s = std::string::fromDouble(d);
-                        result.append(s);
-                    ~s;
+                    nBuffer = std::cstring::dtos24(@getCurrArg(double), 6);
+                    std::sprintBuffer.appendC(cast(char*)&nBuffer);
                 };
             };
             @if(@tEquals(@getCurrArgType(), float)) {
-                double f = @getCurrArg(double);
-                std::string s = std::string::fromDouble(f);
-                    result.append(s);
-                ~s; 
+                nBuffer = std::cstring::dtos24(@getCurrArg(double), 6);
+                std::sprintBuffer.appendC(cast(char*)&nBuffer);
             };
         };
 
