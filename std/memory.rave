@@ -2,10 +2,13 @@ namespace std {
     extern(linkname: "malloc") void* malloc(int size);
     extern(linkname: "free") void free(void* ptr);
 
+    int rSl;
     void* realloc(void* ptr, int oldsize, int newsize) {
-        void* newptr = std::malloc(newsize);
-        for(int i=0; i<oldsize; i++) newptr[i] = ptr[i];
-        std::free(ptr);
+        while(@atomicTAS(&std::rSl, 1) == 1) {}
+            void* newptr = std::malloc(newsize);
+            for(int i=0; i<oldsize; i++) newptr[i] = ptr[i];
+            std::free(ptr);
+        @atomicClear(&std::rSl);
     } => newptr;
 }
 

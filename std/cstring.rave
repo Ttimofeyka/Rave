@@ -1,3 +1,5 @@
+import <std/thread>
+
 namespace libc {
     extern(vararg, linkname: "sprintf") int cformat(char* str, char* fmt);
     extern(linkname: "strtok") char* strtok(char* str, char* chars);
@@ -59,7 +61,9 @@ namespace std {
             if(str[return] == '\0') return = -1;
         }
 
+        int ltosSl;
         char* ltos(long number, char* endBuffer) {
+            std::thread::spinlock::lock(&std::cstring::ltosSl);
             char* buffer = std::malloc(24);
 
             for(int i=0; i<24; i++) buffer[i] = '\0';
@@ -68,6 +72,7 @@ namespace std {
                 endBuffer[0] = '0';
                 std::free(buffer);
                 buffer = null;
+                std::thread::spinlock::unlock(&std::cstring::ltosSl);
                 @return(endBuffer);
             }
 
@@ -98,9 +103,12 @@ namespace std {
             }
 
             if(buffer != null) std::free(buffer);
+            std::thread::spinlock::unlock(&std::cstring::ltosSl);
         } => endBuffer;
         
+        int dtosSl;
         char* dtos(double number, int precision, char* buffer) {
+            std::thread::spinlock::lock(&std::cstring::dtosSl);
             long lPart;
             int i;
             int len;
@@ -128,6 +136,7 @@ namespace std {
                 number = number - cast(double)lPart;
             }
             buffer[i] = '\0';
+            std::thread::spinlock::unlock(&std::cstring::dtosSl);
         } => buffer;
     }
 }
