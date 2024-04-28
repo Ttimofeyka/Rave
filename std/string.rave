@@ -407,6 +407,8 @@ namespace std {
 
     (ctargs) std::string sprint {
         std::string result = "";
+        
+        char[24] buffer;
 
         @foreachArgs() {
             @if(@tNequals(@getCurrArgType(), float)) {
@@ -414,7 +416,12 @@ namespace std {
                     @if(@tNequals(@getCurrArgType(), std::string)) {
                         @if(@tNequals(@getCurrArgType(), char)) {
                             @if(@tEquals(@getCurrArgType(), short) || @tEquals(@getCurrArgType(), int) || @tEquals(@getCurrArgType(), long)) {
-                                nBuffer = std::cstring::ltos24(@getCurrArg(long));
+                                nBuffer = [
+                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
+                                ];
+                                std::cstring::ltos(@getCurrArg(long), cast(char*)&nBuffer);
                                 std::sprintBuffer.appendC(cast(char*)&nBuffer);
                             };
                             @if(@tEquals(@getCurrArgType(), bool)) {
@@ -486,12 +493,22 @@ namespace std {
                     };
                 };
                 @if(@tEquals(@getCurrArgType(), double)) {
-                    nBuffer = std::cstring::dtos24(@getCurrArg(double), 6);
+                    nBuffer = [
+                        '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+                        '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+                        '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
+                    ];
+                    std::cstring::dtos(@getCurrArg(double), 6, &nBuffer);
                     std::sprintBuffer.appendC(cast(char*)&nBuffer);
                 };
             };
             @if(@tEquals(@getCurrArgType(), float)) {
-                nBuffer = std::cstring::dtos24(@getCurrArg(double), 6);
+                nBuffer = [
+                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
+                ];
+                std::cstring::dtos(@getCurrArg(double), 6, &nBuffer);
                 std::sprintBuffer.appendC(cast(char*)&nBuffer);
             };
         };

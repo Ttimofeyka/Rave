@@ -32,11 +32,11 @@ std::vector<LLVMValueRef> NodeArray::getValues() {
 LLVMValueRef NodeArray::generate() {
     std::vector<LLVMValueRef> genValues = this->getValues();
     if(isConst) return LLVMConstArray(this->type, genValues.data(), values.size());
-    LLVMValueRef arr = LLVMBuildAlloca(generator->builder, LLVMArrayType(this->type,this->values.size()), "NodeArray");
+    LLVMValueRef arr = LLVMBuildAlloca(generator->builder, LLVMArrayType(this->type, this->values.size()), "NodeArray");
     for(int i=0; i<this->values.size(); i++) {
         LLVMBuildStore(
             generator->builder, genValues[i],
-            generator->byIndex(arr, std::vector<LLVMValueRef>({LLVMConstInt(LLVMInt32TypeInContext(generator->context),i,false)}))
+            generator->byIndex(arr, std::vector<LLVMValueRef>({LLVMConstInt(LLVMInt32TypeInContext(generator->context), i, false)}))
         );
     }
     return LLVM::load(arr, "loadNodeArray");

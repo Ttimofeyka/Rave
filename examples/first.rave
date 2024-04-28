@@ -1,5 +1,6 @@
 import <std/io>
 
 void main {
-    
+    auto buffer = std::string("HELLO").substring(0, 2);
+    std::println(buffer);
 }
