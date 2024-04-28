@@ -172,8 +172,8 @@ namespace std {
         void add(uint c) {
             this.length += 1;
             if(this.length == this.capacity) {
+                this.data = cast(uint*)std::realloc(cast(void*)this.data, this.capacity, this.capacity * 2);
                 this.capacity = this.capacity * 2;
-                this.data = cast(uint*)std::realloc(cast(void*)this.data,this.capacity);
             }
             this.data[this.length-1] = c;
         }

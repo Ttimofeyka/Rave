@@ -1,16 +1,19 @@
 namespace std {
-    extern(linkname: "malloc") void* malloc(uint size);
+    extern(linkname: "malloc") void* malloc(int size);
     extern(linkname: "free") void free(void* ptr);
-    extern(linkname: "realloc") void* realloc(void* ptr, uint newsize);
+
+    void* realloc(void* ptr, int oldsize, int newsize) {
+        void* newptr = std::malloc(newsize);
+        for(int i=0; i<oldsize; i++) newptr[i] = ptr[i];
+        std::free(ptr);
+    } => newptr;
 }
 
 namespace std {
     (inline) void* calloc(int num, int size) => std::malloc(num*size);
 
     (nochecks) void* memcpy(void* dest, void* src, int n) {
-        for(int i=0; i<n; i+=1) {
-            dest[i] = src[i];
-        }
+        for(int i=0; i<n; i+=1) dest[i] = src[i];
     } => dest;
 
     (nochecks) void* memmove(void* dest, void* src, int n) {
