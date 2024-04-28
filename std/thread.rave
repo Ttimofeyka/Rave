@@ -11,8 +11,8 @@ import <std/process>
 namespace std {
     namespace thread {
         namespace spinlock {
-            (inline) void lock(char* sl) {while((@atomicTAS(sl, 1)) == 0) {}}
-            (inline) void unlock(char* sl) {@atomicClear(sl);}
+            (inline) void lock(int* sl) {while(@atomicTAS(sl, 1) == 1) {}}
+            (inline) void unlock(int* sl) {@atomicClear(sl);}
         }
     }
 }

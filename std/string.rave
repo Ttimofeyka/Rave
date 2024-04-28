@@ -359,7 +359,7 @@ namespace std {
         (inline) std::string fromUNumber(char n) => std::string::fromUNumber(cast(short)n);
     }
 
-    (volatile) char sprintBufferSL = 0;
+    (volatile) int sprintBufferSL = 0;
     std::string sprintBuffer;
     bool sbInitialized = false;
 

@@ -115,7 +115,7 @@ namespace std {
     extern(linkname: "getchar") char getchar();
     extern(linkname: "putchar") int putchar(char c);
 
-    (volatile) char __putsSL = 0;
+    (volatile) int __putsSL = 0;
     void puts(char* s) {
         std::thread::spinlock::lock(&std::__putsSL);
         for(int i=0; s[i] != '\0'; i+=1) {
@@ -125,7 +125,7 @@ namespace std {
         std::thread::spinlock::unlock(&std::__putsSL);
     }
 
-    (volatile) char __putswnlSL = 0;
+    (volatile) int __putswnlSL = 0;
     void putswnl(char* s) {
         std::thread::spinlock::lock(&std::__putswnlSL);
         for(int i=0; s[i] != '\0'; i+=1) {
@@ -134,7 +134,7 @@ namespace std {
         std::thread::spinlock::unlock(&std::__putswnlSL);
     }
 
-    (volatile) char __putswnlSL2 = 0;
+    (volatile) int __putswnlSL2 = 0;
     void putswnlS(std::string s) {
         std::thread::spinlock::lock(&std::__putswnlSL2);
         for(int i=0; i<s.length; i+=1) {

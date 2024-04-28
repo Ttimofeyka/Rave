@@ -4,6 +4,10 @@
             char[56] __size;
             int __align;
         }
+
+        struct mutex {
+            char[40] __data;
+        }
     }
 }
 
@@ -12,6 +16,10 @@
         struct attribute {
             char[36] __size;
             int __align;
+        }
+
+        struct mutex {
+            char[24] __data;
         }
     }
 }
@@ -23,4 +31,10 @@ namespace pthread {
     extern(linkname: "pthread_exit") void exit(void* retVal);
     extern(linkname: "pthread_cancel") int cancel(ulong thread);
     extern(linkname: "pthread_detach") int detach(ulong thread);
+
+    namespace mutex {
+        extern(linkname: "pthread_mutex_lock") int lock(pthread::mutex* mutex);
+        extern(linkname: "pthread_mutex_unlock") int unlock(pthread::mutex* mutex);
+        extern(linkname: "pthread_mutex_init") int initialize(pthread::mutex* mutex, void* attr);
+    }
 }

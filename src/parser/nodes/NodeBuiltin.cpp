@@ -420,7 +420,7 @@ LLVMValueRef NodeBuiltin::generate() {
     }
     else if(this->name == "atomicTAS") {
         LLVMValueRef result = LLVMBuildAtomicRMW(generator->builder, LLVMAtomicRMWBinOpXchg, this->args[0]->generate(),
-            (new NodeCast(new TypeBasic(BasicType::Char), this->args[1], this->loc))->generate(), LLVMAtomicOrderingSequentiallyConsistent, false
+            this->args[1]->generate(), LLVMAtomicOrderingSequentiallyConsistent, false
         );
         LLVMSetVolatile(result, true);
         return result;
