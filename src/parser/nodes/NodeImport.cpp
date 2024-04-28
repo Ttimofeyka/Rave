@@ -89,7 +89,7 @@ std::vector<std::string> filesFromDirectory(std::string directory)
 }
 #endif
 
-NodeImport::NodeImport(std::string file, std::vector<std::string> functions, long loc) {
+NodeImport::NodeImport(std::string file, std::vector<std::string> functions, int loc) {
     this->file = file;
     this->functions = functions;
     this->loc = loc;
@@ -179,7 +179,7 @@ LLVMValueRef NodeImport::generate() {
     return nullptr;
 }
 
-NodeImports::NodeImports(std::vector<NodeImport*> imports, long loc) {
+NodeImports::NodeImports(std::vector<NodeImport*> imports, int loc) {
     this->imports = std::vector<NodeImport*>(imports);
     this->loc = loc;
 }

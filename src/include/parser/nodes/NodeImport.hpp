@@ -16,9 +16,9 @@ class NodeImport : public Node {
 public:
     std::string file;
     std::vector<std::string> functions;
-    long loc;
+    int loc;
 
-    NodeImport(std::string file, std::vector<std::string> functions, long loc);
+    NodeImport(std::string file, std::vector<std::string> functions, int loc);
     Type* getType() override;
     void check() override;
     LLVMValueRef generate() override;
@@ -29,9 +29,9 @@ public:
 class NodeImports : public Node {
 public:
     std::vector<NodeImport*> imports;
-    long loc;
+    int loc;
 
-    NodeImports(std::vector<NodeImport*> imports, long loc);
+    NodeImports(std::vector<NodeImport*> imports, int loc);
     Type* getType() override;
     void check() override;
     LLVMValueRef generate() override;
