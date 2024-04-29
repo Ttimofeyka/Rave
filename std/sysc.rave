@@ -58,6 +58,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias GetTID = 186;
                 alias GetPPID = 0x6E;
                 alias Clone = 56;
+                alias Wait4 = 61;
 
                 alias ClockGetTime = 228;
             }
@@ -112,6 +113,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias GetTID = 224;
                 alias GetPPID = 0x40;
                 alias Clone = 120;
+                alias Wait4 = 114;
 
                 alias ClockGetTime = 265;
             }
@@ -168,6 +170,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias GetTID = 178;
                 alias GetPPID = 0xAD;
                 alias Clone = 220;
+                alias Wait4 = 260;
                 
                 alias ClockGetTime = 113;
             }
@@ -224,6 +227,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias GetTID = 224;
                 alias GetPPID = 0x40;
                 alias Clone = 120;
+                alias Wait4 = 114;
 
                 alias ClockGetTime = 263;
             }
@@ -265,6 +269,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias GetTID = 207;
                 alias GetPPID = 64;
                 alias Clone = 120;
+                alias Wait4 = 114;
 
                 alias ClockGetTime = 246;
             }
@@ -306,6 +311,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias GetTID = 207;
                 alias GetPPID = 64;
                 alias Clone = 120;
+                alias Wait4 = 114;
 
                 alias ClockGetTime = 246;
             }
@@ -342,6 +348,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias SendTo = 369;
                 alias SetSockOpt = 366;
                 alias GetSockOpt = 365;
+                alias Wait4 = 114;
 
                 alias GetPID = 20;
                 alias GetTID = 236;
@@ -388,6 +395,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias GetTID = 5178;
                 alias GetPPID = 5108;
                 alias Clone = 5055;
+                alias Wait4 = 5059;
 
                 alias ClockGetTime = 5222;
             }

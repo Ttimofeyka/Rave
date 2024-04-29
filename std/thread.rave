@@ -3,7 +3,19 @@ import <std/process>
 @if(__RAVE_OS == "LINUX") {
     namespace std {
         namespace thread {
+            alias cloneVM = 256;
+            alias cloneFS = 512;
+            alias cloneFiles = 1024;
+            alias cloneSighand = 2048;
+            alias cloneThread = 65536;
+            alias cloneSysvsem = 262144;
+            alias cloneSetTLS = 524288;
+            alias cloneParentSetTID = 1048576;
+            alias cloneChildClearTID = 2097152;
+
             (inline) int getCurrentID => cast(int)std::syscall(std::sysctable::GetTID);
+            (inline) int __wait4(int pid, int* wstatus, int options, void* rusage) => cast(int)std::syscall(std::sysctable::Wait4, pid, wstatus, options, rusage);
+            (inline) int __waitpid(int pid, int* status, int options) => std::thread::__wait4(pid, status, options, null);
         }
     }
 };
