@@ -1,6 +1,8 @@
 import <std/process>
 
 @if(__RAVE_OS == "LINUX") {
+    import <std/pthread>
+
     namespace std {
         namespace thread {
             alias cloneVM = 256;
@@ -16,6 +18,23 @@ import <std/process>
             (inline) int getCurrentID => cast(int)std::syscall(std::sysctable::GetTID);
             (inline) int __wait4(int pid, int* wstatus, int options, void* rusage) => cast(int)std::syscall(std::sysctable::Wait4, pid, wstatus, options, rusage);
             (inline) int __waitpid(int pid, int* status, int options) => std::thread::__wait4(pid, status, options, null);
+        }
+
+        struct thread {
+            ulong id;
+
+            std::thread this {
+                std::thread this;
+                this.id = 0;
+            } => this;
+
+            void run(void*(void*) fn, void* argument) {
+                pthread::create(this.&id, cast(pthread::attribute*)null, fn, argument);
+            }
+
+            int join(void** valuePtr) => pthread::join(this.id, valuePtr);
+
+            int join {this.join(cast(void**)null);}
         }
     }
 };

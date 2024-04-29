@@ -1261,9 +1261,11 @@ Node* Parser::parseSlice(Node* base, std::string f) {
 }
 
 bool Parser::isDefinedLambda(bool updateIdx) {
-    if(this->tokens[this->idx+1]->type != TokType::Rpar) return false;
+    if(this->tokens[this->idx+1]->type != TokType::Rpar && this->tokens[this->idx+1]->type != TokType::Multiply) return false;
     long oldIdx = this->idx;
     this->next();
+
+    while(this->peek()->type == TokType::Multiply) this->next();
 
     int cntOfRpars = 1;
     while(this->peek()->type != TokType::Lpar) {
