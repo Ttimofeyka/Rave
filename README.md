@@ -12,7 +12,12 @@ void main {
 }
 ```
 
-You can compile are examples using `rave directory/of/Rave/examples/necessary_example.rave -o preffered/directory/necessary_example`
+## Advantages
+
+* Fast compilation
+* Cross-platform features (for example, working with threads)
+* Support for many platforms as target
+* Using LLVM for great optimizations
 
 ## Dependencies
 
@@ -20,7 +25,7 @@ You can compile are examples using `rave directory/of/Rave/examples/necessary_ex
 **You can also use LLVM from 11 to 15.**
 * `clang` or `gcc`
 * Make
-* mingw (if you need cross-compilation or you are using Windows)
+* MinGW (if you need cross-compilation or you are using Windows)
 
 ## Building/Running
 
@@ -29,6 +34,8 @@ To install dependencies, you can try running `install.sh` (Arch Linux/Ubuntu/Deb
 If the installer does not work well on your system, you can try to install all the dependencies yourself.
 
 After install write `make` in the Rave directory.
+
+You can compile, for example, "Hello world!" example using `./rave examples/hello_world.rave -o hello_world` in directory with Rave.
 
 ### Cross-compilation programs from Linux for Windows
 
