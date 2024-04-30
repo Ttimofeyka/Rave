@@ -6,6 +6,9 @@ namespace std {
     void* realloc(void* ptr, int oldsize, int newsize) {
         while(@atomicTAS(&std::rSl, 1) == 1) {}
             void* newptr = std::malloc(newsize);
+            @if(__RAVE_OPTIMIZATION_LEVEL == 0) {
+                std::assert(newptr != null, "Pointer into realloc is null!");
+            };
             for(int i=0; i<oldsize; i++) newptr[i] = ptr[i];
             std::free(ptr);
         @atomicClear(&std::rSl);

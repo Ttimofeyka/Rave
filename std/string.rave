@@ -110,8 +110,8 @@ namespace std {
             if(this.data != null) {
                 this.length += 1;
                 if(this.length == this.capacity) {
-                    this.data = std::realloc(this.data, this.capacity, this.capacity * 2);
-                    this.capacity = this.capacity * 2;
+                    this.data = std::realloc(this.data, this.capacity, cast(int)(this.capacity * 1.51));
+                    this.capacity = cast(int)(this.capacity * 1.51);
                 }
                 this.data[this.length-1] = c;
             }

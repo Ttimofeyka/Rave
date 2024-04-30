@@ -210,8 +210,8 @@ Node* NodeBinary::comptime() {
     while(instanceof<NodeIden>(first) && AST::aliasTable.find(((NodeIden*)first)->name) != AST::aliasTable.end()) first = AST::aliasTable[((NodeIden*)first)->name];
     while(instanceof<NodeIden>(second) && AST::aliasTable.find(((NodeIden*)second)->name) != AST::aliasTable.end()) second = AST::aliasTable[((NodeIden*)second)->name];
     
-    while(!instanceof<NodeBool>(first) && !instanceof<NodeString>(first) && !instanceof<NodeIden>(first)) first = first->comptime();
-    while(!instanceof<NodeBool>(second) && !instanceof<NodeString>(second) && !instanceof<NodeIden>(second)) second = second->comptime();
+    while(!instanceof<NodeBool>(first) && !instanceof<NodeString>(first) && !instanceof<NodeIden>(first) && !instanceof<NodeInt>(first) && !instanceof<NodeFloat>(first)) first = first->comptime();
+    while(!instanceof<NodeBool>(second) && !instanceof<NodeString>(second) && !instanceof<NodeIden>(second) && !instanceof<NodeInt>(second) && !instanceof<NodeFloat>(second)) second = second->comptime();
 
     switch(this->op) {
         case TokType::Equal:

@@ -1,11 +1,5 @@
-import <std/io> <std/thread>
-
-int jam(void* arg) {
-    std::println("Hello, cross-platform, from thread-safe Rave!");
-}
+import <std/io> <std/vector>
 
 void main {
-    std::thread thr = std::thread();
-    thr.run(jam, null);
-    thr.join();
+    std::vector<std::vector<int>> vec = std::vector<std::vector<int>>();
 }

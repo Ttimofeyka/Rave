@@ -152,7 +152,7 @@ LLVMValueRef NodeGet::generate() {
             "NodeGet_generate_Index_preload"
         ), "NodeGet_generate_Index_load");
     }
-    generator->error("Assert into NodeGet ("+std::string(typeid(this->base[0]).name())+")", this->loc);
+    generator->error("assert into NodeGet ("+std::string(typeid(this->base[0]).name())+")", this->loc);
     return nullptr;
 }
 

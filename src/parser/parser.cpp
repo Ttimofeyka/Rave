@@ -642,6 +642,7 @@ Node* Parser::parseAtom(std::string f) {
         }
         return new NodeBuiltin(name, args, t->line, block);
     }
+    if(t->type == TokType::Destructor) return new NodeUnary(t->line, TokType::Destructor, this->parseExpr());
     this->error("expected a number, true/false, char, variable or expression. Got: '"+t->value+"' on "+std::to_string(t->line)+" line.");
     return nullptr;
 }
@@ -883,7 +884,6 @@ Node* Parser::parsePrefix(std::string f) {
         TokType::Multiply,
         TokType::Minus,
         TokType::Ne,
-        TokType::Destructor,
     };
     if(std::find(operators.begin(), operators.end(), this->peek()->type) != operators.end()) {
         auto tok = this->peek();

@@ -61,15 +61,15 @@ namespace std {
             if(str[return] == '\0') return = -1;
         }
 
+        int ltosSl;
+        char[20] ltosBuffer;
         char* ltos(long number, char* endBuffer) {
-            char* buffer = std::malloc(24);
-
-            for(int i=0; i<24; i++) buffer[i] = '\0';
+            std::thread::spinlock::lock(&std::cstring::ltosSl);
+            for(int i=0; i<20; i++) std::cstring::ltosBuffer[i] = '\0';
 
             if(number == 0) {
                 endBuffer[0] = '0';
-                std::free(buffer);
-                buffer = null;
+                std::thread::spinlock::unlock(&std::cstring::ltosSl);
                 @return(endBuffer);
             }
 
@@ -81,13 +81,13 @@ namespace std {
 
             int index = 0;
             while(number > 0) {
-                buffer[index] = ((number % cast(long)10) + '0');
+                std::cstring::ltosBuffer[index] = ((number % cast(long)10) + '0');
                 number = number / 10;
                 index += 1;
             }
 
             if(isNegative) {
-                buffer[index] = '-';
+                std::cstring::ltosBuffer[index] = '-';
                 index += 1;
             }
 
@@ -95,11 +95,11 @@ namespace std {
 
             int endI = 0;
             for(int i=index-1; i>=0; i--) {
-                endBuffer[endI] = buffer[i];
+                endBuffer[endI] = std::cstring::ltosBuffer[i];
                 endI += 1;
             }
 
-            if(buffer != null) std::free(buffer);
+            std::thread::spinlock::unlock(&std::cstring::ltosSl);
         } => endBuffer;
         
         char* dtos(double number, int precision, char* buffer) {

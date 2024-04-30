@@ -1,4 +1,4 @@
-import <std/time> <std/memory>
+import <std/time> <std/memory> <std/thread>
 
 namespace std {
     short randomShort(short min, short max) {
