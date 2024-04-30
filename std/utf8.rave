@@ -182,8 +182,8 @@ namespace std {
             this.length += 1;
             this.byteLength += 1;
             if(this.byteLength >= this.capacity) {
-                this.data = std::realloc(this.data, this.capacity, cast(int)(this.capacity * 1.51));
-                this.capacity = cast(int)(this.capacity * 1.51);
+                this.data = std::realloc(this.data, this.capacity, this.capacity * 2);
+                this.capacity = this.capacity * 2;
             }
             this.data[this.length-1] = c;
         }
