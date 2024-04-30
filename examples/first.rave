@@ -1,9 +1,11 @@
 import <std/io> <std/thread>
 
+int jam(void* arg) {
+    std::println("Hello, cross-platform, from thread-safe Rave!");
+}
+
 void main {
     std::thread thr = std::thread();
-    thr.run(void*(void* arg) {
-        std::println("Hello from thread-safe Rave!");
-    }, null);
+    thr.run(jam, null);
     thr.join();
 }

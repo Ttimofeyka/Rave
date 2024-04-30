@@ -2,6 +2,7 @@ import <std/process>
 
 @if(__RAVE_OS != "WINDOWS") {
     import <std/pthread>
+
     struct thread {
         ulong id;
 
@@ -10,13 +11,37 @@ import <std/process>
             this.id = 0;
         } => this;
 
-        void run(void*(void*) fn, void* argument) {
-            pthread::create(this.&id, cast(pthread::attribute*)null, fn, argument);
+        void run(int(void*) fn, void* argument) {
+            pthread::create(this.&id, cast(pthread::attribute*)null, cast(void*(void*))fn, argument);
         }
 
-        int join(void** valuePtr) => pthread::join(this.id, valuePtr);
+        int join => pthread::join(this.id, cast(void**)null);
+    }
+};
 
-        int join {this.join(cast(void**)null);}
+@if(__RAVE_OS == "WINDOWS") {
+    namespace std {
+        namespace thread {
+            extern(linkname: "CreateThread") void* __CreateThread(void* attributes, uint stackSize, int(void*) fn, void* argument, uint flags, uint* threadId);
+            extern(linkname: "WaitForSingleObject") int __WaitForSingleObject(void* thread, uint ms);
+        }
+
+        struct thread {
+            uint id;
+            void* __ptr;
+
+            std::thread this {
+                std::thread this;
+                this.id = 0;
+                this.__ptr = null;
+            } => this;
+
+            void run(int(void*) fn, void* argument) {
+                this.__ptr = std::thread::__CreateThread(null, 0, fn, argument, 0, this.&id);
+            }
+
+            int join => std::thread::__WaitForSingleObject(this.__ptr, -1);
+        }
     }
 };
 
