@@ -25,7 +25,7 @@ fi
 
 if [ ! -z "$(command -v xbps-install)" ]; then
     echo Void Linux detected.
-    $SUDO xbps-install -S clang llvm
+    $SUDO xbps-install -S clang llvm15
     ./llvm-patch.sh
     echo Done.
     exit 0

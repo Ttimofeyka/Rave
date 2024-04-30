@@ -38,6 +38,8 @@ static bool instanceof(const T* ptr) {
     #define RAVE_OS "WINDOWS"
 #elif __linux__
     #define RAVE_OS "LINUX"
+#elif __APPLE__
+    #define RAVE_OS "MACOS"
 #else
     #define RAVE_OS "UNKNOWN"
 #endif
