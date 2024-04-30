@@ -2,7 +2,7 @@ import <std/io> <std/thread>
 
 void main {
     std::thread thr = std::thread();
-    thr.run(void*(void* arg) {
+    thr.run(int(void* arg) {
         std::println("Hello from thread-safe Rave!");
     }, null);
     thr.join();
