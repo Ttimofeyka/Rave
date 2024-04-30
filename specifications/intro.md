@@ -30,3 +30,5 @@ The characters are enclosed in single quotes (").
 ##### [std/io](std/io.md)
 ##### [std/vector](std/vector.md)
 ##### [std/cstring](std/cstring.md)
+##### [std/library](std/library.md)
+##### [std/random](std/random.md)
