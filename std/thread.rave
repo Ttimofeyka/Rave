@@ -3,19 +3,21 @@ import <std/process>
 @if(__RAVE_OS != "WINDOWS") {
     import <std/pthread>
 
-    struct thread {
-        ulong id;
-
-        std::thread this {
-            std::thread this;
-            this.id = 0;
-        } => this;
-
-        void run(int(void*) fn, void* argument) {
-            pthread::create(this.&id, cast(pthread::attribute*)null, cast(void*(void*))fn, argument);
+    namespace std {
+        struct thread {
+            ulong id;
+    
+            std::thread this {
+                std::thread this;
+                this.id = 0;
+            } => this;
+    
+            void run(int(void*) fn, void* argument) {
+                pthread::create(this.&id, cast(pthread::attribute*)null, cast(void*(void*))fn, argument);
+            }
+    
+            int join => pthread::join(this.id, cast(void**)null);
         }
-
-        int join => pthread::join(this.id, cast(void**)null);
     }
 };
 
