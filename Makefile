@@ -36,4 +36,8 @@ $(BIN): $(OBJ)
 	$(COMPILER) -c $< -o $@ -DLLVM_VERSION=$(LLVM_VERSION) -std=c++11 -Wno-deprecated $(FLAGS)
 
 clean:
+ifdef OS
+	del /s src\*.o
+else
 	rm -rf src/*.o src/parser/*.o src/parser/nodes/*.o src/lexer/*.o
+endif
