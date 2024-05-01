@@ -206,15 +206,15 @@ void Compiler::compile(std::string file) {
     generator = new LLVMGen(file, Compiler::settings);
 
     if(Compiler::outType.empty()) {
-        if(RAVE_OS == "LINUX") {
-            if(RAVE_PLATFORM == "X86_64") Compiler::outType = "linux-gnu-pc-x86_64";
-            else if(RAVE_PLATFORM == "X86") Compiler::outType = "linux-gnu-pc-i686";
-            else if(RAVE_PLATFORM == "AARCH64") Compiler::outType = "linux-gnu-aarch64";
-            else if(RAVE_PLATFORM == "ARM") Compiler::outType = "linux-gnu-armv7";
+        if(raveOs == "LINUX") {
+            if(ravePlatform == "X86_64") Compiler::outType = "linux-gnu-pc-x86_64";
+            else if(ravePlatform == "X86") Compiler::outType = "linux-gnu-pc-i686";
+            else if(ravePlatform == "AARCH64") Compiler::outType = "linux-gnu-aarch64";
+            else if(ravePlatform == "ARM") Compiler::outType = "linux-gnu-armv7";
             else Compiler::outType = "linux-unknown";
         }
-        else if(RAVE_OS == "WINDOWS") {
-            if(RAVE_PLATFORM == "X86_64") Compiler::outType = "x86_64-pc-windows-gnu";
+        else if(raveOs == "WINDOWS") {
+            if(ravePlatform == "X86_64") Compiler::outType = "x86_64-pc-windows-gnu";
             else Compiler::outType = "i686-win32-gnu";
         }
         else Compiler::outType = "unknown";
@@ -372,7 +372,9 @@ void Compiler::compileAll() {
         }
     }
 
-    Compiler::outFile = (Compiler::outFile == "") ? "a" : (Compiler::outFile[0] != '/' ? getDirectory(Compiler::files[0])+"/"+Compiler::outFile : Compiler::outFile);
+    if(Compiler::outFile == "") Compiler::outFile = "a";
+    else if(Compiler::outFile[0] != '/' && getDirectory(Compiler::files[0]).find(".rave") == std::string::npos) Compiler::outFile = getDirectory(Compiler::files[0]) + "/" + Compiler::outFile;
+
     if(Compiler::settings.onlyObject) Compiler::linkString += "-r ";
     if(Compiler::settings.isStatic) Compiler::linkString += "-static ";
     if(Compiler::settings.isPIC) Compiler::linkString += "-no-pie ";
