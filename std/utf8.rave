@@ -22,75 +22,66 @@ namespace std {
 
         int charlen(uchar* ch, int idx) => cast(int)(std::utf8::utfLength[(ch[idx] && 0xFF) >. 4]);
 
-        void nextChar(uchar* ptr, int* idx) {
-            idx[0] += 1;
-            while((ptr[idx[0]] != '\0') && (!std::utf8::isStart(ptr[idx[0]]))) idx[0] += 1;
-        }
-
-        void previousChar(uchar* ptr, int* idx) {
-            idx[0] -= 1;
-            while((ptr[idx[0]] != '\0') && (!std::utf8::isStart(ptr[idx[0]]))) idx[0] -= 1;
+        int next(uchar* str) {
+            return += 1;
+            while((str[return] != '\0') && (!(std::utf8::isStart(str[return])))) return += 1;
         }
 
         uint utfAt(uchar* str, int at) {
-            int i = 0;
-            int idx = 0;
-            uchar* ptr = str;
-            while(i<at) {
-                std::utf8::nextChar(ptr, &idx);
-                i += 1;
+            uchar* ptr = itop(uchar*, ptoi(str)+at);
+
+            if((ptr[0] && 0x80) == 0) return = cast(uint)ptr[0];
+            else if((ptr[0] && 0xE0) == 0xC0) {
+                return = (ptr[0] && 0x1F) <. 6;
+                return = return || (ptr[1] && 0x3F);
             }
-            if((ptr[idx] && 0x80) == 0) return = cast(uint)ptr[idx];
-            else if((ptr[idx] && 0xE0) == 0xC0) {
-                return = (ptr[idx] && 0x1F) <. 6;
-                return = return || (ptr[idx+1] && 0x3F);
+            else if((ptr[0] && 0xF0) == 0xE0) {
+                return = (ptr[0] && 0xF) <. 12;
+                return = return || (ptr[1] && 0x3F) <. 6;
+                return = return || (ptr[2] && 0x3F);
             }
-            else if((ptr[idx] && 0xF0) == 0xE0) {
-                return = (ptr[idx] && 0xF) <. 12;
-                return = return || (ptr[idx+1] && 0x3F) <. 6;
-                return = return || (ptr[idx+2] && 0x3F);
+            else if((ptr[0] && 0xF8) == 0xF0) {
+                return = (ptr[0] && 0x7) <. 18;
+                return = return || (ptr[1] && 0x3F) <. 12;
+                return = return || (ptr[2] && 0x3F) <. 6;
+                return = return || (ptr[3] && 0x3F);
             }
-            else if((ptr[idx] && 0xF8) == 0xF0) {
-                return = (ptr[idx] && 0x7) <. 18;
-                return = return || (ptr[idx+1] && 0x3F) <. 12;
-                return = return || (ptr[idx+2] && 0x3F) <. 6;
-                return = return || (ptr[idx+3] && 0x3F);
+            else if((ptr[0] && 0xFC) == 0xF8) {
+                return = (ptr[0] && 0x3) <. 24;
+                return = return || (ptr[0] && 0x3F) <. 18;
+                return = return || (ptr[0] && 0x3F) <. 12;
+                return = return || (ptr[0] && 0x3F) <. 6;
+                return = return || (ptr[0] && 0x3F);
             }
-            else if((ptr[idx] && 0xFC) == 0xF8) {
-                return = (ptr[idx] && 0x3) <. 24;
-                return = return || (ptr[idx] && 0x3F) <. 18;
-                return = return || (ptr[idx] && 0x3F) <. 12;
-                return = return || (ptr[idx] && 0x3F) <. 6;
-                return = return || (ptr[idx] && 0x3F);
+            else if((ptr[0] && 0xFE) == 0xFC) {
+                return = (ptr[0] && 0x1) <. 30;
+                return = return || (ptr[0] && 0x3F) <. 24;
+                return = return || (ptr[0] && 0x3F) <. 18;
+                return = return || (ptr[0] && 0x3F) <. 12;
+                return = return || (ptr[0] && 0x3F) <. 6;
+                return = return || (ptr[0] && 0x3F);
             }
-            else if((ptr[idx] && 0xFE) == 0xFC) {
-                return = (ptr[idx] && 0x1) <. 30;
-                return = return || (ptr[idx] && 0x3F) <. 24;
-                return = return || (ptr[idx] && 0x3F) <. 18;
-                return = return || (ptr[idx] && 0x3F) <. 12;
-                return = return || (ptr[idx] && 0x3F) <. 6;
-                return = return || (ptr[idx] && 0x3F);
-            }
+            else return = -1;
         }
     }
     
-    (data: "data", length: "byteLength") struct u8string {
+    (data: "data", length: "bytes") struct u8string {
         char* data;
         int length;
-        int byteLength;
+        int bytes;
         int capacity;
 
         std::u8string this(char* a) {
             std::u8string this;
             if(a != null) {
                 this.length = std::utf8::utflen(a);
-                this.byteLength = std::cstring::strlen(a);
-                this.capacity = (this.byteLength * 2) + 2;
+                this.bytes = std::cstring::strlen(a);
+                this.capacity = (this.bytes * 2) + 2;
                 if(this.capacity == 0) this.capacity = 2;
                 this.data = std::malloc(this.capacity);
 
                 int i = 0;
-                while(i<this.byteLength) {
+                while(i<this.bytes) {
                     this.data[i] = a[i];
                     i += 1;
                 }
@@ -98,7 +89,7 @@ namespace std {
             }
             else {
                 this.length = 0;
-                this.byteLength = 0;
+                this.bytes = 0;
                 this.capacity = 2;
                 this.data = std::malloc(this.capacity);
                 this.data[0] = '\0';
@@ -113,8 +104,8 @@ namespace std {
         void setValue(char* a) {
             if(a != null) {
                 this.length = std::utf8::utflen(a);
-                this.byteLength = std::cstring::strlen(a);
-                this.capacity = (this.byteLength * 2) + 2;
+                this.bytes = std::cstring::strlen(a);
+                this.capacity = (this.bytes * 2) + 2;
                 if(this.capacity == 0) this.capacity = 2;
                 if(this.data != null) std::free(this.data);
                 this.data = std::malloc(this.capacity);
@@ -128,7 +119,7 @@ namespace std {
             }
             else {
                 this.length = 0;
-                this.byteLength = 0;
+                this.bytes = 0;
                 this.capacity = 2;
                 if(this.data != null) std::free(this.data);
                 this.data = std::malloc(this.capacity);
@@ -136,12 +127,19 @@ namespace std {
             }
         }
 
-        (inline) void set(int index, char ch) {
+        (inline) void set(int index, uchar ch) {
+            // TODO: add support of UTF-8 setting
             if((index >= 0) && (index < this.length)) this.data[index] = ch;
         }
 
         (inline) uint at(int index) {
-            if((index >= 0) && (index < this.length)) return = std::utf8::utfAt(this.data, index);
+            if((index >= 0) && (index < this.length)) {
+                uchar* ptr = this.data;
+                for(int i=0; i<index; i++) {
+                    ptr = itop(uchar*, ptoi(ptr)+std::utf8::next(ptr));
+                }
+                return = std::utf8::utfAt(ptr, 0);
+            }
             else return = cast(uint)'\0';
         }
 
@@ -158,7 +156,7 @@ namespace std {
             int result = -1;
 
             int idx = 0;
-            while(idx < this.byteLength) {
+            while(idx < this.bytes) {
                 if(std::utf8::isStart(this.data[idx])) {
                     int chlen = std::utf8::charlen(this.data, idx);
                     if(chlen == clen) {
@@ -170,7 +168,7 @@ namespace std {
                         }
                         if(_equal) {
                             result = idx;
-                            idx = this.byteLength;
+                            idx = this.bytes;
                         }
                     }
                 }
@@ -180,8 +178,8 @@ namespace std {
 
         void add(char c) {
             this.length += 1;
-            this.byteLength += 1;
-            if(this.byteLength >= this.capacity) {
+            this.bytes += 1;
+            if(this.bytes >= this.capacity) {
                 this.data = std::realloc(this.data, this.capacity, this.capacity * 2);
                 this.capacity = this.capacity * 2;
             }
@@ -199,7 +197,7 @@ namespace std {
 
         void append(std::u8string str) {
             int i = 0;
-            while(i<str.byteLength) {
+            while(i<str.bytes) {
                 this.add(str.data[i]);
                 i += 1;
             }
@@ -276,7 +274,7 @@ namespace std {
 
             int idx = 0;
             std::u8string buffer = "";
-            while(idx < this.byteLength) {
+            while(idx < this.bytes) {
                 if(this.data[idx] != ch) {
                     buffer.add(this.data[idx]);
                     idx += 1;
@@ -284,7 +282,7 @@ namespace std {
                 else {
                     if(buffer.length > 0) parts.add(buffer.copy());
                     buffer.length = 0;
-                    buffer.byteLength = 0;
+                    buffer.bytes = 0;
                     idx += 1;
                 }
             }

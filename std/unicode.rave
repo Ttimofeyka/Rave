@@ -4,6 +4,7 @@ namespace std {
     namespace unicode {
         (inline) bool isSpace(uint c) => (c == ' ') || (c == '\r') || (c == '\t') || (c == '\n') || (c == '\v');
         (inline) bool isDigit(uint c) => (c >= '0') && (c <= '9');
+
         (inline) uint* charInChars(uint* chars, uint c) {
             int i = 0;
             uint* ptr = null;
@@ -16,6 +17,7 @@ namespace std {
                 i += 1;
             }
         } => ptr;
+
         (inline) bool isLower(uint c) {
             return = false;
             if(c < 128) return = (c > 96) && (c < 123);
@@ -24,6 +26,7 @@ namespace std {
                 // TODO: add completely support of cyrillic
             }
         }
+
         (inline) bool isUpper(uint c) {
             return = false;
             if(c < 128) return = (c > 64) && (c < 91);
@@ -32,6 +35,7 @@ namespace std {
                 // TODO: add completely support of cyrillic
             }
         }
+
         (inline) uint toLower(uint c) {
             uint tmp = c;
             if(c < 128) tmp = std::ascii::toLower(c);
@@ -40,6 +44,7 @@ namespace std {
                 // TODO: add completely support of cyrillic
             }
         } => tmp;
+
         (inline) uint toUpper(uint c) {
             uint tmp = c;
             if(c < 128) tmp = std::ascii::toUpper(c);

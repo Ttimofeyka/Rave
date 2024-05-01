@@ -1,5 +1,5 @@
 import <std/io> <std/vector>
 
 void main {
-    std::vector<std::vector<int>> vec = std::vector<std::vector<int>>();
+    
 }

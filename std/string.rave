@@ -342,7 +342,7 @@ namespace std {
                             };
                             @if(@tEquals(@getCurrArgType(), std::u8string)) {
                                 std::u8string u8s = @getCurrArg(std::u8string);
-                                for(int i=0; i<u8s.byteLength; i+=1) {
+                                for(int i=0; i<u8s.bytes; i+=1) {
                                     std::sprintBuffer.add(u8s.data[i]);
                                 }
                             };
@@ -452,7 +452,7 @@ namespace std {
                             };
                             @if(@tEquals(@getCurrArgType(), std::u8string)) {
                                 std::u8string u8s = @getCurrArg(std::u8string);
-                                for(int i=0; i<u8s.byteLength; i+=1) {
+                                for(int i=0; i<u8s.bytes; i+=1) {
                                     result.add(u8s.data[i]);
                                 }
                             };
