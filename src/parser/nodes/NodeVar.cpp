@@ -122,6 +122,7 @@ LLVMValueRef NodeVar::generate() {
             if(mods[i].name == "C") noMangling = true;
             else if(mods[i].name == "volatile") isVolatile = true;
             else if(mods[i].name == "linkname") linkName = mods[i].value;
+            else if(mods[i].name == "noOperators") isNoOperators = true;
         }
         if(!instanceof<TypeAuto>(this->type)) {
             if(instanceof<NodeInt>(this->value)) ((NodeInt*)this->value)->isVarVal = this->type;
@@ -178,6 +179,7 @@ LLVMValueRef NodeVar::generate() {
         for(int i=0; i<this->mods.size(); i++) {
             if(this->mods[i].name == "volatile") isVolatile = true;
             else if(this->mods[i].name == "nozeroinit") noZeroInit = true;
+            else if(mods[i].name == "noOperators") isNoOperators = true;
         }
         currScope->localVars[this->name] = this;
 

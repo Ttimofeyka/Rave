@@ -345,7 +345,9 @@ LLVMValueRef NodeBinary::generate() {
             LLVMValueRef ptr = ind->generate();
             if(ind->elementIsConst) generator->error("An attempt to change the constant element!", loc);
 
-            if(std::string(LLVMPrintValueToString(ptr)).find("([])") != std::string::npos) {
+            bool isNoOperators = instanceof<NodeIden>(ind->element) && currScope->getVar(((NodeIden*)ind->element)->name, this->loc)->isNoOperators;
+
+            if(!isNoOperators && std::string(LLVMPrintValueToString(ptr)).find("([])") != std::string::npos) {
                 LLVMValueRef structPtr = LLVMGetOperand(ptr, 0);
                 LLVMValueRef structValue = structPtr;
                 while(LLVMGetTypeKind(LLVMTypeOf(structValue)) == LLVMPointerTypeKind) structValue = LLVM::load(structValue, "NodeBinary_NodeIndex_[]=_load");
