@@ -61,6 +61,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias Wait4 = 61;
 
                 alias ClockGetTime = 228;
+                alias GetRandom = 318;
             }
         }
     };
@@ -116,6 +117,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias Wait4 = 114;
 
                 alias ClockGetTime = 265;
+                alias GetRandom = 355;
             }
         }
     };
@@ -173,6 +175,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias Wait4 = 260;
                 
                 alias ClockGetTime = 113;
+                alias GetRandom = 278;
             }
         }
     };
@@ -230,6 +233,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias Wait4 = 114;
 
                 alias ClockGetTime = 263;
+                alias GetRandom = 384;
             }
         }
     };
@@ -272,6 +276,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias Wait4 = 114;
 
                 alias ClockGetTime = 246;
+                alias GetRandom = 359;
             }
         }
     };
@@ -314,6 +319,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias Wait4 = 114;
 
                 alias ClockGetTime = 246;
+                alias GetRandom = 359;
             }
         }
     };
@@ -356,6 +362,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias Clone = 120;
 
                 alias ClockGetTime = 260;
+                alias GetRandom = 349;
             }
         }
     };
@@ -398,6 +405,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias Wait4 = 5059;
 
                 alias ClockGetTime = 5222;
+                alias GetRandom = 5313;
             }
         }
     };

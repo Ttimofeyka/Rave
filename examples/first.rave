@@ -1,4 +1,4 @@
-import <std/io> <std/vector>
+import <std/io> <std/random>
 
 void main {
     

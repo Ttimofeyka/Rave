@@ -1,13 +1,35 @@
-import <std/time> <std/memory> <std/thread>
+import <std/time> <std/sysc>
 
-namespace std {
-    short randomShort(short min, short max) {
-        std::timeSpec ts;
-        std::getCurrentTime(&ts);
-    } => ((cast(short)ts.nsec) % ((max+1)-min))+min;
+@if(__RAVE_OS == "LINUX") {
+    namespace std {
+        (inline) int __getrandom(void* buffer, uint bufferLength, uint flags) => cast(int)std::syscall(std::sysctable::GetRandom, buffer, bufferLength, flags);
 
-    int randomInt(int min, int max) {
-        std::timeSpec ts;
-        std::getCurrentTime(&ts);
-    } => ((cast(int)ts.nsec) % ((max+1)-min))+min;
-}
+        short randomShort(short min, short max) {
+            char[2] buffer;
+            std::__getrandom(&buffer, 2, 2);
+            short* ptr = cast(short*)&buffer;
+            if((ptr[0] < min) && (ptr[0] < 0)) ptr[0] = -(ptr[0]);
+        } => ((ptr[0]) % ((max+1)-min))+min;
+
+        int randomInt(int min, int max) {
+            char[4] buffer;
+            std::__getrandom(&buffer, 4, 2);
+            int* ptr = cast(int*)&buffer;
+            if((ptr[0] < min) && (ptr[0] < 0)) ptr[0] = -(ptr[0]);
+        } => ((ptr[0]) % ((max+1)-min))+min;
+    }
+};
+
+@if(__RAVE_OS != "LINUX") {
+    namespace std {
+        short randomShort(short min, short max) {
+            std::timeSpec ts;
+            std::getCurrentTime(&ts);
+        } => ((cast(short)ts.nsec) % ((max+1)-min))+min;
+
+        int randomInt(int min, int max) {
+            std::timeSpec ts;
+            std::getCurrentTime(&ts);
+        } => ((cast(int)ts.nsec) % ((max+1)-min))+min;
+    }
+};
