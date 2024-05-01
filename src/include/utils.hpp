@@ -49,7 +49,7 @@ static bool instanceof(const T* ptr) {
 #elif defined(__i386__)
     #define RAVE_PLATFORM "i686"
 #elif defined(__arm__)
-    #define RAVE_PLATFORM "ARMv7"
+    #define RAVE_PLATFORM "ARM"
 #elif defined(__aarch64__)
     #define RAVE_PLATFORM "AARCH64"
 #else
