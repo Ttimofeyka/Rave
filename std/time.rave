@@ -82,28 +82,10 @@ namespace std {
 @if(__RAVE_OS == "LINUX") {
     namespace std {
         (inline) int __gettimeofday(std::timeVal* tv) => cast(int)std::syscall(std::sysctable::GetTimeOfDay, tv, null);
+        (inline) int __clock_gettime(int flag, std::timeSpec* tc) => cast(int)std::syscall(std::sysctable::ClockGetTime, flag, tc);
+
+        int getCurrentTime(std::timeSpec* tc) => std::__clock_gettime(std::RealTime, tc);
     }
-
-    @if((__RAVE_PLATFORM != "AARCH64") && (__RAVE_PLATFORM != "ARM")) {
-        namespace std {
-            (inline) int __clock_gettime(int flag, std::timeSpec* tc) => cast(int)std::syscall(std::sysctable::ClockGetTime, flag, tc);
-            int getCurrentTime(std::timeSpec* tc) => std::__clock_gettime(std::RealTime, tc);
-        }
-    };
-    
-    @if((__RAVE_PLATFORM == "AARCH64") || (__RAVE_PLATFORM == "ARM")) {
-        namespace libc {
-            extern(linkname: "time") long getTime(void* v);
-            extern(linkname: "ftime") void getFTime(std::timeb* tm);
-        }
-
-        namespace std {
-            (inline) int getCurrentTime(std::timeSpec* tc) {
-                tc.sec = libc::getTime(null);
-                tc.nsec = tc.sec;
-            } => 0;
-        }
-    };
 };
 
 @if(((__RAVE_OS != "LINUX") && (__RAVE_OS != "WINDOWS"))) {
