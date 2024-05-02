@@ -35,6 +35,7 @@ genSettings analyzeArguments(std::vector<std::string>& arguments) {
         else if(arguments[i] == "-sof" || arguments[i] == "--saveObjectFiles") settings.saveObjectFiles = true;
         else if(arguments[i] == "-dw" || arguments[i] == "--disableWarnings") settings.disableWarnings = true;
         else if(arguments[i] == "--debug") Compiler::debugMode = true;
+        else if(arguments[i] == "-t" || arguments[i] == "--target") {outType = arguments[i+1]; i += 1;}
         else if(arguments[i][0] == '-') settings.linkParams += arguments[i]+" ";
         else files.push_back(arguments[i]);
     }
