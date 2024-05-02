@@ -1,5 +1,7 @@
-import <std/io> <std/random>
+import <std/sysc> <std/io> <std/time>
 
 void main {
-    std::println("Random int: '", std::randomInt(0, 1000), "'");
+    std::timeVal tv;
+    std::syscall(std::sysctable::GetTimeOfDay, &tv, null);
+    std::println(tv.usec);
 }

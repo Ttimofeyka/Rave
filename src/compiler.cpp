@@ -140,9 +140,9 @@ void Compiler::compile(std::string file) {
 
     if(outType != "") {
         if(outType.find("i686") != std::string::npos || outType.find("i386") != std::string::npos) ravePlatform = "X86";
-        else if(outType.find("x86_64") != std::string::npos || outType.find("win64") != std::string::npos) ravePlatform = "X86_64";
-        else if(outType.find("x32") != std::string::npos) ravePlatform = "X32";
         else if(outType.find("aarch64") != std::string::npos || outType.find("arm64") != std::string::npos) ravePlatform = "AARCH64";
+        else if(outType.find("x86_64") != std::string::npos || outType.find("win64") != std::string::npos) ravePlatform = "X86_64";
+        else if(outType.find("x86") != std::string::npos) ravePlatform = "X86";
         else if(outType.find("arm") != std::string::npos) ravePlatform = "ARM";
         else if(outType.find("mips") != std::string::npos) ravePlatform = "MIPS";
         else if(outType.find("mips64") != std::string::npos) ravePlatform = "MIPS64";
@@ -203,20 +203,18 @@ void Compiler::compile(std::string file) {
     start = end;
     generator = new LLVMGen(file, Compiler::settings);
 
-    if(Compiler::outType.empty()) {
-        if(raveOs == "LINUX") {
-            if(ravePlatform == "X86_64") Compiler::outType = "linux-gnu-pc-x86_64";
-            else if(ravePlatform == "X86") Compiler::outType = "linux-gnu-pc-i686";
-            else if(ravePlatform == "AARCH64") Compiler::outType = "linux-gnu-aarch64";
-            else if(ravePlatform == "ARM") Compiler::outType = "linux-gnu-armv7";
-            else Compiler::outType = "linux-unknown";
-        }
-        else if(raveOs == "WINDOWS") {
-            if(ravePlatform == "X86_64") Compiler::outType = "x86_64-pc-windows-gnu";
-            else Compiler::outType = "i686-win32-gnu";
-        }
-        else Compiler::outType = "unknown";
+    if(raveOs == "LINUX") {
+        if(ravePlatform == "X86_64") Compiler::outType = "linux-gnu-pc-x86_64";
+        else if(ravePlatform == "X86") Compiler::outType = "linux-gnu-pc-i686";
+        else if(ravePlatform == "AARCH64") Compiler::outType = "linux-gnu-aarch64";
+        else if(ravePlatform == "ARM") Compiler::outType = "linux-gnu-armv7";
+        else Compiler::outType = "linux-unknown";
     }
+    else if(raveOs == "WINDOWS") {
+        if(ravePlatform == "X86_64") Compiler::outType = "x86_64-pc-windows-gnu";
+        else Compiler::outType = "i686-win32-gnu";
+    }
+    else Compiler::outType = "unknown";
 
     LLVMInitializeX86TargetInfo();
     LLVMInitializeAArch64TargetInfo();
