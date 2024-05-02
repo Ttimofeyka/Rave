@@ -1,5 +1,7 @@
-import <std/io> <std/random>
+import <std/io> <std/time> <std/sysc>
 
 void main {
-    
+    std::timeVal tv;
+    std::__gettimeofday(&tv);
+    std::println(tv.usec);
 }

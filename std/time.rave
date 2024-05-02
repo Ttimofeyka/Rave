@@ -24,8 +24,8 @@ namespace std {
     alias Monotonic = 1;
 
     struct timeVal {
-        long tv_sec;
-        long tv_usec;
+        long sec;
+        long usec;
     }
 
     struct timeZone {
@@ -80,6 +80,10 @@ namespace std {
 };
 
 @if(__RAVE_OS == "LINUX") {
+    namespace std {
+        (inline) int __gettimeofday(std::timeVal* tv) => cast(int)std::syscall(std::sysctable::GetTimeOfDay, tv, null);
+    }
+
     @if((__RAVE_PLATFORM != "AARCH64") && (__RAVE_PLATFORM != "ARM")) {
         namespace std {
             (inline) int __clock_gettime(int flag, std::timeSpec* tc) => cast(int)std::syscall(std::sysctable::ClockGetTime, flag, tc);

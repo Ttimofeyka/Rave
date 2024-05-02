@@ -48,10 +48,10 @@ static bool instanceof(const T* ptr) {
     #define RAVE_PLATFORM "X86_64"
 #elif defined(__i386__)
     #define RAVE_PLATFORM "X86"
-#elif defined(__arm__)
-    #define RAVE_PLATFORM "ARM"
 #elif defined(__aarch64__) || defined(__ARM_ARCH_ISA_A64)
     #define RAVE_PLATFORM "AARCH64"
+#elif defined(__arm__)
+    #define RAVE_PLATFORM "ARM"
 #else
     #define RAVE_PLATFORM "UNKNOWN"
 #endif

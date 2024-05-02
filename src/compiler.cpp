@@ -192,8 +192,6 @@ void Compiler::compile(std::string file) {
     Lexer* lexer = new Lexer(content, offset);
     auto end = std::chrono::system_clock::now();
     Compiler::lexTime += std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
-
-    // for(int i=0; i<lexer->tokens.size(); i++) std::cout << "Token '" << lexer->tokens[i]->value << "', type: " << std::to_string(lexer->tokens[i]->type) << std::endl;
     
     start = end;
     Parser* parser = new Parser(lexer->tokens, file);
