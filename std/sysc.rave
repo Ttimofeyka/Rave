@@ -20,7 +20,7 @@ the result of a call with the same parameters and the same number will be the sa
 	                movq %rcx, %rdx
 	                movq %r8, %r10
 	                movq %r9, %r8
-	                movq 8(%rsp),%r9
+	                movq 8(%rsp), %r9
 	                syscall
 
 	            	movq %rax, \"_RaveGstd::__syscResult\"
@@ -130,13 +130,14 @@ the result of a call with the same parameters and the same number will be the sa
                 bool fix;
 	            asm(
                 "
-	                mov x8, x1
+	                mov w8, w0
+                    mov x0, x1
                     mov x1, x2
                     mov x2, x3
                     mov x3, x4
                     mov x4, x5
                     mov x5, x6
-	                svc #0
+                    svc #0
 
                     ldr x1, =\"_RaveGstd::__syscResult\"
                     str x0, [x1]
