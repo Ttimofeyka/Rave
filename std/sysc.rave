@@ -78,7 +78,7 @@ the result of a call with the same parameters and the same number will be the sa
 	                movl %edx, %ecx
 	                movl %esi, %edx
 	                movl %ebp, %edi
-	                syscall
+	                int 0x80
 
 	            	movl %eax, \"_RaveGstd::__syscResult\"
                 ");
