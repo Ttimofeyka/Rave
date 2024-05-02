@@ -252,7 +252,10 @@ namespace std {
         }
 
         void ~this {
-            if(this.data != cast(T*)null) std::free(cast(void*)this.data);
+            if(this.data != cast(T*)null) {
+                std::free(cast(void*)this.data);
+                this.data = cast(T*)null;
+            }
         }
     }
 }

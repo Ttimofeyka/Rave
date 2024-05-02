@@ -1,9 +1,17 @@
 import <std/time> <std/sysc>
 
 @if(__RAVE_OS == "LINUX") {
+    @if((__RAVE_PLATFORM != "AARCH64") && (__RAVE_PLATFORM != "ARM")) {
+        namespace std {
+            (inline) int __getrandom(void* buffer, uint bufferLength, uint flags) => cast(int)std::syscall(std::sysctable::GetRandom, buffer, bufferLength, flags);
+        }
+    }
+    @if((__RAVE_PLATFORM == "AARCH64") || (__RAVE_PLATFORM == "ARM")) {
+        namespace std {
+            extern(linkname: "getrandom") int __getrandom(void* buffer, uint bufferLength, uint flags);
+        }
+    }
     namespace std {
-        (inline) int __getrandom(void* buffer, uint bufferLength, uint flags) => cast(int)std::syscall(std::sysctable::GetRandom, buffer, bufferLength, flags);
-
         short randomShort(short min, short max) {
             char[2] buffer;
             std::__getrandom(&buffer, 2, 2);

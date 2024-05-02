@@ -56,7 +56,7 @@ namespace std {
               }
             } => this;
 
-            std::network::URL this(std::string url) => std::network::URL(url.c());
+            std::network::URL this(std::string url) => std::network::URL(url.data);
         }
     }
 }
@@ -69,11 +69,11 @@ namespace std {
         } => result > 0;
 
         std::string _determine_true_ip(std::string host, char* port) {
-            if(std::network::isValidIPv4(host.c())) return = host;
+            if(std::network::isValidIPv4(host.data)) return = host;
             else {
                 std::socket::addrinfo* res;
                 bool found = false;
-                std::socket::getAddrInfo(host.c(), port, cast(std::socket::addrinfo*)0, &res);
+                std::socket::getAddrInfo(host.data, port, cast(std::socket::addrinfo*)0, &res);
 
                 for(std::socket::addrinfo* i = res; i != cast(std::socket::addrinfo*)0; i=i.ai_next) {
                     char[46] str;
@@ -122,9 +122,9 @@ namespace std {
             std::socket sock = std::socket();
 
             if(port == "") port = "80";
-            std::string trueip = std::network::_determine_true_ip(url.host, port.c());
+            std::string trueip = std::network::_determine_true_ip(url.host, port.data);
 
-            if(sock.open(trueip.c(), port.toInt(), std::socket::InAddrBroadcast) < 0) {
+            if(sock.open(trueip.data, port.toInt(), std::socket::InAddrBroadcast) < 0) {
                 std::network::Response resp_fail_ssl = std::network::Response();
                 resp_fail_ssl.success = -5; // open failure
                 return = resp_fail_ssl;
@@ -135,7 +135,7 @@ namespace std {
                     std::println(explain_connect(sock.fd, cast(std::socket::sockaddr*)sock.addr, sizeof(std::socket::sockaddr_in)));
                     return = resp_fail_ssl;
                 } else {
-                    sock.write(reqline.c());
+                    sock.write(reqline.data);
 
                     std::string buffer = "";
                     char[513] char_buffer; // just in case 513 instead of 512
@@ -155,10 +155,10 @@ namespace std {
 
                     // TODO: read headers
                     int ip = 0; // point to first header actually
-                    while(buffer.c()[ip] != '\0') {
-                        if(buffer.c()[ip] == '\n') {
+                    while(buffer.data[ip] != '\0') {
+                        if(buffer.data[ip] == '\n') {
                             ip += 1;
-                            if(buffer.c()[ip] == '\r') {
+                            if(buffer.data[ip] == '\r') {
                                 ip += 2;
                                 break;
                             }
@@ -202,8 +202,8 @@ namespace std {
             std::socket sock = std::socket();
 
             if(port == "") port = "443";
-            std::string trueip = std::network::_determine_true_ip(url.host, port.c());
-            if(sock.open(trueip.c(), port.toInt(), std::socket::InAddrBroadcast) < 0) {
+            std::string trueip = std::network::_determine_true_ip(url.host, port.data);
+            if(sock.open(trueip.data, port.toInt(), std::socket::InAddrBroadcast) < 0) {
                 std::network::Response resp_fail_ssl = std::network::Response();
                 resp_fail_ssl.success = -5; // open failure
                 return = resp_fail_ssl;
@@ -227,7 +227,7 @@ namespace std {
                     } else {
 
                         // do other stuff
-                        ssl::write(conn, reqline.c(), reqline.length);
+                        ssl::write(conn, reqline.data, reqline.length);
 
                         std::string buffer = "";
                         char[513] char_buffer; // just in case 513 instead of 512
@@ -248,10 +248,10 @@ namespace std {
 
                         // TODO: read headers
                         int ip = 0; // point to first header actually
-                        while(buffer.c()[ip] != '\0') {
-                            if(buffer.c()[ip] == '\n') {
+                        while(buffer.data[ip] != '\0') {
+                            if(buffer.data[ip] == '\n') {
                                 ip += 1;
-                                if(buffer.c()[ip] == '\r') {
+                                if(buffer.data[ip] == '\r') {
                                     ip += 2;
                                     break;
                                 }

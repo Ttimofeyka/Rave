@@ -42,7 +42,7 @@ namespace std {
         }
 
         void catch(void(char*, int) catcher) {
-            if(this.message != null) catcher(this.message,this.code);
+            if(this.message != null) catcher(this.message, this.code);
         }
     }
 }
