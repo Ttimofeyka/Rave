@@ -1,24 +1,7 @@
 namespace std {
-    int _lengthOfNumber(long x) {
-        if(x < 0) x = x * (-1);
-
-        if(x >= 1000000000000) return = 13;
-        else if(x >= 100000000000) return = 12;
-        else if(x >= 10000000000) return = 11;
-        else if(x >= 1000000000) return = 10;
-        else if(x >= 100000000) return = 9;
-        else if(x >= 10000000) return = 8;
-        else if(x >= 1000000) return = 7;
-        else if(x >= 100000) return = 6;
-        else if(x >= 10000) return = 5;
-        else if(x >= 1000) return = 4;
-        else if(x >= 100) return = 3;
-        else if(x >= 10) return = 2;
-        else return = 1;
-    }
-    
-    (inline) int lengthOfNumber(long x) {
-        if(x < 0) return = std::_lengthOfNumber(-x) + 1;
-        else return = std::_lengthOfNumber(x);
+    (inline) int lengthOfNumber(cent x) {
+        if(x < 0) x = -x;
+        return = 1;
+        while(x > 9) {return += 1; x = x / 10;}
     }
 }

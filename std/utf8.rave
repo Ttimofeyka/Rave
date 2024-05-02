@@ -135,9 +135,7 @@ namespace std {
         (inline) uint at(int index) {
             if((index >= 0) && (index < this.length)) {
                 uchar* ptr = this.data;
-                for(int i=0; i<index; i++) {
-                    ptr = itop(uchar*, ptoi(ptr)+std::utf8::next(ptr));
-                }
+                for(int i=0; i<index; i++) ptr = itop(uchar*, ptoi(ptr)+std::utf8::next(ptr));
                 return = std::utf8::utfAt(ptr, 0);
             }
             else return = cast(uint)'\0';

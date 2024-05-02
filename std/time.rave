@@ -23,12 +23,12 @@ namespace std {
     alias RealTime = 0;
     alias Monotonic = 1;
 
-    struct timeval {
-        int tv_sec;
-        int tv_usec;
+    struct timeVal {
+        long tv_sec;
+        long tv_usec;
     }
 
-    struct timezone {
+    struct timeZone {
         int tz_minuteswest;
         int tz_dsttime;
     }
