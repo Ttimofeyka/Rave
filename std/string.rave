@@ -298,7 +298,7 @@ namespace std {
         }
         else std::sprintBuffer.length = 0;
 
-        char[24] nBuffer;
+        char[40] nBuffer;
 
         @foreachArgs() {
             @if(@tNequals(@getCurrArgType(), float)) {
