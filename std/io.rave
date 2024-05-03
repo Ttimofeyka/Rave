@@ -246,6 +246,15 @@ namespace std {
         }
     } => buffer;
 
+    std::u8string u8ReadLine {
+        std::u8string buffer = "";
+        char ch = std::getchar();
+        while((ch != '\n') && (ch != -1)) {
+            buffer.add(ch);
+            ch = std::getchar();
+        }
+    } => buffer;
+
     struct file {
         libc::File* _file;
         const(char)* name;
