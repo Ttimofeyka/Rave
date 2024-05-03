@@ -141,7 +141,7 @@ void Compiler::compile(std::string file) {
     if(outType != "") {
         if(outType.find("i686") != std::string::npos || outType.find("i386") != std::string::npos) ravePlatform = "X86";
         else if(outType.find("aarch64") != std::string::npos || outType.find("arm64") != std::string::npos) ravePlatform = "AARCH64";
-	    else if(outType.find("x86") != std::string::npos) ravePlatform = "X86";
+        else if(outType.find("x86") != std::string::npos) ravePlatform = "X86";
         else if(outType.find("x86_64") != std::string::npos || outType.find("win64") != std::string::npos) ravePlatform = "X86_64";
         else if(outType.find("arm") != std::string::npos) ravePlatform = "ARM";
         else if(outType.find("mips") != std::string::npos) ravePlatform = "MIPS";
@@ -184,7 +184,7 @@ void Compiler::compile(std::string file) {
     if(!Compiler::settings.noPrelude && file != "std/prelude.rave" && file != "std/memory.rave") {
         content = content+" import <std/prelude> <std/memory>";
     }
-    content = content+"\n"+oldContent;
+    content = content + "\n" + oldContent;
 
     AST::mainFile = Compiler::files[0];
 
