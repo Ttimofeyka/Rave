@@ -1,112 +1,59 @@
-import <std/vector> <std/io>
-
+// TODO: need to be improved
 namespace std {
-    struct map<K,V> {
-        std::vector<std::pair<K,V>> first;
-        std::vector<std::pair<K,V>> second;
+    struct map<K, V> {
+        std::pair<K, V>* data;
         int length;
+        int capacity;
 
         std::map<K,V> this {
-            std::map<K,V> this;
-            this.first = std::vector<std::pair<K,V>>();
-            this.second = std::vector<std::pair<K,V>>();
+            std::map<K, V> this;
+            this.data = cast(std::pair<K, V>*)std::malloc((sizeof(K) + sizeof(V))+1);
             this.length = 0;
+            this.capacity = (sizeof(K) + sizeof(V))+1;
         } => this;
 
         void add(K key, V value) {
-            int _hash = (cast(int)key) % 2;
-
-            if(_hash == 0) {
-                this.first.add(std::pair<K,V>(key,value));
-            }
-            else {
-                this.second.add(std::pair<K,V>(key,value));
-            }
+            this.data[this.length] = std::pair<K, V>(key, value);
+            this.length += 1;
+            if(this.capacity <= ((sizeof(K) + sizeof(V) * this.length))) this.capacity = this.capacity * 2;
         }
-
-        void set(K key, V newvalue) {
-            int _hash = (cast(int)key) % 2;
-
-            if(_hash == 0) {
-                for(int i=0; i<this.first.length; i+=1) {
-                    if(this.first.data[i].first == key) {
-                        this.first.data[i].second = newvalue;
-                        break;
-                    }
-                }
-            }
-            else {
-                for(int i=0; i<this.second.length; i+=1) {
-                    if(this.second.data[i].first == key) {
-                        this.second.data[i].second = newvalue;
-                        break;
-                    }
-                }
-            }
-        }
-
-        bool has(K key) {
-            bool complete = false;
-            int _hash = (cast(int)key) % 2;
-
-            if(_hash == 0) {
-                for(int i=0; i<this.first.length; i+=1) {
-                    if(this.first.data[i].first == key) {
-                        complete = true;
-                        break;
-                    }
-                }
-            }
-            else {
-                for(int i=0; i<this.second.length; i+=1) {
-                    if(this.second.data[i].first == key) {
-                        complete = true;
-                        break;
-                    }
-                }
-            }
-        } => complete;
 
         V get(K key) {
-            V toret = cast(V)null;
-            int _hash = (cast(int)key) % 2;
+            return = null;
+            for(int i=0; i<this.length; i++) {
+                if(this.data[i].first == key) {
+                    return = this.data[i].second;
+                    break;
+                }
+            }
+        }
 
-            if(_hash == 0) {
-                for(int i=0; i<this.first.length; i+=1) {
-                    if(this.first.data[i].first == key) {
-                        toret = this.first.data[i].second;
-                        break;
-                    }
+        int getIndex(K key) {
+            return = -1;
+            for(int i=0; i<this.length; i++) {
+                if(this.data[i].first == key) {
+                    return = i;
+                    break;
                 }
             }
-            else {
-                for(int i=0; i<this.second.length; i+=1) {
-                    if(this.second.data[i].first == key) {
-                        toret = this.second.data[i].second;
-                        break;
-                    }
-                }
-            }
-        } => toret;
+        }
+
+        (inline) bool has(K key) => (this.getIndex(key) != -1);
 
         void remove(K key) {
-            int _hash = (cast(int)key) % 2;
-
-            if(_hash == 0) {
-                for(int i=0; i<this.first.length; i+=1) {
-                    if(this.first.data[i].first == key) {
-                        this.first.remove(i);
-                        break;
-                    }
+            int index = this.getIndex(key);
+            if(index != -1) {
+                for(int i=index; i<this.length; i+=1) {
+                    if((i+1) < this.length) this.data[i] = this.data[i+1];
                 }
+                this.length = this.length - 1;
             }
-            else {
-                for(int i=0; i<this.second.length; i+=1) {
-                    if(this.second.data[i].first == key) {
-                        this.second.remove(i);
-                        break;
-                    }
-                }
+        }
+
+        void ~this {
+            if(this.data != null) {
+                std::free(cast(void*)this.data);
+                this.data = cast(std::pair<K, V>*)null;
             }
         }
     }
