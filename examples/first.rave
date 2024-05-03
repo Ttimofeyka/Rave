@@ -1,4 +1,4 @@
-import <std/sysc> <std/io> <std/time>
+import <std/io>
 
 void main {
     
