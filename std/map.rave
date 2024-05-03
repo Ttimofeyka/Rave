@@ -9,13 +9,13 @@ namespace std {
             std::map<K, V> this;
             this.data = cast(std::pair<K, V>*)std::malloc((sizeof(K) + sizeof(V))+1);
             this.length = 0;
-            this.capacity = (sizeof(K) + sizeof(V))+1;
+            this.capacity = sizeof(std::pair<K, V>)+1;
         } => this;
 
         void add(K key, V value) {
             this.data[this.length] = std::pair<K, V>(key, value);
             this.length += 1;
-            if(this.capacity <= ((sizeof(K) + sizeof(V) * this.length))) this.capacity = this.capacity * 2;
+            if(this.capacity <= ((sizeof(std::pair<K, V>) * this.length))) this.capacity = this.capacity * 2;
         }
 
         V get(K key) {
