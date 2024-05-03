@@ -1,7 +1,5 @@
 import <std/sysc> <std/io> <std/time>
 
 void main {
-    std::timeVal tv;
-    std::syscall(std::sysctable::GetTimeOfDay, &tv, null);
-    std::println(tv.usec);
+    
 }

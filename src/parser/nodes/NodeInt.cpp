@@ -46,7 +46,7 @@ Type* NodeInt::getType() {
 }
 
 LLVMValueRef NodeInt::generate() {
-    if(isMustBeLong) return LLVMConstIntOfString(LLVMInt64TypeInContext(generator->context),value.to_string().c_str(),this->sys);
+    if(isMustBeLong) return LLVMConstIntOfString(LLVMInt64TypeInContext(generator->context), value.to_string().c_str(), this->sys);
     if(this->isVarVal != nullptr && instanceof<TypeBasic>(this->isVarVal)) {
         this->type = ((TypeBasic*)this->isVarVal)->type;
         switch(this->type) {
@@ -64,11 +64,11 @@ LLVMValueRef NodeInt::generate() {
             default: break;
         }
     }
-    if(value < INT32_MAX) {
+    if(value >= INT32_MIN && value <= INT32_MAX) {
         this->type = BasicType::Int;
         return LLVMConstIntOfString(LLVMInt32TypeInContext(generator->context), value.to_string().c_str(), this->sys);
     }
-    if(value < INT64_MAX) {
+    if(value >= INT64_MIN && value <= INT64_MAX) {
         this->type = BasicType::Long;
         return LLVMConstIntOfString(LLVMInt64TypeInContext(generator->context), value.to_string().c_str(), this->sys);
     }

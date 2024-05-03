@@ -94,7 +94,7 @@ namespace libc {
         namespace file {
             int __access(char* fname, int flag) {
                 libc::File* f = libc::fopen(fname, "r");
-                if(f == cast(libc::File*)null) return = -1;
+                if(f == null) return = -1;
                 else {
                     libc::fclose(f);
                     return = 0;
@@ -261,7 +261,7 @@ namespace std {
 
         void open(char* mode) {
             this._file = libc::fopen(this.name, mode);
-            this.isOpen = (this._file != cast(libc::File*)null);
+            this.isOpen = (this._file != null);
         }
 
         void close {

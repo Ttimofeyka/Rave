@@ -101,6 +101,47 @@ namespace std {
 
             std::thread::spinlock::unlock(&std::cstring::ltosSl);
         } => endBuffer;
+
+        int ctosSl;
+        char[20] ctosBuffer;
+        char* ctos(cent number, char* endBuffer) {
+            std::thread::spinlock::lock(&std::cstring::ltosSl);
+            for(int i=0; i<20; i++) std::cstring::ctosBuffer[i] = '\0';
+
+            if(number == 0) {
+                endBuffer[0] = '0';
+                std::thread::spinlock::unlock(&std::cstring::ltosSl);
+                @return(endBuffer);
+            }
+
+            bool isNegative = false;
+            if(number < 0) {
+                isNegative = true;
+                number = -number;
+            }
+
+            int index = 0;
+            while(number > 0) {
+                std::cstring::ctosBuffer[index] = ((number % cast(cent)10) + '0');
+                number = number / 10;
+                index += 1;
+            }
+
+            if(isNegative) {
+                std::cstring::ctosBuffer[index] = '-';
+                index += 1;
+            }
+
+            endBuffer[index] = '\0';
+
+            int endI = 0;
+            for(int i=index-1; i>=0; i--) {
+                endBuffer[endI] = std::cstring::ctosBuffer[i];
+                endI += 1;
+            }
+
+            std::thread::spinlock::unlock(&std::cstring::ctosSl);
+        } => endBuffer;
         
         char* dtos(double number, int precision, char* buffer) {
             long lPart;

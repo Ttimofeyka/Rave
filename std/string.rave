@@ -305,8 +305,13 @@ namespace std {
                 @if(@tNequals(@getCurrArgType(), double)) {
                     @if(@tNequals(@getCurrArgType(), std::string)) {
                         @if(@tNequals(@getCurrArgType(), char)) {
+                            @if(@tEquals(@getCurrArgType(), bool)) {
+                                std::sprintBuffer.appendC(std::cstring::fromBool(@getCurrArg(bool)));
+                            };
                             @if(@tEquals(@getCurrArgType(), short) || @tEquals(@getCurrArgType(), int) || @tEquals(@getCurrArgType(), long)) {
                                 nBuffer = [
+                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
                                     '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
                                     '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
                                     '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
@@ -314,8 +319,16 @@ namespace std {
                                 std::cstring::ltos(@getCurrArg(long), cast(char*)&nBuffer);
                                 std::sprintBuffer.appendC(cast(char*)&nBuffer);
                             };
-                            @if(@tEquals(@getCurrArgType(), bool)) {
-                                std::sprintBuffer.appendC(std::cstring::fromBool(@getCurrArg(bool)));
+                            @if(@tEquals(@getCurrArgType(), cent)) {
+                                nBuffer = [
+                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
+                                ];
+                                std::cstring::ctos(@getCurrArg(cent), cast(char*)&nBuffer);
+                                std::sprintBuffer.appendC(cast(char*)&nBuffer);
                             };
                             @if(@tEquals(@getCurrArgType(), std::u32string)) {
                                 std::u32string us = @getCurrArg(std::u32string);
@@ -386,6 +399,8 @@ namespace std {
                     nBuffer = [
                         '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
                         '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+                        '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+                        '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
                         '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
                     ];
                     std::cstring::dtos(@getCurrArg(double), 6, &nBuffer);
@@ -394,6 +409,8 @@ namespace std {
             };
             @if(@tEquals(@getCurrArgType(), float)) {
                 nBuffer = [
+                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
                     '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
                     '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
                     '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
@@ -408,15 +425,20 @@ namespace std {
     (ctargs) std::string sprint {
         std::string result = "";
         
-        char[24] buffer;
+        char[40] buffer;
 
         @foreachArgs() {
             @if(@tNequals(@getCurrArgType(), float)) {
                 @if(@tNequals(@getCurrArgType(), double)) {
                     @if(@tNequals(@getCurrArgType(), std::string)) {
                         @if(@tNequals(@getCurrArgType(), char)) {
+                            @if(@tEquals(@getCurrArgType(), bool)) {
+                                result.appendC(std::cstring::fromBool(@getCurrArg(bool)));
+                            };
                             @if(@tEquals(@getCurrArgType(), short) || @tEquals(@getCurrArgType(), int) || @tEquals(@getCurrArgType(), long)) {
                                 nBuffer = [
+                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
                                     '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
                                     '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
                                     '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
@@ -424,8 +446,16 @@ namespace std {
                                 std::cstring::ltos(@getCurrArg(long), cast(char*)&nBuffer);
                                 std::sprintBuffer.appendC(cast(char*)&nBuffer);
                             };
-                            @if(@tEquals(@getCurrArgType(), bool)) {
-                                result.appendC(std::cstring::fromBool(@getCurrArg(bool)));
+                            @if(@tEquals(@getCurrArgType(), cent)) {
+                                nBuffer = [
+                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
+                                ];
+                                std::cstring::ctos(@getCurrArg(cent), cast(char*)&nBuffer);
+                                std::sprintBuffer.appendC(cast(char*)&nBuffer);
                             };
                             @if(@tEquals(@getCurrArgType(), std::u32string)) {
                                 std::u32string us = @getCurrArg(std::u32string);
@@ -496,6 +526,8 @@ namespace std {
                     nBuffer = [
                         '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
                         '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+                        '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+                        '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
                         '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
                     ];
                     std::cstring::dtos(@getCurrArg(double), 6, &nBuffer);
@@ -504,6 +536,8 @@ namespace std {
             };
             @if(@tEquals(@getCurrArgType(), float)) {
                 nBuffer = [
+                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
                     '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
                     '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
                     '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
