@@ -225,31 +225,27 @@ namespace std {
         } => third;
 
         bool operator==(std::u8string one, std::u8string two) {
-            bool isEqual = true;
-            if(one.length != two.length) isEqual = false;
+            return = true;
+            if(one.length != two.length) return = false;
             else {
                 for(int i=0; i<one.length; i+=1) {
                     if(one.data[i] != two.data[i]) {
-                        isEqual = false;
+                        return = false;
                         break;
                     }
                 }
             }
-        } => isEqual;
+        }
 
         bool operator==(std::u8string one, char* two) {
-            bool isEqual = true;
-            int length = std::cstring::strlen(two);
-            if(one.length != length) isEqual = false;
-            else {
-                for(int i=0; i<one.length; i+=1) {
-                    if(one.data[i] != two[i]) {
-                        isEqual = false;
-                        break;
-                    }
+            return = true;
+            for(int i=0; i<one.length; i+=1) {
+                if(one.data[i] != two[i]) {
+                    return = false;
+                    break;
                 }
             }
-        } => isEqual;
+        }
 
         std::u8string substring(int from, int to) {
             std::u8string temp = "";
