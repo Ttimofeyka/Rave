@@ -1,4 +1,4 @@
-import <std/io> <std/math> <std/random>
+import <std/io> <std/matrix>
 
 void main {
     
