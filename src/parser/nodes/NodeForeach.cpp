@@ -46,7 +46,7 @@ LLVMValueRef NodeForeach::generate() {
                 if(AST::structTable.find(ts->name) != AST::structTable.end()) {
                     NodeStruct* ns = (NodeStruct*)AST::structTable[ts->name];
                     if(ns->dataVar == "" || ns->lengthVar == "") {
-                        generator->error("structure '"+ts->name+"' doesn't contain the parameters data or length!", this->loc);
+                        generator->error("structure '" + ts->name + "' doesn't contain the parameters data or length!", this->loc);
                         return nullptr;
                     }
                     this->varLength = new NodeGet(niVarData, ns->lengthVar, false, this->loc);
@@ -60,7 +60,7 @@ LLVMValueRef NodeForeach::generate() {
 
     }
 
-    NodeVar* nv = new NodeVar("__RAVE_FOREACH_N"+std::to_string(this->loc), new NodeInt(0), false, false, false, {}, this->loc, new TypeBasic(BasicType::Int), false);
+    NodeVar* nv = new NodeVar("__RAVE_FOREACH_N" + std::to_string(this->loc), new NodeInt(0), false, false, false, {}, this->loc, new TypeBasic(BasicType::Int), false);
     nv->check();
     nv->generate();
 
@@ -68,20 +68,20 @@ LLVMValueRef NodeForeach::generate() {
     this->block->nodes = {
         new NodeVar(
             elName->name, new NodeIndex(varData,
-                {new NodeIden("__RAVE_FOREACH_N"+std::to_string(this->loc), this->loc)
+                {new NodeIden("__RAVE_FOREACH_N" + std::to_string(this->loc), this->loc)
             }, this->loc),
         false, false, false, {}, this->loc, new TypeAuto())
     };
 
     for(int i=0; i<oldBlock->nodes.size(); i++) this->block->nodes.push_back(oldBlock->nodes[i]);
 
-    this->block->nodes.push_back(new NodeBinary(TokType::PluEqu, new NodeIden("__RAVE_FOREACH_N"+std::to_string(this->loc), this->loc), new NodeInt(1), this->loc));
+    this->block->nodes.push_back(new NodeBinary(TokType::PluEqu, new NodeIden("__RAVE_FOREACH_N" + std::to_string(this->loc), this->loc), new NodeInt(1), this->loc));
 
-    NodeWhile* nwhile = new NodeWhile(new NodeBinary(TokType::Less, new NodeIden("__RAVE_FOREACH_N"+std::to_string(this->loc), this->loc), varLength, this->loc), this->block, this->loc, this->funcName);
+    NodeWhile* nwhile = new NodeWhile(new NodeBinary(TokType::Less, new NodeIden("__RAVE_FOREACH_N" + std::to_string(this->loc), this->loc), varLength, this->loc), this->block, this->loc, this->funcName);
     nwhile->check();
     LLVMValueRef result = nwhile->generate();
 
-    currScope->remove("__RAVE_FOREACH_N"+std::to_string(this->loc));
+    currScope->remove("__RAVE_FOREACH_N" + std::to_string(this->loc));
 
     return nullptr;
 }
