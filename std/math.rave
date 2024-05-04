@@ -5,16 +5,19 @@ namespace std {
         alias NAN = (0.0) / (0.0);
 
         (inline) double degToRad(double d) => (d * std::math::PI / 180);
+        (inline) float degToRad(float d) => (d * std::math::PI_f / 180f);
+
         (inline) double radToDeg(double r) => (r * 180 / std::math::PI);
+        (inline) float radToDeg(float r) => (r * cast(float)180 / std::math::PI_f);
 
         long factorial(int n) {
-            long fact = 1;
+            return = 1;
             int i = 1;
             while(i <= n) {
-                fact = fact * i;
+                return = return * i;
                 i += 1;
             }
-        } => fact;
+        }
 
         double abs(double f) {
             return = f;
