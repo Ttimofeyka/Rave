@@ -436,6 +436,14 @@ namespace std {
             this.columns = columns;
         } => this;
 
+        (inline) void set(int r, int c, T value) {
+            if((r >= 0) && (r < this.rows) && (c >= 0) && (c < this.columns)) this.data[(r+1) * (c+1)] = value;
+        }
+
+        (inline) T get(int r, int c) {
+            if((r >= 0) && (r < this.rows) && (c >= 0) && (c < this.columns)) return = this.data[(r+1) * (c+1)];
+        }
+
         void filter(T(T) fn) {
             for(int i=0; i<(this.rows * this.columns); i++) this.data[i] = fn(this.data[i]);
         }
