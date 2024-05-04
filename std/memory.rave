@@ -16,7 +16,7 @@ namespace std {
 }
 
 namespace std {
-    (inline) void* calloc(int num, int size) => std::malloc(num*size);
+    (inline) void* calloc(int num, int size) => std::malloc(num * size);
 
     (nochecks) void* memcpy(void* dest, void* src, int n) {
         for(int i=0; i<n; i+=1) dest[i] = src[i];

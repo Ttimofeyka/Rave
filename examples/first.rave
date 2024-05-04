@@ -1,5 +1,12 @@
-import <std/io>
+import <std/io> <std/error>
+
+void detected {
+    std::exit(3);
+}
+
+int* ptr;
 
 void main {
-    
+    std::error::sigsegv(detected);
+    ptr[0] = 100;
 }

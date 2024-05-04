@@ -45,4 +45,10 @@ namespace std {
             if(this.message != null) catcher(this.message, this.code);
         }
     }
+
+    extern(linkname: "signal") void __signal(int flag, void(int) catcher);
+
+    namespace error {
+        void sigsegv(void() catcher) {std::__signal(11, cast(void(int))catcher);}
+    }
 }
