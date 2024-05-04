@@ -19,6 +19,13 @@ import <std/time> <std/sysc>
             int* ptr = cast(int*)&buffer;
             if((ptr[0] < min) && (ptr[0] < 0)) ptr[0] = -(ptr[0]);
         } => ((ptr[0]) % ((max+1)-min))+min;
+
+        long randomLong(long min, long max) {
+            char[8] buffer;
+            std::__getrandom(&buffer, 8, 2);
+            long* ptr = cast(long*)&buffer;
+            if((ptr[0] < min) && (ptr[0] < 0)) ptr[0] = -(ptr[0]);
+        } => ((ptr[0]) % ((max+1)-min))+min;
     }
 };
 
@@ -33,5 +40,10 @@ import <std/time> <std/sysc>
             std::timeSpec ts;
             std::getCurrentTime(&ts);
         } => ((cast(int)ts.nsec) % ((max+1)-min))+min;
+
+        long randomLong(long min, long max) {
+            std::timeSpec ts;
+            std::getCurrentTime(&ts);
+        } => ((ts.nsec) % ((max+1)-min))+min;
     }
 };

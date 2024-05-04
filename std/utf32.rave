@@ -137,7 +137,7 @@ namespace std {
                 this.length = std::utf32::utflen(a);
                 this.capacity = this.length*4;
                 if(this.capacity == 0) this.capacity = 4;
-                if(this.data != cast(uint*)null) std::free(cast(void*)this.data);
+                if(this.data != null) std::free(cast(void*)this.data);
                 this.data = cast(uint*)std::malloc(this.capacity);
 
                 int i = 0;
@@ -149,7 +149,7 @@ namespace std {
             else {
                 this.length = 0;
                 this.capacity = 4;
-                if(this.data != cast(uint*)null) std::free(cast(void*)this.data);
+                if(this.data != null) std::free(cast(void*)this.data);
                 this.data = cast(uint*)std::malloc(this.capacity);
             }
         }

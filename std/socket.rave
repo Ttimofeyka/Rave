@@ -141,7 +141,7 @@ namespace std {
             std::socket this {
                 std::socket this;
                 this.fd = 0;
-                this.addr = cast(std::socket::sockaddr_in*)null;
+                this.addr = null;
                 this.addrlen = 0;
             } => this;
 
@@ -185,11 +185,11 @@ namespace std {
 
             void close {
                 std::socket::close(this.fd);
-                if(this.addr != cast(std::socket::sockaddr_in*)null) std::free(this.addr);
+                if(this.addr != null) std::free(this.addr);
             }
 
             void ~this {
-                if(this.addr != cast(std::socket::sockaddr_in*)null) std::free(this.addr);
+                if(this.addr != null) std::free(this.addr);
             }
         }
     }

@@ -65,7 +65,7 @@ namespace std {
 
         void ~this {
             std::free(cast(void*)this.data);
-            this.data = cast(T*)null;
+            this.data = null;
         }
 
         void filter(T(T) fn) {

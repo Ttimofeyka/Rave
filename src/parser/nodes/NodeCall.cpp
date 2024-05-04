@@ -191,6 +191,10 @@ LLVMValueRef NodeCall::generate() {
             return LLVM::call(generator->functions[idenFunc->name], this->getParameters(AST::funcTable[idenFunc->name], false, AST::funcTable[idenFunc->name]->args).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
         }
         if(currScope->has(idenFunc->name)) {
+            if(!instanceof<TypeFunc>(currScope->getVar(idenFunc->name, this->loc)->type)) {
+                generator->error("undefined function '"+idenFunc->name+"'!", this->loc);
+                return nullptr;
+            }
             TypeFunc* fn = (TypeFunc*)currScope->getVar(idenFunc->name, this->loc)->type;
             return LLVM::call(currScope->get(idenFunc->name), this->getParameters(nullptr, false, tfaToFas(fn->args)).data(), this->args.size(), (instanceof<TypeVoid>(fn->main) ? "" : "callFunc"));
         }

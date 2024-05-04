@@ -25,9 +25,9 @@ namespace std {
         }
 
         void ~this {
-            if(this.data != cast(T*)null) {
+            if(this.data != null) {
                 std::free(cast(void*)this.data);
-                this.data = cast(T*)null;
+                this.data = null;
             }
         }
     }

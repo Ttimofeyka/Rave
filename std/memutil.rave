@@ -6,7 +6,7 @@ import <std/io> <std/error>
 
     SafePtr<T> this {
         SafePtr<T> this;
-        this.pointer = cast(T*)null;
+        this.pointer = null;
         this.size = 0;
     } => this;
 
@@ -17,7 +17,7 @@ import <std/io> <std/error>
 
     (inline) std::error<T> get(int n) {
         std::error<T> result;
-        if(this.pointer == cast(T*)null) {
+        if(this.pointer == null) {
             result.message = "Error using SafePtr: attempt to access the null pointer!";
             result.code = std::NullPointer;
         }
@@ -30,7 +30,7 @@ import <std/io> <std/error>
 
     (inline) std::error<bool> set(int n, T value) {
         std::error<bool> result;
-        if(this.pointer == cast(T*)null) {
+        if(this.pointer == null) {
             result.message = "Error using SafePtr: attempt to access the null pointer!";
             result.code = std::NullPointer;
             result.value = false;
@@ -48,7 +48,7 @@ import <std/io> <std/error>
 
     void ~this {
         std::free(cast(void*)this.pointer);
-        this.pointer = cast(T*)null;
+        this.pointer = null;
         this.size = 0;
     }
 }

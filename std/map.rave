@@ -68,8 +68,8 @@ namespace std {
             if((this.keys != null) && (this.values != null)) {
                 std::free(cast(void*)this.keys);
                 std::free(cast(void*)this.values);
-                this.keys = cast(K*)null;
-                this.values = cast(V*)null;
+                this.keys = null;
+                this.values = null;
             }
         }
     }
