@@ -16,8 +16,11 @@ NodeFloat::NodeFloat(double value, TypeBasic* type) {this->value = value; this->
 
 Type* NodeFloat::getType() {
     if(this->type != nullptr) return this->type;
-    this->type = new TypeBasic((this->value > std::numeric_limits<float>::max()) ? BasicType::Double :
-        (BasicType::Float));
+    if(this->isMustBeFloat) {
+        this->type = new TypeBasic(BasicType::Float);
+        return this->type;
+    }
+    this->type = new TypeBasic((this->value > std::numeric_limits<float>::max()) ? BasicType::Double : (BasicType::Float));
     return this->type;
 }
 
@@ -32,6 +35,10 @@ LLVMValueRef NodeFloat::generate() {
     return LLVMConstReal(LLVMDoubleTypeInContext(generator->context), this->value);
 }
 
-Node* NodeFloat::copy() {return new NodeFloat(this->value, (this->type == nullptr) ? nullptr : (TypeBasic*)this->type->copy());}
+Node* NodeFloat::copy() {
+    NodeFloat* nf = new NodeFloat(this->value, (this->type == nullptr) ? nullptr : (TypeBasic*)this->type->copy());
+    nf->isMustBeFloat = this->isMustBeFloat;
+    return nf;
+}
 void NodeFloat::check() {this->isChecked = true;}
 Node* NodeFloat::comptime() {return this;}

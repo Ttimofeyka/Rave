@@ -19,26 +19,26 @@ namespace std {
 
         (inline) bool strncmp(const(char)* s1, const(char)* s2, int n) {
             int i = 0;
-            bool value = true;
+            return = true;
             while(i < n) {
                 if(s1[i] != s2[i]) {
-                    value = false;
+                    return = false;
                     break;
                 }
                 i += 1;
             }
-        } => value;
+        }
 
         (inline, nochecks) bool strcmp(const(char)* s1, const(char)* s2) {
             char* _s1 = s1;
             char* _s2 = s2;
-            bool result;
+            return = false;
             while((_s1[0] != '\0') && (_s1[0] == _s2[0])) {
                 _s1 = itop(char*, ptoi(_s1)+1);
                 _s2 = itop(char*, ptoi(_s2)+1);
             }
-            if(_s1[0] == _s2[0]) result = true;
-        } => result;
+            if(_s1[0] == _s2[0]) return = true;
+        }
 
         (nochecks) char* strstr(const(char)* str, const(char)* substr) {
             int i = 0;

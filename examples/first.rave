@@ -1,4 +1,4 @@
-import <std/io> <std/matrix>
+import <std/io> <std/matrix> <std/math>
 
 void main {
     

@@ -427,20 +427,7 @@ LLVMValueRef Scope::getWithoutLoad(std::string name, long loc) {
     if(AST::aliasTable.find(name) != AST::aliasTable.end()) return AST::aliasTable[name]->generate();
     if(this->localScope.find(name) != this->localScope.end()) return this->localScope[name];
     if(generator->globals.find(name) != generator->globals.end()) return generator->globals[name];
-    if(this->has("this") && this->args.find(name) == this->args.end()) {
-        // TODO:
-        /*Type _t = currScope.getVar("this",loc).t;
-        if(TypePointer tp = _t.instanceof!TypePointer) _t = tp.instance;
-        TypeStruct ts = _t.instanceof!TypeStruct;
-
-        if(ts.name.into(StructTable)) {
-            if(cast(immutable)[ts.name,n].into(structsNumbers)) {
-                return new NodeGet(new NodeIden("this",loc),n,true,loc).generate();
-            }
-        }*/
-        return nullptr;
-    }
-    if(this->args.find(name) == this->args.end()) generator->error("undefined identifier '"+name+"' at function '"+this->funcName+"'!",loc);
+    if(this->args.find(name) == this->args.end()) generator->error("undefined identifier '"+name+"' at function '"+this->funcName+"'!", loc);
     return LLVMGetParam(generator->functions[this->funcName], this->args[name]);
 }
 
@@ -455,17 +442,6 @@ NodeVar* Scope::getVar(std::string name, long loc) {
     if(this->localVars.find(name) != this->localVars.end()) return this->localVars[name];
     if(AST::varTable.find(name) != AST::varTable.end()) return AST::varTable[name];
     if(this->argVars.find(name) != this->argVars.end()) return this->argVars[name];
-    if(this->has("this")) {
-        // TODO:
-        /*Type _t = currScope.getVar("this",line).t;
-        if(TypePointer tp = _t.instanceof!TypePointer) _t = tp.instance;
-        TypeStruct ts = _t.instanceof!TypeStruct;
-        if(ts.name.into(StructTable)) {
-            if(cast(immutable)[ts.name,n].into(structsNumbers)) {
-                return structsNumbers[cast(immutable)[ts.name,n]].var;
-            }
-        }*/
-    }
     generator->error("undefined variable '"+name+"'!",loc);
     return nullptr;
 }

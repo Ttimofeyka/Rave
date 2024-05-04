@@ -9,7 +9,7 @@ namespace std {
         (inline) float degToRad(float d) => (d * std::math::PI_f / 180f);
 
         (inline) double radToDeg(double r) => (r * 180 / std::math::PI);
-        (inline) float radToDeg(float r) => (r * cast(float)180 / std::math::PI_f);
+        (inline) float radToDeg(float r) => (r * 180f / std::math::PI_f);
 
         long factorial(int n) {
             return = 1;
@@ -212,10 +212,10 @@ namespace std {
         } => c;
 
         double cosh(double x) => 0.5 * (std::math::exp(x) + std::math::exp(-x));
-        float cosh(float x) => cast(float)0.5 * (std::math::exp(x) + std::math::exp(-x));
+        float cosh(float x) => 0.5f * (std::math::exp(x) + std::math::exp(-x));
 
         double sinh(double x) => 0.5 * (std::math::exp(x) - std::math::exp(-x));
-        float sinh(float x) => cast(float)0.5 * (std::math::exp(x) - std::math::exp(-x));
+        float sinh(float x) => 0.5f * (std::math::exp(x) - std::math::exp(-x));
 
         double tanh(double x) => (std::math::exp(2.0 * x) - 1d) / (std::math::exp(2.0 * x) + 1.0);
         float tanh(float x) => (std::math::exp(2.0 * x) - 1f) / (std::math::exp(2.0 * x) + 1.0);
@@ -227,7 +227,7 @@ namespace std {
         float asinh(float x) => std::math::log(x + std::math::sqrt(x * x + 1.0));
 
         double atanh(double x) => 0.5 * (std::math::log(1.0 + x) - std::math::log(1.0 - x));
-        float atanh(float x) => cast(float)0.5 * (std::math::log(1.0 + x) - std::math::log(1.0 - x));
+        float atanh(float x) => 0.5f * (std::math::log(1.0 + x) - std::math::log(1.0 - x));
 
         double erf(double x) {
             x = std::math::abs(x);
@@ -415,7 +415,7 @@ namespace std {
         } => result;
         
         double sigmoid(double x) => 1d / (1d + std::math::exp(-x));
-        float sigmoid(float x) => cast(float)1 / (1f + std::math::exp(-x));
+        float sigmoid(float x) => 1f / (1f + std::math::exp(-x));
 
         double sigmoidDerivative(double x) => std::math::exp(-x) / std::math::pow(1d + std::math::exp(-x), 2d);
         float sigmoidDerivative(float x) => std::math::exp(-x) / std::math::pow(1f + std::math::exp(-x), 2f);
