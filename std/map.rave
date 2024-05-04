@@ -1,28 +1,39 @@
 // TODO: need to be improved
+import <std/io>
 namespace std {
     struct map<K, V> {
-        std::pair<K, V>* data;
+        (noOperators) K* keys;
+        (noOperators) V* values;
         int length;
-        int capacity;
+        int capacityKeys;
+        int capacityValues;
 
         std::map<K,V> this {
             std::map<K, V> this;
-            this.data = cast(std::pair<K, V>*)std::malloc((sizeof(K) + sizeof(V))+1);
+            this.keys = cast(K*)std::malloc(sizeof(K));
+            this.values = cast(V*)std::malloc(sizeof(V));
             this.length = 0;
-            this.capacity = sizeof(std::pair<K, V>)+1;
+            this.capacityKeys = sizeof(K);
+            this.capacityValues = sizeof(V);
         } => this;
 
         void add(K key, V value) {
-            this.data[this.length] = std::pair<K, V>(key, value);
+            this.keys[this.length] = key;
+            this.values[this.length] = value;
             this.length += 1;
-            if(this.capacity <= ((sizeof(std::pair<K, V>) * this.length))) this.capacity = this.capacity * 2;
+            if(((this.length * sizeof(K)) >= this.capacityKeys) || ((this.length * sizeof(V)) >= this.capacityValues)) {
+                this.keys = cast(K*)std::realloc(cast(void*)this.keys, this.capacityKeys, this.capacityKeys * 2);
+                this.values = cast(V*)std::realloc(cast(void*)this.values, this.capacityValues, this.capacityValues * 2);
+                this.capacityKeys = this.capacityKeys * 2;
+                this.capacityValues = this.capacityValues * 2;
+            }
         }
 
         V get(K key) {
             return = null;
             for(int i=0; i<this.length; i++) {
-                if(this.data[i].first == key) {
-                    return = this.data[i].second;
+                if(this.keys[i] == key) {
+                    return = this.values[i];
                     break;
                 }
             }
@@ -31,7 +42,7 @@ namespace std {
         int getIndex(K key) {
             return = -1;
             for(int i=0; i<this.length; i++) {
-                if(this.data[i].first == key) {
+                if(this.keys[i] == key) {
                     return = i;
                     break;
                 }
@@ -44,16 +55,21 @@ namespace std {
             int index = this.getIndex(key);
             if(index != -1) {
                 for(int i=index; i<this.length; i+=1) {
-                    if((i+1) < this.length) this.data[i] = this.data[i+1];
+                    if((i+1) < this.length) {
+                        this.keys[i] = this.keys[i+1];
+                        this.values[i] = this.values[i+1];
+                    }
                 }
                 this.length = this.length - 1;
             }
         }
 
         void ~this {
-            if(this.data != null) {
-                std::free(cast(void*)this.data);
-                this.data = cast(std::pair<K, V>*)null;
+            if((this.keys != null) && (this.values != null)) {
+                std::free(cast(void*)this.keys);
+                std::free(cast(void*)this.values);
+                this.keys = cast(K*)null;
+                this.values = cast(V*)null;
             }
         }
     }
