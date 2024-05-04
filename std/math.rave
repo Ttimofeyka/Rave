@@ -1,6 +1,7 @@
 namespace std {
     namespace math {
         alias PI = 3.14159265358979323846;
+        alias PI_f = 3.141592653589793f;
         alias NAN = (0.0) / (0.0);
 
         (inline) double degToRad(double d) => (d * std::math::PI / 180);
@@ -16,43 +17,74 @@ namespace std {
         } => fact;
 
         double abs(double f) {
-            double result = f;
-            if(f < 0.0) result = -result;
-        } => result;
+            return = f;
+            if(f < 0.0) return = -return;
+        }
+
+        float abs(float f) {
+            return = f;
+            if(f < 0.0) return = -return;
+        }
 
         (inline) char getSign(double d) {
-            char result = 1;
-            if(d < 0.0) result = -1;
-        } => result;
+            return = 1;
+            if(d < 0.0) return = -1;
+        }
+
+        (inline) char getSign(float f) {
+            return = 1;
+            if(f < 0.0) return = -1;
+        }
 
         (inline) double copySign(double d1, double d2) {
             char sign = -1;
             if(d2 > 0.0) sign = 1;
         } => std::math::abs(d1) * sign;
 
+        (inline) float copySign(float f1, float f2) {
+            char sign = -1;
+            if(f2 > 0.0) sign = 1;
+        } => std::math::abs(f1) * sign;
+
         double floor(double f) {
-            double result = f;
+            return = f;
             if(f != std::math::NAN) {
-                result = (cast(double)(cast(long)f));
-                if((result < 0) && (result != f)) result = result - 1.0;
+                return = (cast(double)(cast(long)f));
+                if((return < 0) && (return != f)) return = return - 1.0;
             }
-        } => result;
+        }
+
+        float floor(float f) {
+            return = f;
+            if(f != std::math::NAN) {
+                return = (cast(float)(cast(long)f));
+                if((return < 0) && (return != f)) return = return - 1.0;
+            }
+        }
 
         double ceil(double d) => -(std::math::floor(-d));
+        float ceil(float f) => -(std::math::floor(-f));
 
         double exp(double x) {
-            double sum = 1.0 + x;
+            return = 1.0 + x;
             double term = x;
             for(int k=2; k<50; k+=1) {
                 term = term * x / cast(double)k;
-                sum = sum + term;
+                return = return + term;
             }
-        } => sum;
+        }
+
+        float exp(float x) {
+            return = 1.0 + x;
+            float term = x;
+            for(int k=2; k<50; k+=1) {
+                term = term * x / cast(float)k;
+                return = return + term;
+            }
+        }
 
         double loge(double x) {
-            double result = 0.0;
-
-            if (x <= 0) result = std::math::NAN;
+            if (x <= 0) return = std::math::NAN;
             else {
                 int powAdj = 0;
                 while(x > 1.0) {
@@ -74,18 +106,53 @@ namespace std {
                     s = -s;
                 }
 
-                result = t + powAdj;
+                return = t + powAdj;
             }
-        } => result;
+        }
+
+        float loge(float x) {
+            if (x <= 0) return = std::math::NAN;
+            else {
+                int powAdj = 0;
+                while(x > 1.0) {
+                    x = x / 2.718281828459045235;
+                    powAdj += 1;
+                }
+                while(x < 0.25) {
+                    x = x * 2.718281828459045235;
+                    powAdj -= 1;
+                }
+
+                x -= 1.0;
+                float t = 0.0;
+                float s = 1.0;
+                float z = x;
+                for(int k=1; k<=50; k+=1) {
+                    t = t + (z * s) / k;
+                    z = z * x;
+                    s = -s;
+                }
+
+                return = t + powAdj;
+            }
+        }
 
         (inline) double log(double x) => std::math::loge(x) / std::math::loge(10.0);
+        (inline) float log(float x) => std::math::loge(x) / std::math::loge(10.0);
 
         double sqrt(double d) {
-            double result = 1.0;
+            return = 1.0;
             for(int i=0; i<=10; i+=1) {
-                result = result - (result * result - d) / (2 * result);
+                return = return - (return * return - d) / (2 * return);
             }
-        } => result;
+        }
+
+        float sqrt(float f) {
+            return = 1.0;
+            for(int i=0; i<=10; i+=1) {
+                return = return - (return * return - f) / (2 * return);
+            }
+        }
 
         double acos(double d) {
             double negate = cast(double)(d < 0.0);
@@ -101,7 +168,22 @@ namespace std {
             result = result - 2 * negate * result;
         } => ((negate * std::math::PI) + result);
 
+        float acos(float f) {
+            float negate = cast(float)(f < 0.0);
+            f = std::math::abs(f);
+            float result = -0.0187293;
+            result = result * f;
+            result = result + 0.0742610;
+            result = result * f;
+            result = result - 0.2121144;
+            result = result * f;
+            result = result + 1.5707288;
+            result = result * std::math::sqrt(1.0 - f);
+            result = result - 2 * negate * result;
+        } => ((negate * std::math::PI) + result);
+
         double asin(double x) => (std::math::PI / 2.0) - std::math::sqrt(1.0 - x) * (1.5707288 + (-0.2121144) * x + 0.0742610 * (x * x) + -0.0187293 * (x * x * x));
+        float asin(float x) => (std::math::PI_f / 2.0f) - std::math::sqrt(1.0f - x) * (1.5707288f + (-0.2121144f) * x + 0.0742610f * (x * x) + (-0.0187293f) * (x * x * x));
 
         double coshn(double d, int n) {
             double c = 1.0;
@@ -114,27 +196,52 @@ namespace std {
             }
         } => c;
 
+        float coshn(float d, int n) {
+            float c = 1.0;
+            float f = 1.0;
+            float xp = 1.0;
+            for(int i=1; i<n; i+=1) {
+                f = f * ((2 * i - 1) * (2 * i));
+                xp = xp * (d * d);
+                c += xp / f;
+            }
+        } => c;
+
         double cosh(double x) => 0.5 * (std::math::exp(x) + std::math::exp(-x));
+        float cosh(float x) => cast(float)0.5 * (std::math::exp(x) + std::math::exp(-x));
+
         double sinh(double x) => 0.5 * (std::math::exp(x) - std::math::exp(-x));
-        double tanh(double x) => (std::math::exp(2.0*x)-1) / (std::math::exp(2.0*x)+1.0);
-        double acosh(double x) => std::math::log(x+std::math::sqrt((x+1.0)*(x-1.0)));
-        double asinh(double x) => std::math::log(x+std::math::sqrt(x*x+1.0));
-        double atanh(double x) => 0.5 * (std::math::log(1.0+x) - std::math::log(1.0-x));
+        float sinh(float x) => cast(float)0.5 * (std::math::exp(x) - std::math::exp(-x));
+
+        double tanh(double x) => (std::math::exp(2.0 * x) - 1) / (std::math::exp(2.0 * x) + 1.0);
+        float tanh(float x) => (std::math::exp(2.0 * x) - 1) / (std::math::exp(2.0 * x) + 1.0);
+
+        double acosh(double x) => std::math::log(x + std::math::sqrt((x + 1.0) * (x - 1.0)));
+        float acosh(float x) => std::math::log(x + std::math::sqrt((x + 1.0) * (x - 1.0)));
+
+        double asinh(double x) => std::math::log(x + std::math::sqrt(x * x + 1.0));
+        float asinh(float x) => std::math::log(x + std::math::sqrt(x * x + 1.0));
+
+        double atanh(double x) => 0.5 * (std::math::log(1.0 + x) - std::math::log(1.0 - x));
+        float atanh(float x) => cast(float)0.5 * (std::math::log(1.0 + x) - std::math::log(1.0 - x));
 
         double erf(double x) {
             x = std::math::abs(x);
-            double t = 1.0 / (1.0 + (0.3275911*x));
-            double y = 1.0 - (((((1.061405429*t + (-1.453152027))*t) + 1.421413741)*t + (-0.284496736))*t + 0.254829592)*t*std::math::exp(-x*x);
+            double t = 1.0 / (1.0 + (0.3275911 * x));
+            double y = 1.0 - (((((1.061405429 * t + (-1.453152027)) * t) + 1.421413741) * t + (-0.284496736)) * t + 0.254829592) * t * std::math::exp(-x * x);
+        } => std::math::getSign(x) * y;
+
+        float erf(float x) {
+            x = std::math::abs(x);
+            float t = 1.0 / (1.0 + (0.3275911 * x));
+            float y = 1.0 - (((((1.061405429 * t + (-1.453152027)) * t) + 1.421413741) * t + (-0.284496736)) * t + 0.254829592) * t * std::math::exp(-x * x);
         } => std::math::getSign(x) * y;
 
         double pow(double f, double f2) {
-            double result;
-            if(f2 < 0) {
-                result = 1 / std::math::pow(f, -f2);
-            }
+            if(f2 < 0) return = 1 / std::math::pow(f, -f2);
             else if((f2 > 0.0) && (f2 < 1.0)) {
                 // TODO: Is there a possible inaccuracy?
-                result = std::math::exp(f2 * std::math::loge(f));
+                return = std::math::exp(f2 * std::math::loge(f));
             }
             else {
                 double r = 1.0;
@@ -142,18 +249,37 @@ namespace std {
                     r = r * f;
                     f2 = f2 - 1;
                 }
-                if(f2 > 0) {
-                    r = r * f * f2;
-                }
-                result = r;
+                if(f2 > 0) r = r * f * f2;
+                return = r;
             }
-        } => result;
+        }
+
+        float pow(float f, float f2) {
+            if(f2 < 0) return = 1 / std::math::pow(f, -f2);
+            else if((f2 > 0.0) && (f2 < 1.0)) {
+                // TODO: Is there a possible inaccuracy?
+                return = std::math::exp(f2 * std::math::loge(f));
+            }
+            else {
+                float r = 1.0;
+                while(f2 > 0) {
+                    r = r * f;
+                    f2 = f2 - 1;
+                }
+                if(f2 > 0) r = r * f * f2;
+                return = r;
+            }
+        }
 
         double cbrt(double d) {
-            double result;
-            if(d < 0.0) result = (-1.0 * std::math::pow(-1.0*d, 1.0/3.0));
-            else result = std::math::pow(d, 1.0/3.0);
-        } => result;
+            if(d < 0.0) return = (-1.0 * std::math::pow(-1.0 * d, 1.0 / 3.0));
+            else return = std::math::pow(d, 1.0 / 3.0);
+        }
+
+        float cbrt(float f) {
+            if(f < 0.0) return = (-1.0 * std::math::pow(-1.0 * f, 1.0 / 3.0));
+            else return = std::math::pow(f, 1.0 / 3.0);
+        }
         
         double cos(double d) {
             while(d < 0.0) d = d + (2.0 * std::math::PI);
@@ -167,6 +293,18 @@ namespace std {
             }
         } => cos;
 
+        float cos(float f) {
+            while(f < 0.0) f = f + (2.0 * std::math::PI);
+            while(f > (2.0 * std::math::PI)) f = f - (2.0 * std::math::PI);
+            float t = 1.0;
+            float cos = t;
+            for(int i=1; i<40; i+=1) {
+                float mult = (-f) * (f / ((2*i)*(2*i-1)));
+                t = t * mult;
+                cos = cos + t;
+            }
+        } => cos;
+
         char sign(double x) {
             char result = 0;
             if(x < 0) result = -1;
@@ -174,7 +312,19 @@ namespace std {
             else if(x > 0) result = 1;
         } => result;
 
+        char sign(float  x) {
+            char result = 0;
+            if(x < 0) result = -1;
+            else if(x == 0) result = 0;
+            else if(x > 0) result = 1;
+        } => result;
+
         double min(double one, double two) {
+            return = one;
+            if(two < one) return = two;
+        }
+
+        float min(float one, float two) {
             return = one;
             if(two < one) return = two;
         }
@@ -187,6 +337,11 @@ namespace std {
         double max(double one, double two) {
             return = one;
             if(two > one) return = two;
+        }
+
+        float max(float one, float two) {
+            return = one;
+            if(two < one) return = two;
         }
 
         int max(int one, int two) {
@@ -205,21 +360,43 @@ namespace std {
             }
         } => sine;
 
-        double fma(double a, double b, double c) => (a*b)+c;
+        float sin(float x) {
+            float t = x;
+            float sine = t;
+            
+            for(int i=1; i<=20; i+=1) {
+                float mult = (-x) * (x / ((2*i+1)*(2*i)));
+                t = t * mult;
+                sine = sine + t;
+            }
+        } => sine;
+
+        double fma(double a, double b, double c) => (a * b) + c;
+        float fma(float a, float b, float c) => (a * b) + c;
 
         double tan(double d) => std::math::sin(d) / std::math::cos(d);
+        float tan(float f) => std::math::sin(f) / std::math::cos(f);
 
         double mod(double x) {
-            double result = 1.0;
-            if((x % 1.0) != 0.0) {
-                result = (x % 1.0);
-            }
-        } => result;
+            return = 1.0;
+            if((x % 1.0) != 0.0) return = (x % 1.0);
+        }
+
+        float mod(float x) {
+            return = 1.0;
+            if((x % 1.0) != 0.0) return = (x % 1.0);
+        }
 
         double round(double x, int n) {
             x = x * std::math::pow(10.0, cast(double)n);
             x += 0.5;
             x = std::math::floor(x) / std::math::pow(10.0, cast(double)n);
+        } => x;
+
+        float round(float x, int n) {
+            x = x * std::math::pow(10.0f, cast(float)n);
+            x += 0.5f;
+            x = std::math::floor(x) / std::math::pow(10.0f, cast(float)n);
         } => x;
 
         bool isPrime(int number) {
