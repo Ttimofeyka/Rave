@@ -144,9 +144,7 @@ namespace std {
 
             int i = 0;
             while(i<this.length) {
-                if(this.data[i] == c) {
-                    temp.data[i] = to;
-                }
+                if(this.data[i] == c) temp.data[i] = to;
                 i += 1;
             }
         } => temp;
@@ -255,10 +253,10 @@ namespace std {
             std::cstring::dtos(n, precision, &std::string::tempBuffer);
             std::string sNumber = std::string(&std::string::tempBuffer);
         } => sNumber;
-        (inline) std::string fromDouble(double n) => std::string::fromDoubleN(n, 6);
+        (inline) std::string fromDouble(double n) => std::string::fromDoubleN(n, 8);
 
         (inline) std::string fromFloatN(float n, int precision) => std::string::fromDoubleN(cast(double)n, precision);
-        (inline) std::string fromFloat(float n) => std::string::fromFloatN(n, 6);
+        (inline) std::string fromFloat(float n) => std::string::fromFloatN(n, 7);
 
         (inline) std::string fromUNumber(long n) {
             char[36] buffer;
@@ -399,7 +397,7 @@ namespace std {
                         '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
                         '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
                     ];
-                    std::cstring::dtos(@getCurrArg(double), 6, &nBuffer);
+                    std::cstring::dtos(@getCurrArg(double), 8, &nBuffer);
                     std::sprintBuffer.appendC(cast(char*)&nBuffer);
                 };
             };
@@ -411,7 +409,7 @@ namespace std {
                     '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
                     '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
                 ];
-                std::cstring::dtos(@getCurrArg(double), 6, &nBuffer);
+                std::cstring::dtos(@getCurrArg(double), 7, &nBuffer);
                 std::sprintBuffer.appendC(cast(char*)&nBuffer);
             };
         };
@@ -526,7 +524,7 @@ namespace std {
                         '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
                         '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
                     ];
-                    std::cstring::dtos(@getCurrArg(double), 6, &nBuffer);
+                    std::cstring::dtos(@getCurrArg(double), 8, &nBuffer);
                     std::sprintBuffer.appendC(cast(char*)&nBuffer);
                 };
             };
@@ -538,7 +536,7 @@ namespace std {
                     '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
                     '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
                 ];
-                std::cstring::dtos(@getCurrArg(double), 6, &nBuffer);
+                std::cstring::dtos(@getCurrArg(double), 7, &nBuffer);
                 std::sprintBuffer.appendC(cast(char*)&nBuffer);
             };
         };

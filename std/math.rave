@@ -1,7 +1,10 @@
+import <std/vector>
+
 namespace std {
     namespace math {
         alias PI = 3.14159265358979323846;
         alias PI_f = 3.141592653589793f;
+        alias INFINITY = 10000000000000000000000; // TODO: maybe wrong?
         alias NAN = (0.0) / (0.0);
 
         (inline) double degToRad(double d) => (d * std::math::PI / 180);
@@ -216,8 +219,8 @@ namespace std {
         double sinh(double x) => 0.5 * (std::math::exp(x) - std::math::exp(-x));
         float sinh(float x) => cast(float)0.5 * (std::math::exp(x) - std::math::exp(-x));
 
-        double tanh(double x) => (std::math::exp(2.0 * x) - 1) / (std::math::exp(2.0 * x) + 1.0);
-        float tanh(float x) => (std::math::exp(2.0 * x) - 1) / (std::math::exp(2.0 * x) + 1.0);
+        double tanh(double x) => (std::math::exp(2.0 * x) - 1d) / (std::math::exp(2.0 * x) + 1.0);
+        float tanh(float x) => (std::math::exp(2.0 * x) - 1f) / (std::math::exp(2.0 * x) + 1.0);
 
         double acosh(double x) => std::math::log(x + std::math::sqrt((x + 1.0) * (x - 1.0)));
         float acosh(float x) => std::math::log(x + std::math::sqrt((x + 1.0) * (x - 1.0)));
@@ -412,6 +415,8 @@ namespace std {
                 }
             }
         } => result;
+        
+        double sigmoid(double x) => 1d / (1d + std::math::exp(-x));
     }
 
     struct matrix<T> {

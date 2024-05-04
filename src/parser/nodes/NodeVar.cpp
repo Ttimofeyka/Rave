@@ -103,7 +103,9 @@ LLVMValueRef NodeVar::generate() {
     }
 
     if(instanceof<TypeStruct>(this->type)) {
-        while(generator->toReplace.find(((TypeStruct*)this->type)->name) != generator->toReplace.end()) this->type = generator->toReplace[((TypeStruct*)this->type)->name];
+        while(instanceof<TypeStruct>(this->type) &&
+              generator->toReplace.find(((TypeStruct*)this->type)->name) != generator->toReplace.end()
+        ) this->type = generator->toReplace[((TypeStruct*)this->type)->name];
     }
 
     linkName = this->name;
@@ -181,6 +183,7 @@ LLVMValueRef NodeVar::generate() {
             else if(this->mods[i].name == "nozeroinit") noZeroInit = true;
             else if(mods[i].name == "noOperators") isNoOperators = true;
         }
+
         currScope->localVars[this->name] = this;
 
         if(instanceof<TypeAuto>(this->type)) {

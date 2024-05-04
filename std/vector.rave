@@ -44,7 +44,7 @@ namespace std {
         (inline) void operator[]=(std::vector<T>* v, int index, T value) {v.data[index] = value;}
 
         (inline) void swap(int first, int second) {
-            T temp = this.data[first];
+            (noOperators) T temp = this.data[first];
             this.data[first] = this.data[second];
             this.data[second] = temp;
         }
