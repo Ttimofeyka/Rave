@@ -1,0 +1,34 @@
+namespace std {
+    struct matrix<T> {
+        T* data;
+        int rows;
+        int columns;
+
+        std::matrix<T> this(int rows, int columns) {
+            std::matrix<T> this;
+            this.data = cast(T*)std::malloc(sizeof(T) * rows * columns);
+            for(int i=0; i<(rows * columns); i++) this.data[i] = cast(T)0;
+            this.rows = rows;
+            this.columns = columns;
+        } => this;
+
+        (inline) void set(int r, int c, T value) {
+            if((r >= 0) && (r < this.rows) && (c >= 0) && (c < this.columns)) this.data[(r+1) * (c+1)] = value;
+        }
+
+        (inline) T get(int r, int c) {
+            if((r >= 0) && (r < this.rows) && (c >= 0) && (c < this.columns)) return = this.data[(r+1) * (c+1)];
+        }
+
+        void filter(T(T) fn) {
+            for(int i=0; i<(this.rows * this.columns); i++) this.data[i] = fn(this.data[i]);
+        }
+
+        void ~this {
+            if(this.data != cast(T*)null) {
+                std::free(cast(void*)this.data);
+                this.data = cast(T*)null;
+            }
+        }
+    }
+}
