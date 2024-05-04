@@ -144,12 +144,12 @@ void Compiler::compile(std::string file) {
         else if(outType.find("x86_64") != std::string::npos || outType.find("win64") != std::string::npos) ravePlatform = "X86_64";
         else if(outType.find("x86") != std::string::npos) ravePlatform = "X86";
         else if(outType.find("arm") != std::string::npos) ravePlatform = "ARM";
-        else if(outType.find("mips") != std::string::npos) ravePlatform = "MIPS";
         else if(outType.find("mips64") != std::string::npos) ravePlatform = "MIPS64";
-        else if(outType.find("powerpc") != std::string::npos) ravePlatform = "POWERPC";
+        else if(outType.find("mips") != std::string::npos) ravePlatform = "MIPS";
         else if(outType.find("powerpc64") != std::string::npos) ravePlatform = "POWERPC64";
-        else if(outType.find("sparc") != std::string::npos) ravePlatform = "SPARC";
+        else if(outType.find("powerpc") != std::string::npos) ravePlatform = "POWERPC";
         else if(outType.find("sparcv9") != std::string::npos) ravePlatform = "SPARCV9";
+        else if(outType.find("sparc") != std::string::npos) ravePlatform = "SPARC";
         else if(outType.find("s390x") != std::string::npos) ravePlatform = "S390X";
         else if(outType.find("wasm") != std::string::npos) ravePlatform = "WASM";
         else if(outType.find("avr") != std::string::npos) {
@@ -178,6 +178,7 @@ void Compiler::compile(std::string file) {
         ravePlatform = RAVE_PLATFORM;
         raveOs = RAVE_OS;
     }
+
     content = "alias __RAVE_PLATFORM = \""+ravePlatform+"\"; ";
     content = "alias __RAVE_OS = \""+raveOs+"\"; "+content;
     content = "alias __RAVE_OPTIMIZATION_LEVEL = "+std::to_string(settings.optLevel)+";"+content;
