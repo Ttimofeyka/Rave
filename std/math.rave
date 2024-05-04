@@ -417,6 +417,10 @@ namespace std {
         } => result;
         
         double sigmoid(double x) => 1d / (1d + std::math::exp(-x));
+        float sigmoid(float x) => cast(float)1 / (1f + std::math::exp(-x));
+
+        double sigmoidDerivative(double x) => std::math::exp(-x) / std::math::pow(1d + std::math::exp(-x), 2d);
+        float sigmoidDerivative(float x) => std::math::exp(-x) / std::math::pow(1f + std::math::exp(-x), 2f);
     }
 
     struct matrix<T> {
