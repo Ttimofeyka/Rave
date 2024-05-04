@@ -146,17 +146,26 @@ namespace std {
         char* dtos(double number, int precision, char* buffer) {
             long lPart;
             int i;
+            int tI;
             int len;
             char[24] temp;
             int decimals;
 
+            bool isNegative = false;
+            if(number < 0.0d) {
+                isNegative = true;
+                number = -number;
+                buffer[0] = '-';
+                i += 1;
+            }
+
             lPart = cast(long)number;
             std::cstring::ltos(lPart, &temp);
-            i = 0;
             len = std::cstring::strlen(&temp);
-            while(i < len) {
-                buffer[i] = temp[i];
+            while(tI < len) {
+                buffer[i] = temp[tI];
                 i += 1;
+                tI += 1;
             }
             number = number - cast(double)lPart;
             buffer[i] = '.';
