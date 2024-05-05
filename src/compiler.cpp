@@ -299,7 +299,7 @@ void Compiler::compile(std::string file) {
     LLVMSetDataLayout(generator->lModule, targetDataStr);
     LLVMDisposeMessage(targetDataStr);
 
-    LLVMTargetMachineEmitToFile(machine, generator->lModule, (std::regex_replace(file, std::regex(".rave"), ".o")).c_str(), LLVMObjectFile, &errors);
+    LLVMTargetMachineEmitToFile(machine, generator->lModule, (std::regex_replace(file, std::regex("\\.rave"), ".o")).c_str(), LLVMObjectFile, &errors);
     if(errors != nullptr) {
         Compiler::error("target machine emit to file: "+std::string(errors));
         std::exit(1);
@@ -334,7 +334,7 @@ void Compiler::compileAll() {
                 char* err;
                 LLVMPrintModuleToFile(generator->lModule, (Compiler::files[i]+".ll").c_str(), &err);
             }
-            std::string compiledFile = std::regex_replace(Compiler::files[i], std::regex(".rave"), ".o");
+            std::string compiledFile = std::regex_replace(Compiler::files[i], std::regex("\\.rave"), ".o");
             Compiler::linkString += compiledFile+" ";
             if(!Compiler::settings.saveObjectFiles) toRemove.push_back(compiledFile);
         }
@@ -361,8 +361,8 @@ void Compiler::compileAll() {
             #ifdef __linux__
             if(
                 Compiler::toImport[i].find("Rave/std/") != std::string::npos && !Compiler::settings.recompileStd &&
-                access(std::regex_replace(Compiler::toImport[i], std::regex(".rave"), std::string(".")+Compiler::outType+".o").c_str(), 0) != -1
-            ) linkString += std::regex_replace(Compiler::toImport[i], std::regex(".rave"), std::string(".")+Compiler::outType+".o")+" ";
+                access(std::regex_replace(Compiler::toImport[i], std::regex("\\.rave"), std::string(".")+Compiler::outType+".o").c_str(), 0) != -1
+            ) linkString += std::regex_replace(Compiler::toImport[i], std::regex("\\.rave"), std::string(".")+Compiler::outType+".o")+" ";
             else {
             #endif
                 compile(Compiler::toImport[i]);
@@ -370,7 +370,7 @@ void Compiler::compileAll() {
                     char* err;
                     LLVMPrintModuleToFile(generator->lModule, (Compiler::toImport[i]+".ll").c_str(), &err);
                 }
-                std::string compiledFile = std::regex_replace(Compiler::toImport[i], std::regex(".rave"), ".o");
+                std::string compiledFile = std::regex_replace(Compiler::toImport[i], std::regex("\\.rave"), ".o");
                 linkString += compiledFile+" ";
                 #ifndef __linux__
                 toRemove.push_back(compiledFile);
