@@ -358,11 +358,13 @@ void Compiler::compileAll() {
                 Compiler::linkString += Compiler::toImport[i]+" ";
         }
         else {
+            #ifdef __linux__
             if(
                 Compiler::toImport[i].find("Rave/std/") != std::string::npos && !Compiler::settings.recompileStd &&
                 access(std::regex_replace(Compiler::toImport[i], std::regex(".rave"), std::string(".")+Compiler::outType+".o").c_str(), 0) != -1
             ) linkString += std::regex_replace(Compiler::toImport[i], std::regex(".rave"), std::string(".")+Compiler::outType+".o")+" ";
             else {
+            #endif
                 compile(Compiler::toImport[i]);
                 if(Compiler::settings.emitLLVM) {
                     char* err;
@@ -370,6 +372,9 @@ void Compiler::compileAll() {
                 }
                 std::string compiledFile = std::regex_replace(Compiler::toImport[i], std::regex(".rave"), ".o");
                 linkString += compiledFile+" ";
+                #ifndef __linux__
+                toRemove.push_back(compiledFile);
+                #else
                 if(Compiler::toImport[i].find("Rave/std/") == std::string::npos) toRemove.push_back(compiledFile);
                 else {
                     std::ifstream src(compiledFile, std::ios::binary);
@@ -377,6 +382,7 @@ void Compiler::compileAll() {
                     dst << src.rdbuf();
                     toRemove.push_back(compiledFile);
                 }
+                #endif
             }
         }
     }
