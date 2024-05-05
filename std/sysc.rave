@@ -69,20 +69,7 @@ the result of a call with the same parameters and the same number will be the sa
 
     @if(__RAVE_PLATFORM == "X86") {
         namespace std {
-            (vararg) void* syscall(int number) {
-                bool fix;
-	            asm(
-                "
-	                movl %ebx, %eax
-	                movl %ecx, %ebx
-	                movl %edx, %ecx
-	                movl %esi, %edx
-	                movl %ebp, %edi
-	                int $0x80
-
-	            	movl %eax, \"_RaveGstd::__syscResult\"
-                ");
-            } => cast(void*)std::__syscResult;
+            extern(linkname: "syscall", vararg) void* syscall(int number);
         }
 
         namespace std {
