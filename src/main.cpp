@@ -22,6 +22,7 @@ genSettings analyzeArguments(std::vector<std::string>& arguments) {
         else if(arguments[i] == "-np" || arguments[i] == "--noPrelude") settings.noPrelude = true;
         else if(arguments[i] == "-eml" || arguments[i] == "--emitLLVM" || arguments[i] == "-emit-llvm") settings.emitLLVM = true;
         else if(arguments[i] == "-l" || arguments[i] == "--link") {settings.linkParams += "-l"+arguments[i+1]+" "; i += 1;}
+        else if(arguments[i] == "-rcs" || arguments[i] == "--recompileStd") settings.recompileStd = true;
         else if(arguments[i] == "-c") {settings.onlyObject = true; settings.isStatic = true;}
         else if(arguments[i] == "-ne" || arguments[i] == "--noEntry") settings.noEntry = true;
         else if(arguments[i] == "-ns" || arguments[i] == "--noStd") settings.noStd = true;

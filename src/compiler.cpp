@@ -358,14 +358,26 @@ void Compiler::compileAll() {
                 Compiler::linkString += Compiler::toImport[i]+" ";
         }
         else {
-            compile(Compiler::toImport[i]);
-            if(Compiler::settings.emitLLVM) {
-                char* err;
-                LLVMPrintModuleToFile(generator->lModule, (Compiler::toImport[i]+".ll").c_str(), &err);
+            if(
+                Compiler::toImport[i].find("Rave/std/") != std::string::npos && !Compiler::settings.recompileStd &&
+                access(std::regex_replace(Compiler::toImport[i], std::regex(".rave"), std::string(".")+Compiler::outType+".o").c_str(), 0) != -1
+            ) linkString += std::regex_replace(Compiler::toImport[i], std::regex(".rave"), std::string(".")+Compiler::outType+".o")+" ";
+            else {
+                compile(Compiler::toImport[i]);
+                if(Compiler::settings.emitLLVM) {
+                    char* err;
+                    LLVMPrintModuleToFile(generator->lModule, (Compiler::toImport[i]+".ll").c_str(), &err);
+                }
+                std::string compiledFile = std::regex_replace(Compiler::toImport[i], std::regex(".rave"), ".o");
+                linkString += compiledFile+" ";
+                if(Compiler::toImport[i].find("Rave/std/") == std::string::npos) toRemove.push_back(compiledFile);
+                else {
+                    std::ifstream src(compiledFile, std::ios::binary);
+                    std::ofstream dst(std::regex_replace(compiledFile, std::regex("\\.o"), std::string(".")+Compiler::outType+".o"));
+                    dst << src.rdbuf();
+                    toRemove.push_back(compiledFile);
+                }
             }
-            std::string compiledFile = std::regex_replace(Compiler::toImport[i], std::regex(".rave"), ".o");
-            linkString += compiledFile+" ";
-            toRemove.push_back(compiledFile);
         }
     }
 

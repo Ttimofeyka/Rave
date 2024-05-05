@@ -69,6 +69,7 @@ typedef struct genSettings {
     bool disableWarnings = false;
     bool saveObjectFiles = false;
     bool isStatic = false;
+    bool recompileStd = false;
     std::string linkParams = "";
 
     #if defined(__linux__)
