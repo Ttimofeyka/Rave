@@ -318,11 +318,12 @@ LLVMValueRef NodeCall::generate() {
         }
         else if(instanceof<NodeCall>(getFunc->base)) {
             NodeCall* ncall = (NodeCall*)getFunc->base;
+            LLVMValueRef result = ncall->generate();
 
             if(currScope->localVars.find("__RAVE_NG_NGC") != currScope->localVars.end() && currScope->localVars["__RAVE_NG_NGC"] != nullptr) delete currScope->localVars["__RAVE_NG_NGC"];
 
             // Creating a temp variable
-            currScope->localScope["__RAVE_NG_NGC"] = ncall->generate();
+            currScope->localScope["__RAVE_NG_NGC"] = result;
             currScope->localVars["__RAVE_NG_NGC"] = new NodeVar(
                 "__RAVE_NG_NGC", nullptr, false, false, false, {},
                 this->loc, lTypeToType(LLVMTypeOf(currScope->localScope["__RAVE_NG_NGC"]))
@@ -330,7 +331,16 @@ LLVMValueRef NodeCall::generate() {
 
             NodeCall* ncall2 = new NodeCall(this->loc, new NodeGet(new NodeIden("__RAVE_NG_NGC", this->loc), getFunc->field, getFunc->isMustBePtr, this->loc), this->args);
             LLVMValueRef answer = ncall2->generate();
-            //(new NodeUnary(this->loc, TokType::Destructor, new NodeIden("__RAVE_NG_NGC", this->loc)))->generate();
+
+            if(LLVMGetTypeKind(LLVMTypeOf(result)) == LLVMStructTypeKind) {
+                std::string structName = LLVMGetStructName(LLVMTypeOf(result));
+                if(AST::structTable.find(structName) != AST::structTable.end()) {
+                    if(AST::structTable[structName]->destructor != nullptr) {
+                        std::vector<LLVMValueRef> cArgs = std::vector<LLVMValueRef>({LLVMGetArgOperand(answer, 0)});
+                        LLVM::call(generator->functions[AST::structTable[structName]->destructor->name], cArgs.data(), 1, ((instanceof<TypeVoid>(AST::structTable[structName]->destructor->type) ? "" : "NodeCall_destructor")));
+                    }
+                }
+            }
             return answer;
         }
         else if(instanceof<NodeGet>(getFunc->base)) {

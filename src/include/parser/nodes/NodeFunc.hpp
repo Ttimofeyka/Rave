@@ -34,6 +34,7 @@ public:
     std::vector<NodeRet*> rets;
     std::vector<RetGenStmt> genRets;
     std::vector<DeclarMod> mods;
+
     long loc;
     Type* type;
 

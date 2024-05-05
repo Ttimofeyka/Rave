@@ -47,8 +47,10 @@ import <std/io> <std/error>
     } => result;
 
     void ~this {
-        std::free(cast(void*)this.pointer);
-        this.pointer = null;
+        if(this.pointer != null) {
+            std::free(cast(void*)this.pointer);
+            this.pointer = null;
+        }
         this.size = 0;
     }
 }

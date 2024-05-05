@@ -97,8 +97,10 @@ namespace std {
         } => this;
 
         void ~this {
-            std::free(this.data);
-            this.data = null;
+            if(this.data != null) {
+                std::free(this.data);
+                this.data = null;
+            }
         }
 
         void setValue(char* a) {

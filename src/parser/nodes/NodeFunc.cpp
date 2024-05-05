@@ -20,6 +20,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeUnary.hpp"
 #include "../../include/parser/nodes/NodeFor.hpp"
 #include "../../include/parser/nodes/NodeNull.hpp"
+#include "../../include/parser/nodes/NodeDone.hpp"
 #include "../../include/llvm-c/Comdat.h"
 #include "../../include/llvm-c/Analysis.h"
 
@@ -262,12 +263,8 @@ LLVMValueRef NodeFunc::generate() {
 
         LLVMPositionBuilderAtEnd(generator->builder, this->exitBlock);
 
-        if(!instanceof<TypeVoid>(this->type)) {
-            LLVMBuildRet(generator->builder, currScope->get("return", this->loc));
-        }
-        else {
-            LLVMBuildRetVoid(generator->builder);
-        }
+        if(!instanceof<TypeVoid>(this->type)) LLVMBuildRet(generator->builder, currScope->get("return", this->loc));
+        else LLVMBuildRetVoid(generator->builder);
 
         generator->builder = nullptr;
         currScope = nullptr;
