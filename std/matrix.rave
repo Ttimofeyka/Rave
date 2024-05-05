@@ -1,3 +1,5 @@
+import <std/io>
+
 namespace std {
     struct matrix<T> {
         T* data;
@@ -13,11 +15,19 @@ namespace std {
         } => this;
 
         (inline) void set(int r, int c, T value) {
-            if((r >= 0) && (r < this.rows) && (c >= 0) && (c < this.columns)) this.data[(r+1) * (c+1)] = value;
+            if((r >= 0) && (r < this.rows) && (c >= 0) && (c < this.columns)) this.data[(c*this.columns) + r] = value;
         }
 
         (inline) T get(int r, int c) {
-            if((r >= 0) && (r < this.rows) && (c >= 0) && (c < this.columns)) return = this.data[(r+1) * (c+1)];
+            if((r >= 0) && (r < this.rows) && (c >= 0) && (c < this.columns)) return = this.data[(c*this.columns) + r];
+        }
+
+        void add(std::matrix<T> mat) {
+            if((this.rows == mat.rows) && (this.columns == mat.columns) && (mat.data != null)) {
+                for(int y=0; y<this.rows; y++) {
+                    for(int x=0; x<this.columns; x++) this.set(y, x, this.get(y, x) + mat.get(y, x));
+                }
+            }
         }
 
         void filter(T(T) fn) {

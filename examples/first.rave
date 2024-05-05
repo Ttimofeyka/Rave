@@ -1,5 +1,30 @@
 import <std/io> <std/matrix> <std/math>
 
 void main {
-    
+    auto mat = std::matrix<float>(2, 2);
+    auto mat2 = std::matrix<float>(2, 2);
+
+    mat.set(0, 0, 10f);
+    mat.set(0, 1, 5f);
+    mat.set(1, 0, 2.5f);
+    mat.set(1, 1, 1f);
+
+    for(int y=0; y<mat.rows; y++) {
+        for(int x=0; x<mat.columns; x++) std::print(mat.get(y, x), " ");
+        std::println();
+    }
+
+    std::println("\nAfter:\n");
+
+    mat2.set(0, 0, 0f);
+    mat2.set(0, 1, 5f);
+    mat2.set(1, 0, 7.5f);
+    mat2.set(1, 1, 9f);
+
+    mat.add(mat2);
+
+    for(int y=0; y<mat.rows; y++) {
+        for(int x=0; x<mat.columns; x++) std::print(mat.get(y, x), " ");
+        std::println();
+    }
 }

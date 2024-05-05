@@ -422,7 +422,7 @@ Node* Parser::parseAtom(std::string f) {
     this->next();
     int size = this->peek()->value.size();
     if(t->type == TokType::Number) {
-        if(size > 0) {
+        if(size > 0 && this->peek()->type == TokType::Identifier) {
             if(this->peek()->value[0] == 'u') {
                 // Unsigned-type
                 this->next();
@@ -463,27 +463,29 @@ Node* Parser::parseAtom(std::string f) {
         return new NodeInt(BigInt(t->value));
     }
     if(t->type == TokType::FloatNumber) {
-        if(size > 0 && std::tolower(this->peek()->value[0]) == 'd') {
-            // Double-type
-            this->next();
-            return new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Double));
-        }
-        else if(this->peek()->type == TokType::Identifier && this->peek()->value == "f") {
-            // Float-type
-            this->next();
-            NodeFloat* nfloat = new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Float));
-            nfloat->isMustBeFloat = true;
-            return nfloat;
-        }
-        if(this->peek()->type == TokType::Identifier && this->peek()->value == "h") {
-            // Half-type
-            this->next();
-            return new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Half));
-        }
-        else if(this->peek()->type == TokType::Identifier && this->peek()->value == "bh") {
-            // Bhalf-type
-            this->next();
-            return new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Bhalf));
+        if(size > 0 && this->peek()->type == TokType::Identifier) {
+            if(this->peek()->value == "d") {
+                // Double-type
+                this->next();
+                return new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Double));
+            }
+            else if(this->peek()->value == "f") {
+                // Float-type
+                this->next();
+                NodeFloat* nfloat = new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Float));
+                nfloat->isMustBeFloat = true;
+                return nfloat;
+            }
+            if(this->peek()->value == "h") {
+                // Half-type
+                this->next();
+                return new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Half));
+            }
+            else if(this->peek()->value == "bh") {
+                // Bhalf-type
+                this->next();
+                return new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Bhalf));
+            }
         }
         return new NodeFloat(std::stod(t->value));
     }
