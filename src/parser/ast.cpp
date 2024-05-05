@@ -145,8 +145,17 @@ std::string typeToString(Type* arg) {
         return buffer;
     }
     else if(instanceof<TypeStruct>(arg)) {
-        if(((TypeStruct*)arg)->name.find('<') == std::string::npos) return "s-"+((TypeStruct*)arg)->name;
-        else return "s-"+((TypeStruct*)arg)->name.substr(0,((TypeStruct*)arg)->name.find('<'));
+        TypeStruct* ts = (TypeStruct*)arg;
+        Type* t = ts;
+        while(instanceof<TypeStruct>(t) && generator->toReplace.find(t->toString()) != generator->toReplace.end()) t = generator->toReplace[ts->toString()]->copy();
+        if(!instanceof<TypeStruct>(t)) return typeToString(t);
+        else ts = (TypeStruct*)t;
+
+        for(int i=0; i<ts->types.size(); i++) {
+            while(generator->toReplace.find(ts->types[i]->toString()) != generator->toReplace.end()) ts->types[i] = generator->toReplace[ts->types[i]->toString()]->copy();
+        }
+        if(ts->types.size() > 0) ts->updateByTypes();
+        return "s-"+ts->toString();
     }
     else if(instanceof<TypeFunc>(arg)) return "func";
     else if(instanceof<TypeConst>(arg)) {

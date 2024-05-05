@@ -15,11 +15,11 @@ namespace std {
         } => this;
 
         (inline) void set(int r, int c, T value) {
-            if((r >= 0) && (r < this.rows) && (c >= 0) && (c < this.columns)) this.data[(c*this.columns) + r] = value;
+            if((r >= 0) && (r < this.rows) && (c >= 0) && (c < this.columns)) this.data[(c * this.columns) + r] = value;
         }
 
         (inline) T get(int r, int c) {
-            if((r >= 0) && (r < this.rows) && (c >= 0) && (c < this.columns)) return = this.data[(c*this.columns) + r];
+            if((r >= 0) && (r < this.rows) && (c >= 0) && (c < this.columns)) return = this.data[(c * this.columns) + r];
         }
 
         void add(std::matrix<T> mat) {

@@ -1,3 +1,5 @@
+import <std/vector>
+
 namespace std {
     namespace math {
         alias PI = 3.14159265358979323846;
@@ -419,5 +421,40 @@ namespace std {
 
         double sigmoidDerivative(double x) => std::math::exp(-x) / std::math::pow(1d + std::math::exp(-x), 2d);
         float sigmoidDerivative(float x) => std::math::exp(-x) / std::math::pow(1f + std::math::exp(-x), 2f);
+
+        void softmax(double* x, int size) {
+            double maxValue = x[0];
+            double sum;
+
+            for(int i=1; i<size; i++) {
+                if(x[i] > maxValue) maxValue = x[i];
+            }
+
+            for(int i=0; i<size; i++) {
+                x[i] = std::math::exp(x[i] - maxValue);
+                sum += x[i];
+            }
+
+            for(int i=0; i<size; i++) x[i] /= sum;
+        }
+
+        void softmax(float* x, int size) {
+            float maxValue = x[0];
+            float sum;
+
+            for(int i=1; i<size; i++) {
+                if(x[i] > maxValue) maxValue = x[i];
+            }
+
+            for(int i=0; i<size; i++) {
+                x[i] = std::math::exp(x[i] - maxValue);
+                sum += x[i];
+            }
+
+            for(int i=0; i<size; i++) x[i] /= sum;
+        }
+
+        void softmax(std::vector<double> dvec) {std::math::softmax(dvec.data, dvec.length);}
+        void softmax(std::vector<float> fvec) {std::math::softmax(fvec.data, fvec.length);}
     }
 }
