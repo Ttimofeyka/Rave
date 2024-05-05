@@ -330,7 +330,7 @@ LLVMValueRef NodeCall::generate() {
 
             NodeCall* ncall2 = new NodeCall(this->loc, new NodeGet(new NodeIden("__RAVE_NG_NGC", this->loc), getFunc->field, getFunc->isMustBePtr, this->loc), this->args);
             LLVMValueRef answer = ncall2->generate();
-            (new NodeUnary(this->loc, TokType::Destructor, new NodeIden("__RAVE_NG_NGC", this->loc)))->generate();
+            //(new NodeUnary(this->loc, TokType::Destructor, new NodeIden("__RAVE_NG_NGC", this->loc)))->generate();
             return answer;
         }
         else if(instanceof<NodeGet>(getFunc->base)) {
