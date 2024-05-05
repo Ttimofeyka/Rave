@@ -30,6 +30,25 @@ namespace std {
             }
         }
 
+        void sub(std::matrix<T> mat) {
+            if((this.rows == mat.rows) && (this.columns == mat.columns) && (mat.data != null)) {
+                for(int y=0; y<this.rows; y++) {
+                    for(int x=0; x<this.columns; x++) this.set(y, x, this.get(y, x) - mat.get(y, x));
+                }
+            }
+        }
+
+        std::matrix<T> multiply(std::matrix<T> mat) {
+            if(mat.data != null) {
+                return = std::matrix<T>(this.rows, mat.columns);
+                for(int y=0; y<this.rows; y++) {
+                    for(int x=0; x<mat.columns; x++) {
+                        for(int k=0; k<mat.rows; k++) return.set(y, x, return.get(y, x) + (this.get(y, k) * mat.get(k, x)));
+                    }
+                }
+            }
+        }
+
         void filter(T(T) fn) {
             for(int i=0; i<(this.rows * this.columns); i++) this.data[i] = fn(this.data[i]);
         }
