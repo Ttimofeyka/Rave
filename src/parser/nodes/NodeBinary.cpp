@@ -203,6 +203,7 @@ std::pair<std::string, std::string> NodeBinary::isOperatorOverload(LLVMValueRef 
 
 Node* NodeBinary::copy() {return new NodeBinary(this->op, this->first->copy(), this->second->copy(), this->loc, this->isStatic);}
 void NodeBinary::check() {this->isChecked = true;}
+
 Node* NodeBinary::comptime() {
     Node* first = this->first;
     Node* second = this->second;
@@ -224,6 +225,18 @@ Node* NodeBinary::comptime() {
             return new NodeBool(false);
         case TokType::And: return new NodeBool(((NodeBool*)first->comptime())->value && ((NodeBool*)second->comptime())->value);
         case TokType::Or: return new NodeBool(((NodeBool*)first->comptime())->value || ((NodeBool*)second->comptime())->value);
+        case TokType::More:
+            if(instanceof<NodeInt>(first)) return new NodeBool(((NodeInt*)first)->value > ((NodeInt*)second)->value);
+            else return new NodeBool(((NodeFloat*)first)->value > ((NodeFloat*)second)->value);
+        case TokType::Less:
+            if(instanceof<NodeInt>(first)) return new NodeBool(((NodeInt*)first)->value < ((NodeInt*)second)->value);
+            else return new NodeBool(((NodeFloat*)first)->value < ((NodeFloat*)second)->value);
+        case TokType::MoreEqual:
+            if(instanceof<NodeInt>(first)) return new NodeBool(((NodeInt*)first)->value >= ((NodeInt*)second)->value);
+            else return new NodeBool(((NodeFloat*)first)->value >= ((NodeFloat*)second)->value);
+        case TokType::LessEqual:
+            if(instanceof<NodeInt>(first)) return new NodeBool(((NodeInt*)first)->value <= ((NodeInt*)second)->value);
+            else return new NodeBool(((NodeFloat*)first)->value <= ((NodeFloat*)second)->value);
         default: return new NodeBool(false);
     }
 }
