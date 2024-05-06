@@ -1,5 +1,5 @@
-import <std/io> <std/matrix> <std/math>
+import <std/io> <std/random> <std/matrix> <std/math>
 
 void main {
-    
+    std::println(cast(int)std::randomChar(-5, 5));
 }

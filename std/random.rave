@@ -6,6 +6,12 @@ import <std/time> <std/sysc>
     }
 
     namespace std {
+        char randomChar(char min, char max) {
+            char buffer;
+            std::__getrandom(&buffer, 1, 2);
+            if((buffer < min) && (buffer < 0)) buffer = -buffer;
+        } => (buffer % ((max+1)-min))+min;
+
         short randomShort(short min, short max) {
             char[2] buffer;
             std::__getrandom(&buffer, 2, 2);
