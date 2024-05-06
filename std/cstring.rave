@@ -61,15 +61,11 @@ namespace std {
             if(str[return] == '\0') return = -1;
         }
 
-        int ltosSl;
-        char[20] ltosBuffer;
         char* ltos(long number, char* endBuffer) {
-            std::thread::spinlock::lock(&std::cstring::ltosSl);
-            for(int i=0; i<20; i++) std::cstring::ltosBuffer[i] = '\0';
+            char[20] ltosBuffer;
 
             if(number == 0) {
                 endBuffer[0] = '0';
-                std::thread::spinlock::unlock(&std::cstring::ltosSl);
                 @return(endBuffer);
             }
 
@@ -81,13 +77,13 @@ namespace std {
 
             int index = 0;
             while(number > 0) {
-                std::cstring::ltosBuffer[index] = ((number % cast(long)10) + '0');
+                ltosBuffer[index] = ((number % cast(long)10) + '0');
                 number = number / 10;
                 index += 1;
             }
 
             if(isNegative) {
-                std::cstring::ltosBuffer[index] = '-';
+                ltosBuffer[index] = '-';
                 index += 1;
             }
 
@@ -95,22 +91,16 @@ namespace std {
 
             int endI = 0;
             for(int i=index-1; i>=0; i--) {
-                endBuffer[endI] = std::cstring::ltosBuffer[i];
+                endBuffer[endI] = ltosBuffer[i];
                 endI += 1;
             }
-
-            std::thread::spinlock::unlock(&std::cstring::ltosSl);
         } => endBuffer;
 
-        int ctosSl;
-        char[20] ctosBuffer;
         char* ctos(cent number, char* endBuffer) {
-            std::thread::spinlock::lock(&std::cstring::ltosSl);
-            for(int i=0; i<20; i++) std::cstring::ctosBuffer[i] = '\0';
+            char[20] ctosBuffer;
 
             if(number == 0) {
                 endBuffer[0] = '0';
-                std::thread::spinlock::unlock(&std::cstring::ltosSl);
                 @return(endBuffer);
             }
 
@@ -122,13 +112,13 @@ namespace std {
 
             int index = 0;
             while(number > 0) {
-                std::cstring::ctosBuffer[index] = ((number % cast(cent)10) + '0');
+                ctosBuffer[index] = ((number % cast(cent)10) + '0');
                 number = number / 10;
                 index += 1;
             }
 
             if(isNegative) {
-                std::cstring::ctosBuffer[index] = '-';
+                ctosBuffer[index] = '-';
                 index += 1;
             }
 
@@ -136,11 +126,9 @@ namespace std {
 
             int endI = 0;
             for(int i=index-1; i>=0; i--) {
-                endBuffer[endI] = std::cstring::ctosBuffer[i];
+                endBuffer[endI] = ctosBuffer[i];
                 endI += 1;
             }
-
-            std::thread::spinlock::unlock(&std::cstring::ctosSl);
         } => endBuffer;
         
         char* dtos(double number, int precision, char* buffer) {
