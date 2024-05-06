@@ -6,8 +6,9 @@
         void* reg_save_area;
     }
 }
-@if((__RAVE_PLATFORM == "X86") || (__RAVE_PLATFORM == "POWERPC64") ||
-    (__RAVE_PLATFORM == "MIPS") || (__RAVE_PLATFORM == "MIPS64")
+@if(
+    (__RAVE_PLATFORM == "X86") || (__RAVE_PLATFORM == "POWERPC64") || (__RAVE_PLATFORM == "MIPS") || (__RAVE_PLATFORM == "MIPS64") |
+    (__RAVE_PLATFORM == "AVR") || (__RAVE_PLATFORM == "WASM") || (__RAVE_PLATFORM == "UNKNOWN")
 ) {
     struct va_list {
         void* __ap;
@@ -42,12 +43,6 @@
         char* _f;
     }
 }
-
-@if((__RAVE_PLATFORM == "AVR") || (__RAVE_PLATFORM == "WASM") || (__RAVE_PLATFORM == "UNKNOWN")) {
-    struct va_list {
-        void* v;
-    }
-};
 
 extern(linkname: "llvm.va_start") void __builtin_va_start(void* va);
 extern(linkname: "llvm.va_end") void __builtin_va_end(void* va);

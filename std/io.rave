@@ -280,6 +280,11 @@ namespace std {
             }
         }
 
+        void ~this {
+            if(this._file != null) this.close();
+            this._file = null;
+        }
+
         void rename(char* to) {
             std::file::rename(this.name, to);
             this.name = to;
