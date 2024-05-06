@@ -5,6 +5,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 #include <iostream>
+#include <fstream>
+#include <regex>
 #include "./include/lexer/lexer.hpp"
 #include "./include/parser/parser.hpp"
 #include "./include/compiler.hpp"
@@ -44,11 +46,37 @@ genSettings analyzeArguments(std::vector<std::string>& arguments) {
 }
 
 int main(int argc, char** argv) {
+    std::vector<std::string> arguments;
     exePath = getExePath();
     Compiler::debugMode = false;
-    std::vector<std::string> arguments;
+
     for(int i=1; i<argc; i+=1) arguments.push_back(std::string(argv[i]));
     options = analyzeArguments(arguments);
+
+    if(files.size() == 0) {
+        if(options.recompileStd) {
+            #ifdef __linux__
+            Compiler::initialize(outFile, outType, options, {""});
+            auto stdFiles = filesInDirectory("std");
+            for(int i=0; i<stdFiles.size(); i++) {
+                if(stdFiles[i].find(".ll") == std::string::npos && stdFiles[i].find(".rave") != std::string::npos) {
+                    std::string compiledFile = std::regex_replace("./std/"+stdFiles[i], std::regex("\\.rave"), ".o");
+                    Compiler::compile("./std/"+stdFiles[i]);
+                    std::ifstream src(compiledFile, std::ios::binary);
+                    std::ofstream dst(std::regex_replace(compiledFile, std::regex("\\.o"), std::string(".") + Compiler::outType + ".o"));
+                    dst << src.rdbuf();
+                }
+            }
+            std::cout << "Time spent by lexer: " << std::to_string(Compiler::lexTime) << "ms\nTime spent by parser: " << std::to_string(Compiler::parseTime) << "ms\nTime spent by generator: " << std::to_string(Compiler::genTime) << "ms" << std::endl;
+            #else
+            // Platform without standart library caching support
+            std::cout << "\033[0;33mWarning: your host platform does not support caching of the standard library.\033[0;0m" << std::endl;
+            #endif
+            return 0;
+        }
+        std::cout << "\033[0;31mError: no files to compile!\033[0;0m" << std::endl;
+        std::exit(1);
+    }
 
     Compiler::initialize(outFile, outType, options, files);
     Compiler::compileAll();

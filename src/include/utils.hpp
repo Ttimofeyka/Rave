@@ -26,8 +26,62 @@ static std::string namespacesToString(std::vector<std::string> namespacesNames, 
 
 static bool isBasicType(std::string s) {
     return s == "char" || s == "uchar" || s == "short" || s == "ushort" || s == "int" ||s == "uint" || s == "long" || s == "ulong"
-    || s == "cent" || s == "ucent" || s == "void" || s == "float" || s == "double";
+    || s == "cent" || s == "ucent" || s == "void" || s == "float" || s == "double" || s == "half" || s == "bhalf";
 }
+
+#ifdef _WIN32
+#include <windows.h>
+static std::vector<std::string> filesInDirectory(std::string path) {
+    std::vector<std::string> files;
+
+    // check directory exists
+    char fullpath[MAX_PATH];
+    GetFullPathNameA(path.c_str(), MAX_PATH, fullpath, 0);
+    std::string fp(fullpath);
+    if(GetFileAttributesA(fp.c_str()) != FILE_ATTRIBUTE_DIRECTORY) return files;
+
+    // get file names
+    WIN32_FIND_DATAA findfiledata;
+    HANDLE hFind = FindFirstFileA((LPCSTR)(fp + "\\*").c_str(), &findfiledata);
+    if(hFind != INVALID_HANDLE_VALUE) {
+        do {
+            files.push_back(findfiledata.cFileName);
+        } 
+        while(FindNextFileA(hFind, &findfiledata));
+        FindClose(hFind);
+    }
+
+    // delete current and parent directories
+    files.erase(std::find(files.begin(), files.end(), "."));
+    files.erase(std::find(files.begin(), files.end(), ".."));
+
+    // sort in alphabetical order
+    std::sort(files.begin(), files.end());
+
+    return files;
+}
+#else
+#include <dirent.h>
+static std::vector<std::string> filesInDirectory(std::string directory) {
+    std::vector<std::string> files;
+
+    DIR *dir;
+    dir = opendir(directory.c_str());
+    if(dir == NULL) return files;
+
+    struct dirent *ent;
+    while((ent = readdir(dir)) != NULL) files.push_back(ent->d_name);
+    closedir(dir);
+
+    // delete current and parent directories
+    files.erase(std::find(files.begin(), files.end(), "."));
+    files.erase(std::find(files.begin(), files.end(), ".."));
+
+    // sort in alphabetical order
+    std::sort(files.begin(), files.end());
+    return files;
+}
+#endif
 
 template<typename Base, typename T>
 static bool instanceof(const T* ptr) {
@@ -120,7 +174,7 @@ static std::string getExePath() {
 #elif defined(__linux__)
     char c[260];
     int length = (int)readlink("/proc/self/exe", c, 260);
-    path = std::string(c, length>0 ? length : 0);
+    path = std::string(c, length > 0 ? length : 0);
 #endif
     return path.substr(0, path.rfind('/')+1);
 }

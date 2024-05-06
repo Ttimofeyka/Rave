@@ -182,7 +182,7 @@ void Compiler::compile(std::string file) {
     content = "alias __RAVE_PLATFORM = \""+ravePlatform+"\"; ";
     content = "alias __RAVE_OS = \""+raveOs+"\"; "+content;
     content = "alias __RAVE_OPTIMIZATION_LEVEL = "+std::to_string(settings.optLevel)+";"+content;
-    if(!Compiler::settings.noPrelude && file != "std/prelude.rave" && file != "std/memory.rave") {
+    if(!Compiler::settings.noPrelude && file.find("std/prelude.rave") == std::string::npos && file.find("std/memory.rave") == std::string::npos) {
         content = content+" import <std/prelude> <std/memory>";
     }
     content = content + "\n" + oldContent;
@@ -361,8 +361,8 @@ void Compiler::compileAll() {
             #ifdef __linux__
             if(
                 Compiler::toImport[i].find("Rave/std/") != std::string::npos && !Compiler::settings.recompileStd &&
-                access(std::regex_replace(Compiler::toImport[i], std::regex("\\.rave"), std::string(".")+Compiler::outType+".o").c_str(), 0) != -1
-            ) linkString += std::regex_replace(Compiler::toImport[i], std::regex("\\.rave"), std::string(".")+Compiler::outType+".o")+" ";
+                access(std::regex_replace(Compiler::toImport[i], std::regex("\\.rave"), std::string(".") + Compiler::outType+".o").c_str(), 0) != -1
+            ) linkString += std::regex_replace(Compiler::toImport[i], std::regex("\\.rave"), std::string(".") + Compiler::outType+".o") + " ";
             else {
             #endif
                 compile(Compiler::toImport[i]);
@@ -378,7 +378,7 @@ void Compiler::compileAll() {
                 if(Compiler::toImport[i].find("Rave/std/") == std::string::npos) toRemove.push_back(compiledFile);
                 else {
                     std::ifstream src(compiledFile, std::ios::binary);
-                    std::ofstream dst(std::regex_replace(compiledFile, std::regex("\\.o"), std::string(".")+Compiler::outType+".o"));
+                    std::ofstream dst(std::regex_replace(compiledFile, std::regex("\\.o"), std::string(".") + Compiler::outType + ".o"));
                     dst << src.rdbuf();
                     toRemove.push_back(compiledFile);
                 }
