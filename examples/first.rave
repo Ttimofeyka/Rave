@@ -1,5 +1,5 @@
 import <std/io> <std/random> <std/matrix> <std/math>
 
 void main {
-    
+    std::println(std::math::INFINITY < 0);
 }

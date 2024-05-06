@@ -4,7 +4,7 @@ namespace std {
     namespace math {
         alias PI = 3.14159265358979323846;
         alias PI_f = 3.141592653589793f;
-        alias INFINITY = 10000000000000000000000; // TODO: maybe wrong?
+        alias INFINITY = (1.0) / (0.0);
         alias NAN = (0.0) / (0.0);
 
         (inline) double degToRad(double d) => (d * std::math::PI / 180);
