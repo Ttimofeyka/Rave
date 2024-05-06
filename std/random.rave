@@ -37,6 +37,11 @@ import <std/time> <std/sysc>
 
 @if(__RAVE_OS != "LINUX") {
     namespace std {
+        char randomChar(char min, char max) {
+            std::timeSpec ts;
+            std::getCurrentTime(&ts);
+        } => ((cast(char)ts.nsec) % ((max+1)-min))+min;
+        
         short randomShort(short min, short max) {
             std::timeSpec ts;
             std::getCurrentTime(&ts);
