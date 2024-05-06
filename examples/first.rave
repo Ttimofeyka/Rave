@@ -1,7 +1,5 @@
 import <std/io> <std/random> <std/matrix> <std/math>
 
 void main {
-    auto s = std::u8string("Hi");
-    s.append(std::u8string(", all!"));
-    std::println(s);
+    
 }
