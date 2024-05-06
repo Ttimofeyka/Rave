@@ -120,19 +120,33 @@ namespace std {
         }
 
         void append(std::string str) {
-            int i = 0;
-            while(i<str.length) {
-                this.add(str.data[i]);
-                i += 1;
+            if(this.data != null) {
+                int i = 0;
+                while(i<str.length) {
+                    this.length += 1;
+                    if(this.length == this.capacity) {
+                        this.data = std::realloc(this.data, this.capacity, this.capacity * 2);
+                        this.capacity = this.capacity * 2;
+                    }
+                    this.data[this.length-1] = str.data[i];
+                    i += 1;
+                }
             }
         }
 
         void appendC(char* cstr) {
-            int len = std::cstring::strlen(cstr);
-            int i = 0;
-            while(i<len) {
-                this.add(cstr[i]);
-                i += 1;
+            if(this.data != null) {
+                int len = std::cstring::strlen(cstr);
+                int i = 0;
+                while(i<len) {
+                    this.length += 1;
+                    if(this.length == this.capacity) {
+                        this.data = std::realloc(this.data, this.capacity, this.capacity * 2);
+                        this.capacity = this.capacity * 2;
+                    }
+                    this.data[this.length-1] = cstr[i];
+                    i += 1;
+                }
             }
         }
 
