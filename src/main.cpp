@@ -55,7 +55,7 @@ int main(int argc, char** argv) {
 
     if(files.size() == 0) {
         if(options.recompileStd) {
-            #if defined(__linux__) || defined(__unix__)
+            #if defined(__linux__)
             Compiler::initialize(outFile, outType, options, {""});
             auto stdFiles = filesInDirectory("std");
             for(int i=0; i<stdFiles.size(); i++) {
