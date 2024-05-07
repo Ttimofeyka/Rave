@@ -7,7 +7,7 @@
     }
 }
 @if(
-    (__RAVE_PLATFORM == "X86") || (__RAVE_PLATFORM == "POWERPC64") || (__RAVE_PLATFORM == "MIPS") || (__RAVE_PLATFORM == "MIPS64") |
+    (__RAVE_PLATFORM == "X86") || (__RAVE_PLATFORM == "POWERPC64") || (__RAVE_PLATFORM == "MIPS") || (__RAVE_PLATFORM == "MIPS64") ||
     (__RAVE_PLATFORM == "AVR") || (__RAVE_PLATFORM == "WASM") || (__RAVE_PLATFORM == "UNKNOWN")
 ) {
     struct va_list {

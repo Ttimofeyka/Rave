@@ -281,7 +281,12 @@ namespace std {
         }
 
         void ~this {
-            if(this._file != null) this.close();
+            if(this._file != null) {
+                if(this.isOpen) {
+                    libc::fclose(this._file);
+                    this.isOpen = false;
+                }
+            }
             this._file = null;
         }
 
