@@ -29,7 +29,7 @@ void main {
 
 ## Building/Running
 
-To install dependencies, you can try running `install.sh` (Arch Linux/Ubuntu/Debian) or `install.bat` (only Windows 64-bit using [choco](https://chocolatey.org))
+To install dependencies, you can try running `install.sh` (Arch Linux/Void Linux/Ubuntu/Debian) or `install.bat` (only Windows 64-bit using [choco](https://chocolatey.org))
 
 If the installer does not work well on your system, you can try to install all the dependencies yourself.
 
