@@ -1,5 +1,7 @@
 import <std/io> <std/random> <std/matrix> <std/math>
 
+int* ptr;
+
 void main {
-    std::println(std::math::INFINITY < 0);
+    ptr[0] = 100;
 }

@@ -29,7 +29,7 @@ namespace std {
 
     (inline) void assert(bool cond) {
         if(!cond) {
-            std::putswnl("Assert: The conditions haven't been verified!\n");
+            std::putswnl("Assert: the conditions haven't been verified!\n");
             std::exit(1);
         }
     }

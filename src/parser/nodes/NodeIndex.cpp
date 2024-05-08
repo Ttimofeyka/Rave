@@ -14,6 +14,10 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeStruct.hpp"
 #include "../../include/parser/nodes/NodeInt.hpp"
 #include "../../include/parser/nodes/NodeFunc.hpp"
+#include "../../include/parser/nodes/NodeBinary.hpp"
+#include "../../include/parser/nodes/NodeDone.hpp"
+#include "../../include/parser/nodes/NodeNull.hpp"
+#include "../../include/parser/nodes/NodeString.hpp"
 #include "../../include/parser/ast.hpp"
 #include <vector>
 #include <string>
@@ -32,7 +36,6 @@ Type* NodeIndex::getType() {
     while(instanceof<TypeConst>(type)) type = ((TypeConst*)type)->instance;
     if(!instanceof<TypePointer>(type) && !instanceof<TypeArray>(type) && !instanceof<TypeConst>(type)) {
         if(instanceof<TypeStruct>(type)) {
-            //if(TokType.Rbra.into(StructTable[ts.name].operators)) return StructTable[ts.name].operators[TokType.Rbra][""].type;
             TypeStruct* tstruct = (TypeStruct*)type;
             if(AST::structTable[tstruct->name]->operators.find(TokType::Rbra) != AST::structTable[tstruct->name]->operators.end()) {
                 for(auto const& x : AST::structTable[tstruct->name]->operators[TokType::Rbra]) return AST::structTable[tstruct->name]->operators[TokType::Rbra][x.first]->type;
@@ -77,7 +80,7 @@ LLVMValueRef NodeIndex::generate() {
     if(instanceof<NodeIden>(this->element)) {
         NodeIden* id = (NodeIden*)this->element;
         Type* _t = currScope->getVar(id->name, this->loc)->type;
-        if(instanceof<TypeStruct>(_t) || (instanceof<TypePointer>(_t) && instanceof<TypeStruct>(((TypePointer*)_t)->instance))) {
+        if(instanceof<TypeStruct>(_t) || ((instanceof<TypePointer>(_t) && instanceof<TypeStruct>(((TypePointer*)_t)->instance)))) {
             Type* tstruct = nullptr;
             if(instanceof<TypeStruct>(_t)) tstruct = _t;
             else tstruct = ((TypePointer*)_t)->instance;
@@ -110,27 +113,19 @@ LLVMValueRef NodeIndex::generate() {
             ptr = copyVal;
         }
         else if(LLVMGetTypeKind(LLVMTypeOf(ptr)) != LLVMPointerTypeKind) ptr = currScope->getWithoutLoad(id->name, this->loc);
-        std::string structName = "";
-        if(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMStructTypeKind) structName = std::string(LLVMGetStructName(LLVMTypeOf(ptr)));
-        else if(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMPointerTypeKind) {
-            if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) == LLVMStructTypeKind) structName = std::string(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(ptr))));
-            else if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) == LLVMPointerTypeKind) {
-                if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) == LLVMStructTypeKind) structName = std::string(LLVMGetStructName(LLVMGetElementType(LLVMGetElementType(LLVMTypeOf(ptr)))));
+
+        if(generator->settings.optLevel <= 2 &&
+            ((AST::funcTable.find(currScope->funcName) != AST::funcTable.end() && AST::funcTable[currScope->funcName]->isNoChecks == false)
+            || AST::funcTable.find(currScope->funcName) == AST::funcTable.end())
+        ) {
+            if(AST::funcTable.find("std::assert[_b_pc]") != AST::funcTable.end() && LLVMPrintTypeToString(LLVMTypeOf(ptr))[0] != '%') {
+                (new NodeCall(this->loc, new NodeIden("std::assert[_b_pc]", this->loc), {
+                    new NodeBinary(TokType::Nequal, new NodeDone(ptr), new NodeNull(nullptr, this->loc), this->loc),
+                    new NodeString("Assert in '"+generator->file+"' file in function '" + currScope->funcName + "' at "+std::to_string(this->loc)+" line: trying to get a value from a null pointer!\n", false)
+                }))->generate();
             }
         }
-        /*if(structName != "" && TokType.Rbra.into(StructTable[structName].operators)) {
-            NodeFunc _f = StructTable[structName].operators[TokType.Rbra][""];
-            if(_f.args[0].type.instanceof!TypeStruct) {
-                if(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMPointerTypeKind) ptr = LLVMBuildLoad(generator->builder,ptr,toStringz("load_"));
-            }
-            return LLVMBuildCall(
-                generator->builder,
-                Generator.Functions[_f.name],
-                [ptr, indexs[0].generate()].ptr,
-                2,
-                toStringz("call")
-            );
-        }*/
+
         LLVMValueRef index = generator->byIndex(ptr, this->generateIndexes());
         if(isMustBePtr) return index;
         return LLVM::load(index, ("NodeIndex_NodeIden_load_"+std::to_string(this->loc)+"_").c_str());
@@ -139,6 +134,7 @@ LLVMValueRef NodeIndex::generate() {
         NodeGet* nget = (NodeGet*)this->element;
         nget->isMustBePtr = true;
         LLVMValueRef ptr = nget->generate();
+
         this->elementIsConst = nget->elementIsConst;
         if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) != LLVMArrayTypeKind) {ptr = LLVM::load(ptr, ("NodeIndex_NodeGet_load"+std::to_string(this->loc)+"_").c_str());}
         LLVMValueRef index = generator->byIndex(ptr, this->generateIndexes());
@@ -148,6 +144,19 @@ LLVMValueRef NodeIndex::generate() {
     if(instanceof<NodeCall>(this->element)) {
         NodeCall* ncall = (NodeCall*)this->element;
         LLVMValueRef vr = ncall->generate();
+
+        if(generator->settings.optLevel <= 2 &&
+            ((AST::funcTable.find(currScope->funcName) != AST::funcTable.end() && AST::funcTable[currScope->funcName]->isNoChecks == false)
+            || AST::funcTable.find(currScope->funcName) == AST::funcTable.end())
+        ) {
+            if(AST::funcTable.find("std::assert[_b_pc]") != AST::funcTable.end() && LLVMPrintTypeToString(LLVMTypeOf(vr))[0] != '%') {
+                (new NodeCall(this->loc, new NodeIden("std::assert[_b_pc]", this->loc), {
+                    new NodeBinary(TokType::Nequal, new NodeDone(vr), new NodeNull(nullptr, this->loc), this->loc),
+                    new NodeString("Assert in '"+generator->file+"' file in function '" + currScope->funcName + "' at "+std::to_string(this->loc)+" line: trying to get a value from a null pointer!\n", false)
+                }))->generate();
+            }
+        }
+
         LLVMValueRef index = generator->byIndex(vr, this->generateIndexes());
         if(isMustBePtr) return index;
         return LLVM::load(index, ("NodeIndex_NodeCall_load"+std::to_string(this->loc)+"_").c_str());
@@ -161,6 +170,19 @@ LLVMValueRef NodeIndex::generate() {
     if(instanceof<NodeCast>(this->element)) {
         NodeCast* ncast = (NodeCast*)this->element;
         LLVMValueRef val = ncast->generate();
+
+        if(generator->settings.optLevel <= 2 &&
+            ((AST::funcTable.find(currScope->funcName) != AST::funcTable.end() && AST::funcTable[currScope->funcName]->isNoChecks == false)
+            || AST::funcTable.find(currScope->funcName) == AST::funcTable.end())
+        ) {
+            if(AST::funcTable.find("std::assert[_b_pc]") != AST::funcTable.end() && LLVMPrintTypeToString(LLVMTypeOf(val))[0] != '%') {
+                (new NodeCall(this->loc, new NodeIden("std::assert[_b_pc]", this->loc), {
+                    new NodeBinary(TokType::Nequal, new NodeDone(val), new NodeNull(nullptr, this->loc), this->loc),
+                    new NodeString("Assert in '"+generator->file+"' file in function '" + currScope->funcName + "' at "+std::to_string(this->loc)+" line: trying to get a value from a null pointer!\n", false)
+                }))->generate();
+            }
+        }
+
         LLVMValueRef index = generator->byIndex(val, this->generateIndexes());
         if(isMustBePtr) return index;
         return LLVM::load(index, "NodeIndex_NodeCast_load");
@@ -168,6 +190,19 @@ LLVMValueRef NodeIndex::generate() {
     if(instanceof<NodeUnary>(this->element)) {
         NodeUnary* nunary = (NodeUnary*)this->element;
         LLVMValueRef val = nunary->generate();
+
+        if(generator->settings.optLevel <= 2 &&
+            ((AST::funcTable.find(currScope->funcName) != AST::funcTable.end() && AST::funcTable[currScope->funcName]->isNoChecks == false)
+            || AST::funcTable.find(currScope->funcName) == AST::funcTable.end())
+        ) {
+            if(AST::funcTable.find("std::assert[_b_pc]") != AST::funcTable.end() && LLVMPrintTypeToString(LLVMTypeOf(val))[0] != '%') {
+                (new NodeCall(this->loc, new NodeIden("std::assert[_b_pc]", this->loc), {
+                    new NodeBinary(TokType::Nequal, new NodeDone(val), new NodeNull(nullptr, this->loc), this->loc),
+                    new NodeString("Assert in '"+generator->file+"' file in function '" + currScope->funcName + "' at "+std::to_string(this->loc)+" line: trying to get a value from a null pointer!\n", false)
+                }))->generate();
+            }
+        }
+
         LLVMValueRef index = generator->byIndex(val, this->generateIndexes());
         return index;
     }

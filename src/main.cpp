@@ -60,8 +60,12 @@ int main(int argc, char** argv) {
             auto stdFiles = filesInDirectory("std");
             for(int i=0; i<stdFiles.size(); i++) {
                 if(stdFiles[i].find(".ll") == std::string::npos && stdFiles[i].find(".rave") != std::string::npos) {
-                    std::string compiledFile = std::regex_replace("./std/"+stdFiles[i], std::regex("\\.rave"), ".o");
-                    Compiler::compile("./std/"+stdFiles[i]);
+                    std::string compiledFile = std::regex_replace("std/"+stdFiles[i], std::regex("\\.rave"), ".o");
+                    Compiler::compile("std/"+stdFiles[i]);
+                    if(options.emitLLVM) {
+                        char* err;
+                        LLVMPrintModuleToFile(generator->lModule, ("std/"+stdFiles[i]+".ll").c_str(), &err);
+                    }
                     std::ifstream src(compiledFile, std::ios::binary);
                     std::ofstream dst(std::regex_replace(compiledFile, std::regex("\\.o"), std::string(".") + Compiler::outType + ".o"));
                     dst << src.rdbuf();

@@ -23,7 +23,6 @@ void NodePtoi::check() {
 }
 
 LLVMValueRef NodePtoi::generate() {
-    // TODO
     return LLVMBuildPtrToInt(
         generator->builder,
         this->value->generate(),
