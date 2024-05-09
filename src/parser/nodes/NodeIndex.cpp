@@ -114,7 +114,7 @@ LLVMValueRef NodeIndex::generate() {
         }
         else if(LLVMGetTypeKind(LLVMTypeOf(ptr)) != LLVMPointerTypeKind) ptr = currScope->getWithoutLoad(id->name, this->loc);
 
-        if(generator->settings.optLevel <= 2 &&
+        if(!generator->settings.noChecks && generator->settings.optLevel <= 2 &&
             ((AST::funcTable.find(currScope->funcName) != AST::funcTable.end() && AST::funcTable[currScope->funcName]->isNoChecks == false)
             || AST::funcTable.find(currScope->funcName) == AST::funcTable.end())
         ) {
@@ -145,7 +145,7 @@ LLVMValueRef NodeIndex::generate() {
         NodeCall* ncall = (NodeCall*)this->element;
         LLVMValueRef vr = ncall->generate();
 
-        if(generator->settings.optLevel <= 2 &&
+        if(!generator->settings.noChecks && generator->settings.optLevel <= 2 &&
             ((AST::funcTable.find(currScope->funcName) != AST::funcTable.end() && AST::funcTable[currScope->funcName]->isNoChecks == false)
             || AST::funcTable.find(currScope->funcName) == AST::funcTable.end())
         ) {
@@ -171,7 +171,7 @@ LLVMValueRef NodeIndex::generate() {
         NodeCast* ncast = (NodeCast*)this->element;
         LLVMValueRef val = ncast->generate();
 
-        if(generator->settings.optLevel <= 2 &&
+        if(!generator->settings.noChecks && generator->settings.optLevel <= 2 &&
             ((AST::funcTable.find(currScope->funcName) != AST::funcTable.end() && AST::funcTable[currScope->funcName]->isNoChecks == false)
             || AST::funcTable.find(currScope->funcName) == AST::funcTable.end())
         ) {
@@ -191,7 +191,7 @@ LLVMValueRef NodeIndex::generate() {
         NodeUnary* nunary = (NodeUnary*)this->element;
         LLVMValueRef val = nunary->generate();
 
-        if(generator->settings.optLevel <= 2 &&
+        if(!generator->settings.noChecks && generator->settings.optLevel <= 2 &&
             ((AST::funcTable.find(currScope->funcName) != AST::funcTable.end() && AST::funcTable[currScope->funcName]->isNoChecks == false)
             || AST::funcTable.find(currScope->funcName) == AST::funcTable.end())
         ) {

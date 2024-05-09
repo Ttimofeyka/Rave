@@ -19,6 +19,8 @@ void main {
 * Support for many platforms as target
 * Using LLVM for great optimizations
 
+For maximum performance, use the `-Ofast` or `-O3 --noChecks`. Also, don't forget to compile std with these flags using `--recompileStd -Ofast`.
+
 ## Dependencies
 
 * `llvm-16`

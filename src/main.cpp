@@ -28,11 +28,17 @@ genSettings analyzeArguments(std::vector<std::string>& arguments) {
         else if(arguments[i] == "-c") {settings.onlyObject = true; settings.isStatic = true;}
         else if(arguments[i] == "-ne" || arguments[i] == "--noEntry") settings.noEntry = true;
         else if(arguments[i] == "-ns" || arguments[i] == "--noStd") settings.noStd = true;
-        else if(arguments[i] == "-opt" || arguments[i] == "-O" || arguments[i] == "--optimizationLevel") {settings.optLevel = std::stoi(arguments[i+1]); i += 1;}
+        else if(arguments[i] == "-opt" || arguments[i] == "-O" || arguments[i] == "--optimizationLevel") {
+            if(arguments[i+1] == "fast") {settings.optLevel = 3; settings.noChecks = true;}
+            else settings.optLevel = std::stoi(arguments[i+1]);
+            i += 1;
+        }
+        else if(arguments[i] == "-nc" || arguments[i] == "--noChecks") settings.noChecks = true;
         else if(arguments[i] == "-O0") settings.optLevel = 0;
         else if(arguments[i] == "-O1") settings.optLevel = 1;
         else if(arguments[i] == "-O2") settings.optLevel = 2;
         else if(arguments[i] == "-O3") settings.optLevel = 3;
+        else if(arguments[i] == "-Ofast") {settings.optLevel = 3; settings.noChecks = true;}
         else if(arguments[i].find("-O") == 0) settings.optLevel = 1;
         else if(arguments[i] == "-s" || arguments[i] == "--shared") {settings.linkParams += "-shared "; settings.isPIE = true; settings.isPIC = false;}
         else if(arguments[i] == "-sof" || arguments[i] == "--saveObjectFiles") settings.saveObjectFiles = true;

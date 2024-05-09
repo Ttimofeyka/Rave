@@ -56,10 +56,6 @@ LLVMValueRef NodeForeach::generate() {
         }
     }
 
-    if(instanceof<NodeGet>(this->varData)) {
-
-    }
-
     NodeVar* nv = new NodeVar("__RAVE_FOREACH_N" + std::to_string(this->loc), new NodeInt(0), false, false, false, {}, this->loc, new TypeBasic(BasicType::Int), false);
     nv->check();
     nv->generate();
