@@ -67,11 +67,12 @@ int main(int argc, char** argv) {
         + "\n\t--link (-l) <library> - Add the <library> library to the linker."
         + "\n\t--noStd (-ns) - Do not link with standart library."
         + "\n\t--noEntry (-ne) - Passes information to the compiler that there is no start point (main) in the code."
+        + "\n\t--noPrelude (-np) - Disable automatic import of <std/prelude> and <std/memory>."
         + "\n\t--noChecks (-nc) - Disables runtime checks (automatically at -Ofast)."
         + "\n\t--saveObjectfiles (-sof) - Save the object files after compilation."
         + "\n\t--disableWarnings (-dw) - Disables warnings."
         + "\n\t--shared (-s) - Creates a shared output files."
-        + "\n\t-c - Does not create an output file (only object files)."
+        + "\n\t-c - Do not create an output file (only object files)."
         + "\nFor bug reporting, you can use Issues at https://github.com/Ttimofeyka/Rave.";
         std::cout << help << std::endl;
         return 0;
