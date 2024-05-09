@@ -1,7 +1,5 @@
 import <std/io> <std/random> <std/matrix> <std/math>
 
-int* ptr;
-
 void main {
-    ptr[0] = 100;
+    
 }

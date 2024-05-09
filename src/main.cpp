@@ -16,6 +16,7 @@ std::string outType = "";
 std::vector<std::string> files;
 genSettings options;
 std::string exePath;
+bool helpCalled = false;
 
 genSettings analyzeArguments(std::vector<std::string>& arguments) {
     genSettings settings;
@@ -28,11 +29,6 @@ genSettings analyzeArguments(std::vector<std::string>& arguments) {
         else if(arguments[i] == "-c") {settings.onlyObject = true; settings.isStatic = true;}
         else if(arguments[i] == "-ne" || arguments[i] == "--noEntry") settings.noEntry = true;
         else if(arguments[i] == "-ns" || arguments[i] == "--noStd") settings.noStd = true;
-        else if(arguments[i] == "-opt" || arguments[i] == "-O" || arguments[i] == "--optimizationLevel") {
-            if(arguments[i+1] == "fast") {settings.optLevel = 3; settings.noChecks = true;}
-            else settings.optLevel = std::stoi(arguments[i+1]);
-            i += 1;
-        }
         else if(arguments[i] == "-nc" || arguments[i] == "--noChecks") settings.noChecks = true;
         else if(arguments[i] == "-O0") settings.optLevel = 0;
         else if(arguments[i] == "-O1") settings.optLevel = 1;
@@ -45,6 +41,7 @@ genSettings analyzeArguments(std::vector<std::string>& arguments) {
         else if(arguments[i] == "-dw" || arguments[i] == "--disableWarnings") settings.disableWarnings = true;
         else if(arguments[i] == "--debug") Compiler::debugMode = true;
         else if(arguments[i] == "-t" || arguments[i] == "--target") {outType = arguments[i+1]; i += 1;}
+        else if(arguments[i] == "-h" || arguments[i] == "--help") helpCalled = true;
         else if(arguments[i][0] == '-') settings.linkParams += arguments[i]+" ";
         else files.push_back(arguments[i]);
     }
@@ -58,6 +55,27 @@ int main(int argc, char** argv) {
 
     for(int i=1; i<argc; i+=1) arguments.push_back(std::string(argv[i]));
     options = analyzeArguments(arguments);
+
+    if(helpCalled) {
+        std::string help = std::string("Usage: rave [files] [options]")
+        + "\nOptions:"
+        + "\n\t--out (-o) <file> - Place the output into <file>."
+        + "\n\t--target (-t) <target> - Change the platform type to <target>."
+        + "\n\t--emitLLVM, -emit-llvm (-eml) - Create output files with LLVM IR."
+        + "\n\t--recompileStd (-rcs) - Recompile the std with flags and replacing the cache version (if available)."
+        + "\n\t-O0, -O1, -O2, -O3, -Ofast - Optimization levels (in ascending order of output program speed)."
+        + "\n\t--link (-l) <library> - Add the <library> library to the linker."
+        + "\n\t--noStd (-ns) - Do not link with standart library."
+        + "\n\t--noEntry (-ne) - Passes information to the compiler that there is no start point (main) in the code."
+        + "\n\t--noChecks (-nc) - Disables runtime checks (automatically at -Ofast)."
+        + "\n\t--saveObjectfiles (-sof) - Save the object files after compilation."
+        + "\n\t--disableWarnings (-dw) - Disables warnings."
+        + "\n\t--shared (-s) - Creates a shared output files."
+        + "\n\t-c - Does not create an output file (only object files)."
+        + "\nFor bug reporting, you can use Issues at https://github.com/Ttimofeyka/Rave.";
+        std::cout << help << std::endl;
+        return 0;
+    }
 
     if(files.size() == 0) {
         if(options.recompileStd) {
