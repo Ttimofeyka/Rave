@@ -179,11 +179,15 @@ void Compiler::compile(std::string file) {
         raveOs = RAVE_OS;
     }
 
-    content = "alias __RAVE_PLATFORM = \""+ravePlatform+"\"; ";
-    content = "alias __RAVE_OS = \""+raveOs+"\"; "+content;
-    content = "alias __RAVE_OPTIMIZATION_LEVEL = "+std::to_string(settings.optLevel)+";"+content;
+    content = "alias __RAVE_PLATFORM = \"" + ravePlatform + "\"; ";
+    content = "alias __RAVE_OS = \"" + raveOs + "\"; " + content;
+    content = "alias __RAVE_OPTIMIZATION_LEVEL = " + std::to_string(settings.optLevel) + ";" + content;
+
+    if(settings.runtimeChecks) content = "alias __RAVE_RUNTIME_CHECKS = true;" + content;
+    else content = "alias __RAVE_RUNTIME_CHECKS = false;" + content;
+
     if(!Compiler::settings.noPrelude && file.find("std/prelude.rave") == std::string::npos && file.find("std/memory.rave") == std::string::npos) {
-        content = content+" import <std/prelude> <std/memory>";
+        content = content + " import <std/prelude> <std/memory>";
     }
     content = content + "\n" + oldContent;
 

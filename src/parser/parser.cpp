@@ -258,15 +258,16 @@ Node* Parser::parseOperatorOverload(Type* type, std::string s) {
     if(this->peek()->type == TokType::ShortRet) {
         NodeBlock* nb = new NodeBlock({});
         this->next();
-        nb->nodes.push_back(new NodeRet(this->parseExpr(), name, _t->line));
+        nb->nodes.push_back(new NodeRet(this->parseExpr("operator"), name, _t->line));
         if(this->peek()->type == TokType::Semicolon) this->next();
         return new NodeFunc(name, args, nb, false, {}, _t->line, type, {});
     }
+
     this->next();
-    NodeBlock* nb = this->parseBlock();
+    NodeBlock* nb = this->parseBlock("operator");
     if(this->peek()->type == TokType::ShortRet) {
         this->next();
-        nb->nodes.push_back(new NodeRet(this->parseExpr(), name, _t->line));
+        nb->nodes.push_back(new NodeRet(this->parseExpr("operator"), name, _t->line));
     }
     return new NodeFunc(name, args, nb, false, {}, _t->line, type, {});
 }

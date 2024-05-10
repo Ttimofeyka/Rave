@@ -26,7 +26,15 @@ namespace std {
             for(int i=0; i<of.length; i+=1) {this.add(of.data[i]);}
         }
 
-        (inline) void set(int index, T value) {this.data[index] = value;}
+        (inline) void set(int index, T value) {
+            @if(__RAVE_RUNTIME_CHECKS) {
+                if((index >= 0) && (index < this.length)) this.data[index] = value;
+            };
+
+            @if(!(__RAVE_RUNTIME_CHECKS)) {
+                this.data[index] = value;
+            };
+        }
 
         std::vector<T> copy {
             std::vector<T> buffer;
@@ -34,19 +42,43 @@ namespace std {
             buffer.capacity = 1;
             buffer.length = 0;
 
-            for(int i=0; i<this.length; i+=1) {
-                buffer.add(this.data[i]);
-            }
+            for(int i=0; i<this.length; i+=1) buffer.add(this.data[i]);
         } => buffer;
 
-        (inline) T operator[](std::vector<T>* v, int index) => v.data[index];
+        (inline) T operator[](std::vector<T>* v, int index) {
+            @if(__RAVE_RUNTIME_CHECKS) {
+                if((index >= 0) && (index < v.length)) return = v.data[index];
+            };
 
-        (inline) void operator[]=(std::vector<T>* v, int index, T value) {v.data[index] = value;}
+            @if(!(__RAVE_RUNTIME_CHECKS)) {
+                return = v.data[index];
+            };
+        }
+
+        (inline) void operator[]=(std::vector<T>* v, int index, T value) {
+            @if(__RAVE_RUNTIME_CHECKS) {
+                if((index >= 0) && (index < v.length)) v.data[index] = value;
+            };
+
+            @if(!(__RAVE_RUNTIME_CHECKS)) {
+                v.data[index] = value;
+            };
+        }
 
         (inline) void swap(int first, int second) {
-            (noOperators) T temp = this.data[first];
-            this.data[first] = this.data[second];
-            this.data[second] = temp;
+            @if(__RAVE_RUNTIME_CHECKS) {
+                if(((first >= 0) && (first < this.length)) && ((second >= 0) && (second < this.length))) {
+                    (noOperators) T temp = this.data[first];
+                    this.data[first] = this.data[second];
+                    this.data[second] = temp;
+                }
+            };
+
+            @if(!(__RAVE_RUNTIME_CHECKS)) {
+                (noOperators) T temp = this.data[first];
+                this.data[first] = this.data[second];
+                this.data[second] = temp;
+            };
         }
 
         std::vector<T> operator+(std::vector<T> one, std::vector<T> two) {
@@ -55,13 +87,32 @@ namespace std {
         } => cp;
 
         void remove(int index) {
-            for(int i=index; i<this.length; i+=1) {
-                if((i+1) < this.length) this.data[i] = this.data[i+1];
-            }
-            this.length = this.length - 1;
+            @if(__RAVE_RUNTIME_CHECKS) {
+                if((index >= 0) && (index < this.length)) {
+                    for(int i=index; i<this.length; i+=1) {
+                        if((i+1) < this.length) this.data[i] = this.data[i+1];
+                    }
+                    this.length = this.length - 1;
+                }
+            };
+
+            @if(!(__RAVE_RUNTIME_CHECKS)) {
+                for(int i=index; i<this.length; i+=1) {
+                    if((i+1) < this.length) this.data[i] = this.data[i+1];
+                }
+                this.length = this.length - 1;
+            };
         }
 
-        (inline) void removeLast {this.remove(this.length-1);}
+        (inline) void removeLast {
+            @if(__RAVE_RUNTIME_CHECKS) {
+                if(this.length > 0) this.remove(this.length-1);
+            };
+
+            @if(!(__RAVE_RUNTIME_CHECKS)) {
+                this.remove(this.length-1);
+            };
+        }
 
         void ~this {
             if(this.data != null) {

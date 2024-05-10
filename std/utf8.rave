@@ -131,16 +131,30 @@ namespace std {
 
         (inline) void set(int index, uchar ch) {
             // TODO: add support of UTF-8 setting
-            if((index >= 0) && (index < this.length)) this.data[index] = ch;
+            @if(__RAVE_RUNTIME_CHECKS) {
+                if((index >= 0) && (index < this.length)) this.data[index] = ch;
+            };
+
+            @if(!(__RAVE_RUNTIME_CHECKS)) {
+                this.data[index] = ch;
+            };
         }
 
         (inline) uint at(int index) {
-            if((index >= 0) && (index < this.length)) {
+            @if(__RAVE_RUNTIME_CHECKS) {
+                if((index >= 0) && (index < this.length)) {
+                    uchar* ptr = this.data;
+                    for(int i=0; i<index; i++) ptr = itop(uchar*, ptoi(ptr) + std::utf8::next(ptr));
+                    return = std::utf8::utfAt(ptr, 0);
+                }
+                else return = cast(uint)'\0';
+            };
+
+            @if(!(__RAVE_RUNTIME_CHECKS)) {
                 uchar* ptr = this.data;
-                for(int i=0; i<index; i++) ptr = itop(uchar*, ptoi(ptr)+std::utf8::next(ptr));
+                for(int i=0; i<index; i++) ptr = itop(uchar*, ptoi(ptr) + std::utf8::next(ptr));
                 return = std::utf8::utfAt(ptr, 0);
-            }
-            else return = cast(uint)'\0';
+            };
         }
 
         (inline) bool isDeleted => (this.data == null);

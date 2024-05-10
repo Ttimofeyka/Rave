@@ -75,12 +75,22 @@ namespace std {
         }
 
         (inline) void set(int index, char ch) {
-            if((index >= 0) && (index < this.length)) this.data[index] = ch;
+            @if(__RAVE_RUNTIME_CHECKS) {
+                if((index >= 0) && (index < this.length)) this.data[index] = ch;
+            };
+            @if(!(__RAVE_RUNTIME_CHECKS)) {
+                this.data[index] = ch;
+            };
         }
 
         (inline) char at(int index) {
-            if((index >= 0) && (index < this.length)) return = this.data[index];
-            else return = '\0';
+            @if(__RAVE_RUNTIME_CHECKS) {
+                if((index >= 0) && (index < this.length)) return = this.data[index];
+                else return = '\0';
+            };
+            @if(!(__RAVE_RUNTIME_CHECKS)) {
+                return = this.data[index];
+            };
         }
 
         (inline) bool isDeleted => (this.data == null);
@@ -94,7 +104,7 @@ namespace std {
         int indexOf(char c) {
             int i = 0;
             int needed = -1;
-            while(i<this.length) {if(this.data[i] == c) {needed = i; i = this.length;} i += 1;}
+            while(i < this.length) {if(this.data[i] == c) {needed = i; i = this.length;} i += 1;}
         } => needed;
 
         int indexOf(char* s) {
@@ -122,7 +132,7 @@ namespace std {
         void append(std::string str) {
             if(this.data != null) {
                 int i = 0;
-                while(i<str.length) {
+                while(i < str.length) {
                     this.length += 1;
                     if(this.length == this.capacity) {
                         this.data = std::realloc(this.data, this.capacity, this.capacity * 2);
@@ -138,7 +148,7 @@ namespace std {
             if(this.data != null) {
                 int len = std::cstring::strlen(cstr);
                 int i = 0;
-                while(i<len) {
+                while(i < len) {
                     this.length += 1;
                     if(this.length == this.capacity) {
                         this.data = std::realloc(this.data, this.capacity, this.capacity * 2);
@@ -166,14 +176,27 @@ namespace std {
         } => temp;
 
         std::string substring(int from, int to) {
-            std::string temp = "";
+            @if(__RAVE_RUNTIME_CHECKS) {
+                if(((from >= 0) && (from < this.length)) && ((to >= 0) && (to < this.length))) {
+                    return = "";
+                    int i = from;
 
-            int i = from;
-            while(i<to) {
-                temp.add(this.data[i]);
-                i += 1;
-            }
-        } => temp;
+                    while(i < to) {
+                        return.add(this.data[i]);
+                        i += 1;
+                    }
+                }
+            };
+            @if(!(__RAVE_RUNTIME_CHECKS)) {
+                return = "";
+                int i = from;
+
+                while(i < to) {
+                    return.add(this.data[i]);
+                    i += 1;
+                }
+            };
+        }
 
         std::string operator+(std::string one, std::string two) {
             std::string third = "";
