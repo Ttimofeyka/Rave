@@ -183,7 +183,7 @@ void Compiler::compile(std::string file) {
     content = "alias __RAVE_OS = \"" + raveOs + "\"; " + content;
     content = "alias __RAVE_OPTIMIZATION_LEVEL = " + std::to_string(settings.optLevel) + ";" + content;
 
-    if(settings.runtimeChecks) content = "alias __RAVE_RUNTIME_CHECKS = true;" + content;
+    if(!settings.noChecks) content = "alias __RAVE_RUNTIME_CHECKS = true;" + content;
     else content = "alias __RAVE_RUNTIME_CHECKS = false;" + content;
 
     if(!Compiler::settings.noPrelude && file.find("std/prelude.rave") == std::string::npos && file.find("std/memory.rave") == std::string::npos) {
