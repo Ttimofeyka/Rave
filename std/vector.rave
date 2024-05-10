@@ -39,10 +39,10 @@ namespace std {
         std::vector<T> copy {
             std::vector<T> buffer;
             buffer.data = cast(T*)std::malloc(sizeof(std::vector<T>));
-            buffer.capacity = 1;
-            buffer.length = 0;
+            buffer.capacity = this.capacity;
+            buffer.length = this.length;
 
-            for(int i=0; i<this.length; i+=1) buffer.add(this.data[i]);
+            for(int i=0; i<this.length; i+=1) buffer.set(i, this.data[i]);
         } => buffer;
 
         (inline) T operator[](std::vector<T>* v, int index) {

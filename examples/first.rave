@@ -1,15 +1,5 @@
 import <std/io> <std/vector>
 
 void main {
-  std::vector<int> v = std::vector<int>();
-  v.add(1);
-  v.add(12);
-  v.add(123);
 
-  v.remove(-1);
-  std::println(v[-1]);
-  std::println(v[0]);
-  std::println(v[1]);
-  std::println(v.length);
-  std::println(__RAVE_RUNTIME_CHECKS);
 }
