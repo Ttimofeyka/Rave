@@ -44,6 +44,7 @@ void NodeRet::setParentBlock(Loop value, int n) {
 }
 
 LLVMValueRef NodeRet::generate() {
+    if(currScope == nullptr || !currScope->has("return")) return nullptr;
     if(this->value == nullptr) this->value = new NodeNull(nullptr, this->loc);
     return LLVMBuildStore(generator->builder, this->value->generate(), currScope->getWithoutLoad("return", this->loc));
     currScope->funcHasRet = true;

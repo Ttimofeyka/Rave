@@ -1,5 +1,5 @@
-import <std/io> <std/vector>
+import <std/io> <std/vector> <std/math>
 
 void main {
-
+    
 }

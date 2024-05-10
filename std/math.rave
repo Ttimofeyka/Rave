@@ -454,8 +454,8 @@ namespace std {
             for(int i=0; i<size; i++) x[i] /= sum;
         }
 
-        void softmax(std::vector<double> dvec) {std::math::softmax(dvec.data, dvec.length);}
-        void softmax(std::vector<float> fvec) {std::math::softmax(fvec.data, fvec.length);}
+        void softmax(std::vector<double> dvec) => std::math::softmax(dvec.data, dvec.length);
+        void softmax(std::vector<float> fvec) => std::math::softmax(fvec.data, fvec.length);
 
         void rmsnorm(double* out, double* x, double* weight, int size) {
             double ss;
@@ -479,7 +479,7 @@ namespace std {
             for(int i=0; i<size; i++) out[i] = weight[i] * (ss * x[i]);
         }
 
-        void rmsnorm(std::vector<double> out, std::vector<double> x, std::vector<double> weight) {std::math::rmsnorm(out.data, x.data, weight.data, out.length);}
-        void rmsnorm(std::vector<float> out, std::vector<float> x, std::vector<float> weight) {std::math::rmsnorm(out.data, x.data, weight.data, out.length);}
+        void rmsnorm(std::vector<double> out, std::vector<double> x, std::vector<double> weight) => std::math::rmsnorm(out.data, x.data, weight.data, out.length);
+        void rmsnorm(std::vector<float> out, std::vector<float> x, std::vector<float> weight) => std::math::rmsnorm(out.data, x.data, weight.data, out.length);
     }
 }
