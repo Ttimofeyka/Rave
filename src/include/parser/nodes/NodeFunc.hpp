@@ -59,6 +59,7 @@ public:
     bool noCompile = false;
     bool isExtern = false;
     bool isCdecl64 = false;
+    bool isArrayable = false;
 
     NodeFunc(std::string name, std::vector<FuncArgSet> args, NodeBlock* block, bool isExtern, std::vector<DeclarMod> mods, long loc, Type* type, std::vector<std::string> templateNames);
     LLVMTypeRef* getParameters(int callConv);

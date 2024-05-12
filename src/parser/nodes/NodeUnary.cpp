@@ -4,9 +4,10 @@ Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-#include "../../include/parser/nodes/NodeUnary.hpp"
 #include "../../include/utils.hpp"
+#include "../../include/parser/nodes/NodeUnary.hpp"
 #include "../../include/parser/nodes/NodeBool.hpp"
+#include "../../include/parser/nodes/NodeArray.hpp"
 #include "../../include/parser/nodes/NodeGet.hpp"
 #include "../../include/parser/nodes/NodeIndex.hpp"
 #include "../../include/parser/nodes/NodeIden.hpp"
@@ -29,7 +30,9 @@ NodeUnary::NodeUnary(long loc, char type, Node* base) {
 
 Type* NodeUnary::getType() {
     switch(this->type) {
-        case TokType::GetPtr: return new TypePointer(this->base->getType());
+        case TokType::GetPtr:
+            if(instanceof<TypeArray>(this->base->getType())) return new TypePointer(((TypeArray*)this->base->getType())->element);
+            return new TypePointer(this->base->getType());
         case TokType::Minus: case TokType::Ne: return this->base->getType();
         case TokType::Destructor: return new TypeVoid();
         case TokType::Multiply:
@@ -102,6 +105,12 @@ LLVMValueRef NodeUnary::generate() {
         else if(instanceof<NodeIndex>(this->base)) {
             ((NodeIndex*)this->base)->isMustBePtr = true;
             val = this->base->generate();
+        }
+        else if(instanceof<NodeArray>(this->base)) {
+            val = this->base->generate();
+            LLVMValueRef temp = LLVMBuildAlloca(generator->builder, LLVMTypeOf(val), "NodeUnary_NA_temp");
+            LLVMBuildStore(generator->builder, val, temp);
+            val = temp;
         }
         if(LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(val))) == LLVMArrayTypeKind) {
             return LLVMBuildPointerCast(

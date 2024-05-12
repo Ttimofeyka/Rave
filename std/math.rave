@@ -462,8 +462,8 @@ namespace std {
 
             for(int i=0; i<size; i++) ss += x[i] * x[i];
             ss /= cast(double)size;
-            ss += 0.00001f;
-            ss = 1f / std::math::sqrt(ss);
+            ss += 0.00001d;
+            ss = 1d / std::math::sqrt(ss);
 
             for(int i=0; i<size; i++) out[i] = weight[i] * (ss * x[i]);
         }

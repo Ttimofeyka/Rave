@@ -1,5 +1,6 @@
-import <std/io> <std/vector> <std/math>
+import <std/io> <std/vector>
 
 void main {
-    
+    auto v = std::vector<int>([10, 20, 30, 40]);
+    foreach(element; v) std::println(element);
 }

@@ -35,6 +35,7 @@ NodeFunc::NodeFunc(std::string name, std::vector<FuncArgSet> args, NodeBlock* bl
     this->loc = loc;
     this->type = type;
     this->templateNames = templateNames;
+    this->isArrayable = false;
     for(int i=0; i<mods.size(); i++) {
         if(mods[i].name == "private") this->isPrivate = true;
     }
@@ -181,6 +182,7 @@ LLVMValueRef NodeFunc::generate() {
         else if(this->mods[i].name == "safe") this->isSafe = true;
         else if(this->mods[i].name == "nochecks") this->isNoChecks = true;
         else if(this->mods[i].name == "noOptimize") this->isNoOpt = true;
+        else if(this->mods[i].name == "arrayable") this->isArrayable = true;
         else if(this->mods[i].name.size() > 0 && this->mods[i].name[0] == '@') builtins[this->mods[i].name.substr(1)] = ((NodeBuiltin*)this->mods[i].genValue);
     }
     if(!this->isTemplate && this->isCtargs) return nullptr;
@@ -273,8 +275,8 @@ LLVMValueRef NodeFunc::generate() {
 
     if(LLVMVerifyFunction(generator->functions[this->name], LLVMPrintMessageAction)) {
         std::string content = LLVMPrintValueToString(generator->functions[this->name]);
-        if(content.length() > 12000) content = content.substr(0, 12000)+"...";
-        generator->error("LLVM errors into the function '"+this->name+"'! Content:\n"+content, this->loc);
+        if(content.length() > 12000) content = content.substr(0, 12000) + "...";
+        generator->error("LLVM errors into the function '" + this->name + "'! Content:\n" + content, this->loc);
     }
     return generator->functions[this->name];
 }

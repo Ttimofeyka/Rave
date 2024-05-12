@@ -100,6 +100,10 @@ std::string typeToString(Type* arg) {
     else if(instanceof<TypePointer>(arg)) {
         if(instanceof<TypeStruct>(((TypePointer*)arg)->instance)) {
             TypeStruct* ts = (TypeStruct*)(((TypePointer*)arg)->instance);
+            Type* t = ts;
+            while(generator->toReplace.find(t->toString()) != generator->toReplace.end()) t = generator->toReplace[t->toString()];
+            if(!instanceof<TypeStruct>(t)) return typeToString(new TypePointer(t));
+            ts = (TypeStruct*)t;
             if(ts->name.find('<') == std::string::npos) return "s-"+ts->name;
             else return "s-"+ts->name.substr(0,ts->name.find('<'));
         }

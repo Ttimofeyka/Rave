@@ -6,11 +6,26 @@ namespace std {
         int capacity;
         int length;
 
-        std::vector<T> this {
+        (arrayable) std::vector<T> this {
             std::vector<T> this;
             this.data = cast(T*)std::malloc(sizeof(T));
             this.capacity = sizeof(T);
             this.length = 0;
+        } => this;
+
+        std::vector<T> this(int size) {
+            std::vector<T> this;
+            this.data = cast(T*)std::malloc(sizeof(T) * size);
+            this.capacity = sizeof(T) * size;
+            this.length = 0;
+        } => this;
+
+        std::vector<T> this(T* data, int size) {
+            std::vector<T> this;
+            this.data = cast(T*)std::malloc(sizeof(T) * size);
+            this.capacity = sizeof(T) * size;
+            this.length = size;
+            for(int i=0; i<size; i++) this.data[i] = data[i];
         } => this;
 
         void add(T value) {

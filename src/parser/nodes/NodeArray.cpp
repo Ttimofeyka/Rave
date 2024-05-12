@@ -14,7 +14,10 @@ NodeArray::NodeArray(long loc, std::vector<Node*> values) {
     this->values = std::vector<Node*>(values);
 }
 
-Type* NodeArray::getType() {return (this->values.size() > 0 ? this->values[0]->getType() : new TypeVoid());}
+Type* NodeArray::getType() {
+    if(this->values.size() > 0) return new TypeArray(this->values.size(), this->values[0]->getType());
+    return new TypeVoid();
+}
 
 std::vector<LLVMValueRef> NodeArray::getValues() {
     std::vector<LLVMValueRef> buffer;

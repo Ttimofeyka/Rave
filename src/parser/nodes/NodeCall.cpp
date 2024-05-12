@@ -17,6 +17,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeCast.hpp"
 #include "../../include/parser/nodes/NodeBuiltin.hpp"
 #include "../../include/parser/nodes/NodeBinary.hpp"
+#include "../../include/parser/nodes/NodeInt.hpp"
 #include "../../include/parser/nodes/NodeType.hpp"
 #include "../../include/parser/Types.hpp"
 #include "../../include/parser/ast.hpp"
@@ -168,7 +169,7 @@ LLVMValueRef NodeCall::generate() {
             if(generator->functions.find(idenFunc->name) == generator->functions.end()) {
                 // Function with compile-time args (ctargs)
                 if(AST::funcTable[idenFunc->name]->isCtargs) {
-                    if(generator->functions.find(idenFunc->name+sTypes) != generator->functions.end()) {
+                    if(generator->functions.find(idenFunc->name + sTypes) != generator->functions.end()) {
                         return LLVM::call(generator->functions[idenFunc->name+sTypes], this->getParameters(nullptr, false).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
                     }
                     std::vector<LLVMValueRef> params = this->getParameters(nullptr, false);
@@ -183,9 +184,33 @@ LLVMValueRef NodeCall::generate() {
                 generator->error("undefined function '"+idenFunc->name+"'!", this->loc);
                 return nullptr;
             }
-            if(AST::funcTable.find(idenFunc->name+sTypes) != AST::funcTable.end()) {
-                this->isCdecl64 = AST::funcTable[idenFunc->name+sTypes]->isCdecl64;
-                return LLVM::call(generator->functions[idenFunc->name+sTypes], this->getParameters(AST::funcTable[idenFunc->name+sTypes], false, AST::funcTable[idenFunc->name+sTypes]->args).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name+sTypes]->type) ? "" : "callFunc"));
+            if(AST::funcTable.find(idenFunc->name + sTypes) != AST::funcTable.end()) {
+                this->isCdecl64 = AST::funcTable[idenFunc->name + sTypes]->isCdecl64;
+                return LLVM::call(generator->functions[idenFunc->name + sTypes], this->getParameters(AST::funcTable[idenFunc->name + sTypes], false, AST::funcTable[idenFunc->name + sTypes]->args).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name + sTypes]->type) ? "" : "callFunc"));
+            }
+            else if(AST::funcTable[idenFunc->name]->isArrayable && this->args.size() > 0) {
+                // Arrayble - accepts pointer and length instead of array
+                std::vector<Node*> newArgs;
+                bool isChanged = false;
+                for(int i=0; i<this->args.size(); i++) {
+                    if(instanceof<TypeArray>(this->args[i]->getType())) {
+                        isChanged = true;
+                        TypeArray* tarray = (TypeArray*)this->args[i]->getType();
+                        newArgs.push_back(new NodeUnary(this->loc, TokType::GetPtr, this->args[i]));
+                        newArgs.push_back(new NodeInt(tarray->count));
+                    }
+                    else newArgs.push_back(this->args[i]);
+                }
+                if(isChanged) {
+                    std::vector<Type*> newTypes;
+                    for(int i=0; i<newArgs.size(); i++) newTypes.push_back(newArgs[i]->getType());
+                    std::string newSTypes = typesToString(newTypes);
+                    if(AST::funcTable.find(idenFunc->name + newSTypes) != AST::funcTable.end()) {
+                        this->args = newArgs;
+                        this->isCdecl64 = AST::funcTable[idenFunc->name + newSTypes]->isCdecl64;
+                        return LLVM::call(generator->functions[idenFunc->name + newSTypes], this->getParameters(AST::funcTable[idenFunc->name + newSTypes], false, AST::funcTable[idenFunc->name + newSTypes]->args).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name + newSTypes]->type) ? "" : "callFunc"));
+                    }
+                }
             }
             this->isCdecl64 = AST::funcTable[idenFunc->name]->isCdecl64;
             return LLVM::call(generator->functions[idenFunc->name], this->getParameters(AST::funcTable[idenFunc->name], false, AST::funcTable[idenFunc->name]->args).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
@@ -200,8 +225,8 @@ LLVMValueRef NodeCall::generate() {
         }
         if(idenFunc->name.find('<') != std::string::npos && AST::funcTable.find(idenFunc->name.substr(0, idenFunc->name.find('<'))) != AST::funcTable.end()) {
             std::string mainName = idenFunc->name.substr(0, idenFunc->name.find('<'));
-            std::string sTypes = idenFunc->name.substr(idenFunc->name.find('<')+1);
-            Lexer* tLexer = new Lexer(sTypes.substr(0, sTypes.size()-1), 1);
+            std::string sTypes = idenFunc->name.substr(idenFunc->name.find('<') + 1);
+            Lexer* tLexer = new Lexer(sTypes.substr(0, sTypes.size() - 1), 1);
             Parser* tParser = new Parser(tLexer->tokens, "(builtin)");
 
             std::vector<Type*> types;
@@ -218,8 +243,8 @@ LLVMValueRef NodeCall::generate() {
         }
         if(idenFunc->name.find('<') != std::string::npos) {
             std::string mainName = idenFunc->name.substr(0, idenFunc->name.find('<'));
-            std::string sTypes = idenFunc->name.substr(idenFunc->name.find('<')+1);
-            Lexer* tLexer = new Lexer(sTypes.substr(0, sTypes.size()-1), 1);
+            std::string sTypes = idenFunc->name.substr(idenFunc->name.find('<') + 1);
+            Lexer* tLexer = new Lexer(sTypes.substr(0, sTypes.size() - 1), 1);
             Parser* tParser = new Parser(tLexer->tokens, "(builtin)");
 
             std::vector<Type*> types;
