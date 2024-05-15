@@ -222,6 +222,9 @@ namespace std {
         double tanh(double x) => (std::math::exp(2.0 * x) - 1d) / (std::math::exp(2.0 * x) + 1.0);
         float tanh(float x) => (std::math::exp(2.0 * x) - 1f) / (std::math::exp(2.0 * x) + 1.0);
 
+        double dtanh(double x) => 1d - (x * x);
+        float dtanh(float x) => 1f - (x * x);
+
         double acosh(double x) => std::math::log(x + std::math::sqrt((x + 1.0) * (x - 1.0)));
         float acosh(float x) => std::math::log(x + std::math::sqrt((x + 1.0) * (x - 1.0)));
 
@@ -419,8 +422,8 @@ namespace std {
         double sigmoid(double x) => 1d / (1d + std::math::exp(-x));
         float sigmoid(float x) => 1f / (1f + std::math::exp(-x));
 
-        double sigmoidDerivative(double x) => std::math::exp(-x) / std::math::pow(1d + std::math::exp(-x), 2d);
-        float sigmoidDerivative(float x) => std::math::exp(-x) / std::math::pow(1f + std::math::exp(-x), 2f);
+        double dsigmoid(double x) => std::math::exp(-x) / std::math::pow(1d + std::math::exp(-x), 2d);
+        float dsigmoid(float x) => std::math::exp(-x) / std::math::pow(1f + std::math::exp(-x), 2f);
 
         void softmax(double* x, int size) {
             double maxValue = x[0];
@@ -481,5 +484,18 @@ namespace std {
 
         void rmsnorm(std::vector<double> out, std::vector<double> x, std::vector<double> weight) => std::math::rmsnorm(out.data, x.data, weight.data, out.length);
         void rmsnorm(std::vector<float> out, std::vector<float> x, std::vector<float> weight) => std::math::rmsnorm(out.data, x.data, weight.data, out.length);
+
+        double relu(double x) => std::math::max(0.0d, x);
+        float relu(float x) => std::math::max(0.0f, x);
+
+        double drelu(double x) {
+            if(x >= 0.0) return = 1.0d;
+            else return = 0.0d;
+        }
+
+        float drelu(float x) {
+            if(x >= 0.0) return = 1.0f;
+            else return = 0.0f;
+        }
     }
 }
