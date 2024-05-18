@@ -36,8 +36,11 @@ NodeFunc::NodeFunc(std::string name, std::vector<FuncArgSet> args, NodeBlock* bl
     this->type = type;
     this->templateNames = templateNames;
     this->isArrayable = false;
+    this->isNoCopy = false;
+
     for(int i=0; i<mods.size(); i++) {
         if(mods[i].name == "private") this->isPrivate = true;
+        else if(mods[i].name == "noCopy") this->isNoCopy = true;
     }
 }
 

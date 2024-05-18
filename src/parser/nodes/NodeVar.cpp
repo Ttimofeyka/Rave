@@ -49,6 +49,11 @@ NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, boo
     this->isVolatile = isVolatile;
     this->isChanged = isChanged;
     this->noZeroInit = noZeroInit;
+    this->isNoCopy = false;
+
+    for(int i=0; i<this->mods.size(); i++) {
+        if(this->mods[i].name == "noCopy") this->isNoCopy = true;
+    }
 }
 
 Type* NodeVar::getType() {return this->type->copy();}

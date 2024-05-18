@@ -54,4 +54,15 @@ struct A {
     int* one;
     int two;
 }
+
+struct C {
+    int one;
+    int two;
+    (noCopy) int three;
+}
+
+struct D : C {
+    // is copying elements and all methods from one structure to another.
+    // to not copy some method or variable, you can use noCopy flag
+}
 ```

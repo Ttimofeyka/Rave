@@ -194,8 +194,13 @@ void NodeStruct::check() {
         if(this->extends != "") {
             NodeStruct* extended = AST::structTable[this->extends];
             // TODO: error if AST::structTable[this-extends] == nullptr
-            for(int i=0; i<extended->elements.size(); i++) this->elements.push_back(extended->elements[i]);
-            for(int i=0; i<extended->methods.size(); i++) this->methods.push_back(extended->methods[i]);
+            for(int i=0; i<extended->elements.size(); i++) {
+                if(instanceof<NodeVar>(extended->elements[i]) && !(((NodeVar*)extended->elements[i])->isNoCopy)) this->elements.push_back(extended->elements[i]);
+                else if(!instanceof<NodeVar>(extended->elements[i])) this->elements.push_back(extended->elements[i]);
+            }
+            for(int i=0; i<extended->methods.size(); i++) {
+                if(!extended->methods[i]->isNoCopy) this->methods.push_back(extended->methods[i]);
+            }
             for(int i=0; i<extended->predefines.size(); i++) this->predefines.push_back(extended->predefines[i]);
         }
         AST::structTable[this->name] = this;

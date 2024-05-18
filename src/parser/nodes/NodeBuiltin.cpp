@@ -302,7 +302,7 @@ LLVMValueRef NodeBuiltin::generate() {
     }
     if(this->name == "compileAndLink") {
         std::string iden = this->asStringIden(0);
-        if(iden[0] == '<') AST::addToImport.push_back(exePath+iden.substr(1, iden.size()-1)+".rave");
+        if(iden[0] == '<') AST::addToImport.push_back(exePath + iden.substr(1, iden.size()-1)+".rave");
         else AST::addToImport.push_back(getDirectory3(AST::mainFile)+"/"+iden.substr(1, iden.size()-1)+".rave");
         return nullptr;
     }
