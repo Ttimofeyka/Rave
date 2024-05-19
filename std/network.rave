@@ -7,8 +7,6 @@ import <std/openssl>
 
 import <std/io>
 
-extern(C) char* explain_connect(int fildes, std::socket::sockaddr* serv_addr, int serv_addr_size);
-
 namespace std {
     namespace network {
         struct URL {
@@ -132,7 +130,6 @@ namespace std {
                 if(sock.connect() < 0) {
                     std::network::Response resp_fail_ssl = std::network::Response();
                     resp_fail_ssl.success = -6; // connect failure
-                    std::println(explain_connect(sock.fd, cast(std::socket::sockaddr*)sock.addr, sizeof(std::socket::sockaddr_in)));
                     return = resp_fail_ssl;
                 } else {
                     sock.write(reqline.data);

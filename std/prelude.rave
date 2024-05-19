@@ -1,5 +1,3 @@
-@compileAndLink("<std/io>");
-
 @if(@aliasExists(__RAVE_IMPORTED_FROM)) {
     @if(@contains(__RAVE_IMPORTED_FROM, "std/sysc.rave") == false) {
         import <std/sysc>  
@@ -9,6 +7,15 @@
 @if(!@aliasExists(__RAVE_IMPORTED_FROM)) {
     import <std/sysc>
 };
+
+@compileAndLink("<std/thread>");
+@compileAndLink("<std/cstring>");
+@compileAndLink("<std/ascii>");
+@compileAndLink("<std/strutil>");
+@compileAndLink("<std/utf8>");
+@compileAndLink("<std/string>");
+@compileAndLink("<std/error>");
+@compileAndLink("<std/io>");
 
 @if(__RAVE_OS == "LINUX") {
     namespace std {
