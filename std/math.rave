@@ -350,7 +350,7 @@ namespace std {
 
         float max(float one, float two) {
             return = one;
-            if(two < one) return = two;
+            if(two > one) return = two;
         }
 
         int max(int one, int two) {
