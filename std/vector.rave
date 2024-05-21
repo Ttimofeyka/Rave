@@ -136,7 +136,7 @@ namespace std {
             }
         }
 
-        void filter(T(T) fn) {
+        void transform(T(T) fn) {
             for(int i=0; i<this.length; i++) this.data[i] = fn(this.data[i]);
         }
     }
