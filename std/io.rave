@@ -4,10 +4,6 @@ namespace libc {
     struct File {
 	    void* __builtInLibc;
     }
-
-    alias SeekSet = 0;
-    alias SeekCurr = 1;
-    alias SeekEnd = 2;
 }
 
 namespace std {
