@@ -1,3 +1,8 @@
+import <std/io> <std/math> <std/error>
+
 void main {
-    
+    for(int i=0; i<100; i++) {
+        alias a = 100;
+        std::println(a - i);
+    }
 }

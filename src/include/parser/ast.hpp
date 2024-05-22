@@ -106,6 +106,7 @@ public:
     bool funcHasRet = false;
     std::map<std::string, NodeVar*> localVars;
     std::map<std::string, NodeVar*> argVars;
+    std::map<std::string, Node*> aliasTable;
     bool inTry = false;
     LLVMBasicBlockRef fnEnd;
     LLVMBasicBlockRef elseIfEnd = nullptr;

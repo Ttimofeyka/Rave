@@ -398,6 +398,7 @@ Scope::Scope(std::string funcName, std::map<std::string, int> args, std::map<std
     this->funcName = funcName;
     this->args = std::map<std::string, int>(args);
     this->argVars = std::map<std::string, NodeVar*>(argVars);
+    this->aliasTable = std::map<std::string, Node*>();
 }
 
 void Scope::remove(std::string name) {
@@ -405,11 +406,13 @@ void Scope::remove(std::string name) {
         this->localScope.erase(name);
         this->localVars.erase(name);
     }
+    else if(this->aliasTable.find(name) != this->aliasTable.end()) this->aliasTable.erase(name);
 }
 
 LLVMValueRef Scope::get(std::string name, long loc) {
     LLVMValueRef value = nullptr;
     if(AST::aliasTable.find(name) != AST::aliasTable.end()) value = AST::aliasTable[name]->generate();
+    else if(this->aliasTable.find(name) != this->aliasTable.end()) value = this->aliasTable[name]->generate();
     else if(this->localScope.find(name) != this->localScope.end()) value = this->localScope[name];
     else if(generator->globals.find(name) != generator->globals.end()) value = generator->globals[name];
     else if(this->has(name) && this->args.find(name) == this->args.end() && generator->functions.find(name) == generator->functions.end()) {
@@ -438,6 +441,7 @@ LLVMValueRef Scope::get(std::string name, long loc) {
 
 LLVMValueRef Scope::getWithoutLoad(std::string name, long loc) {
     if(AST::aliasTable.find(name) != AST::aliasTable.end()) return AST::aliasTable[name]->generate();
+    if(this->aliasTable.find(name) != this->aliasTable.end()) return this->aliasTable[name]->generate();
     if(this->localScope.find(name) != this->localScope.end()) return this->localScope[name];
     if(generator->globals.find(name) != generator->globals.end()) return generator->globals[name];
     if(this->args.find(name) == this->args.end()) generator->error("undefined identifier '"+name+"' at function '"+this->funcName+"'!", loc);
@@ -446,6 +450,7 @@ LLVMValueRef Scope::getWithoutLoad(std::string name, long loc) {
 
 bool Scope::has(std::string name) {
     return AST::aliasTable.find(name) != AST::aliasTable.end() ||
+        this->aliasTable.find(name) != this->aliasTable.end() ||
         this->localScope.find(name) != this->localScope.end() ||
         generator->globals.find(name) != generator->globals.end() ||
         this->args.find(name) != this->args.end();
@@ -455,7 +460,8 @@ NodeVar* Scope::getVar(std::string name, long loc) {
     if(this->localVars.find(name) != this->localVars.end()) return this->localVars[name];
     if(AST::varTable.find(name) != AST::varTable.end()) return AST::varTable[name];
     if(this->argVars.find(name) != this->argVars.end()) return this->argVars[name];
-    generator->error("undefined variable '"+name+"'!",loc);
+    if(this->aliasTable.find(name) != this->aliasTable.end()) return (new NodeVar(name, this->aliasTable[name]->copy(), false, false, false, {}, loc, this->aliasTable[name]->getType()));
+    generator->error("undefined variable '"+name+"'!", loc);
     return nullptr;
 }
 

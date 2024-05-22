@@ -99,7 +99,8 @@ LLVMValueRef NodeVar::generate() {
     }
 
     if(instanceof<TypeAlias>(this->type)) {
-        AST::aliasTable[this->name] = this->value;
+        if(currScope != nullptr) currScope->aliasTable[this->name] = this->value;
+        else AST::aliasTable[this->name] = this->value;
         return nullptr;
     }
 

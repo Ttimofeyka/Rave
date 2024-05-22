@@ -22,6 +22,7 @@ NodeIden::NodeIden(std::string name, long loc, bool isMustBePtr) {
 
 Node* NodeIden::copy() {return new NodeIden(this->name, this->loc, this->isMustBePtr);}
 void NodeIden::check() {this->isChecked = true;}
+
 Type* NodeIden::getType() {
     if(AST::aliasTable.find(this->name) != AST::aliasTable.end()) return AST::aliasTable[this->name]->getType();
     if(AST::funcTable.find(this->name) != AST::funcTable.end()) return AST::funcTable[this->name]->getType();
@@ -45,9 +46,9 @@ Node* NodeIden::comptime() {
     return AST::aliasTable[this->name];
 }
 
-
 LLVMValueRef NodeIden::generate() {
     if(AST::aliasTable.find(this->name) != AST::aliasTable.end()) return AST::aliasTable[this->name]->generate();
+    else if(currScope != nullptr && currScope->aliasTable.find(this->name) != currScope->aliasTable.end()) return currScope->aliasTable[this->name]->generate();
     if(generator->functions.find(this->name) != generator->functions.end()) {
         generator->addAttr("noinline", LLVMAttributeFunctionIndex, generator->functions[this->name], loc);
         return generator->functions[this->name];
