@@ -291,8 +291,9 @@ namespace std {
         int write(void* buffer, int size, int n) => libc::fwrite(buffer, size, n, this._file);
 
         char getc => libc::fgetc(this._file);
-
         char* gets(char* buffer, int n) => libc::fgets(buffer, n, this._file);
+
+        int seek(int offset, int flag) => libc::fseek(this._file, offset, flag);
 
         std::string readLine {
             std::string buffer = "";
