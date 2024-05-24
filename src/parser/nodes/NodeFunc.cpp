@@ -205,7 +205,10 @@ LLVMValueRef NodeFunc::generate() {
 
     this->getParameters(callConv);
     LLVMValueRef get = LLVMGetNamedFunction(generator->lModule, linkName.c_str());
-    if(get != nullptr) return nullptr;
+    if(get != nullptr) {
+        if(generator->functions.find(this->name) == generator->functions.end()) generator->functions[this->name] = get;
+        return nullptr;
+    }
     if(callConv == -1) callConv = LLVMCCallConv;
     generator->functions[this->name] = LLVMAddFunction(
         generator->lModule, linkName.c_str(),

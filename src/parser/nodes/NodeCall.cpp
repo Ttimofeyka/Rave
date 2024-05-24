@@ -178,7 +178,7 @@ LLVMValueRef NodeCall::generate() {
                     return LLVM::call(generator->functions[AST::funcTable[idenFunc->name]->generateWithCtargs(types)], params.data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
                 }
                 if(AST::debugMode) {
-                    for(auto const& x : AST::funcTable) std::cout << "\t" << x.first << std::endl;
+                    for(auto const& x : generator->functions) std::cout << "\t" << x.first << std::endl;
                     std::cout << "DEBUG_MODE: undefined function (generator->functions)!" << std::endl;
                 }
                 generator->error("undefined function '"+idenFunc->name+"'!", this->loc);
