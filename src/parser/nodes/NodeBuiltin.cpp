@@ -379,7 +379,8 @@ LLVMValueRef NodeBuiltin::generate() {
         if(currScope != nullptr) {
             if(currScope->fnEnd != nullptr) {
                 if(args.size() == 1) (new NodeBinary(TokType::Equ, new NodeIden("return", this->loc), args[0], this->loc))->generate();
-                LLVMBuildBr(generator->builder, currScope->fnEnd);
+                if(currScope->fnEnd != nullptr) LLVMBuildBr(generator->builder, currScope->fnEnd);
+                else LLVMBuildBr(generator->builder, AST::funcTable[currScope->funcName]->exitBlock);
                 currScope->funcHasRet = true;
             }
         }
