@@ -451,14 +451,14 @@ Node* Parser::parseAtom(std::string f) {
                 return new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Double));
             }
             else if(this->peek()->value[0] == 'h') {
-                // Bhalf-type
-                this->next();
-                return new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Bhalf));
-            }
-            else if(this->peek()->value[0] == 'b' && this->peek()->value[1] == 'h') {
                 // Half-type
                 this->next();
                 return new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Half));
+            }
+            else if(this->peek()->value[0] == 'b' && this->peek()->value[1] == 'h') {
+                // Bhalf-type
+                this->next();
+                return new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Bhalf));
             }
         }
         return new NodeInt(BigInt(t->value));
