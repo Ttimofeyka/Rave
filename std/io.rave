@@ -56,7 +56,6 @@ namespace libc {
     extern(linkname: "fopen") libc::File* fopen(char* path, char* mode);
     extern(linkname: "fclose") int fclose(libc::File* file);
     extern(linkname: "ferror") int fhasError(libc::File* file);
-    extern(linkname: "fprintf", vararg) int fprintf(libc::File* file, char* str);
     extern(linkname: "fflush") int fflush(libc::File* file);
     extern(linkname: "fscanf", vararg) int fscanf(libc::File* file, char* fmt);
     extern(linkname: "feof") int feof(libc::File* file);
@@ -136,8 +135,8 @@ namespace std {
     (ctargs, inline) void fprint {
         std::file f = @getArg(std::file, 0);
         @skipArg();
-        std::string data = @callWithArgs(std::gsprint);
-        f.write(data.data, @sizeOf(char), data.length);
+        std::string str = @callWithArgs(std::gsprint);
+        f.write(str.c(), 1, str.length);
     }
 
     (ctargs, inline) void fprintln {
