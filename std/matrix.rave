@@ -15,11 +15,11 @@ namespace std {
         } => this;
 
         (inline) void set(int r, int c, T value) {
-            if((r >= 0) && (r < this.rows) && (c >= 0) && (c < this.columns)) this.data[(r * this.rows) + c] = value;
+            if((r >= 0) && (r < this.rows) && (c >= 0) && (c < this.columns)) this.data[(r * this.columns) + c] = value;
         }
 
         (inline) T get(int r, int c) {
-            if((r >= 0) && (r < this.rows) && (c >= 0) && (c < this.columns)) return = this.data[(r * this.rows) + c];
+            if((r >= 0) && (r < this.rows) && (c >= 0) && (c < this.columns)) return = this.data[(r * this.columns) + c];
         }
 
         void add(std::matrix<T> mat) {
@@ -49,7 +49,7 @@ namespace std {
             }
         }
 
-        void filter(T(T) fn) {
+        void transform(T(T) fn) {
             for(int i=0; i<(this.rows * this.columns); i++) this.data[i] = fn(this.data[i]);
         }
 
