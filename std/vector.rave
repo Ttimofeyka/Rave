@@ -17,7 +17,7 @@ namespace std {
             std::vector<T> this;
             this.data = cast(T*)std::malloc(sizeof(T) * size);
             this.capacity = sizeof(T) * size;
-            this.length = 0;
+            this.length = size;
         } => this;
 
         std::vector<T> this(T* data, int size) {
