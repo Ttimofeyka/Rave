@@ -1,5 +1,22 @@
-import <std/io>
+import <std/io> <std/matrix> <std/random>
 
 void main {
-    
+    auto m = std::matrix<float>(3, 3);
+    for(int y=0; y<m.rows; y++) {
+        for(int x=0; x<m.columns; x++) m.set(x, y, ((cast(float)std::randomShort()) / 32767f));
+    }
+
+    std::println("Before:");
+    for(int y=0; y<m.rows; y++) {
+        for(int x=0; x<m.columns; x++) std::print(m.get(x, y), " ");
+        std::println();
+    }
+
+    m.drelu();
+
+    std::println("After:");
+    for(int y=0; y<m.rows; y++) {
+        for(int x=0; x<m.columns; x++) std::print(m.get(x, y), " ");
+        std::println();
+    }
 }
