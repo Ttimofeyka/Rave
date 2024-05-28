@@ -51,6 +51,10 @@ namespace std {
             };
         }
 
+        void zero {
+            for(int i=0; i<this.length; i++) this.data[i] = null;
+        }
+
         std::vector<T> copy {
             std::vector<T> buffer;
             buffer.data = cast(T*)std::malloc(sizeof(std::vector<T>));
