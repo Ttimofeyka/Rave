@@ -30,7 +30,7 @@ NodeForeach::NodeForeach(NodeIden* elName, Node* varData, Node* varLength, NodeB
 }
 
 Node* NodeForeach::copy() {
-    return new NodeForeach((NodeIden*)this->elName->copy(), this->varData->copy(), this->varLength->copy(), (NodeBlock*)this->block->copy(), this->funcName, this->loc);
+    return new NodeForeach((NodeIden*)this->elName->copy(), this->varData->copy(), (varLength != nullptr ? this->varLength->copy() : nullptr), (NodeBlock*)this->block->copy(), this->funcName, this->loc);
 }
 
 Node* NodeForeach::comptime() {return nullptr;}

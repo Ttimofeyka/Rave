@@ -25,7 +25,7 @@ namespace std {
             this.data = cast(T*)std::malloc(sizeof(T) * size);
             this.capacity = sizeof(T) * size;
             this.length = size;
-            for(int i=0; i<size; i++) this.data[i] = data[i];
+            std::memcpy(cast(char*)this.data, cast(char*)data, size * sizeof(T));
         } => this;
 
         void add(T value) {

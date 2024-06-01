@@ -382,7 +382,7 @@ LLVMValueRef NodeBinary::generate() {
             }
             LLVMValueRef value = this->second->generate();
 
-            if(LLVMTypeOf(ptr) == LLVMPointerType(LLVMPointerType(LLVMTypeOf(value),0),0)) ptr = LLVM::load(ptr, "NodeBinary_NodeIndex_load");
+            if(LLVMTypeOf(ptr) == LLVMPointerType(LLVMPointerType(LLVMTypeOf(value), 0), 0)) ptr = LLVM::load(ptr, "NodeBinary_NodeIndex_load");
 
             if(LLVMGetElementType(LLVMTypeOf(ptr)) != LLVMTypeOf(value) && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) == LLVMGetTypeKind(LLVMTypeOf(value))) {
                 if(LLVMGetTypeKind(LLVMTypeOf(value)) == LLVMIntegerTypeKind) value = LLVMBuildIntCast(generator->builder, value, LLVMGetElementType(LLVMTypeOf(ptr)), "NodeBinary_NodeIndex_intc");
