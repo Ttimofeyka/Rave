@@ -135,11 +135,35 @@ LLVMValueRef NodeIndex::generate() {
         nget->isMustBePtr = true;
         LLVMValueRef ptr = nget->generate();
 
+        if(
+            LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMStructTypeKind ||
+            (LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) == LLVMStructTypeKind)
+        ) {
+            LLVMTypeRef structLType = LLVMTypeOf(ptr);
+            if(LLVMGetTypeKind(structLType) != LLVMStructTypeKind) structLType = LLVMGetElementType(structLType);
+
+            Type* structType = new TypeStruct(std::string(LLVMGetStructName(structLType)));
+            while(generator->toReplace.find(structType->toString()) != generator->toReplace.end()) structType = generator->toReplace[structType->toString()];
+            if(instanceof<TypeStruct>(structType)) {
+                std::string structName = structType->toString();
+                if(AST::structTable.find(structName) != AST::structTable.end()) {
+                    if(AST::structTable[structName]->operators.find(TokType::Rbra) != AST::structTable[structName]->operators.end()) {
+                        for(auto const& x : AST::structTable[structName]->operators[TokType::Rbra]) {
+                            return (new NodeCall(
+                                this->loc, new NodeIden(AST::structTable[structName]->operators[TokType::Rbra][x.first]->name, this->loc),
+                                std::vector<Node*>({new NodeDone(ptr), this->indexes[0]})
+                            ))->generate();
+                        }
+                    }
+                }
+            }
+        }
+
         this->elementIsConst = nget->elementIsConst;
-        if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) != LLVMArrayTypeKind) {ptr = LLVM::load(ptr, ("NodeIndex_NodeGet_load"+std::to_string(this->loc)+"_").c_str());}
+        if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) != LLVMArrayTypeKind) {ptr = LLVM::load(ptr, ("NodeIndex_NodeGet_load" + std::to_string(this->loc) + "_").c_str());}
         LLVMValueRef index = generator->byIndex(ptr, this->generateIndexes());
         if(isMustBePtr) return index;
-        return LLVM::load(index, ("NodeIndex_NodeGet"+std::to_string(this->loc)+"_").c_str());
+        return LLVM::load(index, ("NodeIndex_NodeGet" + std::to_string(this->loc) + "_").c_str());
     }
     if(instanceof<NodeCall>(this->element)) {
         NodeCall* ncall = (NodeCall*)this->element;
