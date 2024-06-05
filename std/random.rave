@@ -36,35 +36,35 @@ import <std/time> <std/sysc>
         ulong randNext;
 
         char randomChar {
-            std::timeSpec ts;
+            std::time ts;
             std::getCurrentTime(&ts);
-            if(std::randNext == 0) std::randNext = ts.nsec;
-            ts.nsec = ts.nsec * 1103515245 + 12345 * std::randNext;
+            if(std::randNext == 0) std::randNext = ts.mseconds;
+            ts.mseconds = ts.mseconds * 1103515245 + 12345 * std::randNext;
             std::randNext = std::randNext * 103515245 + 12345;
         } => (cast(char*)ts.&nsec)[0];
         
         short randomShort {
-            std::timeSpec ts;
+            std::time ts;
             std::getCurrentTime(&ts);
-            if(std::randNext == 0) std::randNext = ts.nsec;
-            ts.nsec = ts.nsec * 1103515245 + 12345 * std::randNext;
+            if(std::randNext == 0) std::randNext = ts.mseconds;
+            ts.mseconds = ts.mseconds * 1103515245 + 12345 * std::randNext;
             std::randNext = std::randNext * 103515245 + 12345;
         } => (cast(short*)ts.&nsec)[0];
 
         int randomInt {
-            std::timeSpec ts;
+            std::time ts;
             std::getCurrentTime(&ts);
-            if(std::randNext == 0) std::randNext = ts.nsec;
-            ts.nsec = ts.nsec * 1103515245 + 12345 * std::randNext;
+            if(std::randNext == 0) std::randNext = ts.mseconds;
+            ts.mseconds = ts.mseconds * 1103515245 + 12345 * std::randNext;
             std::randNext = std::randNext * 103515245 + 12345;
         } => (cast(int*)ts.&nsec)[0];
 
         long randomLong {
-            std::timeSpec ts;
+            std::time ts;
             std::getCurrentTime(&ts);
-            if(std::randNext == 0) std::randNext = ts.nsec;
-            ts.nsec = ts.nsec * 1103515245 + 12345 * std::randNext;
+            if(std::randNext == 0) std::randNext = ts.mseconds;
+            ts.mseconds = ts.mseconds * 1103515245 + 12345 * std::randNext;
             std::randNext = std::randNext * 103515245 + 12345;
-        } => ts.nsec;
+        } => ts.mseconds;
     }
 };

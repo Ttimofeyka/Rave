@@ -1,7 +1,7 @@
 import <std/sysc>
 
 namespace std {
-    struct time {
+    struct timeW {
         int sec;
         int min;
         int hour;
@@ -15,9 +15,9 @@ namespace std {
         char* zone;
     }
 
-    struct timeSpec {
-        long sec;
-        long nsec;
+    struct time {
+        long seconds;
+        long mseconds;
     }
 
     alias RealTime = 0;
@@ -64,7 +64,7 @@ namespace std {
         extern(linkname: "GetSystemTimeAsFileTime") void __GetSystemTimeAsFileTime(std::__fileTime* tm);
         extern(linkname: "ProcessPrng") int __ProcessPrng(char* data, int size);
 
-        int getCurrentTime(std::timeSpec* tc) {
+        int getCurrentTime(std::time* tc) {
            std::__fileTime ftm;
            std::__GetSystemTimeAsFileTime(&ftm);
 
@@ -73,8 +73,8 @@ namespace std {
            liPtr[0] = ftm.low;
            liPtr[1] = ftm.high;
 
-           tc.sec = (li - 116444736000000000) / 10000000;
-           tc.nsec = tc.sec;
+           tc.seconds = (li / 10000000l) - 11644473600l;
+           tc.mseconds = (li / 10000l) - 11644473600000l;
         } => 0;
     }
 };
@@ -82,9 +82,12 @@ namespace std {
 @if(__RAVE_OS == "LINUX") {
     namespace std {
         (inline) int __gettimeofday(std::timeVal* tv) => cast(int)std::syscall(std::sysctable::GetTimeOfDay, tv, null);
-        (inline) int __clock_gettime(int flag, std::timeSpec* tc) => cast(int)std::syscall(std::sysctable::ClockGetTime, flag, tc);
+        (inline) int __clock_gettime(int flag, std::time* tc) => cast(int)std::syscall(std::sysctable::ClockGetTime, flag, tc);
 
-        int getCurrentTime(std::timeSpec* tc) => std::__clock_gettime(std::RealTime, tc);
+        int getCurrentTime(std::time* tc) {
+            return = std::__clock_gettime(std::RealTime, tc);
+            tc.mseconds = tc.mseconds * 1000000l;
+        }
     }
 };
 
@@ -95,9 +98,9 @@ namespace std {
     }
 
     namespace std {
-        (inline) int getCurrentTime(std::timeSpec* tc) {
-            tc.sec = libc::getTime(null);
-            tc.nsec = tc.sec;
+        (inline) int getCurrentTime(std::time* tc) {
+            tc.seconds = libc::getTime(null);
+            tc.mseconds = tc.seconds * 1000l;
         } => 0;
     }
 };
