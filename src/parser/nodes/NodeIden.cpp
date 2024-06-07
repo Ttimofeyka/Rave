@@ -32,7 +32,7 @@ Type* NodeIden::getType() {
             newNode->isMustBePtr = this->isMustBePtr;
             return newNode->getType();
         }
-        generator->error("unknown identifier '"+this->name+"'!", this->loc);
+        generator->error("unknown identifier '" + this->name + "'!", this->loc);
         return nullptr;
     }
     return currScope->getVar(this->name, this->loc)->getType();
@@ -40,7 +40,7 @@ Type* NodeIden::getType() {
 
 Node* NodeIden::comptime() {
     if(AST::aliasTable.find(this->name) == AST::aliasTable.end()) {
-        generator->error("unknown alias '"+name+"'!",loc);
+        generator->error("unknown alias '" + name + "'!",loc);
         return nullptr;
     }
     return AST::aliasTable[this->name];
@@ -53,7 +53,7 @@ LLVMValueRef NodeIden::generate() {
         generator->addAttr("noinline", LLVMAttributeFunctionIndex, generator->functions[this->name], loc);
         return generator->functions[this->name];
     }
-    if(!currScope->has(this->name)) {generator->error("unknown identifier '"+this->name+"'!", loc); return nullptr;}
+    if(!currScope->has(this->name)) {generator->error("unknown identifier '" + this->name + "'!", loc); return nullptr;}
     if(this->isMustBePtr) return currScope->getWithoutLoad(this->name, this->loc);
     return currScope->get(this->name, this->loc);
 }

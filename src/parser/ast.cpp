@@ -16,6 +16,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../include/parser/nodes/NodeStruct.hpp"
 #include "../include/parser/nodes/NodeCall.hpp"
 #include "../include/parser/nodes/NodeType.hpp"
+#include "../include/parser/nodes/NodeGet.hpp"
 #include <iostream>
 #include "../include/llvm.hpp"
 
@@ -426,13 +427,22 @@ LLVMValueRef Scope::get(std::string name, long loc) {
     }
     else if(generator->functions.find(this->funcName) != generator->functions.end()) {
         if(this->args.find(name) == this->args.end()) {
-            if(generator->functions.find(name) == generator->functions.end()) generator->error("undefined identifier '"+name+"' at function '"+this->funcName+"'!", loc);
-            return generator->functions[name];
+            if(generator->functions.find(name) != generator->functions.end()) return generator->functions[name];
         }
-        return LLVMGetParam(generator->functions[this->funcName], this->args[name]);
+        else return LLVMGetParam(generator->functions[this->funcName], this->args[name]);
+    }
+    if(value == nullptr && this->has("this") && (AST::funcTable.find(this->funcName) != AST::funcTable.end() && AST::funcTable[this->funcName]->isMethod)) {
+        NodeVar* nv = this->getVar("this", loc);
+        TypeStruct* ts = nullptr;
+        if(instanceof<TypeStruct>(nv->type)) ts = (TypeStruct*)nv->type;
+        else if(instanceof<TypePointer>(nv->type) && instanceof<TypeStruct>(((TypePointer*)nv->type)->instance)) ts = (TypeStruct*)(((TypePointer*)nv->type)->instance);
+        if(ts != nullptr && AST::structTable.find(ts->toString()) != AST::structTable.end() &&
+           AST::structsNumbers.find({ts->toString(), name}) != AST::structsNumbers.end()) {
+            value = (new NodeGet(new NodeIden("this", loc), name, false, loc))->generate();
+        }
     }
     if(value == nullptr) {
-        generator->error("undefined variable '"+name+"'!", loc);
+        generator->error("undefined variable '" + name + "'!", loc);
         return nullptr;
     }
     if(LLVM::isPointer(value)) value = LLVM::load(value, "scopeGetLoad");
@@ -444,6 +454,16 @@ LLVMValueRef Scope::getWithoutLoad(std::string name, long loc) {
     if(this->aliasTable.find(name) != this->aliasTable.end()) return this->aliasTable[name]->generate();
     if(this->localScope.find(name) != this->localScope.end()) return this->localScope[name];
     if(generator->globals.find(name) != generator->globals.end()) return generator->globals[name];
+    if(this->has("this") && (AST::funcTable.find(this->funcName) != AST::funcTable.end() && AST::funcTable[this->funcName]->isMethod)) {
+        NodeVar* nv = this->getVar("this", loc);
+        TypeStruct* ts = nullptr;
+        if(instanceof<TypeStruct>(nv->type)) ts = (TypeStruct*)nv->type;
+        else if(instanceof<TypePointer>(nv->type) && instanceof<TypeStruct>(((TypePointer*)nv->type)->instance)) ts = (TypeStruct*)(((TypePointer*)nv->type)->instance);
+        if(ts != nullptr && AST::structTable.find(ts->toString()) != AST::structTable.end() &&
+           AST::structsNumbers.find({ts->toString(), name}) != AST::structsNumbers.end()) {
+            return (new NodeGet(new NodeIden("this", loc), name, true, loc))->generate();
+        }
+    }
     if(this->args.find(name) == this->args.end()) generator->error("undefined identifier '"+name+"' at function '"+this->funcName+"'!", loc);
     return LLVMGetParam(generator->functions[this->funcName], this->args[name]);
 }
@@ -461,7 +481,17 @@ NodeVar* Scope::getVar(std::string name, long loc) {
     if(AST::varTable.find(name) != AST::varTable.end()) return AST::varTable[name];
     if(this->argVars.find(name) != this->argVars.end()) return this->argVars[name];
     if(this->aliasTable.find(name) != this->aliasTable.end()) return (new NodeVar(name, this->aliasTable[name]->copy(), false, false, false, {}, loc, this->aliasTable[name]->getType()));
-    generator->error("undefined variable '"+name+"'!", loc);
+    if(this->has("this") && (AST::funcTable.find(this->funcName) != AST::funcTable.end() && AST::funcTable[this->funcName]->isMethod)) {
+        NodeVar* nv = this->getVar("this", loc);
+        TypeStruct* ts = nullptr;
+        if(instanceof<TypeStruct>(nv->type)) ts = (TypeStruct*)nv->type;
+        else if(instanceof<TypePointer>(nv->type) && instanceof<TypeStruct>(((TypePointer*)nv->type)->instance)) ts = (TypeStruct*)(((TypePointer*)nv->type)->instance);
+        if(ts != nullptr && AST::structTable.find(ts->toString()) != AST::structTable.end() &&
+           AST::structsNumbers.find({ts->toString(), name}) != AST::structsNumbers.end()) {
+            return AST::structsNumbers[{ts->toString(), name}].var;
+        }
+    }
+    generator->error("undefined variable '" + name + "'!", loc);
     return nullptr;
 }
 
