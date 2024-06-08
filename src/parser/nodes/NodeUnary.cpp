@@ -174,7 +174,7 @@ Node* NodeUnary::comptime() {
         case TokType::Ne: return new NodeBool(!(((NodeBool*)this->base->comptime()))->value);
         default: break;
     }
-    return nullptr;
+    return this;
 }
 
 Node* NodeUnary::copy() {return new NodeUnary(this->loc, this->type, this->base->copy());}

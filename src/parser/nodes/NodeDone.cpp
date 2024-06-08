@@ -10,5 +10,5 @@ NodeDone::NodeDone(LLVMValueRef value) {this->value = value;}
 void NodeDone::check() {this->isChecked = true;}
 LLVMValueRef NodeDone::generate() {return this->value;}
 Type* NodeDone::getType() {return lTypeToType(LLVMTypeOf(this->value));}
-Node* NodeDone::comptime() {return nullptr;}
+Node* NodeDone::comptime() {return this;}
 Node* NodeDone::copy() {return new NodeDone(this->value);}

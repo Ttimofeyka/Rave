@@ -33,7 +33,7 @@ Node* NodeFor::copy() {
     return new NodeFor(presets, (NodeBinary*)(this->cond->copy()), this->afters, (NodeBlock*)(this->block->copy()), this->funcName, this->loc);
 }
 
-Node* NodeFor::comptime() {return nullptr;}
+Node* NodeFor::comptime() {return this;}
 void NodeFor::check() {this->isChecked = true;}
 Type* NodeFor::getType() {return new TypeVoid();}
 

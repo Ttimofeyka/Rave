@@ -24,7 +24,7 @@ NodeWhile::NodeWhile(Node* cond, Node* body, long loc, std::string funcName) {
 }
 
 Type* NodeWhile::getType() {return new TypeVoid();}
-Node* NodeWhile::comptime() {return nullptr;}
+Node* NodeWhile::comptime() {return this;}
 Node* NodeWhile::copy() {return new NodeWhile(this->cond->copy(), this->body->copy(), this->loc, this->funcName);}
 
 void NodeWhile::check() {
