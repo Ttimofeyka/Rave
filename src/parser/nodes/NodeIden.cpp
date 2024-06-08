@@ -26,7 +26,7 @@ void NodeIden::check() {this->isChecked = true;}
 Type* NodeIden::getType() {
     if(AST::aliasTable.find(this->name) != AST::aliasTable.end()) return AST::aliasTable[this->name]->getType();
     if(AST::funcTable.find(this->name) != AST::funcTable.end()) return AST::funcTable[this->name]->getType();
-    if(!currScope->has(this->name)) {
+    if(!currScope->has(this->name) && !currScope->hasAtThis(this->name)) {
         if(generator->toReplace.find(this->name) != generator->toReplace.end()) {
             NodeIden* newNode = new NodeIden(generator->toReplace[this->name]->toString(), loc);
             newNode->isMustBePtr = this->isMustBePtr;
@@ -53,7 +53,7 @@ LLVMValueRef NodeIden::generate() {
         generator->addAttr("noinline", LLVMAttributeFunctionIndex, generator->functions[this->name], loc);
         return generator->functions[this->name];
     }
-    if(!currScope->has(this->name)) {generator->error("unknown identifier '" + this->name + "'!", loc); return nullptr;}
+    if(!currScope->has(this->name) && !currScope->hasAtThis(this->name)) {generator->error("unknown identifier '" + this->name + "'!", loc); return nullptr;}
     if(this->isMustBePtr) return currScope->getWithoutLoad(this->name, this->loc);
     return currScope->get(this->name, this->loc);
 }

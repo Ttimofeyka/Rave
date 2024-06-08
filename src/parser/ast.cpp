@@ -292,7 +292,7 @@ LLVMTypeRef LLVMGen::genType(Type* type, long loc) {
                 return this->genType(type, loc);
             }
             else if(AST::aliasTypes.find(s->name) != AST::aliasTypes.end()) return this->genType(AST::aliasTypes[s->name], loc);
-            this->error("unknown structure '"+s->name+"'!",loc);
+            this->error("unknown structure '" + s->name + "'!", loc);
         }
         return this->structures[s->name];
     }
@@ -474,6 +474,17 @@ bool Scope::has(std::string name) {
         this->localScope.find(name) != this->localScope.end() ||
         generator->globals.find(name) != generator->globals.end() ||
         this->args.find(name) != this->args.end();
+}
+
+bool Scope::hasAtThis(std::string name) {
+    if(this->has("this") && (AST::funcTable.find(this->funcName) != AST::funcTable.end() && AST::funcTable[this->funcName]->isMethod)) {
+        NodeVar* nv = this->getVar("this", -1);
+        TypeStruct* ts = nullptr;
+        if(instanceof<TypeStruct>(nv->type)) ts = (TypeStruct*)nv->type;
+        else if(instanceof<TypePointer>(nv->type) && instanceof<TypeStruct>(((TypePointer*)nv->type)->instance)) ts = (TypeStruct*)(((TypePointer*)nv->type)->instance);
+        return(ts != nullptr && AST::structTable.find(ts->toString()) != AST::structTable.end() && AST::structsNumbers.find({ts->toString(), name}) != AST::structsNumbers.end());
+    }
+    return false;
 }
 
 NodeVar* Scope::getVar(std::string name, long loc) {
