@@ -283,8 +283,8 @@ LLVMValueRef NodeCall::generate() {
         NodeGet* getFunc = (NodeGet*)this->func;
         if(instanceof<NodeIden>(getFunc->base)) {
             NodeIden* idenFunc = (NodeIden*)getFunc->base;
-            if(!currScope->has(idenFunc->name)) {
-                generator->error("undefined variable '"+idenFunc->name+"'!", this->loc);
+            if(!currScope->has(idenFunc->name) && !currScope->hasAtThis(idenFunc->name)) {
+                generator->error("undefined variable '" + idenFunc->name + "'!", this->loc);
                 return nullptr;
             }
             NodeVar* var = currScope->getVar(idenFunc->name, this->loc);
@@ -293,7 +293,7 @@ LLVMValueRef NodeCall::generate() {
             if(instanceof<TypeStruct>(var->type)) structure = (TypeStruct*)var->type;
             else if(instanceof<TypePointer>(var->type) && instanceof<TypeStruct>(((TypePointer*)var->type)->instance)) structure = (TypeStruct*)((TypePointer*)var->type)->instance;
             else {
-                generator->error("variable '"+idenFunc->name+"' doesn't have structure as type!", this->loc);
+                generator->error("variable '" + idenFunc->name + "' doesn't have structure as type!", this->loc);
                 return nullptr;
             }
 
