@@ -416,15 +416,6 @@ LLVMValueRef Scope::get(std::string name, long loc) {
     else if(this->aliasTable.find(name) != this->aliasTable.end()) value = this->aliasTable[name]->generate();
     else if(this->localScope.find(name) != this->localScope.end()) value = this->localScope[name];
     else if(generator->globals.find(name) != generator->globals.end()) value = generator->globals[name];
-    else if(this->has(name) && this->args.find(name) == this->args.end() && generator->functions.find(name) == generator->functions.end()) {
-        Type* varType = this->getVar(name,loc)->type;
-        if(instanceof<TypePointer>(varType)) varType = ((TypePointer*)varType)->instance;
-        /*if(AST::structTable.find(((TypeStruct*)varType)->name) != AST::structTable.end()) {
-            TODO
-        }*/
-        generator->error("TODO", loc);
-        return nullptr;
-    }
     else if(generator->functions.find(this->funcName) != generator->functions.end()) {
         if(this->args.find(name) == this->args.end()) {
             if(generator->functions.find(name) != generator->functions.end()) return generator->functions[name];

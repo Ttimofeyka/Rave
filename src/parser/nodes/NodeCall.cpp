@@ -307,7 +307,7 @@ LLVMValueRef NodeCall::generate() {
                 
                 if(AST::methodTable.find(method) != AST::methodTable.end() && hasIdenticallyArgs(types, AST::methodTable[method]->args)) {
                     if(generator->functions[AST::methodTable[method]->name] == nullptr) {
-                        generator->error("using '"+AST::methodTable[method]->origName+"' method before declaring it!", this->loc);
+                        generator->error("using '" + AST::methodTable[method]->origName + "' method before declaring it!", this->loc);
                         return nullptr;
                     }
                     params = this->correctByLLVM(params, AST::methodTable[method]->args);
@@ -317,7 +317,7 @@ LLVMValueRef NodeCall::generate() {
                 method.second += typesToString(types);
                 if(AST::methodTable.find(method) != AST::methodTable.end()) {
                     if(generator->functions[AST::methodTable[method]->name] == nullptr) {
-                        generator->error("using '"+AST::methodTable[method]->origName+"' method before declaring it!", this->loc);
+                        generator->error("using '" + AST::methodTable[method]->origName + "' method before declaring it!", this->loc);
                         return nullptr;
                     }
                     params = this->correctByLLVM(params, AST::methodTable[method]->args);
@@ -327,18 +327,18 @@ LLVMValueRef NodeCall::generate() {
                 method.second = method.second.substr(0, method.second.find('['));
                 if(AST::methodTable.find(method) != AST::methodTable.end()) {
                     if(generator->functions[AST::methodTable[method]->name] == nullptr) {
-                        generator->error("using '"+AST::methodTable[method]->origName+"' method before declaring it!", this->loc);
+                        generator->error("using '" + AST::methodTable[method]->origName + "' method before declaring it!", this->loc);
                         return nullptr;
                     }
                     params = this->correctByLLVM(params, AST::methodTable[method]->args);
                     return LLVM::call(generator->functions[AST::methodTable[method]->name], params.data(), params.size(), (instanceof<TypeVoid>(AST::methodTable[method]->type) ? "" : "callFunc"));
                 }
 
-                generator->error("undefined method '"+method.second.substr(0, method.second.find('['))+"' of structure '"+structure->name+"'!", this->loc);
+                generator->error("undefined method '" + method.second.substr(0, method.second.find('[')) + "' of structure '" + structure->name + "'!", this->loc);
                 return nullptr;
             }
 
-            generator->error("undefined structure '"+structure->name+"'!", this->loc);
+            generator->error("undefined structure '" + structure->name + "'!", this->loc);
             return nullptr;
         }
         else if(instanceof<NodeCall>(getFunc->base)) {
@@ -383,7 +383,7 @@ LLVMValueRef NodeCall::generate() {
             NodeCall* ncall2 = new NodeCall(this->loc, new NodeGet(new NodeIden("__RAVE_NG_NG", this->loc), getFunc->field, getFunc->isMustBePtr, this->loc), this->args);
             return ncall2->generate();
         }
-        generator->error("a call of this kind (NodeGet + "+std::string(typeid(this->func[0]).name())+") is temporarily unavailable!", this->loc);
+        generator->error("a call of this kind (NodeGet + " + std::string(typeid(this->func[0]).name()) + ") is temporarily unavailable!", this->loc);
         return nullptr;
     }
     if(instanceof<NodeUnary>(this->func)) {
