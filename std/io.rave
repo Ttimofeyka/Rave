@@ -27,6 +27,16 @@ namespace std {
 @if(__RAVE_OS == "LINUX") {
     namespace std {
         namespace file {
+            alias atFdCwd = -100;
+            alias rdOnly = 0;
+            alias wrOnly = 1;
+            alias rdWrOnly = 2;
+            alias oCreate = 64;
+
+            alias seekSet = 0;
+            alias seekCur = 1;
+            alias seekEnd = 2;
+
             int rename(char* oldpath, char* newpath) => cast(int)std::syscall(std::sysctable::RenameTo, -100, oldpath, -100, newpath);
 
             namespace linux {
@@ -49,10 +59,6 @@ namespace std {
 };
 
 namespace libc {
-    alias seekSet = 0;
-    alias seekCur = 1;
-    alias seekEnd = 2;
-
     extern(linkname: "fopen") libc::File* fopen(char* path, char* mode);
     extern(linkname: "fclose") int fclose(libc::File* file);
     extern(linkname: "ferror") int fhasError(libc::File* file);
@@ -113,22 +119,22 @@ namespace std {
     (volatile) int __putsSL = 0;
     void puts(char* s) {
         std::thread::spinlock::lock(&std::__putsSL);
-        for(int i=0; s[i] != '\0'; i+=1) std::putchar(s[i]);
-        std::putchar('\n');
+            for(int i=0; s[i] != '\0'; i+=1) std::putchar(s[i]);
+            std::putchar('\n');
         std::thread::spinlock::unlock(&std::__putsSL);
     }
 
     (volatile) int __putswnlSL = 0;
     void putswnl(char* s) {
-        for(int i=0; s[i] != '\0'; i+=1) std::putchar(s[i]);
+        std::thread::spinlock::lock(&std::__putswnlSL);
+            for(int i=0; s[i] != '\0'; i+=1) std::putchar(s[i]);
+        std::thread::spinlock::unlock(&std::__putswnlSL);
     }
 
     (volatile) int __putswnlSL2 = 0;
     void putswnlS(std::string s) {
         std::thread::spinlock::lock(&std::__putswnlSL2);
-        for(int i=0; i<s.length; i+=1) {
-            std::putchar(s.data[i]);
-        }
+            for(int i=0; i<s.length; i+=1) std::putchar(s.data[i]);
         std::thread::spinlock::unlock(&std::__putswnlSL2);
     }
 
@@ -334,5 +340,105 @@ namespace std {
         alias cyan = "\033[36m";
         alias white = "\033[37m";
         alias reset = "\033[0m";
+    }
+}
+
+@if(__RAVE_OS == "LINUX") {
+    namespace std {
+        namespace experimental {
+            struct file {
+                int fd;
+                char* buffer; // default: 1024
+                int bufferSize;
+                int bufferPos;
+                char* name;
+                char flushBufferSymbol;
+
+                std::experimental::file this(char* name) {
+                    std::experimental::file this;
+                    this.buffer = null;
+                    this.bufferSize = 1024;
+                    this.name = name;
+                    this.flushBufferSymbol = cast(char)-1;
+                } => this;
+
+                std::experimental::file this(char* name, int bufferSize) {
+                    std::experimental::file this;
+                    this.buffer = null;
+                    this.bufferSize = bufferSize;
+                    this.name = name;
+                    this.flushBufferSymbol = cast(char)-1;
+                } => this;
+
+                void open(char* mode) {
+                    if(std::cstring::strcmp(mode, "r")) fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, name, std::file::rdOnly || std::file::oCreate, 448);
+                    else if(std::cstring::strcmp(mode, "w")) {
+                        fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, name, std::file::wrOnly || std::file::oCreate, 448);
+                        buffer = std::malloc(bufferSize);
+                        this.bufferPos = 0;
+                    }
+                    else if(std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr")) {
+                        fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, name, std::file::rdWrOnly || std::file::oCreate, 448);
+                        buffer = std::malloc(bufferSize);
+                        this.bufferPos = 0;
+                    }
+                    else fd = -1;
+                }
+
+                void open(char* mode, int fd) {
+                    this.fd = fd;
+                    if(std::cstring::strcmp(mode, "w") || std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr")) {
+                        buffer = std::malloc(bufferSize);
+                        this.bufferPos = 0;
+                    }
+                }
+
+                void flush {
+                    if((fd != -1) && (bufferPos > 0) && (buffer != null)) {
+                        std::syscall(std::sysctable::Write, fd, buffer, bufferPos);
+                        bufferPos = 0;
+                    }
+                }
+
+                int read(char* buffer, int bytes) {
+                    if(fd != -1) return = std::syscall(std::sysctable::Read, fd, buffer, bytes);
+                    else return = -1;
+                }
+
+                int write(char* buffer, int bytes) {
+                    if(fd != -1) {
+                        if(bytes < bufferSize) {
+                            for(int i=0; i<bytes; i++) {
+                                this.buffer[bufferPos] = buffer[i];
+                                bufferPos += 1;
+                                if((this.buffer[bufferPos-1] == flushBufferSymbol) || (bufferPos == bufferSize)) this.flush();
+                            }
+                        }
+                    }
+                    else return = -1;
+                }
+
+                void close {
+                    if(fd != -1) {
+                        this.flush();
+                        std::syscall(std::sysctable::Close, fd);
+                        if(buffer != null) std::free(buffer);
+                        fd = -1;
+                    }
+                }
+
+                void ~this {
+                    if(this.fd != -1) {
+                        if((this.fd != -1) && (this.bufferPos > 0)) {
+                            std::syscall(std::sysctable::Write, this.fd, this.buffer, this.bufferPos);
+                            this.bufferPos = 0;
+                        }
+                        std::syscall(std::sysctable::Close, this.fd);
+                        if(this.buffer != null) std::free(this.buffer);
+                        this.fd = -1;
+                    }
+                }
+            }
+        }
     }
 }
