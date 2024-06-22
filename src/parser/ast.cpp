@@ -429,7 +429,7 @@ LLVMValueRef Scope::get(std::string name, long loc) {
         else if(instanceof<TypePointer>(nv->type) && instanceof<TypeStruct>(((TypePointer*)nv->type)->instance)) ts = (TypeStruct*)(((TypePointer*)nv->type)->instance);
         if(ts != nullptr && AST::structTable.find(ts->toString()) != AST::structTable.end() &&
            AST::structsNumbers.find({ts->toString(), name}) != AST::structsNumbers.end()) {
-            value = (new NodeGet(new NodeIden("this", loc), name, false, loc))->generate();
+            value = (new NodeGet(new NodeIden("this", loc), name, true, loc))->generate();
         }
     }
     if(value == nullptr) {
