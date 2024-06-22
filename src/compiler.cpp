@@ -359,7 +359,7 @@ void Compiler::compileAll() {
             Compiler::toImport[i].substr(Compiler::toImport[i].size()-2, Compiler::toImport[i].size()) == ".a" ||
             Compiler::toImport[i].substr(Compiler::toImport[i].size()-4, Compiler::toImport[i].size()) == ".lib" ||
             Compiler::toImport[i].substr(Compiler::toImport[i].size()-2, Compiler::toImport[i].size()) == ".o") {
-                Compiler::linkString += Compiler::toImport[i]+" ";
+                Compiler::linkString += Compiler::toImport[i] + " ";
         }
         else {
             #if defined(__linux__)
@@ -375,7 +375,7 @@ void Compiler::compileAll() {
                     LLVMPrintModuleToFile(generator->lModule, (Compiler::toImport[i]+".ll").c_str(), &err);
                 }
                 std::string compiledFile = std::regex_replace(Compiler::toImport[i], std::regex("\\.rave"), ".o");
-                linkString += compiledFile+" ";
+                linkString += compiledFile + " ";
                 #if defined(__linux__)
                 if(Compiler::toImport[i].find("Rave/std/") == std::string::npos) toRemove.push_back(compiledFile);
                 else {
@@ -413,9 +413,9 @@ void Compiler::compileAll() {
         if(Compiler::options["compiler"].template get<std::string>().find("clang") != std::string::npos) Compiler::linkString += " -fuse-ld=ld ";
     #endif
 
-    ShellResult result = exec(Compiler::linkString+" -o "+Compiler::outFile);
+    ShellResult result = exec(Compiler::linkString + " -o " + Compiler::outFile);
     if(result.status != 0) {
-        Compiler::error("error when linking!\nLinking string: '"+Compiler::linkString+" -o "+Compiler::outFile+"'");
+        Compiler::error("error when linking!\nLinking string: '" + Compiler::linkString+" -o " + Compiler::outFile + "'");
         std::exit(result.status);
         return;
     }

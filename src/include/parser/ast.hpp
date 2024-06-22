@@ -119,6 +119,7 @@ public:
     NodeVar* getVar(std::string name, long loc = -1);
     bool has(std::string name);
     bool hasAtThis(std::string name);
+    bool locatedAtThis(std::string name);
     void hasChanged(std::string name);
     void remove(std::string name);
 };

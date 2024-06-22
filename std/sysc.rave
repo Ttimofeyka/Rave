@@ -37,6 +37,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias RenameTo = 264;
                 alias UnlinkAt = 263;
                 alias FStat = 5;
+                alias LSeek = 8;
 
                 alias Exit = 60;
                 alias Reboot = 169;
@@ -81,6 +82,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias RenameTo = 302;
                 alias UnlinkAt = 301;
                 alias FStat = 108;
+                alias LSeek = 19;
 
                 alias Exit = 1;
                 alias Reboot = 88;
@@ -125,6 +127,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias RenameTo = 38;
                 alias UnlinkAt = 35;
                 alias FStat = 80;
+                alias LSeek = 62;
 
                 alias Exit = 93;
                 alias Reboot = 142;
@@ -169,6 +172,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias RenameTo = 329;
                 alias UnlinkAt = 328;
                 alias FStat = 108;
+                alias LSeek = 19;
 
                 alias Exit = 1;
                 alias Reboot = 88;
@@ -213,6 +217,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias RenameTo = 293;
                 alias UnlinkAt = 292;
                 alias FStat = 108;
+                alias LSeek = 19;
 
                 alias Exit = 1;
                 alias Reboot = 88;
@@ -257,6 +262,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias RenameTo = 293;
                 alias UnlinkAt = 292;
                 alias FStat = 108;
+                alias LSeek = 19;
 
                 alias Exit = 1;
                 alias Reboot = 88;
@@ -301,6 +307,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias RenameTo = 295;
                 alias UnlinkAt = 294;
                 alias FStat = 108;
+                alias LSeek = 19;
 
                 alias Exit = 1;
                 alias Reboot = 88;
@@ -345,6 +352,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias RenameTo = 5254;
                 alias UnlinkAt = 5085;
                 alias FStat = 5433;
+                alias LSeek = 5008;
 
                 alias Exit = 5057;
                 alias Reboot = 5164;

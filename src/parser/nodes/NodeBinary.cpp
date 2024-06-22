@@ -281,12 +281,19 @@ LLVMValueRef NodeBinary::generate() {
         if(instanceof<NodeIden>(first)) {
             NodeIden* id = ((NodeIden*)first);
 
+            if(isAliasIden) {AST::aliasTable[id->name] = this->second->copy(); return nullptr;}
+
+            if(currScope->locatedAtThis(id->name)) {
+                this->first = new NodeGet(new NodeIden("this", this->loc), id->name, true, id->loc);
+                return this->generate();
+            }
+
             if(currScope->getVar(id->name, this->loc)->isConst && id->name != "this" && currScope->getVar(id->name, this->loc)->isChanged) {
                 generator->error("an attempt to change the value of a constant variable!", this->loc);
                 return nullptr;
             }
+
             if(!currScope->getVar(id->name, this->loc)->isChanged) currScope->hasChanged(id->name);
-            if(isAliasIden) {AST::aliasTable[id->name] = this->second->copy(); return nullptr;}
 
             NodeVar* nvar = currScope->getVar(id->name, this->loc);
             
@@ -337,7 +344,7 @@ LLVMValueRef NodeBinary::generate() {
             fValue = nget->generate();
 
             if(LLVMTypeOf(sValue) == LLVMTypeOf(fValue)) {
-                if(instanceof<NodeNull>(this->second)) sValue = LLVM::load(sValue, "NodeBinary_NodeGet_loadnull");
+                if(instanceof<NodeNull>(this->second)) sValue = LLVMConstNull(LLVMGetElementType(LLVMTypeOf(sValue)));
             }
 
             if(nget->elementIsConst) {
@@ -354,6 +361,11 @@ LLVMValueRef NodeBinary::generate() {
         else if(instanceof<NodeIndex>(this->first)) {
             NodeIndex* ind = (NodeIndex*)this->first;
             ind->isMustBePtr = true;
+
+            if(instanceof<NodeIden>(ind->element) && currScope->locatedAtThis(((NodeIden*)ind->element)->name)) {
+                ind->element = new NodeGet(new NodeIden("this", this->loc), ((NodeIden*)ind->element)->name, true, ((NodeIden*)ind->element)->loc);
+                return this->generate();
+            }
 
             LLVMValueRef ptr = ind->generate();
             if(ind->elementIsConst) generator->error("An attempt to change the constant element!", loc);
@@ -433,7 +445,10 @@ LLVMValueRef NodeBinary::generate() {
     }
 
     if(vFirstStr.substr(0, vFirstStr.size()-1) == vSecondStr) vFirst = LLVM::load(vFirst, "NodeBinary_firstload");
-    if(vSecondStr.substr(0, vSecondStr.size()-1) == vFirstStr) vSecond = LLVM::load(vSecond, "NodeBinary_secondload");
+    if(vSecondStr.substr(0, vSecondStr.size()-1) == vFirstStr) {
+        if(LLVMIsNull(vSecond)) vSecond = LLVMConstNull(LLVMGetElementType(LLVMTypeOf(vSecond)));
+        else vSecond = LLVM::load(vSecond, "NodeBinary_secondload");
+    }
 
     if(LLVMGetTypeKind(LLVMTypeOf(vFirst)) == LLVMGetTypeKind(LLVMTypeOf(vSecond)) && LLVMTypeOf(vFirst) != LLVMTypeOf(vSecond)) {
         if(LLVMGetTypeKind(LLVMTypeOf(vFirst)) == LLVMIntegerTypeKind) vFirst = LLVMBuildIntCast(

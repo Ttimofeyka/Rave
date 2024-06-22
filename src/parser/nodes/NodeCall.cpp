@@ -73,6 +73,7 @@ std::vector<LLVMValueRef> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg
         for(int i=0; i<this->args.size(); i++) params.push_back(this->args[i]->generate());
         return params;
     }
+
     for(int i=0; i<this->args.size(); i++) {
         if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(((TypePointer*)fas[i].type)->instance) && !instanceof<TypePointer>(this->args[i]->getType())) {
             if(instanceof<NodeIden>(this->args[i])) ((NodeIden*)this->args[i])->isMustBePtr = true;
@@ -81,6 +82,7 @@ std::vector<LLVMValueRef> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg
         }
         params.push_back(this->args[i]->generate());
     }
+
     for(int i=0; i<params.size(); i++) {
         if(fas[i].type->toString() == "void*" || fas[i].type->toString() == "char*") {
             LLVMTypeRef type = LLVMTypeOf(params[i]);

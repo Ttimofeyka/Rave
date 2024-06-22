@@ -478,6 +478,14 @@ bool Scope::hasAtThis(std::string name) {
     return false;
 }
 
+bool Scope::locatedAtThis(std::string name) {
+    if(AST::aliasTable.find(name) != AST::aliasTable.end()) return false;
+    if(this->aliasTable.find(name) != this->aliasTable.end()) return false;
+    if(this->localScope.find(name) != this->localScope.end()) return false;
+    if(generator->globals.find(name) != generator->globals.end()) return false;
+    return this->hasAtThis(name);
+}
+
 NodeVar* Scope::getVar(std::string name, long loc) {
     if(this->localVars.find(name) != this->localVars.end()) return this->localVars[name];
     if(AST::varTable.find(name) != AST::varTable.end()) return AST::varTable[name];

@@ -7,6 +7,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeIden.hpp"
 #include "../../include/parser/nodes/NodeFunc.hpp"
 #include "../../include/parser/nodes/NodeVar.hpp"
+#include "../../include/parser/nodes/NodeGet.hpp"
 #include "../../include/utils.hpp"
 #include "../../include/parser/ast.hpp"
 
