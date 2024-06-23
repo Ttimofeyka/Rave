@@ -359,6 +359,7 @@ namespace std {
                     this.buffer = null;
                     this.bufferSize = 1024;
                     this.name = name;
+                    this.fd = -1;
                     this.flushBufferSymbol = cast(char)-1;
                 } => this;
 
@@ -377,7 +378,7 @@ namespace std {
                         buffer = std::malloc(bufferSize);
                         this.bufferPos = 0;
                     }
-                    else if(std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr")) {
+                    else if(std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr") || std::cstring::strcmp(mode, "r+") || std::cstring::strcmp(mode, "w+")) {
                         fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, name, std::file::rdWrOnly || std::file::oCreate, 448);
                         buffer = std::malloc(bufferSize);
                         this.bufferPos = 0;
@@ -387,10 +388,26 @@ namespace std {
 
                 void open(char* mode, int fd) {
                     this.fd = fd;
-                    if(std::cstring::strcmp(mode, "w") || std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr")) {
+                    if(std::cstring::strcmp(mode, "w") || std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr") || std::cstring::strcmp(mode, "r+") || std::cstring::strcmp(mode, "w+")) {
                         buffer = std::malloc(bufferSize);
                         this.bufferPos = 0;
                     }
+                }
+
+                (inline) bool isOpen => (fd >= 0);
+
+                void rename(char* to) {
+                    std::file::rename(this.name, to);
+                    this.name = to;
+                }
+
+                bool exists {
+                    if(fd == -1) return = std::file::exists(this.name);
+                    else return = true;
+                }
+
+                int seek(int flag, long offset) {
+                    return = std::syscall(std::sysctable::LSeek, fd, flag, offset);
                 }
 
                 void flush {
@@ -404,6 +421,11 @@ namespace std {
                     if(fd != -1) return = std::syscall(std::sysctable::Read, fd, buffer, bytes);
                     else return = -1;
                 }
+
+                (inline) char getc {
+                    char c;
+                    this.read(&c, 1);
+                } => c;
 
                 int write(char* buffer, int bytes) {
                     if(fd != -1) {
