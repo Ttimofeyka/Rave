@@ -28,6 +28,27 @@ import <std/time> <std/sysc>
             std::__getrandom(&buffer, 8, 2);
             long* ptr = cast(long*)&buffer;
         } => ptr[0];
+
+        cent randomCent {
+            char[16] buffer;
+            std::__getrandom(&buffer, 16, 2);
+            cent* ptr = cast(cent*)&buffer;
+        } => ptr[0];
+
+        void randomBuffer(char* buffer, int length) {
+            char* ptr = buffer;
+            while(length > 0) {
+                if(length >= 64) {
+                    length -= 64;
+                    std::__getrandom(ptr, 64, 2);
+                    ptr = itop(char*, ptoi(ptr) + 64);
+                }
+                else {
+                    std::__getrandom(ptr, length, 2);
+                    length = 0;
+                }
+            }
+        }
     }
 };
 
@@ -41,7 +62,7 @@ import <std/time> <std/sysc>
             if(std::randNext == 0) std::randNext = ts.mseconds;
             ts.mseconds = ts.mseconds * 1103515245 + 12345 * std::randNext;
             std::randNext = std::randNext * 103515245 + 12345;
-        } => (cast(char*)ts.&nsec)[0];
+        } => (cast(char*)ts.&mseconds)[0];
         
         short randomShort {
             std::time ts;
@@ -49,7 +70,7 @@ import <std/time> <std/sysc>
             if(std::randNext == 0) std::randNext = ts.mseconds;
             ts.mseconds = ts.mseconds * 1103515245 + 12345 * std::randNext;
             std::randNext = std::randNext * 103515245 + 12345;
-        } => (cast(short*)ts.&nsec)[0];
+        } => (cast(short*)ts.&mseconds)[0];
 
         int randomInt {
             std::time ts;
@@ -57,7 +78,7 @@ import <std/time> <std/sysc>
             if(std::randNext == 0) std::randNext = ts.mseconds;
             ts.mseconds = ts.mseconds * 1103515245 + 12345 * std::randNext;
             std::randNext = std::randNext * 103515245 + 12345;
-        } => (cast(int*)ts.&nsec)[0];
+        } => (cast(int*)ts.&mseconds)[0];
 
         long randomLong {
             std::time ts;
@@ -66,5 +87,30 @@ import <std/time> <std/sysc>
             ts.mseconds = ts.mseconds * 1103515245 + 12345 * std::randNext;
             std::randNext = std::randNext * 103515245 + 12345;
         } => ts.mseconds;
+
+        cent randomCent {
+            std::time ts;
+            std::getCurrentTime(&ts);
+            if(std::randNext == 0) std::randNext = ts.mseconds;
+            cent buffer;
+            long* bufferPtr = cast(long*)&buffer;
+            ts.mseconds = ts.mseconds * 1103515245 + 12345 * std::randNext;
+            std::randNext = std::randNext * 103515245 + 12345;
+            bufferPtr[0] = ts.mseconds;
+            ts.mseconds = ts.mseconds * 1103515245 + 12345 * std::randNext;
+            std::randNext = std::randNext * 103515245 + 12345;
+            bufferPtr[1] = ts.mseconds;
+        } => buffer;
+
+        void randomBuffer(char* buffer, int length) {
+            std::time ts;
+            std::getCurrentTime(&ts);
+            if(std::randNext == 0) std::randNext = ts.mseconds;
+            for(int i=0; i<length; i++) {
+                ts.mseconds = ts.mseconds * 1103515245 + 12345 * std::randNext;
+                std::randNext = std::randNext * 103515245 + 12345;
+                buffer[i] = (cast(char*)ts.&mseconds)[0];
+            }
+        }
     }
 };
