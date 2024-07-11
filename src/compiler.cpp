@@ -400,14 +400,7 @@ void Compiler::compileAll() {
     if(Compiler::settings.isStatic) Compiler::linkString += "-static ";
     if(Compiler::settings.isPIC) Compiler::linkString += "-no-pie ";
 
-    Compiler::linkString += " "+Compiler::settings.linkParams+" -Wno-unused-command-line-argument ";
-    if(outType != "") {
-        /*if(Compiler::options["compiler"].template get<std::string>().find("gcc") == std::string::npos) {
-            Compiler::linkString += "-target "+Compiler::outType+" ";
-            //if("linker".into(options.object) Compiler::options) linkString = linkString ~ " -fuse-ld="~options.object["linker"].str~" ";
-            Compiler::linkString += " -fuse-ld=lld";
-        }*/
-    }
+    Compiler::linkString += " " + Compiler::settings.linkParams + " -Wno-unused-command-line-argument ";
 
     #ifdef _WIN32
         if(Compiler::options["compiler"].template get<std::string>().find("clang") != std::string::npos) Compiler::linkString += " -fuse-ld=ld ";

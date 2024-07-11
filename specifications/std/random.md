@@ -1,23 +1,63 @@
 # std/random.rave
 
-## std::randomShort
+## std::randomChar
 
-Returns a random short number with a specified maximum and minimum.
+Returns a random char number.
 
 Example:
 
 ```d
-short rand = std::randomShort(0, 100);
-short rand2 = std::randomShort(5, 10);
+char rand = std::randomChar();
+```
+
+## std::randomShort
+
+Returns a random short number.
+
+Example:
+
+```d
+short rand = std::randomShort();
 ```
 
 ## std::randomInt
 
-Returns a random int number with a specified maximum and minimum.
+Returns a random int number.
 
 Example:
 
 ```d
-int rand = std::randomInt(50, 250);
-int rand2 = std::randomInt(45000, 94200);
+int rand = std::randomInt();
+```
+
+## std::randomLong
+
+Returns a random long number.
+
+Example:
+
+```d
+long rand = std::randomLong();
+```
+
+## std::randomCent
+
+Returns a random cent number.
+
+Example:
+
+```d
+cent rand = std::randomCent();
+```
+
+## std::randomBuffer
+
+Fills a provided buffer with provided length with random values.
+This option is considered more optimized than using std::randomChar through a loop.
+
+Example:
+
+```d
+char[32] buffer;
+std::randomBuffer(&buffer, 32);
 ```

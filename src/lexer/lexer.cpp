@@ -250,5 +250,5 @@ std::string tokenToString(char type) {
         case TokType::Char: return "char";
         case TokType::Identifier: return "identifier";
     }
-    return "type "+std::to_string(type);
+    return "type " + std::to_string(type);
 }
