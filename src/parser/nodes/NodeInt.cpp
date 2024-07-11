@@ -47,6 +47,8 @@ Type* NodeInt::getType() {
 
 LLVMValueRef NodeInt::generate() {
     if(isMustBeLong) return LLVMConstIntOfString(LLVMInt64TypeInContext(generator->context), value.to_string().c_str(), this->sys);
+    if(isMustBeShort) return LLVMConstIntOfString(LLVMInt16TypeInContext(generator->context), value.to_string().c_str(), this->sys);
+    if(isMustBeChar) return LLVMConstIntOfString(LLVMInt8TypeInContext(generator->context), value.to_string().c_str(), this->sys);
     if(this->isVarVal != nullptr && instanceof<TypeBasic>(this->isVarVal)) {
         this->type = ((TypeBasic*)this->isVarVal)->type;
         switch(this->type) {

@@ -438,6 +438,20 @@ Node* Parser::parseAtom(std::string f) {
                 _int->isMustBeLong = true;
                 return _int;
             }
+            else if(this->peek()->value[0] == 'c') {
+                // Char-type
+                this->next();
+                NodeInt* _int = new NodeInt(BigInt(t->value));
+                _int->isMustBeChar = true;
+                return _int;
+            }
+            else if(this->peek()->value[0] == 's') {
+                // Short-type
+                this->next();
+                NodeInt* _int = new NodeInt(BigInt(t->value));
+                _int->isMustBeShort = true;
+                return _int;
+            }
             else if(this->peek()->value[0] == 'f') {
                 // Float-type
                 this->next();

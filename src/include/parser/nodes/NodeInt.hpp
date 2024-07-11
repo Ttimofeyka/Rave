@@ -21,6 +21,8 @@ public:
     unsigned char sys;
     bool isUnsigned = false;
     bool isMustBeLong = false;
+    bool isMustBeChar = false;
+    bool isMustBeShort = false;
 
     NodeInt(BigInt value, unsigned char sys = 10);
     NodeInt(BigInt value, char type, Type* isVarVal, unsigned char sys, bool isUnsigned, bool isMustBeLong);

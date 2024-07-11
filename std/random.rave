@@ -1,4 +1,4 @@
-import <std/time> <std/sysc>
+import <std/time> <std/sysc> <std/io>
 
 @if(__RAVE_OS == "LINUX") {
     namespace std {
@@ -114,3 +114,37 @@ import <std/time> <std/sysc>
         }
     }
 };
+
+namespace std {
+    // TODO: Improve the algorithm
+
+    char randomChar(char min, char max) {
+        return = std::randomChar();
+        if(return < 0) return = -return;
+        return = (return % ((max + 1c) - min)) + min;
+    }
+
+    short randomShort(short min, short max) {
+        return = std::randomShort();
+        if(return < 0) return = -return;
+        return = (return % ((max + 1s) - min)) + min;
+    }
+
+    int randomInt(int min, int max) {
+        return = std::randomInt();
+        if(return < 0) return = -return;
+        return = (return % ((max + 1) - min)) + min;
+    }
+
+    long randomLong(long min, long max) {
+        return = std::randomLong();
+        if(return < 0) return = -return;
+        return = (return % ((max + 1l) - min)) + min;
+    }
+
+    cent randomCent(cent min, cent max) {
+        return = std::randomCent();
+        if(return < 0) return = -return;
+        return = (return % ((max + 1) - min)) + min;
+    }
+}

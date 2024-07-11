@@ -1,9 +1,5 @@
-import <std/io> <std/matrix> <std/random> <std/cstring>
+import <std/io> <std/random>
 
 void main {
-    std::experimental::file f = std::experimental::file(null);
-    f.flushBufferSymbol = '\n';
-    f.open("w", 1);
-        f.write("Hello, world!\n", 14);
-    f.close();
+    
 }
