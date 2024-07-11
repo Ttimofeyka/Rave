@@ -345,11 +345,26 @@ namespace std {
 
     namespace u8string {
         (inline) std::u8string fromNumber(long n) {
-            char* buf = std::malloc(std::lengthOfNumber(n)+2);
-            libc::cformat(buf,"%ld",n);
-            std::u8string sbuf = std::u8string(buf);
-            std::free(buf);
-        } => sbuf;
+            char[24] tempBuffer;
+            std::cstring::ltos(n, &tempBuffer);
+            std::u8string sNumber = std::u8string(&tempBuffer);
+        } => sNumber;
+        (inline) std::u8string fromNumber(int n) => std::u8string::fromNumber(cast(long)n);
+        (inline) std::u8string fromNumber(short n) => std::u8string::fromNumber(cast(long)n);
+        (inline) std::u8string fromNumber(char n) => std::u8string::fromNumber(cast(long)n);
+        (inline) std::u8string fromNumber(bool n) => std::u8string::fromNumber(cast(long)n);
+
+        (inline) std::u8string fromDoubleN(double n, int precision) {
+            char[24] tempBuffer;
+            std::cstring::dtos(n, precision, &tempBuffer);
+            std::u8string sNumber = std::u8string(&tempBuffer);
+        } => sNumber;
+        (inline) std::u8string fromDouble(double n) => std::u8string::fromDoubleN(n, 8);
+
+        (inline) std::u8string fromFloatN(float n, int precision) => std::u8string::fromDoubleN(cast(double)n, precision);
+        (inline) std::u8string fromFloat(float n) => std::u8string::fromFloatN(n, 7);
+
+        (inline) std::u8string fromUNumber(char n) => std::u8string::fromUNumber(cast(short)n);
     }
 }
 

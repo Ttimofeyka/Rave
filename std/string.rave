@@ -295,24 +295,6 @@ namespace std {
         (inline) std::string fromFloatN(float n, int precision) => std::string::fromDoubleN(cast(double)n, precision);
         (inline) std::string fromFloat(float n) => std::string::fromFloatN(n, 7);
 
-        (inline) std::string fromUNumber(long n) {
-            char[36] buffer;
-            libc::cformat(&buffer, "%lu", n);
-            std::string sbuffer = std::string(&buffer);
-        } => sbuffer;
-
-        (inline) std::string fromUNumber(int n) {
-            char[36] buffer;
-            libc::cformat(&buffer, "%u", n);
-            std::string sbuffer = std::string(&buffer);
-        } => sbuffer;
-
-        (inline) std::string fromUNumber(short n) {
-            char[36] buffer;
-            libc::cformat(&buffer, "%d", n);
-            std::string sbuffer = std::string(&buffer);
-        } => sbuffer;
-
         (inline) std::string fromUNumber(char n) => std::string::fromUNumber(cast(short)n);
     }
 
