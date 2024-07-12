@@ -281,6 +281,7 @@ void Compiler::compile(std::string file) {
     if(Compiler::settings.optLevel > 0) {
         LLVMAddInstructionCombiningPass(pm);
         LLVMAddConstantMergePass(pm);
+        LLVMAddSLPVectorizePass(pm);
 
         LLVMPassManagerBuilderRef pmb = LLVMPassManagerBuilderCreate();
         LLVMPassManagerBuilderSetOptLevel(pmb, Compiler::settings.optLevel);

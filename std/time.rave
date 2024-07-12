@@ -15,9 +15,15 @@ namespace std {
         char* zone;
     }
 
+    struct __time {
+        long seconds;
+        long nseconds;
+    }
+
     struct time {
         long seconds;
-        long mseconds;
+        long milliseconds;
+        long microseconds;
     }
 
     alias RealTime = 0;
@@ -74,7 +80,8 @@ namespace std {
            liPtr[1] = ftm.high;
 
            tc.seconds = (li / 10000000l) - 11644473600l;
-           tc.mseconds = (li / 10000l) - 11644473600000l;
+           tc.milliseconds = (li / 10000l) - 11644473600000l;
+           tc.microseconds = (li / 10l) - 11644473600000000l;
         } => 0;
     }
 };
@@ -82,11 +89,14 @@ namespace std {
 @if(__RAVE_OS == "LINUX") {
     namespace std {
         (inline) int __gettimeofday(std::timeVal* tv) => cast(int)std::syscall(std::sysctable::GetTimeOfDay, tv, null);
-        (inline) int __clock_gettime(int flag, std::time* tc) => cast(int)std::syscall(std::sysctable::ClockGetTime, flag, tc);
+        (inline) int __clock_gettime(int flag, std::__time* tc) => cast(int)std::syscall(std::sysctable::ClockGetTime, flag, tc);
 
         int getCurrentTime(std::time* tc) {
-            return = std::__clock_gettime(std::RealTime, tc);
-            tc.mseconds = tc.mseconds * 1000000l;
+            std::__time ts;
+            return = std::__clock_gettime(std::RealTime, &ts);
+            tc.seconds = ts.seconds;
+            tc.microseconds = ts.nseconds / 1000l;
+            tc.milliseconds = tc.microseconds / 1000l;
         }
     }
 };
@@ -100,7 +110,8 @@ namespace std {
     namespace std {
         (inline) int getCurrentTime(std::time* tc) {
             tc.seconds = libc::getTime(null);
-            tc.mseconds = tc.seconds * 1000l;
+            tc.milliseconds = -1l;
+            tc.microseconds = -1l;
         } => 0;
     }
 };
