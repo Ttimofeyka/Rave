@@ -26,6 +26,9 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeUnary.hpp"
 #include "../../include/parser/nodes/NodeDone.hpp"
 #include "../../include/parser/nodes/NodeRet.hpp"
+#include "../../include/parser/nodes/NodeIndex.hpp"
+#include "../../include/parser/nodes/NodeArray.hpp"
+#include "../../include/llvm.hpp"
 #include "../../include/parser/Types.hpp"
 #include "../../include/compiler.hpp"
 
@@ -443,7 +446,41 @@ LLVMValueRef NodeBuiltin::generate() {
         generator->error("cannot get the link name of this value!", this->loc);
         return nullptr;
     }
-    generator->error("builtin with the name '"+this->name+"' does not exist!", this->loc);
+    else if(this->name == "f8Load") {
+        LLVMValueRef structPointer = LLVMBuildBitCast(
+            generator->builder,
+            this->args[0]->generate(),
+            LLVMPointerType(LLVMStructTypeInContext(
+                generator->context,
+                std::vector<LLVMTypeRef>({LLVMVectorType(LLVMFloatTypeInContext(generator->context), 8)}).data(),
+                1,
+                false
+            ), 0),
+            "f8Load_bitc"
+        );
+        return LLVM::load(LLVM::structGep(structPointer, 0, "f8Load_gep"), "f8Load");
+    }
+    else if(this->name == "f8Store") {
+        generator->settings.noChecks = true;
+        LLVMValueRef vector = this->args[0]->generate();
+        if(LLVMGetTypeKind(LLVMTypeOf(vector)) == LLVMPointerTypeKind) vector = LLVM::load(vector, "f8Store_load");
+
+        LLVMValueRef castedStore = LLVMBuildBitCast(
+            generator->builder,
+            this->args[1]->generate(),
+            LLVMPointerType(LLVMStructTypeInContext(
+                generator->context,
+                std::vector<LLVMTypeRef>({LLVMVectorType(LLVMFloatTypeInContext(generator->context), 8)}).data(),
+                1,
+                false
+            ), 0),
+            "f8Store_bitc"
+        );
+        LLVMBuildStore(generator->builder, vector, LLVM::structGep(castedStore, 0, "f8Store_gep"));
+        generator->settings.noChecks = false;
+        return nullptr;
+    }
+    generator->error("builtin with the name '" + this->name + "' does not exist!", this->loc);
     return nullptr;
 }
 

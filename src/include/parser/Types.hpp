@@ -180,4 +180,16 @@ public:
     std::string toString() override;
 };
 
+class TypeVector : public Type {
+public:
+    Type* mainType;
+    int count;
+
+    TypeVector(Type* mainType, int count);
+    Type* copy() override;
+    Type* check(Type* parent) override;
+    int getSize() override;
+    std::string toString() override;
+};
+
 Type* getType(std::string id);

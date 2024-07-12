@@ -14,11 +14,11 @@ namespace std {
             this.columns = columns;
         } => this;
 
-        (inline) void set(int r, int c, T value) {
+        void set(int r, int c, T value) {
             if((r >= 0) && (r < this.rows) && (c >= 0) && (c < this.columns)) this.data[(r * this.columns) + c] = value;
         }
 
-        (inline) T get(int r, int c) {
+        T get(int r, int c) {
             if((r >= 0) && (r < this.rows) && (c >= 0) && (c < this.columns)) return = this.data[(r * this.columns) + c];
         }
 
@@ -40,12 +40,13 @@ namespace std {
             }
         }
 
-        std::matrix<T> multiply(std::matrix<T> mat) {
+        void multiply(std::matrix<T> mat, std::matrix<T> out) {
             if(mat.data != null) {
-                return = std::matrix<T>(this.rows, mat.columns);
                 for(int y=0; y<this.rows; y++) {
                     for(int x=0; x<mat.columns; x++) {
-                        for(int k=0; k<mat.rows; k++) return.set(y, x, return.get(y, x) + (this.get(y, k) * mat.get(k, x)));
+                        for(int k=0; k<mat.rows; k++) {
+                            out.set(y, x, out.get(y, x) + (this.get(y, k) * mat.get(k, x)));
+                        }
                     }
                 }
             }

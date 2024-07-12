@@ -159,7 +159,7 @@ LLVMValueRef NodeVar::generate() {
             this->type = lTypeToType(LLVMTypeOf(val));
             LLVMSetInitializer(generator->globals[this->name], val);
             LLVMSetGlobalConstant(generator->globals[this->name], this->isConst);
-            LLVMSetAlignment(generator->globals[this->name], generator->getAlignment(this->type));
+            if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(generator->globals[this->name], generator->getAlignment(this->type));
             if(isVolatile) LLVMSetVolatile(generator->globals[name], true);
             return nullptr;
         }
@@ -173,7 +173,7 @@ LLVMValueRef NodeVar::generate() {
         else if(isExtern) LLVMSetLinkage(generator->globals[this->name], LLVMExternalLinkage);
         if(isVolatile) LLVMSetVolatile(generator->globals[this->name], true);
 
-        LLVMSetAlignment(generator->globals[this->name], generator->getAlignment(this->type));
+        if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(generator->globals[this->name], generator->getAlignment(this->type));
 
         if(value != nullptr && !isExtern) {
             LLVMValueRef val;
@@ -224,7 +224,7 @@ LLVMValueRef NodeVar::generate() {
                         LLVMValueRef val = this->value->generate();
                         currScope->localScope[this->name] = LLVMBuildAlloca(generator->builder, LLVMTypeOf(val), name.c_str());
                         this->type = lTypeToType(LLVMTypeOf(val));
-                        LLVMSetAlignment(currScope->localScope[this->name], generator->getAlignment(this->type));
+                        if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->localScope[this->name], generator->getAlignment(this->type));
                         LLVMBuildStore(generator->builder,val,currScope->localScope[this->name]);
                         return currScope->localScope[this->name];
                     }
@@ -233,7 +233,7 @@ LLVMValueRef NodeVar::generate() {
                     LLVMValueRef val = this->value->generate();
                     currScope->localScope[this->name] = LLVMBuildAlloca(generator->builder, LLVMTypeOf(val), name.c_str());
                     this->type = lTypeToType(LLVMTypeOf(val));
-                    LLVMSetAlignment(currScope->localScope[this->name], generator->getAlignment(this->type));
+                    if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->localScope[this->name], generator->getAlignment(this->type));
                     LLVMBuildStore(generator->builder,val,currScope->localScope[this->name]);
                     return currScope->localScope[this->name];
                 }
@@ -242,7 +242,7 @@ LLVMValueRef NodeVar::generate() {
                 LLVMValueRef val = this->value->generate();
                 currScope->localScope[this->name] = LLVMBuildAlloca(generator->builder, LLVMTypeOf(val), name.c_str());
                 this->type = lTypeToType(LLVMTypeOf(val));
-                LLVMSetAlignment(currScope->localScope[this->name], generator->getAlignment(this->type));
+                if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->localScope[this->name], generator->getAlignment(this->type));
                 LLVMBuildStore(generator->builder,val,currScope->localScope[this->name]);
                 return currScope->localScope[this->name];
             }
@@ -252,7 +252,7 @@ LLVMValueRef NodeVar::generate() {
         LLVMTypeRef gT = generator->genType(this->type, this->loc);
         currScope->localScope[this->name] = LLVMBuildAlloca(generator->builder, gT, name.c_str());
         if(isVolatile) LLVMSetVolatile(currScope->localScope[this->name],true);
-        LLVMSetAlignment(currScope->getWithoutLoad(this->name, this->loc), generator->getAlignment(this->type));
+        if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->getWithoutLoad(this->name, this->loc), generator->getAlignment(this->type));
 
         if((this->value == nullptr || instanceof<NodeCall>(this->value)) && instanceof<TypeStruct>(this->type)) {
             if(AST::structTable[((TypeStruct*)this->type)->name]->predefines.size() > 0) {

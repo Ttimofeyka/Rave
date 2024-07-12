@@ -185,12 +185,11 @@ LLVMValueRef NodeIndex::generate() {
         if(isMustBePtr) return index;
         return LLVM::load(index, ("NodeIndex_NodeCall_load"+std::to_string(this->loc)+"_").c_str());
     }
-    /*if(NodeDone nd = element.instanceof!NodeDone) {
-        LLVMValueRef val = nd.generate();
-        LLVMValueRef index = Generator.byIndex(val, this->generateIndexes());
+    if(instanceof<NodeDone>(element)) {
+        LLVMValueRef index = generator->byIndex(element->generate(), this->generateIndexes());
         if(isMustBePtr) return index;
-        return LLVMBuildLoad(generator->builder,index,toStringz("load3013_"));
-    }*/
+        return LLVM::load(index, "NodeDone_load");
+    }
     if(instanceof<NodeCast>(this->element)) {
         NodeCast* ncast = (NodeCast*)this->element;
         LLVMValueRef val = ncast->generate();

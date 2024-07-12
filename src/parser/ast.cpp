@@ -313,7 +313,8 @@ LLVMTypeRef LLVMGen::genType(Type* type, long loc) {
         */
     }
     if(instanceof<TypeConst>(type)) return this->genType(((TypeConst*)type)->instance, loc);
-    this->error("undefined type!",loc);
+    if(instanceof<TypeVector>(type)) return LLVMVectorType(this->genType(((TypeVector*)type)->mainType, loc), ((TypeVector*)type)->count);
+    this->error("undefined type!", loc);
     return nullptr;
 }
 

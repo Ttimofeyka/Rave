@@ -224,6 +224,13 @@ int TypeLLVM::getSize() {return 0;}
 Type* TypeLLVM::check(Type* parent) {return nullptr;}
 std::string TypeLLVM::toString() {return "";}
 
+// TypeVector
+TypeVector::TypeVector(Type* mainType, int count) {this->mainType = mainType; this->count = count;}
+Type* TypeVector::copy() {return new TypeVector(mainType, count);}
+int TypeVector::getSize() {return mainType->getSize() * count;}
+Type* TypeVector::check(Type* parent) {return nullptr;}
+std::string TypeVector::toString() {return "<" + mainType->toString() + " x " + std::to_string(count) + ">";}
+
 Type* getType(std::string id) {
     if(id == "bool") return new TypeBasic(BasicType::Bool);
     else if(id == "char") return new TypeBasic(BasicType::Char); 
@@ -242,5 +249,6 @@ Type* getType(std::string id) {
     else if(id == "double") return new TypeBasic(BasicType::Double);
     else if(id == "void") return new TypeVoid();
     else if(id == "alias") return new TypeAlias();
+    else if(id == "float8") return new TypeVector(new TypeBasic(BasicType::Float), 8);
     else return new TypeStruct(id);
 }
