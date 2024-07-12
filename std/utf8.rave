@@ -157,30 +157,15 @@ namespace std {
         (inline) long toLong => libc::strtol(this.c(), cast(char**)null, 10);
         int toInt => cast(int)this.toLong();
 
-        int indexOf(char* c) {
-            int clen = std::cstring::strlen(c);
-            int result = -1;
+        int indexOf(char c) => std::cstring::indexOf(this.data, c);
 
-            int idx = 0;
-            while(idx < this.bytes) {
-                if(std::utf8::isStart(this.data[idx])) {
-                    int chlen = std::utf8::charlen(this.data, idx);
-                    if(chlen == clen) {
-                        bool _equal = true;
-                        int idx2 = idx;
-                        int cIdx = 0;
-                        while((_equal) && (idx2 != (idx2 + chlen))) {
-                            if(this.data[idx2] != c[cIdx]) _equal = false;
-                        }
-                        if(_equal) {
-                            result = idx;
-                            idx = this.bytes;
-                        }
-                    }
-                }
-                idx += 1;
-            }
-        } => result;
+        int indexOf(char* s) {
+            char* ptr = std::cstring::strstr(this.data, s);
+            if(ptr != null) return = ptoi(ptr) - ptoi(this.data);
+            else return = -1;
+        }
+
+        (inline) int indexOf(std::u8string s) => this.indexOf(s.data);
 
         void add(char c) {
             if(this.data != null) {
@@ -233,14 +218,14 @@ namespace std {
         } => cp;
 
         std::u8string replace(char c, char to) {
-            std::u8string temp = this.copy();
+            return = this.copy();
 
             int i = 0;
-            while(i<this.length) {
-                if(this.data[i] == c) temp.data[i] = to;
+            while(i < this.length) {
+                if(this.data[i] == c) return.data[i] = to;
                 i += 1;
             }
-        } => temp;
+        }
 
         void operator=(std::u8string* one, char* two) {one[0] = std::u8string(two);}
 
@@ -274,20 +259,27 @@ namespace std {
         }
 
         std::u8string substring(int from, int to) {
-            std::u8string temp = "";
+            @if(__RAVE_RUNTIME_CHECKS) {
+                if(((from >= 0) && (from < this.length)) && ((to >= 0) && (to < this.length))) {
+                    return = "";
+                    int i = from;
 
-            int u8Cnt = 0;
-            int i = 0;
-            bool active = false;
-            while(u8Cnt < to) {
-                if(std::utf8::isStart(this.data[i])) {
-                    if(active == true) temp.add(this.data[i]);
-                    else if(from == u8Cnt) active = true;
-                    u8Cnt += 1;
+                    while(i < to) {
+                        return.add(this.data[i]);
+                        i += 1;
+                    }
                 }
-                i += 1;
-            }
-        } => temp;
+            };
+            @if(!(__RAVE_RUNTIME_CHECKS)) {
+                return = "";
+                int i = from;
+
+                while(i < to) {
+                    return.add(this.data[i]);
+                    i += 1;
+                }
+            };
+        }
 
         std::vector<std::u8string> split(char ch) {
             std::vector<std::u8string> parts = std::vector<std::u8string>();
@@ -318,15 +310,14 @@ namespace std {
         std::u8string rtrim {
             int idx = this.length - 1;
             while(std::ascii::isSpace(this.data[idx])) idx -= 1;
-        } => this.substring(0, idx+1);
+        } => this.substring(0, idx + 1);
 
-        std::u8string trim => this.ltrim().rtrim();
-
-        int fromHex {
-            int hex = 0;
-            char* buffer = this.c();
-            std::format(cast(char*)((cast(int)buffer)+2), "%x", &hex);
-        } => hex;
+        (inline) std::u8string trim {
+            int idxL = 0;
+            int idxR = this.length - 1;
+            while((idxL < this.length) && (std::ascii::isSpace(this.data[idxL]))) idxL += 1;
+            while(std::ascii::isSpace(this.data[idxR])) idxR -= 1;
+        } => this.substring(idxL, idxR + 1);
 
         std::u8string insert(int pos, char* str) {
             std::u8string buffer = "";

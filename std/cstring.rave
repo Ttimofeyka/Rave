@@ -50,7 +50,7 @@ namespace std {
                     done = true;
                     break;
                 }
-                ptr = itop(char*, ptoi(ptr)+1);
+                ptr = itop(char*, ptoi(ptr) + 1);
             }
 
             if(!done) ptr = null;
