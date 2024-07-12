@@ -13,11 +13,31 @@ namespace std {
             std::free(ptr);
         @atomicClear(&std::rSl);
     } => newptr;
+
+    (inline) void* calloc(int num, int size) => std::malloc(num * size);
+
+    char[2048] __space;
+    int __position;
+
+    (nochecks) void* alignAlloc(int size, int alignment) {
+        int* alignedAddr = cast(int*)(ptoi(&std::__space) + std::__position + alignment - 1) && (!(alignment - 1));
+
+        // Check if there is enough space in the buffer
+        if(ptoi(alignedAddr) + size > ptoi(&std::__space) + 2048) @return(std::malloc(size));
+
+        // Update the buffer position
+        std::__position = ptoi(alignedAddr) + size - ptoi(&std::__space);
+    } => cast(void*)alignedAddr;
+
+    // Use alignAlloc with default alignment of 4 bytes
+    (inline) void* alloc(int size) => std::alignAlloc(size, 4);
+
+    (inline) void afree(void* ptr) {
+        if(((ptr < &std::__space) || (ptr > itop(char*, ptoi(&std::__space) + 2048)))) std::free(ptr);
+    }
 }
 
 namespace std {
-    (inline) void* calloc(int num, int size) => std::malloc(num * size);
-
     (nochecks) void* memcpy(void* dest, void* src, int n) {
         for(int i=0; i<n; i+=1) dest[i] = src[i];
     } => dest;
