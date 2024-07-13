@@ -43,10 +43,8 @@ namespace std {
         void multiply(std::matrix<T> mat, std::matrix<T> out) {
             if(mat.data != null) {
                 for(int y=0; y<this.rows; y++) {
-                    for(int x=0; x<mat.columns; x++) {
-                        for(int k=0; k<mat.rows; k++) {
-                            out.set(y, x, out.get(y, x) + (this.get(y, k) * mat.get(k, x)));
-                        }
+                    for(int k=0; k<mat.rows; k++) {
+                        for(int x=0; x<mat.columns; x++) out.data[(y * out.columns) + x] = this.get(y, k) * mat.get(k, x);
                     }
                 }
             }
