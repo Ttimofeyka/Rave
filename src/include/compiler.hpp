@@ -21,6 +21,7 @@ namespace Compiler {
     extern std::vector<std::string> files;
     extern std::vector<std::string> toImport;
     extern bool debugMode;
+    extern std::string features;
 
     extern void error(std::string message);
     extern void initialize(std::string outFile, std::string outType, genSettings settings, std::vector<std::string> files);

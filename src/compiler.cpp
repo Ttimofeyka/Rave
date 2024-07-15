@@ -42,6 +42,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 std::string Compiler::linkString;
 std::string Compiler::outFile;
 std::string Compiler::outType;
+std::string Compiler::features;
 genSettings Compiler::settings;
 nlohmann::json Compiler::options;
 double Compiler::lexTime = 0.0;
@@ -79,6 +80,15 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
     Compiler::outType = outType;
     Compiler::settings = settings;
     Compiler::files = files;
+    if(!settings.isNative) {
+        Compiler::features = "";
+        if(settings.hasSSE) Compiler::features += "+sse,";
+        if(settings.hasSSE2) Compiler::features += "+sse2,";
+        if(settings.hasSSE3) Compiler::features += "+sse3,";
+        if(settings.hasAVX) Compiler::features += "+avx,";
+        Compiler::features = Compiler::features.substr(0, Compiler::features.length() - 1);
+    }
+    else Compiler::features = std::string(LLVMGetHostCPUFeatures());
     
     if(access((exePath+"options.json").c_str(), 0) == 0) {
         std::ifstream fOptions(exePath+"options.json");
@@ -277,9 +287,13 @@ void Compiler::compile(std::string file) {
 
     LLVMPassManagerRef pm = LLVMCreatePassManager();
     LLVMAddAlwaysInlinerPass(pm);
+    LLVMAddInstructionCombiningPass(pm);
+    LLVMAddInstructionSimplifyPass(pm);
+    LLVMAddIndVarSimplifyPass(pm);
+    LLVMAddScalarReplAggregatesPass(pm);
+    LLVMAddLoopVectorizePass(pm);
 
     if(Compiler::settings.optLevel > 0) {
-        LLVMAddInstructionCombiningPass(pm);
         LLVMAddConstantMergePass(pm);
         LLVMAddSLPVectorizePass(pm);
 
@@ -294,7 +308,7 @@ void Compiler::compile(std::string file) {
 		target,
 		triple,
 		"generic",
-		"",
+		Compiler::features.c_str(),
 		LLVMCodeGenLevelDefault,
         (Compiler::settings.isPIC ? LLVMRelocPIC : LLVMRelocDynamicNoPic),
 	LLVMCodeModelDefault);

@@ -126,6 +126,11 @@ typedef struct genSettings {
     bool recompileStd = false;
     bool noChecks = false;
     std::string linkParams = "";
+    bool hasSSE = true;
+    bool hasSSE2 = true;
+    bool hasSSE3 = true;
+    bool hasAVX = true;
+    bool isNative = false;
 
     #if defined(__linux__)
         std::string linker = "lld-11";

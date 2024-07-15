@@ -1,5 +1,8 @@
 import <std/io> <std/matrix> <std/time>
 
 void main {
-    
+    std::matrix<float> first = std::matrix<float>(1000, 1000);
+    std::matrix<float> second = std::matrix<float>(1000, 1000);
+    std::matrix<float> out = std::matrix<float>(1000, 1000);
+    first.multiply(second, out);
 }

@@ -104,7 +104,7 @@ LLVMValueRef NodeImport::generate() {
     if(std::count(AST::importedFiles.begin(), AST::importedFiles.end(), this->file) > 0 || this->file == generator->file) return nullptr;
     std::vector<Node*> buffer;
 
-    if(this->file.find("/.rave") == this->file.size()-6) {
+    if(this->file.find("/.rave") == this->file.size() - 6) {
         NodeImport* imp = new NodeImport({}, functions, loc);
         std::vector<std::string> dirFiles = filesFromDirectory(this->file.substr(0, this->file.size()-5));
         for(int i=0; i<dirFiles.size(); i++) {

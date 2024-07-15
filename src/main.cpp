@@ -42,6 +42,11 @@ genSettings analyzeArguments(std::vector<std::string>& arguments) {
         else if(arguments[i] == "--debug") Compiler::debugMode = true;
         else if(arguments[i] == "-t" || arguments[i] == "--target") {outType = arguments[i+1]; i += 1;}
         else if(arguments[i] == "-h" || arguments[i] == "--help") helpCalled = true;
+        else if(arguments[i] == "-native") settings.isNative = true;
+        else if(arguments[i] == "-noSSE") settings.hasSSE = false;
+        else if(arguments[i] == "-noSSE2") settings.hasSSE2 = false;
+        else if(arguments[i] == "-noSSE3") settings.hasSSE3 = false;
+        else if(arguments[i] == "-noAVX") settings.hasAVX = false;
         else if(arguments[i][0] == '-') settings.linkParams += arguments[i]+" ";
         else files.push_back(arguments[i]);
     }
