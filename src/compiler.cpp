@@ -287,13 +287,13 @@ void Compiler::compile(std::string file) {
 
     LLVMPassManagerRef pm = LLVMCreatePassManager();
     LLVMAddAlwaysInlinerPass(pm);
-    LLVMAddInstructionCombiningPass(pm);
-    LLVMAddInstructionSimplifyPass(pm);
-    LLVMAddIndVarSimplifyPass(pm);
-    LLVMAddScalarReplAggregatesPass(pm);
-    LLVMAddLoopVectorizePass(pm);
 
     if(Compiler::settings.optLevel > 0) {
+        LLVMAddInstructionCombiningPass(pm);
+        LLVMAddInstructionSimplifyPass(pm);
+        LLVMAddIndVarSimplifyPass(pm);
+        LLVMAddScalarReplAggregatesPass(pm);
+        LLVMAddLoopVectorizePass(pm);
         LLVMAddConstantMergePass(pm);
         LLVMAddSLPVectorizePass(pm);
 

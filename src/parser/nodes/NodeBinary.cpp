@@ -88,7 +88,13 @@ LLVMValueRef Binary::sum(LLVMValueRef one, LLVMValueRef two, long loc) {
         if(LLVMTypeOf(one) != LLVMTypeOf(two)) oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;
     }
     else {oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;}
-    if(LLVMGetTypeKind(LLVMTypeOf(oneCasted)) == LLVMIntegerTypeKind) return LLVMBuildAdd(generator->builder, one, two, "sum");
+    if(
+        LLVMGetTypeKind(LLVMTypeOf(oneCasted)) == LLVMIntegerTypeKind ||
+        (
+            LLVMGetTypeKind(LLVMTypeOf(oneCasted)) == LLVMVectorTypeKind &&
+            LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(oneCasted))) == LLVMIntegerTypeKind
+        )
+    ) return LLVMBuildAdd(generator->builder, one, two, "sum");
     return LLVMBuildFAdd(generator->builder, one, two, "fsum");
 }
 

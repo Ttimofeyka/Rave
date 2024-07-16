@@ -96,6 +96,8 @@ NodeType* NodeBuiltin::asType(int n, bool isCompTime) {
         if(name == "ucent") return new NodeType(new TypeBasic(BasicType::Ucent), this->loc);
         if(name == "float") return new NodeType(new TypeBasic(BasicType::Float), this->loc);
         if(name == "double") return new NodeType(new TypeBasic(BasicType::Double), this->loc);
+        if(name == "float8") return new NodeType(new TypeVector(new TypeBasic(BasicType::Float), 8), this->loc);
+        if(name == "int4") return new NodeType(new TypeVector(new TypeBasic(BasicType::Int), 4), this->loc);
         return new NodeType(new TypeStruct(name), this->loc);
     }
     if(instanceof<NodeBuiltin>(this->args[n])) {
@@ -460,25 +462,74 @@ LLVMValueRef NodeBuiltin::generate() {
         );
         return LLVM::load(LLVM::structGep(structPointer, 0, "f8Load_gep"), "f8Load");
     }
-    else if(this->name == "f8Store") {
-        generator->settings.noChecks = true;
+    else if(this->name == "f8Set") {
         LLVMValueRef vector = this->args[0]->generate();
-        if(LLVMGetTypeKind(LLVMTypeOf(vector)) == LLVMPointerTypeKind) vector = LLVM::load(vector, "f8Store_load");
-
-        LLVMValueRef castedStore = LLVMBuildBitCast(
+        LLVMValueRef loaded = LLVM::load(vector, "NodeBuiltin_f8Set_load");
+        LLVMBuildStore(generator->builder, LLVMBuildInsertElement(generator->builder, loaded, this->args[2]->generate(), this->args[1]->generate(), "NodeBuiltin_f8Set_ie"), vector);
+        return nullptr;
+    }
+    else if(this->name == "f8Get") {
+        LLVMValueRef vector = this->args[0]->generate();
+        if(LLVM::isPointer(vector)) vector = LLVM::load(vector, "NodeBuiltin_f8Get_load");
+        return LLVMBuildExtractElement(generator->builder, vector, this->args[1]->generate(), "NodeBuiltin_f8Get_ee");
+    }
+    else if(this->name == "i4Load") {
+         LLVMValueRef structPointer = LLVMBuildBitCast(
             generator->builder,
-            this->args[1]->generate(),
+            this->args[0]->generate(),
             LLVMPointerType(LLVMStructTypeInContext(
                 generator->context,
-                std::vector<LLVMTypeRef>({LLVMVectorType(LLVMFloatTypeInContext(generator->context), 8)}).data(),
+                std::vector<LLVMTypeRef>({LLVMVectorType(LLVMInt32TypeInContext(generator->context), 4)}).data(),
                 1,
                 false
             ), 0),
-            "f8Store_bitc"
+            "i4Load_bitc"
         );
-        LLVMBuildStore(generator->builder, vector, LLVM::structGep(castedStore, 0, "f8Store_gep"));
-        generator->settings.noChecks = false;
+        return LLVM::load(LLVM::structGep(structPointer, 0, "i4Load_gep"), "i4Load");
+    }
+    else if(this->name == "i4Set") {
+        LLVMValueRef vector = this->args[0]->generate();
+        LLVMValueRef loaded = LLVM::load(vector, "NodeBuiltin_i4Set_load");
+        LLVMBuildStore(generator->builder, LLVMBuildInsertElement(generator->builder, loaded, this->args[2]->generate(), this->args[1]->generate(), "NodeBuiltin_i4Set_ie"), vector);
         return nullptr;
+    }
+    else if(this->name == "i4Get") {
+        LLVMValueRef vector = this->args[0]->generate();
+        if(LLVM::isPointer(vector)) vector = LLVM::load(vector, "NodeBuiltin_i4Get_load");
+        return LLVMBuildExtractElement(generator->builder, vector, this->args[1]->generate(), "NodeBuiltin_i4Get_ee");
+    }
+    else if(this->name == "f4Load") {
+        if(instanceof<NodeIndex>(this->args[0])) ((NodeIndex*)this->args[0])->isMustBePtr = true;
+        LLVMValueRef structPointer = LLVMBuildBitCast(
+            generator->builder,
+            this->args[0]->generate(),
+            LLVMPointerType(LLVMStructTypeInContext(
+                generator->context,
+                std::vector<LLVMTypeRef>({LLVMVectorType(LLVMFloatTypeInContext(generator->context), 4)}).data(),
+                1,
+                false
+            ), 0),
+            "f4Load_bitc"
+        );
+        return LLVM::load(LLVM::structGep(structPointer, 0, "f4Load_gep"), "f4Load");
+    }
+    else if(this->name == "f4Set") {
+        LLVMValueRef vector = this->args[0]->generate();
+        LLVMValueRef loaded = LLVM::load(vector, "NodeBuiltin_f4Set_load");
+        LLVMBuildStore(generator->builder, LLVMBuildInsertElement(generator->builder, loaded, this->args[2]->generate(), this->args[1]->generate(), "NodeBuiltin_f4Set_ie"), vector);
+        return nullptr;
+    }
+    else if(this->name == "f4Get") {
+        LLVMValueRef vector = this->args[0]->generate();
+        if(LLVM::isPointer(vector)) vector = LLVM::load(vector, "NodeBuiltin_f4Get_load");
+        return LLVMBuildExtractElement(generator->builder, vector, this->args[1]->generate(), "NodeBuiltin_f4Get_ee");
+    }
+    else if(this->name == "f4Mul") {
+        LLVMValueRef vector1 = this->args[0]->generate();
+        LLVMValueRef vector2 = this->args[1]->generate();
+        if(LLVM::isPointer(vector1)) vector1 = LLVM::load(vector1, "NodeBuiltin_f4Mul_load_v1");
+        if(LLVM::isPointer(vector2)) vector2 = LLVM::load(vector2, "NodeBuiltin_f4Mul_load_v2");
+        return LLVMBuildFMul(generator->builder, vector1, vector2, "NodeBuiltin_f4Mul_fmul");
     }
     generator->error("builtin with the name '" + this->name + "' does not exist!", this->loc);
     return nullptr;

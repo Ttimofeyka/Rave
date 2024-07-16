@@ -370,7 +370,13 @@ Type* lTypeToType(LLVMTypeRef t) {
         return getType(trim(sT));
     }
     else if(LLVMGetTypeKind(t) == LLVMVoidTypeKind) return new TypeVoid();
-    generator->error("assert: lTypeToType",-1);
+    else if(LLVMGetTypeKind(t) == LLVMVectorTypeKind) {
+        std::string tString = typeToString(t);
+        if(tString == "<4 x i32>") return new TypeVector(new TypeBasic(BasicType::Int), 4);
+        else if(tString == "<8 x i32>") return new TypeVector(new TypeBasic(BasicType::Int), 8);
+        else std::cout << tString << std::endl;
+    }
+    generator->error("assert: lTypeToType", -1);
     return nullptr;
 }
 
