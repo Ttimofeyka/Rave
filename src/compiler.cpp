@@ -289,32 +289,24 @@ void Compiler::compile(std::string file) {
 
     if(Compiler::settings.optLevel > 0) {
         LLVMAddInstructionCombiningPass(pm);
+        LLVMAddStripDeadPrototypesPass(pm);
 
         if(Compiler::settings.optLevel >= 2) {
             LLVMAddCFGSimplificationPass(pm);
-
 	        LLVMAddJumpThreadingPass(pm);
-
 	        LLVMAddSimplifyLibCallsPass(pm);
-
 	        LLVMAddTailCallEliminationPass(pm);
 	        LLVMAddCFGSimplificationPass(pm);
 	        LLVMAddReassociatePass(pm);
-
 	        LLVMAddLoopRotatePass(pm);
 	        LLVMAddLICMPass(pm);
-
 	        LLVMAddCFGSimplificationPass(pm);
 	        LLVMAddLoopIdiomPass(pm);
 	        LLVMAddLoopDeletionPass(pm);
-
 	        LLVMAddMergedLoadStoreMotionPass(pm);
-
 	        LLVMAddMemCpyOptPass(pm);
 	        LLVMAddSCCPPass(pm);
-
 	        LLVMAddBitTrackingDCEPass(pm);
-
             LLVMAddCalledValuePropagationPass(pm);
             LLVMAddSLPVectorizePass(pm);
 	        LLVMAddLICMPass(pm);
@@ -324,6 +316,7 @@ void Compiler::compile(std::string file) {
             LLVMAddLoopVectorizePass(pm);
         }
 
+        LLVMAddCFGSimplificationPass(pm);
         LLVMAddIndVarSimplifyPass(pm);
         LLVMAddScalarReplAggregatesPass(pm);
         LLVMAddLoopVectorizePass(pm);
@@ -334,8 +327,7 @@ void Compiler::compile(std::string file) {
 	    LLVMAddAggressiveDCEPass(pm);
 	    LLVMAddAlwaysInlinerPass(pm);
 	    LLVMAddStripDeadPrototypesPass(pm);
-
-        
+        LLVMAddCFGSimplificationPass(pm);
 
         LLVMPassManagerBuilderRef pmb = LLVMPassManagerBuilderCreate();
         LLVMPassManagerBuilderSetOptLevel(pmb, Compiler::settings.optLevel);
