@@ -94,11 +94,14 @@ LLVMValueRef NodeUnary::generate() {
         }*/
         else if(instanceof<NodeIden>(this->base)) {
             NodeIden* id = ((NodeIden*)this->base);
-            if(instanceof<TypeArray>(currScope->getVar(id->name, this->loc)->type)) {
-                LLVMValueRef ptr = LLVM::inboundsGep(currScope->getWithoutLoad(id->name),
-                    std::vector<LLVMValueRef>({LLVMConstInt(LLVMInt32Type(),0,false),LLVMConstInt(LLVMInt32Type(),0,false)}).data(),
+            if(currScope == nullptr) {
+                id->isMustBePtr = true;
+                return id->generate();
+            }
+            else if(instanceof<TypeArray>(currScope->getVar(id->name, this->loc)->type)) {
+                val = LLVM::inboundsGep(currScope->getWithoutLoad(id->name),
+                    std::vector<LLVMValueRef>({LLVMConstInt(LLVMInt32Type(), 0, false), LLVMConstInt(LLVMInt32Type(), 0, false)}).data(),
                 2, "NodeUnary_ingep");
-                val = ptr;
             }
             else val = currScope->getWithoutLoad(id->name);
         }
