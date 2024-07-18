@@ -19,9 +19,9 @@ else
  		LLVM_VERSION = 15
  	endif
 	ifeq ($(LLVM_STATIC), 1)
-		LLVM_LIB = `llvm-config-$(LLVM_VERSION) --ldflags --link-static --libs --system-libs` -static
+		LLVM_LIB = `llvm-config-$(LLVM_VERSION) --ldflags --link-static --libs --system-libs --cxxflags` -static
 	else
-		LLVM_LIB = -lLLVM-$(LLVM_VERSION)
+		LLVM_LIB = -lLLVM-$(LLVM_VERSION) `llvm-config-$(LLVM_VERSION) --cxxflags`
 	endif
 	SRC = $(shell find . -name *.cpp)
 endif
@@ -33,7 +33,7 @@ all: $(BIN)
 $(BIN): $(OBJ)
 	$(COMPILER) $(OBJ) -o $@ $(LLVM_LIB) -DLLVM_VERSION=$(LLVM_VERSION)
 %.o: %.cpp
-	$(COMPILER) -c $< -o $@ -DLLVM_VERSION=$(LLVM_VERSION) -std=c++11 -Wno-deprecated $(FLAGS)
+	$(COMPILER) -c $< -o $@ -DLLVM_VERSION=$(LLVM_VERSION) -std=c++17 -Wno-deprecated $(FLAGS) $(LLVM_LIB) -fexceptions
 
 clean:
 ifdef OS

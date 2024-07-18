@@ -47,7 +47,8 @@ genSettings analyzeArguments(std::vector<std::string>& arguments) {
         else if(arguments[i] == "-noSSE2") settings.hasSSE2 = false;
         else if(arguments[i] == "-noSSE3") settings.hasSSE3 = false;
         else if(arguments[i] == "-noAVX") settings.hasAVX = false;
-        else if(arguments[i][0] == '-') settings.linkParams += arguments[i]+" ";
+        else if(arguments[i] == "-noFastMath") settings.noFastMath = true;
+        else if(arguments[i][0] == '-') settings.linkParams += arguments[i] + " ";
         else files.push_back(arguments[i]);
     }
     return settings;

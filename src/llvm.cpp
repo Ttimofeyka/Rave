@@ -5,9 +5,15 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 #include "./include/llvm.hpp"
-#include "./include/llvm-c/Target.h"
+#include <llvm-c/Target.h>
 #include "./include/parser/ast.hpp"
 #include <iostream>
+
+#include <llvm/Target/TargetMachine.h>
+#include <llvm/IR/IRBuilder.h>
+#include <llvm/Analysis/TargetLibraryInfo.h>
+#include <llvm/Transforms/IPO.h>
+#include <llvm/IR/LegacyPassManager.h>
 
 bool LLVM::isPointerType(LLVMTypeRef type) {
     return LLVMGetTypeKind(type) == LLVMPointerTypeKind;
@@ -70,4 +76,19 @@ LLVMValueRef LLVM::structGep(LLVMValueRef ptr, unsigned int idx, const char* nam
     #else
         return LLVMBuildStructGEP(generator->builder, ptr, idx, name);
     #endif
+}
+
+void LLVM::setFastMath(LLVMBuilderRef builder, bool infs, bool nans, bool arcp, bool nsz) {
+    llvm::FastMathFlags flags;
+    if(infs) flags.setNoInfs(true);
+    if(nans) flags.setNoNaNs(true);
+    if(arcp) flags.setAllowReciprocal(true);
+    if(nsz) flags.setNoSignedZeros(true);
+    llvm::unwrap(builder)->setFastMathFlags(flags);
+}
+
+void LLVM::setFastMathAll(LLVMBuilderRef builder, bool value) {
+    llvm::FastMathFlags flags;
+    flags.setFast(value);
+    llvm::unwrap(builder)->setFastMathFlags(flags);
 }

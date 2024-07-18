@@ -6,7 +6,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "../../include/parser/ast.hpp"
 #include "../../include/parser/Types.hpp"
-#include "../../include/llvm-c/Target.h"
+#include <llvm-c/Target.h>
 #include "../../include/parser/nodes/NodeBinary.hpp"
 #include "../../include/lexer/tokens.hpp"
 #include "../../include/parser/nodes/NodeIden.hpp"
@@ -26,6 +26,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeFunc.hpp"
 #include "../../include/parser/nodes/NodeUnary.hpp"
 #include "../../include/llvm.hpp"
+#include "../../include/compiler.hpp"
 #include <iostream>
 
 LLVMValueRef Binary::castValue(LLVMValueRef from, LLVMTypeRef to, long loc) {

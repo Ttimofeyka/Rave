@@ -18,4 +18,6 @@ namespace LLVM {
     extern LLVMValueRef structGep(LLVMValueRef ptr, unsigned int idx, const char* name);
     extern bool isPointerType(LLVMTypeRef type);
     extern bool isPointer(LLVMValueRef value);
+    extern void setFastMath(LLVMBuilderRef builder, bool infs, bool nans, bool arcp, bool nsz);
+    extern void setFastMathAll(LLVMBuilderRef builder, bool value);
 }

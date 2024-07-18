@@ -21,9 +21,10 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeFor.hpp"
 #include "../../include/parser/nodes/NodeNull.hpp"
 #include "../../include/parser/nodes/NodeDone.hpp"
-#include "../../include/llvm-c/Comdat.h"
-#include "../../include/llvm-c/Analysis.h"
+#include <llvm-c/Comdat.h>
+#include <llvm-c/Analysis.h>
 #include "../../include/compiler.hpp"
+#include "../../include/llvm.hpp"
 
 NodeFunc::NodeFunc(std::string name, std::vector<FuncArgSet> args, NodeBlock* block, bool isExtern, std::vector<DeclarMod> mods, long loc, Type* type, std::vector<std::string> templateNames) {
     this->name = name;
@@ -238,6 +239,7 @@ LLVMValueRef NodeFunc::generate() {
         this->builder = LLVMCreateBuilderInContext(generator->context);
         generator->builder = this->builder;
         LLVMPositionBuilderAtEnd(generator->builder, entry);
+        if(!Compiler::settings.noFastMath) LLVM::setFastMath(generator->builder, true, true, true, true);
 
         std::map<std::string, int> indexes;
         std::map<std::string, NodeVar*> vars;

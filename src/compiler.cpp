@@ -13,23 +13,23 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <regex>
 #include "./include/lexer/lexer.hpp"
 #include "./include/parser/parser.hpp"
-#include "./include/llvm-c/Target.h"
-#include "./include/llvm-c/TargetMachine.h"
-#include "./include/llvm-c/Core.h"
-#include "./include/llvm-c/Analysis.h"
-#include "./include/llvm-c/IRReader.h"
-#include "./include/llvm-c/Orc.h"
-#include "./include/llvm-c/OrcEE.h"
-#include "./include/llvm-c/Remarks.h"
-#include "./include/llvm-c/Linker.h"
-#include "./include/llvm-c/Transforms/PassBuilder.h"
-#include "./include/llvm-c/Transforms/InstCombine.h"
-#include "./include/llvm-c/Transforms/Utils.h"
-#include "./include/llvm-c/Transforms/Vectorize.h"
-#include "./include/llvm-c/Transforms/PassManagerBuilder.h"
-#include "./include/llvm-c/Transforms/IPO.h"
-#include "./include/llvm-c/Transforms/Scalar.h"
-#include "./include/llvm-c/Target.h"
+#include <llvm-c/Target.h>
+#include <llvm-c/TargetMachine.h>
+#include <llvm-c/Core.h>
+#include <llvm-c/Analysis.h>
+#include <llvm-c/IRReader.h>
+#include <llvm-c/Orc.h>
+#include <llvm-c/OrcEE.h>
+#include <llvm-c/Remarks.h>
+#include <llvm-c/Linker.h>
+#include <llvm-c/Transforms/PassBuilder.h>
+#include <llvm-c/Transforms/InstCombine.h>
+#include <llvm-c/Transforms/Utils.h>
+#include <llvm-c/Transforms/Vectorize.h>
+#include <llvm-c/Transforms/PassManagerBuilder.h>
+#include <llvm-c/Transforms/IPO.h>
+#include <llvm-c/Transforms/Scalar.h>
+#include <llvm-c/Target.h>
 
 #ifdef _WIN32
    #include <io.h>
@@ -286,16 +286,56 @@ void Compiler::compile(std::string file) {
     for(int i=0; i<parser->nodes.size(); i++) parser->nodes[i]->generate();
 
     LLVMPassManagerRef pm = LLVMCreatePassManager();
-    LLVMAddAlwaysInlinerPass(pm);
 
     if(Compiler::settings.optLevel > 0) {
         LLVMAddInstructionCombiningPass(pm);
-        LLVMAddInstructionSimplifyPass(pm);
+
+        if(Compiler::settings.optLevel >= 2) {
+            LLVMAddCFGSimplificationPass(pm);
+
+	        LLVMAddJumpThreadingPass(pm);
+
+	        LLVMAddSimplifyLibCallsPass(pm);
+
+	        LLVMAddTailCallEliminationPass(pm);
+	        LLVMAddCFGSimplificationPass(pm);
+	        LLVMAddReassociatePass(pm);
+
+	        LLVMAddLoopRotatePass(pm);
+	        LLVMAddLICMPass(pm);
+
+	        LLVMAddCFGSimplificationPass(pm);
+	        LLVMAddLoopIdiomPass(pm);
+	        LLVMAddLoopDeletionPass(pm);
+
+	        LLVMAddMergedLoadStoreMotionPass(pm);
+
+	        LLVMAddMemCpyOptPass(pm);
+	        LLVMAddSCCPPass(pm);
+
+	        LLVMAddBitTrackingDCEPass(pm);
+
+            LLVMAddCalledValuePropagationPass(pm);
+            LLVMAddSLPVectorizePass(pm);
+	        LLVMAddLICMPass(pm);
+	        LLVMAddAlignmentFromAssumptionsPass(pm);
+	        LLVMAddStripDeadPrototypesPass(pm);
+            LLVMAddLoopRotatePass(pm);
+            LLVMAddLoopVectorizePass(pm);
+        }
+
         LLVMAddIndVarSimplifyPass(pm);
         LLVMAddScalarReplAggregatesPass(pm);
         LLVMAddLoopVectorizePass(pm);
         LLVMAddConstantMergePass(pm);
         LLVMAddSLPVectorizePass(pm);
+	    LLVMAddPromoteMemoryToRegisterPass(pm);
+	    LLVMAddMergedLoadStoreMotionPass(pm);
+	    LLVMAddAggressiveDCEPass(pm);
+	    LLVMAddAlwaysInlinerPass(pm);
+	    LLVMAddStripDeadPrototypesPass(pm);
+
+        
 
         LLVMPassManagerBuilderRef pmb = LLVMPassManagerBuilderCreate();
         LLVMPassManagerBuilderSetOptLevel(pmb, Compiler::settings.optLevel);
@@ -314,9 +354,7 @@ void Compiler::compile(std::string file) {
 	LLVMCodeModelDefault);
 
     generator->targetData = LLVMCreateTargetDataLayout(machine);
-    char* targetDataStr = LLVMCopyStringRepOfTargetData(generator->targetData);
-    LLVMSetDataLayout(generator->lModule, targetDataStr);
-    LLVMDisposeMessage(targetDataStr);
+    LLVMSetModuleDataLayout(generator->lModule, generator->targetData);
 
     LLVMTargetMachineEmitToFile(machine, generator->lModule, (std::regex_replace(file, std::regex("\\.rave"), ".o")).c_str(), LLVMObjectFile, &errors);
     if(errors != nullptr) {

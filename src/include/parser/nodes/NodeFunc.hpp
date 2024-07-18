@@ -6,7 +6,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #pragma once
 
-#include "../../llvm-c/Core.h"
+#include <llvm-c/Core.h>
 #include "Node.hpp"
 #include "NodeBlock.hpp"
 #include "../parser.hpp"

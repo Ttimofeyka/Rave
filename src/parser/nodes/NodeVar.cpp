@@ -6,7 +6,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "../../include/parser/nodes/NodeVar.hpp"
 #include "../../include/parser/ast.hpp"
-#include "../../include/llvm-c/Comdat.h"
+#include <llvm-c/Comdat.h>
 #include "../../include/parser/nodes/NodeArray.hpp"
 #include "../../include/parser/nodes/NodeString.hpp"
 #include "../../include/parser/nodes/NodeInt.hpp"

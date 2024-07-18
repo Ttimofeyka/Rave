@@ -8,10 +8,10 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <string>
 #include <map>
-#include "../llvm-c/Core.h"
-#include "../llvm-c/Initialization.h"
-#include "../llvm-c/lto.h"
-#include "../llvm-c/Target.h"
+#include <llvm-c/Core.h>
+#include <llvm-c/Initialization.h>
+#include <llvm-c/lto.h>
+#include <llvm-c/Target.h>
 #include "../utils.hpp"
 #include "./Type.hpp"
 #include "./Types.hpp"
