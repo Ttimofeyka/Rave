@@ -16,24 +16,19 @@ namespace std {
 
     (inline) void* calloc(int num, int size) => std::malloc(num * size);
 
-    char[2048] __space;
-    int __position;
+    char[1024] __space;
+    char* __spacePtr = &std::__space;
 
-    (nochecks) void* alignAlloc(int size, int alignment) {
-        int* alignedAddr = cast(int*)(ptoi(&std::__space) + std::__position + alignment - 1) && (!(alignment - 1));
+    (nochecks) void* alloc(int size) {
+        if(ptoi(&std::__space) + 1024 - ptoi(std::__spacePtr) >= size) {
+            std::__spacePtr = itop(char*, ptoi(std::__spacePtr) + size);
+            return itop(char*, ptoi(std::__spacePtr) - size); /* old p */
+        }
+        else return = null;
+    }
 
-        // Check if there is enough space in the buffer
-        if(ptoi(alignedAddr) + size > ptoi(&std::__space) + 2048) @return(std::malloc(size));
-
-        // Update the buffer position
-        std::__position = ptoi(alignedAddr) + size - ptoi(&std::__space);
-    } => cast(void*)alignedAddr;
-
-    // Use alignAlloc with default alignment of 4 bytes
-    (inline) void* alloc(int size) => std::alignAlloc(size, 4);
-
-    (inline) void afree(void* ptr) {
-        if(((ptr < &std::__space) || (ptr > itop(char*, ptoi(&std::__space) + 2048)))) std::free(ptr);
+    (nochecks) void afree(void* ptr) {
+        if((ptoi(ptr) >= ptoi(&std::__space)) && (ptoi(ptr) < (ptoi(&std::__space) + 1024))) std::__spacePtr = ptr;
     }
 }
 
