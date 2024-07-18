@@ -319,6 +319,11 @@ LLVMTypeRef NodeStruct::genWithTemplate(std::string sTypes, std::vector<Type*> t
 
     std::string _fn = "<";
 
+    if(types.size() != this->templateNames.size()) {
+        generator->error("the count of template types is not equal!", this->loc);
+        return nullptr;
+    }
+
     for(int i=0; i<types.size(); i++) {
         if(instanceof<TypeStruct>(types[i])) {
             if(AST::structTable.find(((TypeStruct*)types[i])->name) == AST::structTable.end() && !((TypeStruct*)types[i])->types.empty()) generator->genType(types[i], this->loc);
