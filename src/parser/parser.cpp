@@ -929,8 +929,10 @@ Node* Parser::parseSuffix(Node* base, std::string f) {
     ) {
         if(this->peek()->type == TokType::Rpar) base = this->parseCall(base);
         else if(this->peek()->type == TokType::Rarr) {
-            if(this->isSlice()) base = parseSlice(base,f);
-            else base = new NodeIndex(base, this->parseIndexes(), this->peek()->line);
+            if(this->isSlice()) base = parseSlice(base, f);
+            else {
+                base = new NodeIndex(base, this->parseIndexes(), this->peek()->line);
+            }
         }
         else if(this->peek()->type == TokType::Dot) {
             this->next();
@@ -1139,8 +1141,7 @@ Node* Parser::parseStmt(std::string f) {
     if(this->peek()->type == TokType::Rbra) return this->parseBlock(f);
     if(this->peek()->type == TokType::Semicolon) {this->next(); return this->parseStmt(f);}
     if(this->peek()->type == TokType::Eof) return nullptr;
-    if(this->peek()->type == TokType::Identifier && (this->tokens[this->idx+1]->type == TokType::Less)) return this->parseDecl(f);
-    if(this->peek()->value == "try") {}
+    if(this->peek()->type == TokType::Identifier && (this->tokens[this->idx + 1]->type == TokType::Less)) return this->parseDecl(f);
     if(this->peek()->type == TokType::Identifier) {
         std::string id = this->peek()->value;
         if(id == "if") return this->parseIf(f, isStatic);
@@ -1153,7 +1154,8 @@ Node* Parser::parseStmt(std::string f) {
         if(this->tokens[this->idx+1]->type == TokType::Rarr && this->tokens[this->idx+4]->type != TokType::Equ
            && this->tokens[this->idx+4]->type != TokType::Lpar && this->tokens[this->idx+4]->type != TokType::Rpar
            && this->tokens[this->idx+4]->type != TokType::PluEqu && this->tokens[this->idx+4]->type != TokType::MinEqu
-           && this->tokens[this->idx+4]->type != TokType::MulEqu && this->tokens[this->idx+4]->type != TokType::DivEqu) {
+           && this->tokens[this->idx+4]->type != TokType::MulEqu && this->tokens[this->idx+4]->type != TokType::DivEqu
+           && this->tokens[this->idx+4]->type != TokType::Rarr) {
             if(this->tokens[this->idx+2]->type == TokType::Number && this->tokens[this->idx+3]->type == TokType::Larr) return this->parseDecl(f);
         } this->next();
         if(this->peek()->type != TokType::Identifier) {
@@ -1163,7 +1165,8 @@ Node* Parser::parseStmt(std::string f) {
                     id == "void" || id == "bool" || id == "int" || id == "uint" ||
                     id == "short" || id == "ushort" || id == "char" || id == "uchar" ||
                     id == "long" || id == "ulong" || id == "cent" || id == "ucent"|| id == "const"
-                    || id == "half" || id == "bhalf" || id == "int4" || id == "float8"
+                    || id == "half" || id == "bhalf" || id == "int4" || id == "float8" ||
+                    id == "float" || id == "double"
                 ) {this->idx -= 1; return this->parseDecl(f);}
             } this->idx -= 1;
             if(this->peek()->type == TokType::Builtin) return this->parseBuiltin(f);

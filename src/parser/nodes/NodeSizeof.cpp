@@ -20,6 +20,22 @@ Node* NodeSizeof::copy() {return new NodeSizeof(this->value->copy(), this->loc);
 void NodeSizeof::check() {this->isChecked = true;}
 
 LLVMValueRef NodeSizeof::generate() {
-    if(instanceof<NodeType>(this->value)) return LLVMBuildIntCast(generator->builder, LLVMSizeOf(generator->genType(((NodeType*)this->value)->type,loc)), LLVMInt32TypeInContext(generator->context), "icast");
+    if(instanceof<NodeType>(this->value)) {
+        Type* tp = ((NodeType*)this->value)->getType();
+        while(generator->toReplace.find(tp->toString()) != generator->toReplace.end()) tp = generator->toReplace[tp->toString()];
+        if(instanceof<TypeBasic>(tp)) {
+            switch(((TypeBasic*)tp)->type) {
+                case BasicType::Uchar: case BasicType::Char: case BasicType::Bool: return LLVMConstInt(LLVMInt32TypeInContext(generator->context), 1, false);
+                case BasicType::Ushort: case BasicType::Short: return LLVMConstInt(LLVMInt32TypeInContext(generator->context), 2, false);
+                case BasicType::Uint: case BasicType::Int:
+                case BasicType::Float: return LLVMConstInt(LLVMInt32TypeInContext(generator->context), 4, false);
+                case BasicType::Ulong: case BasicType::Long:
+                case BasicType::Double: return LLVMConstInt(LLVMInt32TypeInContext(generator->context), 8, false);
+                case BasicType::Ucent: case BasicType::Cent: return LLVMConstInt(LLVMInt32TypeInContext(generator->context), 16, false);
+                default: break;
+            }
+        }
+        else return LLVMSizeOf(generator->genType(tp, loc));
+    }
     return LLVMSizeOf(LLVMTypeOf(this->value->generate()));
 }
