@@ -1,5 +1,7 @@
 import <std/io> <std/matrix> <std/time>
 
 void main {
-    std::println(std::math::tanh(0.1f));
+    auto v = std::vector<std::vector<int>>();
+    v.add(std::vector<int>([10, 20, 30]));
+    v[0].data[1] = 100;
 }

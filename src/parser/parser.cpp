@@ -1155,7 +1155,7 @@ Node* Parser::parseStmt(std::string f) {
            && this->tokens[this->idx+4]->type != TokType::Lpar && this->tokens[this->idx+4]->type != TokType::Rpar
            && this->tokens[this->idx+4]->type != TokType::PluEqu && this->tokens[this->idx+4]->type != TokType::MinEqu
            && this->tokens[this->idx+4]->type != TokType::MulEqu && this->tokens[this->idx+4]->type != TokType::DivEqu
-           && this->tokens[this->idx+4]->type != TokType::Rarr) {
+           && this->tokens[this->idx+4]->type != TokType::Rarr && this->tokens[this->idx+4]->type != TokType::Dot) {
             if(this->tokens[this->idx+2]->type == TokType::Number && this->tokens[this->idx+3]->type == TokType::Larr) return this->parseDecl(f);
         } this->next();
         if(this->peek()->type != TokType::Identifier) {
