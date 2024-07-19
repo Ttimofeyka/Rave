@@ -73,6 +73,7 @@ LLVMValueRef NodeWhile::generate() {
     }
 
     LLVMPositionBuilderAtEnd(generator->builder, generator->activeLoops[selfNumber].end);
+    generator->currBB = generator->activeLoops[selfNumber].end;
     generator->activeLoops.erase(selfNumber);
     return nullptr;
 }

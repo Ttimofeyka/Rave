@@ -250,8 +250,10 @@ LLVMValueRef NodeVar::generate() {
         if(instanceof<NodeInt>(this->value)) ((NodeInt*)this->value)->isVarVal = this->type;
 
         LLVMTypeRef gT = generator->genType(this->type, this->loc);
+        LLVMPositionBuilder(generator->builder, LLVMGetFirstBasicBlock(generator->functions[currScope->funcName]), LLVMGetFirstInstruction(LLVMGetFirstBasicBlock(generator->functions[currScope->funcName])));
         currScope->localScope[this->name] = LLVMBuildAlloca(generator->builder, gT, name.c_str());
-        if(isVolatile) LLVMSetVolatile(currScope->localScope[this->name],true);
+        LLVMPositionBuilderAtEnd(generator->builder, generator->currBB);
+        if(isVolatile) LLVMSetVolatile(currScope->localScope[this->name], true);
         if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->getWithoutLoad(this->name, this->loc), generator->getAlignment(this->type));
 
         if((this->value == nullptr || instanceof<NodeCall>(this->value)) && instanceof<TypeStruct>(this->type)) {
