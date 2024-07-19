@@ -94,7 +94,7 @@ void NodeVar::check() {
 LLVMValueRef NodeVar::generate() {
     if(instanceof<TypeVoid>(this->type)) {
         // error: variable cannot be void
-        generator->error("using 'void' for variables is prohibited!", this->loc);
+        generator->error("using 'void' in variable '" + this->name + "' is prohibited!", this->loc);
         return nullptr;
     }
 
