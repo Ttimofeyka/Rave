@@ -17,6 +17,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/parser.hpp"
 #include <algorithm>
 #include <fstream>
+#include <chrono>
+#include "../../include/compiler.hpp"
 
 #ifdef _WIN32
    #include <io.h> 
@@ -125,9 +127,18 @@ LLVMValueRef NodeImport::generate() {
         while(fContent.get(c)) content += c;
 
         content = "alias __RAVE_IMPORTED_FROM = \""+generator->file+"\"; "+content;
+
+        auto start = std::chrono::system_clock::now();
         Lexer* lexer = new Lexer(content, 1);
+        auto end = std::chrono::system_clock::now();
+        Compiler::lexTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+        start = end;
         Parser* parser = new Parser(lexer->tokens, this->file);
         parser->parseAll();
+        end = std::chrono::system_clock::now();
+        Compiler::parseTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
         AST::parsed[this->file] = std::vector<Node*>({parser->nodes});
         for(int j=0; j<AST::parsed[this->file].size(); j++) buffer.push_back(AST::parsed[this->file][j]->copy());
     }
@@ -153,6 +164,7 @@ LLVMValueRef NodeImport::generate() {
 
     std::string oldFile = generator->file;
     generator->file = this->file;
+    auto start = std::chrono::system_clock::now();
     for(int j=0; j<buffer.size(); j++) {
         if(instanceof<NodeFunc>(buffer[j])) {
             NodeFunc* nfunc = (NodeFunc*)buffer[j];
@@ -174,6 +186,8 @@ LLVMValueRef NodeImport::generate() {
         }
         buffer[j]->generate();
     }
+    auto end = std::chrono::system_clock::now();
+    Compiler::genTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     generator->file = oldFile;
     AST::importedFiles.push_back(this->file);
     return nullptr;

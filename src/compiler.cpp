@@ -206,7 +206,7 @@ void Compiler::compile(std::string file) {
     auto start = std::chrono::system_clock::now();
     Lexer* lexer = new Lexer(content, offset);
     auto end = std::chrono::system_clock::now();
-    Compiler::lexTime += std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
+    Compiler::lexTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     
     start = end;
     Parser* parser = new Parser(lexer->tokens, file);

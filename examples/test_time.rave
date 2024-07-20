@@ -3,5 +3,5 @@ import <std/io> <std/time>
 void main {
     std::time currTime;
     std::getCurrentTime(&currTime);
-    std::println("Current UNIX time in seconds: ", currTime.mseconds);
+    std::println("Current UNIX time in seconds: ", currTime.seconds);
 }

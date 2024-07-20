@@ -1,7 +1,6 @@
-import <std/io> <std/matrix> <std/time>
+import <std/io> <std/map>
 
 void main {
-    auto v = std::vector<std::vector<int>>();
-    v.add(std::vector<int>([10, 20, 30]));
-    v[0].data[1] = 100;
+    std::map<int, int> m = std::map<int, int>();
+    
 }
