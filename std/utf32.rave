@@ -1,4 +1,4 @@
-import <std/memory> <std/ascii> <std/cstring> <std/vector> <std/unicode>
+import <std/memory> <std/ascii> <std/cstring> <std/vector> <std/unicode> <std/map>
 
 namespace std {
     namespace utf8 {
@@ -270,6 +270,18 @@ namespace std {
                 }
             }
         } => isEqual;
+
+        int hash {
+            return = 1381;
+            int idx = 0;
+    
+            while(idx < length) {
+                return = ((return <. 5) + return) + data[idx];
+                idx += 1;
+            }
+    
+            if(return < 0) return = -return;
+        } => return % std::mapSize;
 
         //bool operator==(std::u32string one, std::u32string two) => one.compare(two);
         //bool operator==(std::u32string one, uint* two) => one.compare(two);

@@ -1,11 +1,9 @@
-import <std/io>
-
 namespace std {
     namespace map {
-        struct Entry {
-            void* key;
-            void* value;
-            std::map::Entry* next;
+        struct Entry<KE, VE> {
+            KE key;
+            VE value;
+            std::map::Entry<KE, VE>* next;
         }
     }
 
@@ -24,24 +22,30 @@ namespace std {
     } => return % std::mapSize;
 
     struct map<K, V> {
-        std::map::Entry** table;
+        std::map::Entry<K, V>** table;
         int length;
 
         std::map<K, V> this {
             std::map<K, V> this;
             this.length = 0;
-            this.table = cast(std::map::Entry**)std::malloc(sizeof(std::map::Entry*) * std::mapSize);
+            this.table = cast(std::map::Entry<K, V>**)std::malloc(sizeof(std::map::Entry<K, V>*) * std::mapSize);
             for(int i=0; i<std::mapSize; i++) this.table[i] = null;
         } => this;
 
         void set(K key, V value) {
-            uint index = std::hash(cast(void*)&key, sizeof(K));
+            @if(@hasMethod(K, hash)) {
+                uint index = key.hash();
+            };
 
-            std::map::Entry* entry = table[index];
+            @if(!@hasMethod(K, hash)) {
+                uint index = std::hash(cast(void*)&key, sizeof(K));
+            };
+
+            std::map::Entry<K, V>* entry = table[index];
             bool setted = false;
             while(entry != null) {
-                if(key == cast(K)(entry.key)) {
-                    entry.value = cast(void*)value;
+                if(key == entry.key) {
+                    entry.value = value;
                     setted = true;
                     break;
                 }
@@ -49,20 +53,28 @@ namespace std {
             }
 
             if(!setted) {
-                table[index] = cast(std::map::Entry*)std::malloc(sizeof(std::map::Entry));
-                table[index].key = cast(void*)key;
-                table[index].value = cast(void*)value;
+                table[index] = cast(std::map::Entry<K, V>*)std::malloc(sizeof(std::map::Entry<K, V>));
+                table[index].key = key;
+                table[index].value = value;
             }
         }
 
         V get(K key) {
             return = cast(V)null;
-            uint index = std::hash(cast(void*)&key, sizeof(K));
+            @if(@hasMethod(K, hash)) {
+                uint index = key.hash();
+            };
 
-            std::map::Entry* entry = table[index];
+            @if(!@hasMethod(K, hash)) {
+                uint index = std::hash(cast(void*)&key, sizeof(K));
+            };
+
+            std::map::Entry<K, V>* entry = table[index];
 
             while(entry != null) {
-                if((cast(K)(entry.key)) == key) {
+                std::println(key);
+                K key2 = (cast(K)entry.key);
+                if(key == key2) {
                     return = (cast(V)(entry.value));
                     break;
                 }

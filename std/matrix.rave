@@ -1,4 +1,4 @@
-import <std/math>
+import <std/math> <std/map>
 
 namespace std {
     struct matrix<T> {
@@ -57,6 +57,12 @@ namespace std {
         void softmax {std::math::softmax(this.data, this.rows * this.columns);}
         void relu {for(int i=0; i<(this.rows * this.columns); i++) this.data[i] = std::math::relu(this.data[i]);}
         void drelu {for(int i=0; i<(this.rows * this.columns); i++) this.data[i] = std::math::drelu(this.data[i]);}
+
+        int hash {
+            return = 1295;
+            for(int i=0; i<(this.rows * this.columns); i++) return = ((return <. 5) + return) + this.data[idx];
+            if(return < 0) return = -return;
+        } => return * std::mapSize;
 
         void ~this {
             if(this.data != null) {

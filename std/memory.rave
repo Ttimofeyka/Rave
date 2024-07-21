@@ -70,5 +70,25 @@ namespace std {
             this.first = first;
             this.second = second;
         } => this;
+
+        int hash {
+            return = 3853;
+
+            @if(@hasMethod(P1, hash)) {
+                return *= first.hash();
+            };
+
+            @if(!@hasMethod(P1, hash)) {
+                return *= std::hash(cast(void*)this.first, sizeof(P1));
+            };
+            
+            @if(@hasMethod(P2, hash)) {
+                return *= second.hash();
+            };
+
+            @if(!@hasMethod(P2, hash)) {
+                return *= std::hash(cast(void*)this.second, sizeof(P2));
+            };
+        } => return % std::mapSize;
     }
 }

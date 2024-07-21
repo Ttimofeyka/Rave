@@ -1,4 +1,4 @@
-import <std/memory> <std/ascii> <std/vector> <std/cstring> <std/strutil>
+import <std/memory> <std/ascii> <std/vector> <std/cstring> <std/strutil> <std/map>
 
 namespace std {
     extern(private, vararg, linkname: "sscanf") int format(char* buff, char* fmt);
@@ -332,6 +332,18 @@ namespace std {
                 i += 1;
             }
         } => buffer;
+
+        int hash {
+            return = 4729;
+            int idx = 0;
+    
+            while(idx < length) {
+                return = ((return <. 5) + return) + data[idx];
+                idx += 1;
+            }
+    
+            if(return < 0) return = -return;
+        } => return % std::mapSize;
     }
 
     namespace u8string {

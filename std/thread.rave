@@ -1,4 +1,4 @@
-import <std/process>
+import <std/process> <std/map>
 
 @if(__RAVE_OS != "WINDOWS") {
     import <std/pthread>
@@ -17,6 +17,8 @@ import <std/process>
             }
     
             int join => pthread::join(this.id, cast(void**)null);
+
+            int hash => (9437 * cast(int)(this.id)) % std::mapSize;
         }
     }
 };
@@ -43,6 +45,8 @@ import <std/process>
             }
 
             int join => std::thread::__WaitForSingleObject(this.__ptr, -1);
+
+            int hash => (9437 * this.id) % std::mapSize;
         }
     }
 };

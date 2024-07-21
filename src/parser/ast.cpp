@@ -249,7 +249,6 @@ Type* LLVMGen::setByTypeList(std::vector<Type*> list) {
 
 LLVMTypeRef LLVMGen::genType(Type* type, long loc) {
     if(type == nullptr) return LLVMPointerType(LLVMInt8TypeInContext(this->context), 0);
-    //std::cout << "genType " << type->toString() << std::endl;
     if(instanceof<TypeAlias>(type)) return nullptr;
     if(instanceof<TypeBasic>(type)) switch(((TypeBasic*)type)->type) {
         case BasicType::Bool: return LLVMInt1TypeInContext(this->context);
@@ -274,7 +273,7 @@ LLVMTypeRef LLVMGen::genType(Type* type, long loc) {
         //std::cout << "  toReplace" << std::endl;
         //for(auto const& x : generator->toReplace) std::cout << "\t" << x.first << " " << x.second->toString() << std::endl;
         if(this->structures.find(s->name) == this->structures.end()) {
-            if(this->toReplace.find(s->name) != this->toReplace.end()) return this->genType(this->toReplace[s->name],loc);
+            if(this->toReplace.find(s->name) != this->toReplace.end()) return this->genType(this->toReplace[s->name], loc);
             if(s->name.find('<') != std::string::npos) {
                 TypeStruct* sCopy = (TypeStruct*)s->copy();
                 for(int i=0; i<sCopy->types.size(); i++) sCopy->types[i] = this->setByTypeList(getTrueTypeList(sCopy->types[i]));
