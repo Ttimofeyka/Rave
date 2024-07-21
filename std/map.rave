@@ -1,75 +1,79 @@
-// TODO: need to be improved
 import <std/io>
-namespace std {
-    struct map<K, V> {
-        (noOperators) K* keys;
-        (noOperators) V* values;
-        int length;
-        int capacityKeys;
-        int capacityValues;
 
-        std::map<K,V> this {
+namespace std {
+    namespace map {
+        struct Entry {
+            void* key;
+            void* value;
+            std::map::Entry* next;
+        }
+    }
+
+    alias mapSize = 32;
+
+    int hash(void* data, int size) {
+        return = 5381;
+        int idx = 0;
+
+        while(idx < size) {
+            return = ((return <. 5) + return) + data[idx];
+            idx += 1;
+        }
+
+        if(return < 0) return = -return;
+    } => return % std::mapSize;
+
+    struct map<K, V> {
+        std::map::Entry** table;
+        int length;
+
+        std::map<K, V> this {
             std::map<K, V> this;
-            this.keys = cast(K*)std::malloc(sizeof(K));
-            this.values = cast(V*)std::malloc(sizeof(V));
             this.length = 0;
-            this.capacityKeys = sizeof(K);
-            this.capacityValues = sizeof(V);
+            this.table = cast(std::map::Entry**)std::malloc(sizeof(std::map::Entry*) * std::mapSize);
+            for(int i=0; i<std::mapSize; i++) this.table[i] = null;
         } => this;
 
-        void add(K key, V value) {
-            this.keys[this.length] = key;
-            this.values[this.length] = value;
-            this.length += 1;
-            if(((this.length * sizeof(K)) >= this.capacityKeys) || ((this.length * sizeof(V)) >= this.capacityValues)) {
-                this.keys = cast(K*)std::realloc(cast(void*)this.keys, this.capacityKeys, this.capacityKeys * 2);
-                this.values = cast(V*)std::realloc(cast(void*)this.values, this.capacityValues, this.capacityValues * 2);
-                this.capacityKeys = this.capacityKeys * 2;
-                this.capacityValues = this.capacityValues * 2;
+        void set(K key, V value) {
+            uint index = std::hash(cast(void*)&key, sizeof(K));
+
+            std::map::Entry* entry = table[index];
+            bool setted = false;
+            while(entry != null) {
+                if(key == cast(K)(entry.key)) {
+                    entry.value = cast(void*)value;
+                    setted = true;
+                    break;
+                }
+                entry = entry.next;
+            }
+
+            if(!setted) {
+                table[index] = cast(std::map::Entry*)std::malloc(sizeof(std::map::Entry));
+                table[index].key = cast(void*)key;
+                table[index].value = cast(void*)value;
             }
         }
 
         V get(K key) {
-            return = null;
-            for(int i=0; i<this.length; i++) {
-                if(this.keys[i] == key) {
-                    return = this.values[i];
+            return = cast(V)null;
+            uint index = std::hash(cast(void*)&key, sizeof(K));
+
+            std::map::Entry* entry = table[index];
+
+            while(entry != null) {
+                if((cast(K)(entry.key)) == key) {
+                    return = (cast(V)(entry.value));
                     break;
                 }
-            }
-        }
-
-        int getIndex(K key) {
-            return = -1;
-            for(int i=0; i<this.length; i++) {
-                if(this.keys[i] == key) {
-                    return = i;
-                    break;
-                }
-            }
-        }
-
-        (inline) bool has(K key) => (this.getIndex(key) != -1);
-
-        void remove(K key) {
-            int index = this.getIndex(key);
-            if(index != -1) {
-                for(int i=index; i<this.length; i+=1) {
-                    if((i+1) < this.length) {
-                        this.keys[i] = this.keys[i+1];
-                        this.values[i] = this.values[i+1];
-                    }
-                }
-                this.length = this.length - 1;
+                else entry = entry.next;
             }
         }
 
         void ~this {
-            if((this.keys != null) && (this.values != null)) {
-                std::free(cast(void*)this.keys);
-                std::free(cast(void*)this.values);
-                this.keys = null;
-                this.values = null;
+            if(this.table != null) {
+                std::free(cast(void*)(this.table));
+                this.table = null;
             }
         }
     }

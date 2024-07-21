@@ -2,5 +2,7 @@ import <std/io> <std/map>
 
 void main {
     std::map<int, int> m = std::map<int, int>();
-    
+    m.set(100, 500);
+    std::println(m.get(100));
+    ~m;
 }
