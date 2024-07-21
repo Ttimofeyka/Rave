@@ -72,6 +72,9 @@ namespace std {
 
         void ~this {
             if(this.table != null) {
+                for(int i=0; i<std::mapSize; i++) {
+                    if(this.table[i] != null) std::free(cast(void*)(this.table[i]));
+                }
                 std::free(cast(void*)(this.table));
                 this.table = null;
             }
