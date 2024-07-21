@@ -15,21 +15,6 @@ namespace std {
     } => newptr;
 
     (inline) void* calloc(int num, int size) => std::malloc(num * size);
-
-    char[1024] __space;
-    int __spaceIdx = 0;
-
-    (nochecks) void* alloc(int size) {
-        if((ptoi(&std::__space) + 1024 - std::__spaceIdx) >= size) {
-            std::__spaceIdx += size;
-            return = itop(char*, ptoi(&std::__space) + std::__spaceIdx - size);
-        }
-        else return = null;
-    }
-
-    (nochecks) void afree(void* ptr) {
-        if((ptoi(ptr) >= ptoi(&std::__space)) && (ptoi(ptr) < (ptoi(&std::__space) + 1024))) std::__spaceIdx = ptoi(ptr) - ptoi(&std::__space);
-    }
 }
 
 namespace std {

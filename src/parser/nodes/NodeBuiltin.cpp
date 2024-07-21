@@ -531,6 +531,16 @@ LLVMValueRef NodeBuiltin::generate() {
         if(LLVM::isPointer(vector2)) vector2 = LLVM::load(vector2, "NodeBuiltin_f4Mul_load_v2");
         return LLVMBuildFMul(generator->builder, vector1, vector2, "NodeBuiltin_f4Mul_fmul");
     }
+    else if(this->name == "alloca") {
+        BigInt size = asNumber(0);
+        return (
+            new NodeCast(
+                new TypePointer(new TypeBasic(BasicType::Char)),
+                new NodeDone(LLVMBuildAlloca(generator->builder, LLVMArrayType(LLVMInt8TypeInContext(generator->context), size.to_int()), "NodeBuiltin_alloca")),
+                this->loc
+            )
+        )->generate();
+    }
     generator->error("builtin with the name '" + this->name + "' does not exist!", this->loc);
     return nullptr;
 }
