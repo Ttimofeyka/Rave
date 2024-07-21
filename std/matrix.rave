@@ -60,7 +60,7 @@ namespace std {
 
         int hash {
             return = 1295;
-            for(int i=0; i<(this.rows * this.columns); i++) return = ((return <. 5) + return) + this.data[idx];
+            for(int i=0; i<(this.rows * this.columns); i++) return = ((return <. 5) + return) + cast(int)(this.data[idx]);
             if(return < 0) return = -return;
         } => return * std::mapSize;
 
