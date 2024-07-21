@@ -367,3 +367,13 @@ Example:
     };
 }
 ```
+
+**@alloca(n)** - Get a pointer to the memory allocated with size n in the stack.
+
+Example:
+
+```d
+void main {
+    void* ptr = @alloca(4);
+}
+```
