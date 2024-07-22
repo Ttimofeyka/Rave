@@ -112,14 +112,8 @@ namespace std {
 
             while(entry != null) {
                 if(key == entry.key) {
-                    if(entry != table[index]) {
-                        entry.key = cast(K)null;
-                        entry.value = cast(V)null;
-                    }
-                    else {
-                        table[index].key = cast(K)null;
-                        table[index].value = cast(V)null;
-                    }
+                    entry.key = cast(K)null;
+                    entry.value = cast(V)null;
                     length -= 1;
                     return = true;
                     break;
