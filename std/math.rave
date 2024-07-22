@@ -465,8 +465,8 @@ namespace std {
         void rmsnorm(std::vector<double> out, std::vector<double> x, std::vector<double> weight) => std::math::rmsnorm(out.data, x.data, weight.data, out.length);
         void rmsnorm(std::vector<float> out, std::vector<float> x, std::vector<float> weight) => std::math::rmsnorm(out.data, x.data, weight.data, out.length);
 
-        double relu(double x) => std::math::max<double>(0.0d, x);
-        float relu(float x) => std::math::max<float>(0.0f, x);
+        double relu(double x) => std::math::max(0.0d, x);
+        float relu(float x) => std::math::max(0.0f, x);
 
         double drelu(double x) {
             if(x >= 0.0) return = 1.0d;

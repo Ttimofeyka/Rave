@@ -1,5 +1,6 @@
-import <std/io> <std/map> <std/math>
+import <std/io> <std/math>
 
 void main {
-    
+    std::println(std::math::max(10d, 11d));
+    std::println(std::math::max(1000l, 1100l));
 }

@@ -180,6 +180,25 @@ LLVMValueRef NodeCall::generate() {
                     for(int i=0; i<params.size(); i++) types.push_back(LLVMTypeOf(params[i]));
                     return LLVM::call(generator->functions[AST::funcTable[idenFunc->name]->generateWithCtargs(types)], params.data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
                 }
+                if(AST::funcTable[idenFunc->name]->templateNames.size() > 0) {
+                    // Template
+                    size_t tnSize = AST::funcTable[idenFunc->name]->templateNames.size();
+                    std::vector<LLVMValueRef> params = this->getParameters(nullptr, false);
+                    std::vector<Type*> types;
+                    std::string all = "<";
+
+                    for(int i=0; i<params.size(); i++) types.push_back(lTypeToType(LLVMTypeOf(params[i])));
+                    while(types.size() > tnSize) types.pop_back();
+    
+                    if(types.size() == tnSize) {
+                        for(int i=0; i<types.size(); i++) all += types[i]->toString() + ",";
+                        all = all.substr(0, all.length() - 1) + ">";
+                        LLVMValueRef fn = AST::funcTable[idenFunc->name]->generateWithTemplate(types, idenFunc->name + all);
+                        if(AST::funcTable.find(idenFunc->name + all) != AST::funcTable.end()) {
+                            return LLVM::call(fn, params.data(), params.size(), instanceof<TypeVoid>(AST::funcTable[idenFunc->name + all]) ? "" : "callFunc");
+                        }
+                    }
+                }
                 if(AST::debugMode) {
                     for(auto const& x : generator->functions) std::cout << "\t" << x.first << std::endl;
                     std::cout << "DEBUG_MODE: undefined function (generator->functions)!" << std::endl;
@@ -262,12 +281,12 @@ LLVMValueRef NodeCall::generate() {
                 sTypes += types[i]->toString()+",";
             }
 
-            idenFunc->name = mainName+"<"+sTypes.substr(0, sTypes.size()-1)+">";
+            idenFunc->name = mainName + "<" + sTypes.substr(0, sTypes.size()-1) + ">";
 
             if(AST::funcTable.find(idenFunc->name.substr(0, idenFunc->name.find('<'))) == AST::funcTable.end()) {
                 // Not working... maybe generate structure?
                 if(AST::structTable.find(idenFunc->name.substr(0, idenFunc->name.find('<'))) != AST::structTable.end()) {
-                    AST::structTable[idenFunc->name.substr(0, idenFunc->name.find('<'))]->genWithTemplate("<"+sTypes.substr(0, sTypes.size()-1)+">", types);
+                    AST::structTable[idenFunc->name.substr(0, idenFunc->name.find('<'))]->genWithTemplate("<" + sTypes.substr(0, sTypes.size()-1) + ">", types);
                 }
             }
             
