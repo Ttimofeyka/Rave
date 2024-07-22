@@ -287,7 +287,7 @@ namespace std {
             }
     
             if(return < 0) return = -return;
-        } => return % std::mapSize;
+        }
 
         //bool operator==(std::u32string one, std::u32string two) => one.compare(two);
         //bool operator==(std::u32string one, uint* two) => one.compare(two);

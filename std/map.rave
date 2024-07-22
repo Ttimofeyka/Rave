@@ -13,8 +13,6 @@ namespace std {
         }
     }
 
-    alias mapSize = 64;
-
     int hash(void* data, int size) {
         return = 5381;
         int idx = 0;
@@ -25,26 +23,36 @@ namespace std {
         }
 
         if(return < 0) return = -return;
-    } => return % std::mapSize;
+    }
 
     struct hashmap<K, V> {
         std::hashmap::Entry<K, V>** table;
         int length;
+        int mapSize;
 
         std::hashmap<K, V> this {
             std::hashmap<K, V> this;
+            this.mapSize = 64;
             this.length = 0;
-            this.table = cast(std::hashmap::Entry<K, V>**)std::malloc(sizeof(std::hashmap::Entry<K, V>*) * std::mapSize);
-            for(int i=0; i<std::mapSize; i++) this.table[i] = null;
+            this.table = cast(std::hashmap::Entry<K, V>**)std::malloc(sizeof(std::hashmap::Entry<K, V>*) * this.mapSize);
+            for(int i=0; i<this.mapSize; i++) this.table[i] = null;
+        } => this;
+
+        std::hashmap<K, V> this(int mapSize) {
+            std::hashmap<K, V> this;
+            this.mapSize = mapSize;
+            this.length = 0;
+            this.table = cast(std::hashmap::Entry<K, V>**)std::malloc(sizeof(std::hashmap::Entry<K, V>*) * mapSize);
+            for(int i=0; i<mapSize; i++) this.table[i] = null;
         } => this;
 
         void set(K key, V value) {
             @if(@hasMethod(K, hash)) {
-                uint index = key.hash();
+                uint index = key.hash() % mapSize;
             };
 
             @if(!@hasMethod(K, hash)) {
-                uint index = std::hash(cast(void*)&key, sizeof(K));
+                uint index = std::hash(cast(void*)&key, sizeof(K)) % mapSize;
             };
 
             std::hashmap::Entry<K, V>* entry = table[index];
@@ -85,11 +93,11 @@ namespace std {
         V get(K key) {
             return = cast(V)null;
             @if(@hasMethod(K, hash)) {
-                uint index = key.hash();
+                uint index = key.hash() % mapSize;
             };
 
             @if(!@hasMethod(K, hash)) {
-                uint index = std::hash(cast(void*)&key, sizeof(K));
+                uint index = std::hash(cast(void*)&key, sizeof(K)) % mapSize;
             };
 
             std::hashmap::Entry<K, V>* entry = table[index];
@@ -106,11 +114,11 @@ namespace std {
         bool remove(K key) {
             return = false;
             @if(@hasMethod(K, hash)) {
-                uint index = key.hash();
+                uint index = key.hash() % mapSize;
             };
 
             @if(!@hasMethod(K, hash)) {
-                uint index = std::hash(cast(void*)&key, sizeof(K));
+                uint index = std::hash(cast(void*)&key, sizeof(K)) % mapSize;
             };
 
             std::hashmap::Entry<K, V>* entry = table[index];
@@ -132,7 +140,7 @@ namespace std {
         }
 
         void clear {
-            for(int i=0; i<std::mapSize; i++) {
+            for(int i=0; i<mapSize; i++) {
                 std::hashmap::Entry<K, V>* entry = table[i];
                 std::hashmap::Entry<K, V>* old = null;
                 while(entry != null) {
@@ -147,7 +155,7 @@ namespace std {
 
         void ~this {
             if(this.table != null) {
-                for(int i=0; i<std::mapSize; i++) {
+                for(int i=0; i<this.mapSize; i++) {
                     std::hashmap::Entry<K, V>* entry = this.table[i];
                     std::hashmap::Entry<K, V>* old = null;
                     while(entry != null) {

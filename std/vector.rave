@@ -155,6 +155,7 @@ namespace std {
             for(int i=0; i<this.length; i++) {
                 return = return * i + 7588 + (return <. 6) + (return >. 2);
             }
-        } => return % std::mapSize;
+            if(return < 0) return = -return;
+        }
     }
 }

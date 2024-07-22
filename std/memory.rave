@@ -80,6 +80,6 @@ namespace std {
             @if(!@hasMethod(P2, hash)) {
                 return *= std::hash(cast(void*)this.second, sizeof(P2));
             };
-        } => return % std::mapSize;
+        }
     }
 }

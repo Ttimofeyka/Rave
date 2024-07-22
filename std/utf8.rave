@@ -349,7 +349,7 @@ namespace std {
             }
     
             if(return < 0) return = -return;
-        } => return % std::mapSize;
+        }
     }
 
     namespace u8string {

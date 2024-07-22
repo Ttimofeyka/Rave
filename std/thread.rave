@@ -24,7 +24,7 @@ import <std/process> <std/map>
     
             int join => pthread::join(this.id, cast(void**)null);
 
-            int hash => (9437 * cast(int)(this.id)) % std::mapSize;
+            int hash => (9437 * cast(int)(this.id));
         }
     }
 };
@@ -52,7 +52,7 @@ import <std/process> <std/map>
 
             int join => std::thread::__WaitForSingleObject(this.__ptr, -1);
 
-            int hash => (9437 * this.id) % std::mapSize;
+            int hash => (9437 * this.id);
         }
     }
 };
