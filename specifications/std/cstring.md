@@ -36,5 +36,5 @@ Compare two C-strings with fixed count of comparing characters.
 
 Example:
 ```d
-bool value = std::cstring::strncmp("Alien", "Alt", 1); // True
+bool value = std::cstring::strncmp("Alien", "Alt", 1); // true
 ```
