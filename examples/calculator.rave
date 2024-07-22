@@ -15,8 +15,8 @@ void main {
         std::input(&second);
 
         std::println("op: ");
-        std::input(&op); // for space, enter, etc.
         std::input(&op);
+        std::input(&op); // for space, enter, etc.
 
         if(op != '+' && op != '-' && op != '*' && op != '/') {
             std::println("Undefined op!");
