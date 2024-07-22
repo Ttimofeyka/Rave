@@ -400,7 +400,7 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
             if(this->peek()->type != TokType::Semicolon) this->error("expected token ';'!");
             this->next();
         }
-        return new NodeVar(name, n, isExtern, instanceof<TypeConst>(type), (s==""), mods, loc, type, isVolatile);
+        return new NodeVar(name, n, isExtern, instanceof<TypeConst>(type), ( s== ""), mods, loc, type, isVolatile);
     }
     NodeBlock* _b = this->parseBlock(name);
     return new NodeFunc(name, {}, _b, isExtern, mods, loc, type, templates);
@@ -588,7 +588,7 @@ Node* Parser::parseAtom(std::string f) {
         else if(this->peek()->type == TokType::Less) {
             if(this->tokens[this->idx+1]->type == TokType::More || isBasicType(this->tokens[this->idx+1]->value) || this->tokens[this->idx+2]->type == TokType::Less || this->tokens[this->idx+2]->type == TokType::More || this->tokens[this->idx+2]->type == TokType::Comma || this->tokens[this->idx+2]->type == TokType::Multiply || this->tokens[this->idx+2]->type == TokType::Rarr) {
                 this->next();
-                std::string all = t->value+"<";
+                std::string all = t->value + "<";
                 int countOfL = 0;
                 while(countOfL != -1) {
                     all += this->peek()->value;
@@ -976,9 +976,11 @@ std::vector<Node*> Parser::parseIndexes() {
     return buffer;
 }
 
-Node* Parser::parseCall(Node* func) {return new NodeCall(this->peek()->line, func, this->parseFuncCallArgs());}
+Node* Parser::parseCall(Node* func) {
+    return new NodeCall(this->peek()->line, func, this->parseFuncCallArgs());
+}
 
-Node* Parser::parseBasic(std::string f) {return this->parseSuffix(this->parsePrefix(f),f);}
+Node* Parser::parseBasic(std::string f) {return this->parseSuffix(this->parsePrefix(f), f);}
 
 Node* Parser::parseExpr(std::string f) {
     std::vector<Token*> operatorStack;

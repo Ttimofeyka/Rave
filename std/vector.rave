@@ -1,47 +1,47 @@
 import <std/memory> <std/map>
 
 namespace std {
-    (data: "data", length: "length") struct vector<T> {
-        (noOperators) T* data;
+    (data: "data", length: "length") struct vector<VECTOR_T> {
+        (noOperators) VECTOR_T* data;
         int capacity;
         int length;
 
-        (arrayable) std::vector<T> this {
-            std::vector<T> this;
-            this.data = cast(T*)std::malloc(sizeof(T));
-            this.capacity = sizeof(T);
+        (arrayable) std::vector<VECTOR_T> this {
+            std::vector<VECTOR_T> this;
+            this.data = cast(VECTOR_T*)std::malloc(sizeof(VECTOR_T));
+            this.capacity = sizeof(VECTOR_T);
             this.length = 0;
         } => this;
 
-        std::vector<T> this(int size) {
-            std::vector<T> this;
-            this.data = cast(T*)std::malloc(sizeof(T) * size);
-            this.capacity = sizeof(T) * size;
+        std::vector<VECTOR_T> this(int size) {
+            std::vector<VECTOR_T> this;
+            this.data = cast(VECTOR_T*)std::malloc(sizeof(VECTOR_T) * size);
+            this.capacity = sizeof(VECTOR_T) * size;
             this.length = size;
         } => this;
 
-        std::vector<T> this(T* data, int size) {
-            std::vector<T> this;
-            this.data = cast(T*)std::malloc(sizeof(T) * size);
-            this.capacity = sizeof(T) * size;
+        std::vector<VECTOR_T> this(VECTOR_T* data, int size) {
+            std::vector<VECTOR_T> this;
+            this.data = cast(VECTOR_T*)std::malloc(sizeof(VECTOR_T) * size);
+            this.capacity = sizeof(VECTOR_T) * size;
             this.length = size;
-            std::memcpy(cast(char*)this.data, cast(char*)data, size * sizeof(T));
+            std::memcpy(cast(char*)this.data, cast(char*)data, size * sizeof(VECTOR_T));
         } => this;
 
-        void add(T value) {
-            if((this.length * sizeof(T)) == this.capacity) {
-                this.data = cast(T*)std::realloc(cast(void*)this.data, this.capacity, this.capacity * 2);
+        void add(VECTOR_T value) {
+            if((this.length * sizeof(VECTOR_T)) == this.capacity) {
+                this.data = cast(VECTOR_T*)std::realloc(cast(void*)this.data, this.capacity, this.capacity * 2);
                 this.capacity = this.capacity * 2;
             }
             this.data[this.length] = value;
             this.length = this.length + 1;
         }
 
-        (inline) void assign(std::vector<T> of) {
+        (inline) void assign(std::vector<VECTOR_T> of) {
             for(int i=0; i<of.length; i+=1) {this.add(of.data[i]);}
         }
 
-        (inline) void set(int index, T value) {
+        (inline) void set(int index, VECTOR_T value) {
             @if(__RAVE_RUNTIME_CHECKS) {
                 if((index >= 0) && (index < this.length)) this.data[index] = value;
             };
@@ -55,16 +55,16 @@ namespace std {
             for(int i=0; i<this.length; i++) this.data[i] = null;
         }
 
-        std::vector<T> copy {
-            std::vector<T> buffer;
-            buffer.data = cast(T*)std::malloc(sizeof(std::vector<T>));
+        std::vector<VECTOR_T> copy {
+            std::vector<VECTOR_T> buffer;
+            buffer.data = cast(VECTOR_T*)std::malloc(sizeof(std::vector<VECTOR_T>));
             buffer.capacity = this.capacity;
             buffer.length = this.length;
 
             for(int i=0; i<this.length; i+=1) buffer.set(i, this.data[i]);
         } => buffer;
 
-        (inline) T operator[](std::vector<T>* v, int index) {
+        (inline) VECTOR_T operator[](std::vector<VECTOR_T>* v, int index) {
             @if(__RAVE_RUNTIME_CHECKS) {
                 if((index >= 0) && (index < v.length)) return = v.data[index];
             };
@@ -74,7 +74,7 @@ namespace std {
             };
         }
 
-        (inline) void operator[]=(std::vector<T>* v, int index, T value) {
+        (inline) void operator[]=(std::vector<VECTOR_T>* v, int index, VECTOR_T value) {
             @if(__RAVE_RUNTIME_CHECKS) {
                 if((index >= 0) && (index < v.length)) v.data[index] = value;
             };
@@ -87,21 +87,21 @@ namespace std {
         (inline) void swap(int first, int second) {
             @if(__RAVE_RUNTIME_CHECKS) {
                 if(((first >= 0) && (first < this.length)) && ((second >= 0) && (second < this.length))) {
-                    (noOperators) T temp = this.data[first];
+                    (noOperators) VECTOR_T temp = this.data[first];
                     this.data[first] = this.data[second];
                     this.data[second] = temp;
                 }
             };
 
             @if(!(__RAVE_RUNTIME_CHECKS)) {
-                (noOperators) T temp = this.data[first];
+                (noOperators) VECTOR_T temp = this.data[first];
                 this.data[first] = this.data[second];
                 this.data[second] = temp;
             };
         }
 
-        std::vector<T> operator+(std::vector<T> one, std::vector<T> two) {
-            std::vector<T> cp = one.copy();
+        std::vector<VECTOR_T> operator+(std::vector<VECTOR_T> one, std::vector<VECTOR_T> two) {
+            std::vector<VECTOR_T> cp = one.copy();
             cp.assign(two);
         } => cp;
 
@@ -140,7 +140,7 @@ namespace std {
             }
         }
 
-        void transform(T(T) fn) {
+        void transform(VECTOR_T(VECTOR_T) fn) {
             for(int i=0; i<this.length; i++) this.data[i] = fn(this.data[i]);
         }
 

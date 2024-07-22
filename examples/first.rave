@@ -1,5 +1,5 @@
-import <std/io> <std/map>
+import <std/io> <std/map> <std/math>
 
 void main {
-    void* ptr = @alloca(100);
+    
 }

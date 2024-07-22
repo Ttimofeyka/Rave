@@ -21,6 +21,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeFor.hpp"
 #include "../../include/parser/nodes/NodeNull.hpp"
 #include "../../include/parser/nodes/NodeDone.hpp"
+#include "../../include/parser/nodes/NodeBool.hpp"
 #include <llvm-c/Comdat.h>
 #include <llvm-c/Analysis.h>
 #include "../../include/compiler.hpp"
@@ -91,8 +92,14 @@ void NodeFunc::check() {
         if(AST::funcTable.find(this->name) != AST::funcTable.end()) {
             std::string toAdd = typesToString(args);
             if(typesToString(AST::funcTable[name]->args) == toAdd) {
-                AST::checkError("a function with '"+this->name+"' name already exists on "+std::to_string(AST::funcTable[this->name]->loc)+" line!", this->loc);
-                return;
+                if(this->isCtargs || this->isCtargsPart) {
+                    this->noCompile = true;
+                    return;
+                }
+                else {
+                    AST::checkError("a function with '" + this->name + "' name already exists on " + std::to_string(AST::funcTable[this->name]->loc) + " line!", this->loc);
+                    return;
+                }
             }
             this->name += toAdd;
         }
@@ -199,8 +206,9 @@ LLVMValueRef NodeFunc::generate() {
     }
 
     for(const auto &data : builtins) {
-        if(data.second->generate() != LLVMConstInt(LLVMInt1TypeInContext(generator->context), 1, false)) {
-            generator->error("The '"+data.first+"' builtin failed when generating the function '"+this->name+"'!", this->loc);
+        Node* result = data.second->comptime();
+        if(result == nullptr || (instanceof<NodeBool>(result) && ((NodeBool*)result)->value)) {
+            generator->error("The '" + data.first+  "' builtin failed when generating the function '" + this->name + "'!", this->loc);
             return nullptr;
         }
     }

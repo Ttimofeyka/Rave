@@ -32,7 +32,8 @@ NodeCall::NodeCall(long loc, Node* func, std::vector<Node*> args) {
 
 Type* NodeCall::getType() {
     if(instanceof<NodeIden>(this->func)) {
-        if(AST::funcTable.find((((NodeIden*)this->func)->name+typesToString(this->getTypes()))) != AST::funcTable.end()) return AST::funcTable[(((NodeIden*)this->func)->name+typesToString(this->getTypes()))]->getType();
+        if(AST::funcTable.find((((NodeIden*)this->func)->name + typesToString(this->getTypes()))) != AST::funcTable.end()) return AST::funcTable[(((NodeIden*)this->func)->name+typesToString(this->getTypes()))]->getType();
+        else if(!currScope->has(((NodeIden*)this->func)->name)) return new TypeVoid(); // TODO: Maybe rework?
     }
     return this->func->getType();
 }
@@ -172,7 +173,7 @@ LLVMValueRef NodeCall::generate() {
                 // Function with compile-time args (ctargs)
                 if(AST::funcTable[idenFunc->name]->isCtargs) {
                     if(generator->functions.find(idenFunc->name + sTypes) != generator->functions.end()) {
-                        return LLVM::call(generator->functions[idenFunc->name+sTypes], this->getParameters(nullptr, false).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
+                        return LLVM::call(generator->functions[idenFunc->name + sTypes], this->getParameters(nullptr, false).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
                     }
                     std::vector<LLVMValueRef> params = this->getParameters(nullptr, false);
                     std::vector<LLVMTypeRef> types;
@@ -183,7 +184,7 @@ LLVMValueRef NodeCall::generate() {
                     for(auto const& x : generator->functions) std::cout << "\t" << x.first << std::endl;
                     std::cout << "DEBUG_MODE: undefined function (generator->functions)!" << std::endl;
                 }
-                generator->error("undefined function '"+idenFunc->name+"'!", this->loc);
+                generator->error("undefined function '" + idenFunc->name + "'!", this->loc);
                 return nullptr;
             }
             if(AST::funcTable.find(idenFunc->name + sTypes) != AST::funcTable.end()) {
@@ -191,7 +192,7 @@ LLVMValueRef NodeCall::generate() {
                 return LLVM::call(generator->functions[idenFunc->name + sTypes], this->getParameters(AST::funcTable[idenFunc->name + sTypes], false, AST::funcTable[idenFunc->name + sTypes]->args).data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name + sTypes]->type) ? "" : "callFunc"));
             }
             else if(AST::funcTable[idenFunc->name]->isArrayable && this->args.size() > 0) {
-                // Arrayble - accepts pointer and length instead of array
+                // Arrayable - accepts pointer and length instead of array
                 std::vector<Node*> newArgs;
                 bool isChanged = false;
                 for(int i=0; i<this->args.size(); i++) {
@@ -219,7 +220,7 @@ LLVMValueRef NodeCall::generate() {
         }
         if(currScope->has(idenFunc->name)) {
             if(!instanceof<TypeFunc>(currScope->getVar(idenFunc->name, this->loc)->type)) {
-                generator->error("undefined function '"+idenFunc->name+"'!", this->loc);
+                generator->error("undefined function '" + idenFunc->name + "'!", this->loc);
                 return nullptr;
             }
             TypeFunc* fn = (TypeFunc*)currScope->getVar(idenFunc->name, this->loc)->type;
@@ -278,7 +279,7 @@ LLVMValueRef NodeCall::generate() {
             for(auto const& x : AST::funcTable) std::cout << "\t" << x.first << std::endl;
             std::cout << "DEBUG_MODE 2: undefined function!" << std::endl;
         }
-        generator->error("undefined function '"+idenFunc->name+"'!", this->loc);
+        generator->error("undefined function '" + idenFunc->name + "'!", this->loc);
         return nullptr;
     }
     if(instanceof<NodeGet>(this->func)) {
