@@ -1,5 +1,7 @@
 # std/random.rave
 
+All the functions below also have their equivalents, in which you can specify the boundaries of the generated number - specify the lower boundary in the first argument and the upper one in the second argument.
+
 ## std::randomChar
 
 Returns a random char number.

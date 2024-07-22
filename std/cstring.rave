@@ -40,8 +40,8 @@ namespace std {
             char* _s2 = s2;
             return = false;
             while((_s1[0] != '\0') && (_s1[0] == _s2[0])) {
-                _s1 = itop(char*, ptoi(_s1)+1);
-                _s2 = itop(char*, ptoi(_s2)+1);
+                _s1 = itop(char*, ptoi(_s1) + 1);
+                _s2 = itop(char*, ptoi(_s2) + 1);
             }
             if(_s1[0] == _s2[0]) return = true;
         }

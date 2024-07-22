@@ -31,10 +31,9 @@ source/old.ast.d
 *.o
 *.be
 bin
-./first
-./second
-first
-second
+./examples/*
+./examples/math/*
+./examples/time/*
 a
 ./a
 
