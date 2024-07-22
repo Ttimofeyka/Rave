@@ -7,7 +7,7 @@ namespace std {
         }
     }
 
-    alias mapSize = 32;
+    alias mapSize = 64;
 
     int hash(void* data, int size) {
         return = 5381;
@@ -53,9 +53,26 @@ namespace std {
             }
 
             if(!setted) {
-                table[index] = cast(std::map::Entry<K, V>*)std::malloc(sizeof(std::map::Entry<K, V>));
-                table[index].key = key;
-                table[index].value = value;
+                if(table[index] == null) {
+                    table[index] = cast(std::map::Entry<K, V>*)std::malloc(sizeof(std::map::Entry<K, V>));
+                    table[index].key = key;
+                    table[index].value = value;
+                    table[index].next = null;
+                }
+                else {
+                    std::map::Entry<K, V>* previous = null;
+                    entry = table[index];
+                    while(entry != null) {
+                        previous = entry;
+                        entry = entry.next;
+                    }
+                    entry = cast(std::map::Entry<K, V>*)std::malloc(sizeof(std::map::Entry<K, V>));
+                    entry.key = key;
+                    entry.value = value;
+                    entry.next = null;
+                    previous.next = entry;
+                }
+                length += 1;
             }
         }
 
@@ -72,20 +89,71 @@ namespace std {
             std::map::Entry<K, V>* entry = table[index];
 
             while(entry != null) {
-                std::println(key);
-                K key2 = (cast(K)entry.key);
-                if(key == key2) {
-                    return = (cast(V)(entry.value));
+                if(key == entry.key) {
+                    return = entry.value;
                     break;
                 }
                 else entry = entry.next;
             }
         }
 
+        bool remove(K key) {
+            return = false;
+            @if(@hasMethod(K, hash)) {
+                uint index = key.hash();
+            };
+
+            @if(!@hasMethod(K, hash)) {
+                uint index = std::hash(cast(void*)&key, sizeof(K));
+            };
+
+            std::map::Entry<K, V>* entry = table[index];
+            std::map::Entry<K, V>* prev = null;
+
+            while(entry != null) {
+                if(key == entry.key) {
+                    if(entry != table[index]) {
+                        entry.key = cast(K)null;
+                        entry.value = cast(V)null;
+                    }
+                    else {
+                        table[index].key = cast(K)null;
+                        table[index].value = cast(V)null;
+                    }
+                    length -= 1;
+                    return = true;
+                    break;
+                }
+                else {
+                    prev = entry;
+                    entry = entry.next;
+                }
+            }
+        }
+
+        void clear {
+            for(int i=0; i<std::mapSize; i++) {
+                std::map::Entry<K, V>* entry = table[i];
+                std::map::Entry<K, V>* old = null;
+                while(entry != null) {
+                    old = entry;
+                    entry = entry.next;
+                    std::free(cast(void*)old);
+                }
+            }
+            length = 0;
+        }
+
         void ~this {
             if(this.table != null) {
                 for(int i=0; i<std::mapSize; i++) {
-                    if(this.table[i] != null) std::free(cast(void*)(this.table[i]));
+                    std::map::Entry<K, V>* entry = this.table[i];
+                    std::map::Entry<K, V>* old = null;
+                    while(entry != null) {
+                        old = entry;
+                        entry = entry.next;
+                        std::free(cast(void*)old);
+                    }
                 }
                 std::free(cast(void*)(this.table));
                 this.table = null;

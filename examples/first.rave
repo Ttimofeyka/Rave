@@ -1,6 +1,6 @@
-import <std/io> <std/math>
+import <std/io> <std/map>
 
 void main {
-    std::println(std::math::max(10d, 11d));
-    std::println(std::math::max(1000l, 1100l));
+    auto m = std::map<int, int>();
+    ~m;
 }
