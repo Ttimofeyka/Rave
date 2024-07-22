@@ -16,7 +16,8 @@ struct A {
     int a;
     int b;
     
-    A this(int f, int s) { // Constructor
+    // Constructor
+    A this(int f, int s) {
         /*
         Control over memory allocation is entirely in the hands of the author of the structure.
         In our case, memory is allocated on the stack.
@@ -26,7 +27,8 @@ struct A {
         this.b = s;
     } => this; // We have to return the value from the constructor, as in all other functions.
     
-    void ~this { // Destructor
+    // Destructor
+    void ~this {
         /*
         The destructor must be of type void and have no arguments. This won't be an error, but the compiler will automatically remove all arguments if there are any.
 
@@ -37,7 +39,7 @@ struct A {
     }
 
     void printAll {
-        std::println(this.a,this.b);
+        std::println(this.a, this.b);
     }
 
     void operator=(A* pointer, int[2] values) {

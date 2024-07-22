@@ -9,18 +9,18 @@ Also, if the entire block of the function is the return of a value, you can use 
 Examples:
 
 ```d
-int sum(int a, int b) => a+b;
+int sum(int a, int b) => a + b;
 
 int main {
-    return = sum(1,1);
+    return = sum(1, 1);
 }
 ```
 
 Overloading of functions is possible - it is similar to the variant in C++:
 
 ```d
-int sum(int a, int b) => a+b;
-float sum(float a, float b) => a+b;
+int sum(int a, int b) => a + b;
+float sum(float a, float b) => a + b;
 ```
 
 ## Parameters

@@ -8,12 +8,12 @@ import <std/vector>
 
 namespace std {
     namespace math {
-        alias PI = 3.14159265358979323846;
+        alias PI = 3.14159265358979323846d;
         alias PI_f = 3.141592653589793f;
         alias INFINITY = (1.0) / (0.0);
         alias NAN = (0.0) / (0.0);
 
-        (inline) double degToRad(double d) => (d * std::math::PI / 180);
+        (inline) double degToRad(double d) => (d * std::math::PI / 180d);
         (inline) float degToRad(float d) => (d * std::math::PI_f / 180f);
 
         (inline) double radToDeg(double r) => (r * 180 / std::math::PI);

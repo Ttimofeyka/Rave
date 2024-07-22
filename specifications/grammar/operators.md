@@ -33,20 +33,6 @@ int main {
 } => 0;
 ```
 
-## Getting a value by pointer
-
-The * operator (placed before the identifier) allows you to get the first element of the pointer in a shorter form.
-
-Examples:
-```d
-int getValByPtr(int* a) => *a;
-
-int main {
-    int a = 123;
-    int* b = &a;
-} => getValByPtr(b);
-```
-
 ## Comparison operators
 
 Everything is exactly like in C-like programming languages.
