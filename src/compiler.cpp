@@ -90,8 +90,8 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
     }
     else Compiler::features = std::string(LLVMGetHostCPUFeatures());
     
-    if(access((exePath+"options.json").c_str(), 0) == 0) {
-        std::ifstream fOptions(exePath+"options.json");
+    if(access((exePath + "options.json").c_str(), 0) == 0) {
+        std::ifstream fOptions(exePath + "options.json");
         Compiler::options = nlohmann::json::parse(fOptions);
         if(fOptions.is_open()) fOptions.close();
     }
@@ -270,7 +270,7 @@ void Compiler::compile(std::string file) {
     LLVMTargetRef target;
     char* triple = LLVMNormalizeTargetTriple(Compiler::outType.c_str());
     if(errors != nullptr) {
-        Compiler::error("normalize target triple: "+std::string(errors));
+        Compiler::error("normalize target triple: " + std::string(errors));
         std::exit(1);
     }
     else LLVMDisposeErrorMessage(errors);
@@ -278,7 +278,7 @@ void Compiler::compile(std::string file) {
 
     LLVMGetTargetFromTriple(triple, &target, &errors);
     if(errors != nullptr) {
-        Compiler::error("target from triple: "+std::string(errors));
+        Compiler::error("target from triple: " + std::string(errors));
         std::exit(1);
     }
     else LLVMDisposeErrorMessage(errors);
@@ -350,7 +350,7 @@ void Compiler::compile(std::string file) {
 
     LLVMTargetMachineEmitToFile(machine, generator->lModule, (std::regex_replace(file, std::regex("\\.rave"), ".o")).c_str(), LLVMObjectFile, &errors);
     if(errors != nullptr) {
-        Compiler::error("target machine emit to file: "+std::string(errors));
+        Compiler::error("target machine emit to file: " + std::string(errors));
         std::exit(1);
     }
     end = std::chrono::system_clock::now();
@@ -368,7 +368,7 @@ void Compiler::compileAll() {
     std::vector<std::string> toRemove;
     for(int i=0; i<Compiler::files.size(); i++) {
         if(access(Compiler::files[i].c_str(), 0) != 0) {
-            Compiler::error("file '"+Compiler::files[i]+"' does not exists!");
+            Compiler::error("file '" + Compiler::files[i] + "' does not exists!");
             return;
         }
         if(Compiler::files[i].size() > 2
@@ -397,7 +397,7 @@ void Compiler::compileAll() {
     }
     for(int i=0; i<Compiler::toImport.size(); i++) {
         if(access(Compiler::toImport[i].c_str(), 0) != 0) {
-            Compiler::error("file '"+Compiler::files[i]+"' does not exists!");
+            Compiler::error("file '" + Compiler::files[i] + "' does not exists!");
             return;
         }
         if(Compiler::files[i].size() > 2 &&

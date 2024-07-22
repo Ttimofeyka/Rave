@@ -26,12 +26,12 @@ Type* NodeGet::getType() {
     Type* _t = this->base->getType();
     TypeStruct* ts;
     if(!instanceof<TypeStruct>(_t)) {
-        if(!instanceof<TypePointer>(_t)) generator->error("Structure '"+_t->toString()+"' doesn't exist! (getType)", loc);
+        if(!instanceof<TypePointer>(_t)) generator->error("Structure '" + _t->toString() + "' doesn't exist! (getType)", loc);
         ts = (TypeStruct*)(((TypePointer*)_t)->instance);
     }
     else ts = (TypeStruct*)_t;
 
-    if(ts == nullptr) generator->error("Type '"+_t->toString()+"' is not a structure!",loc);
+    if(ts == nullptr) generator->error("Type '" + _t->toString() + "' is not a structure!", loc);
 
     if(generator->toReplace.find(ts->name) != generator->toReplace.end()) {
         while(generator->toReplace.find(ts->name) != generator->toReplace.end()) ts = (TypeStruct*)(generator->toReplace[ts->toString()]);
@@ -46,7 +46,7 @@ Type* NodeGet::getType() {
         if(x.first.find('<') != std::string::npos) return generator->toReplace[x.first];
     }
 
-    generator->error("Structure '"+ts->name+"' doesn't contain element '"+field+"'!", loc);
+    generator->error("Structure '" + ts->name + "' doesn't contain element '" + field + "'!", loc);
     return nullptr;
 }
 
@@ -66,30 +66,17 @@ LLVMValueRef NodeGet::checkStructure(LLVMValueRef ptr) {
 
 LLVMValueRef NodeGet::checkIn(std::string structure) {
     if(AST::structTable.find(structure) == AST::structTable.end()) {
-        generator->error("Structure '"+structure+"' doesn't exist!", loc);
+        generator->error("Structure '" + structure + "' doesn't exist!", loc);
         return nullptr;
     }
     auto member = std::pair<std::string, std::string>(structure,this->field);
     if(AST::structsNumbers.find(member) == AST::structsNumbers.end()) {
         if(AST::methodTable.find(member) != AST::methodTable.end()) return generator->functions[AST::methodTable[member]->name];
-        generator->error("Structure '"+structure+"' doesn't contain element '"+this->field+"'!", loc);
+        generator->error("Structure '" + structure + "' doesn't contain element '" + this->field + "'!", loc);
         return nullptr;
     }
     if(instanceof<TypeConst>(AST::structsNumbers[member].var->type)) elementIsConst = true;
     return nullptr;
-}
-
-void NodeGet::checkIsNull(LLVMValueRef ptr) {
-    /*if(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMPointerTypeKind && Generator.opts.runtimeChecks && !FuncTable[currScope.func].isNoChecks) {
-        LLVMValueRef isNull = LLVMBuildICmp(
-            Generator.Builder,
-            LLVMIntNE,
-            LLVMBuildPtrToInt(Generator.Builder,ptr,LLVMInt32TypeInContext(Generator.Context),toStringz("ptoi_")),
-            LLVMBuildPtrToInt(Generator.Builder,new NodeNull().generate(),LLVMInt32TypeInContext(Generator.Context),toStringz("ptoi_")),
-            toStringz("assert(p==null)_")
-        );
-        LLVMBuildCall(Generator.Builder,Generator.Functions[NeededFunctions["assert"]],[isNull,new NodeString("Runtime error in '"~Generator.file~"' file on "~to!string(loc)~" line: attempt to get an element from a null pointer to a structure!\n",false).generate()].ptr,2,toStringz(""));
-    }*/
 }
 
 LLVMValueRef NodeGet::generate() {
@@ -152,7 +139,7 @@ LLVMValueRef NodeGet::generate() {
             "NodeGet_generate_Index_preload"
         ), "NodeGet_generate_Index_load");
     }
-    generator->error("assert into NodeGet ("+std::string(typeid(this->base[0]).name())+")", this->loc);
+    generator->error("assert into NodeGet (" + std::string(typeid(this->base[0]).name()) + ")", this->loc);
     return nullptr;
 }
 

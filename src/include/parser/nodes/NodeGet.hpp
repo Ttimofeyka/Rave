@@ -20,7 +20,6 @@ public:
 
     NodeGet(Node* base, std::string field, bool isMustBePtr, long loc);
     LLVMValueRef checkStructure(LLVMValueRef ptr);
-    void checkIsNull(LLVMValueRef ptr);
     LLVMValueRef checkIn(std::string structure);
     LLVMValueRef generate() override;
     Type* getType() override;

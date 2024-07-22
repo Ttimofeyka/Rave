@@ -1,3 +1,9 @@
+/*
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+
 import <std/vector>
 
 namespace std {
@@ -90,7 +96,7 @@ namespace std {
         }
 
         double loge(double x) {
-            if (x <= 0) return = std::math::NAN;
+            if(x <= 0) return = std::math::NAN;
             else {
                 int powAdj = 0;
                 while(x > 1.0) {
@@ -117,7 +123,7 @@ namespace std {
         }
 
         float loge(float x) {
-            if (x <= 0) return = std::math::NAN;
+            if(x <= 0) return = std::math::NAN;
             else {
                 int powAdj = 0;
                 while(x > 1.0) {
@@ -192,9 +198,9 @@ namespace std {
         float asin(float x) => (std::math::PI_f / 2.0f) - std::math::sqrt(1.0f - x) * (1.5707288f + (-0.2121144f) * x + 0.0742610f * (x * x) + (-0.0187293f) * (x * x * x));
 
         double coshn(double d, int n) {
-            double c = 1.0;
-            double f = 1.0;
-            double xp = 1.0;
+            double c = 1.0d;
+            double f = 1.0d;
+            double xp = 1.0d;
             for(int i=1; i<n; i+=1) {
                 f = f * ((2 * i - 1) * (2 * i));
                 xp = xp * (d * d);
@@ -203,9 +209,9 @@ namespace std {
         } => c;
 
         float coshn(float d, int n) {
-            float c = 1.0;
-            float f = 1.0;
-            float xp = 1.0;
+            float c = 1.0f;
+            float f = 1.0f;
+            float xp = 1.0f;
             for(int i=1; i<n; i+=1) {
                 f = f * ((2 * i - 1) * (2 * i));
                 xp = xp * (d * d);

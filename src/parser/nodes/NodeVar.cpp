@@ -33,6 +33,11 @@ NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, boo
     this->type = type;
     this->isVolatile = isVolatile;
     this->isChanged = false;
+
+    if(value != nullptr && instanceof<TypeArray>(type) && ((TypeArray*)type)->count == 0) {
+        // Set the count of array elements to the count of values
+        ((TypeArray*)this->type)->count = ((NodeArray*)this->value)->values.size();
+    }
 }
 
 NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, bool isGlobal, std::vector<DeclarMod> mods, long loc, Type* type, bool isVolatile, bool isChanged, bool noZeroInit) {
@@ -53,6 +58,11 @@ NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, boo
 
     for(int i=0; i<this->mods.size(); i++) {
         if(this->mods[i].name == "noCopy") this->isNoCopy = true;
+    }
+
+    if(value != nullptr && instanceof<TypeArray>(type) && ((TypeArray*)type)->count == 0) {
+        // Set the count of array elements to the count of values
+        ((TypeArray*)this->type)->count = ((NodeArray*)this->value)->values.size();
     }
 }
 

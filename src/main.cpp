@@ -24,7 +24,7 @@ genSettings analyzeArguments(std::vector<std::string>& arguments) {
         if(arguments[i] == "-o" || arguments[i] == "--out") {outFile = arguments[i+1]; i += 1;}
         else if(arguments[i] == "-np" || arguments[i] == "--noPrelude") settings.noPrelude = true;
         else if(arguments[i] == "-eml" || arguments[i] == "--emitLLVM" || arguments[i] == "-emit-llvm") settings.emitLLVM = true;
-        else if(arguments[i] == "-l" || arguments[i] == "--link") {settings.linkParams += "-l"+arguments[i+1]+" "; i += 1;}
+        else if(arguments[i] == "-l" || arguments[i] == "--link") {settings.linkParams += "-l" + arguments[i+1] + " "; i += 1;}
         else if(arguments[i] == "-rcs" || arguments[i] == "--recompileStd") settings.recompileStd = true;
         else if(arguments[i] == "-c") {settings.onlyObject = true; settings.isStatic = true;}
         else if(arguments[i] == "-ne" || arguments[i] == "--noEntry") settings.noEntry = true;
@@ -40,7 +40,7 @@ genSettings analyzeArguments(std::vector<std::string>& arguments) {
         else if(arguments[i] == "-sof" || arguments[i] == "--saveObjectFiles") settings.saveObjectFiles = true;
         else if(arguments[i] == "-dw" || arguments[i] == "--disableWarnings") settings.disableWarnings = true;
         else if(arguments[i] == "--debug") Compiler::debugMode = true;
-        else if(arguments[i] == "-t" || arguments[i] == "--target") {outType = arguments[i+1]; i += 1;}
+        else if(arguments[i] == "-t" || arguments[i] == "--target") {outType = arguments[i + 1]; i += 1;}
         else if(arguments[i] == "-h" || arguments[i] == "--help") helpCalled = true;
         else if(arguments[i] == "-native") settings.isNative = true;
         else if(arguments[i] == "-noSSE") settings.hasSSE = false;
@@ -78,6 +78,12 @@ int main(int argc, char** argv) {
         + "\n\t--saveObjectfiles (-sof) - Save the object files after compilation."
         + "\n\t--disableWarnings (-dw) - Disables warnings."
         + "\n\t--shared (-s) - Creates a shared output files."
+        + "\n\t-native - Use optimizations from the current platform."
+        + "\n\t-noSSE - Disable SSE."
+        + "\n\t-noSSE2 - Disable SSE2."
+        + "\n\t-noSSE3 - Disable SSE3."
+        + "\n\t-noAVX - Disable AVX."
+        + "\n\t-noFastMath - Disable fast math."
         + "\n\t-c - Do not create an output file (only object files)."
         + "\nFor bug reporting, you can use Issues at https://github.com/Ttimofeyka/Rave.";
         std::cout << help << std::endl;
@@ -92,10 +98,10 @@ int main(int argc, char** argv) {
             for(int i=0; i<stdFiles.size(); i++) {
                 if(stdFiles[i].find(".ll") == std::string::npos && stdFiles[i].find(".rave") != std::string::npos) {
                     std::string compiledFile = std::regex_replace("std/"+stdFiles[i], std::regex("\\.rave"), ".o");
-                    Compiler::compile("std/"+stdFiles[i]);
+                    Compiler::compile("std/" + stdFiles[i]);
                     if(options.emitLLVM) {
                         char* err;
-                        LLVMPrintModuleToFile(generator->lModule, ("std/"+stdFiles[i]+".ll").c_str(), &err);
+                        LLVMPrintModuleToFile(generator->lModule, ("std/" + stdFiles[i] + ".ll").c_str(), &err);
                     }
                     std::ifstream src(compiledFile, std::ios::binary);
                     std::ofstream dst(std::regex_replace(compiledFile, std::regex("\\.o"), std::string(".") + Compiler::outType + ".o"));

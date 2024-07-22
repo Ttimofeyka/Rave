@@ -1,9 +1,15 @@
+/*
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+
 namespace std {
-    namespace map {
+    namespace hashmap {
         struct Entry<KE, VE> {
             KE key;
             VE value;
-            std::map::Entry<KE, VE>* next;
+            std::hashmap::Entry<KE, VE>* next;
         }
     }
 
@@ -21,14 +27,14 @@ namespace std {
         if(return < 0) return = -return;
     } => return % std::mapSize;
 
-    struct map<K, V> {
-        std::map::Entry<K, V>** table;
+    struct hashmap<K, V> {
+        std::hashmap::Entry<K, V>** table;
         int length;
 
-        std::map<K, V> this {
-            std::map<K, V> this;
+        std::hashmap<K, V> this {
+            std::hashmap<K, V> this;
             this.length = 0;
-            this.table = cast(std::map::Entry<K, V>**)std::malloc(sizeof(std::map::Entry<K, V>*) * std::mapSize);
+            this.table = cast(std::hashmap::Entry<K, V>**)std::malloc(sizeof(std::hashmap::Entry<K, V>*) * std::mapSize);
             for(int i=0; i<std::mapSize; i++) this.table[i] = null;
         } => this;
 
@@ -41,7 +47,7 @@ namespace std {
                 uint index = std::hash(cast(void*)&key, sizeof(K));
             };
 
-            std::map::Entry<K, V>* entry = table[index];
+            std::hashmap::Entry<K, V>* entry = table[index];
             bool setted = false;
             while(entry != null) {
                 if(key == entry.key) {
@@ -54,19 +60,19 @@ namespace std {
 
             if(!setted) {
                 if(table[index] == null) {
-                    table[index] = cast(std::map::Entry<K, V>*)std::malloc(sizeof(std::map::Entry<K, V>));
+                    table[index] = cast(std::hashmap::Entry<K, V>*)std::malloc(sizeof(std::hashmap::Entry<K, V>));
                     table[index].key = key;
                     table[index].value = value;
                     table[index].next = null;
                 }
                 else {
-                    std::map::Entry<K, V>* previous = null;
+                    std::hashmap::Entry<K, V>* previous = null;
                     entry = table[index];
                     while(entry != null) {
                         previous = entry;
                         entry = entry.next;
                     }
-                    entry = cast(std::map::Entry<K, V>*)std::malloc(sizeof(std::map::Entry<K, V>));
+                    entry = cast(std::hashmap::Entry<K, V>*)std::malloc(sizeof(std::hashmap::Entry<K, V>));
                     entry.key = key;
                     entry.value = value;
                     entry.next = null;
@@ -86,7 +92,7 @@ namespace std {
                 uint index = std::hash(cast(void*)&key, sizeof(K));
             };
 
-            std::map::Entry<K, V>* entry = table[index];
+            std::hashmap::Entry<K, V>* entry = table[index];
 
             while(entry != null) {
                 if(key == entry.key) {
@@ -107,8 +113,8 @@ namespace std {
                 uint index = std::hash(cast(void*)&key, sizeof(K));
             };
 
-            std::map::Entry<K, V>* entry = table[index];
-            std::map::Entry<K, V>* prev = null;
+            std::hashmap::Entry<K, V>* entry = table[index];
+            std::hashmap::Entry<K, V>* prev = null;
 
             while(entry != null) {
                 if(key == entry.key) {
@@ -127,8 +133,8 @@ namespace std {
 
         void clear {
             for(int i=0; i<std::mapSize; i++) {
-                std::map::Entry<K, V>* entry = table[i];
-                std::map::Entry<K, V>* old = null;
+                std::hashmap::Entry<K, V>* entry = table[i];
+                std::hashmap::Entry<K, V>* old = null;
                 while(entry != null) {
                     old = entry;
                     entry = entry.next;
@@ -142,8 +148,8 @@ namespace std {
         void ~this {
             if(this.table != null) {
                 for(int i=0; i<std::mapSize; i++) {
-                    std::map::Entry<K, V>* entry = this.table[i];
-                    std::map::Entry<K, V>* old = null;
+                    std::hashmap::Entry<K, V>* entry = this.table[i];
+                    std::hashmap::Entry<K, V>* old = null;
                     while(entry != null) {
                         old = entry;
                         entry = entry.next;

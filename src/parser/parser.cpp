@@ -368,13 +368,13 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
         return new NodeFunc(name, args, block, isExtern, mods, loc, type, templates);
     }
     else if(this->peek()->type == TokType::Rbra) {
-        NodeBlock* block = this->parseBlock("__RAVE_PARSER_FUNCTION_"+name);
+        NodeBlock* block = this->parseBlock("__RAVE_PARSER_FUNCTION_" + name);
         if(this->peek()->type == TokType::ShortRet) {
             this->next();
             Node* n = this->parseExpr();
             if(this->peek()->type == TokType::Semicolon) this->next();
             if(instanceof<TypeVoid>(type)) block->nodes.push_back(n);
-            else block->nodes.push_back(new NodeRet(n,name,this->peek()->line));
+            else block->nodes.push_back(new NodeRet(n, name, this->peek()->line));
         }
         return new NodeFunc(name,{},block,isExtern,mods,loc,type,templates);
     }
@@ -386,8 +386,8 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
             this->next();
         }
 
-        if(!instanceof<TypeVoid>(type)) return new NodeFunc(name,{},new NodeBlock({new NodeRet(n,name,loc)}),isExtern,mods,loc,type,templates);
-        return new NodeFunc(name,{},new NodeBlock({n}),isExtern,mods,loc,type,templates);
+        if(!instanceof<TypeVoid>(type)) return new NodeFunc(name, {}, new NodeBlock({new NodeRet(n, name, loc)}), isExtern, mods, loc, type, templates);
+        return new NodeFunc(name, {}, new NodeBlock({n}), isExtern, mods, loc, type, templates);
     }
     else if(this->peek()->type == TokType::Semicolon) {
         this->next();
@@ -400,7 +400,7 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
             if(this->peek()->type != TokType::Semicolon) this->error("expected token ';'!");
             this->next();
         }
-        return new NodeVar(name, n, isExtern, instanceof<TypeConst>(type), ( s== ""), mods, loc, type, isVolatile);
+        return new NodeVar(name, n, isExtern, instanceof<TypeConst>(type), (s == ""), mods, loc, type, isVolatile);
     }
     NodeBlock* _b = this->parseBlock(name);
     return new NodeFunc(name, {}, _b, isExtern, mods, loc, type, templates);
@@ -814,8 +814,10 @@ Type* Parser::parseType(bool cannotBeTemplate) {
             if(this->peek()->type == TokType::Number) cnt = std::stoi(this->peek()->value);
             this->next();
             
-            if(this->peek()->type != TokType::Larr) this->error("expected token ']'!");
-            this->next();
+            if(this->peek()->type != TokType::Larr) {
+                if(this->tokens[this->idx + 1]->type != TokType::Equ) this->error("expected token ']'!");
+            }
+            else this->next();
 
             ty = new TypeArray(cnt, ty);
         }
@@ -947,10 +949,10 @@ Node* Parser::parseSuffix(Node* base, std::string f) {
                     this->next();
                     while(this->peek()->type != TokType::More) {
                         types.push_back(this->parseType());
-                        sTypes += types[types.size()-1]->toString()+",";
+                        sTypes += types[types.size() - 1]->toString() + ",";
                         if(this->peek()->type == TokType::Comma) this->next();
                     }
-                    sTypes = sTypes.substr(0,sTypes.size()-1)+">";
+                    sTypes = sTypes.substr(0, sTypes.size() - 1) + ">";
                     this->next();
                     if(this->peek()->type == TokType::Rpar) base = this->parseCall(new NodeGet(base, field+sTypes, isPtr, this->peek()->line));
                     else {
@@ -1077,7 +1079,7 @@ Node* Parser::parseFor(std::string f) {
         if(this->peek()->type == TokType::Comma) this->next();
 
         if(curr == 0) {
-            if(this->tokens[this->idx+1]->value == "=") presets.push_back(this->parseExpr(f));
+            if(this->tokens[this->idx + 1]->type == TokType::Equ) presets.push_back(this->parseExpr(f));
             else {
                 Type* type = this->parseType();
                 std::string name = this->peek()->value;

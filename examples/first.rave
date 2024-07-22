@@ -1,6 +1,5 @@
 import <std/io> <std/map>
 
 void main {
-    auto m = std::map<int, int>();
-    ~m;
+    
 }

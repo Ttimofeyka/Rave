@@ -1,3 +1,9 @@
+/*
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+
 import <std/string> <std/memory>
 
 namespace std {
@@ -10,8 +16,8 @@ namespace std {
         alias ShutWR = 1;
         alias ShutRDWR = 2;
 
-        alias InAddrAny = cast(long)0;
-        alias InAddrBroadcast = 4294967295;
+        alias InAddrAny = 0l;
+        alias InAddrBroadcast = 4294967295l;
 
         alias AiPassive = 1;
         alias AiCanonName = 2;
