@@ -9,7 +9,7 @@ fi
 
 if [ -f "/etc/arch-release" ]; then
     echo Arch Linux detected.
-    $SUDO yay -S llvm15 clang15
+    yay -S llvm15 clang15
     echo Done.
     exit 0
 fi
