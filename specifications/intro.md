@@ -32,3 +32,7 @@ The characters are enclosed in single quotes (").
 ##### [std/cstring](std/cstring.md)
 ##### [std/library](std/library.md)
 ##### [std/random](std/random.md)
+
+## Other
+
+##### [RaveDoc](ravedoc.md)
