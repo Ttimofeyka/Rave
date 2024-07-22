@@ -1,10 +1,8 @@
-<p align="center">
-<h1>The Rave Programming Language</h1>
+<h1 align="center">The Rave Programming Language</h1>
 <br/>
-<a href="https://github.com/Ttimofeyka/Rave/releases/latest">
-    <img src="https://img.shields.io/github/v/release/Ttimofeyka/Rave.svg">
+<a href="https://github.com/Ttimofeyka/Rave/releases/latest" align="center">
+    <img src="https://img.shields.io/github/v/release/Ttimofeyka/Rave.svg" align="center">
 </a>
-</p>
 
 Rave is a statically typed, compiled, procedural, general-purpose programming language.
 
