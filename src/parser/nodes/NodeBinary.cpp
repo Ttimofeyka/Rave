@@ -424,13 +424,9 @@ LLVMValueRef NodeBinary::generate() {
     }
 
     if(this->op == TokType::Rem) {
-        if(instanceof<TypeBasic>(this->first->getType())) {
-            TypeBasic* type = (TypeBasic*)this->first->getType();
-            if(type->type == BasicType::Float || type->type == BasicType::Double) return (new NodeBuiltin("fmodf", {this->first, this->second}, this->loc, nullptr))->generate();
-            return (new NodeCast(type, new NodeBuiltin("fmodf", {this->first, this->second}, this->loc, nullptr), this->loc))->generate();
-        }
-        generator->error("NodeBinary: TokType::Rem assert!", loc);
-        return nullptr;
+        Type* type = this->first->getType();
+        if(instanceof<TypeBasic>(type) && (((TypeBasic*)type)->type == BasicType::Float || ((TypeBasic*)type)->type == BasicType::Double)) return (new NodeBuiltin("fmodf", {this->first, this->second}, this->loc, nullptr))->generate();
+        return (new NodeCast(instanceof<TypeVoid>(type) ? new TypeBasic(BasicType::Double) : type, new NodeBuiltin("fmodf", {this->first, this->second}, this->loc, nullptr), this->loc))->generate();
     }
 
     LLVMValueRef vFirst = this->first->generate();
