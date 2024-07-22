@@ -134,6 +134,7 @@ namespace std {
                     entry = entry.next;
                     std::free(cast(void*)old);
                 }
+                table[i] = null;
             }
             length = 0;
         }
