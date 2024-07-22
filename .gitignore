@@ -31,11 +31,16 @@ source/old.ast.d
 *.o
 *.be
 bin
-./examples/*
-./examples/math/*
-./examples/time/*
 a
 ./a
+examples/first
+examples/io/test_input
+examples/io/test_input2
+examples/math/calculator
+examples/math/sum_of_input
+examples/multithread/thread_test
+examples/network/socket_server
+examples/time/test_time
 
 std/*.o
 src/*.o
