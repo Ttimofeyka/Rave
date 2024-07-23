@@ -31,4 +31,5 @@ public:
     Node* copy() override;
     Node* comptime() override;
     void check() override;
+    LLVMTypeRef getTypeForBasicType(char type);
 };

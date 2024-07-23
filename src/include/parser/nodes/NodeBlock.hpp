@@ -16,7 +16,6 @@ public:
     std::vector<Node*> nodes;
 
     NodeBlock(std::vector<Node*> nodes);
-    void setFuncName(std::string name);
     LLVMValueRef generate() override;
     void check() override;
     Node* copy() override;

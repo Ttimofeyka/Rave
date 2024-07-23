@@ -39,8 +39,6 @@ void NodeNamespace::check() {
     bool oldCheck = this->isChecked;
     this->isChecked = true;
 
-    //std::cout << "\tChecking " << names[0] << std::endl;
-
     if(!oldCheck) for(int i=0; i<this->nodes.size(); i++) {
         if(this->nodes[i] == nullptr) continue;
         if(instanceof<NodeFunc>(this->nodes[i])) {

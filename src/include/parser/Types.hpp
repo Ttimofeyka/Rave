@@ -14,24 +14,25 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "Type.hpp"
 
 namespace BasicType {
-enum BasicType : char {
-    Bool,
-    Char,
-    Short,
-    Int,
-    Long,
-    Cent,
-    Float,
-    Double,
-
-    Ushort,
-    Uint,
-    Ulong,
-    Uchar,
-    Ucent,
-    Half,
-    Bhalf,
-};
+    enum BasicType : char {
+        Bool,
+        Char,
+        Short,
+        Int,
+        Long,
+        Cent,
+    
+        Half,
+        Bhalf,
+        Float,
+        Double,
+    
+        Uchar,
+        Ushort,
+        Uint,
+        Ulong,
+        Ucent,
+    };
 }
 
 class TypeBasic : public Type {

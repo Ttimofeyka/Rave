@@ -25,32 +25,27 @@ Type* NodeSwitch::getType() {return new TypeVoid();}
 void NodeSwitch::check() {}
 
 LLVMValueRef NodeSwitch::generate() {
-    std::vector<NodeIf*> ifVector;
-
-    for(int i=0; i<this->statements.size(); i++) {
-        ifVector.push_back(new NodeIf(new NodeBinary(
-            TokType::Equal, this->expr, this->statements[i].first, this->loc),
-            this->statements[i].second, nullptr, this->loc, this->funcName, false
-        ));
-    }
-
-    if(ifVector.size() == 0) {
-        generator->error("at least 1 case is required in switch!", this->loc);
+    if(statements.empty()) {
+        generator->error("at least 1 case is required in switch!", loc);
         return nullptr;
     }
 
-    NodeIf* currIf = ifVector[0];
-    NodeIf* origIf = currIf;
+    std::vector<NodeIf*> ifVector;
+    ifVector.reserve(statements.size());
 
-    for(int i=1; i<ifVector.size(); i++) {
-        currIf->_else = ifVector[i];
-        currIf = (NodeIf*)currIf->_else;
+    for(const auto& statement : statements) {
+        ifVector.push_back(new NodeIf(
+            new NodeBinary(TokType::Equal, expr, statement.first, loc),
+            statement.second, nullptr, loc, funcName, false
+        ));
     }
 
-    currIf->_else = this->_default;
+    for(int i=0; i<ifVector.size()-1; i++) ifVector[i]->_else = ifVector[i + 1];
 
-    origIf->check();
-    origIf->generate();
+    ifVector.back()->_else = _default;
+
+    ifVector[0]->check();
+    ifVector[0]->generate();
 
     return nullptr;
 }

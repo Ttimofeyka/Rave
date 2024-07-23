@@ -117,41 +117,42 @@ void NodeFunc::check() {
 
 LLVMTypeRef* NodeFunc::getParameters(int callConv) {
     std::vector<LLVMTypeRef> buffer;
-    for(int i=0; i<this->args.size(); i++) {
-        if(instanceof<TypeStruct>(this->args[i].type)) {
-            if(generator->toReplace.find(((TypeStruct*)(this->args[i].type))->name) == generator->toReplace.end()) {
-                std::string oldName = this->args[i].name;
-                this->args[i].name = "_RaveStructArgument"+oldName;
+    buffer.reserve(this->args.size());
+
+    for(auto& arg : this->args) {
+        bool isStruct = instanceof<TypeStruct>(arg.type);
+
+        if(isStruct || (!instanceof<TypePointer>(arg.type) && !instanceof<TypeConst>(arg.type) && !instanceof<TypeFunc>(arg.type))) {
+            std::string oldName = arg.name;
+            arg.name = (isStruct ? "_RaveStructArgument" : "_RaveTempVariable") + oldName;
+
+            if(isStruct && generator->toReplace.find(static_cast<TypeStruct*>(arg.type)->name) == generator->toReplace.end()) {
+                // "cdecl64" implementation (EXPERIMENTAL)
                 if(callConv == -1) {
-                    // Cdecl64
-                    int size = this->args[i].type->getSize();
-                    Type* ty = nullptr;
+                    int size = arg.type->getSize();
+                    Type* ty = arg.type;
                     switch(size) {
                         case 8: ty = new TypeBasic(BasicType::Char); break;
                         case 16: ty = new TypeBasic(BasicType::Short); break;
                         case 32: ty = new TypeBasic(BasicType::Int); break;
                         case 40: ty = new TypeBasic(BasicType::Long); break;
-                        default: this->block->nodes.insert(this->block->nodes.begin(), new NodeVar(oldName, new NodeIden(this->args[i].name, this->loc), false, false, false, {}, this->loc, this->args[i].type)); break;
+                        default: break;
                     }
-                    if(ty != nullptr) {
-                        this->args[i].type = ty;
-                        this->block->nodes.insert(this->block->nodes.begin(), new NodeVar(oldName, new NodeIden(this->args[i].name, this->loc), false, false, false, {}, this->loc, ty));
+                    if(ty) {
+                        arg.type = ty;
+                        this->block->nodes.emplace(this->block->nodes.begin(), new NodeVar(oldName, new NodeIden(arg.name, this->loc), false, false, false, {}, this->loc, ty));
                         buffer.push_back(generator->genType(ty, this->loc));
                         continue;
                     }
                 }
-                else this->block->nodes.insert(this->block->nodes.begin(), new NodeVar(oldName, new NodeIden(this->args[i].name, this->loc), false, false, false, {}, this->loc, this->args[i].type));
             }
+            this->block->nodes.emplace(this->block->nodes.begin(), new NodeVar(oldName, new NodeIden(arg.name, this->loc), false, false, false, {}, this->loc, arg.type, !isStruct));
         }
-        else if(!instanceof<TypePointer>(this->args[i].type) && !instanceof<TypeConst>(this->args[i].type) && !instanceof<TypeFunc>(this->args[i].type)) {
-            std::string oldName = this->args[i].name;
-            this->args[i].name = "_RaveTempVariable"+oldName;
-            this->block->nodes.insert(this->block->nodes.begin(), new NodeVar(oldName, new NodeIden(this->args[i].name, this->loc), false, false, false, {}, this->loc, this->args[i].type, false));
-        }
-        buffer.push_back(generator->genType(this->args[i].type, this->loc));
+        buffer.push_back(generator->genType(arg.type, this->loc));
     }
-    this->genTypes = std::vector<LLVMTypeRef>(buffer);
-    return buffer.data();
+
+    this->genTypes = buffer;
+    return this->genTypes.data();
 }
 
 LLVMValueRef NodeFunc::generate() {

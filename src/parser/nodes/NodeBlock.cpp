@@ -34,18 +34,3 @@ LLVMValueRef NodeBlock::generate() {
     for(int i=0; i<this->nodes.size(); i++) if(this->nodes[i] != nullptr) this->nodes[i]->generate();
     return nullptr;
 }
-
-void NodeBlock::setFuncName(std::string name) {
-    for(int i=0; i<this->nodes.size(); i++) {
-        /*
-        if(instanceof<NodeWhile>(this->nodes[i])) {
-            NodeWhile* wh = (NodeWhile*) this->nodes[i];
-            wh->fn = name;
-        }
-        else if(instanceof<NodeFor>(this->nodes[i])) {
-            NodeFor* fr = (NodeFor*) this->nodes[i];
-            fr->fn = name;
-        }
-        */
-    }
-}

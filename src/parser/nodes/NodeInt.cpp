@@ -27,55 +27,72 @@ void NodeInt::check() {this->isChecked = true;}
 
 Type* NodeInt::getType() {
     if(this->isMustBeLong) return new TypeBasic(BasicType::Long);
-    char _type;
-    if(this->isVarVal != nullptr && instanceof<TypeBasic>(this->isVarVal)) _type = this->type = ((TypeBasic*)this->isVarVal)->type;
+    if(this->isMustBeShort) return new TypeBasic(BasicType::Short);
+    if(this->isMustBeChar) return new TypeBasic(BasicType::Char);
+
+    char baseType;
+    if(this->isVarVal != nullptr && instanceof<TypeBasic>(this->isVarVal)) baseType = (((TypeBasic*)this->isVarVal)->type);
     else {
-        if(this->value < INT32_MAX) _type = BasicType::Int;
-        else if(this->value < INT64_MAX) _type = BasicType::Long;
-        else _type = BasicType::Cent;
+        if(this->value >= INT32_MIN && this->value <= INT32_MAX) baseType = BasicType::Int;
+        else if(this->value >= INT64_MIN && this->value <= INT64_MAX) baseType = BasicType::Long;
+        else baseType = BasicType::Cent;
     }
-    if(!isUnsigned) return new TypeBasic(_type);
-    switch(_type) {
-        case BasicType::Char: return new TypeBasic(BasicType::Uchar);
-        case BasicType::Short: return new TypeBasic(BasicType::Ushort);
-        case BasicType::Int: return new TypeBasic(BasicType::Uint);
-        case BasicType::Long: return new TypeBasic(BasicType::Ulong);
-        case BasicType::Cent: return new TypeBasic(BasicType::Ucent);
-        default: return new TypeBasic(_type);
-     }
+
+    if(!isUnsigned) return new TypeBasic(baseType);
+
+    constexpr char unsignedTypes[] = {
+        BasicType::Uchar, BasicType::Ushort, BasicType::Uint,
+        BasicType::Ulong, BasicType::Ucent
+    };
+    
+    return new TypeBasic(unsignedTypes[baseType - BasicType::Char]);
 }
 
 LLVMValueRef NodeInt::generate() {
-    if(isMustBeLong) return LLVMConstIntOfString(LLVMInt64TypeInContext(generator->context), value.to_string().c_str(), this->sys);
-    if(isMustBeShort) return LLVMConstIntOfString(LLVMInt16TypeInContext(generator->context), value.to_string().c_str(), this->sys);
-    if(isMustBeChar) return LLVMConstIntOfString(LLVMInt8TypeInContext(generator->context), value.to_string().c_str(), this->sys);
-    if(this->isVarVal != nullptr && instanceof<TypeBasic>(this->isVarVal)) {
-        this->type = ((TypeBasic*)this->isVarVal)->type;
-        switch(this->type) {
-            case BasicType::Bool: return LLVMConstIntOfString(LLVMInt1TypeInContext(generator->context), value.to_string().c_str(), this->sys);
-            case BasicType::Uchar:
-            case BasicType::Char: return LLVMConstIntOfString(LLVMInt8TypeInContext(generator->context), value.to_string().c_str(), this->sys);
-            case BasicType::Ushort:
-            case BasicType::Short: return LLVMConstIntOfString(LLVMInt16TypeInContext(generator->context), value.to_string().c_str(), this->sys);
-            case BasicType::Uint:
-            case BasicType::Int: return LLVMConstIntOfString(LLVMInt32TypeInContext(generator->context), value.to_string().c_str(), this->sys);
-            case BasicType::Ulong:
-            case BasicType::Long: return LLVMConstIntOfString(LLVMInt64TypeInContext(generator->context), value.to_string().c_str(), this->sys);
-            case BasicType::Ucent:
-            case BasicType::Cent: return LLVMConstIntOfString(LLVMInt128TypeInContext(generator->context), value.to_string().c_str(), this->sys);
-            default: break;
+    LLVMTypeRef intType = nullptr;
+    char baseType = BasicType::Int;
+
+    if(isMustBeLong) intType = LLVMInt64TypeInContext(generator->context);
+    else if(isMustBeShort) intType = LLVMInt16TypeInContext(generator->context);
+    else if(isMustBeChar) intType = LLVMInt8TypeInContext(generator->context);
+    else if(this->isVarVal != nullptr && instanceof<TypeBasic>(this->isVarVal)) {
+        baseType = ((TypeBasic*)this->isVarVal)->type;
+        intType = getTypeForBasicType(baseType);
+    }
+    else {
+        if(value >= INT32_MIN && value <= INT32_MAX) {
+            baseType = BasicType::Int;
+            intType = LLVMInt32TypeInContext(generator->context);
+        }
+        else if(value >= INT64_MIN && value <= INT64_MAX) {
+            baseType = BasicType::Long;
+            intType = LLVMInt64TypeInContext(generator->context);
+        }
+        else {
+            baseType = BasicType::Cent;
+            intType = LLVMInt128TypeInContext(generator->context);
         }
     }
-    if(value >= INT32_MIN && value <= INT32_MAX) {
-        this->type = BasicType::Int;
-        return LLVMConstIntOfString(LLVMInt32TypeInContext(generator->context), value.to_string().c_str(), this->sys);
+
+    this->type = baseType;
+    return LLVMConstIntOfString(intType, value.to_string().c_str(), this->sys);
+}
+
+LLVMTypeRef NodeInt::getTypeForBasicType(char type) {
+    switch(type) {
+        case BasicType::Bool: return LLVMInt1TypeInContext(generator->context);
+        case BasicType::Uchar:
+        case BasicType::Char: return LLVMInt8TypeInContext(generator->context);
+        case BasicType::Ushort:
+        case BasicType::Short: return LLVMInt16TypeInContext(generator->context);
+        case BasicType::Uint:
+        case BasicType::Int: return LLVMInt32TypeInContext(generator->context);
+        case BasicType::Ulong:
+        case BasicType::Long: return LLVMInt64TypeInContext(generator->context);
+        case BasicType::Ucent:
+        case BasicType::Cent: return LLVMInt128TypeInContext(generator->context);
+        default: return LLVMInt32TypeInContext(generator->context);
     }
-    if(value >= INT64_MIN && value <= INT64_MAX) {
-        this->type = BasicType::Long;
-        return LLVMConstIntOfString(LLVMInt64TypeInContext(generator->context), value.to_string().c_str(), this->sys);
-    }
-    this->type = BasicType::Cent;
-    return LLVMConstIntOfString(LLVMInt128TypeInContext(generator->context), value.to_string().c_str(), this->sys);
 }
 
 Node* NodeInt::copy() {return new NodeInt(BigInt(this->value), this->type, this->isVarVal, this->sys, this->isUnsigned, this->isMustBeLong);}

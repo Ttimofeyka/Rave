@@ -46,28 +46,32 @@ void NodeWhile::check() {
 }
 
 LLVMValueRef NodeWhile::generate() {
-    LLVMBasicBlockRef condBlock = LLVMAppendBasicBlock(generator->functions[currScope->funcName], "cond");
-    LLVMBasicBlockRef whileBlock = LLVMAppendBasicBlock(generator->functions[currScope->funcName], "while");
-    currScope->blockExit = LLVMAppendBasicBlock(generator->functions[currScope->funcName], "exit");
+    auto& function = generator->functions[currScope->funcName];
+    LLVMBasicBlockRef condBlock = LLVMAppendBasicBlock(function, "cond");
+    LLVMBasicBlockRef whileBlock = LLVMAppendBasicBlock(function, "while");
+    currScope->blockExit = LLVMAppendBasicBlock(function, "exit");
 
     LLVMBuildBr(generator->builder, condBlock);
     LLVMPositionBuilderAtEnd(generator->builder, condBlock);
     LLVMBuildCondBr(generator->builder, this->cond->generate(), whileBlock, currScope->blockExit);
     LLVMPositionBuilderAtEnd(generator->builder, whileBlock);
 
-    int selfNumber = generator->activeLoops.size();
-    generator->activeLoops[selfNumber] = Loop{.isActive = true, .start = condBlock, .end = currScope->blockExit, .hasEnd = false, .isIf = false, .owner = this};
+    size_t selfNumber = generator->activeLoops.size();
+    generator->activeLoops[selfNumber] = {
+        .isActive = true, .start = condBlock,
+        .end = currScope->blockExit, .hasEnd = false,
+        .isIf = false, .owner = this
+    };
 
     generator->currBB = whileBlock;
     this->body->generate();
+    
     if(!generator->activeLoops[selfNumber].hasEnd) LLVMBuildBr(generator->builder, condBlock);
-    if(instanceof<NodeBlock>(this->body)) {
-        NodeBlock* nb = (NodeBlock*)this->body;
-        for(int i=0; i<nb->nodes.size(); i++) {
-            if(instanceof<NodeVar>(nb->nodes[i])) {
-                if(((NodeVar*)nb->nodes[i])->isAllocated) {
-                    generator->warning("@detectMemoryLeaks: the variable '"+((NodeVar*)nb->nodes[i])->name+"' is not released!", ((NodeVar*)nb->nodes[i])->loc);
-                }
+
+    if(auto* nb = dynamic_cast<NodeBlock*>(this->body)) {
+        for(const auto& node : nb->nodes) {
+            if(auto* nodeVar = dynamic_cast<NodeVar*>(node)) {
+                if(nodeVar->isAllocated) generator->warning("@detectMemoryLeaks: the variable '" + nodeVar->name + "' is not released!", nodeVar->loc);
             }
         }
     }

@@ -29,30 +29,31 @@ std::vector<LLVMTypeRef> NodeLambda::generateTypes() {
 LLVMValueRef NodeLambda::generate() {
     this->type = this->tf->main;
 
-    std::map<int32_t, Loop> activeLoops = std::map<int32_t, Loop>(generator->activeLoops);
-    LLVMBuilderRef builder = generator->builder;
-    LLVMBasicBlockRef currBB = generator->currBB;
-    Scope* _scope = currScope;
-    std::map<std::string, Type*> toReplace = std::map<std::string, Type*>(generator->toReplace);
+    const auto& activeLoops = generator->activeLoops;
+    const auto builder = generator->builder;
+    const auto currBB = generator->currBB;
+    auto* const _scope = currScope;
+    const auto& toReplace = generator->toReplace;
 
-    std::vector<TypeFuncArg*> _args = std::vector<TypeFuncArg*>(this->tf->args);
+    const auto& _args = this->tf->args;
     std::vector<FuncArgSet> fas;
+    fas.reserve(_args.size());
 
-    for(int i=0; i<_args.size(); i++) fas.push_back(FuncArgSet{.name = _args[i]->name, .type = _args[i]->type});
+    for(const auto& arg : _args) fas.emplace_back(FuncArgSet{.name = arg->name, .type = arg->type});
 
-    AST::lambdaTable["lambda"+std::to_string(generator->lambdas)] = this;
-    NodeFunc* nf = new NodeFunc("__RAVE_LAMBDA"+std::to_string(generator->lambdas), fas, block, false, {}, this->loc, this->tf->main, {});
+    const auto lambdaId = generator->lambdas++;
+    AST::lambdaTable["lambda" + std::to_string(lambdaId)] = this;
+
+    auto nf = new NodeFunc("__RAVE_LAMBDA" + std::to_string(lambdaId), std::move(fas), block, false, {}, this->loc, this->tf->main, {});
     nf->check();
     nf->isComdat = true;
     LLVMValueRef func = nf->generate();
 
-    generator->lambdas += 1;
-
-    generator->activeLoops = std::map<int32_t, Loop>(activeLoops);
+    generator->activeLoops = activeLoops;
     generator->builder = builder;
     generator->currBB = currBB;
     currScope = _scope;
-    generator->toReplace = std::map<std::string, Type*>(toReplace);
+    generator->toReplace = toReplace;
 
     return func;
 }

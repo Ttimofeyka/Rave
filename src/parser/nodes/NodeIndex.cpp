@@ -33,20 +33,22 @@ NodeIndex::NodeIndex(Node* element, std::vector<Node*> indexes, long loc) {
 
 Type* NodeIndex::getType() {
     Type* type = this->element->getType();
-    while(instanceof<TypeConst>(type)) type = ((TypeConst*)type)->instance;
-    if(!instanceof<TypePointer>(type) && !instanceof<TypeArray>(type) && !instanceof<TypeConst>(type)) {
-        if(instanceof<TypeStruct>(type)) {
-            TypeStruct* tstruct = (TypeStruct*)type;
-            if(AST::structTable[tstruct->name]->operators.find(TokType::Rbra) != AST::structTable[tstruct->name]->operators.end()) {
-                for(auto const& x : AST::structTable[tstruct->name]->operators[TokType::Rbra]) return AST::structTable[tstruct->name]->operators[TokType::Rbra][x.first]->type;
-            }
-        }
-        generator->error("Assert into NodeIndex::getType! Type: "+type->toString(), this->loc);
-        return nullptr;
+    
+    // Remove const qualifiers
+    while(instanceof<TypeConst>(type)) type = static_cast<TypeConst*>(type)->instance;
+    
+    if(instanceof<TypePointer>(type)) return static_cast<TypePointer*>(type)->instance;
+    
+    if(instanceof<TypeArray>(type)) return static_cast<TypeArray*>(type)->element;
+    
+    if(instanceof<TypeStruct>(type)) {
+        TypeStruct* tstruct = static_cast<TypeStruct*>(type);
+        auto& operators = AST::structTable[tstruct->name]->operators;
+        auto it = operators.find(TokType::Rbra);
+        if(it != operators.end() && !it->second.empty()) return it->second.begin()->second->type;
     }
-    if(instanceof<TypePointer>(type)) return ((TypePointer*)type)->instance;
-    else if(instanceof<TypeArray>(type)) return ((TypeArray*)type)->element;
-    generator->error("Assert into NodeIndex::getType! Type: "+type->toString(), this->loc);
+    
+    generator->error("Invalid type in NodeIndex::getType: " + type->toString(), this->loc);
     return nullptr;
 }
 

@@ -380,17 +380,17 @@ LLVMValueRef NodeBinary::generate() {
             bool isNoOperators = instanceof<NodeIden>(ind->element) && currScope->getVar(((NodeIden*)ind->element)->name, this->loc)->isNoOperators;
 
             if(!isNoOperators && std::string(LLVMPrintValueToString(ptr)).find("([])") != std::string::npos) {
-                LLVMValueRef structPtr = LLVMGetOperand(ptr, 0);
-                LLVMValueRef structValue = structPtr;
+                LLVMValueRef structValue = LLVMGetOperand(ptr, 0);
                 while(LLVMGetTypeKind(LLVMTypeOf(structValue)) == LLVMPointerTypeKind) structValue = LLVM::load(structValue, "NodeBinary_NodeIndex_[]=_load");
-                std::string structName = std::string(LLVMGetStructName(LLVMTypeOf(structValue)));
-                if(AST::structTable.find(structName) != AST::structTable.end()) {
-                    if(AST::structTable[structName]->operators.find(TokType::Lbra) != AST::structTable[structName]->operators.end()) {
-                        std::map<std::string, NodeFunc*> opOv = AST::structTable[structName]->operators[TokType::Lbra];
-                        for(const auto& kv : opOv) {
-                            LLVMInstructionEraseFromParent(ptr);
-                            return (new NodeCall(this->loc, new NodeIden(kv.second->name, this->loc), {new NodeDone(structPtr), ind->indexes[0], this->second}))->generate();
-                        }
+    
+                std::string structName = LLVMGetStructName(LLVMTypeOf(structValue));
+                auto structIt = AST::structTable.find(structName);
+    
+                if(structIt != AST::structTable.end() && structIt->second->operators.count(TokType::Lbra)) {
+                    for(const auto& [_, func] : structIt->second->operators[TokType::Lbra]) {
+                        LLVMInstructionEraseFromParent(ptr);
+                        return (new NodeCall(loc, new NodeIden(func->name, loc), 
+                            {new NodeDone(LLVMGetOperand(ptr, 0)), ind->indexes[0], second}))->generate();
                     }
                 }
             }
@@ -413,9 +413,6 @@ LLVMValueRef NodeBinary::generate() {
             return LLVMBuildStore(generator->builder, value, ptr);
         }
         else if(instanceof<NodeDone>(this->first)) return LLVMBuildStore(generator->builder, this->second->generate(), this->first->generate());
-        //else if(NodeSlice ns = first.instanceof!NodeSlice) {
-        //    return ns.binSet(second);
-        //}
     }
 
     if(this->first->getType() != nullptr && this->second->getType() != nullptr && this->first->getType()->toString() != this->second->getType()->toString()) {

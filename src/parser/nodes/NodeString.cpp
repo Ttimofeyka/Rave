@@ -21,26 +21,27 @@ Node* NodeString::comptime() {return this;}
 void NodeString::check() {this->isChecked = true;}
 
 LLVMValueRef NodeString::generate() {
-    LLVMValueRef globalStr;
-    globalStr = LLVMAddGlobal(
-        generator->lModule,
-        LLVMArrayType((this->isWide) ? LLVMInt32TypeInContext(generator->context) : LLVMInt8TypeInContext(generator->context), this->value.size()+1),
-        "_str"
-    );
+    LLVMTypeRef elemType = isWide ? LLVMInt32TypeInContext(generator->context) : LLVMInt8TypeInContext(generator->context);
+    LLVMTypeRef arrayType = LLVMArrayType(elemType, value.size() + 1);
+
+    LLVMValueRef globalStr = LLVMAddGlobal(generator->lModule, arrayType, "_str");
     LLVMSetGlobalConstant(globalStr, true);
     LLVMSetUnnamedAddr(globalStr, true);
     LLVMSetLinkage(globalStr, LLVMPrivateLinkage);
-    LLVMSetAlignment(globalStr, (isWide) ? 4 : 1);
+    LLVMSetAlignment(globalStr, isWide ? 4 : 1);
+
     if(!isWide) LLVMSetInitializer(globalStr, LLVMConstStringInContext(generator->context, value.c_str(), value.size(), false));
     else {
-        std::vector<LLVMValueRef> values;
-        std::u32string u32Str = utf8::utf8to32(this->value);
-        for(int i=0; i<u32Str.size(); i++) values.push_back(LLVMConstInt(LLVMInt32TypeInContext(generator->context), u32Str[i], false));
-        LLVMSetInitializer(globalStr, LLVMConstArray(LLVMInt32TypeInContext(generator->context), values.data(), values.size()));
+        std::u32string u32Str = utf8::utf8to32(value);
+        std::vector<LLVMValueRef> values(u32Str.size());
+        for(int i=0; i<u32Str.size(); i++) values[i] = LLVMConstInt(elemType, u32Str[i], false);
+        LLVMSetInitializer(globalStr, LLVMConstArray(elemType, values.data(), values.size()));
     }
-    return LLVM::constInboundsGep(
-        globalStr,
-        std::vector<LLVMValueRef>({LLVMConstInt(LLVMInt32TypeInContext(generator->context), 0, false), LLVMConstInt(LLVMInt32TypeInContext(generator->context),0,false)}).data(),
-        2
-    );
+
+    LLVMValueRef indices[2] = {
+        LLVMConstInt(LLVMInt32TypeInContext(generator->context), 0, false),
+        LLVMConstInt(LLVMInt32TypeInContext(generator->context), 0, false)
+    };
+
+    return LLVM::constInboundsGep(globalStr, indices, 2);
 }

@@ -88,10 +88,6 @@ LLVMValueRef NodeUnary::generate() {
             val = temp;
         }
         else if(instanceof<NodeBinary>(this->base)) val = generator->byIndex(this->base->generate(), std::vector<LLVMValueRef>({LLVMConstInt(LLVMInt32TypeInContext(generator->context), 0, false)}));
-        /*else if(NodeSlice sl = base.instanceof!NodeSlice) {
-            sl.isMustBePtr = true;
-            val = sl.generate();
-        }*/
         else if(instanceof<NodeIden>(this->base)) {
             NodeIden* id = ((NodeIden*)this->base);
             if(currScope == nullptr) {
@@ -167,9 +163,6 @@ LLVMValueRef NodeUnary::generate() {
 }
 
 Node* NodeUnary::comptime() {
-    //if(instanceof<NodeBuiltin>(this->base)) {
-    //    std::cout << generator->file << ", " << ((NodeBuiltin*)this->base)->loc << ", " << ((NodeBuiltin*)this->base)->name << std::endl;
-    //}
     switch(this->type) {
         case TokType::Minus:
             if(instanceof<NodeInt>(this->base)) return new NodeInt(-((NodeInt*)this->base)->value);

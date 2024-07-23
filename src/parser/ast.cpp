@@ -270,8 +270,6 @@ LLVMTypeRef LLVMGen::genType(Type* type, long loc) {
     if(instanceof<TypeArray>(type)) return LLVMArrayType(this->genType(((TypeArray*)type)->element, loc),((TypeArray*)type)->count);
     if(instanceof<TypeStruct>(type)) {
         TypeStruct* s = (TypeStruct*)type;
-        //std::cout << "  toReplace" << std::endl;
-        //for(auto const& x : generator->toReplace) std::cout << "\t" << x.first << " " << x.second->toString() << std::endl;
         if(this->structures.find(s->name) == this->structures.end()) {
             if(this->toReplace.find(s->name) != this->toReplace.end()) return this->genType(this->toReplace[s->name], loc);
             if(s->name.find('<') != std::string::npos) {
@@ -304,13 +302,6 @@ LLVMTypeRef LLVMGen::genType(Type* type, long loc) {
         return LLVMPointerType(LLVMFunctionType(this->genType(tf->main,loc), types.data(), types.size(), false), 0);
     }
     if(instanceof<TypeFuncArg>(type)) return this->genType(((TypeFuncArg*)type)->type, loc);
-    if(instanceof<TypeBuiltin>(type)) {
-        /*
-        NodeBuiltin nb = new NodeBuiltin(((TypeBuiltin*)type)->name, std::vector<Node*>(((TypeBuiltin*)type)->args), ((TypeBuiltin*)type)->block->copy());
-        nb.generate();
-        return this->genType(nb->type, loc);
-        */
-    }
     if(instanceof<TypeConst>(type)) return this->genType(((TypeConst*)type)->instance, loc);
     if(instanceof<TypeVector>(type)) return LLVMVectorType(this->genType(((TypeVector*)type)->mainType, loc), ((TypeVector*)type)->count);
     this->error("undefined type!", loc);
@@ -345,35 +336,43 @@ void LLVMGen::addStrAttr(std::string name, LLVMAttributeIndex index, LLVMValueRe
 }
 
 Type* lTypeToType(LLVMTypeRef t) {
-    if(LLVMGetTypeKind(t) == LLVMIntegerTypeKind) {
-        if(t == LLVMInt32TypeInContext(generator->context)) return new TypeBasic(BasicType::Int);
-        if(t == LLVMInt64TypeInContext(generator->context)) return new TypeBasic(BasicType::Long);
-        if(t == LLVMInt16TypeInContext(generator->context)) return new TypeBasic(BasicType::Short);
-        if(t == LLVMInt8TypeInContext(generator->context)) return new TypeBasic(BasicType::Char);
-        if(t == LLVMInt1TypeInContext(generator->context)) return new TypeBasic(BasicType::Bool);
-        return new TypeBasic(BasicType::Cent);
-    }
-    else if(LLVMGetTypeKind(t) == LLVMBFloatTypeKind) return new TypeBasic(BasicType::Bhalf);
-    else if(LLVMGetTypeKind(t) == LLVMHalfTypeKind) return new TypeBasic(BasicType::Half);
-    else if(LLVMGetTypeKind(t) == LLVMFloatTypeKind) return new TypeBasic((t == LLVMFloatTypeInContext(generator->context)) ? BasicType::Float : BasicType::Double);
-    else if(LLVMGetTypeKind(t) == LLVMDoubleTypeKind) return new TypeBasic(BasicType::Double);
-    else if(LLVM::isPointerType(t)) {
-        if(LLVMGetTypeKind(LLVMGetElementType(t)) == LLVMStructTypeKind) return new TypeStruct(std::string(LLVMGetStructName(LLVMGetElementType(t))));
-        return new TypePointer(lTypeToType(LLVMGetElementType(t)));
-    }
-    else if(LLVMGetTypeKind(t) == LLVMArrayTypeKind) return new TypeArray(LLVMGetArrayLength(t), lTypeToType(LLVMGetElementType(t)));
-    else if(LLVMGetTypeKind(t) == LLVMStructTypeKind) return new TypeStruct(std::string(LLVMGetStructName(t)));
-    else if(LLVMGetTypeKind(t) == LLVMFunctionTypeKind) {
-        std::string sT = std::string(LLVMPrintTypeToString(t));
-        sT = sT.substr(0, sT.find_last_of('('));
-        return getType(trim(sT));
-    }
-    else if(LLVMGetTypeKind(t) == LLVMVoidTypeKind) return new TypeVoid();
-    else if(LLVMGetTypeKind(t) == LLVMVectorTypeKind) {
-        std::string tString = typeToString(t);
-        if(tString == "<4 x i32>") return new TypeVector(new TypeBasic(BasicType::Int), 4);
-        else if(tString == "<8 x i32>") return new TypeVector(new TypeBasic(BasicType::Int), 8);
-        else std::cout << tString << std::endl;
+    LLVMTypeKind kind = LLVMGetTypeKind(t);
+    switch(kind) {
+        case LLVMIntegerTypeKind: {
+            unsigned bitWidth = LLVMGetIntTypeWidth(t);
+            switch(bitWidth) {
+                case 1: return new TypeBasic(BasicType::Bool);
+                case 8: return new TypeBasic(BasicType::Char);
+                case 16: return new TypeBasic(BasicType::Short);
+                case 32: return new TypeBasic(BasicType::Int);
+                case 64: return new TypeBasic(BasicType::Long);
+                default: return new TypeBasic(BasicType::Cent);
+            }
+        }
+        case LLVMBFloatTypeKind: return new TypeBasic(BasicType::Bhalf);
+        case LLVMHalfTypeKind: return new TypeBasic(BasicType::Half);
+        case LLVMFloatTypeKind: return new TypeBasic(BasicType::Float);
+        case LLVMDoubleTypeKind: return new TypeBasic(BasicType::Double);
+        case LLVMPointerTypeKind: {
+            LLVMTypeRef elementType = LLVMGetElementType(t);
+            if(LLVMGetTypeKind(LLVMGetElementType(elementType)) == LLVMStructTypeKind) return new TypeStruct(LLVMGetStructName(elementType));
+            return new TypePointer(lTypeToType(elementType));
+        }
+        case LLVMArrayTypeKind: return new TypeArray(LLVMGetArrayLength(t), lTypeToType(LLVMGetElementType(t)));
+        case LLVMStructTypeKind: return new TypeStruct(LLVMGetStructName(t));
+        case LLVMFunctionTypeKind: {
+            std::string sT = LLVMPrintTypeToString(t);
+            return getType(trim(sT.substr(0, sT.find_last_of('('))));
+        }
+        case LLVMVoidTypeKind: return new TypeVoid();
+        case LLVMVectorTypeKind: {
+            std::string tString = typeToString(t);
+            if (tString == "<4 x i32>") return new TypeVector(new TypeBasic(BasicType::Int), 4);
+            if (tString == "<8 x i32>") return new TypeVector(new TypeBasic(BasicType::Int), 8);
+            generator->error("unsupported vector type '" + tString + "'!", -1);
+            return nullptr;
+        }
+        default: break;
     }
     generator->error("assert: lTypeToType", -1);
     return nullptr;
@@ -394,7 +393,6 @@ int LLVMGen::getAlignment(Type* type) {
     else if(instanceof<TypeArray>(type)) return this->getAlignment(((TypeArray*)type)->element);
     else if(instanceof<TypeStruct>(type)) return 8;
     else if(instanceof<TypeFunc>(type)) return this->getAlignment(((TypeFunc*)type)->main);
-    else if(instanceof<TypeVoid>(type) || instanceof<TypeAuto>(type)) return 0;
     else if(instanceof<TypeConst>(type)) return this->getAlignment(((TypeConst*)type)->instance);
     return 0;
 }
