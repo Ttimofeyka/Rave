@@ -31,9 +31,9 @@ OBJ = $(SRC:%.cpp=%.o)
 all: $(BIN)
 
 $(BIN): $(OBJ)
-	$(COMPILER) $(OBJ) -o $@ $(LLVM_LIB) -DLLVM_VERSION=$(LLVM_VERSION)
+	$(COMPILER) $(OBJ) -o $@ $(LLVM_LIB) -DLLVM_VERSION=$(LLVM_VERSION) -lstdc++fs
 %.o: %.cpp
-	$(COMPILER) -c $< -o $@ -DLLVM_VERSION=$(LLVM_VERSION) -std=c++17 -Wno-deprecated $(FLAGS) $(LLVM_LIB) -fexceptions
+	$(COMPILER) -c $< -o $@ -DLLVM_VERSION=$(LLVM_VERSION) -std=c++17 -Wno-deprecated $(FLAGS) $(LLVM_LIB) -fexceptions -lstdc++fs
 
 clean:
 ifdef OS
