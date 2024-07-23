@@ -76,7 +76,7 @@ If you have this kinda logs from compiler:
 '+avx' is not a recognized feature for this target (ignoring feature)
 ```
 
-Then you can just disable SSE/SSE2/SSE3/AVX into options.json or using command line options (-noSSE, -noSSE2, -noSSE3, -noAVX).
+You can just disable SSE/SSE2/SSE3/AVX into options.json or using command line options (-noSSE, -noSSE2, -noSSE3, -noAVX).
 
 ## Useful links
 
