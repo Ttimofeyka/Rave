@@ -80,15 +80,6 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
     Compiler::outType = outType;
     Compiler::settings = settings;
     Compiler::files = files;
-    if(!settings.isNative) {
-        Compiler::features = "";
-        if(settings.hasSSE) Compiler::features += "+sse,";
-        if(settings.hasSSE2) Compiler::features += "+sse2,";
-        if(settings.hasSSE3) Compiler::features += "+sse3,";
-        if(settings.hasAVX) Compiler::features += "+avx,";
-        Compiler::features = Compiler::features.substr(0, Compiler::features.length() - 1);
-    }
-    else Compiler::features = std::string(LLVMGetHostCPUFeatures());
     
     if(access((exePath + "options.json").c_str(), 0) == 0) {
         std::ifstream fOptions(exePath + "options.json");
@@ -102,7 +93,7 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
         #else
             ShellResult result = exec("which clang");
             if(result.status != 0) fOptions << "{\n\t\"compiler\": \"gcc\"\n}" << std::endl;
-            else fOptions << "{\n\t\"compiler\": \"clang\"\n}" << std::endl;
+            else fOptions << "{\n\t\"compiler\": \"clang\",\n\t\"sse\": 3,\n\t\"avx\": true\n}" << std::endl;
         #endif
         if(fOptions.is_open()) fOptions.close();
 
@@ -335,6 +326,18 @@ void Compiler::compile(std::string file) {
     }
 
     LLVMRunPassManager(pm, generator->lModule);
+
+    if(!settings.isNative) {
+        Compiler::features = "";
+        int sse = Compiler::options["sse"].template get<int>();
+        bool avx = Compiler::options["avx"].template get<bool>();
+        if(sse > 0 && settings.hasSSE) Compiler::features += "+sse,";
+        if(sse > 1 && settings.hasSSE2) Compiler::features += "+sse2,";
+        if(sse > 2 && settings.hasSSE3) Compiler::features += "+sse3,";
+        if(avx && settings.hasAVX) Compiler::features += "+avx,";
+        Compiler::features = Compiler::features.substr(0, Compiler::features.length() - 1);
+    }
+    else Compiler::features = std::string(LLVMGetHostCPUFeatures());
 
     LLVMTargetMachineRef machine = LLVMCreateTargetMachine(
 		target,
