@@ -27,61 +27,19 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
    #include <unistd.h>
 #endif
 
-#ifdef _WIN32
-#include <windows.h>
-std::vector<std::string> filesFromDirectory(std::string path) {
-    std::vector<std::string> files;
-
-    // check directory exists
-    char fullpath[MAX_PATH];
-    GetFullPathNameA(path.c_str(), MAX_PATH, fullpath, 0);
-    std::string fp(fullpath);
-    if(GetFileAttributesA(fp.c_str()) != FILE_ATTRIBUTE_DIRECTORY) return files;
-
-    // get file names
-    WIN32_FIND_DATAA findfiledata;
-    HANDLE hFind = FindFirstFileA((LPCSTR)(fp + "\\*").c_str(), &findfiledata);
-    if(hFind != INVALID_HANDLE_VALUE) {
-        do {
-            files.push_back(findfiledata.cFileName);
-        } 
-        while(FindNextFileA(hFind, &findfiledata));
-        FindClose(hFind);
-    }
-
-    // delete current and parent directories
-    files.erase(std::find(files.begin(), files.end(), "."));
-    files.erase(std::find(files.begin(), files.end(), ".."));
-
-    // sort in alphabetical order
-    std::sort(files.begin(), files.end());
-
-    return files;
-}
+#ifndef __has_include
+  static_assert(false, "__has_include not supported");
 #else
-#include <dirent.h>
-std::vector<std::string> filesFromDirectory(std::string directory) {
-    std::vector<std::string> files;
-
-    // open directory
-    DIR *dir;
-    dir = opendir(directory.c_str());
-    if(dir == NULL) return files;
-
-    // get file names
-    struct dirent *ent;
-    while((ent = readdir(dir)) != NULL) files.push_back(ent->d_name);
-    closedir(dir);
-
-    // delete current and parent directories
-    files.erase(std::find(files.begin(), files.end(), "."));
-    files.erase(std::find(files.begin(), files.end(), ".."));
-
-    // sort in alphabetical order
-    std::sort(files.begin(), files.end());
-
-    return files;
-}
+#if __cplusplus >= 201703L && __has_include(<filesystem>)
+#include <filesystem>
+    namespace fs = std::filesystem;
+#elif __has_include(<experimental/filesystem>)
+#    include <experimental/filesystem>
+    namespace fs = std::experimental::filesystem;
+#elif __has_include(<boost/filesystem.hpp>)
+#include <boost/filesystem.hpp>
+    namespace fs = boost::filesystem;
+#  endif
 #endif
 
 NodeImport::NodeImport(std::string file, std::vector<std::string> functions, int loc) {
@@ -100,7 +58,7 @@ LLVMValueRef NodeImport::generate() {
 
     if(this->file.find("/.rave") != std::string::npos) {
         std::string dirPath = this->file.substr(0, this->file.size() - 5);
-        for(const auto& entry : std::filesystem::directory_iterator(dirPath)) {
+        for(const auto& entry : fs::directory_iterator(dirPath)) {
             if(entry.path().extension() == ".rave") {
                 NodeImport* imp = new NodeImport({}, functions, loc);
                 imp->file = entry.path().string();
@@ -112,7 +70,7 @@ LLVMValueRef NodeImport::generate() {
     }
 
     if(AST::parsed.find(this->file) == AST::parsed.end()) {
-        if(!std::filesystem::exists(this->file)) {
+        if(!fs::exists(this->file)) {
             generator->error("file '" + this->file + "' does not exist!", this->loc);
             return nullptr;
         }
