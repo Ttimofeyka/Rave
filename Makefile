@@ -4,11 +4,11 @@ LLVM_VERSION ?= 16
 
 LLVM_LIB = -lLLVM-$(LLVM_VERSION)
 
-FLAGS = -O2
+FLAGS ?= -O2
 
 LLVM_STATIC ?= 0
 
-COMPILER = $(CXX)
+COMPILER ?= $(CXX)
 
 ifdef OS
 	BIN = rave.exe

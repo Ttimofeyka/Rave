@@ -9,7 +9,7 @@ fi
 
 if [ -f "/etc/arch-release" ]; then
     echo Arch Linux detected.
-    yay -S llvm15 clang15
+    yay -S llvm16 clang16
     echo Done.
     exit 0
 fi
@@ -17,7 +17,7 @@ fi
 
 if [ -f "/etc/debian_version" ]; then
     echo Debian-based detected.
-    $SUDO apt install llvm-15 llvm-15-dev clang-15 gcc-mingw-w64 binutils-mingw-w64
+    $SUDO apt install llvm-16 llvm-16-dev clang-16
     echo Done.
     exit 0
 fi

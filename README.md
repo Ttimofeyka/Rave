@@ -44,24 +44,24 @@ If the installer does not work well on your system, you can try to install all t
 After install write `make` in the Rave directory.
 
 You can compile, for example, "Hello world!" example using `./rave examples/hello_world.rave -o hello_world` in directory with Rave.
+To run this example after compiling, try `./rave examples/hello_world`.
 
 ### Cross-compilation programs from Linux for Windows
 
 You just need to set the compiler "i686-w64-mingw32-gcc-win32" in options.json, and add "-t i686-win32" to your build command.
 
-### Building in Termux
+## Specifications
 
-1. Install llvm-16 from [Termux User Repository](https://github.com/termux-user-repository/tur):
-```bash
-$ pkg i llvm-16
-```
-2. Apply termux-specific patch for LLVM:
-```bash
-$ ./llvm-patch.sh
-```
-3. Build using `make`.
+The specifications is in `specifications` directory - [link](https://github.com/Ttimofeyka/Rave/blob/main/specifications/intro.md).
 
-### Troubleshooting errors with SSE/SSE2/SSE3/AVX
+### Troubleshooting errors
+
+#### Segmentation fault during compile-time
+
+Most often, this error occurs when using incorrect syntax or builtin instructions with incorrect arguments.
+We try to keep these cases to a minimum, but they may still remain.
+
+#### SSE/SSE2/SSE3/AVX as not a recognized features
 
 If you have this kinda logs from compiler:
 
@@ -77,9 +77,7 @@ If you have this kinda logs from compiler:
 
 Then you can just disable SSE/SSE2/SSE3/AVX into options.json or using command line options (-noSSE, -noSSE2, -noSSE3, -noAVX).
 
-## Specifications
-
-The specifications is in `specifications` directory - [link](https://github.com/Ttimofeyka/Rave/blob/main/specifications/intro.md).
+## Useful links
 
 <a href="https://github.com/Ttimofeyka/Rave/blob/main/bindings.md">Bindings</a>
 
