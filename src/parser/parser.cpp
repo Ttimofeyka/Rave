@@ -856,49 +856,59 @@ bool Parser::isSlice() {
 }
 
 bool Parser::isTemplate() {
-    long idx = this->idx;
-    if(this->tokens[this->idx+1]->type == TokType::Number || this->tokens[this->idx+1]->type != TokType::HexNumber
-    || this->tokens[this->idx+1]->type != TokType::FloatNumber || this->tokens[this->idx+1]->type != TokType::String
-    || this->tokens[this->idx+1]->type != TokType::Rarr) return false;
+    const int startIdx = this->idx;
+    const Token* nextToken = this->tokens[this->idx + 1];
+
+    if(nextToken->type == TokType::Number || nextToken->type == TokType::HexNumber ||
+        nextToken->type == TokType::FloatNumber || nextToken->type == TokType::String ||
+        nextToken->type == TokType::Rarr
+    ) return false;
+
     this->next();
-    if(this->peek()->type == TokType::Number || this->peek()->type == TokType::String || this->peek()->type == TokType::HexNumber || this->peek()->type == TokType::FloatNumber) {
-        this->idx = idx;
+    char peekType = this->peek()->type;
+    if(peekType == TokType::Number || peekType == TokType::String ||
+        peekType == TokType::HexNumber || peekType == TokType::FloatNumber) {
+        this->idx = startIdx;
         return false;
     }
+
     this->next();
-    if(this->peek()->type == TokType::Multiply || this->peek()->type == TokType::Comma || this->peek()->type == TokType::Rarr || this->peek()->type == TokType::More || this->peek()->type == TokType::Less) {
-        if(this->peek()->type == TokType::Multiply) {
+    peekType = this->peek()->type;
+    if(peekType == TokType::Multiply || peekType == TokType::Comma ||
+        peekType == TokType::Rarr || peekType == TokType::More || peekType == TokType::Less) {
+        if(peekType == TokType::Multiply) {
             this->next();
-            if(this->peek()->type == TokType::Multiply || this->peek()->type == TokType::Rarr || this->peek()->type == TokType::Less || this->peek()->type == TokType::More || this->peek()->type == TokType::Comma) {
-                this->idx = idx;
+            peekType = this->peek()->type;
+            if(peekType == TokType::Multiply || peekType == TokType::Rarr ||
+                peekType == TokType::Less || peekType == TokType::More || peekType == TokType::Comma) {
+                this->idx = startIdx;
                 return true;
             }
-            this->idx = idx;
-            return false;
         }
-        else if(this->peek()->type == TokType::Comma || this->peek()->type == TokType::More || this->peek()->type == TokType::Less) {
-            this->idx = idx;;
+        else if(peekType == TokType::Comma || peekType == TokType::More || peekType == TokType::Less) {
+            this->idx = startIdx;
             return true;
         }
-        else if(this->peek()->type == TokType::Rarr) {
+        else if(peekType == TokType::Rarr) {
             while(this->peek()->type == TokType::Rarr) {
                 this->next();
                 if(this->peek()->type != TokType::Number) { // TODO: Alias support
-                    this->idx = idx;
+                    this->idx = startIdx;
                     return false;
                 }
                 this->next();
                 this->next();
             }
-            if(this->peek()->type == TokType::Multiply || this->peek()->type == TokType::Less || this->peek()->type == TokType::More || this->peek()->type == TokType::Comma) {
-                this->idx = idx;
+            peekType = this->peek()->type;
+            if(peekType == TokType::Multiply || peekType == TokType::Less ||
+                peekType == TokType::More || peekType == TokType::Comma) {
+                this->idx = startIdx;
                 return true;
             }
-            this->idx = idx;
-            return false;
         }
     }
-    this->idx = idx;
+
+    this->idx = startIdx;
     return false;
 }
 
