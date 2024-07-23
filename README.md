@@ -1,7 +1,10 @@
 <h1 align="center">The Rave Programming Language</h1>
 <p align="center">
 <a href="https://github.com/Ttimofeyka/Rave/releases/latest">
-    <img src="https://img.shields.io/github/v/release/Ttimofeyka/Rave.svg">
+<img src="https://img.shields.io/github/v/release/Ttimofeyka/Rave.svg" alt="Latest Release">
+</a>
+<a href="https://discord.gg/AfEtyArvsM">
+<img src="https://img.shields.io/discord/872555146968698950?color=7289DA&label=Discord&logo=discord&logoColor=white" alt="Discord">
 </a>
 </p>
 <br/>
