@@ -87,12 +87,12 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
         if(fOptions.is_open()) fOptions.close();
     }
     else {
-        std::ofstream fOptions(exePath+"options.json");
+        std::ofstream fOptions(exePath + "options.json");
         #if defined(_WIN32)
             fOptions << "{\n\t\"compiler\": \"clang\"\n}" << std::endl;
         #else
             ShellResult result = exec("which clang");
-            if(result.status != 0) fOptions << "{\n\t\"compiler\": \"gcc\"\n}" << std::endl;
+            if(result.status != 0) fOptions << "{\n\t\"compiler\": \"gcc\",\n\t\"sse\": 3,\n\t\"avx\": true\n}" << std::endl;
             else fOptions << "{\n\t\"compiler\": \"clang\",\n\t\"sse\": 3,\n\t\"avx\": true\n}" << std::endl;
         #endif
         if(fOptions.is_open()) fOptions.close();
