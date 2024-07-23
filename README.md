@@ -61,9 +61,25 @@ $ ./llvm-patch.sh
 ```
 3. Build using `make`.
 
+### Troubleshooting errors with SSE/SSE2/SSE3/AVX
+
+If you have this kinda logs from compiler:
+
+```d
+'+sse' is not a recognized feature for this target (ignoring feature)
+
+'+sse2' is not a recognized feature for this target (ignoring feature)
+
+'+sse3' is not a recognized feature for this target (ignoring feature)
+
+'+avx' is not a recognized feature for this target (ignoring feature)
+```
+
+Then you can just disable SSE/SSE2/SSE3/AVX into options.json or using command line options (-noSSE, -noSSE2, -noSSE3, -noAVX).
+
 ## Specifications
 
-The specifications is in `specifications` directory.
+The specifications is in `specifications` directory - [link](https://github.com/Ttimofeyka/Rave/blob/main/specifications/intro.md).
 
 <a href="https://github.com/Ttimofeyka/Rave/blob/main/bindings.md">Bindings</a>
 
