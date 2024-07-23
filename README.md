@@ -54,14 +54,14 @@ You just need to set the compiler "i686-w64-mingw32-gcc-win32" in options.json, 
 
 The specifications is in `specifications` directory - [link](https://github.com/Ttimofeyka/Rave/blob/main/specifications/intro.md).
 
-### Troubleshooting errors
+## Troubleshooting errors
 
-#### Segmentation fault during compile-time
+### Segmentation fault during compile-time
 
 Most often, this error occurs when using incorrect syntax or builtin instructions with incorrect arguments.
 We try to keep these cases to a minimum, but they may still remain.
 
-#### SSE/SSE2/SSE3/AVX as not a recognized features
+### SSE/SSE2/SSE3/AVX as not a recognized features
 
 If you have this kinda logs from compiler:
 
