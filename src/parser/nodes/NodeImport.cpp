@@ -29,8 +29,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #ifdef _WIN32
 #include <windows.h>
-std::vector<std::string> filesFromDirectory(std::string path)
-{
+std::vector<std::string> filesFromDirectory(std::string path) {
     std::vector<std::string> files;
 
     // check directory exists
@@ -61,20 +60,17 @@ std::vector<std::string> filesFromDirectory(std::string path)
 }
 #else
 #include <dirent.h>
-std::vector<std::string> filesFromDirectory(std::string directory)
-{
+std::vector<std::string> filesFromDirectory(std::string directory) {
     std::vector<std::string> files;
 
     // open directory
     DIR *dir;
     dir = opendir(directory.c_str());
-    if (dir == NULL)
-        return files;
+    if(dir == NULL) return files;
 
     // get file names
     struct dirent *ent;
-    while ((ent = readdir(dir)) != NULL)
-        files.push_back(ent->d_name);
+    while((ent = readdir(dir)) != NULL) files.push_back(ent->d_name);
     closedir(dir);
 
     // delete current and parent directories
@@ -100,90 +96,95 @@ Node* NodeImport::copy() {return new NodeImport(this->file, this->functions, thi
 void NodeImport::check() {this->isChecked = true;}
 
 LLVMValueRef NodeImport::generate() {
-    if(std::count(AST::importedFiles.begin(), AST::importedFiles.end(), this->file) > 0 || this->file == generator->file) return nullptr;
-    std::vector<Node*> buffer;
+    if(std::find(AST::importedFiles.begin(), AST::importedFiles.end(), this->file) != AST::importedFiles.end() || this->file == generator->file) return nullptr;
 
-    if(this->file.find("/.rave") == this->file.size() - 6) {
-        NodeImport* imp = new NodeImport({}, functions, loc);
-        std::vector<std::string> dirFiles = filesFromDirectory(this->file.substr(0, this->file.size()-5));
-        for(int i=0; i<dirFiles.size(); i++) {
-            if(dirFiles[i].find_last_of(this->file) == this->file.size()-5) imp->file = dirFiles[i];
+    if(this->file.find("/.rave") != std::string::npos) {
+        std::string dirPath = this->file.substr(0, this->file.size() - 5);
+        for(const auto& entry : std::filesystem::directory_iterator(dirPath)) {
+            if(entry.path().extension() == ".rave") {
+                NodeImport* imp = new NodeImport({}, functions, loc);
+                imp->file = entry.path().string();
+                imp->generate();
+                delete imp;
+            }
         }
-        imp->generate();
         return nullptr;
     }
 
     if(AST::parsed.find(this->file) == AST::parsed.end()) {
-        if(access(this->file.c_str(), 0) != 0) {
-            generator->error("file '"+this->file+"' does not exists!", this->loc);
+        if(!std::filesystem::exists(this->file)) {
+            generator->error("file '" + this->file + "' does not exist!", this->loc);
             return nullptr;
         }
+
         std::ifstream fContent(this->file);
-        std::string content = "";
-        char c;
-        while(fContent.get(c)) content += c;
+        std::string content((std::istreambuf_iterator<char>(fContent)), std::istreambuf_iterator<char>());
 
-        content = "alias __RAVE_IMPORTED_FROM = \""+generator->file+"\"; "+content;
+        content = "alias __RAVE_IMPORTED_FROM = \"" + generator->file + "\"; " + content;
 
-        auto start = std::chrono::system_clock::now();
-        Lexer* lexer = new Lexer(content, 1);
-        auto end = std::chrono::system_clock::now();
+        auto start = std::chrono::steady_clock::now();
+        Lexer lexer(content, 1);
+        auto end = std::chrono::steady_clock::now();
         Compiler::lexTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
         start = end;
-        Parser* parser = new Parser(lexer->tokens, this->file);
-        parser->parseAll();
-        end = std::chrono::system_clock::now();
+        Parser parser = Parser(lexer.tokens, this->file);
+        parser.parseAll();
+        end = std::chrono::steady_clock::now();
         Compiler::parseTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-        AST::parsed[this->file] = std::vector<Node*>({parser->nodes});
-        for(int j=0; j<AST::parsed[this->file].size(); j++) buffer.push_back(AST::parsed[this->file][j]->copy());
+        AST::parsed[this->file] = parser.nodes;
     }
-    else {
-        for(int j=0; j<AST::parsed[this->file].size(); j++) buffer.push_back(AST::parsed[this->file][j]->copy());
-        if(instanceof<NodeVar>(buffer[0])) {
-            if(((NodeVar*)buffer[0])->name == "__RAVE_IMPORTED_FROM") ((NodeVar*)buffer[0])->value = new NodeString(generator->file, false);
-        }
+
+    std::vector<Node*> buffer;
+    for(const auto& node : AST::parsed[this->file]) buffer.push_back(node->copy());
+
+    if(instanceof<NodeVar>(buffer[0])) {
+        auto* nodeVar = static_cast<NodeVar*>(buffer[0]);
+        if(nodeVar->name == "__RAVE_IMPORTED_FROM") nodeVar->value = new NodeString(generator->file, false);
     }
-    
-    for(int j=0; j<buffer.size(); j++) {
-        if(instanceof<NodeFunc>(buffer[j])) {
-            if(!((NodeFunc*)buffer[j])->isPrivate) buffer[j]->check();
+
+    for(auto* node : buffer) {
+        if(instanceof<NodeFunc>(node)) {
+            auto* nodeFunc = static_cast<NodeFunc*>(node);
+            if(!nodeFunc->isPrivate) node->check();
         }
-        else if(instanceof<NodeNamespace>(buffer[j])) {
-            NodeNamespace* nnamespace = (NodeNamespace*)buffer[j];
-            nnamespace->hidePrivated = true;
-            nnamespace->isImported = true;
-            nnamespace->check();
+        else if(instanceof<NodeNamespace>(node)) {
+            auto* nodeNamespace = static_cast<NodeNamespace*>(node);
+            nodeNamespace->hidePrivated = true;
+            nodeNamespace->isImported = true;
+            nodeNamespace->check();
         }
-        else buffer[j]->check();
+        else node->check();
     }
 
     std::string oldFile = generator->file;
     generator->file = this->file;
-    auto start = std::chrono::system_clock::now();
-    for(int j=0; j<buffer.size(); j++) {
-        if(instanceof<NodeFunc>(buffer[j])) {
-            NodeFunc* nfunc = (NodeFunc*)buffer[j];
-            if(nfunc->isPrivate) continue;
-            nfunc->isExtern = true;
+    auto start = std::chrono::steady_clock::now();
+
+    for(auto* node : buffer) {
+        if(instanceof<NodeFunc>(node)) {
+            auto* nodeFunc = static_cast<NodeFunc*>(node);
+            if(nodeFunc->isPrivate) continue;
+            nodeFunc->isExtern = true;
         }
-        else if(instanceof<NodeVar>(buffer[j])) {
-            NodeVar* nvar = (NodeVar*)buffer[j];
-            if(nvar->isPrivate) continue;
-            nvar->isExtern = true;
+        else if(instanceof<NodeVar>(node)) {
+            auto* nodeVar = static_cast<NodeVar*>(node);
+            if(nodeVar->isPrivate) continue;
+            nodeVar->isExtern = true;
         }
-        else if(instanceof<NodeStruct>(buffer[j])) {
-            NodeStruct* nstruct = (NodeStruct*)buffer[j];
-            nstruct->isImported = true;
+        else if(instanceof<NodeStruct>(node)) {
+            auto* nodeStruct = static_cast<NodeStruct*>(node);
+            nodeStruct->isImported = true;
         }
-        else if(instanceof<NodeBuiltin>(buffer[j])) {
-            NodeBuiltin* nbuiltin = (NodeBuiltin*)buffer[j];
-            nbuiltin->isImport = true;
+        else if(instanceof<NodeBuiltin>(node)) {
+            auto* nodeBuiltin = static_cast<NodeBuiltin*>(node);
+            nodeBuiltin->isImport = true;
         }
-        buffer[j]->generate();
+        node->generate();
     }
-    auto end = std::chrono::system_clock::now();
+
+    auto end = std::chrono::steady_clock::now();
     Compiler::genTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     generator->file = oldFile;
     AST::importedFiles.push_back(this->file);
