@@ -36,7 +36,7 @@ For maximum performance, use the `-Ofast` or `-O3 --noChecks`. Also, don't forge
 * `llvm-16`
 **You can also use LLVM from 11 to 15.**
 * `clang` or `gcc`
-* `clang++` or `g++`
+* C++ compiler (with support of C++17 and higher)
 * Make
 * MinGW (if you need cross-compilation or you are using Windows)
 
@@ -63,24 +63,12 @@ The specifications is in `specifications` directory - [link](https://github.com/
 
 ### Segmentation fault during compile-time
 
-Most often, this error occurs when using incorrect syntax or builtin instructions with incorrect arguments.
-We try to keep these cases to a minimum, but they may still remain.
+Often caused by incorrect syntax or misuse of builtin instructions.
+We're continuously working to minimize these occurrences.
 
 ### SSE/SSE2/SSE3/AVX as not a recognized features
 
-If you have this kinda logs from compiler:
-
-```d
-'+sse' is not a recognized feature for this target (ignoring feature)
-
-'+sse2' is not a recognized feature for this target (ignoring feature)
-
-'+sse3' is not a recognized feature for this target (ignoring feature)
-
-'+avx' is not a recognized feature for this target (ignoring feature)
-```
-
-You can just disable SSE/SSE2/SSE3/AVX into options.json or using command line options (-noSSE, -noSSE2, -noSSE3, -noAVX).
+If you encounter warnings about unrecognized features, disable them in options.json (set `sse` to `0` and `avx` to `false`) or use command-line options: `-noSSE`, `-noSSE2`, `-noSSE3`, `-noAVX`.
 
 ## Useful links
 
