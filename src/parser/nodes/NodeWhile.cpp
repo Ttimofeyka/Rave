@@ -64,12 +64,7 @@ LLVMValueRef NodeWhile::generate() {
     };
 
     auto oldScope = currScope;
-    currScope = new Scope(currScope->funcName, currScope->args, currScope->argVars);
-    currScope->fnEnd = oldScope->fnEnd;
-    currScope->funcHasRet = oldScope->funcHasRet;
-    currScope->aliasTable = oldScope->aliasTable;
-    currScope->localVars = oldScope->localVars;
-    currScope->localScope = oldScope->localScope;
+    currScope = copyScope(currScope);
 
     generator->currBB = whileBlock;
     this->body->generate();

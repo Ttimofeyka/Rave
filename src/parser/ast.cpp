@@ -516,4 +516,14 @@ void Scope::hasChanged(std::string name) {
     if(this->argVars.find(name) != this->argVars.end()) ((NodeVar*)this->argVars[name])->isChanged = true;
 }
 
+Scope* copyScope(Scope* original) {
+    Scope* newScope = new Scope(original->funcName, original->args, original->argVars);
+    newScope->fnEnd = original->fnEnd;
+    newScope->funcHasRet = original->funcHasRet;
+    newScope->localVars = original->localVars;
+    newScope->localScope = original->localScope;
+    newScope->aliasTable = original->aliasTable;
+    return newScope;
+}
+
 std::string typeToString(LLVMTypeRef type) {return std::string(LLVMPrintTypeToString(type));}

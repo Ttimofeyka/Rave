@@ -27,12 +27,7 @@ LLVMValueRef NodeDefer::generate() {
         generator->currBB = currScope->fnEnd;
 
         auto oldScope = currScope;
-        currScope = new Scope(oldScope->funcName, oldScope->args, oldScope->argVars);
-        currScope->fnEnd = oldScope->fnEnd;
-        currScope->funcHasRet = oldScope->funcHasRet;
-        currScope->localVars = oldScope->localVars;
-        currScope->localScope = oldScope->localScope;
-        currScope->aliasTable = oldScope->aliasTable;
+        currScope = copyScope(oldScope);
 
         instruction->generate();
 
