@@ -918,7 +918,7 @@ bool Parser::isTemplate() {
 }
 
 Node* Parser::parsePrefix(std::string f) {
-    const std::vector<char> operators = {
+    static const std::vector<char> operators = {
         TokType::GetPtr,
         TokType::Multiply,
         TokType::Minus,
