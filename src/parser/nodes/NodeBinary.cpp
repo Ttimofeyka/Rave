@@ -130,7 +130,8 @@ LLVMValueRef Binary::div(LLVMValueRef one, LLVMValueRef two, long loc) {
     LLVMValueRef twoCasted = two;
     if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMGetTypeKind(LLVMTypeOf(two))) {
         if(LLVMTypeOf(one) != LLVMTypeOf(two)) {
-            oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;
+            oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc);
+            twoCasted = two;
         }
     }
     else {oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;}
@@ -259,7 +260,8 @@ Type* NodeBinary::getType() {
             if(firstType == nullptr) return secondType;
             if(secondType == nullptr) return firstType;
             return (firstType->getSize() >= secondType->getSize()) ? firstType : secondType;
-    } return nullptr;
+    }
+    return nullptr;
 }
 
 LLVMValueRef NodeBinary::generate() {

@@ -20,7 +20,7 @@ public:
     std::string linkName;
     Node* value;
     std::vector<DeclarMod> mods;
-    long loc;
+    int loc;
     Type* type;
     std::vector<std::string> namespacesNames;
 
@@ -36,8 +36,8 @@ public:
     bool isNoOperators = false;
     bool isNoCopy = false;
 
-    NodeVar(std::string name, Node* value, bool isExtern, bool isConst, bool isGlobal, std::vector<DeclarMod> mods, long loc, Type* type, bool isVolatile = false);
-    NodeVar(std::string name, Node* value, bool isExtern, bool isConst, bool isGlobal, std::vector<DeclarMod> mods, long loc, Type* type, bool isVolatile, bool isChanged, bool noZeroInit);
+    NodeVar(std::string name, Node* value, bool isExtern, bool isConst, bool isGlobal, std::vector<DeclarMod> mods, int loc, Type* type, bool isVolatile = false);
+    NodeVar(std::string name, Node* value, bool isExtern, bool isConst, bool isGlobal, std::vector<DeclarMod> mods, int loc, Type* type, bool isVolatile, bool isChanged, bool noZeroInit);
 
     LLVMValueRef generate() override;
     Type* getType() override;

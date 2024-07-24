@@ -20,7 +20,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/lexer/lexer.hpp"
 #include "../../include/parser/parser.hpp"
 
-NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, bool isGlobal, std::vector<DeclarMod> mods, long loc, Type* type, bool isVolatile) {
+NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, bool isGlobal, std::vector<DeclarMod> mods, int loc, Type* type, bool isVolatile) {
     this->name = name;
     this->origName = name;
     this->linkName = this->name;
@@ -40,7 +40,7 @@ NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, boo
     }
 }
 
-NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, bool isGlobal, std::vector<DeclarMod> mods, long loc, Type* type, bool isVolatile, bool isChanged, bool noZeroInit) {
+NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, bool isGlobal, std::vector<DeclarMod> mods, int loc, Type* type, bool isVolatile, bool isChanged, bool noZeroInit) {
     this->name = name;
     this->origName = name;
     this->linkName = this->name;
