@@ -384,9 +384,10 @@ namespace std {
                             };
                             @if(@tEquals(@getCurrArgType(), std::u8string)) {
                                 std::u8string u8s = @getCurrArg(std::u8string);
-                                for(int i=0; i<u8s.bytes; i+=1) {
-                                    std::sprintBuffer.add(u8s.data[i]);
+                                if(u8s.data != null) {
+                                    for(int i=0; i<u8s.bytes; i+=1) std::sprintBuffer.add(u8s.data[i]);
                                 }
+                                else std::sprintBuffer.appendC("null");
                             };
                             @if(@tEquals(@getCurrArgType(), int*)) {
                                 uint* utf8Text = @getCurrArg(uint*);
@@ -412,7 +413,9 @@ namespace std {
                                 }
                             };
                             @if(@tEquals(@getCurrArgType(), char*)) {
-                                std::sprintBuffer.appendC(@getCurrArg(char*));
+                                char* str = @getCurrArg(char*);
+                                if(str != null) std::sprintBuffer.appendC(str);
+                                else std::sprintBuffer.appendC("null");
                             };
                         };
                         @if(@tEquals(@getCurrArgType(), char)) {
@@ -421,7 +424,8 @@ namespace std {
                     };
                     @if(@tEquals(@getCurrArgType(), std::string)) {
                         std::string s = @getCurrArg(std::string);
-                        std::sprintBuffer.append(s);
+                        if(s.data != null) std::sprintBuffer.append(s);
+                        else std::sprintBuffer.appendC("null");
                     };
                 };
                 @if(@tEquals(@getCurrArgType(), double)) {
@@ -511,9 +515,10 @@ namespace std {
                             };
                             @if(@tEquals(@getCurrArgType(), std::u8string)) {
                                 std::u8string u8s = @getCurrArg(std::u8string);
-                                for(int i=0; i<u8s.bytes; i+=1) {
-                                    result.add(u8s.data[i]);
+                                if(u8s.data != null) {
+                                    for(int i=0; i<u8s.bytes; i+=1) result.add(u8s.data[i]);
                                 }
+                                else result.appendC("null");
                             };
                             @if(@tEquals(@getCurrArgType(), int*)) {
                                 uint* utf8Text = @getCurrArg(uint*);
@@ -539,7 +544,9 @@ namespace std {
                                 }
                             };
                             @if(@tEquals(@getCurrArgType(), char*)) {
-                                result.appendC(@getCurrArg(void*));
+                                char* str = @getCurrArg(char*);
+                                if(str != null) result.appendC(str);
+                                else result.appendC("null");
                             };
                         };
                         @if(@tEquals(@getCurrArgType(), char)) {
@@ -548,7 +555,8 @@ namespace std {
                     };
                     @if(@tEquals(@getCurrArgType(), std::string)) {
                         std::string s = @getCurrArg(std::string);
-                        result.append(s);
+                        if(s.data != null) result.append(s);
+                        else result.appendC("null");
                     };
                 };
                 @if(@tEquals(@getCurrArgType(), double)) {
