@@ -65,6 +65,8 @@ LLVMValueRef NodeWhile::generate() {
 
     auto oldScope = currScope;
     currScope = new Scope(currScope->funcName, currScope->args, currScope->argVars);
+    currScope->fnEnd = oldScope->fnEnd;
+    currScope->funcHasRet = oldScope->funcHasRet;
 
     // Copy all variables to new scope
     for(auto &&kv : oldScope->localVars) {
