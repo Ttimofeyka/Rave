@@ -12,6 +12,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <vector>
 #include <stdint.h>
 #include <regex>
+#include <unordered_set>
 
 std::string Lexer::replaceAllEscapes(std::string buffer, bool isChar) {
     std::string str = replaceAll(replaceAll(replaceAll(replaceAll(replaceAll(buffer, "\\r", "\r"), "\\n", "\n"), "\\'", "\'"), "\\\"", "\""), "\\t", "\t");
@@ -19,39 +20,16 @@ std::string Lexer::replaceAllEscapes(std::string buffer, bool isChar) {
 }
 
 std::string Lexer::getIdentifier() {
+    static std::unordered_set<char> specialChars = {
+        '+', '-', '*', '/', '>', '<', ',', '.', ';', '(', ')', '[', ']', '&',
+        '\'', '"', '~', '=', '{', '}', '!', ' ', '\n', '\r', ':', '@'
+    };
+
     std::string buffer = "";
-    while(
-        peek() != '+' &&
-        peek() != '-' &&
-        peek() != '*' &&
-        peek() != '/' &&
-        peek() != '>' &&
-        peek() != '<' &&
-        peek() != ',' &&
-        peek() != '.' &&
-        peek() != ';' &&
-        peek() != '(' &&
-        peek() != ')' &&
-        peek() != '[' &&
-        peek() != ']' &&
-        peek() != '&' &&
-        peek() != '\'' &&
-        peek() != '"' &&
-        peek() != '~' &&
-        peek() != '=' &&
-        peek() != '{' &&
-        peek() != '}' &&
-        peek() != '!' &&
-        peek() != ' ' &&
-        peek() != '\n' &&
-        peek() != '\r' &&
-        peek() != '\r' &&
-        peek() != ':' &&
-        peek() != '@'
-    ) {
+    while(specialChars.find(peek()) == specialChars.end()) {
         buffer += peek();
         idx += 1;
-        if(peek() == ':' && this->text[this->idx+1] == ':') {
+        if(peek() == ':' && this->text[this->idx + 1] == ':') {
             buffer += "::";
             idx += 2;
         }
@@ -64,7 +42,7 @@ std::string Lexer::getString() {
     std::string buffer, buffer2 = "";
     while(peek() != '"') {
         if(peek() == '\\' && text[idx+1] == '"') {buffer += "\""; idx += 2;}
-        else if(peek() == '\\' && isdigit(text[idx+1])) {
+        else if(peek() == '\\' && isdigit(text[idx + 1])) {
             buffer2 += peek(); idx += 1;
             while(isdigit(peek())) {buffer2 += peek(); idx += 1;}
             buffer += replaceAllEscapes(buffer2);
