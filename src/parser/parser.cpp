@@ -315,9 +315,9 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
     if(this->peek()->value == "operator") return this->parseOperatorOverload(type, s);
     if(this->peek()->value == "~" && this->tokens[this->idx+1]->value == "with") {this->next(); name = "~with";}
     else {
-        if(this->peek()->type != TokType::Identifier) this->error("a function name must be identifier!");
+        if(this->peek()->type != TokType::Identifier) this->error("a declaration name must be identifier!");
         name = this->peek()->value;
-        if(isBasicType(name)) this->error("a function name cannot be named as basic types!");
+        if(isBasicType(name)) this->error("a declaration cannot be named as basic types!");
     }
     loc = this->peek()->line;
 
@@ -834,8 +834,8 @@ Type* Parser::parseType(bool cannotBeTemplate) {
                 tTypes.push_back(this->parseType(cannotBeTemplate));
                 if(this->peek()->type == TokType::Comma) this->next();
             } this->next();
-            for(int i=0; i<tTypes.size(); i++) tTypesString += tTypes[i]->toString()+",";
-            ty = new TypeStruct(ty->toString()+"<"+tTypesString.substr(0,tTypesString.size()-1)+">",tTypes);
+            for(int i=0; i<tTypes.size(); i++) tTypesString += tTypes[i]->toString() + ",";
+            ty = new TypeStruct(ty->toString() + "<" + tTypesString.substr(0, tTypesString.size() - 1) + ">", tTypes);
             if(this->peek()->type == TokType::Rpar) ty = new TypeCall(((TypeStruct*)ty)->name,this->parseFuncCallArgs());
         }
     }
@@ -896,7 +896,8 @@ bool Parser::isTemplate() {
         else if(peekType == TokType::Rarr) {
             while(this->peek()->type == TokType::Rarr) {
                 this->next();
-                if(this->peek()->type != TokType::Number) { // TODO: Alias support
+                // TODO: Alias support
+                if(this->peek()->type != TokType::Number) {
                     this->idx = startIdx;
                     return false;
                 }
@@ -1204,7 +1205,7 @@ Node* Parser::parseStmt(std::string f) {
                 continue;
             }
 
-            if(this->peek()->type != TokType::Identifier) this->error("expected identifier");
+            if(this->peek()->type != TokType::Identifier) this->error("expected identifier!");
             this->next();
 
             std::string name = this->peek()->value;

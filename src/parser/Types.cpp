@@ -96,7 +96,7 @@ TypeConst::TypeConst(Type* instance) {this->instance = instance;}
 Type* TypeConst::copy() {return new TypeConst(this->instance->copy());}
 Type* TypeConst::check(Type* parent) {this->instance->check(nullptr); return nullptr;}
 int TypeConst::getSize() {return this->instance->getSize();}
-std::string TypeConst::toString() {return "const("+this->instance->toString()+")";}
+std::string TypeConst::toString() {return "const(" + this->instance->toString() + ")";}
 
 // TypeStruct
 TypeStruct::TypeStruct(std::string name) {

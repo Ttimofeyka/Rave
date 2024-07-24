@@ -324,14 +324,13 @@ LLVMValueRef LLVMGen::byIndex(LLVMValueRef value, std::vector<LLVMValueRef> inde
 
 void LLVMGen::addAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, long loc, unsigned long value) {
     int id = LLVMGetEnumAttributeKindForName(name.c_str(), name.size());
-    if(id == 0) this->error("unknown attribute '"+name+"'!",loc);
+    if(id == 0) this->error("unknown attribute '" + name + "'!",loc);
     LLVMAddAttributeAtIndex(ptr, index, LLVMCreateEnumAttribute(generator->context, id, value));
 }
 
-
 void LLVMGen::addStrAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, long loc, std::string value) {
     LLVMAttributeRef attr = LLVMCreateStringAttribute(generator->context,name.c_str(),name.size(),value.c_str(),value.size());
-    if(attr == nullptr) this->error("unknown attribute '"+name+"'!",loc);
+    if(attr == nullptr) this->error("unknown attribute '" + name + "'!",loc);
     LLVMAddAttributeAtIndex(ptr, index, attr);
 }
 
