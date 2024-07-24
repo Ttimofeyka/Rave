@@ -586,7 +586,7 @@ Node* Parser::parseAtom(std::string f) {
             return new NodeAsm(line, true, type, additions, args, t->line);
         }
         else if(this->peek()->type == TokType::Less) {
-            if(this->tokens[this->idx+1]->type == TokType::More || isBasicType(this->tokens[this->idx+1]->value) || this->tokens[this->idx+2]->type == TokType::Less || this->tokens[this->idx+2]->type == TokType::More || this->tokens[this->idx+2]->type == TokType::Comma || this->tokens[this->idx+2]->type == TokType::Multiply || this->tokens[this->idx+2]->type == TokType::Rarr) {
+            if(isTemplate()) {
                 this->next();
                 std::string all = t->value + "<";
                 int countOfL = 0;
@@ -602,9 +602,8 @@ Node* Parser::parseAtom(std::string f) {
         }
         else if(this->peek()->type == TokType::Rpar) {
             this->idx -= 1;
-            if(isDefinedLambda()) {
-                return parseLambda();
-            } else this->idx += 1;
+            if(isDefinedLambda()) return parseLambda();
+            else this->idx += 1;
         }
         return new NodeIden(t->value, this->peek()->line);
     }
@@ -1069,10 +1068,10 @@ Node* Parser::parseFor(std::string f) {
 
     std::vector<Node*> presets;
     std::vector<Node*> afters;
-    NodeBinary* cond;
+    Node* cond;
     int curr = 0;
 
-    if(this->peek()->type == TokType::Semicolon && this->tokens[this->idx+1]->type == TokType::Semicolon) {
+    if(this->peek()->type == TokType::Semicolon && this->tokens[this->idx + 1]->type == TokType::Semicolon) {
         // Infinite loop
         this->idx += 3;
 
@@ -1103,7 +1102,7 @@ Node* Parser::parseFor(std::string f) {
                 else presets.push_back(new NodeVar(name, nullptr, false, false, false, {}, this->peek()->line, type));
             }
         }
-        else if(curr == 1) cond = (NodeBinary*)this->parseExpr(f);
+        else if(curr == 1) cond = this->parseExpr(f);
         else afters.push_back(this->parseExpr(f));
     }
     this->next();
@@ -1175,13 +1174,7 @@ Node* Parser::parseStmt(std::string f) {
         if(this->peek()->type != TokType::Identifier) {
             if(this->peek()->type == TokType::Multiply) {this->idx -= 1; return this->parseDecl(f);}
             else if(this->peek()->type == TokType::Rarr || this->peek()->type == TokType::Rpar) {
-                if(
-                    id == "void" || id == "bool" || id == "int" || id == "uint" ||
-                    id == "short" || id == "ushort" || id == "char" || id == "uchar" ||
-                    id == "long" || id == "ulong" || id == "cent" || id == "ucent"|| id == "const"
-                    || id == "half" || id == "bhalf" || id == "int4" || id == "float8" ||
-                    id == "float" || id == "double"
-                ) {this->idx -= 1; return this->parseDecl(f);}
+                if(isBasicType(id)) {this->idx -= 1; return this->parseDecl(f);}
             } this->idx -= 1;
             if(this->peek()->type == TokType::Builtin) return this->parseBuiltin(f);
             Node* expr = this->parseExpr(f);
@@ -1352,12 +1345,7 @@ std::vector<Node*> Parser::parseFuncCallArgs() {
     else this->error("expected token '('!");
     while(this->peek()->type != TokType::Lpar) {
         if(this->peek()->type == TokType::Identifier) {
-            if(this->peek()->value == "bool" || this->peek()->value == "char" || this->peek()->value == "uchar"
-             ||this->peek()->value == "short" || this->peek()->value == "ushort" || this->peek()->value == "int"
-             ||this->peek()->value == "uint" || this->peek()->value == "long" || this->peek()->value == "ulong"
-             ||this->peek()->value == "cent" || this->peek()->value == "ucent" || this->peek()->value == "void"
-             ||this->peek()->value == "half" || this->peek()->value == "bhalf" || this->peek()->value == "int4"
-             ||this->peek()->value == "float8") {
+            if(isBasicType(this->peek()->value)) {
                 if(this->isDefinedLambda()) buffer.push_back(this->parseLambda());
                 else buffer.push_back(new NodeType(this->parseType(), this->peek()->line));
             }

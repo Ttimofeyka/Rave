@@ -16,7 +16,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/ast.hpp"
 #include <iostream>
 
-NodeFor::NodeFor(std::vector<Node*> presets, NodeBinary* cond, std::vector<Node*> afters, NodeBlock* block, std::string funcName, long loc) {
+NodeFor::NodeFor(std::vector<Node*> presets, Node* cond, std::vector<Node*> afters, NodeBlock* block, std::string funcName, long loc) {
     this->presets = std::vector<Node*>(presets);
     this->cond = cond;
     this->afters = std::vector<Node*>(afters);
