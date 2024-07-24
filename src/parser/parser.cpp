@@ -1193,7 +1193,7 @@ Node* Parser::parseStmt(std::string f) {
         while(this->peek()->type != TokType::Lpar) {
             if(this->peek()->type == TokType::Builtin) {
                 NodeBuiltin* nb = (NodeBuiltin*)this->parseBuiltin(f);
-                mods.push_back(DeclarMod{.name = "@"+nb->name, .value = "", .genValue = nb});
+                mods.push_back(DeclarMod{.name = "@" + nb->name, .value = "", .genValue = nb});
                 if(this->peek()->type == TokType::Comma) this->next();
                 continue;
             }
@@ -1293,26 +1293,26 @@ Node* Parser::parseSlice(Node* base, std::string f) {
 }
 
 bool Parser::isDefinedLambda(bool updateIdx) {
-    if(this->tokens[this->idx+1]->type != TokType::Rpar && this->tokens[this->idx+1]->type != TokType::Multiply) return false;
-    long oldIdx = this->idx;
-    this->next();
+    const auto& nextToken = this->tokens[this->idx + 1];
+    if(nextToken->type != TokType::Rpar && nextToken->type != TokType::Multiply) return false;
 
-    while(this->peek()->type == TokType::Multiply) this->next();
-
+    int oldIdx = this->idx;
     int cntOfRpars = 1;
-    while(this->peek()->type != TokType::Lpar) {
-        this->next();
-        if(this->peek()->type == TokType::Lpar) {
-            cntOfRpars -= 1;
-            if(cntOfRpars == 0) break;
-            this->next();
+
+    for(int i=this->idx + 2; i<this->tokens.size(); i++) {
+        const auto& token = this->tokens[i];
+        
+        if(token->type == TokType::Lpar) {
+            if(--cntOfRpars == 0) {
+                bool result = (i + 1 < this->tokens.size() && (this->tokens[i + 1]->type == TokType::Rbra || this->tokens[i + 1]->type == TokType::ShortRet));
+                if(!updateIdx) this->idx = i;
+                return result;
+            }
         }
-        else if(this->peek()->type == TokType::Rpar) cntOfRpars += 1;
+        else if (token->type == TokType::Rpar) ++cntOfRpars;
     }
-    this->next();
-    bool result = (this->peek()->type == TokType::Rbra || this->peek()->type == TokType::ShortRet);
-    if(updateIdx) this->idx = oldIdx;
-    return result;
+
+    return false;
 }
 
 Node* Parser::parseLambda() {
