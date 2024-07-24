@@ -317,6 +317,7 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
     else {
         if(this->peek()->type != TokType::Identifier) this->error("a function name must be identifier!");
         name = this->peek()->value;
+        if(isBasicType(name)) this->error("a function name cannot be named as basic types!");
     }
     loc = this->peek()->line;
 
