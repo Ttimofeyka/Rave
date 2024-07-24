@@ -88,12 +88,29 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
     }
     else {
         std::ofstream fOptions(exePath + "options.json");
+        std::string __features = LLVMGetHostCPUFeatures();
+        int sse = 3;
+        int avx = 2;
+
+        if(__features.find("+sse3") == std::string::npos) {
+            if(__features.find("+sse2") == std::string::npos) {
+                if(__features.find("+sse") == std::string::npos) sse = 0;
+                else sse = 1;
+            }
+            else sse = 2;
+        }
+        
+        if(__features.find("+avx2") == std::string::npos) {
+            if(__features.find("+avx") == std::string::npos) avx = 0;
+            else avx = 1;
+        }
+
         #if defined(_WIN32)
-            fOptions << "{\n\t\"compiler\": \"clang\"\n}" << std::endl;
+            fOptions << "{\n\t\"compiler\": \"gcc\",\n\t\"sse\": " + std::to_string(sse) + ",\n\t\"avx\": " + std::to_string(avx) + "\n}" << std::endl;
         #else
             ShellResult result = exec("which clang");
-            if(result.status != 0) fOptions << "{\n\t\"compiler\": \"gcc\",\n\t\"sse\": 3,\n\t\"avx\": true\n}" << std::endl;
-            else fOptions << "{\n\t\"compiler\": \"clang\",\n\t\"sse\": 3,\n\t\"avx\": true\n}" << std::endl;
+            if(result.status != 0) fOptions << "{\n\t\"compiler\": \"gcc\",\n\t\"sse\": " + std::to_string(sse) + ",\n\t\"avx\": " + std::to_string(avx) + "\n}" << std::endl;
+            else fOptions << "{\n\t\"compiler\": \"clang\",\n\t\"sse\": " + std::to_string(sse) + ",\n\t\"avx\": " + std::to_string(avx) + "\n}" << std::endl;
         #endif
         if(fOptions.is_open()) fOptions.close();
 
@@ -330,11 +347,12 @@ void Compiler::compile(std::string file) {
     if(!settings.isNative) {
         Compiler::features = "";
         int sse = Compiler::options["sse"].template get<int>();
-        bool avx = Compiler::options["avx"].template get<bool>();
+        int avx = Compiler::options["avx"].template get<int>();
         if(sse > 0 && settings.hasSSE) Compiler::features += "+sse,";
         if(sse > 1 && settings.hasSSE2) Compiler::features += "+sse2,";
         if(sse > 2 && settings.hasSSE3) Compiler::features += "+sse3,";
-        if(avx && settings.hasAVX) Compiler::features += "+avx,";
+        if(avx > 0 && settings.hasAVX) Compiler::features += "+avx,";
+        if(avx > 1 && settings.hasAVX2) Compiler::features += "+avx,";
         Compiler::features = Compiler::features.substr(0, Compiler::features.length() - 1);
     }
     else Compiler::features = std::string(LLVMGetHostCPUFeatures());

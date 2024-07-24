@@ -131,6 +131,7 @@ typedef struct genSettings {
     bool hasSSE2 = true;
     bool hasSSE3 = true;
     bool hasAVX = true;
+    bool hasAVX2 = true;
     bool isNative = false;
     bool noFastMath = false;
 

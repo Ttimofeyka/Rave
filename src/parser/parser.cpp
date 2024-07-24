@@ -274,7 +274,7 @@ Node* Parser::parseOperatorOverload(Type* type, std::string s) {
 
 Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
     std::vector<DeclarMod> mods = _mods;
-    long loc = 0;
+    int loc = 0;
     std::string name = "";
     bool isExtern = false;
     bool isVolatile = false;
@@ -287,14 +287,15 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
         while(this->peek()->type != TokType::Lpar) {
             if(this->peek()->type == TokType::Builtin) {
                 NodeBuiltin* nb = (NodeBuiltin*)this->parseBuiltin();
-                mods.push_back(DeclarMod{.name = "@"+nb->name, .value = "", .genValue = nb});
+                mods.push_back(DeclarMod{.name = "@" + nb->name, .value = "", .genValue = nb});
                 if(this->peek()->type == TokType::Comma) this->next();
                 continue;
             }
             std::string name = this->peek()->value; this->next();
             std::string value = "";
             if(this->peek()->type == TokType::ValSel) {
-                this->next(); value = this->peek()->value; this->next();
+               value = this->tokens[this->idx + 1]->value;
+               this->idx += 2;
             }
             mods.push_back(DeclarMod{.name = name, .value = value});
             if(this->peek()->type == TokType::Comma) this->next();
@@ -303,7 +304,7 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
         this->next();
     }
 
-    long currIdx = this->idx;
+    int currIdx = this->idx;
     auto type = this->parseType();
     if(instanceof<TypeCall>(type)) {
         this->idx = currIdx;
@@ -376,7 +377,7 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
             if(instanceof<TypeVoid>(type)) block->nodes.push_back(n);
             else block->nodes.push_back(new NodeRet(n, name, this->peek()->line));
         }
-        return new NodeFunc(name,{},block,isExtern,mods,loc,type,templates);
+        return new NodeFunc(name, {}, block, isExtern, mods, loc, type, templates);
     }
     else if(this->peek()->type == TokType::ShortRet) {
         this->next();

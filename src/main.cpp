@@ -47,6 +47,7 @@ genSettings analyzeArguments(std::vector<std::string>& arguments) {
         else if(arguments[i] == "-noSSE2") settings.hasSSE2 = false;
         else if(arguments[i] == "-noSSE3") settings.hasSSE3 = false;
         else if(arguments[i] == "-noAVX") settings.hasAVX = false;
+        else if(arguments[i] == "-noAVX2") settings.hasAVX2 = false;
         else if(arguments[i] == "-noFastMath") settings.noFastMath = true;
         else if(arguments[i][0] == '-') settings.linkParams += arguments[i] + " ";
         else files.push_back(arguments[i]);
@@ -83,6 +84,7 @@ int main(int argc, char** argv) {
         + "\n\t-noSSE2 - Disable SSE2."
         + "\n\t-noSSE3 - Disable SSE3."
         + "\n\t-noAVX - Disable AVX."
+        + "\n\t-noAVX2 - Disable AVX2."
         + "\n\t-noFastMath - Disable fast math."
         + "\n\t-c - Do not create an output file (only object files)."
         + "\nFor bug reporting, you can use Issues at https://github.com/Ttimofeyka/Rave.";

@@ -68,7 +68,7 @@ We're continuously working to minimize these occurrences.
 
 ### SSE/SSE2/SSE3/AVX as not a recognized features
 
-If you encounter warnings about unrecognized features, disable them in options.json (set `sse` to `0` and `avx` to `false`) or use command-line options: `-noSSE`, `-noSSE2`, `-noSSE3`, `-noAVX`.
+If you encounter warnings about unrecognized features, disable them in options.json (set `sse` and `avx` to `0`) or use command-line options: `-noSSE`, `-noSSE2`, `-noSSE3`, `-noAVX`, `-noAVX2`.
 
 ## Useful links
 
