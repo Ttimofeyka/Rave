@@ -20,6 +20,8 @@ int main {
 } => (a+b-c-d);
 ```
 
+Division by zero is **undefined behavior** regardless of the types of expression.
+
 ## Getting a pointer to an element
 
 The & operator is used to get a pointer to a variable, function, or structure element.
