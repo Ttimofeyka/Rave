@@ -314,7 +314,10 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
     }
     if(this->peek()->value == "operator") return this->parseOperatorOverload(type, s);
     if(this->peek()->value == "~" && this->tokens[this->idx+1]->value == "with") {this->next(); name = "~with";}
-    else name = this->peek()->value;
+    else {
+        if(this->peek()->type != TokType::Identifier) this->error("a function name must be identifier!");
+        name = this->peek()->value;
+    }
     loc = this->peek()->line;
 
     this->next();
@@ -989,6 +992,7 @@ std::vector<Node*> Parser::parseIndexes() {
 }
 
 Node* Parser::parseCall(Node* func) {
+    if(instanceof<NodeInt>(func)) this->error("a function name must be as identifier!");
     return new NodeCall(this->peek()->line, func, this->parseFuncCallArgs());
 }
 
