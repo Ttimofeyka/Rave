@@ -433,9 +433,9 @@ LLVMValueRef NodeBinary::generate() {
     }
 
     LLVMValueRef vFirst = this->first->generate();
-    std::string vFirstStr = std::string(LLVMPrintTypeToString(LLVMTypeOf(vFirst)));
+    std::string vFirstStr = typeToString(LLVMTypeOf(vFirst));
     LLVMValueRef vSecond = this->second->generate();
-    std::string vSecondStr = std::string(LLVMPrintTypeToString(LLVMTypeOf(vSecond)));
+    std::string vSecondStr = typeToString(LLVMTypeOf(vSecond));
 
     if(instanceof<TypeStruct>(this->first->getType()) || instanceof<TypePointer>(this->first->getType())
      && !instanceof<TypeStruct>(this->second->getType()) && !instanceof<TypePointer>(this->second->getType())) {
