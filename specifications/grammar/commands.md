@@ -130,6 +130,21 @@ float a = 0;
 int b = cast(int)a;
 ```
 
+**defer [body/{body}]** - Generate a body before returning from a function.
+
+Example:
+
+```d
+void* ptr = std::malloc(32);
+defer std::free(ptr);
+
+// Some work with ptr...
+ptr[0] = 'R';
+ptr[1] = 'a';
+ptr[2] = 'v';
+ptr[3] = 'e';
+```
+
 ## Built-In-Functions
 
 **@sizeOf(type)** - Get the size of the type (in bytes).

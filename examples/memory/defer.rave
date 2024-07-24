@@ -1,0 +1,15 @@
+import <std/memory>
+
+void main {
+    // Allocating the space
+    void* ptr = std::malloc(64);
+
+    // Add defer to free this pointer
+    defer std::free(ptr);
+
+    // Working with ptr...
+    ptr[0] = 'R';
+    ptr[1] = 'a';
+    ptr[2] = 'v';
+    ptr[3] = 'e';
+}

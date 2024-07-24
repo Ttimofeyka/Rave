@@ -49,6 +49,7 @@ with this file, You can obtain one at htypep://mozilla.org/MPL/2.0/.
 #include "../include/parser/nodes/NodeLambda.hpp"
 #include "../include/parser/nodes/NodeFor.hpp"
 #include "../include/parser/nodes/NodeForeach.hpp"
+#include "../include/parser/nodes/NodeDefer.hpp"
 #include <inttypes.h>
 #include <sstream>
 
@@ -787,7 +788,7 @@ Type* Parser::parseTypeAtom() {
         if(this->peek()->type == TokType::Rbra) return new TypeBuiltin(info->value, args, parseBlock(""));
         return new TypeBuiltin(info->value, args, new NodeBlock({}));
     }
-    else this->error("expected a typename, not '"+this->peek()->value+"'!");
+    else this->error("expected a typename, not '" + this->peek()->value + "'!");
     return nullptr;
 }
 
@@ -1054,7 +1055,7 @@ Node* Parser::parseExpr(std::string f) {
 }
 
 Node* Parser::parseWhile(std::string f) {
-    long line = this->peek()->line;
+    int line = this->peek()->line;
     this->next();
 
     Node* cond = nullptr;
@@ -1065,8 +1066,13 @@ Node* Parser::parseWhile(std::string f) {
         if(this->peek()->type == TokType::Lpar) this->next();
     }
 
-    auto body_ = parseStmt(f);
-    return new NodeWhile(cond, body_, line, f);
+    return new NodeWhile(cond, parseStmt(f), line, f);
+}
+
+Node* Parser::parseDefer(std::string f) {
+    int line = this->peek()->line;
+    this->next();
+    return new NodeDefer(parseStmt(f), line);
 }
 
 Node* Parser::parseFor(std::string f) {
@@ -1170,6 +1176,7 @@ Node* Parser::parseStmt(std::string f) {
         if(id == "foreach") return this->parseForeach(f);
         if(id == "break") return this->parseBreak();
         if(id == "switch") return this->parseSwitch(f);
+        if(id == "defer") return this->parseDefer(f);
         if(id == "extern" || id == "volatile") return this->parseDecl(f);
         if(this->tokens[this->idx+1]->type == TokType::Rarr && this->tokens[this->idx+4]->type != TokType::Equ
            && this->tokens[this->idx+4]->type != TokType::Lpar && this->tokens[this->idx+4]->type != TokType::Rpar

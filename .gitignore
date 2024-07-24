@@ -43,6 +43,7 @@ examples/math/sum_of_input
 examples/multithread/thread_test
 examples/network/socket_server
 examples/time/test_time
+examples/memory/defer
 
 std/*.o
 src/*.o
