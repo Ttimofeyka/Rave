@@ -27,11 +27,8 @@ Type* NodeGet::getType() {
     TypeStruct* ts = nullptr;
 
     if(instanceof<TypeStruct>(baseType)) ts = static_cast<TypeStruct*>(baseType);
-    else if (instanceof<TypePointer>(baseType)) ts = static_cast<TypeStruct*>(static_cast<TypePointer*>(baseType)->instance);
-    else {
-        generator->error("structure '" + baseType->toString() + "' does not exist!", loc);
-        return nullptr;
-    }
+    else if(instanceof<TypePointer>(baseType)) ts = static_cast<TypeStruct*>(static_cast<TypePointer*>(baseType)->instance);
+    else return baseType;
 
     if(!ts) {
         generator->error("type '" + baseType->toString() + "' is not a structure!", loc);

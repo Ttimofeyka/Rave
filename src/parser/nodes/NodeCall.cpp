@@ -326,7 +326,7 @@ LLVMValueRef NodeCall::generate() {
             if(instanceof<TypeStruct>(var->type)) structure = (TypeStruct*)var->type;
             else if(instanceof<TypePointer>(var->type) && instanceof<TypeStruct>(((TypePointer*)var->type)->instance)) structure = (TypeStruct*)((TypePointer*)var->type)->instance;
             else {
-                generator->error("variable '" + idenFunc->name + "' doesn't have structure as type!", this->loc);
+                generator->error("variable '" + idenFunc->name + "' does not have structure as type!", this->loc);
                 return nullptr;
             }
 
