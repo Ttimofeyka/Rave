@@ -32,8 +32,8 @@ NodeCall::NodeCall(long loc, Node* func, std::vector<Node*> args) {
 
 Type* NodeCall::getType() {
     if(instanceof<NodeIden>(this->func)) {
-        if(AST::funcTable.find((((NodeIden*)this->func)->name + typesToString(this->getTypes()))) != AST::funcTable.end()) return AST::funcTable[(((NodeIden*)this->func)->name+typesToString(this->getTypes()))]->getType();
-        else if(!currScope->has(((NodeIden*)this->func)->name)) return new TypeVoid(); // TODO: Maybe rework?
+        if(AST::funcTable.find(((NodeIden*)this->func)->name) != AST::funcTable.end()) return AST::funcTable[((NodeIden*)this->func)->name]->type;
+        if(AST::funcTable.find((((NodeIden*)this->func)->name + typesToString(this->getTypes()))) != AST::funcTable.end()) return AST::funcTable[(((NodeIden*)this->func)->name + typesToString(this->getTypes()))]->getType();
     }
     return this->func->getType();
 }
