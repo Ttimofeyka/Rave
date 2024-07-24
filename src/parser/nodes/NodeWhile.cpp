@@ -88,6 +88,7 @@ LLVMValueRef NodeWhile::generate() {
     generator->currBB = generator->activeLoops[selfNumber].end;
     generator->activeLoops.erase(selfNumber);
 
+    delete currScope;
     currScope = oldScope;
 
     return nullptr;

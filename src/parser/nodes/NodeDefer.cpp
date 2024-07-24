@@ -25,9 +25,20 @@ LLVMValueRef NodeDefer::generate() {
         LLVMBasicBlockRef oldBB = generator->currBB;
         LLVMPositionBuilderAtEnd(generator->builder, currScope->fnEnd);
         generator->currBB = currScope->fnEnd;
+
+        auto oldScope = currScope;
+        currScope = new Scope(oldScope->funcName, oldScope->args, oldScope->argVars);
+        currScope->fnEnd = oldScope->fnEnd;
+        currScope->funcHasRet = oldScope->funcHasRet;
+        currScope->localVars = oldScope->localVars;
+        currScope->localScope = oldScope->localScope;
+        currScope->aliasTable = oldScope->aliasTable;
+
         instruction->generate();
+
         LLVMPositionBuilderAtEnd(generator->builder, oldBB);
         generator->currBB = oldBB;
+        currScope = oldScope;
         return nullptr;
     }
     return nullptr;

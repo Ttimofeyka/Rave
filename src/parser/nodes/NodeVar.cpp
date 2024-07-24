@@ -195,6 +195,11 @@ LLVMValueRef NodeVar::generate() {
         return nullptr;
     }
     else {
+        if(currScope->has(this->name)) {
+            generator->error("this name is already used!", loc);
+            return nullptr;
+        }
+
         for(int i=0; i<this->mods.size(); i++) {
             if(this->mods[i].name == "volatile") isVolatile = true;
             else if(this->mods[i].name == "nozeroinit") noZeroInit = true;
