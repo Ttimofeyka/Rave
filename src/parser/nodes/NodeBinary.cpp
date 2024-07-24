@@ -285,6 +285,10 @@ LLVMValueRef NodeBinary::generate() {
     }
 
     if(this->op == TokType::Equ) {
+        if(instanceof<TypeVoid>(second->getType())) {
+            generator->error("an attempt to store a void to the variable!", this->loc);
+            return nullptr;
+        }
         if(instanceof<NodeIden>(first)) {
             NodeIden* id = ((NodeIden*)first);
 
