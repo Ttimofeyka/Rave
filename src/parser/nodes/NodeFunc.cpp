@@ -299,7 +299,7 @@ LLVMValueRef NodeFunc::generate() {
 
 std::string NodeFunc::generateWithCtargs(std::vector<LLVMTypeRef> args) {
     std::vector<FuncArgSet> newArgs;
-    for(int i=0; i<args.size(); i++) newArgs.push_back(FuncArgSet{.name = "_RaveArg"+std::to_string(i), .type = lTypeToType(args[i])});
+    for(int i=0; i<args.size(); i++) newArgs.push_back(FuncArgSet{.name = "_RaveArg" + std::to_string(i), .type = lTypeToType(args[i])});
 
     auto activeLoops = std::map<int32_t, Loop>(generator->activeLoops);
     auto builder = generator->builder;
@@ -309,7 +309,7 @@ std::string NodeFunc::generateWithCtargs(std::vector<LLVMTypeRef> args) {
     std::vector<DeclarMod> _mods;
     for(int i=0; i<mods.size(); i++) if(mods[i].name != "ctargs") _mods.push_back(mods[i]);
 
-    NodeFunc* _f = new NodeFunc(name+typesToString(newArgs), newArgs, (NodeBlock*)this->block->copy(), false, _mods, this->loc, this->type->copy(), {});
+    NodeFunc* _f = new NodeFunc(name + typesToString(newArgs), newArgs, (NodeBlock*)this->block->copy(), false, _mods, this->loc, this->type->copy(), {});
     _f->args = std::vector<FuncArgSet>(newArgs);
     _f->isCtargsPart = true;
     std::string _n = _f->name;

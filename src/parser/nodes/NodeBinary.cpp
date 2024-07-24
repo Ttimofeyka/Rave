@@ -183,30 +183,26 @@ NodeBinary::NodeBinary(char op, Node* first, Node* second, long loc, bool isStat
 }
 
 std::pair<std::string, std::string> NodeBinary::isOperatorOverload(LLVMValueRef first, LLVMValueRef second, char op) {
-    if(first == nullptr || second ==  nullptr) return std::pair<std::string, std::string>("", "");
+    if(first == nullptr || second == nullptr) return {"", ""};
+
     LLVMTypeRef type = LLVMTypeOf(first);
     if(LLVMGetTypeKind(type) == LLVMStructTypeKind || (LLVMGetTypeKind(type) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVMGetElementType(type)) == LLVMStructTypeKind)) {
-        std::string structName = std::string(LLVMGetStructName(type));
+        std::string structName = LLVMGetStructName(type);
         if(AST::structTable.find(structName) != AST::structTable.end()) {
-            if(AST::structTable[structName]->operators.find(op) != AST::structTable[structName]->operators.end()) {
-                std::vector<Type*> types;
-                types.push_back(lTypeToType(type));
-                types.push_back(lTypeToType(LLVMTypeOf(second)));
+            auto& operators = AST::structTable[structName]->operators;
+            if(operators.find(op) != operators.end()) {
+                std::vector<Type*> types = {lTypeToType(type), lTypeToType(LLVMTypeOf(second))};
                 std::string sTypes = typesToString(types);
-                return ((AST::structTable[structName]->operators[op].find(sTypes) != AST::structTable[structName]->operators[op].end())
-                    ? std::pair<std::string, std::string>(structName, sTypes) : std::pair<std::string, std::string>("", ""));
+                if(operators[op].find(sTypes) != operators[op].end()) return {structName, sTypes};
             }
-            else if(op == TokType::Nequal && AST::structTable[structName]->operators.find(TokType::Equal) != AST::structTable[structName]->operators.end()) {
-                std::vector<Type*> types;
-                types.push_back(lTypeToType(type));
-                types.push_back(lTypeToType(LLVMTypeOf(second)));
+            else if(op == TokType::Nequal && operators.find(TokType::Equal) != operators.end()) {
+                std::vector<Type*> types = {lTypeToType(type), lTypeToType(LLVMTypeOf(second))};
                 std::string sTypes = typesToString(types);
-                return ((AST::structTable[structName]->operators[TokType::Equal].find(sTypes) != AST::structTable[structName]->operators[TokType::Equal].end())
-                    ? std::pair<std::string, std::string>("!" + structName, sTypes) : std::pair<std::string, std::string>("", ""));
+                if(operators[TokType::Equal].find(sTypes) != operators[TokType::Equal].end()) return {"!" + structName, sTypes};
             }
         }
     }
-    return std::pair<std::string, std::string>("", "");
+    return {"", ""};
 }
 
 Node* NodeBinary::copy() {return new NodeBinary(this->op, this->first->copy(), this->second->copy(), this->loc, this->isStatic);}
