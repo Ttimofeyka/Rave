@@ -269,13 +269,13 @@ namespace std {
         }
 
         double cbrt(double d) {
-            if(d < 0.0) return = (-1.0 * std::math::pow(-1.0 * d, 1.0 / 3.0));
-            else return = std::math::pow(d, 1.0 / 3.0);
+            if(d < 0.0d) return = (-1.0d * std::math::pow(-1.0d * d, 1.0d / 3.0d));
+            else return = std::math::pow(d, 1.0d / 3.0d);
         }
 
         float cbrt(float f) {
-            if(f < 0.0) return = (-1.0 * std::math::pow(-1.0 * f, 1.0 / 3.0));
-            else return = std::math::pow(f, 1.0 / 3.0);
+            if(f < 0.0f) return = (-1.0f * std::math::pow(-1.0f * f, 1.0f / 3.0f));
+            else return = std::math::pow(f, 1.0f / 3.0f);
         }
         
         double cos(double d) {
