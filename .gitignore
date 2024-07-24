@@ -45,6 +45,7 @@ examples/network/socket_server
 examples/time/test_time
 examples/memory/defer
 examples/memory/null_access
+examples/math/div_by_zero
 
 std/*.o
 src/*.o

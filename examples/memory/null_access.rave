@@ -3,6 +3,6 @@
 void main {
     char* ptr = null;
     
-    // Let's try to access null pointer!
+    // Let's try to access the null pointer!
     char ch = ptr[0];
 }

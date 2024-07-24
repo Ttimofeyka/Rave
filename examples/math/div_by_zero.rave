@@ -1,0 +1,9 @@
+import <std/io>
+
+void main {
+    /*
+    As specified in the specification, any division by zero (regardless of the types) leads to undefined behavior.
+    Let's check it out.
+    */
+    std::println(0.0f / 0.0f);
+}
