@@ -8,29 +8,28 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import <std/string>
 import <std/vector>
 import <std/socket>
-import <std/openssl>
 import <std/io>
 
-namespace std {
-    namespace ssl {
-        extern(linkname: "SSL_CTX_new") void* ctxNew(void* method);
-        extern(linkname: "SSL_CTX_free") void ctxFree(void* ctx);
-        extern(linkname: "SSL_new") void* new(void* ctx);
-        extern(linkname: "SSL_free") void free(void* ssl);
-        extern(linkname: "SSL_shutdown") int shutdown(void* ssl);
-        extern(linkname: "SSL_set_fd") int setFd(void* conn, int sock);
-        extern(linkname: "SSL_connect") int connect(void* conn);
-        extern(linkname: "SSL_accept") int accept(void* conn);
-    
-        extern(linkname: "TLSv1_method") void* methodTLS1();
-        extern(linkname: "TLSv1_1_method") void* methodTLS1_1();
-        extern(linkname: "TLSv1_2_method") void* methodTLS1_2();
-    
-        extern(linkname: "SSL_read") int read(void* ssl, void* buffer, int num);
-        extern(linkname: "SSL_read_ex") int readEx(void* ssl, void* buf, int num, int* readbytes);
-        extern(linkname: "SSL_write") int write(void* ssl, void* buffer, int num);
-    }
+namespace ssl {
+    extern(linkname: "SSL_CTX_new") void* ctxNew(void* method);
+    extern(linkname: "SSL_CTX_free") void ctxFree(void* ctx);
+    extern(linkname: "SSL_new") void* new(void* ctx);
+    extern(linkname: "SSL_free") void free(void* ssl);
+    extern(linkname: "SSL_shutdown") int shutdown(void* ssl);
+    extern(linkname: "SSL_set_fd") int setFd(void* conn, int sock);
+    extern(linkname: "SSL_connect") int connect(void* conn);
+    extern(linkname: "SSL_accept") int accept(void* conn);
 
+    extern(linkname: "TLSv1_method") void* methodTLS1();
+    extern(linkname: "TLSv1_1_method") void* methodTLS1_1();
+    extern(linkname: "TLSv1_2_method") void* methodTLS1_2();
+
+    extern(linkname: "SSL_read") int read(void* ssl, void* buffer, int num);
+    extern(linkname: "SSL_read_ex") int readEx(void* ssl, void* buf, int num, int* readbytes);
+    extern(linkname: "SSL_write") int write(void* ssl, void* buffer, int num);
+}
+
+namespace std {
     namespace network {
         struct URL {
             std::string protocol;
