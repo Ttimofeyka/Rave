@@ -352,7 +352,7 @@ void Compiler::compile(std::string file) {
         if(sse > 1 && settings.hasSSE2) Compiler::features += "+sse2,";
         if(sse > 2 && settings.hasSSE3) Compiler::features += "+sse3,";
         if(avx > 0 && settings.hasAVX) Compiler::features += "+avx,";
-        if(avx > 1 && settings.hasAVX2) Compiler::features += "+avx,";
+        if(avx > 1 && settings.hasAVX2) Compiler::features += "+avx2,";
         Compiler::features = Compiler::features.substr(0, Compiler::features.length() - 1);
     }
     else Compiler::features = std::string(LLVMGetHostCPUFeatures());
