@@ -201,7 +201,7 @@ std::pair<std::string, std::string> NodeBinary::isOperatorOverload(LLVMValueRef 
                 types.push_back(lTypeToType(LLVMTypeOf(second)));
                 std::string sTypes = typesToString(types);
                 return ((AST::structTable[structName]->operators[TokType::Equal].find(sTypes) != AST::structTable[structName]->operators[TokType::Equal].end())
-                    ? std::pair<std::string, std::string>("!"+structName, sTypes) : std::pair<std::string, std::string>("", ""));
+                    ? std::pair<std::string, std::string>("!" + structName, sTypes) : std::pair<std::string, std::string>("", ""));
             }
         }
     }
@@ -306,7 +306,8 @@ LLVMValueRef NodeBinary::generate() {
             
             LLVMValueRef vSecond = nullptr;
             if(instanceof<TypeStruct>(nvar->type) || (instanceof<TypePointer>(nvar->type) && instanceof<TypeStruct>(((TypePointer*)nvar->type)->instance))
-            && !instanceof<TypeStruct>(this->second->getType()) || (instanceof<TypePointer>(this->second->getType()) && instanceof<TypeStruct>(((TypePointer*)this->second->getType())->instance))) {
+               &&!instanceof<TypeStruct>(this->second->getType()) || (instanceof<TypePointer>(this->second->getType()) && instanceof<TypeStruct>(((TypePointer*)this->second->getType())->instance))
+            ) {
                 LLVMValueRef vFirst = this->first->generate();
                 vSecond = this->second->generate();
                 std::pair<std::string, std::string> opOverload = isOperatorOverload(vFirst, vSecond, this->op);
@@ -320,7 +321,7 @@ LLVMValueRef NodeBinary::generate() {
                         std::vector<Node*>({this->first, new NodeDone(vSecond)})))->generate();
                 }
                 else if(instanceof<TypeBasic>(this->second->getType())) {
-                    generator->error("an attempt to change value of the structure as the variable '"+id->name+"' without overloading!", this->loc);
+                    generator->error("an attempt to change value of the structure as the variable '" + id->name + "' without overloading!", this->loc);
                     return nullptr;
                 }
             }

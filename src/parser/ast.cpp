@@ -105,8 +105,8 @@ std::string typeToString(Type* arg) {
             while(generator->toReplace.find(t->toString()) != generator->toReplace.end()) t = generator->toReplace[t->toString()];
             if(!instanceof<TypeStruct>(t)) return typeToString(new TypePointer(t));
             ts = (TypeStruct*)t;
-            if(ts->name.find('<') == std::string::npos) return "s-"+ts->name;
-            else return "s-"+ts->name.substr(0,ts->name.find('<'));
+            if(ts->name.find('<') == std::string::npos) return "s-" + ts->name;
+            else return "s-" + ts->name.substr(0, ts->name.find('<'));
         }
         else {
             std::string buffer = "p";
@@ -160,20 +160,17 @@ std::string typeToString(Type* arg) {
             while(generator->toReplace.find(ts->types[i]->toString()) != generator->toReplace.end()) ts->types[i] = generator->toReplace[ts->types[i]->toString()]->copy();
         }
         if(ts->types.size() > 0) ts->updateByTypes();
-        return "s-"+ts->toString();
+        return "s-" + ts->toString();
     }
     else if(instanceof<TypeFunc>(arg)) return "func";
-    else if(instanceof<TypeConst>(arg)) {
-        std::string constVal = typesToString({((TypeConst*)arg)->instance});
-        return constVal.substr(1, constVal.size()-1);
-    }
+    else if(instanceof<TypeConst>(arg)) return typeToString(((TypeConst*)arg)->instance);
     return "";
 }
 
 std::string typesToString(std::vector<Type*> args) {
     std::string data = "[";
     for(int i=0; i<args.size(); i++) {
-        data += "_"+typeToString(args[i]);
+        data += "_" + typeToString(args[i]);
     }
     return data + "]";
 }
@@ -355,7 +352,7 @@ Type* lTypeToType(LLVMTypeRef t) {
         case LLVMDoubleTypeKind: return new TypeBasic(BasicType::Double);
         case LLVMPointerTypeKind: {
             LLVMTypeRef elementType = LLVMGetElementType(t);
-            if(LLVMGetTypeKind(LLVMGetElementType(elementType)) == LLVMStructTypeKind) return new TypeStruct(LLVMGetStructName(elementType));
+            if(LLVMGetTypeKind(elementType) == LLVMStructTypeKind) return new TypeStruct(LLVMGetStructName(elementType));
             return new TypePointer(lTypeToType(elementType));
         }
         case LLVMArrayTypeKind: return new TypeArray(LLVMGetArrayLength(t), lTypeToType(LLVMGetElementType(t)));

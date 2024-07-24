@@ -168,7 +168,8 @@ LLVMValueRef NodeCall::generate() {
     if(instanceof<NodeIden>(this->func)) {
         NodeIden* idenFunc = (NodeIden*)this->func;
         if(AST::funcTable.find(idenFunc->name) != AST::funcTable.end()) {
-            std::string sTypes = typesToString(this->getTypes());
+            std::vector<Type*> __types = this->getTypes();
+            std::string sTypes = typesToString(__types);
             if(generator->functions.find(idenFunc->name) == generator->functions.end()) {
                 // Function with compile-time args (ctargs)
                 if(AST::funcTable[idenFunc->name]->isCtargs) {
@@ -181,7 +182,17 @@ LLVMValueRef NodeCall::generate() {
                     return LLVM::call(generator->functions[AST::funcTable[idenFunc->name]->generateWithCtargs(types)], params.data(), this->args.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
                 }
                 if(AST::funcTable[idenFunc->name]->templateNames.size() > 0) {
-                    // Template
+                    // Template function
+                    std::string __typesAll = "<";
+                    for(int i=0; i<__types.size(); i++) __typesAll += __types[i]->toString() + ",";
+                    __typesAll = __typesAll.substr(0, __typesAll.length() - 1) + ">";
+
+                    if(AST::funcTable.find(idenFunc->name + __typesAll) != AST::funcTable.end()) {
+                        // If it was already generated - call it
+                        std::vector<LLVMValueRef> params = this->getParameters(nullptr, false);
+                        return LLVM::call(generator->functions[idenFunc->name + __typesAll], params.data(), params.size(), instanceof<TypeVoid>(AST::funcTable[idenFunc->name + __typesAll]->type) ? "" : "callFunc");
+                    }
+
                     size_t tnSize = AST::funcTable[idenFunc->name]->templateNames.size();
                     std::vector<LLVMValueRef> params = this->getParameters(nullptr, false);
                     std::vector<Type*> types;

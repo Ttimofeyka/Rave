@@ -112,9 +112,11 @@ Type* TypeStruct::copy() {
     return new TypeStruct(this->name, typesCopy);
 }
 void TypeStruct::updateByTypes() {
-    this->name = this->name.substr(0, this->name.find('<'))+"<";
-    for(int i=0; i<this->types.size(); i++) this->name += this->types[i]->toString()+",";
-    this->name = this->name.substr(0, this->name.size()-1)+">";
+    if(this->name.find('<') != std::string::npos) {
+        this->name = this->name.substr(0, this->name.find('<')) + "<";
+        for(int i=0; i<this->types.size(); i++) this->name += this->types[i]->toString()+",";
+        this->name = this->name.substr(0, this->name.size()-1) + ">";
+    }
 }
 int TypeStruct::getSize() {
     Type* t = this;

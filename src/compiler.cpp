@@ -291,6 +291,31 @@ void Compiler::compile(std::string file) {
     }
     else LLVMDisposeErrorMessage(errors);
 
+    if(!settings.isNative) {
+        Compiler::features = "";
+        int sse = Compiler::options["sse"].template get<int>();
+        int avx = Compiler::options["avx"].template get<int>();
+        if(sse > 0 && settings.hasSSE) Compiler::features += "+sse,";
+        if(sse > 1 && settings.hasSSE2) Compiler::features += "+sse2,";
+        if(sse > 2 && settings.hasSSE3) Compiler::features += "+sse3,";
+        if(avx > 0 && settings.hasAVX) Compiler::features += "+avx,";
+        if(avx > 1 && settings.hasAVX2) Compiler::features += "+avx2,";
+        Compiler::features = Compiler::features.substr(0, Compiler::features.length() - 1);
+    }
+    else Compiler::features = std::string(LLVMGetHostCPUFeatures());
+
+    LLVMTargetMachineRef machine = LLVMCreateTargetMachine(
+		target,
+		triple,
+		"generic",
+		Compiler::features.c_str(),
+		LLVMCodeGenLevelDefault,
+        (Compiler::settings.isPIC ? LLVMRelocPIC : LLVMRelocDynamicNoPic),
+	LLVMCodeModelDefault);
+
+    generator->targetData = LLVMCreateTargetDataLayout(machine);
+    LLVMSetDataLayout(generator->lModule, LLVMCopyStringRepOfTargetData(generator->targetData));
+
     for(int i=0; i<parser->nodes.size(); i++) parser->nodes[i]->generate();
 
     LLVMPassManagerRef pm = LLVMCreatePassManager();
@@ -343,31 +368,6 @@ void Compiler::compile(std::string file) {
     }
 
     LLVMRunPassManager(pm, generator->lModule);
-
-    if(!settings.isNative) {
-        Compiler::features = "";
-        int sse = Compiler::options["sse"].template get<int>();
-        int avx = Compiler::options["avx"].template get<int>();
-        if(sse > 0 && settings.hasSSE) Compiler::features += "+sse,";
-        if(sse > 1 && settings.hasSSE2) Compiler::features += "+sse2,";
-        if(sse > 2 && settings.hasSSE3) Compiler::features += "+sse3,";
-        if(avx > 0 && settings.hasAVX) Compiler::features += "+avx,";
-        if(avx > 1 && settings.hasAVX2) Compiler::features += "+avx2,";
-        Compiler::features = Compiler::features.substr(0, Compiler::features.length() - 1);
-    }
-    else Compiler::features = std::string(LLVMGetHostCPUFeatures());
-
-    LLVMTargetMachineRef machine = LLVMCreateTargetMachine(
-		target,
-		triple,
-		"generic",
-		Compiler::features.c_str(),
-		LLVMCodeGenLevelDefault,
-        (Compiler::settings.isPIC ? LLVMRelocPIC : LLVMRelocDynamicNoPic),
-	LLVMCodeModelDefault);
-
-    generator->targetData = LLVMCreateTargetDataLayout(machine);
-    LLVMSetModuleDataLayout(generator->lModule, generator->targetData);
 
     LLVMTargetMachineEmitToFile(machine, generator->lModule, (std::regex_replace(file, std::regex("\\.rave"), ".o")).c_str(), LLVMObjectFile, &errors);
     if(errors != nullptr) {
