@@ -39,6 +39,16 @@ Example:
 bool value = std::cstring::strncmp("Alien", "Alt", 1); // true
 ```
 
+## std::cstring::strstr
+
+Find the substring in the string (returns pointer to substring or null).
+
+Example:
+
+```d
+char* ptr = std::cstring::strstr("Hello!", "ell");
+```
+
 ## std::cstring::indexOf
 
 Get the index of char in the string.
