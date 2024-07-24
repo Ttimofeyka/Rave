@@ -80,6 +80,7 @@ LLVMValueRef NodeIf::generate() {
     LLVMBasicBlockRef thenBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[currScope->funcName], "then");
 	LLVMBasicBlockRef elseBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[currScope->funcName], "else");
 	LLVMBasicBlockRef endBlock = nullptr;
+
     if(this->_else != nullptr && instanceof<NodeIf>(this->_else)) {
         if(currScope->elseIfEnd == nullptr) currScope->elseIfEnd = LLVMAppendBasicBlockInContext(generator->context, generator->functions[currScope->funcName], "elseIfEnd");
         endBlock = currScope->elseIfEnd;
@@ -89,6 +90,8 @@ LLVMValueRef NodeIf::generate() {
         currScope->elseIfEnd = nullptr;
     }
 
+    auto origScope = currScope;
+
     LLVMBuildCondBr(generator->builder, this->cond->generate(), thenBlock, elseBlock);
 
     int selfNum = generator->activeLoops.size();
@@ -96,6 +99,14 @@ LLVMValueRef NodeIf::generate() {
 
     LLVMPositionBuilderAtEnd(generator->builder, thenBlock);
     generator->currBB = thenBlock;
+
+    currScope = new Scope(origScope->funcName, origScope->args, origScope->argVars);
+    currScope->localScope = origScope->localScope;
+    currScope->localVars = origScope->localVars;
+    currScope->fnEnd = origScope->fnEnd;
+    currScope->aliasTable = origScope->aliasTable;
+    currScope->funcHasRet = origScope->funcHasRet;
+
     if(this->body != nullptr) this->body->generate();
     if(!generator->activeLoops[selfNum].hasEnd) LLVMBuildBr(generator->builder, endBlock);
 
@@ -104,6 +115,14 @@ LLVMValueRef NodeIf::generate() {
     bool hasEnd1 = generator->activeLoops[selfNum].hasEnd;
 
     generator->activeLoops[selfNum] = Loop{.isActive = true, .start = elseBlock, .end = endBlock, .hasEnd = false, .isIf = true, .loopRets = std::vector<LoopReturn>(), .owner = this};
+
+    delete currScope;
+    currScope = new Scope(origScope->funcName, origScope->args, origScope->argVars);
+    currScope->localScope = origScope->localScope;
+    currScope->localVars = origScope->localVars;
+    currScope->fnEnd = origScope->fnEnd;
+    currScope->aliasTable = origScope->aliasTable;
+    currScope->funcHasRet = origScope->funcHasRet;
 
     LLVMPositionBuilderAtEnd(generator->builder, elseBlock);
 	generator->currBB = elseBlock;
@@ -114,6 +133,8 @@ LLVMValueRef NodeIf::generate() {
     bool hasEnd2 = generator->activeLoops[selfNum].hasEnd;
 
     if(generator->activeLoops[selfNum].loopRets.size() > 0) AST::funcTable[currScope->funcName]->rets.push_back(generator->activeLoops[selfNum].loopRets[0].ret);
+
+    currScope = origScope;
 
     LLVMPositionBuilderAtEnd(generator->builder, endBlock);
     generator->currBB = endBlock;
