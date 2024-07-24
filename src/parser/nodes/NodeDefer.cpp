@@ -24,8 +24,10 @@ LLVMValueRef NodeDefer::generate() {
     if(currScope->fnEnd != nullptr) {
         LLVMBasicBlockRef oldBB = generator->currBB;
         LLVMPositionBuilderAtEnd(generator->builder, currScope->fnEnd);
+        generator->currBB = currScope->fnEnd;
         instruction->generate();
         LLVMPositionBuilderAtEnd(generator->builder, oldBB);
+        generator->currBB = oldBB;
         return nullptr;
     }
     return nullptr;
