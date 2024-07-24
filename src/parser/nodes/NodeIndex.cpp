@@ -37,7 +37,10 @@ Type* NodeIndex::getType() {
     // Remove const qualifiers
     while(instanceof<TypeConst>(type)) type = static_cast<TypeConst*>(type)->instance;
     
-    if(instanceof<TypePointer>(type)) return static_cast<TypePointer*>(type)->instance;
+    if(instanceof<TypePointer>(type)) {
+        Type* tp = static_cast<TypePointer*>(type)->instance;
+        return instanceof<TypeVoid>(tp) ? new TypeBasic(BasicType::Char) : tp;
+    }
     
     if(instanceof<TypeArray>(type)) return static_cast<TypeArray*>(type)->element;
     
