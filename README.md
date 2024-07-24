@@ -70,6 +70,11 @@ We're continuously working to minimize these occurrences.
 
 If you encounter warnings about unrecognized features, disable them in options.json (set `sse` and `avx` to `0`) or use command-line options: `-noSSE`, `-noSSE2`, `-noSSE3`, `-noAVX`, `-noAVX2`.
 
+### Division by zero
+
+The compiler defines any division by zero as **undefined behavior** in order to optimize the work with mathematics.
+Always check the numbers if you are not sure before making a division or calling a mathematical function from standard library.
+
 ## Useful links
 
 <a href="https://github.com/Ttimofeyka/Rave/blob/main/bindings.md">Bindings</a>
