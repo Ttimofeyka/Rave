@@ -44,6 +44,7 @@ examples/multithread/thread_test
 examples/network/socket_server
 examples/time/test_time
 examples/memory/defer
+examples/memory/null_access
 
 std/*.o
 src/*.o

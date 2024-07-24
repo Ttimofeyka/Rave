@@ -1,0 +1,8 @@
+// Compile this example without -Ofast and without --noChecks (!)
+
+void main {
+    char* ptr = null;
+    
+    // Let's try to access null pointer!
+    char ch = ptr[0];
+}
