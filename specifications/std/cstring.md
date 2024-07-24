@@ -38,3 +38,13 @@ Example:
 ```d
 bool value = std::cstring::strncmp("Alien", "Alt", 1); // true
 ```
+
+## std::cstring::indexOf
+
+Get the index of char in the string.
+
+Example:
+
+```d
+int index = std::cstring::indexOf("String", 'r');
+```
