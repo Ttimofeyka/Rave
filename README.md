@@ -66,7 +66,7 @@ The specifications is in `specifications` directory - [link](https://github.com/
 Often caused by incorrect syntax or misuse of builtin instructions.
 We're continuously working to minimize these occurrences.
 
-### SSE/SSE2/SSE3/AVX as not a recognized features
+### SSE/SSE2/SSE3/AVX/AVX2 as not a recognized features
 
 If you encounter warnings about unrecognized features, disable them in options.json (set `sse` and `avx` to `0`) or use command-line options: `-noSSE`, `-noSSE2`, `-noSSE3`, `-noAVX`, `-noAVX2`.
 
