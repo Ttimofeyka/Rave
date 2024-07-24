@@ -96,7 +96,7 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
             }
             else if(func->origName == "~this") {
                 this->destructor = func;
-                func->name = "~"+this->origname;
+                func->name = "~" + this->origname;
                 func->namespacesNames = std::vector<std::string>(this->namespacesNames);
                 func->isTemplatePart = this->isLinkOnce;
                 func->isComdat = this->isComdat;
@@ -111,8 +111,8 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 }
                 if(!instanceof<TypeStruct>(this->constructors[0]->type)) this->destructor->block->nodes.push_back(new NodeCall(
                         func->loc,
-                        new NodeIden("std::free",this->destructor->loc),
-                        std::vector<Node*>({new NodeIden("this",this->destructor->loc)})
+                        new NodeIden("std::free", this->destructor->loc),
+                        std::vector<Node*>({new NodeIden("this", this->destructor->loc)})
                 ));
                 func->check();
             }
@@ -123,12 +123,12 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 if(isImported) func->isExtern = true;
 
                 char oper;
-                if(func->origName.find("(+)") != std::string::npos) {oper = TokType::Plus; func->name = this->name+"(+)";}
-                else if(func->origName.find("(=)") != std::string::npos) {oper = TokType::Equ; func->name = this->name+"(=)";}
-                else if(func->origName.find("(==)") != std::string::npos) {oper = TokType::Equal; func->name = this->name+"(==)";}
-                else if(func->origName.find("(!=)") != std::string::npos) {oper = TokType::Nequal; func->name = this->name+"(!=)";}
-                else if(func->origName.find("([])") != std::string::npos) {oper = TokType::Rbra; func->name = this->name+"([])";}
-                else if(func->origName.find("([]=)") != std::string::npos) {oper = TokType::Lbra; func->name = this->name+"([]=)";}
+                if(func->origName.find("(+)") != std::string::npos) {oper = TokType::Plus; func->name = this->name + "(+)";}
+                else if(func->origName.find("(=)") != std::string::npos) {oper = TokType::Equ; func->name = this->name + "(=)";}
+                else if(func->origName.find("(==)") != std::string::npos) {oper = TokType::Equal; func->name = this->name + "(==)";}
+                else if(func->origName.find("(!=)") != std::string::npos) {oper = TokType::Nequal; func->name = this->name + "(!=)";}
+                else if(func->origName.find("([])") != std::string::npos) {oper = TokType::Rbra; func->name = this->name + "([])";}
+                else if(func->origName.find("([]=)") != std::string::npos) {oper = TokType::Lbra; func->name = this->name + "([]=)";}
                 if(oper != TokType::Rbra) func->name = func->name + typesToString(func->args);
                 this->operators[oper][(oper != TokType::Rbra ? typesToString(func->args) : "")] = func;
                 this->methods.push_back(func);
@@ -156,14 +156,14 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 }
                 else outType = new TypePointer(new TypeStruct(this->name));
                 if((func->args.size() > 0 && func->args[0].name != "this") || func->args.size() == 0) func->args.insert(func->args.begin(), FuncArgSet{.name = "this", .type = outType});
-                func->name = this->name+"."+func->origName;
+                func->name = this->name + "." + func->origName;
                 func->isMethod = true;
                 func->isExtern = (func->isExtern || this->isImported);
                 func->isComdat = this->isComdat;
                 if(AST::methodTable.find(std::pair<std::string, std::string>(this->name, func->origName)) != AST::methodTable.end()) {
                     std::string sTypes = typesToString(AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)]->args);
-                    if(sTypes != typesToString(func->args)) AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName+typesToString(func->args))] = func;
-                    else generator->error("method '"+func->origName+"' has already been declared on "+std::to_string(AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)]->loc)+" line!", this->loc);
+                    if(sTypes != typesToString(func->args)) AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName + typesToString(func->args))] = func;
+                    else generator->error("method '" + func->origName + "' has already been declared on " + std::to_string(AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)]->loc) + " line!", this->loc);
                 }
                 else AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)] = func;
                 this->methods.push_back(func);
