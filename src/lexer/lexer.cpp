@@ -58,14 +58,14 @@ std::string Lexer::getChar() {
     idx += 1;
     std::string buffer = "", buffer2 = "";
     while(peek() != '\'') {
-        if(peek() == '\\' && text[idx+1] == '\'') {buffer += "'"; idx += 2;}
-        else if(peek() == '\\' && isdigit(text[idx+1])) {
+        if(peek() == '\\' && text[idx + 1] == '\'') {buffer += "'"; idx += 2;}
+        else if(peek() == '\\' && isdigit(text[idx + 1])) {
             buffer2 += peek(); idx += 1;
             while(isdigit(peek())) {buffer2 += peek(); idx += 1;}
             buffer += replaceAllEscapes(buffer2);
             buffer2 = "";
         }
-        else if(peek() == '\\' && text[idx+1] == '\\') {buffer += "\\"; idx += 2;}
+        else if(peek() == '\\' && text[idx + 1] == '\\') {buffer += "\\"; idx += 2;}
         else {buffer += peek(); idx += 1;}
     } next();
     return replaceAllEscapes(buffer);
