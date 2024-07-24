@@ -403,6 +403,8 @@ Scope::Scope(std::string funcName, std::map<std::string, int> args, std::map<std
     this->args = std::map<std::string, int>(args);
     this->argVars = std::map<std::string, NodeVar*>(argVars);
     this->aliasTable = std::map<std::string, Node*>();
+    this->localScope = std::map<std::string, LLVMValueRef>();
+    this->localVars = std::map<std::string, NodeVar*>();
 }
 
 void Scope::remove(std::string name) {

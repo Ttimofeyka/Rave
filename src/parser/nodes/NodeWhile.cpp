@@ -63,6 +63,15 @@ LLVMValueRef NodeWhile::generate() {
         .isIf = false, .owner = this
     };
 
+    auto oldScope = currScope;
+    currScope = new Scope(currScope->funcName, currScope->args, currScope->argVars);
+
+    // Copy all variables to new scope
+    for(auto &&kv : oldScope->localVars) {
+        currScope->localVars[kv.first] = oldScope->localVars[kv.first];
+        currScope->localScope[kv.first] = oldScope->localScope[kv.first];
+    }
+
     generator->currBB = whileBlock;
     this->body->generate();
     
@@ -79,6 +88,9 @@ LLVMValueRef NodeWhile::generate() {
     LLVMPositionBuilderAtEnd(generator->builder, generator->activeLoops[selfNumber].end);
     generator->currBB = generator->activeLoops[selfNumber].end;
     generator->activeLoops.erase(selfNumber);
+
+    currScope = oldScope;
+
     return nullptr;
 }
 
