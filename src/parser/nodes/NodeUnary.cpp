@@ -167,8 +167,13 @@ Node* NodeUnary::comptime() {
     switch(this->type) {
         case TokType::Minus:
             if(instanceof<NodeInt>(comptimed)) return new NodeInt(-((NodeInt*)comptimed)->value);
-            return new NodeFloat(-((NodeFloat*)comptimed)->value);
-        case TokType::Ne: return new NodeBool(!(((NodeBool*)comptimed))->value);
+            else if(instanceof<NodeFloat>(comptimed)) return new NodeFloat(-((NodeFloat*)comptimed)->value);
+            generator->error("NodeUnary::comptime() cannot work with this value!", this->loc);
+            return nullptr;
+        case TokType::Ne:
+            if(instanceof<NodeBool>(comptimed)) return new NodeBool(!(((NodeBool*)comptimed))->value);
+            generator->error("NodeUnary::comptime() cannot work with this value!", this->loc);
+            return nullptr;
         default: break;
     }
     return this;
