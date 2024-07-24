@@ -23,59 +23,80 @@ NodeGet::NodeGet(Node* base, std::string field, bool isMustBePtr, long loc) {
 }
 
 Type* NodeGet::getType() {
-    Type* _t = this->base->getType();
-    TypeStruct* ts;
-    if(!instanceof<TypeStruct>(_t)) {
-        if(!instanceof<TypePointer>(_t)) generator->error("Structure '" + _t->toString() + "' doesn't exist! (getType)", loc);
-        ts = (TypeStruct*)(((TypePointer*)_t)->instance);
-    }
-    else ts = (TypeStruct*)_t;
+    Type* baseType = this->base->getType();
+    TypeStruct* ts = nullptr;
 
-    if(ts == nullptr) generator->error("Type '" + _t->toString() + "' is not a structure!", loc);
-
-    if(generator->toReplace.find(ts->name) != generator->toReplace.end()) {
-        while(generator->toReplace.find(ts->name) != generator->toReplace.end()) ts = (TypeStruct*)(generator->toReplace[ts->toString()]);
-    }
-    if(AST::methodTable.find(std::pair<std::string, std::string>(ts->name, this->field)) != AST::methodTable.end()) {
-        return AST::methodTable[std::pair<std::string, std::string>(ts->name, this->field)]->getType();
-    }
-    if(AST::structsNumbers.find(std::pair<std::string, std::string>(ts->name, this->field)) != AST::structsNumbers.end()) {
-        return AST::structsNumbers[std::pair<std::string, std::string>(ts->name, this->field)].var->getType();
-    }
-    for(auto const& x : generator->toReplace) {
-        if(x.first.find('<') != std::string::npos) return generator->toReplace[x.first];
+    if(instanceof<TypeStruct>(baseType)) ts = static_cast<TypeStruct*>(baseType);
+    else if (instanceof<TypePointer>(baseType)) ts = static_cast<TypeStruct*>(static_cast<TypePointer*>(baseType)->instance);
+    else {
+        generator->error("structure '" + baseType->toString() + "' does not exist!", loc);
+        return nullptr;
     }
 
-    generator->error("Structure '" + ts->name + "' doesn't contain element '" + field + "'!", loc);
+    if(!ts) {
+        generator->error("type '" + baseType->toString() + "' is not a structure!", loc);
+        return nullptr;
+    }
+
+    // Replace ts if needed
+    auto it = generator->toReplace.find(ts->name);
+    while(it != generator->toReplace.end()) {
+        ts = static_cast<TypeStruct*>(it->second);
+        it = generator->toReplace.find(ts->name);
+    }
+
+    // Check method table
+    auto methodIt = AST::methodTable.find({ts->name, this->field});
+    if(methodIt != AST::methodTable.end()) return methodIt->second->getType();
+
+    // Check struct numbers
+    auto structIt = AST::structsNumbers.find({ts->name, this->field});
+    if(structIt != AST::structsNumbers.end()) return structIt->second.var->getType();
+
+    // Check for generic types
+    for(const auto& x : generator->toReplace) {
+        if(x.first.find('<') != std::string::npos) return x.second;
+    }
+
+    generator->error("structure '" + ts->name + "' does not contain element '" + field + "'!", loc);
     return nullptr;
 }
 
 LLVMValueRef NodeGet::checkStructure(LLVMValueRef ptr) {
-    std::string sType = typeToString(LLVMTypeOf(ptr));
-    if(sType[sType.size()-1] != '*') {
-        LLVMValueRef temp = LLVMBuildAlloca(generator->builder, LLVMTypeOf(ptr), "NodeGet_checkStructure");
+    LLVMTypeRef type = LLVMTypeOf(ptr);
+    
+    if(!LLVMGetTypeKind(type) == LLVMPointerTypeKind) {
+        LLVMValueRef temp = LLVMBuildAlloca(generator->builder, type, "NodeGet_checkStructure");
         LLVMBuildStore(generator->builder, ptr, temp);
         return temp;
     }
-    while(sType.substr(sType.size()-2) == "**") {
+    
+    while(LLVMGetTypeKind(LLVMGetElementType(type)) == LLVMPointerTypeKind) {
         ptr = LLVM::load(ptr, "NodeGet_checkStructure_load");
-        sType = typeToString(LLVMTypeOf(ptr));
+        type = LLVMTypeOf(ptr);
     }
+    
     return ptr;
 }
 
 LLVMValueRef NodeGet::checkIn(std::string structure) {
-    if(AST::structTable.find(structure) == AST::structTable.end()) {
-        generator->error("Structure '" + structure + "' doesn't exist!", loc);
+    auto structIt = AST::structTable.find(structure);
+    if(structIt == AST::structTable.end()) {
+        generator->error("structure '" + structure + "' does not exist!", loc);
         return nullptr;
     }
-    auto member = std::pair<std::string, std::string>(structure,this->field);
-    if(AST::structsNumbers.find(member) == AST::structsNumbers.end()) {
-        if(AST::methodTable.find(member) != AST::methodTable.end()) return generator->functions[AST::methodTable[member]->name];
-        generator->error("Structure '" + structure + "' doesn't contain element '" + this->field + "'!", loc);
+
+    const auto member = std::make_pair(structure, field);
+    auto numberIt = AST::structsNumbers.find(member);
+    
+    if(numberIt == AST::structsNumbers.end()) {
+        auto methodIt = AST::methodTable.find(member);
+        if(methodIt != AST::methodTable.end()) return generator->functions[methodIt->second->name];
+        generator->error("structure '" + structure + "' does not contain element '" + field + "'!", loc);
         return nullptr;
     }
-    if(instanceof<TypeConst>(AST::structsNumbers[member].var->type)) elementIsConst = true;
+
+    elementIsConst = instanceof<TypeConst>(numberIt->second.var->type);
     return nullptr;
 }
 
