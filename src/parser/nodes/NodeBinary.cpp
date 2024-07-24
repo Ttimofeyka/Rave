@@ -361,7 +361,7 @@ LLVMValueRef NodeBinary::generate() {
             }
 
             if(nget->elementIsConst) {
-                generator->error("An attempt to change the constant element!",loc);
+                generator->error("An attempt to change the constant element!", loc);
                 return nullptr;
             }
 
@@ -474,7 +474,7 @@ LLVMValueRef NodeBinary::generate() {
              ||LLVMGetTypeKind(LLVMTypeOf(vFirst)) == LLVMIntegerTypeKind) vFirst = Binary::castValue(vFirst, LLVMTypeOf(vSecond), this->loc);
         }
         else {
-            generator->error("value types '"+this->first->getType()->toString()+"' and '"+this->second->getType()->toString()+"' are incompatible!", loc);
+            generator->error("value types '" + this->first->getType()->toString() + "' and '" + this->second->getType()->toString() + "' are incompatible!", loc);
             return nullptr;
         }
     }
@@ -496,6 +496,6 @@ LLVMValueRef NodeBinary::generate() {
         case TokType::BitXor: return LLVMBuildXor(generator->builder, vFirst, vSecond, "NodeBinary_xor");
         case TokType::BitLeft: return LLVMBuildShl(generator->builder, vFirst, vSecond, "NodeBinary_and");
         case TokType::BitRight: return LLVMBuildLShr(generator->builder, vFirst, vSecond, "NodeBinary_and");
-        default: generator->error("undefined operator "+std::to_string(this->op)+"!", this->loc); return nullptr;
+        default: generator->error("undefined operator " + std::to_string(this->op) + "!", this->loc); return nullptr;
     }
 }

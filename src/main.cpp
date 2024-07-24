@@ -112,7 +112,7 @@ int main(int argc, char** argv) {
             }
             std::cout << "Time spent by lexer: " << std::to_string(Compiler::lexTime) << "ms\nTime spent by parser: " << std::to_string(Compiler::parseTime) << "ms\nTime spent by generator: " << std::to_string(Compiler::genTime) << "ms" << std::endl;
             #else
-            // Platform without standart library caching support
+            // Platform without standard library caching support
             std::cout << "\033[0;33mWarning: your host platform does not support caching of the standard library.\033[0;0m" << std::endl;
             #endif
             return 0;

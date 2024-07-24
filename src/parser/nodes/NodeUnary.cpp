@@ -165,8 +165,9 @@ LLVMValueRef NodeUnary::generate() {
 Node* NodeUnary::comptime() {
     switch(this->type) {
         case TokType::Minus:
-            if(instanceof<NodeInt>(this->base)) return new NodeInt(-((NodeInt*)this->base)->value);
-            return new NodeFloat(-((NodeFloat*)this->base)->value);
+            Node* comptimed = this->base->comptime();
+            if(instanceof<NodeInt>(comptimed)) return new NodeInt(-((NodeInt*)comptimed)->value);
+            return new NodeFloat(-((NodeFloat*)comptimed)->value);
         case TokType::Ne: return new NodeBool(!(((NodeBool*)this->base->comptime()))->value);
         default: break;
     }
