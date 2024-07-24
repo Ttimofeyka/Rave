@@ -1,0 +1,9 @@
+import <std/io>
+
+void main {
+    std::println("String");
+    std::println(0);
+    std::println(0.0f);
+    std::println(0.0d);
+    std::println(null);
+}

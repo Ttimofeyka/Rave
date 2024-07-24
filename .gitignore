@@ -37,6 +37,7 @@ examples/first
 examples/hello_world
 examples/io/test_input
 examples/io/test_input2
+examples/io/print
 examples/math/calculator
 examples/math/sum_of_input
 examples/multithread/thread_test
