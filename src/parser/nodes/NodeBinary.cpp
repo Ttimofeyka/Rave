@@ -456,31 +456,31 @@ LLVMValueRef NodeBinary::generate() {
         else vSecond = LLVM::load(vSecond, "NodeBinary_secondload");
     }
 
-    if(LLVMGetTypeKind(LLVMTypeOf(vFirst)) == LLVMGetTypeKind(LLVMTypeOf(vSecond)) && LLVMTypeOf(vFirst) != LLVMTypeOf(vSecond)) {
-        if(LLVMGetTypeKind(LLVMTypeOf(vFirst)) == LLVMIntegerTypeKind) vFirst = LLVMBuildIntCast(
-            generator->builder,
-            vFirst,
-            LLVMTypeOf(vSecond),
-            "NodeBinary_intc"
-        );
+    LLVMTypeRef vFirstType = LLVMTypeOf(vFirst);
+    LLVMTypeRef vSecondType = LLVMTypeOf(vSecond);
+    LLVMTypeKind vFirstTypeKind = LLVMGetTypeKind(vFirstType);
+    LLVMTypeKind vSecondTypeKind = LLVMGetTypeKind(vSecondType);
+
+    if(vFirstTypeKind == vSecondTypeKind && vFirstType != vSecondType) {
+        if(vFirstTypeKind == LLVMIntegerTypeKind) vFirst = LLVMBuildIntCast(generator->builder, vFirst, vSecondType, "NodeBinary_intc");
     }
-    else if(LLVMGetTypeKind(LLVMTypeOf(vFirst)) != LLVMGetTypeKind(LLVMTypeOf(vSecond))) {
-        if(LLVMGetTypeKind(LLVMTypeOf(vFirst)) == LLVMFloatTypeKind || LLVMGetTypeKind(LLVMTypeOf(vFirst)) == LLVMDoubleTypeKind) {
-            if(LLVMGetTypeKind(LLVMTypeOf(vSecond)) == LLVMFloatTypeKind || LLVMGetTypeKind(LLVMTypeOf(vSecond)) == LLVMDoubleTypeKind
-             ||LLVMGetTypeKind(LLVMTypeOf(vSecond)) == LLVMIntegerTypeKind) vSecond = Binary::castValue(vSecond, LLVMTypeOf(vFirst), this->loc);
+    else if(vFirstTypeKind != vSecondTypeKind) {
+        if(vFirstTypeKind == LLVMFloatTypeKind || vFirstTypeKind == LLVMDoubleTypeKind) {
+            if(vSecondTypeKind == LLVMFloatTypeKind || vSecondTypeKind == LLVMDoubleTypeKind
+             ||vSecondTypeKind == LLVMIntegerTypeKind) vSecond = Binary::castValue(vSecond, LLVMTypeOf(vFirst), this->loc);
         }
-        else if(LLVMGetTypeKind(LLVMTypeOf(vSecond)) == LLVMFloatTypeKind || LLVMGetTypeKind(LLVMTypeOf(vSecond)) == LLVMDoubleTypeKind) {
-            if(LLVMGetTypeKind(LLVMTypeOf(vFirst)) == LLVMFloatTypeKind || LLVMGetTypeKind(LLVMTypeOf(vFirst)) == LLVMDoubleTypeKind
-             ||LLVMGetTypeKind(LLVMTypeOf(vFirst)) == LLVMIntegerTypeKind) vFirst = Binary::castValue(vFirst, LLVMTypeOf(vSecond), this->loc);
+        else if(vSecondTypeKind == LLVMFloatTypeKind || vSecondTypeKind == LLVMDoubleTypeKind) {
+            if(vFirstTypeKind == LLVMFloatTypeKind || vFirstTypeKind == LLVMDoubleTypeKind || vFirstTypeKind == LLVMIntegerTypeKind)
+                vFirst = Binary::castValue(vFirst, LLVMTypeOf(vSecond), this->loc);
         }
         else {
             generator->error("value types '" + this->first->getType()->toString() + "' and '" + this->second->getType()->toString() + "' are incompatible!", loc);
             return nullptr;
         }
     }
-    else if(LLVMTypeOf(vFirst) != LLVMTypeOf(vSecond)) {
-        if(LLVMABISizeOfType(generator->targetData, LLVMTypeOf(vFirst)) > LLVMABISizeOfType(generator->targetData, LLVMTypeOf(vSecond))) vSecond = Binary::castValue(vSecond, LLVMTypeOf(vFirst), this->loc);
-        else vFirst = Binary::castValue(vFirst, LLVMTypeOf(vSecond), this->loc);
+    else if(vFirstType != vSecondType) {
+        if(LLVMABISizeOfType(generator->targetData, vFirstType) > LLVMABISizeOfType(generator->targetData, vSecondType)) vSecond = Binary::castValue(vSecond, vFirstType, this->loc);
+        else vFirst = Binary::castValue(vFirst, vSecondType, this->loc);
     }
     
     switch(this->op) {
