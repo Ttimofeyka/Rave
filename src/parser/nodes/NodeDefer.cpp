@@ -38,6 +38,7 @@ LLVMValueRef NodeDefer::generate() {
 
         LLVMPositionBuilderAtEnd(generator->builder, oldBB);
         generator->currBB = oldBB;
+        delete currScope;
         currScope = oldScope;
         return nullptr;
     }
