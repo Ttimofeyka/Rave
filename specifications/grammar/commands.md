@@ -109,15 +109,12 @@ int n;
 std::input(&n);
 
 switch(n) {
-    case(10) {
-        std::println("10");
-    }
+    case(10) std::println("10");
     case(20) {
-        std::println("20");
+        std::println("20!");
+        std::exit(1);
     }
-    default {
-        std::println("Other");
-    }
+    default std::println("Other");
 }
 ```
 

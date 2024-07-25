@@ -855,7 +855,9 @@ Type* Parser::parseType(bool cannotBeTemplate) {
             this->next();
             while(this->peek()->type != TokType::More) {
                 tTypes.push_back(this->parseType(cannotBeTemplate));
+
                 if(this->peek()->type == TokType::Comma) this->next();
+                else if(this->peek()->type != TokType::More) this->error("expected token '>'!");
             } this->next();
             for(int i=0; i<tTypes.size(); i++) tTypesString += tTypes[i]->toString() + ",";
             ty = new TypeStruct(ty->toString() + "<" + tTypesString.substr(0, tTypesString.size() - 1) + ">", tTypes);
@@ -1017,7 +1019,7 @@ std::vector<Node*> Parser::parseIndexes() {
 }
 
 Node* Parser::parseCall(Node* func) {
-    if(instanceof<NodeInt>(func)) this->error("a function name must be as identifier!");
+    if(instanceof<NodeInt>(func)) this->error("a function name must be identifier!");
     return new NodeCall(this->peek()->line, func, this->parseFuncCallArgs());
 }
 
@@ -1268,12 +1270,15 @@ Node* Parser::parseBreak() {
 }
 
 Node* Parser::parseIf(std::string f, bool isStatic) {
-    long line = this->peek()->line;
+    int line = this->peek()->line;
     this->next();
     if(this->peek()->type != TokType::Rpar) this->error("expected token '('!");
+
     this->next();
     Node* cond = this->parseExpr();
+    if(this->peek()->type != TokType::Lpar) this->error("expected token ')'!");
     this->next();
+
     Node* body = this->parseStmt(f);
     if(this->peek()->value == "else") {
         this->next();
@@ -1284,9 +1289,14 @@ Node* Parser::parseIf(std::string f, bool isStatic) {
 
 std::pair<Node*, Node*> Parser::parseCase(std::string f) {
     this->next();
-    Node* cond = this->parseExpr(f);
+    if(this->peek()->type != TokType::Rpar) this->error("expected token '('!");
     this->next();
-    Node* block = this->parseBlock(f);
+
+    Node* cond = this->parseExpr(f);
+    if(this->peek()->type != TokType::Lpar) this->error("expected token ')'!");
+    this->next();
+
+    Node* block = this->parseStmt(f);
     return std::pair<Node*, Node*>(cond, block);
 }
 
@@ -1304,7 +1314,7 @@ Node* Parser::parseSwitch(std::string f) {
         if(this->peek()->value == "case") statements.push_back(this->parseCase(f));
         else if(this->peek()->value == "default") {
             this->next();
-            _default = this->parseBlock(f);
+            _default = this->parseStmt(f);
         }
         while(this->peek()->type == TokType::Semicolon) this->next();
     }
