@@ -67,19 +67,20 @@ std::string Lexer::getChar() {
         }
         else if(peek() == '\\' && text[idx + 1] == '\\') {buffer += "\\"; idx += 2;}
         else {buffer += peek(); idx += 1;}
-    } next();
+    }
+    next();
     return replaceAllEscapes(buffer);
 }
 
 std::string Lexer::getDigit(char numType) {
     std::string buffer = "";
-    if(numType == TokType::Number) while(isdigit(peek())) {buffer += peek(); idx += 1;}
-    else {
-        idx += 2;
-        while(isdigit(peek()) || peek() == 'A' || peek() == 'B' || peek() == 'C' || peek() == 'D' || peek() == 'E' || peek() == 'F') {
-            buffer += peek();
-            idx += 1;
-        }
+    bool isHexadecimal = (numType == TokType::HexNumber);
+    char currentChar;
+
+    if(isHexadecimal) idx += 2;
+    while((currentChar = peek()) != '\0' && (isdigit(currentChar) || (isHexadecimal && isxdigit(currentChar)))) {
+        buffer += currentChar;
+        idx += 1;
     }
     return buffer;
 }
@@ -149,7 +150,7 @@ Lexer::Lexer(std::string text, int offset) {
                 else tokens.push_back(new Token(TokType::Dot, ".", line));
                 break;
             case '~':
-                if((idx+5) < this->text.size()) {
+                if((idx + 5) < this->text.size()) {
                     int oldIdx = idx;
                     if(next() == 't' && next() == 'h' && next() == 'i' && next() == 's') {
                         if(next() != '.') {tokens.push_back(new Token(TokType::Identifier, "~this", line)); idx += 1;}
@@ -186,7 +187,7 @@ Lexer::Lexer(std::string text, int offset) {
                         bool isFloat = false;
                         std::string buffer = "";
                         idx -= 1;
-                        while(isdigit(this->peek()) || (this->peek() == '.' && this->text[this->idx+1] != '.')) {
+                        while(isdigit(this->peek()) || (this->peek() == '.' && this->text[this->idx + 1] != '.')) {
                             if(this->peek() == '.') {
                                 isFloat = true;
                                 buffer += ".";

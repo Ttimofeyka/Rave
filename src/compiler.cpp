@@ -70,6 +70,11 @@ ShellResult exec(std::string cmd) {
     return ShellResult{.output = result, .status = WEXITSTATUS(pclose(pipe))};
 }
 
+bool endsWith(const std::string &str, const std::string &suffix) {
+    if(str.size() < suffix.size()) return false;
+    return str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
+
 void Compiler::error(std::string message) {
     std::cout << "\033[0;31mError: "+message+"\033[0;0m\n";
     std::exit(1);
@@ -392,12 +397,8 @@ void Compiler::compileAll() {
             Compiler::error("file '" + Compiler::files[i] + "' does not exists!");
             return;
         }
-        if(Compiler::files[i].size() > 2
-            && (Compiler::files[i].substr(Compiler::files[i].size()-2, Compiler::files[i].size()) == ".a"
-             ||Compiler::files[i].substr(Compiler::files[i].size()-2, Compiler::files[i].size()) == ".o"
-             ||Compiler::files[i].substr(Compiler::files[i].size()-4, Compiler::files[i].size()) == ".lib")) {
-                Compiler::linkString += Compiler::files[i]+" ";
-        }
+        if(Compiler::files[i].size() > 2 && (endsWith(Compiler::files[i], ".a") || endsWith(Compiler::files[i], ".o") || endsWith(Compiler::files[i], ".lib")))
+            Compiler::linkString += Compiler::files[i] + " ";
         else {
             Compiler::compile(Compiler::files[i]);
             if(Compiler::settings.emitLLVM) {
@@ -411,8 +412,9 @@ void Compiler::compileAll() {
     }
     for(int i=0; i<AST::addToImport.size(); i++) {
         std::string fname = replaceAll(AST::addToImport[i], ">", "");
-        if(std::count(Compiler::toImport.begin(), Compiler::toImport.end(), fname) == 0
-        && std::count(Compiler::files.begin(), Compiler::files.end(), fname) == 0) {
+        if(std::count(Compiler::toImport.begin(), Compiler::toImport.end(), fname) == 0 &&
+           std::count(Compiler::files.begin(), Compiler::files.end(), fname) == 0
+        ) {
             Compiler::toImport.push_back(fname);
         }
     }
@@ -421,12 +423,8 @@ void Compiler::compileAll() {
             Compiler::error("file '" + Compiler::files[i] + "' does not exists!");
             return;
         }
-        if(Compiler::files[i].size() > 2 &&
-            Compiler::toImport[i].substr(Compiler::toImport[i].size()-2, Compiler::toImport[i].size()) == ".a" ||
-            Compiler::toImport[i].substr(Compiler::toImport[i].size()-4, Compiler::toImport[i].size()) == ".lib" ||
-            Compiler::toImport[i].substr(Compiler::toImport[i].size()-2, Compiler::toImport[i].size()) == ".o") {
-                Compiler::linkString += Compiler::toImport[i] + " ";
-        }
+        if(Compiler::toImport[i].size() > 2 && (endsWith(Compiler::toImport[i], ".a") || endsWith(Compiler::toImport[i], ".o") || endsWith(Compiler::toImport[i], ".lib")))
+            Compiler::linkString += Compiler::toImport[i] + " ";
         else {
             #if defined(__linux__)
             if(
@@ -438,7 +436,7 @@ void Compiler::compileAll() {
                 compile(Compiler::toImport[i]);
                 if(Compiler::settings.emitLLVM) {
                     char* err;
-                    LLVMPrintModuleToFile(generator->lModule, (Compiler::toImport[i]+".ll").c_str(), &err);
+                    LLVMPrintModuleToFile(generator->lModule, (Compiler::toImport[i] + ".ll").c_str(), &err);
                 }
                 std::string compiledFile = std::regex_replace(Compiler::toImport[i], std::regex("\\.rave"), ".o");
                 linkString += compiledFile + " ";
