@@ -1359,11 +1359,8 @@ std::vector<Node*> Parser::parseFuncCallArgs() {
     else this->error("expected token '('!");
     while(this->peek()->type != TokType::Lpar) {
         if(this->peek()->type == TokType::Identifier) {
-            if(isBasicType(this->peek()->value)) {
-                if(this->isDefinedLambda()) buffer.push_back(this->parseLambda());
-                else buffer.push_back(new NodeType(this->parseType(), this->peek()->line));
-            }
-            else if(this->isDefinedLambda()) buffer.push_back(this->parseLambda());
+            if(this->isDefinedLambda()) buffer.push_back(this->parseLambda());
+            else if(isBasicType(this->peek()->value)) buffer.push_back(new NodeType(this->parseType(), this->peek()->line));
             else buffer.push_back(this->parseExpr());
         }
         else buffer.push_back(this->parseExpr());
