@@ -7,30 +7,30 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import <std/math> <std/map>
 
 namespace std {
-    struct matrix<T> {
-        T* data;
+    (@tNequals(MATRIX_T, void)) struct matrix<MATRIX_T> {
+        MATRIX_T* data;
         int rows;
         int columns;
 
-        std::matrix<T> this(int rows, int columns) {
-            std::matrix<T> this;
-            this.data = cast(T*)std::malloc(sizeof(T) * rows * columns);
-            for(int i=0; i<(rows * columns); i++) this.data[i] = cast(T)0;
+        std::matrix<MATRIX_T> this(int rows, int columns) {
+            std::matrix<MATRIX_T> this;
+            this.data = cast(MATRIX_T*)std::malloc(sizeof(MATRIX_T) * rows * columns);
+            for(int i=0; i<(rows * columns); i++) this.data[i] = cast(MATRIX_T)0;
             this.rows = rows;
             this.columns = columns;
         } => this;
 
-        void set(int r, int c, T value) {
+        void set(int r, int c, MATRIX_T value) {
             if((r >= 0) && (r < this.rows) && (c >= 0) && (c < this.columns)) this.data[(r * this.columns) + c] = value;
         }
 
-        T get(int r, int c) {
+        MATRIX_T get(int r, int c) {
             if((r >= 0) && (r < this.rows) && (c >= 0) && (c < this.columns)) return = this.data[(r * this.columns) + c];
         }
 
         void zero {for(int i=0; i<(this.rows * this.columns); i++) this.data[i] = null;}
 
-        void add(std::matrix<T> mat) {
+        void add(std::matrix<MATRIX_T> mat) {
             if((this.rows == mat.rows) && (this.columns == mat.columns) && (mat.data != null)) {
                 for(int y=0; y<this.rows; y++) {
                     for(int x=0; x<this.columns; x++) this.set(y, x, this.get(y, x) + mat.get(y, x));
@@ -38,7 +38,7 @@ namespace std {
             }
         }
 
-        void sub(std::matrix<T> mat) {
+        void sub(std::matrix<MATRIX_T> mat) {
             if((this.rows == mat.rows) && (this.columns == mat.columns) && (mat.data != null)) {
                 for(int y=0; y<this.rows; y++) {
                     for(int x=0; x<this.columns; x++) this.set(y, x, this.get(y, x) - mat.get(y, x));
@@ -46,7 +46,7 @@ namespace std {
             }
         }
 
-        void multiply(std::matrix<T> mat, std::matrix<T> out) {
+        void multiply(std::matrix<MATRIX_T> mat, std::matrix<MATRIX_T> out) {
             if(mat.data != null) {
                 for(int y=0; y<this.rows; y++) {
                     for(int k=0; k<mat.rows; k++) {
@@ -56,7 +56,7 @@ namespace std {
             }
         }
 
-        void transform(T(T) fn) {
+        void transform(MATRIX_T(MATRIX_T) fn) {
             for(int i=0; i<(this.rows * this.columns); i++) this.data[i] = fn(this.data[i]);
         }
 

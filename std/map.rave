@@ -25,7 +25,7 @@ namespace std {
         if(return < 0) return = -return;
     }
 
-    struct hashmap<K, V> {
+    (@tNequals(K, void), @tNequals(V, void)) struct hashmap<K, V> {
         std::hashmap::Entry<K, V>** table;
         int length;
         int mapSize;
