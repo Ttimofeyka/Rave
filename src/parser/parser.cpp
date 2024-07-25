@@ -511,7 +511,7 @@ Node* Parser::parseAtom(std::string f) {
         return new NodeFloat(std::stod(t->value));
     }
     if(t->type == TokType::HexNumber) {
-        long number;
+        long long number;
         std::stringstream ss;
         ss << std::hex << t->value;
         ss >> number;
@@ -536,34 +536,44 @@ Node* Parser::parseAtom(std::string f) {
     if(t->type == TokType::Identifier) {
         if(t->value == "null") return new NodeNull(nullptr, t->line);
         else if(t->value == "cast") {
+            if(this->peek()->type != TokType::Rpar) this->error("expected token '('!");
             this->next();
             Type* ty = this->parseType();
-            this->next(); // skip )
+            if(this->peek()->type != TokType::Lpar) this->error("expected token ')'!");
+            this->next();
             Node* expr = this->parseExpr();
             return new NodeCast(ty, expr, t->line);
         }
         else if(t->value == "sizeof") {
-            next();
+            if(this->peek()->type != TokType::Rpar) this->error("expected token '('!");
+            this->next();
             NodeType* val = new NodeType(this->parseType(), t->line);
+            if(this->peek()->type != TokType::Lpar) this->error("expected token ')'!");
             this->next();
             return new NodeSizeof(val, t->line);
         }
         else if(t->value == "itop") {
+            if(this->peek()->type != TokType::Rpar) this->error("expected token '('!");
             this->next();
             Type* type = this->parseType();
+            if(this->peek()->type != TokType::Comma) this->error("expected token ','!");
             this->next();
             Node* val = this->parseExpr();
+            if(this->peek()->type != TokType::Lpar) this->error("expected token ')'!");
             this->next();
             return new NodeItop(val, type, t->line);
         }
         else if(t->value == "ptoi") {
+            if(this->peek()->type != TokType::Rpar) this->error("expected token '('!");
             this->next();
             Node* val = this->parseExpr();
+            if(this->peek()->type != TokType::Lpar) this->error("expected token ')'!");
             this->next();
             return new NodePtoi(val, t->line);
         }
         else if(t->value == "cmpxchg") return parseCmpXchg(f);
         else if(t->value == "asm") {
+            if(this->peek()->type != TokType::Rpar) this->error("expected token '('!");
             this->next();
             Type* type = nullptr;
             if(this->peek()->type != TokType::String) {
@@ -588,11 +598,12 @@ Node* Parser::parseAtom(std::string f) {
                     if(this->peek()->type != TokType::Lpar) this->next();
                 }
             }
-            if(this->peek()->type == TokType::Lpar) this->next();
+            if(this->peek()->type != TokType::Lpar) this->error("expected token ')'!");
+            this->next();
             return new NodeAsm(line, true, type, additions, args, t->line);
         }
         else if(this->peek()->type == TokType::Less) {
-            if(isTemplate()) {
+            if(this->isTemplate()) {
                 this->next();
                 std::string all = t->value + "<";
                 int countOfL = 0;
@@ -623,7 +634,8 @@ Node* Parser::parseAtom(std::string f) {
         std::vector<Node*> values;
         while(this->peek()->type != TokType::Larr) {
             values.push_back(this->parseExpr());
-            if(this->peek()->type == TokType::Comma) next();
+            if(this->peek()->type == TokType::Comma) this->next();
+            else if(this->peek()->type != TokType::Larr) this->error("expected token ']'!");
         }
         this->next();
         return new NodeArray(t->line, values);
@@ -667,13 +679,15 @@ Node* Parser::parseAtom(std::string f) {
         return new NodeBuiltin(name, args, t->line, block);
     }
     if(t->type == TokType::Destructor) return new NodeUnary(t->line, TokType::Destructor, this->parseExpr());
-    this->error("expected a number, true/false, char, variable or expression. Got: '"+t->value+"' on "+std::to_string(t->line)+" line.");
+    this->error("expected a number, true/false, char, variable or expression. Got: '" + t->value + "' on " + std::to_string(t->line) + " line.");
     return nullptr;
 }
 
 Node* Parser::parseStruct(std::vector<DeclarMod> mods) {
-    long loc = this->peek()->line;
+    int loc = this->peek()->line;
+
     this->next();
+    if(this->peek()->type != TokType::Identifier) this->error("a declaration name must be identifier!");
     std::string name = this->peek()->value;
     this->next();
 
@@ -723,14 +737,18 @@ std::string getGlobalFile(Parser* parser) {
     while(parser->peek()->type != TokType::More) {
         buffer += parser->peek()->value;
         parser->next();
+        if(parser->peek()->type == TokType::Divide) {buffer += "/"; parser->next();}
+        else if(parser->peek()->type != TokType::Divide && parser->peek()->type != TokType::More) parser->error("expected token '/' or '>'!");
     }
-    return exePath+buffer;
+    return exePath + buffer;
 }
 
 Node* Parser::parseImport() {
-    long loc = this->peek()->line;
+    int loc = this->peek()->line;
     this->next();
     std::vector<std::string> files;
+
+    if(this->peek()->type != TokType::Less && this->peek()->type != TokType::String) this->error("expected token '<' or string!");
 
     while(this->peek()->type == TokType::Less || this->peek()->type == TokType::String) {
         if(this->peek()->type == TokType::Less) files.push_back(getGlobalFile(this) + ".rave");
@@ -748,8 +766,10 @@ Node* Parser::parseImport() {
 }
 
 Node* Parser::parseAliasType() {
-    long loc = this->peek()->line;
+    int loc = this->peek()->line;
+
     this->next();
+    if(this->peek()->type != TokType::Identifier) this->error("a type name must be identifier!");
     std::string name = this->peek()->value;
     this->next();
 
@@ -788,7 +808,7 @@ Type* Parser::parseTypeAtom() {
         if(this->peek()->type == TokType::Rbra) return new TypeBuiltin(info->value, args, parseBlock(""));
         return new TypeBuiltin(info->value, args, new NodeBlock({}));
     }
-    else this->error("expected a typename, not '" + this->peek()->value + "'!");
+    else this->error("expected a type name, not '" + this->peek()->value + "'!");
     return nullptr;
 }
 
@@ -801,7 +821,9 @@ std::vector<TypeFuncArg*> Parser::parseFuncArgs() {
         std::string name = "";
         if(this->peek()->type == TokType::Identifier) {name = this->peek()->value; this->next();}
         buffer.push_back(new TypeFuncArg(ty,name));
+
         if(this->peek()->type == TokType::Comma) this->next();
+        else if(this->peek()->type != TokType::Lpar) this->error("expected token ')'!");
     } this->next();
     return buffer;
 }
@@ -972,7 +994,7 @@ Node* Parser::parseSuffix(Node* base, std::string f) {
                     this->next();
                     if(this->peek()->type == TokType::Rpar) base = this->parseCall(new NodeGet(base, field+sTypes, isPtr, this->peek()->line));
                     else {
-                        generator->error("Assert into parseSuffix!", this->peek()->line);
+                        error("Assert into parseSuffix!");
                         return nullptr;
                     }
                 }
@@ -1338,6 +1360,8 @@ Node* Parser::parseLambda() {
         name = peek()->value;
         next();
     }
+    else error("a declaration name must be identifier!");
+
     if(peek()->type == TokType::ShortRet) {
         this->next();
         Node* value = this->parseExpr();
