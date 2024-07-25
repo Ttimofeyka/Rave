@@ -14,7 +14,7 @@ Rave is a statically typed, compiled, procedural, general-purpose programming la
 
 ## "Hello, world!" Example
 
-```nasm
+```d
 import <std/io>
 
 void main {
