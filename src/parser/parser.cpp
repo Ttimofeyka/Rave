@@ -147,7 +147,7 @@ Node* Parser::parseTopLevel(std::string s) {
         while(this->peek()->type != TokType::Lpar) {
             if(this->peek()->type == TokType::Builtin) {
                 NodeBuiltin* nb = (NodeBuiltin*)this->parseBuiltin(s);
-                mods.push_back(DeclarMod{.name = ("@"+nb->name), .value = "", .genValue = nb});
+                mods.push_back(DeclarMod{.name = ("@" + nb->name), .value = "", .genValue = nb});
                 if(this->peek()->type == TokType::Comma) this->next();
                 continue;
             }

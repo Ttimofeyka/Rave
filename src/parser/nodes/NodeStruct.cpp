@@ -21,6 +21,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeGet.hpp"
 #include "../../include/parser/nodes/NodeWhile.hpp"
 #include "../../include/parser/nodes/NodeRet.hpp"
+#include "../../include/parser/nodes/NodeBuiltin.hpp"
+#include "../../include/parser/nodes/NodeBool.hpp"
 #include "../../include/parser/ast.hpp"
 #include <algorithm>
 
@@ -240,6 +242,8 @@ std::vector<Node*> NodeStruct::copyElements() {
 LLVMValueRef NodeStruct::generate() {
     if(this->templateNames.size() > 0 || this->noCompile) return nullptr;
 
+    std::map<std::string, NodeBuiltin*> builtins;
+
     for(int i=0; i<this->mods.size(); i++) {
         while(AST::aliasTable.find(this->mods[i].name) != AST::aliasTable.end()) {
             if(instanceof<NodeArray>(AST::aliasTable[this->mods[i].name])) {
@@ -251,7 +255,17 @@ LLVMValueRef NodeStruct::generate() {
         if(this->mods[i].name == "packed") this->isPacked = true;
         else if(this->mods[i].name == "data") this->dataVar = this->mods[i].value;
         else if(this->mods[i].name == "length") this->lengthVar = this->mods[i].value;
+        else if(this->mods[i].name.size() > 0 && this->mods[i].name[0] == '@') builtins[this->mods[i].name.substr(1)] = ((NodeBuiltin*)this->mods[i].genValue);
     }
+
+    for(const auto &data : builtins) {
+        Node* result = data.second->comptime();
+        if(result == nullptr || (instanceof<NodeBool>(result) && !((NodeBool*)result)->value)) {
+            generator->error("The '" + data.first+  "' builtin failed when generating the structure '" + this->name + "'!", this->loc);
+            return nullptr;
+        }
+    }
+
     generator->structures[this->name] = LLVMStructCreateNamed(generator->context, this->name.c_str());
 
     std::vector<LLVMTypeRef> params = this->getParameters(this->isTemplated);

@@ -208,7 +208,7 @@ LLVMValueRef NodeFunc::generate() {
 
     for(const auto &data : builtins) {
         Node* result = data.second->comptime();
-        if(result == nullptr || (instanceof<NodeBool>(result) && ((NodeBool*)result)->value)) {
+        if(result == nullptr || (instanceof<NodeBool>(result) && !((NodeBool*)result)->value)) {
             generator->error("The '" + data.first+  "' builtin failed when generating the function '" + this->name + "'!", this->loc);
             return nullptr;
         }
