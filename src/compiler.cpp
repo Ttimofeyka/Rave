@@ -211,15 +211,15 @@ void Compiler::compile(std::string file) {
 
     AST::mainFile = Compiler::files[0];
 
-    auto start = std::chrono::system_clock::now();
+    auto start = std::chrono::steady_clock::now();
     Lexer* lexer = new Lexer(content, offset);
-    auto end = std::chrono::system_clock::now();
+    auto end = std::chrono::steady_clock::now();
     Compiler::lexTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     
     start = end;
     Parser* parser = new Parser(lexer->tokens, file);
     parser->parseAll();
-    end = std::chrono::system_clock::now();
+    end = std::chrono::steady_clock::now();
     for(int i=0; i<parser->nodes.size(); i++) parser->nodes[i]->check();
     Compiler::parseTime += std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
 
@@ -374,7 +374,7 @@ void Compiler::compile(std::string file) {
         Compiler::error("target machine emit to file: " + std::string(errors));
         std::exit(1);
     }
-    end = std::chrono::system_clock::now();
+    end = std::chrono::steady_clock::now();
     Compiler::genTime += std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
 
     for(int i=0; i<AST::importedFiles.size(); i++) {
