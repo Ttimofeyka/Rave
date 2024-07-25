@@ -188,10 +188,10 @@ Example:
 @if(@isNumeric(int)) {
     // ...
 };
-@if(isPointer(int*)) {
+@if(@isPointer(int*)) {
     // ...
 };
-@if(isArray(int[1])) {
+@if(@isArray(int[1])) {
     // ...
 };
 ```
@@ -226,8 +226,7 @@ Example:
 Example:
 
 ```d
-const(char)* _int = @typeToString(int);
-@if(_int == "int") {
+@if(@typeToString(int) == "int") {
 
 };
 ```
