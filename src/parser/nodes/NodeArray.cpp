@@ -27,7 +27,10 @@ std::vector<LLVMValueRef> NodeArray::getValues() {
     if(!LLVMIsConstant(v0)) isConst = false;
     for(int i=1; i<this->values.size(); i++) {
         buffer.push_back(values[i]->generate());
-        if(!LLVMIsConstant(buffer[buffer.size() - 1])) isConst = false;
+        if(!LLVMIsConstant(buffer[buffer.size() - 1])) {
+            isConst = false;
+            break;
+        }
     }
     return buffer;
 }
