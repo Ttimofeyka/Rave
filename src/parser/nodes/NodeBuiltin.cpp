@@ -96,8 +96,10 @@ NodeType* NodeBuiltin::asType(int n, bool isCompTime) {
         if(name == "ucent") return new NodeType(new TypeBasic(BasicType::Ucent), this->loc);
         if(name == "float") return new NodeType(new TypeBasic(BasicType::Float), this->loc);
         if(name == "double") return new NodeType(new TypeBasic(BasicType::Double), this->loc);
+        if(name == "float4") return new NodeType(new TypeVector(new TypeBasic(BasicType::Float), 8), this->loc);
         if(name == "float8") return new NodeType(new TypeVector(new TypeBasic(BasicType::Float), 8), this->loc);
         if(name == "int4") return new NodeType(new TypeVector(new TypeBasic(BasicType::Int), 4), this->loc);
+        if(name == "int8") return new NodeType(new TypeVector(new TypeBasic(BasicType::Int), 8), this->loc);
         return new NodeType(new TypeStruct(name), this->loc);
     }
     if(instanceof<NodeBuiltin>(this->args[n])) {
@@ -448,88 +450,133 @@ LLVMValueRef NodeBuiltin::generate() {
         generator->error("cannot get the link name of this value!", this->loc);
         return nullptr;
     }
-    else if(this->name == "f8Load") {
-        LLVMValueRef structPointer = LLVMBuildBitCast(
-            generator->builder,
-            this->args[0]->generate(),
-            LLVMPointerType(LLVMStructTypeInContext(
-                generator->context,
-                std::vector<LLVMTypeRef>({LLVMVectorType(LLVMFloatTypeInContext(generator->context), 8)}).data(),
-                1,
-                false
-            ), 0),
-            "f8Load_bitc"
-        );
-        return LLVM::load(LLVM::structGep(structPointer, 0, "f8Load_gep"), "f8Load");
+    else if(this->name == "vLoad") {
+        LLVMValueRef value = nullptr;
+        LLVMTypeRef ptrType = nullptr;
+        Type* resultVectorType;
+        if(this->args.size() < 2) generator->error("at least two arguments are required!", this->loc);
+
+        resultVectorType = asType(0)->type;
+        if(!instanceof<TypeVector>(resultVectorType)) generator->error("the type must be a vector!", this->loc);
+
+        value = this->args[1]->generate();
+        if(!LLVM::isPointer(value)) generator->error("the second argument is not a pointer to the data!", this->loc);
+
+        // Warning
+        generator->warning("'vLoad' is very experimental builtin that can cause problems.", this->loc);
+
+        // Uses clang method: creating anonymous structure with vector type and bitcast it
+        return LLVM::load(LLVM::structGep(LLVMBuildBitCast(
+            generator->builder, value,
+            LLVMPointerType(LLVMStructTypeInContext(generator->context, std::vector<LLVMTypeRef>({generator->genType(resultVectorType, this->loc)}).data(), 1, false), 0),
+            "vLoad_bitc"
+        ), 0, "vLoad_sgep"), "vLoad");
     }
-    else if(this->name == "f8Set") {
+    else if(this->name == "vGet") {
+        if(this->args.size() < 2) generator->error("at least two arguments are required!", this->loc);
         LLVMValueRef vector = this->args[0]->generate();
-        LLVMValueRef loaded = LLVM::load(vector, "NodeBuiltin_f8Set_load");
-        LLVMBuildStore(generator->builder, LLVMBuildInsertElement(generator->builder, loaded, this->args[2]->generate(), this->args[1]->generate(), "NodeBuiltin_f8Set_ie"), vector);
+        if(LLVM::isPointer(vector)) vector = LLVM::load(vector, "vGet_load");
+        if(LLVMGetTypeKind(LLVMTypeOf(vector)) != LLVMVectorTypeKind) generator->error("the value must be a vector!", this->loc);
+        return LLVMBuildExtractElement(generator->builder, vector, this->args[1]->generate(), "vGet_ee");
+    }
+    else if(this->name == "vSet") {
+        if(this->args.size() < 3) generator->error("at least three arguments are required!", this->loc);
+        LLVMValueRef vector = this->args[0]->generate();
+        if(!LLVM::isPointer(vector)) generator->error("the value must be a pointer to the vector!", this->loc);
+
+        // Warning
+        generator->warning("'vSet' is very experimental builtin that can cause problems.", this->loc);
+
+        LLVMValueRef index = this->args[1]->generate();
+        LLVMValueRef value = this->args[2]->generate();
+        LLVMValueRef buffer = LLVM::load(vector, "vSet_buffer");
+        buffer = LLVMBuildInsertElement(generator->builder, buffer, value, index, "vSet_ie");
+        LLVMBuildStore(generator->builder, buffer, vector);
         return nullptr;
     }
-    else if(this->name == "f8Get") {
-        LLVMValueRef vector = this->args[0]->generate();
-        if(LLVM::isPointer(vector)) vector = LLVM::load(vector, "NodeBuiltin_f8Get_load");
-        return LLVMBuildExtractElement(generator->builder, vector, this->args[1]->generate(), "NodeBuiltin_f8Get_ee");
-    }
-    else if(this->name == "i4Load") {
-         LLVMValueRef structPointer = LLVMBuildBitCast(
-            generator->builder,
-            this->args[0]->generate(),
-            LLVMPointerType(LLVMStructTypeInContext(
-                generator->context,
-                std::vector<LLVMTypeRef>({LLVMVectorType(LLVMInt32TypeInContext(generator->context), 4)}).data(),
-                1,
-                false
-            ), 0),
-            "i4Load_bitc"
-        );
-        return LLVM::load(LLVM::structGep(structPointer, 0, "i4Load_gep"), "i4Load");
-    }
-    else if(this->name == "i4Set") {
-        LLVMValueRef vector = this->args[0]->generate();
-        LLVMValueRef loaded = LLVM::load(vector, "NodeBuiltin_i4Set_load");
-        LLVMBuildStore(generator->builder, LLVMBuildInsertElement(generator->builder, loaded, this->args[2]->generate(), this->args[1]->generate(), "NodeBuiltin_i4Set_ie"), vector);
-        return nullptr;
-    }
-    else if(this->name == "i4Get") {
-        LLVMValueRef vector = this->args[0]->generate();
-        if(LLVM::isPointer(vector)) vector = LLVM::load(vector, "NodeBuiltin_i4Get_load");
-        return LLVMBuildExtractElement(generator->builder, vector, this->args[1]->generate(), "NodeBuiltin_i4Get_ee");
-    }
-    else if(this->name == "f4Load") {
-        if(instanceof<NodeIndex>(this->args[0])) ((NodeIndex*)this->args[0])->isMustBePtr = true;
-        LLVMValueRef structPointer = LLVMBuildBitCast(
-            generator->builder,
-            this->args[0]->generate(),
-            LLVMPointerType(LLVMStructTypeInContext(
-                generator->context,
-                std::vector<LLVMTypeRef>({LLVMVectorType(LLVMFloatTypeInContext(generator->context), 4)}).data(),
-                1,
-                false
-            ), 0),
-            "f4Load_bitc"
-        );
-        return LLVM::load(LLVM::structGep(structPointer, 0, "f4Load_gep"), "f4Load");
-    }
-    else if(this->name == "f4Set") {
-        LLVMValueRef vector = this->args[0]->generate();
-        LLVMValueRef loaded = LLVM::load(vector, "NodeBuiltin_f4Set_load");
-        LLVMBuildStore(generator->builder, LLVMBuildInsertElement(generator->builder, loaded, this->args[2]->generate(), this->args[1]->generate(), "NodeBuiltin_f4Set_ie"), vector);
-        return nullptr;
-    }
-    else if(this->name == "f4Get") {
-        LLVMValueRef vector = this->args[0]->generate();
-        if(LLVM::isPointer(vector)) vector = LLVM::load(vector, "NodeBuiltin_f4Get_load");
-        return LLVMBuildExtractElement(generator->builder, vector, this->args[1]->generate(), "NodeBuiltin_f4Get_ee");
-    }
-    else if(this->name == "f4Mul") {
+    else if(this->name == "vMul") {
+        if(this->args.size() < 2) generator->error("at least two arguments are required!", this->loc);
+
         LLVMValueRef vector1 = this->args[0]->generate();
         LLVMValueRef vector2 = this->args[1]->generate();
-        if(LLVM::isPointer(vector1)) vector1 = LLVM::load(vector1, "NodeBuiltin_f4Mul_load_v1");
-        if(LLVM::isPointer(vector2)) vector2 = LLVM::load(vector2, "NodeBuiltin_f4Mul_load_v2");
-        return LLVMBuildFMul(generator->builder, vector1, vector2, "NodeBuiltin_f4Mul_fmul");
+
+        if(LLVM::isPointer(vector1)) vector1 = LLVM::load(vector1, "vMul_load1_");
+        if(LLVM::isPointer(vector2)) vector2 = LLVM::load(vector2, "vMul_load2_");
+
+        LLVMTypeRef vecType = LLVMTypeOf(vector1);
+
+        if(LLVMGetTypeKind(vecType) != LLVMVectorTypeKind ||
+           LLVMGetTypeKind(LLVMTypeOf(vector2)) != LLVMVectorTypeKind) generator->error("the values must have the vector type!", this->loc);
+
+        if(LLVMGetTypeKind(LLVMGetElementType(vecType)) == LLVMFloatTypeKind) return LLVMBuildFMul(generator->builder, vector1, vector2, "vMul_fmul");
+        return LLVMBuildMul(generator->builder, vector1, vector2, "vMul_mul");
+    }
+    else if(this->name == "vDiv") {
+        if(this->args.size() < 2) generator->error("at least two arguments are required!", this->loc);
+
+        LLVMValueRef vector1 = this->args[0]->generate();
+        LLVMValueRef vector2 = this->args[1]->generate();
+
+        if(LLVM::isPointer(vector1)) vector1 = LLVM::load(vector1, "vDiv_load1_");
+        if(LLVM::isPointer(vector2)) vector2 = LLVM::load(vector2, "vDiv_load2_");
+
+        LLVMTypeRef vecType = LLVMTypeOf(vector1);
+
+        if(LLVMGetTypeKind(vecType) != LLVMVectorTypeKind ||
+           LLVMGetTypeKind(LLVMTypeOf(vector2)) != LLVMVectorTypeKind) generator->error("the values must have the vector type!", this->loc);
+
+        if(LLVMGetTypeKind(LLVMGetElementType(vecType)) == LLVMFloatTypeKind) return LLVMBuildFDiv(generator->builder, vector1, vector2, "vDiv_fdiv");
+        return LLVMBuildSDiv(generator->builder, vector1, vector2, "vDiv_div");
+    }
+    else if(this->name == "vAdd") {
+        if(this->args.size() < 2) generator->error("at least two arguments are required!", this->loc);
+
+        LLVMValueRef vector1 = this->args[0]->generate();
+        LLVMValueRef vector2 = this->args[1]->generate();
+
+        if(LLVM::isPointer(vector1)) vector1 = LLVM::load(vector1, "vAdd_load1_");
+        if(LLVM::isPointer(vector2)) vector2 = LLVM::load(vector2, "vAdd_load2_");
+
+        LLVMTypeRef vecType = LLVMTypeOf(vector1);
+
+        if(LLVMGetTypeKind(vecType) != LLVMVectorTypeKind ||
+           LLVMGetTypeKind(LLVMTypeOf(vector2)) != LLVMVectorTypeKind) generator->error("the values must have the vector type!", this->loc);
+
+        if(LLVMGetTypeKind(LLVMGetElementType(vecType)) == LLVMFloatTypeKind) return LLVMBuildFAdd(generator->builder, vector1, vector2, "vAdd_fadd");
+        return LLVMBuildAdd(generator->builder, vector1, vector2, "vAdd_add");
+    }
+    else if(this->name == "vSub") {
+        if(this->args.size() < 2) generator->error("at least two arguments are required!", this->loc);
+
+        LLVMValueRef vector1 = this->args[0]->generate();
+        LLVMValueRef vector2 = this->args[1]->generate();
+
+        if(LLVM::isPointer(vector1)) vector1 = LLVM::load(vector1, "vSub_load1_");
+        if(LLVM::isPointer(vector2)) vector2 = LLVM::load(vector2, "vSub_load2_");
+
+        LLVMTypeRef vecType = LLVMTypeOf(vector1);
+
+        if(LLVMGetTypeKind(vecType) != LLVMVectorTypeKind ||
+           LLVMGetTypeKind(LLVMTypeOf(vector2)) != LLVMVectorTypeKind) generator->error("the values must have the vector type!", this->loc);
+
+        if(LLVMGetTypeKind(LLVMGetElementType(vecType)) == LLVMFloatTypeKind) return LLVMBuildFSub(generator->builder, vector1, vector2, "vSub_fsub");
+        return LLVMBuildSub(generator->builder, vector1, vector2, "vSub_sub");
+    }
+    else if(this->name == "vHAdd32x4") {
+        if(!(generator->settings.hasSSSE3 && generator->options["ssse3"].template get<bool>())) {
+            generator->error("your target does not supports SSSE3!", this->loc);
+            return nullptr;
+        }
+
+        if(this->args.size() < 2) generator->error("at least two arguments are required!", this->loc);
+
+        LLVMValueRef vector1 = this->args[0]->generate();
+        LLVMValueRef vector2 = this->args[1]->generate();
+
+        if(LLVM::isPointer(vector1)) vector1 = LLVM::load(vector1, "vHAdd32x4_load1_");
+        if(LLVM::isPointer(vector2)) vector2 = LLVM::load(vector2, "vHAdd32x4_load2_");
+
+        return LLVM::call(generator->functions["llvm.x86.ssse3.phadd.d.128"], std::vector<LLVMValueRef>({vector1, vector2}).data(), 2, "vHAdd32x4");
     }
     else if(this->name == "alloca") {
         BigInt size = asNumber(0);
@@ -620,6 +667,6 @@ Node* NodeBuiltin::comptime() {
         if(AST::structTable.find(tstruct->name) == AST::structTable.end()) return new NodeBool(false);
         return new NodeBool(AST::structTable[tstruct->name]->destructor == nullptr);
     }
-    AST::checkError("builtin with name '"+this->name+"' does not exist!", this->loc);
+    AST::checkError("builtin with name '" + this->name + "' does not exist!", this->loc);
     return nullptr;
 }

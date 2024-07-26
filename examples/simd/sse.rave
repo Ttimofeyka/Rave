@@ -1,0 +1,34 @@
+// This is still very experimental! Segmentation faults can be at anytime.
+
+import <std/io>
+
+void main {
+    float4 a;
+    float[] b = [2f, 4f, 8f, 16f];
+
+    a = @vLoad(float4, &b);
+
+    float c = @vGet(a, 2);
+    std::println(c);
+    // Output: 8
+
+    @vSet(&a, 2, 16f);
+
+    c = @vGet(a, 2);
+    std::println(c);
+    // Output: 16
+
+    // Multiply
+    a = @vMul(a, a);
+
+    c = @vGet(a, 2);
+    std::println(c);
+    // Output: 256
+
+    // Divide
+    a = @vDiv(a, a);
+
+    c = @vGet(a, 2);
+    std::println(c);
+    // Output: 1
+}

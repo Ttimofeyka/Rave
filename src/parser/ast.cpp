@@ -17,6 +17,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../include/parser/nodes/NodeCall.hpp"
 #include "../include/parser/nodes/NodeType.hpp"
 #include "../include/parser/nodes/NodeGet.hpp"
+#include "../include/json.hpp"
+#include "../include/compiler.hpp"
 #include <iostream>
 #include "../include/llvm.hpp"
 
@@ -186,12 +188,21 @@ void AST::checkError(std::string message, long loc) {
 	exit(1);
 }
 
-LLVMGen::LLVMGen(std::string file, genSettings settings) {
+LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options) {
     this->file = file;
     this->settings = settings;
+    this->options = options;
     this->context = LLVMContextCreate();
     this->lModule = LLVMModuleCreateWithNameInContext("rave", this->context);
     LLVMContextSetOpaquePointers(this->context, 0);
+
+    if(settings.hasSSE3 && options["sse"].template get<int>() > 2) {
+        functions["llvm.x86.ssse3.phadd.d.128"] = LLVMAddFunction(lModule, "llvm.x86.ssse3.phadd.d.128", LLVMFunctionType(
+            LLVMVectorType(LLVMInt32TypeInContext(context), 4),
+            std::vector<LLVMTypeRef>({LLVMVectorType(LLVMInt32TypeInContext(context), 4), LLVMVectorType(LLVMInt32TypeInContext(context), 4)}).data(),
+            2, false
+        ));
+    }
 
     this->neededFunctions["free"] = "std::free";
     this->neededFunctions["malloc"] = "std::malloc";

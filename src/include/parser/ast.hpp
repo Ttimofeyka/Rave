@@ -16,6 +16,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "./Type.hpp"
 #include "./Types.hpp"
 #include "./nodes/Node.hpp"
+#include "../json.hpp"
 #include <vector>
 
 class NodeVar;
@@ -67,6 +68,7 @@ public:
     LLVMTargetDataRef targetData;
     std::string file;
     genSettings settings;
+    nlohmann::json options;
     
     std::map<std::string,LLVMValueRef> globals;
     std::map<std::string,LLVMValueRef> functions;
@@ -84,7 +86,7 @@ public:
     void error(std::string msg, long line);
     void warning(std::string msg, long line);
 
-    LLVMGen(std::string file, genSettings settings);
+    LLVMGen(std::string file, genSettings settings, nlohmann::json options);
 
     std::string mangle(std::string name, bool isFunc, bool isMethod);
 
