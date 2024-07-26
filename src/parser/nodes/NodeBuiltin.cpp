@@ -484,9 +484,6 @@ LLVMValueRef NodeBuiltin::generate() {
         LLVMValueRef vector = this->args[0]->generate();
         if(!LLVM::isPointer(vector)) generator->error("the value must be a pointer to the vector!", this->loc);
 
-        // Warning
-        generator->warning("'vSet' is very experimental builtin that can cause problems.", this->loc);
-
         LLVMValueRef index = this->args[1]->generate();
         LLVMValueRef value = this->args[2]->generate();
         LLVMValueRef buffer = LLVM::load(vector, "vSet_buffer");
