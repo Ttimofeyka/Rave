@@ -195,7 +195,7 @@ LLVMValueRef NodeVar::generate() {
         return nullptr;
     }
     else {
-        if(currScope->has(this->name)) {
+        if(currScope->has(this->name) && !AST::funcTable[currScope->funcName]->isCtargs && !AST::funcTable[currScope->funcName]->isCtargsPart) {
             generator->error("this name is already used!", loc);
             return nullptr;
         }
