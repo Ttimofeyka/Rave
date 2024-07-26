@@ -207,10 +207,14 @@ void Compiler::compile(std::string file) {
 
     content = "alias __RAVE_PLATFORM = \"" + ravePlatform + "\"; ";
     content = "alias __RAVE_OS = \"" + raveOs + "\"; " + content;
-    content = "alias __RAVE_OPTIMIZATION_LEVEL = " + std::to_string(settings.optLevel) + ";" + content;
+    content = "alias __RAVE_OPTIMIZATION_LEVEL = " + std::to_string(settings.optLevel) + "; " + content;
 
     if(!settings.noChecks) content = "alias __RAVE_RUNTIME_CHECKS = true;" + content;
     else content = "alias __RAVE_RUNTIME_CHECKS = false;" + content;
+    
+    content = "alias __RAVE_SSE = " + std::to_string(Compiler::options["sse"].template get<int>()) + "; " + content;
+    content = "alias __RAVE_SSSE3 = " + ((Compiler::options["ssse3"].template get<bool>() && Compiler::settings.hasSSSE3) ? std::string("true") : std::string("false")) + "; " + content;
+    content = "alias __RAVE_AVX = " + std::to_string(Compiler::options["avx"].template get<int>()) + "; " + content;
 
     if(!Compiler::settings.noPrelude && file.find("std/prelude.rave") == std::string::npos && file.find("std/memory.rave") == std::string::npos) {
         content = content + " import <std/prelude> <std/memory>";
