@@ -379,8 +379,6 @@ void Compiler::compile(std::string file) {
 
     LLVMRunPassManager(pm, generator->lModule);
 
-    std::cout << LLVMPrintModuleToString(generator->lModule) << std::endl;
-
     LLVMTargetMachineEmitToFile(machine, generator->lModule, (std::regex_replace(file, std::regex("\\.rave"), ".o")).c_str(), LLVMObjectFile, &errors);
     if(errors != nullptr) {
         Compiler::error("target machine emit to file: " + std::string(errors));

@@ -46,6 +46,7 @@ examples/time/test_time
 examples/memory/defer
 examples/memory/null_access
 examples/math/div_by_zero
+examples/simd/sse
 
 std/*.o
 src/*.o
