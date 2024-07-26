@@ -563,8 +563,8 @@ LLVMValueRef NodeBuiltin::generate() {
         return LLVMBuildSub(generator->builder, vector1, vector2, "vSub_sub");
     }
     else if(this->name == "vHAdd32x4") {
-        if(!(generator->settings.hasSSSE3 && generator->options["ssse3"].template get<bool>())) {
-            generator->error("your target does not supports SSSE3!", this->loc);
+        if(!(generator->settings.hasSSSE3 && generator->options["ssse3"].template get<bool>()) || !(generator->settings.hasSSE3 && generator->options["sse"].template get<int>() > 2)) {
+            generator->error("your target does not supports SSE3/SSSE3!", this->loc);
             return nullptr;
         }
 
@@ -576,7 +576,15 @@ LLVMValueRef NodeBuiltin::generate() {
         if(LLVM::isPointer(vector1)) vector1 = LLVM::load(vector1, "vHAdd32x4_load1_");
         if(LLVM::isPointer(vector2)) vector2 = LLVM::load(vector2, "vHAdd32x4_load2_");
 
-        return LLVM::call(generator->functions["llvm.x86.ssse3.phadd.d.128"], std::vector<LLVMValueRef>({vector1, vector2}).data(), 2, "vHAdd32x4");
+        LLVMTypeRef vector1Type = LLVMTypeOf(vector1);
+        if(LLVMGetTypeKind(vector1Type) != LLVMVectorTypeKind || LLVMGetTypeKind(LLVMTypeOf(vector2)) != LLVMVectorTypeKind)
+            generator->error("the values must have the vector type!", this->loc);
+
+        if(LLVMGetTypeKind(LLVMGetElementType(vector1Type)) != LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(vector2))))
+            generator->error("the values must have the same type!", this->loc);
+
+        if(LLVMGetTypeKind(LLVMGetElementType(vector1Type)) == LLVMIntegerTypeKind) return LLVM::call(generator->functions["llvm.x86.ssse3.phadd.d.128"], std::vector<LLVMValueRef>({vector1, vector2}).data(), 2, "vHAdd32x4");
+        return LLVM::call(generator->functions["llvm.x86.sse3.hadd.ps"], std::vector<LLVMValueRef>({vector1, vector2}).data(), 2, "vHAdd32x4");
     }
     else if(this->name == "alloca") {
         BigInt size = asNumber(0);

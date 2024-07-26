@@ -196,10 +196,18 @@ LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options)
     this->lModule = LLVMModuleCreateWithNameInContext("rave", this->context);
     LLVMContextSetOpaquePointers(this->context, 0);
 
-    if(settings.hasSSE3 && options["sse"].template get<int>() > 2) {
+    if(settings.hasSSSE3 && options["ssse3"].template get<bool>()) {
         functions["llvm.x86.ssse3.phadd.d.128"] = LLVMAddFunction(lModule, "llvm.x86.ssse3.phadd.d.128", LLVMFunctionType(
             LLVMVectorType(LLVMInt32TypeInContext(context), 4),
             std::vector<LLVMTypeRef>({LLVMVectorType(LLVMInt32TypeInContext(context), 4), LLVMVectorType(LLVMInt32TypeInContext(context), 4)}).data(),
+            2, false
+        ));
+    }
+
+    if(settings.hasSSE3 && options["sse"].template get<int>() > 2) {
+        functions["llvm.x86.sse3.hadd.ps"] = LLVMAddFunction(lModule, "llvm.x86.sse3.hadd.ps", LLVMFunctionType(
+            LLVMVectorType(LLVMFloatTypeInContext(context), 4),
+            std::vector<LLVMTypeRef>({LLVMVectorType(LLVMFloatTypeInContext(context), 4), LLVMVectorType(LLVMFloatTypeInContext(context), 4)}).data(),
             2, false
         ));
     }
