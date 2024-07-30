@@ -463,15 +463,21 @@ LLVMValueRef NodeBuiltin::generate() {
         value = this->args[1]->generate();
         if(!LLVM::isPointer(value)) generator->error("the second argument is not a pointer to the data!", this->loc);
 
+        bool alignment = true;
+
+        if(this->args.size() == 3) alignment = asBool(2)->value;
+
         // Warning
         generator->warning("'vLoad' is very experimental builtin that can cause problems.", this->loc);
 
         // Uses clang method: creating anonymous structure with vector type and bitcast it
-        return LLVM::load(LLVM::structGep(LLVMBuildBitCast(
+        LLVMValueRef v = LLVM::load(LLVM::structGep(LLVMBuildBitCast(
             generator->builder, value,
             LLVMPointerType(LLVMStructTypeInContext(generator->context, std::vector<LLVMTypeRef>({generator->genType(resultVectorType, this->loc)}).data(), 1, false), 0),
             "vLoad_bitc"
         ), 0, "vLoad_sgep"), "vLoad");
+        if(!alignment) LLVMSetAlignment(v, 1);
+        return v;
     }
     else if(this->name == "vGet") {
         if(this->args.size() < 2) generator->error("at least two arguments are required!", this->loc);
