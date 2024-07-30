@@ -100,6 +100,7 @@ NodeType* NodeBuiltin::asType(int n, bool isCompTime) {
         if(name == "float8") return new NodeType(new TypeVector(new TypeBasic(BasicType::Float), 8), this->loc);
         if(name == "int4") return new NodeType(new TypeVector(new TypeBasic(BasicType::Int), 4), this->loc);
         if(name == "int8") return new NodeType(new TypeVector(new TypeBasic(BasicType::Int), 8), this->loc);
+        if(name == "short8") return new NodeType(new TypeVector(new TypeBasic(BasicType::Short), 8), this->loc);
         return new NodeType(new TypeStruct(name), this->loc);
     }
     if(instanceof<NodeBuiltin>(this->args[n])) {
@@ -582,6 +583,59 @@ LLVMValueRef NodeBuiltin::generate() {
 
         if(LLVMGetTypeKind(LLVMGetElementType(vector1Type)) == LLVMIntegerTypeKind) return LLVM::call(generator->functions["llvm.x86.ssse3.phadd.d.128"], std::vector<LLVMValueRef>({vector1, vector2}).data(), 2, "vHAdd32x4");
         return LLVM::call(generator->functions["llvm.x86.sse3.hadd.ps"], std::vector<LLVMValueRef>({vector1, vector2}).data(), 2, "vHAdd32x4");
+    }
+    else if(this->name == "vHAdd16x8") {
+        if(!(generator->settings.hasSSSE3 && generator->options["ssse3"].template get<bool>())) {
+            generator->error("your target does not supports SSSE3!", this->loc);
+            return nullptr;
+        }
+
+        if(this->args.size() < 2) generator->error("at least two arguments are required!", this->loc);
+
+        LLVMValueRef vector1 = this->args[0]->generate();
+        LLVMValueRef vector2 = this->args[1]->generate();
+
+        if(LLVM::isPointer(vector1)) vector1 = LLVM::load(vector1, "vHAdd16x8_load1_");
+        if(LLVM::isPointer(vector2)) vector2 = LLVM::load(vector2, "vHAdd16x8_load2_");
+
+        LLVMTypeRef vector1Type = LLVMTypeOf(vector1);
+        if(LLVMGetTypeKind(vector1Type) != LLVMVectorTypeKind || LLVMGetTypeKind(LLVMTypeOf(vector2)) != LLVMVectorTypeKind)
+            generator->error("the values must have the vector type!", this->loc);
+
+        if(LLVMGetTypeKind(LLVMGetElementType(vector1Type)) != LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(vector2))))
+            generator->error("the values must have the same type!", this->loc);
+
+        return LLVM::call(generator->functions["llvm.x86.ssse3.phadd.sw.128"], std::vector<LLVMValueRef>({vector1, vector2}).data(), 2, "vHAdd16x8");
+    }
+    else if(this->name == "vSumAll") {
+        if(!(generator->settings.hasSSSE3 && generator->options["ssse3"].template get<bool>()) || !(generator->settings.hasSSE3 && generator->options["sse"].template get<int>() > 2)) {
+            generator->error("your target does not supports SSE3/SSSE3!", this->loc);
+            return nullptr;
+        }
+
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+
+        LLVMValueRef value = this->args[0]->generate();
+        LLVMTypeRef valueType = LLVMTypeOf(value);
+        if(LLVMGetTypeKind(valueType) != LLVMVectorTypeKind) generator->error("the value must have the vector type!", this->loc);
+
+        unsigned int vectorSize = LLVMGetVectorSize(valueType);
+        unsigned long long abiSize = LLVMABISizeOfType(generator->targetData, valueType);
+
+        if(vectorSize == 4 && abiSize == 16) {
+            // 32 x 4
+            LLVMValueRef result = (new NodeBuiltin("vHAdd32x4", {new NodeDone(value), new NodeDone(value)}, this->loc, this->block))->generate();
+            return (new NodeBuiltin("vHAdd32x4", {new NodeDone(result), new NodeDone(result)}, this->loc, this->block))->generate();
+        }
+        else if(vectorSize == 8 && abiSize == 16) {
+            // 16 x 8
+            LLVMValueRef result = (new NodeBuiltin("vHAdd16x8", {new NodeDone(value), new NodeDone(value)}, this->loc, this->block))->generate();
+            result = (new NodeBuiltin("vHAdd16x8", {new NodeDone(result), new NodeDone(result)}, this->loc, this->block))->generate();
+            return (new NodeBuiltin("vHAdd16x8", {new NodeDone(result), new NodeDone(result)}, this->loc, this->block))->generate();
+        }
+
+        generator->error("unsupported vector!", this->loc);
+        return nullptr;
     }
     else if(this->name == "alloca") {
         BigInt size = asNumber(0);

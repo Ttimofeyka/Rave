@@ -27,7 +27,7 @@ static std::string namespacesToString(std::vector<std::string> namespacesNames, 
 static bool isBasicType(std::string s) {
     return s == "char" || s == "uchar" || s == "short" || s == "ushort" || s == "int" ||s == "uint" || s == "long" || s == "ulong"
     || s == "cent" || s == "ucent" || s == "void" || s == "float" || s == "double" || s == "half" || s == "bhalf"
-    || s == "float4" || s == "int4" || s == "int8";
+    || s == "float4" || s == "int4" || s == "int8" || s == "float8" || s == "short8";
 }
 
 #ifdef _WIN32
