@@ -78,6 +78,13 @@ LLVMValueRef LLVM::structGep(LLVMValueRef ptr, unsigned int idx, const char* nam
     #endif
 }
 
+LLVMValueRef LLVM::alloc(LLVMTypeRef type, const char* name) {
+    LLVMPositionBuilder(generator->builder, LLVMGetFirstBasicBlock(generator->functions[currScope->funcName]), LLVMGetFirstInstruction(LLVMGetFirstBasicBlock(generator->functions[currScope->funcName])));
+    LLVMValueRef value = LLVMBuildAlloca(generator->builder, type, name);
+    LLVMPositionBuilderAtEnd(generator->builder, generator->currBB);
+    return value;
+}
+
 void LLVM::setFastMath(LLVMBuilderRef builder, bool infs, bool nans, bool arcp, bool nsz) {
     llvm::FastMathFlags flags;
     if(infs) flags.setNoInfs(true);

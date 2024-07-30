@@ -299,6 +299,7 @@ LLVMValueRef NodeCall::generate() {
                 if(AST::structTable.find(idenFunc->name.substr(0, idenFunc->name.find('<'))) != AST::structTable.end()) {
                     AST::structTable[idenFunc->name.substr(0, idenFunc->name.find('<'))]->genWithTemplate("<" + sTypes.substr(0, sTypes.size()-1) + ">", types);
                 }
+                else generator->error("undefined structure '" + idenFunc->name + "'!", this->loc);
             }
             
             delete tLexer;

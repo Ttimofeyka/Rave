@@ -479,6 +479,23 @@ LLVMValueRef NodeBuiltin::generate() {
         if(!alignment) LLVMSetAlignment(v, 1);
         return v;
     }
+    else if(this->name == "vFrom") {
+        LLVMValueRef value = nullptr;
+        LLVMTypeRef ptrType = nullptr;
+        Type* resultVectorType;
+        if(this->args.size() < 2) generator->error("at least two arguments are required!", this->loc);
+
+        resultVectorType = asType(0)->type;
+        if(!instanceof<TypeVector>(resultVectorType)) generator->error("the type must be a vector!", this->loc);
+
+        value = this->args[1]->generate();
+
+        LLVMValueRef vector = LLVM::alloc(generator->genType(resultVectorType, this->loc), "vFrom_buffer");
+        LLVMValueRef tempVector = LLVM::load(vector, "vFrom_loadedBuffer");
+        for(int i=0; i<((TypeVector*)resultVectorType)->count; i++)
+            tempVector = LLVMBuildInsertElement(generator->builder, tempVector, value, LLVMConstInt(LLVMInt32TypeInContext(generator->context), i, false), "vFrom_ie");
+        return tempVector;
+    }
     else if(this->name == "vGet") {
         if(this->args.size() < 2) generator->error("at least two arguments are required!", this->loc);
         LLVMValueRef vector = this->args[0]->generate();
@@ -648,7 +665,7 @@ LLVMValueRef NodeBuiltin::generate() {
         return (
             new NodeCast(
                 new TypePointer(new TypeBasic(BasicType::Char)),
-                new NodeDone(LLVMBuildAlloca(generator->builder, LLVMArrayType(LLVMInt8TypeInContext(generator->context), size.to_int()), "NodeBuiltin_alloca")),
+                new NodeDone(LLVM::alloc(LLVMArrayType(LLVMInt8TypeInContext(generator->context), size.to_int()), "NodeBuiltin_alloca")),
                 this->loc
             )
         )->generate();

@@ -19,6 +19,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeCall.hpp"
 #include "../../include/lexer/lexer.hpp"
 #include "../../include/parser/parser.hpp"
+#include "../../include/llvm.hpp"
 
 NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, bool isGlobal, std::vector<DeclarMod> mods, int loc, Type* type, bool isVolatile) {
     this->name = name;
@@ -244,7 +245,7 @@ LLVMValueRef NodeVar::generate() {
                     }
                     else {
                         LLVMValueRef val = this->value->generate();
-                        currScope->localScope[this->name] = LLVMBuildAlloca(generator->builder, LLVMTypeOf(val), name.c_str());
+                        currScope->localScope[this->name] = LLVM::alloc(LLVMTypeOf(val), name.c_str());
                         this->type = lTypeToType(LLVMTypeOf(val));
                         if(isVolatile) LLVMSetVolatile(currScope->localScope[this->name], true);
                         if(alignment != -1) LLVMSetAlignment(generator->globals[this->name], alignment);
@@ -255,7 +256,7 @@ LLVMValueRef NodeVar::generate() {
                 }
                 else {
                     LLVMValueRef val = this->value->generate();
-                    currScope->localScope[this->name] = LLVMBuildAlloca(generator->builder, LLVMTypeOf(val), name.c_str());
+                    currScope->localScope[this->name] = LLVM::alloc(LLVMTypeOf(val), name.c_str());
                     this->type = lTypeToType(LLVMTypeOf(val));
                     if(isVolatile) LLVMSetVolatile(currScope->localScope[this->name], true);
                     if(alignment != -1) LLVMSetAlignment(generator->globals[this->name], alignment);
@@ -266,7 +267,7 @@ LLVMValueRef NodeVar::generate() {
             }
             else {
                 LLVMValueRef val = this->value->generate();
-                currScope->localScope[this->name] = LLVMBuildAlloca(generator->builder, LLVMTypeOf(val), name.c_str());
+                currScope->localScope[this->name] = LLVM::alloc(LLVMTypeOf(val), name.c_str());
                 this->type = lTypeToType(LLVMTypeOf(val));
                 if(isVolatile) LLVMSetVolatile(currScope->localScope[this->name], true);
                 if(alignment != -1) LLVMSetAlignment(generator->globals[this->name], alignment);
@@ -278,9 +279,7 @@ LLVMValueRef NodeVar::generate() {
         if(instanceof<NodeInt>(this->value)) ((NodeInt*)this->value)->isVarVal = this->type;
 
         LLVMTypeRef gT = generator->genType(this->type, this->loc);
-        LLVMPositionBuilder(generator->builder, LLVMGetFirstBasicBlock(generator->functions[currScope->funcName]), LLVMGetFirstInstruction(LLVMGetFirstBasicBlock(generator->functions[currScope->funcName])));
-        currScope->localScope[this->name] = LLVMBuildAlloca(generator->builder, gT, name.c_str());
-        LLVMPositionBuilderAtEnd(generator->builder, generator->currBB);
+        currScope->localScope[this->name] = LLVM::alloc(gT, name.c_str());
         if(isVolatile) LLVMSetVolatile(currScope->localScope[this->name], true);
         if(alignment != -1) LLVMSetAlignment(generator->globals[this->name], alignment);
         else if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->getWithoutLoad(this->name, this->loc), generator->getAlignment(this->type));
