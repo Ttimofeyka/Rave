@@ -142,7 +142,9 @@ ptr[2] = 'v';
 ptr[3] = 'e';
 ```
 
-## Built-In-Functions
+## Builtin functions
+
+### [SIMD](./simd.md)
 
 **@sizeOf(type)** - Get the size of the type (in bytes).
 

@@ -1,5 +1,3 @@
-// This is still very experimental! Segmentation faults can be at anytime.
-
 import <std/io>
 
 void main {

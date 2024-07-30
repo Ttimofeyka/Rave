@@ -199,7 +199,7 @@ LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options)
     LLVMContextSetOpaquePointers(this->context, 0);
     #endif
 
-    if(settings.hasSSSE3 && options["ssse3"].template get<bool>()) {
+    if(settings.sseLevel > 2 && options["ssse3"].template get<bool>()) {
         functions["llvm.x86.ssse3.phadd.d.128"] = LLVMAddFunction(lModule, "llvm.x86.ssse3.phadd.d.128", LLVMFunctionType(
             LLVMVectorType(LLVMInt32TypeInContext(context), 4),
             std::vector<LLVMTypeRef>({LLVMVectorType(LLVMInt32TypeInContext(context), 4), LLVMVectorType(LLVMInt32TypeInContext(context), 4)}).data(),
@@ -213,7 +213,7 @@ LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options)
         ));
     }
 
-    if(settings.hasSSE3 && options["sse"].template get<int>() > 2) {
+    if(settings.sseLevel > 2 && options["sse"].template get<int>() > 2) {
         functions["llvm.x86.sse3.hadd.ps"] = LLVMAddFunction(lModule, "llvm.x86.sse3.hadd.ps", LLVMFunctionType(
             LLVMVectorType(LLVMFloatTypeInContext(context), 4),
             std::vector<LLVMTypeRef>({LLVMVectorType(LLVMFloatTypeInContext(context), 4), LLVMVectorType(LLVMFloatTypeInContext(context), 4)}).data(),
@@ -227,19 +227,19 @@ LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options)
 }
 
 void LLVMGen::error(std::string msg, long line) {
-    std::cout << "\033[0;31mError in '"+this->file+"' file at "+std::to_string(line)+" line: "+msg+"\033[0;0m" << std::endl;
+    std::cout << "\033[0;31mError in '" + this->file + "' file at " + std::to_string(line) + " line: " + msg + "\033[0;0m" << std::endl;
     std::exit(1);
 }
 
 void LLVMGen::warning(std::string msg, long line) {
-    std::cout << "\033[0;33mWarning in '"+this->file+"' file at "+std::to_string(line)+" line: "+msg+"\033[0;0m" << std::endl;
+    std::cout << "\033[0;33mWarning in '" + this->file + "' file at " + std::to_string(line) + " line: " + msg + "\033[0;0m" << std::endl;
 }
 
 std::string LLVMGen::mangle(std::string name, bool isFunc, bool isMethod) {
     if(isFunc) {
-        if(isMethod) return "_RaveM"+std::to_string(name.size())+name; 
-        return "_RaveF"+std::to_string(name.size())+name;
-    } return "_RaveG"+name;
+        if(isMethod) return "_RaveM" + std::to_string(name.size()) + name; 
+        return "_RaveF" + std::to_string(name.size()) + name;
+    } return "_RaveG" + name;
 }
 
 Type* getTrueStructType(TypeStruct* ts) {

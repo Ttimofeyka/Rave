@@ -205,6 +205,22 @@ void Compiler::compile(std::string file) {
         raveOs = RAVE_OS;
     }
 
+    int sse = Compiler::options["sse"].template get<int>();
+    int avx = Compiler::options["avx"].template get<int>();
+    bool ssse3 = Compiler::options["ssse3"].template get<bool>();
+
+    if(!settings.isNative) {
+        Compiler::features = "";
+        if(sse > 0 && settings.sseLevel > 0) {Compiler::features += "+sse,"; sse = 1;}
+        if(sse > 1 && settings.sseLevel > 1) {Compiler::features += "+sse2,"; sse = 2;}
+        if(sse > 2 && settings.sseLevel > 2) {Compiler::features += "+sse3,"; sse = 3;}
+        if(ssse3 && settings.sseLevel > 2) {Compiler::features += "+ssse3,"; sse = 3;}
+        if(avx > 0 && settings.avxLevel > 0) {Compiler::features += "+avx,"; avx = 1;}
+        if(avx > 1 && settings.avxLevel > 1) {Compiler::features += "+avx2,"; avx = 2;}
+        if(Compiler::features.length() > 0) Compiler::features = Compiler::features.substr(0, Compiler::features.length() - 1);
+    }
+    else Compiler::features = std::string(LLVMGetHostCPUFeatures());
+
     content = "alias __RAVE_PLATFORM = \"" + ravePlatform + "\"; ";
     content = "alias __RAVE_OS = \"" + raveOs + "\"; " + content;
     content = "alias __RAVE_OPTIMIZATION_LEVEL = " + std::to_string(settings.optLevel) + "; " + content;
@@ -212,9 +228,9 @@ void Compiler::compile(std::string file) {
     if(!settings.noChecks) content = "alias __RAVE_RUNTIME_CHECKS = true;" + content;
     else content = "alias __RAVE_RUNTIME_CHECKS = false;" + content;
     
-    content = "alias __RAVE_SSE = " + std::to_string(Compiler::options["sse"].template get<int>()) + "; " + content;
-    content = "alias __RAVE_SSSE3 = " + ((Compiler::options["ssse3"].template get<bool>() && Compiler::settings.hasSSSE3) ? std::string("true") : std::string("false")) + "; " + content;
-    content = "alias __RAVE_AVX = " + std::to_string(Compiler::options["avx"].template get<int>()) + "; " + content;
+    content = "alias __RAVE_SSE = " + std::to_string(sse) + "; " + content;
+    content = "alias __RAVE_SSSE3 = " + (ssse3 ? std::string("true") : std::string("false")) + "; " + content;
+    content = "alias __RAVE_AVX = " + std::to_string(avx) + "; " + content;
 
     if(!Compiler::settings.noPrelude && file.find("std/prelude.rave") == std::string::npos && file.find("std/memory.rave") == std::string::npos) {
         content = content + " import <std/prelude> <std/memory>";
@@ -303,21 +319,6 @@ void Compiler::compile(std::string file) {
     }
     else LLVMDisposeErrorMessage(errors);
 
-    if(!settings.isNative) {
-        Compiler::features = "";
-        int sse = Compiler::options["sse"].template get<int>();
-        int avx = Compiler::options["avx"].template get<int>();
-        bool ssse3 = Compiler::options["ssse3"].template get<bool>();
-        if(sse > 0 && settings.hasSSE) Compiler::features += "+sse,";
-        if(sse > 1 && settings.hasSSE2) Compiler::features += "+sse2,";
-        if(sse > 2 && settings.hasSSE3) Compiler::features += "+sse3,";
-        if(ssse3 && settings.hasSSSE3) Compiler::features += "+ssse3,";
-        if(avx > 0 && settings.hasAVX) Compiler::features += "+avx,";
-        if(avx > 1 && settings.hasAVX2) Compiler::features += "+avx2,";
-        Compiler::features = Compiler::features.substr(0, Compiler::features.length() - 1);
-    }
-    else Compiler::features = std::string(LLVMGetHostCPUFeatures());
-
     LLVMTargetMachineRef machine = LLVMCreateTargetMachine(
 		target,
 		triple,
@@ -383,7 +384,7 @@ void Compiler::compile(std::string file) {
 
     LLVMRunPassManager(pm, generator->lModule);
 
-    LLVMTargetMachineEmitToFile(machine, generator->lModule, (std::regex_replace(file, std::regex("\\.rave"), ".o")).c_str(), LLVMObjectFile, &errors);
+    LLVMTargetMachineEmitToFile(machine, generator->lModule, (char*)(std::regex_replace(file, std::regex("\\.rave"), ".o")).c_str(), LLVMObjectFile, &errors);
     if(errors != nullptr) {
         Compiler::error("target machine emit to file: " + std::string(errors));
         std::exit(1);

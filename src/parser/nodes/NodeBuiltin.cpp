@@ -124,6 +124,7 @@ std::string NodeBuiltin::asStringIden(int n) {
             Node* node = AST::aliasTable[nam];
             if(instanceof<NodeIden>(node)) nam = ((NodeIden*)node)->name;
             else if(instanceof<NodeString>(node)) nam = ((NodeString*)node)->value;
+            else if(instanceof<NodeInt>(node)) return ((NodeInt*)node)->value.to_string();
             else {
                 generator->error("NodeBuiltin::asStringIden assert!", this->loc);
                 return "";
@@ -453,7 +454,6 @@ LLVMValueRef NodeBuiltin::generate() {
     }
     else if(this->name == "vLoad") {
         LLVMValueRef value = nullptr;
-        LLVMTypeRef ptrType = nullptr;
         Type* resultVectorType;
         if(this->args.size() < 2) generator->error("at least two arguments are required!", this->loc);
 
@@ -464,11 +464,7 @@ LLVMValueRef NodeBuiltin::generate() {
         if(!LLVM::isPointer(value)) generator->error("the second argument is not a pointer to the data!", this->loc);
 
         bool alignment = true;
-
         if(this->args.size() == 3) alignment = asBool(2)->value;
-
-        // Warning
-        generator->warning("'vLoad' is very experimental builtin that can cause problems.", this->loc);
 
         // Uses clang method: creating anonymous structure with vector type and bitcast it
         LLVMValueRef v = LLVM::load(LLVM::structGep(LLVMBuildBitCast(
@@ -479,9 +475,29 @@ LLVMValueRef NodeBuiltin::generate() {
         if(!alignment) LLVMSetAlignment(v, 1);
         return v;
     }
+    else if(this->name == "vStore") {
+        if(this->args.size() < 2) generator->error("at least two arguments are required!", this->loc);
+
+        LLVMValueRef vector = this->args[0]->generate();
+        if(LLVMGetTypeKind(LLVMTypeOf(vector)) != LLVMVectorTypeKind) generator->error("the first argument must have a vector type!", this->loc);
+ 
+        LLVMValueRef dataPtr = this->args[1]->generate();
+        if(!LLVM::isPointer(dataPtr)) generator->error("the second argument is not a pointer to the data!", this->loc);
+
+        bool alignment = true;
+        if(this->args.size() == 3) alignment = asBool(2)->value;
+
+        // Uses clang method: creating anonymous structure with vector type and bitcast it
+        LLVMValueRef vPtr = LLVMBuildStore(generator->builder, vector, LLVM::structGep(LLVMBuildBitCast(
+            generator->builder, dataPtr,
+            LLVMPointerType(LLVMStructTypeInContext(generator->context, std::vector<LLVMTypeRef>({LLVMTypeOf(vector)}).data(), 1, false), 0),
+            "vStore_bitc"
+        ), 0, "vStore_sgep"));
+        if(!alignment) LLVMSetAlignment(vPtr, 1);
+        return vPtr;
+    }
     else if(this->name == "vFrom") {
         LLVMValueRef value = nullptr;
-        LLVMTypeRef ptrType = nullptr;
         Type* resultVectorType;
         if(this->args.size() < 2) generator->error("at least two arguments are required!", this->loc);
 
@@ -584,7 +600,7 @@ LLVMValueRef NodeBuiltin::generate() {
         return LLVMBuildSub(generator->builder, vector1, vector2, "vSub_sub");
     }
     else if(this->name == "vHAdd32x4") {
-        if(!(generator->settings.hasSSSE3 && generator->options["ssse3"].template get<bool>()) || !(generator->settings.hasSSE3 && generator->options["sse"].template get<int>() > 2)) {
+        if(Compiler::features.find("+sse3") == std::string::npos || Compiler::features.find("+ssse3") == std::string::npos) {
             generator->error("your target does not supports SSE3/SSSE3!", this->loc);
             return nullptr;
         }
@@ -608,7 +624,7 @@ LLVMValueRef NodeBuiltin::generate() {
         return LLVM::call(generator->functions["llvm.x86.sse3.hadd.ps"], std::vector<LLVMValueRef>({vector1, vector2}).data(), 2, "vHAdd32x4");
     }
     else if(this->name == "vHAdd16x8") {
-        if(!(generator->settings.hasSSSE3 && generator->options["ssse3"].template get<bool>())) {
+        if(Compiler::features.find("+ssse3") == std::string::npos) {
             generator->error("your target does not supports SSSE3!", this->loc);
             return nullptr;
         }
@@ -631,7 +647,7 @@ LLVMValueRef NodeBuiltin::generate() {
         return LLVM::call(generator->functions["llvm.x86.ssse3.phadd.sw.128"], std::vector<LLVMValueRef>({vector1, vector2}).data(), 2, "vHAdd16x8");
     }
     else if(this->name == "vSumAll") {
-        if(!(generator->settings.hasSSSE3 && generator->options["ssse3"].template get<bool>()) || !(generator->settings.hasSSE3 && generator->options["sse"].template get<int>() > 2)) {
+        if(Compiler::features.find("+sse3") == std::string::npos || Compiler::features.find("+ssse3") == std::string::npos) {
             generator->error("your target does not supports SSE3/SSSE3!", this->loc);
             return nullptr;
         }

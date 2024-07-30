@@ -32,13 +32,21 @@ Examples:
 - B
 - std::string
 
-## Function-Pointers
+## Function pointers
 
 Examples:
 
 - void()
 - int(int, int)
 - float(std::string, char*)
+
+## SIMD vectors
+
+- short8
+- int4
+- float4
+- int8
+- float8
 
 # Creating new types
 

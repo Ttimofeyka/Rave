@@ -127,12 +127,8 @@ typedef struct genSettings {
     bool recompileStd = false;
     bool noChecks = false;
     std::string linkParams = "";
-    bool hasSSE = true;
-    bool hasSSE2 = true;
-    bool hasSSE3 = true;
-    bool hasSSSE3 = true;
-    bool hasAVX = true;
-    bool hasAVX2 = true;
+    int sseLevel = 3;
+    int avxLevel = 2;
     bool isNative = false;
     bool noFastMath = false;
 
