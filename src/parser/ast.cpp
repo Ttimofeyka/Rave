@@ -194,7 +194,10 @@ LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options)
     this->options = options;
     this->context = LLVMContextCreate();
     this->lModule = LLVMModuleCreateWithNameInContext("rave", this->context);
+
+    #if LLVM_VERSION >= 15
     LLVMContextSetOpaquePointers(this->context, 0);
+    #endif
 
     if(settings.hasSSSE3 && options["ssse3"].template get<bool>()) {
         functions["llvm.x86.ssse3.phadd.d.128"] = LLVMAddFunction(lModule, "llvm.x86.ssse3.phadd.d.128", LLVMFunctionType(
