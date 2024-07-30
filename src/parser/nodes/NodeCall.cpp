@@ -34,6 +34,7 @@ Type* NodeCall::getType() {
     if(instanceof<NodeIden>(this->func)) {
         if(AST::funcTable.find((((NodeIden*)this->func)->name + typesToString(this->getTypes()))) != AST::funcTable.end()) return AST::funcTable[(((NodeIden*)this->func)->name + typesToString(this->getTypes()))]->getType();
         if(AST::funcTable.find(((NodeIden*)this->func)->name) != AST::funcTable.end()) return AST::funcTable[((NodeIden*)this->func)->name]->type;
+        return new TypePointer(new TypeVoid());
     }
     return this->func->getType();
 }
