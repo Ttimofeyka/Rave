@@ -49,6 +49,8 @@ namespace std {
         for(int i=0; i<n; i+=1) dest[i] = cast(char)c;
     } => dest;
 
+    (inline) NEW_T* new<NEW_T>(int n) => cast(NEW_T*)std::malloc(n * sizeof(NEW_T));
+
     extern(linkname: "llvm.frameaddress.p0i8") void* frameAddress(int level);
     extern(linkname: "llvm.eh.sjlj.setjmp") int setjmp(char* buff);
 
