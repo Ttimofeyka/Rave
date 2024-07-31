@@ -599,6 +599,33 @@ LLVMValueRef NodeBuiltin::generate() {
         if(LLVMGetTypeKind(LLVMGetElementType(vecType)) == LLVMFloatTypeKind) return LLVMBuildFSub(generator->builder, vector1, vector2, "vSub_fsub");
         return LLVMBuildSub(generator->builder, vector1, vector2, "vSub_sub");
     }
+    else if(this->name == "vShuffle") {
+        if(this->args.size() < 3) generator->error("at least three arguments are required!", this->loc);
+
+        LLVMValueRef vector1 = this->args[0]->generate();
+        LLVMValueRef vector2 = this->args[1]->generate();
+
+        if(LLVM::isPointer(vector1)) vector1 = LLVM::load(vector1, "vShuffle_load1_");
+        if(LLVM::isPointer(vector2)) vector2 = LLVM::load(vector2, "vShuffle_load2_");
+
+        LLVMTypeRef vecType = LLVMTypeOf(vector1);
+
+        if(LLVMGetTypeKind(vecType) != LLVMVectorTypeKind ||
+           LLVMGetTypeKind(LLVMTypeOf(vector2)) != LLVMVectorTypeKind) generator->error("the values must have the vector type!", this->loc);
+
+        if(!instanceof<NodeArray>(this->args[2])) generator->error("The third argument must be a constant array!", this->loc);
+        if(!instanceof<TypeArray>(this->args[2]->getType())) generator->error("the third argument must be a constant array!", this->loc);
+
+        TypeArray* tarray = (TypeArray*)this->args[2]->getType();
+        if(!instanceof<TypeBasic>(tarray->element) || ((TypeBasic*)tarray->element)->type != BasicType::Int)
+            generator->error("the third argument must be a constant array of integers!", this->loc);
+        if(tarray->count < 1) generator->error("the constant array cannot be empty!", this->loc);
+
+        std::vector<LLVMValueRef> values;
+        for(int i=0; i<((NodeArray*)this->args[2])->values.size(); i++) values.push_back(((NodeArray*)this->args[2])->values[i]->generate());
+
+        return LLVMBuildShuffleVector(generator->builder, vector1, vector2, LLVMConstVector(values.data(), values.size()), "vShuffle");
+    }
     else if(this->name == "vHAdd32x4") {
         if(Compiler::features.find("+sse3") == std::string::npos || Compiler::features.find("+ssse3") == std::string::npos) {
             generator->error("your target does not supports SSE3/SSSE3!", this->loc);

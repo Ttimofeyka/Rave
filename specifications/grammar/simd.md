@@ -74,6 +74,15 @@ vector = @vMul(vector, vector);
 float value = @vGet(vector, 0); // 100f
 ```
 
+**@vShuffle(vector1, vector2, array)** - Returns a shuffled vector with the specified mask.
+
+Example:
+
+```d
+float4 example = @vLoad(float4, &[10f, 20f, 30f, 40f], false); // 10f, 20f, 30f, 40f
+jam = @vShuffle(jam, jam, [0, 0, 0, 0]); // 10f, 10f, 10f, 10f
+```
+
 **@vHAdd32x4, @vHAdd16x8 (vector1, vector2)** - Add the horizontal elements of two vectors side by side, returning the output vector as a result.
 
 **@vHAdd32x4** works for `int4` and `float8`, **@vHAdd16x8** works for `short8`.
