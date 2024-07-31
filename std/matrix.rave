@@ -4,77 +4,166 @@ Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-import <std/math> <std/map>
+import <std/math>
 
-namespace std {
-    (@tNequals(MATRIX_T, void)) struct matrix<MATRIX_T> {
-        MATRIX_T* data;
-        int rows;
-        int columns;
+@if(__RAVE_SSE < 2) {
+    // Using naive methods (slowly, but works)
 
-        std::matrix<MATRIX_T> this(int rows, int columns) {
-            std::matrix<MATRIX_T> this;
-            this.data = cast(MATRIX_T*)std::malloc(sizeof(MATRIX_T) * rows * columns);
-            for(int i=0; i<(rows * columns); i++) this.data[i] = cast(MATRIX_T)0;
-            this.rows = rows;
-            this.columns = columns;
-        } => this;
+    namespace std {
+        namespace matrix {
+            void multiply(float* left, float* right, float* result, int rows, int columns, int inners) {
+                for(int row=0; row<rows; row++) {
+                    for(int inner=0; inner<inners; inner++) {
+                        for(int col=0; col<columns; col++) result[row * columns + col] += left[row * columns + inner] * right[inner * columns + col];
+                    }
+                }
+            }
 
-        void set(int r, int c, MATRIX_T value) {
-            if((r >= 0) && (r < this.rows) && (c >= 0) && (c < this.columns)) this.data[(r * this.columns) + c] = value;
-        }
+            void add(float* left, float* right, float* target, int rows, int columns) {
+                for(int i=0; i<rows; i++) {
+                    for(int j=0; j<columns; j++) target[i * columns + j] = left[i * columns + j] + right[i * columns + j];
+                }
+            }
 
-        MATRIX_T get(int r, int c) {
-            if((r >= 0) && (r < this.rows) && (c >= 0) && (c < this.columns)) return = this.data[(r * this.columns) + c];
-        }
+            void sub(float* left, float* right, float* target, int rows, int columns) {
+                for(int i=0; i<rows; i++) {
+                    for(int j=0; j<columns; j++) target[i * columns + j] = left[i * columns + j] - right[i * columns + j];
+                }
+            }
 
-        void zero {for(int i=0; i<(this.rows * this.columns); i++) this.data[i] = null;}
+            void scale(float* matrix, float* target, int rows, int columns, float scalar) {
+                for(int i=0; i<rows * columns; i++) target[i] = matrix[i] * scalar;
+            }
 
-        void add(std::matrix<MATRIX_T> mat) {
-            if((this.rows == mat.rows) && (this.columns == mat.columns) && (mat.data != null)) {
-                for(int y=0; y<this.rows; y++) {
-                    for(int x=0; x<this.columns; x++) this.set(y, x, this.get(y, x) + mat.get(y, x));
+            void transpose(float* matrix, float* target, int rows, int columns) {
+                for(int i=0; i<rows; i++) {
+                    for(int j=0; j<columns; j++) target[j * rows + i] = matrix[i * columns + j];
                 }
             }
         }
+    }
+};
 
-        void sub(std::matrix<MATRIX_T> mat) {
-            if((this.rows == mat.rows) && (this.columns == mat.columns) && (mat.data != null)) {
-                for(int y=0; y<this.rows; y++) {
-                    for(int x=0; x<this.columns; x++) this.set(y, x, this.get(y, x) - mat.get(y, x));
+@if(__RAVE_SSE >= 2) {
+    // Using SSE instructions (faster, but requires SSE2 and higher)
+
+    namespace std {
+        namespace matrix {
+            void multiply(float* left, float* right, float* result, int rows, int columns, int inners) {
+                for(int row=0; row<rows; row++) {
+                    for(int inner=0; inner<inners; inner++) {
+                        float4 leftVec = @vFrom(float4, left[row * inners + inner], false);
+                        for(int col=0; col<columns; col+=4) {
+                            if((col + 3) < columns) {
+                                float4 rightVec = @vLoad(float4, &right[inner * columns + col], false);
+                                float4 resultVec = @vLoad(float4, &result[row * columns + col], false) + (leftVec * rightVec);
+                                @vStore(resultVec, &result[row * columns + col], false);
+                            }
+                            else {
+                                // Handle the remaining elements that are not a multiple of 4
+                                for(int i=col; i<columns; i++) result[row * columns + i] += left[row * inners + inner] * right[inner * columns + i];
+                                break; // Exit the loop since we've handled all columns
+                            }
+                        }
+                    }
                 }
             }
-        }
 
-        void multiply(std::matrix<MATRIX_T> mat, std::matrix<MATRIX_T> out) {
-            if(mat.data != null) {
-                for(int y=0; y<this.rows; y++) {
-                    for(int k=0; k<mat.rows; k++) {
-                        for(int x=0; x<mat.columns; x++) out.data[(y * out.columns) + x] = this.get(y, k) * mat.get(k, x);
+            void add(float* left, float* right, float* target, int rows, int columns) {
+                for(int i=0; i<rows; i++) {
+                    for(int j=0; j<columns; j++) {
+                        if((j + 3) < columns) {
+                            float4 buffer = @vLoad(float4, &left[i * columns + j], false) + @vLoad(float4, &right[i * columns + j], false);
+                            @vStore(buffer, &target[i * columns + j], false);
+                        }
+                        else {
+                            // Handle the remaining elements that are not a multiple of 4
+                            for(int z=j; z<columns; z++) target[i * columns + j] = left[i * columns + j] + right[i * columns + j];
+                            break; // Exit the loop since we've handled all columns
+                        }
+                    }
+                }
+            }
+
+            void sub(float* left, float* right, float* target, int rows, int columns) {
+                for(int i=0; i<rows; i++) {
+                    for(int j=0; j<columns; j++) {
+                        if((j + 3) < columns) {
+                            float4 buffer = @vLoad(float4, &left[i * columns + j], false) - @vLoad(float4, &right[i * columns + j], false);
+                            @vStore(buffer, &target[i * columns + j], false);
+                        }
+                        else {
+                            // Handle the remaining elements that are not a multiple of 4
+                            for(int z=j; z<columns; z++) target[i * columns + j] = left[i * columns + j] - right[i * columns + j];
+                            break; // Exit the loop since we've handled all columns
+                        }
+                    }
+                }
+            }
+
+            void scale(float* matrix, float* target, int rows, int columns, float scalar) {
+                float4 scalarVec = @vFrom(float4, scalar);
+                const(int) rc = (rows * columns);
+                for(int i=0; i<rc; i++) {
+                    if((i + 3) < rc) {
+                        float4 buffer = @vLoad(float4, &matrix[i], false) * scalarVec;
+                        @vStore(buffer, target, false);
+                    }
+                    else {
+                        // Handle the remaining elements that are not a multiple of 4
+                        for(int j=i; j<rc; j++) target[j] = matrix[j] * scalar;
+                        break; // Exit the loop since we've handled all elements
+                    }
+                }
+            }
+
+            void transpose(float* matrix, float* target, int rows, int columns) {
+                int i;
+                int j;
+                for(i=0; i<=rows; i+=4) {
+                    if((i + 3) < rows) break;
+                    for(j=0; j<=columns; j+=4) {
+                        if((j + 3) < columns) break;
+                        // Load 4x4 block from source matrix
+                        float4 row1 = @vLoad(float4, &matrix[i * columns + j], false);
+                        float4 row2 = @vLoad(float4, &matrix[(i + 1) * columns + j], false);
+                        float4 row3 = @vLoad(float4, &matrix[(i + 2) * columns + j], false);
+                        float4 row4 = @vLoad(float4, &matrix[(i + 3) * columns + j], false);
+
+                        // Transpose the 4x4 block using @vShuffle
+                        float4 tmp1 = @vShuffle(row1, row2, [1, 0, 1, 0]);
+                        float4 tmp2 = @vShuffle(row3, row4, [1, 0, 1, 0]);
+                        float4 tmp3 = @vShuffle(row1, row2, [3, 2, 3, 2]);
+                        float4 tmp4 = @vShuffle(row3, row4, [3, 2, 3, 2]);
+
+                        row1 = @vShuffle(tmp1, tmp2, [2, 0, 2, 0]);
+                        row2 = @vShuffle(tmp1, tmp2, [3, 1, 3, 1]);
+                        row3 = @vShuffle(tmp3, tmp4, [2, 0, 2, 0]);
+                        row4 = @vShuffle(tmp3, tmp4, [3, 1, 3, 1]);
+
+                        // Store the transposed 4x4 block to the target matrix
+                        @vStore(row1, &target[j * rows + i], false);
+                        @vStore(row2, &target[(j + 1) * rows + i], false);
+                        @vStore(row3, &target[(j + 2) * rows + i], false);
+                        @vStore(row4, &target[(j + 3) * rows + i], false);
+                    }
+                }
+
+                // Handle remaining rows
+                for(; i<rows; i++) {
+                    for(j=0; j<columns; j++) target[j * rows + i] = matrix[i * columns + j];
+                }
+
+                // Handle remaining columns
+                for(i=0; i<rows; i+=4) {
+                    for(; j<columns - (columns % 4); j++) {
+                        target[j * rows + i] = matrix[i * columns + j];
+                        target[j * rows + (i + 1)] = matrix[(i + 1) * columns + j];
+                        target[j * rows + (i + 2)] = matrix[(i + 2) * columns + j];
+                        target[j * rows + (i + 3)] = matrix[(i + 3) * columns + j];
                     }
                 }
             }
         }
-
-        void transform(MATRIX_T(MATRIX_T) fn) {
-            for(int i=0; i<(this.rows * this.columns); i++) this.data[i] = fn(this.data[i]);
-        }
-
-        void softmax {std::math::softmax(this.data, this.rows * this.columns);}
-        void relu {for(int i=0; i<(this.rows * this.columns); i++) this.data[i] = std::math::relu(this.data[i]);}
-        void drelu {for(int i=0; i<(this.rows * this.columns); i++) this.data[i] = std::math::drelu(this.data[i]);}
-
-        int hash {
-            return = 1295;
-            for(int i=0; i<(this.rows * this.columns); i++) return = ((return <. 5) + return) + cast(int)(this.data[i]);
-            if(return < 0) return = -return;
-        }
-
-        void ~this {
-            if(this.data != null) {
-                std::free(cast(void*)this.data);
-                this.data = null;
-            }
-        }
     }
-}
+};
