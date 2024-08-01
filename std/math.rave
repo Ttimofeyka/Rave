@@ -41,19 +41,13 @@ namespace std {
         (inline, @tNequals(COPYSIGN_T, void)) COPYSIGN_T copySign<COPYSIGN_T>(COPYSIGN_T v1, COPYSIGN_T v2) => std::math::abs(v1) * std::math::getSign(v2);
 
         double floor(double f) {
-            return = f;
-            if(f != std::math::NAN) {
-                return = (cast(double)(cast(long)f));
-                if((return < 0) && (return != f)) return = return - 1.0;
-            }
+            return = (cast(double)(cast(long)f));
+            if((return < 0) && (return != f)) return = return - 1d;
         }
 
         float floor(float f) {
-            return = f;
-            if(f != std::math::NAN) {
-                return = (cast(float)(cast(long)f));
-                if((return < 0) && (return != f)) return = return - 1.0;
-            }
+            return = (cast(float)(cast(long)f));
+            if((return < 0) && (return != f)) return = return - 1f;
         }
 
         double ceil(double d) => -(std::math::floor(-d));
@@ -136,16 +130,12 @@ namespace std {
 
         double sqrt(double d) {
             return = 1.0;
-            for(int i=0; i<=10; i+=1) {
-                return = return - (return * return - d) / (2 * return);
-            }
+            for(int i=0; i<=10; i+=1) return = return - (return * return - d) / (2 * return);
         }
 
         float sqrt(float f) {
             return = 1.0;
-            for(int i=0; i<=10; i+=1) {
-                return = return - (return * return - f) / (2 * return);
-            }
+            for(int i=0; i<=10; i+=1) return = return - (return * return - f) / (2 * return);
         }
 
         double acos(double d) {
@@ -158,7 +148,7 @@ namespace std {
             result = result - 0.2121144;
             result = result * d;
             result = result + 1.5707288;
-            result = result * std::math::sqrt(1.0-d);
+            result = result * std::math::sqrt(1.0 - d);
             result = result - 2 * negate * result;
         } => ((negate * std::math::PI) + result);
 
