@@ -259,6 +259,18 @@ LLVMValueRef NodeCall::generate() {
         }
         if(idenFunc->name.find('<') != std::string::npos && AST::funcTable.find(idenFunc->name.substr(0, idenFunc->name.find('<'))) != AST::funcTable.end()) {
             std::string mainName = idenFunc->name.substr(0, idenFunc->name.find('<'));
+
+            std::string callTypes = typesToString(this->getTypes());
+            if(AST::funcTable.find(mainName + callTypes) != AST::funcTable.end()) {
+                if(generator->functions.find(idenFunc->name + callTypes) != generator->functions.end()) {
+                    // This function is already exists - just call it
+                    this->isCdecl64 = AST::funcTable[idenFunc->name + callTypes]->isCdecl64;
+                    std::vector<LLVMValueRef> values = this->getParameters(AST::funcTable[idenFunc->name + callTypes], false);
+                    return LLVM::call(generator->functions[idenFunc->name + callTypes], values.data(), values.size(), instanceof<TypeVoid>(AST::funcTable[idenFunc->name + callTypes]->type) ? "" : "callFunc");
+                }
+                mainName += callTypes;
+            }
+
             std::string sTypes = idenFunc->name.substr(idenFunc->name.find('<') + 1);
             Lexer* tLexer = new Lexer(sTypes.substr(0, sTypes.size() - 1), 1);
             Parser* tParser = new Parser(tLexer->tokens, "(builtin)");
@@ -269,7 +281,7 @@ LLVMValueRef NodeCall::generate() {
                 if(tParser->peek()->type == TokType::Comma) tParser->next();
             }
 
-            AST::funcTable[mainName]->generateWithTemplate(types, idenFunc->name);
+            AST::funcTable[mainName]->generateWithTemplate(types, idenFunc->name + (mainName.find('[') != std::string::npos ? callTypes : ""));
 
             delete tLexer;
             delete tParser;

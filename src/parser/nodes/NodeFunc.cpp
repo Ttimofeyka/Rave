@@ -92,7 +92,7 @@ void NodeFunc::check() {
         if(AST::funcTable.find(this->name) != AST::funcTable.end()) {
             std::string toAdd = typesToString(args);
             if(typesToString(AST::funcTable[name]->args) == toAdd) {
-                if(this->isCtargs || this->isCtargsPart) {
+                if(this->isCtargs || this->isCtargsPart || this->isTemplate) {
                     this->noCompile = true;
                     return;
                 }
