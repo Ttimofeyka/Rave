@@ -226,36 +226,44 @@ namespace std {
 
         double pow(double f, double f2) {
             if(f2 < 0) return = 1 / std::math::pow(f, -f2);
-            else if((f2 > 0.0) && (f2 < 1.0)) {
-                // TODO: Is there a possible inaccuracy?
-                return = std::math::exp(f2 * std::math::loge(f));
-            }
+            else if((f2 > 0.0) && (f2 < 1.0)) return = std::math::exp(f2 * std::math::loge(f));
             else {
-                double r = 1.0;
-                while(f2 > 0) {
-                    r = r * f;
-                    f2 = f2 - 1;
+                if(std::math::floor(f2) != f2) {
+                    if(f < 0d) return = 0d;
+                    else return = std::math::exp(f2 * std::math::loge(f));
                 }
-                if(f2 > 0) r = r * f * f2;
-                return = r;
+                else {
+                    double r = 1.0;
+                    while(f2 > 0) {
+                        r = r * f;
+                        f2 = f2 - 1;
+                    }
+                    if(f2 > 0) r = r * f * f2;
+                    return = r;
+                }
             }
+            if((f < 0d) && (return > 0d)) return = -return;
         }
 
         float pow(float f, float f2) {
             if(f2 < 0) return = 1 / std::math::pow(f, -f2);
-            else if((f2 > 0.0) && (f2 < 1.0)) {
-                // TODO: Is there a possible inaccuracy?
-                return = std::math::exp(f2 * std::math::loge(f));
-            }
+            else if((f2 > 0.0) && (f2 < 1.0)) return = std::math::exp(f2 * std::math::loge(f));
             else {
-                float r = 1.0;
-                while(f2 > 0) {
-                    r = r * f;
-                    f2 = f2 - 1;
+                if(std::math::floor(f2) != f2) {
+                    if(f < 0f) return = 0f;
+                    else return = std::math::exp(f2 * std::math::loge(f));
                 }
-                if(f2 > 0) r = r * f * f2;
-                return = r;
+                else {
+                    float r = 1.0;
+                    while(f2 > 0) {
+                        r = r * f;
+                        f2 = f2 - 1;
+                    }
+                    if(f2 > 0) r = r * f * f2;
+                    return = r;
+                }
             }
+            if((f < 0f) && (return > 0f)) return = -return;
         }
 
         double cbrt(double d) {
