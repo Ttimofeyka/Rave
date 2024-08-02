@@ -121,9 +121,10 @@ void TypeStruct::updateByTypes() {
 int TypeStruct::getSize() {
     Type* t = this;
     while(generator->toReplace.find(t->toString()) != generator->toReplace.end()) t = generator->toReplace[t->toString()];
+    while(AST::aliasTypes.find(t->toString()) != AST::aliasTypes.end()) t = AST::aliasTypes[t->toString()];
     if(instanceof<TypeStruct>(t)) {
         TypeStruct* ts = (TypeStruct*)t;
-        if(!ts->types.empty() && AST::structTable.find(ts->name) == AST::structTable.end()) {
+        if(!ts->types.empty() && AST::structTable.find(ts->name) != AST::structTable.end()) {
             AST::structTable[ts->name]->genWithTemplate(ts->name.substr(ts->name.find('<')), ts->types);
         }
         if(AST::structTable.find(ts->name) != AST::structTable.end()) {
