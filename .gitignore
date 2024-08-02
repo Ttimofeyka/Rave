@@ -68,3 +68,4 @@ LLVM-15
 LLVM
 
 *.bin
+*.a
