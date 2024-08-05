@@ -19,10 +19,10 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <llvm-c/Analysis.h>
 #include <llvm-c/IRReader.h>
 #include <llvm-c/Orc.h>
-#include <llvm-c/OrcEE.h>
+//#include <llvm-c/OrcEE.h>
 #include <llvm-c/Remarks.h>
 #include <llvm-c/Linker.h>
-#include <llvm-c/Transforms/PassBuilder.h>
+//#include <llvm-c/Transforms/PassBuilder.h>
 #include <llvm-c/Transforms/InstCombine.h>
 #include <llvm-c/Transforms/Utils.h>
 #include <llvm-c/Transforms/Vectorize.h>
@@ -114,11 +114,11 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
         }
 
         #if defined(_WIN32)
-            fOptions << "{\n\t\"compiler\": \"gcc\",\n\t\"sse\": " + std::to_string(sse) + ",\n\t\"avx\": " + std::to_string(avx) + "\n\t\"ssse3\": " + ssse3 + "\n}" << std::endl;
+            fOptions << "{\n\t\"compiler\": \"gcc\",\n\t\"sse\": " + std::to_string(sse) + ",\n\t\"avx\": " + std::to_string(avx) + ",\n\t\"ssse3\": " + ssse3 + "\n}" << std::endl;
         #else
             ShellResult result = exec("which clang");
-            if(result.status != 0) fOptions << "{\n\t\"compiler\": \"gcc\",\n\t\"sse\": " + std::to_string(sse) + ",\n\t\"avx\": " + std::to_string(avx) + "\n\t\"ssse3\": " + ssse3 + "\n}" << std::endl;
-            else fOptions << "{\n\t\"compiler\": \"clang\",\n\t\"sse\": " + std::to_string(sse) + ",\n\t\"avx\": " + std::to_string(avx) + "\n\t\"ssse3\": " + ssse3 + "\n}" << std::endl;
+            if(result.status != 0) fOptions << "{\n\t\"compiler\": \"gcc\",\n\t\"sse\": " + std::to_string(sse) + ",\n\t\"avx\": " + std::to_string(avx) + ",\n\t\"ssse3\": " + ssse3 + "\n}" << std::endl;
+            else fOptions << "{\n\t\"compiler\": \"clang\",\n\t\"sse\": " + std::to_string(sse) + ",\n\t\"avx\": " + std::to_string(avx) + ",\n\t\"ssse3\": " + ssse3 + "\n}" << std::endl;
         #endif
         if(fOptions.is_open()) fOptions.close();
 
