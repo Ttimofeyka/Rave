@@ -37,7 +37,9 @@ LLVMValueRef NodeAsm::generate() {
         values.push_back(value);
         types.push_back(LLVMTypeOf(value));
     }
-
+    
+    #if LLVM_VERSION >= 13
+    
     return LLVM::call(LLVMGetInlineAsm(
         LLVMFunctionType(generator->genType(this->type, this->loc), types.data(), types.size(), false),
         (char*)this->line.c_str(),
@@ -49,4 +51,19 @@ LLVMValueRef NodeAsm::generate() {
         LLVMInlineAsmDialectATT,
         false
     ), values.data(), values.size(), (instanceof<TypeVoid>(this->type) ? "" : "asm_"));
+    
+    #else
+    
+    return LLVM::call(LLVMGetInlineAsm(
+        LLVMFunctionType(generator->genType(this->type, this->loc), types.data(), types.size(), false),
+        (char*)this->line.c_str(),
+        this->line.size(),
+        (char*)this->additions.c_str(),
+        this->additions.size(),
+        this->isVolatile,
+        false,
+        LLVMInlineAsmDialectATT
+    ), values.data(), values.size(), (instanceof<TypeVoid>(this->type) ? "" : "asm_"));
+    
+    #endif
 }
