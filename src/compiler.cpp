@@ -19,10 +19,14 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <llvm-c/Analysis.h>
 #include <llvm-c/IRReader.h>
 #include <llvm-c/Orc.h>
-//#include <llvm-c/OrcEE.h>
+
+#if LLVM_VERSION >= 14
+#include <llvm-c/OrcEE.h>
+#include <llvm-c/Transforms/PassBuilder.h>
+#endif
+
 #include <llvm-c/Remarks.h>
 #include <llvm-c/Linker.h>
-//#include <llvm-c/Transforms/PassBuilder.h>
 #include <llvm-c/Transforms/InstCombine.h>
 #include <llvm-c/Transforms/Utils.h>
 #include <llvm-c/Transforms/Vectorize.h>
