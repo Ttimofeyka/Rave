@@ -164,6 +164,7 @@ std::string typeToString(Type* arg) {
         if(ts->types.size() > 0) ts->updateByTypes();
         return "s-" + ts->toString();
     }
+    else if(instanceof<TypeVector>(arg)) return "v" + typeToString(((TypeVector*)arg)->mainType) + std::to_string(((TypeVector*)arg)->count);
     else if(instanceof<TypeFunc>(arg)) return "func";
     else if(instanceof<TypeConst>(arg)) return typeToString(((TypeConst*)arg)->instance);
     return "";
