@@ -1,4 +1,5 @@
 <h1 align="center">The Rave Programming Language</h1>
+<p align="center">Rave is a statically typed, compiled, procedural, general-purpose programming language.</p>
 <p align="center">
 <a href="https://github.com/Ttimofeyka/Rave/releases/latest">
 <img src="https://img.shields.io/github/v/release/Ttimofeyka/Rave.svg" alt="Latest Release">
@@ -9,8 +10,6 @@
 </a>
 </p>
 <br/>
-
-Rave is a statically typed, compiled, procedural, general-purpose programming language.
 
 ## Example of "Hello, world!"
 
@@ -38,7 +37,7 @@ void main {
 * Support for many platforms as target
 * Using LLVM for great optimizations
 
-For maximum performance, use the `-Ofast` or `-O3 --noChecks`. Also, don't forget to compile std with these flags using `--recompileStd -Ofast`.
+For maximum performance, use the `-Ofast` or `-O3 --noChecks`. Also, don't forget to compile standard library with these flags using `--recompileStd -Ofast`.
 
 ## Dependencies
 
@@ -73,9 +72,9 @@ The specifications is in `specifications` directory - [link](https://github.com/
 ### Segmentation fault during compile-time
 
 Often caused by incorrect syntax or misuse of builtin instructions.
-We're continuously working to minimize these occurrences.
+We are continuously working to minimize these occurrences.
 
-### SSE/SSE2/SSE3/SSSE3/AVX/AVX2 as not a recognized features
+### SSE/AVX as not a recognized features
 
 If you encounter warnings about unrecognized features, disable them in options.json (set `sse` and `avx` to `0`) or use command-line options: `-SSE 0`, `-AVX 0`.
 
