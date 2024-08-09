@@ -12,7 +12,16 @@
 
 Rave is a statically typed, compiled, procedural, general-purpose programming language.
 
-## "Hello, world!" Example
+## Example of "Hello, world!"
+
+### Reduced version
+
+```d
+import <std/io>
+void main => std::println("Hello, world!");
+```
+
+### Expanded version
 
 ```d
 import <std/io>
