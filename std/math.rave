@@ -10,8 +10,6 @@ namespace std {
     namespace math {
         alias PI = 3.14159265358979323846d;
         alias PI_f = 3.141592653589793f;
-        alias INFINITY = (1.0) / (0.0);
-        alias NAN = (0.0) / (0.0);
 
         (inline) double degToRad(double d) => (d * std::math::PI / 180d);
         (inline) float degToRad(float d) => (d * std::math::PI_f / 180f);
@@ -72,7 +70,7 @@ namespace std {
         }
 
         double loge(double x) {
-            if(x <= 0) return = std::math::NAN;
+            if(x <= 0) return = 0d;
             else {
                 int powAdj = 0;
                 while(x > 1.0) {
@@ -99,7 +97,7 @@ namespace std {
         }
 
         float loge(float x) {
-            if(x <= 0) return = std::math::NAN;
+            if(x <= 0) return = 0f;
             else {
                 int powAdj = 0;
                 while(x > 1.0) {
