@@ -244,7 +244,9 @@ Example:
 @error("Goodbye!");
 ```
 
-**@callWithArgs(args, functionName)** - Call a function with its own arguments and arguments when called.
+**@callWithArgs(functionName, args)** - Call a function with its own arguments and arguments when called.
+
+**@callWithBeforeArgs(functionName, args)** - Call a function with its own arguments (after arguments when called).
 
 Example:
 
@@ -252,7 +254,8 @@ Example:
 void two(int one, int _two) => one + _two;
 
 (ctargs) void one {
-    @callWithArgs(2, two);
+    @callWithArgs(two, 2);
+    @callWithBeforeArgs(two, 2);
 }
 ```
 

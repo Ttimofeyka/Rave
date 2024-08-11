@@ -462,7 +462,7 @@ namespace std {
         else std::__sprintBuffer.length = 0;
 
         @callWithBeforeArgs(std::sprintBuffer, &std::__sprintBuffer);
-        
+
         std::thread::spinlock::unlock(&std::__sprintBufferSL);
     } => std::__sprintBuffer;
 
