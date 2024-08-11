@@ -50,6 +50,7 @@ with this file, You can obtain one at htypep://mozilla.org/MPL/2.0/.
 #include "../include/parser/nodes/NodeFor.hpp"
 #include "../include/parser/nodes/NodeForeach.hpp"
 #include "../include/parser/nodes/NodeDefer.hpp"
+#include "../include/parser/nodes/NodeConstStruct.hpp"
 #include <inttypes.h>
 #include <sstream>
 
@@ -230,16 +231,16 @@ Node* Parser::parseBuiltin(std::string f) {
 
 Node* Parser::parseOperatorOverload(Type* type, std::string s) {
     this->next();
-    std::string name = s+"("+this->peek()->value+")";
+    std::string name = s + "(" + this->peek()->value + ")";
     Token* _t = this->peek();
     this->next();
 
     if(this->peek()->type != TokType::Rpar) {
         Token* _t2 = this->peek();
-        name = s+"("+_t->value+_t2->value+")";
+        name = s + "(" + _t->value+_t2->value + ")";
         this->next();
         if(this->peek()->type != TokType::Rpar) {
-            name = s+"("+_t->value+_t2->value+this->peek()->value+")";
+            name = s + "("+_t->value+_t2->value + this->peek()->value + ")";
             this->next();
         }
     }
@@ -424,6 +425,28 @@ Node* Parser::parseCmpXchg(std::string s) {
     return new NodeCmpxchg(ptr, val1, val2, loc);
 }
 
+Node* Parser::parseConstantStructure(std::string structName) {
+    int loc = this->peek()->line;
+
+    this->next();
+    std::vector<Node*> values;
+
+    while(this->peek()->type != TokType::Lbra) {
+        /*if(this->peek()->type == TokType::Identifier && this->tokens[this->idx + 1]->type == TokType::Equ) {
+            std::string elementName = this->peek()->value;
+            this->idx += 2;
+            values.push_back(new NodeBinary(TokType::Equ, new NodeIden(peek()->value, peek()->line), parseExpr(structName), peek()->line));
+        }
+        else values.push_back(parseExpr(structName));*/
+        values.push_back(parseExpr(structName));
+        if(this->peek()->type == TokType::Comma) this->next();
+        else if(this->peek()->type != TokType::Lbra) this->error("expected token '}'!");
+    }
+    this->next();
+
+    return new NodeConstStruct(structName, values, loc);
+}
+
 Node* Parser::parseAtom(std::string f) {
     Token* t = this->peek();
     this->next();
@@ -533,6 +556,7 @@ Node* Parser::parseAtom(std::string f) {
         }
         return new NodeChar(t->value, false);
     }
+    if(this->peek()->type == TokType::Rbra) return parseConstantStructure(t->value);
     if(t->type == TokType::Identifier) {
         if(t->value == "null") return new NodeNull(nullptr, t->line);
         else if(t->value == "cast") {
@@ -614,6 +638,7 @@ Node* Parser::parseAtom(std::string f) {
                     this->next();
                 }
                 if(this->peek()->type == TokType::More) this->next();
+                if(this->peek()->type == TokType::Rbra) return parseConstantStructure(all);
                 return this->parseCall(new NodeIden(all, this->peek()->line));
             }
         }

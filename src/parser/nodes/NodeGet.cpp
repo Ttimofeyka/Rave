@@ -10,6 +10,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeIden.hpp"
 #include "../../include/parser/nodes/NodeIndex.hpp"
 #include "../../include/parser/nodes/NodeCall.hpp"
+#include "../../include/parser/nodes/NodeDone.hpp"
 #include "../../include/parser/ast.hpp"
 #include "../../include/llvm.hpp"
 #include <vector>
@@ -63,7 +64,7 @@ LLVMValueRef NodeGet::checkStructure(LLVMValueRef ptr) {
     LLVMTypeRef type = LLVMTypeOf(ptr);
     
     if(!LLVMGetTypeKind(type) == LLVMPointerTypeKind) {
-        LLVMValueRef temp = LLVMBuildAlloca(generator->builder, type, "NodeGet_checkStructure");
+        LLVMValueRef temp = LLVM::alloc(type, "NodeGet_checkStructure");
         LLVMBuildStore(generator->builder, ptr, temp);
         return temp;
     }
@@ -114,6 +115,7 @@ LLVMValueRef NodeGet::generate() {
             "NodeGet_generate_Iden_preload"
         ), "NodeGet_generate_Iden_load");
     }
+
     if(instanceof<NodeIndex>(this->base) || instanceof<NodeGet>(this->base)) {
         if(instanceof<NodeIndex>(this->base)) ((NodeIndex*)this->base)->isMustBePtr = true;
         else ((NodeGet*)this->base)->isMustBePtr = true;
@@ -134,6 +136,7 @@ LLVMValueRef NodeGet::generate() {
             "NodeGet_generate_Index_preload"
         ), "NodeGet_generate_Index_load");
     }
+
     if(instanceof<NodeCall>(this->base)) {
         NodeCall* ncall = (NodeCall*)this->base;
         Type* ty = ncall->getType();
@@ -157,6 +160,31 @@ LLVMValueRef NodeGet::generate() {
             "NodeGet_generate_Index_preload"
         ), "NodeGet_generate_Index_load");
     }
+
+    if(instanceof<NodeDone>(this->base)) {
+        NodeDone* ndone = (NodeDone*)this->base;
+        Type* ty = ndone->getType();
+        std::string structName = "";
+        if(ty != nullptr && instanceof<TypeStruct>(ty)) {
+            structName = ((TypeStruct*)ty)->name;
+            LLVMValueRef f = checkIn(structName);
+            if(f != nullptr) return f;
+        }
+        LLVMValueRef ptr = checkStructure(ndone->generate());
+        if(structName == "") structName = std::string(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(ptr))));
+
+        if(this->isMustBePtr) return LLVM::structGep(
+            ptr,
+            AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
+            "NodeGet_generate_Index_ptr"
+        );
+        return LLVM::load(LLVM::structGep(
+            ptr,
+            AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
+            "NodeGet_generate_Index_preload"
+        ), "NodeGet_generate_Index_load");
+    }
+
     generator->error("assert into NodeGet (" + std::string(typeid(this->base[0]).name()) + ")", this->loc);
     return nullptr;
 }

@@ -57,7 +57,7 @@ std::vector<LLVMValueRef> NodeCall::correctByLLVM(std::vector<LLVMValueRef> valu
         else if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(((TypePointer*)fas[i].type)->instance)) {
             LLVMTypeRef type = LLVMTypeOf(params[i]);
             if(LLVMGetTypeKind(type) != LLVMPointerTypeKind) {
-                LLVMValueRef temp = LLVMBuildAlloca(generator->builder, type, "NodeCall_getParameters_temp");
+                LLVMValueRef temp = LLVM::alloc(type, "NodeCall_getParameters_temp");
                 LLVMBuildStore(generator->builder, params[i], temp);
                 params[i] = temp;
             }
@@ -94,7 +94,7 @@ std::vector<LLVMValueRef> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg
         else if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(((TypePointer*)fas[i].type)->instance)) {
             LLVMTypeRef type = LLVMTypeOf(params[i]);
             if(LLVMGetTypeKind(type) != LLVMPointerTypeKind) {
-                LLVMValueRef temp = LLVMBuildAlloca(generator->builder, type, "NodeCall_getParameters_temp");
+                LLVMValueRef temp = LLVM::alloc(type, "NodeCall_getParameters_temp");
                 LLVMBuildStore(generator->builder, params[i], temp);
                 params[i] = temp;
             }
@@ -123,7 +123,7 @@ std::vector<LLVMValueRef> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg
         else if(this->isCdecl64 && instanceof<TypeBasic>(fas[i].type) && LLVMGetTypeKind(LLVMTypeOf(params[i])) == LLVMStructTypeKind) {
             TypeBasic* tbasic = (TypeBasic*)(fas[i].type);
             if(!tbasic->isFloat()) {
-                LLVMValueRef temp = LLVMBuildAlloca(generator->builder, LLVMTypeOf(params[i]), "StructToI_cdecl64_getParameters_temp");
+                LLVMValueRef temp = LLVM::alloc(LLVMTypeOf(params[i]), "StructToI_cdecl64_getParameters_temp");
                 LLVMBuildStore(generator->builder, params[i], temp);
                 temp = LLVMBuildPointerCast(generator->builder, temp, LLVMPointerType(generator->genType(tbasic, this->loc), 0), "StructToI_cdecl64_getParameters");
                 params[i] = LLVM::load(temp, "StructToI_cdecl64_getParameters_load");

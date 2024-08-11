@@ -50,7 +50,7 @@ LLVMValueRef NodeCast::generate() {
         }
 
         if(LLVMGetTypeKind(LLVMTypeOf(result)) == LLVMStructTypeKind) {
-            LLVMValueRef _temp = LLVMBuildAlloca(generator->builder,LLVMTypeOf(result), "NodeCast_stoiTemp");
+            LLVMValueRef _temp = LLVM::alloc(LLVMTypeOf(result), "NodeCast_stoiTemp");
             LLVMBuildStore(generator->builder, result, _temp);
             if(tbasic->isFloat()) return LLVMBuildSIToFP(generator->builder, LLVMBuildPtrToInt(generator->builder, _temp, LLVMInt32TypeInContext(generator->context), "NodeCast_ptoi_stop"), generator->genType(type,loc), "NodeCast_ptoi_stopC");
             return LLVMBuildPtrToInt(generator->builder, _temp, LLVMInt32TypeInContext(generator->context), "NodeCast_stoi");
@@ -78,7 +78,7 @@ LLVMValueRef NodeCast::generate() {
     if(instanceof<TypeStruct>(this->type)) {
         TypeStruct* tstruct = (TypeStruct*)this->type;
         if(generator->toReplace.find(tstruct->name) != generator->toReplace.end()) return (new NodeCast(generator->toReplace[tstruct->name], this->value, this->loc))->generate();
-        LLVMValueRef ptrResult = LLVMBuildAlloca(generator->builder, LLVMTypeOf(result), "NodeCast_ptrResult");
+        LLVMValueRef ptrResult = LLVM::alloc(LLVMTypeOf(result), "NodeCast_ptrResult");
         LLVMBuildStore(generator->builder, result, ptrResult);
         return LLVM::load(LLVMBuildBitCast(generator->builder, ptrResult, LLVMPointerType(generator->genType(tstruct, this->loc), 0), "NodeCast_tempFn"), "NodeCast_fnload");
     }

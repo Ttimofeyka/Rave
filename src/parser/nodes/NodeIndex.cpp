@@ -113,7 +113,7 @@ LLVMValueRef NodeIndex::generate() {
         LLVMValueRef ptr = currScope->get(id->name, this->loc);
 
         if(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMArrayTypeKind && LLVMGetTypeKind(LLVMTypeOf(currScope->getWithoutLoad(id->name, this->loc))) == LLVMArrayTypeKind) {
-            LLVMValueRef copyVal = LLVMBuildAlloca(generator->builder, LLVMTypeOf(ptr), ("NodeIndex_copyVal_"+std::to_string(this->loc)+"_").c_str());
+            LLVMValueRef copyVal = LLVM::alloc(LLVMTypeOf(ptr), ("NodeIndex_copyVal_"+std::to_string(this->loc)+"_").c_str());
             LLVMBuildStore(generator->builder, ptr, copyVal);
             ptr = copyVal;
         }

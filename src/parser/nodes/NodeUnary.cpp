@@ -83,7 +83,7 @@ LLVMValueRef NodeUnary::generate() {
         else if(instanceof<NodeCall>(this->base)) {
             NodeCall* call = (NodeCall*)this->base;
             auto gcall = call->generate();
-            auto temp = LLVMBuildAlloca(generator->builder, LLVMTypeOf(gcall), "NodeUnary_temp");
+            auto temp = LLVM::alloc(LLVMTypeOf(gcall), "NodeUnary_temp");
             LLVMBuildStore(generator->builder, gcall, temp);
             val = temp;
         }
@@ -107,7 +107,7 @@ LLVMValueRef NodeUnary::generate() {
         }
         else if(instanceof<NodeArray>(this->base)) {
             val = this->base->generate();
-            LLVMValueRef temp = LLVMBuildAlloca(generator->builder, LLVMTypeOf(val), "NodeUnary_NA_temp");
+            LLVMValueRef temp = LLVM::alloc(LLVMTypeOf(val), "NodeUnary_NA_temp");
             LLVMBuildStore(generator->builder, val, temp);
             val = temp;
         }
@@ -136,7 +136,7 @@ LLVMValueRef NodeUnary::generate() {
             }
         }
         if(LLVMGetTypeKind(LLVMTypeOf(val2)) != LLVMPointerTypeKind) {
-            LLVMValueRef temp = LLVMBuildAlloca(generator->builder, LLVMTypeOf(val2), "NodeUnary_temp");
+            LLVMValueRef temp = LLVM::alloc(LLVMTypeOf(val2), "NodeUnary_temp");
             LLVMBuildStore(generator->builder, val2, temp);
             val2 = temp;
         }
