@@ -320,7 +320,7 @@ namespace std {
 
         @skipArg();
 
-        char[40] buffer;
+        char[40] nBuffer;
 
         @foreachArgs() {
             @if(@tNequals(@getCurrArgType(), float)) {
