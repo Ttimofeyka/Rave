@@ -58,18 +58,14 @@ namespace std {
                 } else {
                   if(state == 1) {
                     if(url[p] != "/") {
-                        std::string host = this.host; // TODO: fix into NodeCall (Ng + Ng error)
-                            host.add(url[p]);
-                        this.host = host;
+                        this.host.add(url[p]);
                         p += 1;
                     } else {
                         p += 1;
                         state += 1;
                     }
                   } else {
-                    std::string path = this.path; // TODO: fix into NodeCall (Ng + Ng error)
-                        path.add(url[p]);
-                    this.path = path;
+                    this.path.add(url[p]);
                     p += 1;
                   }
                 }
