@@ -712,11 +712,13 @@ LLVMValueRef NodeBuiltin::generate() {
         return nullptr;
     }
     else if(this->name == "alloca") {
-        BigInt size = asNumber(0);
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+        LLVMValueRef size = this->args[0]->generate();
+
         return (
             new NodeCast(
                 new TypePointer(new TypeBasic(BasicType::Char)),
-                new NodeDone(LLVM::alloc(LLVMArrayType(LLVMInt8TypeInContext(generator->context), size.to_int()), "NodeBuiltin_alloca")),
+                new NodeDone(LLVM::alloc(this->args[0]->generate(), "NodeBuiltin_alloca")),
                 this->loc
             )
         )->generate();

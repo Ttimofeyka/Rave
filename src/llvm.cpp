@@ -85,6 +85,10 @@ LLVMValueRef LLVM::alloc(LLVMTypeRef type, const char* name) {
     return value;
 }
 
+LLVMValueRef LLVM::alloc(LLVMValueRef size, const char* name) {
+    return LLVMBuildArrayAlloca(generator->builder, LLVMInt8TypeInContext(generator->context), size, name);
+}
+
 void LLVM::setFastMath(LLVMBuilderRef builder, bool infs, bool nans, bool arcp, bool nsz) {
     llvm::FastMathFlags flags;
     if(infs) flags.setNoInfs(true);
