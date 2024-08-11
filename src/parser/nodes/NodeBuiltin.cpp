@@ -723,6 +723,48 @@ LLVMValueRef NodeBuiltin::generate() {
             )
         )->generate();
     }
+    else if(this->name == "minOf") {
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+        Type* type = asType(0)->type;
+
+        if(!instanceof<TypeVoid>(type) && !instanceof<TypeBasic>(type)) generator->error("the type must be a basic!", this->loc);
+        if(instanceof<TypeVoid>(type)) return LLVMConstInt(LLVMInt64TypeInContext(generator->context), 0, false);
+        else {
+            TypeBasic* btype = (TypeBasic*)type;
+            switch(btype->type) {
+                case BasicType::Bool: return LLVMConstInt(LLVMInt64TypeInContext(generator->context), 0, false);
+                case BasicType::Char: return LLVMConstInt(LLVMInt64TypeInContext(generator->context), -128, false);
+                case BasicType::Short: return LLVMConstInt(LLVMInt64TypeInContext(generator->context), -32768, false);
+                case BasicType::Int: return LLVMConstInt(LLVMInt64TypeInContext(generator->context), -2147483647, false);
+                case BasicType::Long: return LLVMConstInt(LLVMInt64TypeInContext(generator->context), -9223372036854775807, false);
+                // TODO: Add BasicType::Cent
+                default: return LLVMConstInt(LLVMInt64TypeInContext(generator->context), 0, false);
+            }
+        }
+    }
+    else if(this->name == "maxOf") {
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+        Type* type = asType(0)->type;
+
+        if(!instanceof<TypeVoid>(type) && !instanceof<TypeBasic>(type)) generator->error("the type must be a basic!", this->loc);
+        if(instanceof<TypeVoid>(type)) return LLVMConstInt(LLVMInt64TypeInContext(generator->context), 0, false);
+        else {
+            TypeBasic* btype = (TypeBasic*)type;
+            switch(btype->type) {
+                case BasicType::Bool: return LLVMConstInt(LLVMInt64TypeInContext(generator->context), 1, false);
+                case BasicType::Char: return LLVMConstInt(LLVMInt64TypeInContext(generator->context), 127, false);
+                case BasicType::Uchar: return LLVMConstInt(LLVMInt64TypeInContext(generator->context), 255, false);
+                case BasicType::Short: return LLVMConstInt(LLVMInt64TypeInContext(generator->context), 32767, false);
+                case BasicType::Ushort: return LLVMConstInt(LLVMInt64TypeInContext(generator->context), 65535, false);
+                case BasicType::Int: return LLVMConstInt(LLVMInt64TypeInContext(generator->context), 2147483647, false);
+                case BasicType::Uint: return LLVMConstInt(LLVMInt64TypeInContext(generator->context), 4294967295, false);
+                case BasicType::Long: return LLVMConstInt(LLVMInt64TypeInContext(generator->context), 9223372036854775807, false);
+                case BasicType::Ulong: return LLVMConstInt(LLVMInt64TypeInContext(generator->context), 18446744073709551615ull, true);
+                // TODO: Add BasicType::Cent
+                default: return LLVMConstInt(LLVMInt64TypeInContext(generator->context), 0, false);
+            }
+        }
+    }
     generator->error("builtin with the name '" + this->name + "' does not exist!", this->loc);
     return nullptr;
 }
@@ -801,6 +843,48 @@ Node* NodeBuiltin::comptime() {
 
         if(AST::structTable.find(tstruct->name) == AST::structTable.end()) return new NodeBool(false);
         return new NodeBool(AST::structTable[tstruct->name]->destructor == nullptr);
+    }
+    else if(this->name == "minOf") {
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+        Type* type = asType(0)->type;
+
+        if(!instanceof<TypeVoid>(type) && !instanceof<TypeBasic>(type)) generator->error("the type must be a basic!", this->loc);
+        if(instanceof<TypeVoid>(type)) return new NodeInt(0);
+        else {
+            TypeBasic* btype = (TypeBasic*)type;
+            switch(btype->type) {
+                case BasicType::Bool: return new NodeInt(0);
+                case BasicType::Char: return new NodeInt(-128);
+                case BasicType::Short: return new NodeInt(-32768);
+                case BasicType::Int: return new NodeInt(-2147483647);
+                case BasicType::Long: return new NodeInt(-9223372036854775807);
+                // TODO: Add BasicType::Cent
+                default: return new NodeInt(0);
+            }
+        }
+    }
+    else if(this->name == "maxOf") {
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+        Type* type = asType(0)->type;
+
+        if(!instanceof<TypeVoid>(type) && !instanceof<TypeBasic>(type)) generator->error("the type must be a basic!", this->loc);
+        if(instanceof<TypeVoid>(type)) return new NodeInt(0);
+        else {
+            TypeBasic* btype = (TypeBasic*)type;
+            switch(btype->type) {
+                case BasicType::Bool: return new NodeInt(1);
+                case BasicType::Char: return new NodeInt(127);
+                case BasicType::Uchar: return new NodeInt(255);
+                case BasicType::Short: return new NodeInt(32767);
+                case BasicType::Ushort: return new NodeInt(65535);
+                case BasicType::Int: return new NodeInt(2147483647);
+                case BasicType::Uint: return new NodeInt(4294967295);
+                case BasicType::Long: return new NodeInt(9223372036854775807);
+                case BasicType::Ulong: return new NodeInt(18446744073709551615ull);
+                // TODO: Add BasicType::Cent
+                default: return new NodeInt(0);
+            }
+        }
     }
     AST::checkError("builtin with name '" + this->name + "' does not exist!", this->loc);
     return nullptr;
