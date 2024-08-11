@@ -272,9 +272,17 @@ LLVMValueRef NodeBuiltin::generate() {
     if(this->name == "callWithArgs") {
         std::vector<Node*> nodes;
         for(int i=generator->currentBuiltinArg; i<AST::funcTable[currScope->funcName]->args.size(); i++) {
-            nodes.push_back(new NodeIden("_RaveArg"+std::to_string(i), this->loc));
+            nodes.push_back(new NodeIden("_RaveArg" + std::to_string(i), this->loc));
         }
         for(int i=1; i<args.size(); i++) nodes.push_back(args[i]);
+        return (new NodeCall(this->loc, args[0], nodes))->generate();
+    }
+    if(this->name == "callWithBeforeArgs") {
+        std::vector<Node*> nodes;
+        for(int i=1; i<args.size(); i++) nodes.push_back(args[i]);
+        for(int i=generator->currentBuiltinArg; i<AST::funcTable[currScope->funcName]->args.size(); i++) {
+            nodes.push_back(new NodeIden("_RaveArg" + std::to_string(i), this->loc));
+        }
         return (new NodeCall(this->loc, args[0], nodes))->generate();
     }
     if(this->name == "tEquals") {

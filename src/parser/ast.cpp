@@ -381,11 +381,7 @@ Type* lTypeToType(LLVMTypeRef t) {
         case LLVMHalfTypeKind: return new TypeBasic(BasicType::Half);
         case LLVMFloatTypeKind: return new TypeBasic(BasicType::Float);
         case LLVMDoubleTypeKind: return new TypeBasic(BasicType::Double);
-        case LLVMPointerTypeKind: {
-            LLVMTypeRef elementType = LLVMGetElementType(t);
-            if(LLVMGetTypeKind(elementType) == LLVMStructTypeKind) return new TypeStruct(LLVMGetStructName(elementType));
-            return new TypePointer(lTypeToType(elementType));
-        }
+        case LLVMPointerTypeKind: return new TypePointer(lTypeToType(LLVMGetElementType(t)));
         case LLVMArrayTypeKind: return new TypeArray(LLVMGetArrayLength(t), lTypeToType(LLVMGetElementType(t)));
         case LLVMStructTypeKind: return new TypeStruct(LLVMGetStructName(t));
         case LLVMFunctionTypeKind: {

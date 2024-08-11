@@ -314,150 +314,12 @@ namespace std {
         (inline) std::string fromUNumber(char n) => std::string::fromUNumber(cast(short)n);
     }
 
-    (volatile) int sprintBufferSL = 0;
-    std::string sprintBuffer;
-    bool sbInitialized = false;
+    (ctargs) void sprintBuffer {
+        std::string* resultPtr = @getCurrArg(std::string*);
+        std::string result = resultPtr[0];
 
-    (ctargs) std::string gsprint {
-        std::thread::spinlock::lock(&std::sprintBufferSL);
+        @skipArg();
 
-        if(!std::sbInitialized) {
-            std::sprintBuffer = std::string(128);
-            std::sbInitialized = true;
-        }
-        else std::sprintBuffer.length = 0;
-
-        char[40] nBuffer;
-
-        @foreachArgs() {
-            @if(@tNequals(@getCurrArgType(), float)) {
-                @if(@tNequals(@getCurrArgType(), double)) {
-                    @if(@tNequals(@getCurrArgType(), std::string)) {
-                        @if(@tNequals(@getCurrArgType(), char)) {
-                            @if(@tEquals(@getCurrArgType(), bool)) {
-                                std::sprintBuffer.appendC(std::cstring::fromBool(@getCurrArg(bool)));
-                            };
-                            @if(@tEquals(@getCurrArgType(), short) || @tEquals(@getCurrArgType(), int) || @tEquals(@getCurrArgType(), long)) {
-                                nBuffer = [
-                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
-                                ];
-                                std::cstring::ltos(@getCurrArg(long), cast(char*)&nBuffer);
-                                std::sprintBuffer.appendC(cast(char*)&nBuffer);
-                            };
-                            @if(@tEquals(@getCurrArgType(), cent)) {
-                                nBuffer = [
-                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
-                                ];
-                                std::cstring::ctos(@getCurrArg(cent), cast(char*)&nBuffer);
-                                std::sprintBuffer.appendC(cast(char*)&nBuffer);
-                            };
-                            @if(@tEquals(@getCurrArgType(), std::u32string)) {
-                                std::u32string us = @getCurrArg(std::u32string);
-                                for(int i=0; i<us.length; i+=1) {
-                                    char[4] buf;
-                                    int n = std::utf::encode(us.data[i], &buf[0]);
-                                    if(n == 1) std::sprintBuffer.add(buf[0]);
-                                    else if(n == 2) {
-                                        std::sprintBuffer.add(buf[0]);
-                                        std::sprintBuffer.add(buf[1]);
-                                    }
-                                    else if(n == 3) {
-                                        std::sprintBuffer.add(buf[0]);
-                                        std::sprintBuffer.add(buf[1]);
-                                        std::sprintBuffer.add(buf[2]);
-                                    }
-                                    else if(n == 4) {
-                                        std::sprintBuffer.add(buf[0]);
-                                        std::sprintBuffer.add(buf[1]);
-                                        std::sprintBuffer.add(buf[2]);
-                                        std::sprintBuffer.add(buf[3]);
-                                    }
-                                }
-                            };
-                            @if(@tEquals(@getCurrArgType(), std::u8string)) {
-                                std::u8string u8s = @getCurrArg(std::u8string);
-                                if(u8s.data != null) {
-                                    for(int i=0; i<u8s.bytes; i+=1) std::sprintBuffer.add(u8s.data[i]);
-                                }
-                                else std::sprintBuffer.appendC("null");
-                            };
-                            @if(@tEquals(@getCurrArgType(), int*)) {
-                                uint* utf8Text = @getCurrArg(uint*);
-                                for(int i=0; utf8Text[i] != '\0'; i+=1) {
-                                    char[4] buf;
-                                    int n = std::utf::encode(utf8Text[i], &buf[0]);
-                                    if(n == 1) std::sprintBuffer.add(buf[0]);
-                                    else if(n == 2) {
-                                        std::sprintBuffer.add(buf[0]);
-                                        std::sprintBuffer.add(buf[1]);
-                                    }
-                                    else if(n == 3) {
-                                        std::sprintBuffer.add(buf[0]);
-                                        std::sprintBuffer.add(buf[1]);
-                                        std::sprintBuffer.add(buf[2]);
-                                    }
-                                    else if(n == 4) {
-                                        std::sprintBuffer.add(buf[0]);
-                                        std::sprintBuffer.add(buf[1]);
-                                        std::sprintBuffer.add(buf[2]);
-                                        std::sprintBuffer.add(buf[3]);
-                                    }
-                                }
-                            };
-                            @if(@tEquals(@getCurrArgType(), char*)) {
-                                char* str = @getCurrArg(char*);
-                                if(str != null) std::sprintBuffer.appendC(str);
-                                else std::sprintBuffer.appendC("null");
-                            };
-                        };
-                        @if(@tEquals(@getCurrArgType(), char)) {
-                            std::sprintBuffer.add(@getCurrArg(char));
-                        };
-                    };
-                    @if(@tEquals(@getCurrArgType(), std::string)) {
-                        std::string s = @getCurrArg(std::string);
-                        if(s.data != null) std::sprintBuffer.append(s);
-                        else std::sprintBuffer.appendC("null");
-                    };
-                };
-                @if(@tEquals(@getCurrArgType(), double)) {
-                    nBuffer = [
-                        '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                        '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                        '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                        '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                        '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
-                    ];
-                    std::cstring::dtos(@getCurrArg(double), 8, &nBuffer);
-                    std::sprintBuffer.appendC(cast(char*)&nBuffer);
-                };
-            };
-            @if(@tEquals(@getCurrArgType(), float)) {
-                nBuffer = [
-                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
-                ];
-                std::cstring::dtos(@getCurrArg(double), 7, &nBuffer);
-                std::sprintBuffer.appendC(cast(char*)&nBuffer);
-            };
-        };
-        std::thread::spinlock::unlock(&std::sprintBufferSL);
-    } => std::sprintBuffer;
-
-    (ctargs) std::string sprint {
-        std::string result = "";
-        
         char[40] buffer;
 
         @foreachArgs() {
@@ -477,7 +339,7 @@ namespace std {
                                     '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
                                 ];
                                 std::cstring::ltos(@getCurrArg(long), cast(char*)&nBuffer);
-                                std::sprintBuffer.appendC(cast(char*)&nBuffer);
+                                result.appendC(cast(char*)&nBuffer);
                             };
                             @if(@tEquals(@getCurrArgType(), cent)) {
                                 nBuffer = [
@@ -488,7 +350,7 @@ namespace std {
                                     '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
                                 ];
                                 std::cstring::ctos(@getCurrArg(cent), cast(char*)&nBuffer);
-                                std::sprintBuffer.appendC(cast(char*)&nBuffer);
+                                result.appendC(cast(char*)&nBuffer);
                             };
                             @if(@tEquals(@getCurrArgType(), std::u32string)) {
                                 std::u32string us = @getCurrArg(std::u32string);
@@ -568,7 +430,7 @@ namespace std {
                         '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
                     ];
                     std::cstring::dtos(@getCurrArg(double), 8, &nBuffer);
-                    std::sprintBuffer.appendC(cast(char*)&nBuffer);
+                    result.appendC(cast(char*)&nBuffer);
                 };
             };
             @if(@tEquals(@getCurrArgType(), float)) {
@@ -580,9 +442,32 @@ namespace std {
                     '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
                 ];
                 std::cstring::dtos(@getCurrArg(double), 7, &nBuffer);
-                std::sprintBuffer.appendC(cast(char*)&nBuffer);
+                result.appendC(cast(char*)&nBuffer);
             };
         };
+        resultPtr[0] = result;
+    }
 
+    (volatile) int __sprintBufferSL = 0;
+    std::string __sprintBuffer;
+    bool sbInitialized = false;
+
+    (ctargs) std::string gsprint {
+        std::thread::spinlock::lock(&std::__sprintBufferSL);
+
+        if(!std::sbInitialized) {
+            std::__sprintBuffer = std::string(128);
+            std::sbInitialized = true;
+        }
+        else std::__sprintBuffer.length = 0;
+
+        @callWithBeforeArgs(std::sprintBuffer, &std::__sprintBuffer);
+        
+        std::thread::spinlock::unlock(&std::__sprintBufferSL);
+    } => std::__sprintBuffer;
+
+    (ctargs) std::string sprint {
+        std::string result = "";
+        @callWithBeforeArgs(std::sprintBuffer, &result);
     } => result;
 }
