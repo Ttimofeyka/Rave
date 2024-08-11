@@ -415,7 +415,7 @@ LLVMValueRef NodeBuiltin::generate() {
             if(instanceof<NodeCall>(args[2])) fnType = callToTFunc(((NodeCall*)args[2]));
             else if(instanceof<NodeType>(args[2])) fnType = (TypeFunc*)((NodeType*)args[2])->type;
             else {
-                generator->error("undefined type of method '"+methodName+"'!", this->loc);
+                generator->error("undefined type of method '" + methodName + "'!", this->loc);
                 return nullptr;
             }
         }

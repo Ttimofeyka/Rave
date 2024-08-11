@@ -60,62 +60,32 @@ import <std/time> <std/sysc> <std/io>
 
 @if(__RAVE_OS != "LINUX") {
     namespace std {
-        ulong randNext;
+        cent randNext;
 
-        char randomChar {
-            std::time ts;
-            std::getCurrentTime(&ts);
-            if(std::randNext == 0) std::randNext = ts.mseconds;
-            ts.mseconds = ts.mseconds * 1103515245 + 12345 * std::randNext;
-            std::randNext = std::randNext * 103515245 + 12345;
-        } => (cast(char*)ts.&mseconds)[0];
-        
-        short randomShort {
-            std::time ts;
-            std::getCurrentTime(&ts);
-            if(std::randNext == 0) std::randNext = ts.mseconds;
-            ts.mseconds = ts.mseconds * 1103515245 + 12345 * std::randNext;
-            std::randNext = std::randNext * 103515245 + 12345;
-        } => (cast(short*)ts.&mseconds)[0];
+        void __randomGen {
+            if(std::randNext == 0) {
+                std::time ts;
+                std::getCurrentTime(&ts);
+                std::randNext = ts.mseconds;
+            }
+            std::randNext = std::randNext * 10351524532 + 12345;
+        }
 
-        int randomInt {
-            std::time ts;
-            std::getCurrentTime(&ts);
-            if(std::randNext == 0) std::randNext = ts.mseconds;
-            ts.mseconds = ts.mseconds * 1103515245 + 12345 * std::randNext;
-            std::randNext = std::randNext * 103515245 + 12345;
-        } => (cast(int*)ts.&mseconds)[0];
+        char randomChar {std::__randomGen();} => (cast(char*)std::randNext)[0];
 
-        long randomLong {
-            std::time ts;
-            std::getCurrentTime(&ts);
-            if(std::randNext == 0) std::randNext = ts.mseconds;
-            ts.mseconds = ts.mseconds * 1103515245 + 12345 * std::randNext;
-            std::randNext = std::randNext * 103515245 + 12345;
-        } => ts.mseconds;
+        short randomShort {std::__randomGen();} => (cast(short*)std::randNext)[0];
 
-        cent randomCent {
-            std::time ts;
-            std::getCurrentTime(&ts);
-            if(std::randNext == 0) std::randNext = ts.mseconds;
-            cent buffer;
-            long* bufferPtr = cast(long*)&buffer;
-            ts.mseconds = ts.mseconds * 1103515245 + 12345 * std::randNext;
-            std::randNext = std::randNext * 103515245 + 12345;
-            bufferPtr[0] = ts.mseconds;
-            ts.mseconds = ts.mseconds * 1103515245 + 12345 * std::randNext;
-            std::randNext = std::randNext * 103515245 + 12345;
-            bufferPtr[1] = ts.mseconds;
-        } => buffer;
+        int randomInt {std::__randomGen();} => (cast(int*)std::randNext)[0];
+
+        long randomLong {std::__randomGen();} => (cast(long*)std::randNext)[0];
+
+        cent randomCent {std::__randomGen();} => std::randNext;
 
         void randomBuffer(char* buffer, int length) {
-            std::time ts;
-            std::getCurrentTime(&ts);
-            if(std::randNext == 0) std::randNext = ts.mseconds;
+            std::__randomGen();
             for(int i=0; i<length; i++) {
-                ts.mseconds = ts.mseconds * 1103515245 + 12345 * std::randNext;
-                std::randNext = std::randNext * 103515245 + 12345;
-                buffer[i] = (cast(char*)ts.&mseconds)[0];
+                std::randNext = std::randNext * 10351524532 + 12345;
+                buffer[i] = (cast(char*)std::randNext)[0];
             }
         }
     }
