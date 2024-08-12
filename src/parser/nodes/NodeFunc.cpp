@@ -98,7 +98,6 @@ void NodeFunc::check() {
                     return;
                 }
                 else {
-                    std::cout << "toAdd '" << toAdd << "'" << ", " << (this-> ? "true" : "false") << std::endl;
                     AST::checkError("a function with '" + this->name + "' name already exists on " + std::to_string(AST::funcTable[this->name]->loc) + " line!", this->loc);
                     return;
                 }
