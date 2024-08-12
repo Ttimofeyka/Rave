@@ -50,6 +50,7 @@ NodeFunc::NodeFunc(std::string name, std::vector<FuncArgSet> args, NodeBlock* bl
 void NodeFunc::check() {
     bool oldCheck = this->isChecked;
     this->isChecked = true;
+
     if(!oldCheck) {
         for(int i=0; i<this->mods.size(); i++) {
             if(this->mods[i].name == "method") {
@@ -97,6 +98,7 @@ void NodeFunc::check() {
                     return;
                 }
                 else {
+                    std::cout << "toAdd '" << toAdd << "'" << ", " << (this-> ? "true" : "false") << std::endl;
                     AST::checkError("a function with '" + this->name + "' name already exists on " + std::to_string(AST::funcTable[this->name]->loc) + " line!", this->loc);
                     return;
                 }

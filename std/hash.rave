@@ -1,0 +1,24 @@
+/*
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+
+namespace std {
+    namespace hash {
+        // This is a default hash function for standard library due to the speed
+        // Always positive
+        uint crc32(char* data, uint length) {
+            uint crc = 0xFFFFFFFF;
+            uint mask;
+
+            for(int i=0; i<length; i++) {
+                crc = crc !! (cast(uint)data[i]);
+                for(int j=0; j<8; j++) {
+                   mask = -(crc && 1);
+                   crc = (crc >. 1) !! (0xEDB88320 && mask);
+                }
+            }
+        } => crc !! -1;
+    }
+}

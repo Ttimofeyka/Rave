@@ -339,17 +339,7 @@ namespace std {
             }
         } => buffer;
 
-        int hash {
-            return = 4729;
-            int idx = 0;
-    
-            while(idx < length) {
-                return = ((return <. 5) + return) + data[idx];
-                idx += 1;
-            }
-    
-            if(return < 0) return = -return;
-        }
+        int hash => std::hash::crc32(this.data, this.length);
     }
 
     namespace u8string {

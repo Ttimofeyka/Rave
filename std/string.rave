@@ -5,7 +5,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 import <std/vector> <std/cstring> <std/ascii> <std/utf8>
-import <std/thread> <std/strutil> <std/map>
+import <std/thread> <std/strutil> <std/map> <std/hash>
 
 namespace std {
     extern(private, linkname: "sscanf") int format(char* buff, char* fmt);
@@ -277,17 +277,7 @@ namespace std {
             }
         } => buffer;
 
-        int hash {
-            return = 5381;
-            int idx = 0;
-    
-            while(idx < length) {
-                return = ((return <. 5) + return) + data[idx];
-                idx += 1;
-            }
-    
-            if(return < 0) return = -return;
-        }
+        int hash => std::hash::crc32(this.data, this.length);
     }
 
     namespace string {

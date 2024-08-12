@@ -66,23 +66,13 @@ namespace std {
         } => this;
 
         int hash {
-            return = 3853;
+            return = 2;
 
-            @if(@hasMethod(P1, hash)) {
-                return *= first.hash();
-            };
-
-            @if(!@hasMethod(P1, hash)) {
-                return *= std::hash(cast(void*)this.first, sizeof(P1));
-            };
+            char* pFirst = cast(char*)(this.&first);
+            char* pSecond = cast(char*)(this.&second);
             
-            @if(@hasMethod(P2, hash)) {
-                return *= second.hash();
-            };
-
-            @if(!@hasMethod(P2, hash)) {
-                return *= std::hash(cast(void*)this.second, sizeof(P2));
-            };
+            for(int i=0; i<sizeof(P1); i++) return = return * pFirst[i] + 7588 + (return <. 6) + (return >. 2);
+            for(int i=0; i<sizeof(P2); i++) return = return * pSecond[i] + 7588 + (return <. 6) + (return >. 2);
         }
     }
 }

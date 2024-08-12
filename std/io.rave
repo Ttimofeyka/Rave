@@ -180,9 +180,7 @@ namespace std {
                     else return = true;
                 }
 
-                int seek(int flag, long offset) {
-                    return = std::syscall(std::sysctable::LSeek, fd, flag, offset);
-                }
+                int seek(int flag, long offset) => cast(int)std::syscall(std::sysctable::LSeek, fd, flag, offset);
 
                 void flush {
                     if((fd != -1) && (bufferPos > 0) && (buffer != null)) {
@@ -228,9 +226,10 @@ namespace std {
                             this.bufferPos = 0;
                         }
                         std::syscall(std::sysctable::Close, this.fd);
-                        if(this.buffer != null) std::free(this.buffer);
                         this.fd = -1;
                     }
+                    if(this.buffer != null) std::free(this.buffer);
+                    this.bufferPos = 0;
                 }
             }
         }
