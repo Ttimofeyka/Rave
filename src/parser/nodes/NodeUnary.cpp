@@ -128,18 +128,24 @@ LLVMValueRef NodeUnary::generate() {
     }
     if(this->type == TokType::Destructor) {
         LLVMValueRef val2 = this->generatePtr();
-        if(LLVMGetTypeKind(LLVMTypeOf(val2)) != LLVMPointerTypeKind
-        && LLVMGetTypeKind(LLVMTypeOf(val2)) != LLVMStructTypeKind) generator->error("the attempt to call the destructor is not in the structure!", this->loc); 
-        if(LLVMGetTypeKind(LLVMTypeOf(val2)) == LLVMPointerTypeKind) {
-            if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(val2))) == LLVMPointerTypeKind) {
-                if(LLVMGetTypeKind(LLVMGetElementType(LLVMGetElementType(LLVMTypeOf(val2)))) == LLVMStructTypeKind) val2 = LLVM::load(val2, "NodeCall_destructor_load");
+        LLVMTypeRef val2Type = LLVMTypeOf(val2);
+
+        if(LLVMGetTypeKind(val2Type) != LLVMPointerTypeKind
+        && LLVMGetTypeKind(val2Type) != LLVMStructTypeKind) generator->error("the attempt to call the destructor is not in the structure!", this->loc); 
+        if(LLVMGetTypeKind(val2Type) == LLVMPointerTypeKind) {
+            if(LLVMGetTypeKind(LLVMGetElementType(val2Type)) == LLVMPointerTypeKind) {
+                if(LLVMGetTypeKind(LLVMGetElementType(LLVMGetElementType(val2Type))) == LLVMStructTypeKind) val2 = LLVM::load(val2, "NodeCall_destructor_load");
             }
         }
-        if(LLVMGetTypeKind(LLVMTypeOf(val2)) != LLVMPointerTypeKind) {
-            LLVMValueRef temp = LLVM::alloc(LLVMTypeOf(val2), "NodeUnary_temp");
+        
+        if(LLVMGetTypeKind(val2Type) != LLVMPointerTypeKind) {
+            LLVMValueRef temp = LLVM::alloc(val2Type, "NodeUnary_temp");
             LLVMBuildStore(generator->builder, val2, temp);
             val2 = temp;
         }
+
+        if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(val2))) != LLVMStructTypeKind) generator->error("the attempt to call the destructor is not in the structure!", this->loc);
+
         std::string struc = std::string(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(val2))));
         if(AST::structTable[struc]->destructor == nullptr) {
             if(instanceof<NodeIden>(this->base)) {

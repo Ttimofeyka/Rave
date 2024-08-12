@@ -121,7 +121,7 @@ namespace std {
             std::u32string this;
             if(a != null) {
                 this.length = std::utf32::utflen(a);
-                this.capacity = this.length*4;
+                this.capacity = this.length * 4;
                 if(this.capacity == 0) this.capacity = 4;
                 this.data = cast(uint*)std::malloc(this.capacity);
 
@@ -277,17 +277,7 @@ namespace std {
             }
         } => isEqual;
 
-        int hash {
-            return = 1381;
-            int idx = 0;
-    
-            while(idx < length) {
-                return = ((return <. 5) + return) + data[idx];
-                idx += 1;
-            }
-    
-            if(return < 0) return = -return;
-        }
+        int hash => std::hash::crc32(cast(char*)(this.data), this.length * 4);
 
         //bool operator==(std::u32string one, std::u32string two) => one.compare(two);
         //bool operator==(std::u32string one, uint* two) => one.compare(two);

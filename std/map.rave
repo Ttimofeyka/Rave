@@ -4,6 +4,8 @@ Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+import <std/hash>
+
 namespace std {
     namespace hashmap {
         struct Entry<KE, VE> {
@@ -11,18 +13,6 @@ namespace std {
             VE value;
             std::hashmap::Entry<KE, VE>* next;
         }
-    }
-
-    int hash(void* data, int size) {
-        return = 5381;
-        int idx = 0;
-
-        while(idx < size) {
-            return = ((return <. 5) + return) + data[idx];
-            idx += 1;
-        }
-
-        if(return < 0) return = -return;
     }
 
     (@tNequals(K, void), @tNequals(V, void)) struct hashmap<K, V> {
@@ -58,8 +48,10 @@ namespace std {
             };
 
             @if(!@hasMethod(K, hash)) {
-                uint index = std::hash(cast(void*)&key, sizeof(K)) % mapSize;
+                uint index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
             };
+
+            if(index < 0) index = -index;
 
             std::hashmap::Entry<K, V>* entry = table[index];
             bool setted = false;
@@ -103,7 +95,7 @@ namespace std {
             };
 
             @if(!@hasMethod(K, hash)) {
-                uint index = std::hash(cast(void*)&key, sizeof(K)) % mapSize;
+                uint index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
             };
 
             std::hashmap::Entry<K, V>* entry = table[index];
@@ -119,13 +111,16 @@ namespace std {
 
         bool remove(K key) {
             return = false;
+
             @if(@hasMethod(K, hash)) {
                 uint index = key.hash() % mapSize;
             };
 
             @if(!@hasMethod(K, hash)) {
-                uint index = std::hash(cast(void*)&key, sizeof(K)) % mapSize;
+                uint index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
             };
+
+            if(index < 0) index = -index;
 
             std::hashmap::Entry<K, V>* entry = table[index];
             std::hashmap::Entry<K, V>* prev = null;
