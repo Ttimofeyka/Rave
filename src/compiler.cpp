@@ -188,13 +188,13 @@ void Compiler::compile(std::string file) {
         }
 
         if(outType.find("win32") != std::string::npos) {
-            #if _WIN32
+            #ifndef _WIN32
                 Compiler::linkString += " --target=i686-pc-windows-gnu ";
             #endif
             raveOs = "WINDOWS";
         }
         else if(outType.find("win64") != std::string::npos || outType.find("windows") != std::string::npos) {
-            #if _WIN32
+            #ifndef _WIN32
                 Compiler::linkString += " --target=x86_64-pc-windows-gnu ";
             #endif
             raveOs = "WINDOWS";
