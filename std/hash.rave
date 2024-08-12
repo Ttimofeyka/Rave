@@ -7,7 +7,6 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace std {
     namespace hash {
         // This is a default hash function for standard library due to the speed
-        // Always positive
         uint crc32(char* data, uint length) {
             uint crc = 0xFFFFFFFF;
             uint mask;
