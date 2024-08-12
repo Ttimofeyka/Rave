@@ -22,6 +22,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeNull.hpp"
 #include "../../include/parser/nodes/NodeDone.hpp"
 #include "../../include/parser/nodes/NodeBool.hpp"
+#include "../../include/parser/nodes/NodeStruct.hpp"
 #include <llvm-c/Comdat.h>
 #include <llvm-c/Analysis.h>
 #include "../../include/compiler.hpp"
@@ -132,13 +133,33 @@ LLVMTypeRef* NodeFunc::getParameters(int callConv) {
                 if(callConv == -1) {
                     int size = arg.type->getSize();
                     Type* ty = arg.type;
-                    switch(size) {
+
+                    LLVMTypeRef genStructType = generator->genType(arg.type, this->loc);
+                    int typesCount = LLVMCountStructElementTypes(genStructType);
+                    LLVMTypeRef* types = new LLVMTypeRef[typesCount];
+                    LLVMGetStructElementTypes(genStructType, types);
+
+                    bool isFloatable = false;
+
+                    for(int i=0; i<typesCount; i++) {
+                        if(LLVMGetTypeKind(types[i]) == LLVMFloatTypeKind) {
+                            if(size == 24) {
+                                isFloatable = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    delete types;
+
+                    if(!isFloatable) switch(size) {
                         case 8: ty = new TypeBasic(BasicType::Char); break;
                         case 16: ty = new TypeBasic(BasicType::Short); break;
-                        case 32: ty = new TypeBasic(BasicType::Int); break;
+                        case 24: case 32: ty = new TypeBasic(BasicType::Int); break;
                         case 40: ty = new TypeBasic(BasicType::Long); break;
                         default: break;
                     }
+
                     if(ty) {
                         arg.type = ty;
                         this->block->nodes.emplace(this->block->nodes.begin(), new NodeVar(oldName, new NodeIden(arg.name, this->loc), false, false, false, {}, this->loc, ty));

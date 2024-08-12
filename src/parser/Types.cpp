@@ -253,6 +253,7 @@ Type* getType(std::string id) {
     else if(id == "int4") return new TypeVector(new TypeBasic(BasicType::Int), 4);
     else if(id == "int8") return new TypeVector(new TypeBasic(BasicType::Int), 8);
     else if(id == "float4") return new TypeVector(new TypeBasic(BasicType::Float), 4);
+    else if(id == "float2") return new TypeVector(new TypeBasic(BasicType::Float), 2);
     else if(id == "float8") return new TypeVector(new TypeBasic(BasicType::Float), 8);
     else if(id == "short8") return new TypeVector(new TypeBasic(BasicType::Short), 8);
     else return new TypeStruct(id);

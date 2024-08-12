@@ -10,6 +10,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeDone.hpp"
 #include "../../include/parser/nodes/NodeIden.hpp"
 #include "../../include/parser/nodes/NodeStruct.hpp"
+#include "../../include/parser/nodes/NodeVar.hpp"
 #include "../../include/parser/ast.hpp"
 #include "../../include/llvm.hpp"
 
@@ -28,6 +29,30 @@ LLVMValueRef NodeConstStruct::generate() {
     LLVMTypeRef constStructType = generator->genType(new TypeStruct(this->structName), this->loc);
     std::vector<LLVMValueRef> llvmValues;
 
-    for(int i=0; i<this->values.size(); i++) llvmValues.push_back(this->values[i]->generate());
-    return LLVMConstNamedStruct(constStructType, llvmValues.data(), llvmValues.size());
+    bool isConst = true;
+
+    for(int i=0; i<this->values.size(); i++) {
+        LLVMValueRef generated = this->values[i]->generate();
+
+        if(!LLVMIsConstant(generated)) isConst = false;
+
+        llvmValues.push_back(generated);
+    }
+
+    if(isConst) return LLVMConstNamedStruct(constStructType, llvmValues.data(), llvmValues.size());
+    else {
+        if(currScope == nullptr) generator->error("constant structure with dynamic values cannot be created outside a function!", this->loc);
+        LLVMValueRef temp = LLVM::alloc(constStructType, "constStruct_temp");
+
+        std::vector<std::string> elements;
+        for(int i=0; i<AST::structTable[this->structName]->elements.size(); i++) {
+            if(instanceof<NodeVar>(AST::structTable[this->structName]->elements[i])) elements.push_back(((NodeVar*)AST::structTable[this->structName]->elements[i])->name);
+        }
+
+        for(int i=0; i<this->values.size(); i++) {
+            (new NodeBinary(TokType::Equ, new NodeGet(new NodeDone(temp), elements[i], true, this->loc), new NodeDone(llvmValues[i]), this->loc))->generate();
+        }
+
+        return LLVM::load(temp, "constStruct_tempLoad");
+    }
 }
