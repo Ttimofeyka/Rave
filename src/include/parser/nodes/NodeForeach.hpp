@@ -21,7 +21,7 @@ public:
     Node* varData;
     Node* varLength;
     std::string funcName;
-    long loc;
+    int loc;
 
     NodeForeach(NodeIden* elName, Node* varData, Node* varLength, NodeBlock* block, std::string funcName, long loc);
     bool isReleased(std::string varName);
