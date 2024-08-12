@@ -103,6 +103,8 @@ void NodeVar::check() {
 }
 
 LLVMValueRef NodeVar::generate() {
+    while(AST::aliasTypes.find(this->type->toString()) != AST::aliasTypes.end()) this->type = AST::aliasTypes[this->type->toString()];
+
     if(instanceof<TypeVoid>(this->type)) {
         // error: variable cannot be void
         generator->error("using 'void' in variable '" + this->name + "' is prohibited!", this->loc);
