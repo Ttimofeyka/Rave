@@ -12,9 +12,9 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 class NodeBreak : public Node {
 public:
-    long loc;
+    int loc;
 
-    NodeBreak(long loc);
+    NodeBreak(int loc);
     int getWhileLoop();
     LLVMValueRef generate() override;
     Type* getType() override;

@@ -35,7 +35,7 @@ public:
     std::vector<RetGenStmt> genRets;
     std::vector<DeclarMod> mods;
 
-    long loc;
+    int loc;
     Type* type;
 
     LLVMBasicBlockRef exitBlock;

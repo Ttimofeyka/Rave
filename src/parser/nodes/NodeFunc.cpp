@@ -23,10 +23,15 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeDone.hpp"
 #include "../../include/parser/nodes/NodeBool.hpp"
 #include "../../include/parser/nodes/NodeStruct.hpp"
+#include "../../include/parser/nodes/NodeBinary.hpp"
+#include "../../include/parser/nodes/NodeGet.hpp"
+#include "../../include/parser/nodes/NodeIndex.hpp"
+#include "../../include/parser/nodes/NodeCast.hpp"
 #include <llvm-c/Comdat.h>
 #include <llvm-c/Analysis.h>
 #include "../../include/compiler.hpp"
 #include "../../include/llvm.hpp"
+#include "../../include/callconv.hpp"
 
 NodeFunc::NodeFunc(std::string name, std::vector<FuncArgSet> args, NodeBlock* block, bool isExtern, std::vector<DeclarMod> mods, long loc, Type* type, std::vector<std::string> templateNames) {
     this->name = name;
@@ -119,58 +124,101 @@ void NodeFunc::check() {
 
 LLVMTypeRef* NodeFunc::getParameters(int callConv) {
     std::vector<LLVMTypeRef> buffer;
-    buffer.reserve(this->args.size());
+    buffer.reserve(getCountOfInternalArgs(args));
 
-    for(auto& arg : this->args) {
-        bool isStruct = instanceof<TypeStruct>(arg.type);
+    for(int i=0; i<args.size(); i++) {
+        FuncArgSet arg = args[i];
 
-        if(isStruct || (!instanceof<TypePointer>(arg.type) && !instanceof<TypeConst>(arg.type) && !instanceof<TypeFunc>(arg.type))) {
+        while(instanceof<TypeConst>(arg.type)) arg.type = ((TypeConst*)arg.type)->instance;
+
+        if(instanceof<TypeStruct>(arg.type) || instanceof<TypeBasic>(arg.type)) {
             std::string oldName = arg.name;
-            arg.name = (isStruct ? "_RaveStructArgument" : "_RaveTempVariable") + oldName;
+            arg.name = "_RaveArgument" + arg.name;
 
-            if(isStruct && generator->toReplace.find(static_cast<TypeStruct*>(arg.type)->name) == generator->toReplace.end()) {
-                // "cdecl64" implementation (EXPERIMENTAL)
-                if(callConv == -1) {
-                    int size = arg.type->getSize();
-                    Type* ty = arg.type;
+            if(isCdecl64) {
+                if(arg.internalTypes.size() > 1 || arg.internalTypes[0]->toString() != arg.type->toString()) {
+                    // Replace with another types
+                    if(arg.internalTypes.size() == 1) {
+                        if(instanceof<TypeDivided>(arg.internalTypes[0])) {
+                            // Cast a structure to a pointer of the main type and set it
+                            TypeDivided* tdivided = (TypeDivided*)arg.internalTypes[0];
 
-                    LLVMTypeRef genStructType = generator->genType(arg.type, this->loc);
-                    int typesCount = LLVMCountStructElementTypes(genStructType);
-                    LLVMTypeRef* types = new LLVMTypeRef[typesCount];
-                    LLVMGetStructElementTypes(genStructType, types);
+                            this->block->nodes.emplace(
+                                this->block->nodes.begin(),
+                                new NodeVar(oldName, new NodeIden("_cdecl64_" + arg.name, loc), false, false, false, {}, loc, arg.type, false, false, false, true)
+                            );
 
-                    bool isFloatable = false;
-
-                    for(int i=0; i<typesCount; i++) {
-                        if(LLVMGetTypeKind(types[i]) == LLVMFloatTypeKind) {
-                            if(size == 24) {
-                                isFloatable = true;
-                                break;
-                            }
+                            this->block->nodes.emplace(
+                                this->block->nodes.begin(),
+                                new NodeBinary(
+                                    TokType::Equ,
+                                    new NodeIndex(new NodeCast(new TypePointer(tdivided->mainType), new NodeIden("_cdecl64_" + arg.name, loc), loc), {new NodeInt(0)}, loc),
+                                    new NodeIden(arg.name, loc), loc
+                                )
+                            );
                         }
-                    }
+                        else if(instanceof<TypeVector>(arg.internalTypes[0])) {
+                            // Cast a structure to a pointer of the vector type and set it
+                            TypeVector* tvector = (TypeVector*)arg.internalTypes[0];
 
-                    delete types;
+                            this->block->nodes.emplace(
+                                this->block->nodes.begin(),
+                                new NodeVar(oldName, new NodeIden("_cdecl64_" + arg.name, loc), false, false, false, {}, loc, arg.type, false, false, false, true)
+                            );
 
-                    if(!isFloatable) switch(size) {
-                        case 8: ty = new TypeBasic(BasicType::Char); break;
-                        case 16: ty = new TypeBasic(BasicType::Short); break;
-                        case 24: case 32: ty = new TypeBasic(BasicType::Int); break;
-                        case 40: ty = new TypeBasic(BasicType::Long); break;
-                        default: break;
-                    }
+                            this->block->nodes.emplace(
+                                this->block->nodes.begin(),
+                                new NodeBinary(
+                                    TokType::Equ,
+                                    new NodeIndex(new NodeCast(new TypePointer(tvector), new NodeIden("_cdecl64_" + arg.name, loc), loc), {new NodeInt(0)}, loc),
+                                    new NodeIden(arg.name, loc), loc
+                                )
+                            );
+                        }
+                        else {
+                            // Just set as a first element of the structure
+                            this->block->nodes.emplace(
+                                this->block->nodes.begin(),
+                                new NodeVar(oldName, new NodeIden("_cdecl64_" + arg.name, loc), false, false, false, {}, loc, arg.type, false, false, false, true)
+                            );
 
-                    if(ty) {
-                        arg.type = ty;
-                        this->block->nodes.emplace(this->block->nodes.begin(), new NodeVar(oldName, new NodeIden(arg.name, this->loc), false, false, false, {}, this->loc, ty));
-                        buffer.push_back(generator->genType(ty, this->loc));
-                        continue;
+                            this->block->nodes.emplace(
+                                this->block->nodes.begin(),
+                                new NodeBinary(
+                                    TokType::Equ,
+                                    new NodeGet(new NodeIden("_cdecl64_" + arg.name, loc), AST::structTable[arg.type->toString()]->getVariables()[0]->name, true, loc),
+                                    new NodeIden(arg.name, loc), loc
+                                )
+                            );
+                        }
+
+                        this->block->nodes.emplace(
+                            this->block->nodes.begin(),
+                            new NodeVar("_cdecl64_" + arg.name, nullptr, false, false, false, {}, this->loc, arg.type, false, false, false, false)
+                        );
                     }
+                    else this->block->nodes.emplace(
+                        this->block->nodes.begin(),
+                        new NodeVar(oldName, new NodeIden(arg.name, this->loc), false, false, false, {}, this->loc, arg.type, false, false, false, true)
+                    );
                 }
+                else this->block->nodes.emplace(
+                    this->block->nodes.begin(),
+                    new NodeVar(oldName, new NodeIden(arg.name, this->loc), false, false, false, {}, this->loc, arg.type, false, false, false, true)
+                );
             }
-            this->block->nodes.emplace(this->block->nodes.begin(), new NodeVar(oldName, new NodeIden(arg.name, this->loc), false, false, false, {}, this->loc, arg.type, !isStruct));
+            else this->block->nodes.emplace(
+                this->block->nodes.begin(),
+                new NodeVar(oldName, new NodeIden(arg.name, this->loc), false, false, false, {}, this->loc, arg.type, false, false, false, true)
+            );
         }
-        buffer.push_back(generator->genType(arg.type, this->loc));
+
+        for(int j=0; j<arg.internalTypes.size(); j++) {
+            if(instanceof<TypeDivided>(arg.internalTypes[j])) buffer.push_back(generator->genType(((TypeDivided*)arg.internalTypes[j])->mainType, loc));
+            else buffer.push_back(generator->genType(arg.internalTypes[j], loc));
+        }
+
+        args[i] = arg;
     }
 
     this->genTypes = buffer;
@@ -209,7 +257,7 @@ LLVMValueRef NodeFunc::generate() {
         else if(this->mods[i].name == "stdcc") callConv = LLVMX86StdcallCallConv;
         else if(this->mods[i].name == "armapcs") callConv = LLVMARMAPCSCallConv;
         else if(this->mods[i].name == "armaapcs") callConv = LLVMARMAAPCSCallConv;
-        else if(this->mods[i].name == "cdecl64") {callConv = -1; this->isCdecl64 = true;}
+        else if(this->mods[i].name == "cdecl64") {callConv = LLVMCCallConv; this->isCdecl64 = true;}
         else if(this->mods[i].name == "inline") this->isInline = true;
         else if(this->mods[i].name == "linkname") linkName = this->mods[i].value;
         else if(this->mods[i].name == "ctargs") this->isCtargs = true;
@@ -236,17 +284,20 @@ LLVMValueRef NodeFunc::generate() {
         }
     }
 
+    if(this->isCdecl64) this->args = normalizeArgsCdecl64(this->args, this->loc);
+
     this->getParameters(callConv);
     LLVMValueRef get = LLVMGetNamedFunction(generator->lModule, linkName.c_str());
     if(get != nullptr) {
         if(generator->functions.find(this->name) == generator->functions.end()) generator->functions[this->name] = get;
         return nullptr;
     }
-    if(callConv == -1) callConv = LLVMCCallConv;
+
     generator->functions[this->name] = LLVMAddFunction(
         generator->lModule, linkName.c_str(),
-        LLVMFunctionType(generator->genType(this->type, loc), this->genTypes.data(), this->args.size(), this->isVararg)
+        LLVMFunctionType(generator->genType(this->type, loc), this->genTypes.data(), getCountOfInternalArgs(this->args), this->isVararg)
     );
+
     LLVMSetFunctionCallConv(generator->functions[this->name], callConv);
 
     if(this->isInline) generator->addAttr("alwaysinline", LLVMAttributeFunctionIndex, generator->functions[this->name], this->loc);
@@ -321,7 +372,10 @@ LLVMValueRef NodeFunc::generate() {
 
 std::string NodeFunc::generateWithCtargs(std::vector<LLVMTypeRef> args) {
     std::vector<FuncArgSet> newArgs;
-    for(int i=0; i<args.size(); i++) newArgs.push_back(FuncArgSet{.name = "_RaveArg" + std::to_string(i), .type = lTypeToType(args[i])});
+    for(int i=0; i<args.size(); i++) {
+        Type* newType = lTypeToType(args[i]);
+        newArgs.push_back(FuncArgSet{.name = "_RaveArg" + std::to_string(i), .type = newType, .internalTypes = {newType}});
+    }
 
     auto activeLoops = std::map<int32_t, Loop>(generator->activeLoops);
     auto builder = generator->builder;

@@ -232,6 +232,17 @@ int TypeVector::getSize() {return mainType->getSize() * count;}
 Type* TypeVector::check(Type* parent) {return nullptr;}
 std::string TypeVector::toString() {return "<" + mainType->toString() + " x " + std::to_string(count) + ">";}
 
+// TypeDivided
+TypeDivided::TypeDivided(Type* mainType, std::vector<Type*> divided) {this->mainType = mainType; this->divided = divided;}
+Type* TypeDivided::copy() {return new TypeDivided(mainType, divided);}
+int TypeDivided::getSize() {
+    int sum = 0;
+    for(int i=0; i<divided.size(); i++) sum += divided[i]->getSize();
+    return sum;
+}
+Type* TypeDivided::check(Type* parent) {return nullptr;}
+std::string TypeDivided::toString() {return "NotImplemented2";}
+
 Type* getType(std::string id) {
     if(id == "bool") return new TypeBasic(BasicType::Bool);
     else if(id == "char") return new TypeBasic(BasicType::Char); 

@@ -12,7 +12,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeIf.hpp"
 #include "../../include/utils.hpp"
 
-NodeSwitch::NodeSwitch(Node* expr, Node* _default, std::vector<std::pair<Node*, Node*>> statements, long loc, std::string func) {
+NodeSwitch::NodeSwitch(Node* expr, Node* _default, std::vector<std::pair<Node*, Node*>> statements, int loc, std::string func) {
     this->expr = expr;
     this->statements = statements;
     this->loc = loc;

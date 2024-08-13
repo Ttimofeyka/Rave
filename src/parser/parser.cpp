@@ -194,7 +194,7 @@ std::vector<FuncArgSet> Parser::parseFuncArgSets() {
         Type* type = this->parseType();
         std::string name = this->peek()->value;
         this->next();
-        args.push_back(FuncArgSet{.name = name, .type = type});
+        args.push_back(FuncArgSet{.name = name, .type = type, .internalTypes = {type}});
         if(this->peek()->type == TokType::Comma) this->next();
     }
     return args;
@@ -251,7 +251,7 @@ Node* Parser::parseOperatorOverload(Type* type, std::string s) {
         this->next();
         while(this->peek()->type != TokType::Lpar) {
             Type* type = this->parseType();
-            args.push_back(FuncArgSet{.name = this->peek()->value, .type = type});
+            args.push_back(FuncArgSet{.name = this->peek()->value, .type = type, .internalTypes = {type}});
             this->next();
             if(this->peek()->type == TokType::Comma) this->next();
         } this->next();

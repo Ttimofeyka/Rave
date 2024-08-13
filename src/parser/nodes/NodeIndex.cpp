@@ -25,7 +25,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/Types.hpp"
 #include "../../include/llvm.hpp"
 
-NodeIndex::NodeIndex(Node* element, std::vector<Node*> indexes, long loc) {
+NodeIndex::NodeIndex(Node* element, std::vector<Node*> indexes, int loc) {
     this->element = element;
     this->indexes = indexes;
     this->loc = loc;

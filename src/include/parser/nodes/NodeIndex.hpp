@@ -14,11 +14,11 @@ class NodeIndex : public Node {
 public:
     Node* element;
     std::vector<Node*> indexes;
-    long loc;
+    int loc;
     bool isMustBePtr = false;
     bool elementIsConst = false;
 
-    NodeIndex(Node* element, std::vector<Node*> indexes, long loc);
+    NodeIndex(Node* element, std::vector<Node*> indexes, int loc);
     Type* getType() override;
     LLVMValueRef generate() override;
     Node* copy() override;

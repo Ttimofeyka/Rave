@@ -11,11 +11,12 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/utils.hpp"
 #include "../../include/parser/ast.hpp"
 
-NodeIden::NodeIden(std::string name, long loc) {
+NodeIden::NodeIden(std::string name, int loc) {
     this->name = name;
     this->loc = loc;
 }
-NodeIden::NodeIden(std::string name, long loc, bool isMustBePtr) {
+
+NodeIden::NodeIden(std::string name, int loc, bool isMustBePtr) {
     this->name = name;
     this->loc = loc;
     this->isMustBePtr = isMustBePtr;

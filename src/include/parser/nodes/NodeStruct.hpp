@@ -27,7 +27,7 @@ public:
     std::vector<Node*> elements;
     std::vector<StructPredefined> predefines;
     std::vector<std::string> namespacesNames;
-    long loc;
+    int loc;
     std::string origname;
     std::vector<NodeFunc*>  constructors;
     NodeFunc* destructor;
@@ -49,10 +49,11 @@ public:
     bool hasDefaultConstructor = false;
     bool isImported = false;
 
-    NodeStruct(std::string name, std::vector<Node*> elements, long loc, std::string extends, std::vector<std::string> templateNames, std::vector<DeclarMod> mods);
+    NodeStruct(std::string name, std::vector<Node*> elements, int loc, std::string extends, std::vector<std::string> templateNames, std::vector<DeclarMod> mods);
     
     LLVMTypeRef asConstType();
     std::vector<LLVMTypeRef> getParameters(bool isLinkOnce);
+    std::vector<NodeVar*> getVariables();
     LLVMTypeRef genWithTemplate(std::string sTypes, std::vector<Type*> types);
     LLVMValueRef generate() override;
     Type* getType() override;

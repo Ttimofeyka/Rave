@@ -29,7 +29,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/compiler.hpp"
 #include <iostream>
 
-LLVMValueRef Binary::castValue(LLVMValueRef from, LLVMTypeRef to, long loc) {
+LLVMValueRef Binary::castValue(LLVMValueRef from, LLVMTypeRef to, int loc) {
     if(LLVMTypeOf(from) == to) return from;
     LLVMTypeKind kindFrom = LLVMGetTypeKind(LLVMTypeOf(from));
     LLVMTypeKind kindTo = LLVMGetTypeKind(to);
@@ -82,7 +82,7 @@ LLVMValueRef Binary::castValue(LLVMValueRef from, LLVMTypeRef to, long loc) {
     } return from;
 }
 
-LLVMValueRef Binary::sum(LLVMValueRef one, LLVMValueRef two, long loc) {
+LLVMValueRef Binary::sum(LLVMValueRef one, LLVMValueRef two, int loc) {
     LLVMValueRef oneCasted = one;
     LLVMValueRef twoCasted = two;
     if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMGetTypeKind(LLVMTypeOf(two))) {
@@ -99,7 +99,7 @@ LLVMValueRef Binary::sum(LLVMValueRef one, LLVMValueRef two, long loc) {
     return LLVMBuildFAdd(generator->builder, one, two, "fsum");
 }
 
-LLVMValueRef Binary::sub(LLVMValueRef one, LLVMValueRef two, long loc) {
+LLVMValueRef Binary::sub(LLVMValueRef one, LLVMValueRef two, int loc) {
     LLVMValueRef oneCasted = one;
     LLVMValueRef twoCasted = two;
     if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMGetTypeKind(LLVMTypeOf(two))) {
@@ -111,7 +111,7 @@ LLVMValueRef Binary::sub(LLVMValueRef one, LLVMValueRef two, long loc) {
     return LLVMBuildFSub(generator->builder, one, two, "fsub");
 }
 
-LLVMValueRef Binary::mul(LLVMValueRef one, LLVMValueRef two, long loc) {
+LLVMValueRef Binary::mul(LLVMValueRef one, LLVMValueRef two, int loc) {
     LLVMValueRef oneCasted = one;
     LLVMValueRef twoCasted = two;
     if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMGetTypeKind(LLVMTypeOf(two))) {
@@ -125,7 +125,7 @@ LLVMValueRef Binary::mul(LLVMValueRef one, LLVMValueRef two, long loc) {
     return LLVMBuildFMul(generator->builder, one, two, "fmul");
 }
 
-LLVMValueRef Binary::div(LLVMValueRef one, LLVMValueRef two, long loc) {
+LLVMValueRef Binary::div(LLVMValueRef one, LLVMValueRef two, int loc) {
     LLVMValueRef oneCasted = one;
     LLVMValueRef twoCasted = two;
     if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMGetTypeKind(LLVMTypeOf(two))) {
@@ -140,7 +140,7 @@ LLVMValueRef Binary::div(LLVMValueRef one, LLVMValueRef two, long loc) {
     return LLVMBuildFDiv(generator->builder, one, two, "fdiv");
 }
 
-LLVMValueRef Binary::compare(LLVMValueRef one, LLVMValueRef two, char op, long loc) {
+LLVMValueRef Binary::compare(LLVMValueRef one, LLVMValueRef two, char op, int loc) {
     LLVMValueRef oneCasted = one;
     LLVMValueRef twoCasted = two;
     if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMGetTypeKind(LLVMTypeOf(two))) {
@@ -174,7 +174,7 @@ LLVMValueRef Binary::compare(LLVMValueRef one, LLVMValueRef two, char op, long l
     } return nullptr;
 }
 
-NodeBinary::NodeBinary(char op, Node* first, Node* second, long loc, bool isStatic) {
+NodeBinary::NodeBinary(char op, Node* first, Node* second, int loc, bool isStatic) {
     this->op = op;
     this->first = first;
     this->second = second;
@@ -328,11 +328,14 @@ LLVMValueRef NodeBinary::generate() {
                     return nullptr;
                 }
             }
-            LLVMTypeRef lType = LLVMTypeOf(currScope->get(id->name, this->loc));
+
+            LLVMValueRef value = currScope->get(id->name, this->loc);
+
+            LLVMTypeRef lType = LLVMTypeOf(value);
             if(instanceof<NodeNull>(this->second)) {((NodeNull*)(this->second))->type = nullptr; ((NodeNull*)this->second)->lType = lType;}
 
             if(vSecond == nullptr) vSecond = this->second->generate();
-            vSecond = Binary::castValue(vSecond, LLVMTypeOf(currScope->get(id->name, this->loc)), this->loc);
+            vSecond = Binary::castValue(vSecond, lType, this->loc);
             if(LLVMGetTypeKind(LLVMTypeOf(vSecond)) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(vSecond))) == LLVMStructTypeKind) {
                 nvar->isAllocated = currScope->detectMemoryLeaks && true; // @detectMemoryLeaks
             }

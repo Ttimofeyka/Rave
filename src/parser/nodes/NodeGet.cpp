@@ -16,7 +16,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <vector>
 #include <string>
 
-NodeGet::NodeGet(Node* base, std::string field, bool isMustBePtr, long loc) {
+NodeGet::NodeGet(Node* base, std::string field, bool isMustBePtr, int loc) {
     this->base = base;
     this->field = field;
     this->isMustBePtr = isMustBePtr;
@@ -100,7 +100,7 @@ LLVMValueRef NodeGet::checkIn(std::string structure) {
 
 LLVMValueRef NodeGet::generate() {
     if(instanceof<NodeIden>(this->base)) {
-        LLVMValueRef ptr = checkStructure(currScope->getWithoutLoad(((NodeIden*)this->base)->name,loc));
+        LLVMValueRef ptr = checkStructure(currScope->getWithoutLoad(((NodeIden*)this->base)->name, loc));
         std::string structName = std::string(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(ptr))));
         LLVMValueRef f = this->checkIn(structName);
         if(f != nullptr) return f;

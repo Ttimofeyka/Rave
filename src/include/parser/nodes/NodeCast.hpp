@@ -14,9 +14,9 @@ class NodeCast : public Node {
 public:
     Type* type;
     Node* value;
-    long loc;
+    int loc;
 
-    NodeCast(Type* type, Node* value, long loc);
+    NodeCast(Type* type, Node* value, int loc);
     ~NodeCast() {if(this->value != nullptr) delete this->value;}
     LLVMValueRef generate() override;
     Type* getType() override;

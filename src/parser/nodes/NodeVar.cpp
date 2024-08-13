@@ -67,6 +67,33 @@ NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, boo
     }
 }
 
+NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, bool isGlobal, std::vector<DeclarMod> mods, int loc, Type* type, bool isVolatile, bool isChanged, bool noZeroInit, bool isInternal) {
+    this->name = name;
+    this->origName = name;
+    this->linkName = this->name;
+    this->value = value;
+    this->isExtern = isExtern;
+    this->isConst = isConst;
+    this->isGlobal = isGlobal;
+    this->mods = std::vector<DeclarMod>(mods);
+    this->loc = loc;
+    this->type = type;
+    this->isVolatile = isVolatile;
+    this->isChanged = isChanged;
+    this->noZeroInit = noZeroInit;
+    this->isNoCopy = false;
+    this->isInternal = isInternal;
+
+    for(int i=0; i<this->mods.size(); i++) {
+        if(this->mods[i].name == "noCopy") this->isNoCopy = true;
+    }
+
+    if(value != nullptr && instanceof<TypeArray>(type) && ((TypeArray*)type)->count == 0) {
+        // Set the count of array elements to the count of values
+        ((TypeArray*)this->type)->count = ((NodeArray*)this->value)->values.size();
+    }
+}
+
 Type* NodeVar::getType() {return this->type->copy();}
 Node* NodeVar::comptime() {return this;}
 
@@ -205,7 +232,7 @@ LLVMValueRef NodeVar::generate() {
         return nullptr;
     }
     else {
-        if(currScope->has(this->name) && !AST::funcTable[currScope->funcName]->isCtargs && !AST::funcTable[currScope->funcName]->isCtargsPart) {
+        if(!isInternal && currScope->has(this->name) && !AST::funcTable[currScope->funcName]->isCtargs && !AST::funcTable[currScope->funcName]->isCtargsPart) {
             generator->error("this name is already used!", loc);
             return nullptr;
         }

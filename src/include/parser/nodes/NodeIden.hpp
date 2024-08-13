@@ -15,11 +15,11 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 class NodeIden : public Node {
 public:
     std::string name;
-    long loc;
+    int loc;
     bool isMustBePtr = false;
 
-    NodeIden(std::string name, long loc);
-    NodeIden(std::string name, long loc, bool isMustBePtr);
+    NodeIden(std::string name, int loc);
+    NodeIden(std::string name, int loc, bool isMustBePtr);
 
     Type* getType() override;
     LLVMValueRef generate() override;

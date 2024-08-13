@@ -18,10 +18,10 @@ public:
     Node* expr = nullptr;
     Node* _default = nullptr;
     std::vector<std::pair<Node*, Node*>> statements;
-    long loc;
+    int loc;
     std::string funcName;
 
-    NodeSwitch(Node* expr, Node* _default, std::vector<std::pair<Node*, Node*>> statements, long loc, std::string func);
+    NodeSwitch(Node* expr, Node* _default, std::vector<std::pair<Node*, Node*>> statements, int loc, std::string func);
     Type* getType() override;
     void check() override;
     LLVMValueRef generate() override;

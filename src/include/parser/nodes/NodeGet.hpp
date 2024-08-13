@@ -14,11 +14,11 @@ class NodeGet : public Node {
 public:
     Node* base;
     std::string field;
-    long loc;
+    int loc;
     bool isMustBePtr = false;
     bool elementIsConst = false;
 
-    NodeGet(Node* base, std::string field, bool isMustBePtr, long loc);
+    NodeGet(Node* base, std::string field, bool isMustBePtr, int loc);
     LLVMValueRef checkStructure(LLVMValueRef ptr);
     LLVMValueRef checkIn(std::string structure);
     LLVMValueRef generate() override;

@@ -10,7 +10,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeRet.hpp"
 #include <string>
 
-NodeBreak::NodeBreak(long loc) {this->loc = loc;}
+NodeBreak::NodeBreak(int loc) {this->loc = loc;}
 void NodeBreak::check() {this->isChecked = true;}
 Type* NodeBreak::getType() {return new TypeVoid();}
 Node* NodeBreak::comptime() {return this;}

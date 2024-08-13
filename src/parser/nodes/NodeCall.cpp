@@ -19,12 +19,13 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeBinary.hpp"
 #include "../../include/parser/nodes/NodeInt.hpp"
 #include "../../include/parser/nodes/NodeType.hpp"
+#include "../../include/callconv.hpp"
 #include "../../include/parser/Types.hpp"
 #include "../../include/parser/ast.hpp"
 #include "../../include/lexer/lexer.hpp"
 #include "../../include/llvm.hpp"
 
-NodeCall::NodeCall(long loc, Node* func, std::vector<Node*> args) {
+NodeCall::NodeCall(int loc, Node* func, std::vector<Node*> args) {
     this->loc = loc;
     this->func = func;
     this->args = std::vector<Node*>(args);
@@ -140,6 +141,9 @@ std::vector<LLVMValueRef> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg
             }
         }
     }
+
+    if(nfunc != nullptr && nfunc->isCdecl64) params = normalizeCallCdecl64(nfunc->args, params, loc);
+    
     return params;
 }
 

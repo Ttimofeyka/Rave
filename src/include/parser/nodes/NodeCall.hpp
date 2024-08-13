@@ -14,7 +14,7 @@ class NodeFunc;
 
 class NodeCall : public Node {
 public:
-    long loc;
+    int loc;
     Node* func;
     std::vector<Node*> args;
     bool isInverted = false;
@@ -22,7 +22,7 @@ public:
     NodeFunc* calledFunc = nullptr;
     int _offset = 0;
 
-    NodeCall(long loc, Node* func, std::vector<Node*> args);
+    NodeCall(int loc, Node* func, std::vector<Node*> args);
     LLVMValueRef generate() override;
     Type* getType() override;
     std::vector<Type*> getTypes();

@@ -184,8 +184,8 @@ std::string typesToString(std::vector<FuncArgSet> args) {
     return typesToString(types);
 }
 
-void AST::checkError(std::string message, long loc) {
-    std::cout << "\033[0;31mError on "+std::to_string(loc)+" line: "+message+"\033[0;0m\n";
+void AST::checkError(std::string message, int loc) {
+    std::cout << "\033[0;31mError on " + std::to_string(loc) + " line: " + message + "\033[0;0m\n";
 	exit(1);
 }
 
@@ -227,12 +227,12 @@ LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options)
     this->neededFunctions["assert"] = "std::assert[_b_p]";
 }
 
-void LLVMGen::error(std::string msg, long line) {
+void LLVMGen::error(std::string msg, int line) {
     std::cout << "\033[0;31mError in '" + this->file + "' file at " + std::to_string(line) + " line: " + msg + "\033[0;0m" << std::endl;
     std::exit(1);
 }
 
-void LLVMGen::warning(std::string msg, long line) {
+void LLVMGen::warning(std::string msg, int line) {
     std::cout << "\033[0;33mWarning in '" + this->file + "' file at " + std::to_string(line) + " line: " + msg + "\033[0;0m" << std::endl;
 }
 
@@ -273,7 +273,7 @@ Type* LLVMGen::setByTypeList(std::vector<Type*> list) {
     return buffer[0];
 }
 
-LLVMTypeRef LLVMGen::genType(Type* type, long loc) {
+LLVMTypeRef LLVMGen::genType(Type* type, int loc) {
     if(type == nullptr) return LLVMPointerType(LLVMInt8TypeInContext(this->context), 0);
     if(instanceof<TypeAlias>(type)) return nullptr;
     if(instanceof<TypeBasic>(type)) switch(((TypeBasic*)type)->type) {
@@ -333,6 +333,7 @@ LLVMTypeRef LLVMGen::genType(Type* type, long loc) {
     if(instanceof<TypeFuncArg>(type)) return this->genType(((TypeFuncArg*)type)->type, loc);
     if(instanceof<TypeConst>(type)) return this->genType(((TypeConst*)type)->instance, loc);
     if(instanceof<TypeVector>(type)) return LLVMVectorType(this->genType(((TypeVector*)type)->mainType, loc), ((TypeVector*)type)->count);
+    if(instanceof<TypeLLVM>(type)) return ((TypeLLVM*)type)->tr;
     this->error("undefined type!", loc);
     return nullptr;
 }
@@ -351,13 +352,13 @@ LLVMValueRef LLVMGen::byIndex(LLVMValueRef value, std::vector<LLVMValueRef> inde
     return LLVM::gep(value,indexes.data(), indexes.size(), "gep3_byIndex");
 }
 
-void LLVMGen::addAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, long loc, unsigned long value) {
+void LLVMGen::addAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, int loc, unsigned long value) {
     int id = LLVMGetEnumAttributeKindForName(name.c_str(), name.size());
     if(id == 0) this->error("unknown attribute '" + name + "'!",loc);
     LLVMAddAttributeAtIndex(ptr, index, LLVMCreateEnumAttribute(generator->context, id, value));
 }
 
-void LLVMGen::addStrAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, long loc, std::string value) {
+void LLVMGen::addStrAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, int loc, std::string value) {
     LLVMAttributeRef attr = LLVMCreateStringAttribute(generator->context,name.c_str(),name.size(),value.c_str(),value.size());
     if(attr == nullptr) this->error("unknown attribute '" + name + "'!",loc);
     LLVMAddAttributeAtIndex(ptr, index, attr);
@@ -389,13 +390,7 @@ Type* lTypeToType(LLVMTypeRef t) {
             return getType(trim(sT.substr(0, sT.find_last_of('('))));
         }
         case LLVMVoidTypeKind: return new TypeVoid();
-        case LLVMVectorTypeKind: {
-            std::string tString = typeToString(t);
-            if (tString == "<4 x i32>") return new TypeVector(new TypeBasic(BasicType::Int), 4);
-            if (tString == "<8 x i32>") return new TypeVector(new TypeBasic(BasicType::Int), 8);
-            generator->error("unsupported vector type '" + tString + "'!", -1);
-            return nullptr;
-        }
+        case LLVMVectorTypeKind: return new TypeVector(lTypeToType(LLVMGetElementType(t)), LLVMGetVectorSize(t));
         default: break;
     }
     generator->error("assert: lTypeToType", -1);
@@ -440,7 +435,7 @@ void Scope::remove(std::string name) {
     else if(this->aliasTable.find(name) != this->aliasTable.end()) this->aliasTable.erase(name);
 }
 
-LLVMValueRef Scope::get(std::string name, long loc) {
+LLVMValueRef Scope::get(std::string name, int loc) {
     LLVMValueRef value = nullptr;
     if(AST::aliasTable.find(name) != AST::aliasTable.end()) value = AST::aliasTable[name]->generate();
     else if(this->aliasTable.find(name) != this->aliasTable.end()) value = this->aliasTable[name]->generate();
@@ -470,7 +465,7 @@ LLVMValueRef Scope::get(std::string name, long loc) {
     return value;
 }
 
-LLVMValueRef Scope::getWithoutLoad(std::string name, long loc) {
+LLVMValueRef Scope::getWithoutLoad(std::string name, int loc) {
     if(AST::aliasTable.find(name) != AST::aliasTable.end()) return AST::aliasTable[name]->generate();
     if(this->aliasTable.find(name) != this->aliasTable.end()) return this->aliasTable[name]->generate();
     if(this->localScope.find(name) != this->localScope.end()) return this->localScope[name];
@@ -516,7 +511,7 @@ bool Scope::locatedAtThis(std::string name) {
     return this->hasAtThis(name);
 }
 
-NodeVar* Scope::getVar(std::string name, long loc) {
+NodeVar* Scope::getVar(std::string name, int loc) {
     if(this->localVars.find(name) != this->localVars.end()) return this->localVars[name];
     if(AST::varTable.find(name) != AST::varTable.end()) return AST::varTable[name];
     if(this->argVars.find(name) != this->argVars.end()) return this->argVars[name];

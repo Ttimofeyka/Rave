@@ -14,7 +14,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeBuiltin.hpp"
 #include "../../include/llvm.hpp"
 
-NodeCast::NodeCast(Type* type, Node* value, long loc) {
+NodeCast::NodeCast(Type* type, Node* value, int loc) {
     this->type = type;
     this->value = value;
     this->loc = loc;

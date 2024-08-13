@@ -35,6 +35,7 @@ struct StructMember {
 struct FuncArgSet {
     std::string name;
     Type* type;
+    std::vector<Type*> internalTypes;
 };
 
 namespace AST {
@@ -53,7 +54,7 @@ namespace AST {
     extern std::string mainFile;
     extern bool debugMode;
 
-    void checkError(std::string message, long loc);
+    void checkError(std::string message, int loc);
 }
 
 extern std::string typesToString(std::vector<FuncArgSet> args);
@@ -83,17 +84,17 @@ public:
     long lambdas = 0;
     int currentBuiltinArg = 0;
 
-    void error(std::string msg, long line);
-    void warning(std::string msg, long line);
+    void error(std::string msg, int line);
+    void warning(std::string msg, int line);
 
     LLVMGen(std::string file, genSettings settings, nlohmann::json options);
 
     std::string mangle(std::string name, bool isFunc, bool isMethod);
 
-    LLVMTypeRef genType(Type* type, long loc);
+    LLVMTypeRef genType(Type* type, int loc);
     LLVMValueRef byIndex(LLVMValueRef value, std::vector<LLVMValueRef> indexes);
-    void addAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, long loc, unsigned long value = 0);
-    void addStrAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, long loc, std::string value = "");
+    void addAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, int loc, unsigned long value = 0);
+    void addStrAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, int loc, std::string value = "");
     Type* setByTypeList(std::vector<Type*> list);
 
     int getAlignment(Type* type);
@@ -116,9 +117,9 @@ public:
 
     Scope(std::string funcName, std::map<std::string, int> args, std::map<std::string, NodeVar*> argVars);
 
-    LLVMValueRef get(std::string name, long loc = -1);
-    LLVMValueRef getWithoutLoad(std::string name, long loc = -1);
-    NodeVar* getVar(std::string name, long loc = -1);
+    LLVMValueRef get(std::string name, int loc = -1);
+    LLVMValueRef getWithoutLoad(std::string name, int loc = -1);
+    NodeVar* getVar(std::string name, int loc = -1);
     bool has(std::string name);
     bool hasAtThis(std::string name);
     bool locatedAtThis(std::string name);

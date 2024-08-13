@@ -26,7 +26,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/ast.hpp"
 #include <algorithm>
 
-NodeStruct::NodeStruct(std::string name, std::vector<Node*> elements, long loc, std::string extends, std::vector<std::string> templateNames, std::vector<DeclarMod> mods) {
+NodeStruct::NodeStruct(std::string name, std::vector<Node*> elements, int loc, std::string extends, std::vector<std::string> templateNames, std::vector<DeclarMod> mods) {
     this->name = name;
     this->origname = name;
     this->oldElements = elements;
@@ -105,7 +105,7 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 func->isChecked = false;
                 Type* outType = this->constructors[0]->type;
                 if(instanceof<TypeStruct>(outType)) outType = new TypePointer(outType);
-                this->destructor->args = std::vector<FuncArgSet>({FuncArgSet{.name = "this", .type = outType}});
+                this->destructor->args = std::vector<FuncArgSet>({FuncArgSet{.name = "this", .type = outType, .internalTypes = {outType}}});
                 if(isImported) {
                     func->isExtern = true;
                     func->check();
@@ -142,7 +142,7 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 func->name = "~with."+this->name;
                 Type* outType = this->constructors[0]->type;
                 if(instanceof<TypeStruct>(outType)) outType = new TypePointer(outType);
-                func->args = {FuncArgSet{.name = "this", .type = outType}};
+                func->args = {FuncArgSet{.name = "this", .type = outType, .internalTypes = {outType}}};
                 this->with = func;
                 if(this->isImported) {
                     func->isExtern = true;
@@ -157,7 +157,7 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                     if(instanceof<TypeStruct>(outType)) outType = new TypePointer(outType);
                 }
                 else outType = new TypePointer(new TypeStruct(this->name));
-                if((func->args.size() > 0 && func->args[0].name != "this") || func->args.size() == 0) func->args.insert(func->args.begin(), FuncArgSet{.name = "this", .type = outType});
+                if((func->args.size() > 0 && func->args[0].name != "this") || func->args.size() == 0) func->args.insert(func->args.begin(), FuncArgSet{.name = "this", .type = outType, .internalTypes = {outType}});
                 func->name = this->name + "." + func->origName;
                 func->isMethod = true;
                 func->isExtern = (func->isExtern || this->isImported);
@@ -273,12 +273,14 @@ LLVMValueRef NodeStruct::generate() {
 
     if(this->constructors.empty() && this->predefines.size() > 0) {
         // Creating the default constructor
+        Type* thisType = new TypePointer(new TypeStruct(this->name));
         NodeBlock* constructorBlock = new NodeBlock({});
+
         for(int i=0; i<this->predefines.size(); i++) {
             if(!this->predefines[i].isStruct) constructorBlock->nodes.push_back(new NodeBinary(TokType::Equ, new NodeGet(new NodeIden("this", this->loc), this->predefines[i].name, true, this->loc), this->predefines[i].value, this->loc));
         }
         NodeFunc* constructor = new NodeFunc(
-            this->origname, std::vector<FuncArgSet>({FuncArgSet{.name = "this", .type = new TypePointer(new TypeStruct(this->name))}}),
+            this->origname, std::vector<FuncArgSet>({FuncArgSet{.name = "this", .type = thisType, .internalTypes = {thisType}}}),
             constructorBlock, false, std::vector<DeclarMod>(), this->loc,
             new TypeStruct(this->name), std::vector<std::string>()
         );
@@ -299,7 +301,7 @@ LLVMValueRef NodeStruct::generate() {
     if(this->destructor == nullptr) {
         // Creating default destructor
         this->destructor = new NodeFunc(
-            "~"+this->origname, std::vector<FuncArgSet>(),
+            "~" + this->origname, std::vector<FuncArgSet>(),
             new NodeBlock({new NodeCall(this->loc, new NodeIden("std::free", this->loc), {new NodeIden("this", this->loc)})}), false,
             std::vector<DeclarMod>(), this->loc, new TypeVoid(), std::vector<std::string>()
         );
@@ -312,7 +314,8 @@ LLVMValueRef NodeStruct::generate() {
                 this->destructor->check();
             }
             else {
-                this->destructor->args = {FuncArgSet{.name = "this", .type = new TypePointer(this->constructors[0]->type)}};
+                Type* thisType = new TypePointer(this->constructors[0]->type);
+                this->destructor->args = {FuncArgSet{.name = "this", .type = thisType, .internalTypes = {thisType}}};
                 this->destructor->check();
             }
             this->destructor->generate();
@@ -324,7 +327,8 @@ LLVMValueRef NodeStruct::generate() {
             this->destructor->check();
         }
         else {
-            this->destructor->args = {FuncArgSet{.name = "this", .type = new TypePointer(this->constructors[0]->type)}};
+            Type* thisType = new TypePointer(this->constructors[0]->type);
+            this->destructor->args = {FuncArgSet{.name = "this", .type = thisType, .internalTypes = {thisType}}};
             this->destructor->check();
         }
         this->destructor->generate();
@@ -429,4 +433,12 @@ LLVMTypeRef NodeStruct::genWithTemplate(std::string sTypes, std::vector<Type*> t
     generator->toReplace = std::map<std::string, Type*>(toReplace);
 
     return generator->structures[_struct->name];
+}
+
+std::vector<NodeVar*> NodeStruct::getVariables() {
+    std::vector<NodeVar*> data;
+    for(int i=0; i<elements.size(); i++) {
+        if(instanceof<NodeVar>(elements[i])) data.push_back(((NodeVar*)elements[i]));
+    }
+    return data;
 }

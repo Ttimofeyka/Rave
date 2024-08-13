@@ -13,12 +13,12 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <string>
 
 namespace Binary {
-    LLVMValueRef castValue(LLVMValueRef from, LLVMTypeRef to, long loc = -1);
-    LLVMValueRef sum(LLVMValueRef one, LLVMValueRef two, long loc = -1);
-    LLVMValueRef sub(LLVMValueRef one, LLVMValueRef two, long loc = -1);
-    LLVMValueRef mul(LLVMValueRef one, LLVMValueRef two, long loc = -1);
-    LLVMValueRef div(LLVMValueRef one, LLVMValueRef two, long loc = -1);
-    LLVMValueRef compare(LLVMValueRef one, LLVMValueRef two, char, long loc = -1);
+    LLVMValueRef castValue(LLVMValueRef from, LLVMTypeRef to, int loc = -1);
+    LLVMValueRef sum(LLVMValueRef one, LLVMValueRef two, int loc = -1);
+    LLVMValueRef sub(LLVMValueRef one, LLVMValueRef two, int loc = -1);
+    LLVMValueRef mul(LLVMValueRef one, LLVMValueRef two, int loc = -1);
+    LLVMValueRef div(LLVMValueRef one, LLVMValueRef two, int loc = -1);
+    LLVMValueRef compare(LLVMValueRef one, LLVMValueRef two, char, int loc = -1);
 }
 
 class NodeBinary : public Node {
@@ -27,9 +27,9 @@ public:
     Node* first;
     Node* second;
     bool isStatic = false;
-    long loc;
+    int loc;
 
-    NodeBinary(char op, Node* first, Node* second, long loc, bool isStatic = false);
+    NodeBinary(char op, Node* first, Node* second, int loc, bool isStatic = false);
 
     LLVMValueRef generate() override;
     Type* getType() override;

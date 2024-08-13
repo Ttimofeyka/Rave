@@ -193,4 +193,16 @@ public:
     std::string toString() override;
 };
 
+class TypeDivided : public Type {
+public:
+    Type* mainType;
+    std::vector<Type*> divided;
+
+    TypeDivided(Type* mainType, std::vector<Type*> divided);
+    Type* copy() override;
+    Type* check(Type* parent) override;
+    int getSize() override;
+    std::string toString() override;
+};
+
 Type* getType(std::string id);
