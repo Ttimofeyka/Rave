@@ -36,14 +36,17 @@ namespace std {
         }
 
         (inline, nochecks) bool strcmp(const(char)* s1, const(char)* s2) {
-            char* _s1 = s1;
-            char* _s2 = s2;
-            return = false;
-            while((_s1[0] != '\0') && (_s1[0] == _s2[0])) {
-                _s1 = itop(char*, ptoi(_s1) + 1);
-                _s2 = itop(char*, ptoi(_s2) + 1);
+            int length1 = std::cstring::strlen(s1);
+            int length2 = std::cstring::strlen(s2);
+
+            return = true;
+
+            if(length1 != length2) return = false;
+            else {
+                for(int i=0; i<length1; i++) {
+                    if(s1[i] != s2[i]) @return(false);
+                }
             }
-            if(_s1[0] == _s2[0]) return = true;
         }
 
         (nochecks) char* strstr(const(char)* str, const(char)* substr) {
