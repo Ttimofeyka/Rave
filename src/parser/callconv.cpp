@@ -33,7 +33,8 @@ FuncArgSet normalizeArgCdecl64(FuncArgSet arg, int loc) {
         TypeStruct* tstruct = (TypeStruct*)arg.type;
         generator->genType(tstruct, loc); // Fix for possible template structure
         
-        if(AST::structTable.find(tstruct->toString()) != AST::structTable.end() && tstruct->getSize() < 192) {
+        if(tstruct->getSize() >= 192) {arg.type = new TypePointer(arg.type); arg.internalTypes[0] = arg.type;}
+        else if(AST::structTable.find(tstruct->toString()) != AST::structTable.end()) {
             NodeStruct* nstruct = AST::structTable[tstruct->toString()];
             std::vector<NodeVar*> variables = nstruct->getVariables();
 
