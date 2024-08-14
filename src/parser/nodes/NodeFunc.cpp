@@ -136,7 +136,7 @@ LLVMTypeRef* NodeFunc::getParameters(int callConv) {
             arg.name = "_RaveArgument" + arg.name;
 
             if(isCdecl64) {
-                if(arg.internalTypes.size() > 1 || arg.internalTypes[0]->toString() != arg.type->toString()) {
+                if(instanceof<TypeStruct>(arg.type) && (arg.internalTypes.size() > 1 || arg.internalTypes[0]->toString() != arg.type->toString())) {
                     // Replace with another types
                     if(arg.internalTypes.size() == 1) {
                         if(instanceof<TypeDivided>(arg.internalTypes[0])) {
@@ -195,6 +195,30 @@ LLVMTypeRef* NodeFunc::getParameters(int callConv) {
                         this->block->nodes.emplace(
                             this->block->nodes.begin(),
                             new NodeVar("_cdecl64_" + arg.name, nullptr, false, false, false, {}, this->loc, arg.type, false, false, false, false)
+                        );
+                    }
+                    else if(arg.internalTypes.size() == 2) {
+                        if(instanceof<TypeVector>(arg.internalTypes[0])) {
+                            TypeVector* tvector = (TypeVector*)arg.internalTypes[0];
+                            TypeBasic* tbasic = (TypeBasic*)arg.internalTypes[1];
+
+                            this->block->nodes.emplace(
+                                this->block->nodes.begin(),
+                                new NodeVar(oldName, new NodeIden("_cdecl64_" + arg.name, loc), false, false, false, {}, loc, arg.type, false, false, false, true)
+                            );
+
+                            this->block->nodes.emplace(
+                                this->block->nodes.begin(),
+                                new NodeBinary(
+                                    TokType::Equ,
+                                    new NodeIndex(new NodeCast(new TypePointer(tvector), new NodeIden("_cdecl64_" + arg.name, loc), loc), {new NodeInt(0)}, loc),
+                                    new NodeIden(arg.name, loc), loc
+                                )
+                            );
+                        }
+                        else this->block->nodes.emplace(
+                            this->block->nodes.begin(),
+                            new NodeVar(oldName, new NodeIden(arg.name, this->loc), false, false, false, {}, this->loc, arg.type, false, false, false, true)
                         );
                     }
                     else this->block->nodes.emplace(
