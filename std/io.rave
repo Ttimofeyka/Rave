@@ -30,6 +30,14 @@ namespace std {
     }
 }
 
+namespace std {
+    namespace file {
+        alias seekSet = 0;
+        alias seekCur = 1;
+        alias seekEnd = 2;
+    }
+}
+
 @if(__RAVE_OS == "LINUX") {
     namespace std {
         namespace file {
@@ -39,10 +47,6 @@ namespace std {
             alias rdWrOnly = 2;
             alias oCreate = 64;
 
-            alias seekSet = 0;
-            alias seekCur = 1;
-            alias seekEnd = 2;
-
             int rename(char* oldpath, char* newpath) => cast(int)std::syscall(std::sysctable::RenameTo, -100, oldpath, -100, newpath);
 
             namespace linux {
@@ -51,6 +55,14 @@ namespace std {
 
             int remove(char* pathname) => std::file::linux::unlinkat(-100, pathname, 0);
             int getStat(int fd, std::fstat* buffer) => cast(int)std::syscall(std::sysctable::FStat, fd, buffer);
+        }
+    }
+};
+
+@if(__RAVE_OS == "WINDOWS") {
+    namespace std {
+        namespace file {
+            extern(C, linkname: "MoveFileW") char __rename(ushort* oldpath, ushort* newpath);
         }
     }
 };
@@ -142,6 +154,7 @@ namespace std {
                     this.buffer = null;
                     this.bufferSize = bufferSize;
                     this.name = name;
+                    this.fd = -1;
                     this.flushBufferSymbol = cast(char)-1;
                 } => this;
 
@@ -160,7 +173,7 @@ namespace std {
                     else fd = -1;
                 }
 
-                void open(char* mode, int fd) {
+                void openFd(char* mode, int fd) {
                     this.fd = fd;
                     if(std::cstring::strcmp(mode, "w") || std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr") || std::cstring::strcmp(mode, "r+") || std::cstring::strcmp(mode, "w+")) {
                         buffer = std::malloc(bufferSize);
@@ -190,19 +203,20 @@ namespace std {
                 }
 
                 int read(char* buffer, int bytes) {
-                    if(fd != -1) return = std::syscall(std::sysctable::Read, fd, buffer, bytes);
+                    if(fd != -1) return = cast(int)std::syscall(std::sysctable::Read, fd, buffer, bytes);
                     else return = -1;
                 }
 
-                int write(char* buffer, int bytes) {
+                int write(char* buf, int bytes) {
                     if(fd != -1) {
                         if(bytes < bufferSize) {
                             for(int i=0; i<bytes; i++) {
-                                this.buffer[bufferPos] = buffer[i];
+                                buffer[bufferPos] = buf[i];
                                 bufferPos += 1;
-                                if((this.buffer[bufferPos-1] == flushBufferSymbol) || (bufferPos == bufferSize)) this.flush();
+                                if((buffer[bufferPos - 1] == flushBufferSymbol) || (bufferPos == bufferSize)) this.flush();
                             }
                         }
+                        else return = cast(int)std::syscall(std::sysctable::Write, fd, buf, bytes);
                     }
                     else return = -1;
                 }
@@ -214,21 +228,205 @@ namespace std {
                     if(fd != -1) {
                         this.flush();
                         std::syscall(std::sysctable::Close, fd);
-                        if(buffer != null) std::free(buffer);
+                        if(buffer != null) {
+                            std::free(buffer);
+                            buffer = null;
+                        }
                         fd = -1;
                     }
                 }
 
                 void ~this {
                     if(this.fd != -1) {
-                        if((this.fd != -1) && (this.bufferPos > 0)) {
+                        if(this.bufferPos > 0) {
                             std::syscall(std::sysctable::Write, this.fd, this.buffer, this.bufferPos);
                             this.bufferPos = 0;
                         }
                         std::syscall(std::sysctable::Close, this.fd);
                         this.fd = -1;
                     }
-                    if(this.buffer != null) std::free(this.buffer);
+
+                    if(this.buffer != null) {
+                        std::free(this.buffer);
+                        this.buffer = null;
+                    }
+
+                    this.bufferPos = 0;
+                }
+            }
+        }
+    }
+}
+
+@if(__RAVE_OS == "WINDOWS") {
+    namespace std {
+        namespace experimental {
+            namespace file {
+                alias stdOutputHandle = -11;
+                alias stdErrorHandle = -12;
+
+                alias genericAll = 268435456;
+                alias genericExecute = 536870912;
+                alias genericWrite = 1073741824;
+                alias genericRead = 2147483648;
+
+                alias fileShareRead = 1;
+                alias fileShareWrite = 2;
+
+                extern(linkname: "GetStdHandle") void* GetStdHandle(int nStdHandle);
+                extern(linkname: "CreateFileW") void* CreateFileW(ushort* fName, int dAccess, int sMod, void* sAttributes, int cDisposition, int fAndAttributes, void* templateFile);
+                extern(linkname: "WriteFile") char WriteFile(void* file, void* buffer, int length, int* out, void* overlapped);
+                extern(linkname: "ReadFile") char ReadFile(void* file, void* buffer, int length, int* out, void* overlapped);
+                extern(linkname: "CloseHandle") char CloseHandle(void* file);
+            }
+
+            struct file {
+                void* fd;
+                char* buffer; // default: 1024
+                int bufferSize;
+                int bufferPos;
+                char* name;
+                ushort* __name;
+                char flushBufferSymbol;
+                bool __isStdHandle;
+
+                std::experimental::file this(char* name) {
+                    std::experimental::file this;
+                    this.buffer = null;
+                    this.bufferSize = 1024;
+                    this.name = name;
+                    this.__name = std::utf8::toUtf16(name);
+                    this.fd = null;
+                    this.flushBufferSymbol = cast(char)-1;
+                    this.__isStdHandle = false;
+                } => this;
+
+                std::experimental::file this(char* name, int bufferSize) {
+                    std::experimental::file this;
+                    this.buffer = null;
+                    this.bufferSize = bufferSize;
+                    this.name = name;
+                    this.__name = std::utf8::toUtf16(name);
+                    this.fd = null;
+                    this.flushBufferSymbol = cast(char)-1;
+                    this.__isStdHandle = false;
+                } => this;
+
+                void open(char* mode) {
+                    if(std::cstring::strcmp(mode, "r")) {
+                        fd = std::experimental::file::CreateFileW(
+                            __name, std::experimental::file::genericRead,
+                            std::experimental::file::fileShareRead, null,
+                            4, 0, null
+                        );
+                    }
+                    else if(std::cstring::strcmp(mode, "w")) {
+                        fd = std::experimental::file::CreateFileW(
+                            __name, std::experimental::file::genericWrite,
+                            std::experimental::file::fileShareRead, null,
+                            4, 0, null
+                        );
+                        buffer = std::malloc(bufferSize);
+                        this.bufferPos = 0;
+                    }
+                    else if(std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr") || std::cstring::strcmp(mode, "r+") || std::cstring::strcmp(mode, "w+")) {
+                         fd = std::experimental::file::CreateFileW(
+                            __name, std::experimental::file::genericRead || std::experimental::file::genericWrite,
+                            std::experimental::file::fileShareRead, null,
+                            4, 0, null
+                        );
+                        buffer = std::malloc(bufferSize);
+                        this.bufferPos = 0;
+                    }
+                    else fd = null;
+                }
+
+                void openFd(char* mode, void* fd) {
+                    this.fd = fd;
+                    if(std::cstring::strcmp(mode, "w") || std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr") || std::cstring::strcmp(mode, "r+") || std::cstring::strcmp(mode, "w+")) {
+                        buffer = std::malloc(bufferSize);
+                        this.bufferPos = 0;
+                    }
+                }
+
+                (inline) bool isOpen => (fd != null);
+
+                void rename(char* to) {
+                    ushort* __to = std::utf8::toUtf16(to);
+                    std::file::__rename(this.__name, __to);
+                    this.name = to;
+                    std::free(cast(void*)(this.__name));
+                    this.__name = __to;
+                }
+
+                bool exists {
+                    if(fd == null) return = std::file::exists(this.name);
+                    else return = true;
+                }
+
+                //int seek(int flag, long offset) => cast(int)std::syscall(std::sysctable::LSeek, fd, flag, offset);
+
+                void flush {
+                    if((fd != null) && (bufferPos > 0) && (buffer != null)) {
+                        std::experimental::file::WriteFile(fd, buffer, bufferPos, cast(int*)null, null);
+                        bufferPos = 0;
+                    }
+                }
+
+                int read(char* buffer, int bytes) {
+                    if(fd != null) std::experimental::file::ReadFile(fd, buffer, bufferPos, &return, null);
+                    else return = -1;
+                }
+
+                int write(char* buf, int bytes) {
+                    if(fd != null) {
+                        if(bytes < bufferSize) {
+                            for(int i=0; i<bytes; i++) {
+                                buffer[bufferPos] = buf[i];
+                                bufferPos += 1;
+                                if((buffer[bufferPos - 1] == flushBufferSymbol) || (bufferPos == bufferSize)) this.flush();
+                            }
+                        }
+                        else std::experimental::file::WriteFile(fd, buf, bytes, &return, null);
+                    }
+                    else return = -1;
+                }
+
+                (inline) char getc {this.read(&return, 1);}
+                (inline) void putc(char c) {this.write(&c, 1);}
+
+                void close {
+                    if(fd != null) {
+                        this.flush();
+                        if(!__isStdHandle) std::experimental::file::CloseHandle(fd);
+                        if(buffer != null) {
+                            std::free(buffer);
+                            buffer = null;
+                        }
+                        fd = null;
+                    }
+                }
+
+                void ~this {
+                    if(this.__name != null) {
+                        std::free(cast(void*)(this.__name));
+                        this.__name = null;
+                    }
+
+                    if(this.fd != null) {
+                        if(this.bufferPos > 0) {
+                            std::experimental::file::WriteFile(this.fd, this.buffer, this.bufferPos, cast(int*)null, null);
+                            this.bufferPos = 0;
+                        }
+                        std::experimental::file::CloseHandle(this.fd);
+                        this.fd = null;
+                    }
+
+                    if(this.buffer != null) {
+                        std::free(this.buffer);
+                        this.buffer = null;
+                    }
+
                     this.bufferPos = 0;
                 }
             }
