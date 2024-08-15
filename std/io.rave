@@ -216,7 +216,10 @@ namespace std {
                                 if((buffer[bufferPos - 1] == flushBufferSymbol) || (bufferPos == bufferSize)) this.flush();
                             }
                         }
-                        else return = cast(int)std::syscall(std::sysctable::Write, fd, buf, bytes);
+                        else {
+                            this.flush();
+                            return = cast(int)std::syscall(std::sysctable::Write, fd, buf, bytes);
+                        }
                     }
                     else return = -1;
                 }
@@ -387,7 +390,10 @@ namespace std {
                                 if((buffer[bufferPos - 1] == flushBufferSymbol) || (bufferPos == bufferSize)) this.flush();
                             }
                         }
-                        else std::experimental::file::WriteFile(fd, buf, bytes, &return, null);
+                        else {
+                            this.flush();
+                            std::experimental::file::WriteFile(fd, buf, bytes, &return, null);
+                        }
                     }
                     else return = -1;
                 }
