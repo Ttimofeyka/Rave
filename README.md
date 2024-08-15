@@ -89,4 +89,4 @@ Always check the numbers if you are not sure before making a division or calling
 
 <a href="https://discord.gg/AfEtyArvsM">Discord</a>
 
-<a href="https://ravelang.space">Web-site</a>
+<a href="https://ravelang.xyz">Web-site</a>
