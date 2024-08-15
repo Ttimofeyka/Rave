@@ -44,7 +44,7 @@ LLVMValueRef NodeCast::generate() {
             return LLVMBuildIntCast(generator->builder, result, generator->genType(type, loc), "NodeCast_itoi");
         }
 
-        if(LLVMGetTypeKind(LLVMTypeOf(result)) == LLVMPointerTypeKind) {
+        if(LLVM::isPointer(result)) {
             if(!tbasic->isFloat()) return LLVMBuildPtrToInt(generator->builder, result, generator->genType(tbasic, this->loc), "NodeCast_ptoi");
             return LLVM::load(LLVMBuildPointerCast(generator->builder, result, LLVMPointerType(generator->genType(this->type, this->loc), 0), "NodeCast_ptofLoad"), "NodeCast_ptofLoadC");
         }

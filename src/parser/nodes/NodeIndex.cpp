@@ -117,7 +117,7 @@ LLVMValueRef NodeIndex::generate() {
             LLVMBuildStore(generator->builder, ptr, copyVal);
             ptr = copyVal;
         }
-        else if(LLVMGetTypeKind(LLVMTypeOf(ptr)) != LLVMPointerTypeKind) ptr = currScope->getWithoutLoad(id->name, this->loc);
+        else if(!LLVM::isPointer(ptr)) ptr = currScope->getWithoutLoad(id->name, this->loc);
 
         if(!generator->settings.noChecks && generator->settings.optLevel <= 2 &&
             ((AST::funcTable.find(currScope->funcName) != AST::funcTable.end() && AST::funcTable[currScope->funcName]->isNoChecks == false)
@@ -142,7 +142,7 @@ LLVMValueRef NodeIndex::generate() {
 
         if(
             LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMStructTypeKind ||
-            (LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) == LLVMStructTypeKind)
+            (LLVM::isPointer(ptr) && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) == LLVMStructTypeKind)
         ) {
             LLVMTypeRef structLType = LLVMTypeOf(ptr);
             if(LLVMGetTypeKind(structLType) != LLVMStructTypeKind) structLType = LLVMGetElementType(structLType);

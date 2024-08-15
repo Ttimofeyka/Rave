@@ -336,7 +336,7 @@ LLVMValueRef NodeBinary::generate() {
 
             if(vSecond == nullptr) vSecond = this->second->generate();
             vSecond = Binary::castValue(vSecond, lType, this->loc);
-            if(LLVMGetTypeKind(LLVMTypeOf(vSecond)) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(vSecond))) == LLVMStructTypeKind) {
+            if(LLVM::isPointer(vSecond) && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(vSecond))) == LLVMStructTypeKind) {
                 nvar->isAllocated = currScope->detectMemoryLeaks && true; // @detectMemoryLeaks
             }
             return LLVMBuildStore(generator->builder, vSecond, currScope->getWithoutLoad(id->name, this->loc));
@@ -388,7 +388,7 @@ LLVMValueRef NodeBinary::generate() {
 
             if(!isNoOperators && std::string(LLVMPrintValueToString(ptr)).find("([])") != std::string::npos) {
                 LLVMValueRef structValue = LLVMGetOperand(ptr, 0);
-                while(LLVMGetTypeKind(LLVMTypeOf(structValue)) == LLVMPointerTypeKind) structValue = LLVM::load(structValue, "NodeBinary_NodeIndex_[]=_load");
+                while(LLVM::isPointer(structValue)) structValue = LLVM::load(structValue, "NodeBinary_NodeIndex_[]=_load");
     
                 std::string structName = LLVMGetStructName(LLVMTypeOf(structValue));
                 auto structIt = AST::structTable.find(structName);

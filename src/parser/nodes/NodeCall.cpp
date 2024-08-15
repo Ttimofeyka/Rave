@@ -52,18 +52,18 @@ std::vector<LLVMValueRef> NodeCall::correctByLLVM(std::vector<LLVMValueRef> valu
     for(int i=0; i<params.size(); i++) {
         if(fas[i].type->toString() == "void*" || fas[i].type->toString() == "char*") {
             LLVMTypeRef type = LLVMTypeOf(params[i]);
-            if(LLVMGetTypeKind(type) != LLVMPointerTypeKind) params[i] = Binary::castValue(params[i], LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0), this->loc);
+            if(!LLVM::isPointerType(type)) params[i] = Binary::castValue(params[i], LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0), this->loc);
             else if(LLVMGetTypeKind(LLVMGetElementType(type)) != LLVMIntegerTypeKind) params[i] = Binary::castValue(params[i], LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0), this->loc);
         }
         else if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(((TypePointer*)fas[i].type)->instance)) {
             LLVMTypeRef type = LLVMTypeOf(params[i]);
-            if(LLVMGetTypeKind(type) != LLVMPointerTypeKind) {
+            if(!LLVM::isPointerType(type)) {
                 LLVMValueRef temp = LLVM::alloc(type, "NodeCall_getParameters_temp");
                 LLVMBuildStore(generator->builder, params[i], temp);
                 params[i] = temp;
             }
         }
-        else if(!instanceof<TypePointer>(fas[i].type) && LLVMGetTypeKind(LLVMTypeOf(params[i])) == LLVMPointerTypeKind) {
+        else if(!instanceof<TypePointer>(fas[i].type) && LLVM::isPointer(params[i])) {
             if(LLVMIsAFunction(params[i]) == nullptr) params[i] = LLVM::load(params[i], "correctLoad");
         }
     }
@@ -89,12 +89,12 @@ std::vector<LLVMValueRef> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg
     for(int i=0; i<params.size(); i++) {
         if(fas[i].type->toString() == "void*" || fas[i].type->toString() == "char*") {
             LLVMTypeRef type = LLVMTypeOf(params[i]);
-            if(LLVMGetTypeKind(type) != LLVMPointerTypeKind) params[i] = Binary::castValue(params[i], LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0), this->loc);
+            if(!LLVM::isPointerType(type)) params[i] = Binary::castValue(params[i], LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0), this->loc);
             else if(LLVMGetTypeKind(LLVMGetElementType(type)) != LLVMIntegerTypeKind) params[i] = Binary::castValue(params[i], LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0), this->loc);
         }
         else if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(((TypePointer*)fas[i].type)->instance)) {
             LLVMTypeRef type = LLVMTypeOf(params[i]);
-            if(LLVMGetTypeKind(type) != LLVMPointerTypeKind) {
+            if(!LLVM::isPointerType(type)) {
                 LLVMValueRef temp = LLVM::alloc(type, "NodeCall_getParameters_temp");
                 LLVMBuildStore(generator->builder, params[i], temp);
                 params[i] = temp;

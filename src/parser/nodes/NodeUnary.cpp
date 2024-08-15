@@ -111,7 +111,7 @@ LLVMValueRef NodeUnary::generate() {
             LLVMBuildStore(generator->builder, val, temp);
             val = temp;
         }
-        if(LLVMGetTypeKind(LLVMTypeOf(val)) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(val))) == LLVMArrayTypeKind) {
+        if(LLVM::isPointer(val) && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(val))) == LLVMArrayTypeKind) {
             return LLVMBuildPointerCast(
                 generator->builder,
                 val,

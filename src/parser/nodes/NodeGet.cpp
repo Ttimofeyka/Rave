@@ -63,13 +63,13 @@ Type* NodeGet::getType() {
 LLVMValueRef NodeGet::checkStructure(LLVMValueRef ptr) {
     LLVMTypeRef type = LLVMTypeOf(ptr);
     
-    if(!LLVMGetTypeKind(type) == LLVMPointerTypeKind) {
+    if(!LLVM::isPointerType(type)) {
         LLVMValueRef temp = LLVM::alloc(type, "NodeGet_checkStructure");
         LLVMBuildStore(generator->builder, ptr, temp);
         return temp;
     }
     
-    while(LLVMGetTypeKind(LLVMGetElementType(type)) == LLVMPointerTypeKind) {
+    while(LLVM::isPointerType(LLVMGetElementType(type))) {
         ptr = LLVM::load(ptr, "NodeGet_checkStructure_load");
         type = LLVMTypeOf(ptr);
     }
