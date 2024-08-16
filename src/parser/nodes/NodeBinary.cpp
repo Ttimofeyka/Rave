@@ -344,15 +344,11 @@ LLVMValueRef NodeBinary::generate() {
         else if(instanceof<NodeGet>(this->first)) {
             NodeGet* nget = (NodeGet*)this->first;
             LLVMValueRef fValue = nget->generate();
-            std::string fValueStr = std::string(LLVMPrintTypeToString(LLVMTypeOf(fValue)));
             if(instanceof<NodeNull>(this->second)) {
                 ((NodeNull*)this->second)->type = nullptr;
                 ((NodeNull*)this->second)->lType = LLVMTypeOf(fValue);
             }
             LLVMValueRef sValue = this->second->generate();
-            std::string sValueStr = std::string(LLVMPrintTypeToString(LLVMTypeOf(sValue)));
-
-            if(sValueStr.substr(0,sValueStr.size()-1) == fValueStr) sValue = LLVM::load(sValue, "NodeBinary_NodeGet_load");
 
             nget->isMustBePtr = true;
             fValue = nget->generate();
@@ -434,9 +430,7 @@ LLVMValueRef NodeBinary::generate() {
     }
 
     LLVMValueRef vFirst = this->first->generate();
-    std::string vFirstStr = typeToString(LLVMTypeOf(vFirst));
     LLVMValueRef vSecond = this->second->generate();
-    std::string vSecondStr = typeToString(LLVMTypeOf(vSecond));
 
     if(instanceof<TypeStruct>(this->first->getType()) || instanceof<TypePointer>(this->first->getType())
      && !instanceof<TypeStruct>(this->second->getType()) && !instanceof<TypePointer>(this->second->getType())) {
