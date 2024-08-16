@@ -298,6 +298,11 @@ LLVMValueRef NodeBuiltin::generate() {
         while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
         return LLVMConstInt(LLVMInt1TypeInContext(generator->context), instanceof<TypeArray>(ty), false);
     }
+    if(this->name == "isVector") {
+        Type* ty = this->asType(0)->type;
+        while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
+        return LLVMConstInt(LLVMInt1TypeInContext(generator->context), instanceof<TypeVector>(ty), false);
+    }
     if(this->name == "isPointer") {
         Type* ty = this->asType(0)->type;
         while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
@@ -794,6 +799,7 @@ Node* NodeBuiltin::comptime() {
         Type* ty = this->asType(0)->type;
         if(instanceof<TypeArray>(ty)) this->type = ((TypeArray*)ty)->element;
         else if(instanceof<TypePointer>(ty)) this->type = ((TypePointer*)ty)->instance;
+        else if(instanceof<TypeVector>(ty)) this->type = ((TypeVector*)ty)->mainType;
         else this->type = ty;
         return new NodeType(ty, this->loc);
     }
@@ -801,6 +807,11 @@ Node* NodeBuiltin::comptime() {
         Type* ty = this->asType(0)->type;
         while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
         return new NodeBool(instanceof<TypeArray>(ty));
+    }
+    if(this->name == "isVector") {
+        Type* ty = this->asType(0)->type;
+        while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
+        return new NodeBool(instanceof<TypeVector>(ty));
     }
     if(this->name == "isPointer") {
         Type* ty = this->asType(0)->type;
