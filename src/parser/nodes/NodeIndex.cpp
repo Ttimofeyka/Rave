@@ -123,10 +123,10 @@ LLVMValueRef NodeIndex::generate() {
             ((AST::funcTable.find(currScope->funcName) != AST::funcTable.end() && AST::funcTable[currScope->funcName]->isNoChecks == false)
             || AST::funcTable.find(currScope->funcName) == AST::funcTable.end())
         ) {
-            if(AST::funcTable.find("std::assert[_b_pc]") != AST::funcTable.end() && LLVMPrintTypeToString(LLVMTypeOf(ptr))[0] != '%') {
+            if(AST::funcTable.find("std::assert[_b_pc]") != AST::funcTable.end()) {
                 (new NodeCall(this->loc, new NodeIden("std::assert[_b_pc]", this->loc), {
                     new NodeBinary(TokType::Nequal, new NodeDone(ptr), new NodeNull(nullptr, this->loc), this->loc),
-                    new NodeString("Assert in '"+generator->file+"' file in function '" + currScope->funcName + "' at "+std::to_string(this->loc)+" line: trying to get a value from a null pointer!\n", false)
+                    new NodeString("Assert in '" + generator->file + "' file in function '" + currScope->funcName + "' at " + std::to_string(this->loc) + " line: trying to get a value from a null pointer!\n", false)
                 }))->generate();
             }
         }
@@ -178,17 +178,17 @@ LLVMValueRef NodeIndex::generate() {
             ((AST::funcTable.find(currScope->funcName) != AST::funcTable.end() && AST::funcTable[currScope->funcName]->isNoChecks == false)
             || AST::funcTable.find(currScope->funcName) == AST::funcTable.end())
         ) {
-            if(AST::funcTable.find("std::assert[_b_pc]") != AST::funcTable.end() && LLVMPrintTypeToString(LLVMTypeOf(vr))[0] != '%') {
+            if(AST::funcTable.find("std::assert[_b_pc]") != AST::funcTable.end()) {
                 (new NodeCall(this->loc, new NodeIden("std::assert[_b_pc]", this->loc), {
                     new NodeBinary(TokType::Nequal, new NodeDone(vr), new NodeNull(nullptr, this->loc), this->loc),
-                    new NodeString("Assert in '"+generator->file+"' file in function '" + currScope->funcName + "' at "+std::to_string(this->loc)+" line: trying to get a value from a null pointer!\n", false)
+                    new NodeString("Assert in '" + generator->file + "' file in function '" + currScope->funcName + "' at " + std::to_string(this->loc) + " line: trying to get a value from a null pointer!\n", false)
                 }))->generate();
             }
         }
 
         LLVMValueRef index = generator->byIndex(vr, this->generateIndexes());
         if(isMustBePtr) return index;
-        return LLVM::load(index, ("NodeIndex_NodeCall_load"+std::to_string(this->loc)+"_").c_str());
+        return LLVM::load(index, ("NodeIndex_NodeCall_load" + std::to_string(this->loc)+"_").c_str());
     }
     if(instanceof<NodeDone>(element)) {
         LLVMValueRef index = generator->byIndex(element->generate(), this->generateIndexes());
@@ -203,10 +203,10 @@ LLVMValueRef NodeIndex::generate() {
             ((AST::funcTable.find(currScope->funcName) != AST::funcTable.end() && AST::funcTable[currScope->funcName]->isNoChecks == false)
             || AST::funcTable.find(currScope->funcName) == AST::funcTable.end())
         ) {
-            if(AST::funcTable.find("std::assert[_b_pc]") != AST::funcTable.end() && LLVMPrintTypeToString(LLVMTypeOf(val))[0] != '%') {
+            if(AST::funcTable.find("std::assert[_b_pc]") != AST::funcTable.end()) {
                 (new NodeCall(this->loc, new NodeIden("std::assert[_b_pc]", this->loc), {
                     new NodeBinary(TokType::Nequal, new NodeDone(val), new NodeNull(nullptr, this->loc), this->loc),
-                    new NodeString("Assert in '"+generator->file+"' file in function '" + currScope->funcName + "' at "+std::to_string(this->loc)+" line: trying to get a value from a null pointer!\n", false)
+                    new NodeString("Assert in '" + generator->file + "' file in function '" + currScope->funcName + "' at " + std::to_string(this->loc) + " line: trying to get a value from a null pointer!\n", false)
                 }))->generate();
             }
         }
@@ -223,10 +223,10 @@ LLVMValueRef NodeIndex::generate() {
             ((AST::funcTable.find(currScope->funcName) != AST::funcTable.end() && AST::funcTable[currScope->funcName]->isNoChecks == false)
             || AST::funcTable.find(currScope->funcName) == AST::funcTable.end())
         ) {
-            if(AST::funcTable.find("std::assert[_b_pc]") != AST::funcTable.end() && LLVMPrintTypeToString(LLVMTypeOf(val))[0] != '%') {
+            if(AST::funcTable.find("std::assert[_b_pc]") != AST::funcTable.end()) {
                 (new NodeCall(this->loc, new NodeIden("std::assert[_b_pc]", this->loc), {
                     new NodeBinary(TokType::Nequal, new NodeDone(val), new NodeNull(nullptr, this->loc), this->loc),
-                    new NodeString("Assert in '"+generator->file+"' file in function '" + currScope->funcName + "' at "+std::to_string(this->loc)+" line: trying to get a value from a null pointer!\n", false)
+                    new NodeString("Assert in '" + generator->file + "' file in function '" + currScope->funcName + "' at " + std::to_string(this->loc) + " line: trying to get a value from a null pointer!\n", false)
                 }))->generate();
             }
         }
