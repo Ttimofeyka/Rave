@@ -179,18 +179,30 @@ Example:
 };
 ```
 
-**@isNumeric, @isStructure, @isPointer, @isArray (type)** - Check whether the type is numerical, pointer, array or structure
+**@isNumeric, @isStructure, @isPointer, @isVector, @isArray (type)** - Check whether the type is numerical, pointer, SIMD vector, array or structure.
 
 Example:
 
 ```d
+struct A {}
+
 @if(@isNumeric(int)) {
     // ...
 };
+
 @if(@isPointer(int*)) {
     // ...
 };
+
 @if(@isArray(int[1])) {
+    // ...
+};
+
+@if(@isVector(float4)) {
+    // ...
+};
+
+@if(@isStructure(A)) {
     // ...
 };
 ```
