@@ -451,12 +451,6 @@ LLVMValueRef NodeBinary::generate() {
         }
     }
 
-    if(vFirstStr.substr(0, vFirstStr.size()-1) == vSecondStr) vFirst = LLVM::load(vFirst, "NodeBinary_firstload");
-    if(vSecondStr.substr(0, vSecondStr.size()-1) == vFirstStr) {
-        if(LLVMIsNull(vSecond)) vSecond = LLVMConstNull(LLVMGetElementType(LLVMTypeOf(vSecond)));
-        else vSecond = LLVM::load(vSecond, "NodeBinary_secondload");
-    }
-
     LLVMTypeRef vFirstType = LLVMTypeOf(vFirst);
     LLVMTypeRef vSecondType = LLVMTypeOf(vSecond);
     LLVMTypeKind vFirstTypeKind = LLVMGetTypeKind(vFirstType);

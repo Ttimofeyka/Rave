@@ -56,7 +56,7 @@ import <std/io>
                         }
                     } else {
                         if(state == 1) {
-                            if(url[p] != "/") {
+                            if(url[p] != '/') {
                                 this.host.add(url[p]);
                                 p += 1;
                             } else {
