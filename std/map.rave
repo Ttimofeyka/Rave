@@ -37,7 +37,7 @@ namespace std {
         } => this;
 
         void set(K key, V value) {
-            if((length / 2) > mapSize) {
+            if((length * 2) > mapSize) {
                 table = cast(std::hashmap::Entry<K, V>**)std::realloc(table, sizeof(std::hashmap::Entry<K, V>*) * mapSize, sizeof(std::hashmap::Entry<K, V>*) * (mapSize * 2));
                 for(int i=mapSize; i<(mapSize * 2); i++) table[i] = null;
                 mapSize = mapSize * 2;
