@@ -53,9 +53,10 @@ namespace std {
             int i = 0;
             char* ptr = str;
             bool done = false;
+            int substrLen = std::cstring::strlen(substr);
 
             while(ptr[i] != '\0') {
-                if(std::cstring::strncmp(ptr, substr, std::cstring::strlen(substr))) {
+                if(std::cstring::strncmp(ptr, substr, substrLen)) {
                     done = true;
                     break;
                 }
