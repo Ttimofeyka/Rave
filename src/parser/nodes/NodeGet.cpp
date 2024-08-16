@@ -68,10 +68,18 @@ LLVMValueRef NodeGet::checkStructure(LLVMValueRef ptr) {
         LLVMBuildStore(generator->builder, ptr, temp);
         return temp;
     }
-    
-    while(LLVM::isPointerType(LLVMGetElementType(type))) {
-        ptr = LLVM::load(ptr, "NodeGet_checkStructure_load");
-        type = LLVMTypeOf(ptr);
+    else {
+        if(
+            (LLVMIsAAllocaInst(ptr) && LLVMGetTypeKind(LLVMGetAllocatedType(ptr)) == LLVMPointerTypeKind) ||
+            (LLVMIsAGetElementPtrInst(ptr) && LLVM::isPointer(LLVMGetArgOperand(ptr, 0)))
+        ) {
+            ptr = LLVM::load(ptr, "NodeGet_checkStructure");
+            if(!LLVM::isPointer(ptr)) {
+                LLVMValueRef inst = ptr;
+                ptr = LLVMGetArgOperand(ptr, 0);
+                LLVMInstructionEraseFromParent(inst);
+            }
+        }
     }
     
     return ptr;

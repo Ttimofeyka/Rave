@@ -9,6 +9,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <vector>
 #include <llvm-c/Core.h>
 
+class Type;
+
 namespace LLVM {
     extern LLVMValueRef load(LLVMValueRef value, const char* name);
     extern LLVMValueRef call(LLVMValueRef fn, LLVMValueRef* args, unsigned int argsCount, const char* name);
@@ -20,6 +22,7 @@ namespace LLVM {
     extern LLVMValueRef alloc(LLVMValueRef size, const char* name);
     extern bool isPointerType(LLVMTypeRef type);
     extern bool isPointer(LLVMValueRef value);
+    extern LLVMTypeRef getPointerElType(LLVMValueRef value);
     extern void setFastMath(LLVMBuilderRef builder, bool infs, bool nans, bool arcp, bool nsz);
     extern void setFastMathAll(LLVMBuilderRef builder, bool value);
 }

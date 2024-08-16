@@ -7,6 +7,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "./include/llvm.hpp"
 #include <llvm-c/Target.h>
 #include "./include/parser/ast.hpp"
+#include "./include/parser/nodes/NodeFunc.hpp"
 #include <iostream>
 
 #include <llvm/Target/TargetMachine.h>
@@ -20,11 +21,15 @@ bool LLVM::isPointerType(LLVMTypeRef type) {
 }
 
 bool LLVM::isPointer(LLVMValueRef value) {
-    #if LLVM_VERSION_MAJOR <= 16
-        return LLVM::isPointerType(LLVMTypeOf(value));
-    #else
-        return LLVMIsAGlobalVariable(value) || LLVMIsAAllocaInst(value); || LLVMIsAIntToPtrInst(value); // TODO
-    #endif
+    if(LLVMIsAGlobalVariable(value) || LLVMIsAAllocaInst(value) || LLVMIsAIntToPtrInst(value) || LLVMIsAGetElementPtrInst(value)) return true;
+    return LLVM::isPointerType(LLVMTypeOf(value));
+}
+
+LLVMTypeRef LLVM::getPointerElType(LLVMValueRef value) {
+    if(LLVMIsAAllocaInst(value)) return LLVMGetAllocatedType(value);
+    if(LLVMIsAGlobalValue(value)) return LLVMGlobalGetValueType(value);
+    if(LLVMIsAArgument(value)) return generator->genType(AST::funcTable[currScope->funcName]->getInternalArgType(value), -1);
+    return LLVMGetElementType(LLVMTypeOf(value));
 }
 
 LLVMValueRef LLVM::load(LLVMValueRef value, const char* name) {

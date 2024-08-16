@@ -85,6 +85,7 @@ LLVMValueRef Binary::castValue(LLVMValueRef from, LLVMTypeRef to, int loc) {
 LLVMValueRef Binary::sum(LLVMValueRef one, LLVMValueRef two, int loc) {
     LLVMValueRef oneCasted = one;
     LLVMValueRef twoCasted = two;
+
     if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMGetTypeKind(LLVMTypeOf(two))) {
         if(LLVMTypeOf(one) != LLVMTypeOf(two)) oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;
     }
@@ -186,7 +187,7 @@ std::pair<std::string, std::string> NodeBinary::isOperatorOverload(LLVMValueRef 
     if(first == nullptr || second == nullptr) return {"", ""};
 
     LLVMTypeRef type = LLVMTypeOf(first);
-    if(LLVMGetTypeKind(type) == LLVMStructTypeKind || (LLVMGetTypeKind(type) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVMGetElementType(type)) == LLVMStructTypeKind)) {
+    if(LLVMGetTypeKind(type) == LLVMStructTypeKind || (LLVM::isPointer(first) && LLVMGetTypeKind(LLVM::getPointerElType(first)) == LLVMStructTypeKind)) {
         std::string structName = LLVMGetStructName(type);
         if(AST::structTable.find(structName) != AST::structTable.end()) {
             auto& operators = AST::structTable[structName]->operators;
@@ -336,7 +337,7 @@ LLVMValueRef NodeBinary::generate() {
 
             if(vSecond == nullptr) vSecond = this->second->generate();
             vSecond = Binary::castValue(vSecond, lType, this->loc);
-            if(LLVM::isPointer(vSecond) && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(vSecond))) == LLVMStructTypeKind) {
+            if(LLVM::isPointer(vSecond) && LLVMGetTypeKind(LLVM::getPointerElType(vSecond)) == LLVMStructTypeKind) {
                 nvar->isAllocated = currScope->detectMemoryLeaks && true; // @detectMemoryLeaks
             }
             return LLVMBuildStore(generator->builder, vSecond, currScope->getWithoutLoad(id->name, this->loc));

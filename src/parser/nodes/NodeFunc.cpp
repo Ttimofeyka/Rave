@@ -466,3 +466,18 @@ bool NodeFunc::isReleased(int n) {
     }
     return false;
 }
+
+Type* NodeFunc::getInternalArgType(LLVMValueRef value) {
+    std::string __n = LLVMPrintValueToString(value);
+    int n = std::stoi(__n.substr(__n.find(" %") + 2));
+    int nArg = 0;
+
+    for(int i=0; i<args.size(); i++) {
+        for(int j=0; j<args[i].internalTypes.size(); j++) {
+            if(nArg == n) return args[i].internalTypes[j];
+            nArg += 1;
+        }
+    }
+
+    return nullptr;
+}
