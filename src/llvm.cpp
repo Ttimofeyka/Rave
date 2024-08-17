@@ -26,7 +26,7 @@ bool LLVM::isPointer(LLVMValueRef value) {
 }
 
 LLVMTypeRef LLVM::getPointerElType(LLVMValueRef value) {
-    #if LLVM_OPAQUE_POINTERS
+    #if RAVE_OPAQUE_POINTERS
     if(LLVMIsAAllocaInst(value)) return LLVMGetAllocatedType(value);
     if(LLVMIsAGlobalValue(value)) return LLVMGlobalGetValueType(value);
     if(LLVMIsAArgument(value)) return generator->genType(AST::funcTable[currScope->funcName]->getInternalArgType(value), -1);
@@ -76,7 +76,7 @@ LLVMValueRef LLVM::load(LLVMValueRef value, const char* name) {
 
 LLVMValueRef LLVM::call(LLVMValueRef fn, LLVMValueRef* args, unsigned int argsCount, const char* name) {
     #if LLVM_VERSION_MAJOR >= 15
-        #if LLVM_OPAQUE_POINTERS
+        #if RAVE_OPAQUE_POINTERS
         return LLVMBuildCall2(generator->builder, LLVMGetReturnType(LLVMGlobalGetValueType(fn)), fn, args, argsCount, name);
         #else
         return LLVMBuildCall2(generator->builder, LLVMGetReturnType(LLVMTypeOf(fn)), fn, args, argsCount, name);
