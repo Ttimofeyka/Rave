@@ -186,6 +186,7 @@ LLVMValueRef NodeCall::generate() {
                     for(int i=0; i<params.size(); i++) types.push_back(LLVMTypeOf(params[i]));
                     return LLVM::call(generator->functions[AST::funcTable[idenFunc->name]->generateWithCtargs(types)], params.data(), params.size(), (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
                 }
+
                 if(AST::funcTable[idenFunc->name]->templateNames.size() > 0) {
                     // Template function
                     std::string __typesAll = "<";
@@ -215,13 +216,16 @@ LLVMValueRef NodeCall::generate() {
                         }
                     }
                 }
+
                 if(AST::debugMode) {
                     for(auto const& x : generator->functions) std::cout << "\t" << x.first << std::endl;
                     std::cout << "DEBUG_MODE: undefined function (generator->functions)!" << std::endl;
                 }
+
                 generator->error("undefined function '" + idenFunc->name + "'!", this->loc);
                 return nullptr;
             }
+
             if(AST::funcTable.find(idenFunc->name + sTypes) != AST::funcTable.end()) {
                 this->isCdecl64 = AST::funcTable[idenFunc->name + sTypes]->isCdecl64;
                 std::vector<LLVMValueRef> params = this->getParameters(AST::funcTable[idenFunc->name + sTypes], false, AST::funcTable[idenFunc->name + sTypes]->args);

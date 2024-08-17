@@ -109,7 +109,7 @@ LLVMValueRef NodeGet::checkIn(std::string structure) {
 LLVMValueRef NodeGet::generate() {
     if(instanceof<NodeIden>(this->base)) {
         LLVMValueRef ptr = checkStructure(currScope->getWithoutLoad(((NodeIden*)this->base)->name, loc));
-        std::string structName = std::string(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(ptr))));
+        std::string structName = std::string(LLVMGetStructName(LLVM::getPointerElType(ptr)));
         LLVMValueRef f = this->checkIn(structName);
         if(f != nullptr) return f;
         if(this->isMustBePtr) return LLVM::structGep(

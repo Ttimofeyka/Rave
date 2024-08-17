@@ -59,6 +59,7 @@ LLVMValueRef NodeCast::generate() {
         if(tbasic->isFloat()) return LLVMBuildFPCast(generator->builder, result, generator->genType(this->type, this->loc), "NodeCast_ftof");
         return LLVMBuildFPToSI(generator->builder, result, generator->genType(this->type, this->loc), "NodeCast_ftoi");
     }
+
     result = this->value->generate();
     if(instanceof<TypePointer>(this->type)) {
         TypePointer* tpointer = (TypePointer*)this->type;

@@ -21,6 +21,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../include/compiler.hpp"
 #include <iostream>
 #include "../include/llvm.hpp"
+#include "../include/utils.hpp"
 
 std::map<std::string, Type*> AST::aliasTypes;
 std::map<std::string, Node*> AST::aliasTable;
@@ -196,7 +197,7 @@ LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options)
     this->context = LLVMContextCreate();
     this->lModule = LLVMModuleCreateWithNameInContext("rave", this->context);
 
-    #if LLVM_VERSION >= 15
+    #if (LLVM_VERSION >= 15) && !(LLVM_OPAQUE_POINTERS)
     LLVMContextSetOpaquePointers(this->context, 0);
     #endif
 
@@ -342,9 +343,13 @@ LLVMValueRef LLVMGen::byIndex(LLVMValueRef value, std::vector<LLVMValueRef> inde
     if(LLVMGetTypeKind(LLVMTypeOf(value)) == LLVMArrayTypeKind) return byIndex(
         LLVM::gep(value, std::vector<LLVMValueRef>({LLVMConstInt(LLVMInt32TypeInContext(generator->context), 0, false)}).data(), 2, "gep_byIndex"), indexes
     );
+
+    #if !(RAVE_OPAQUE_POINTERS)
     if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(value))) == LLVMArrayTypeKind) value = LLVMBuildPointerCast(
         generator->builder,value,LLVMPointerType(LLVMGetElementType(LLVMGetElementType(LLVMTypeOf(value))),0),"ptrc_byIndex"
     );
+    #endif
+
     if(indexes.size() > 1) {
         LLVMValueRef oneGep = LLVM::gep(value, std::vector<LLVMValueRef>({indexes[0]}).data(), 1, "gep2_byIndex");
         return byIndex(oneGep,std::vector<LLVMValueRef>(indexes.begin() + 1, indexes.end()));

@@ -428,9 +428,7 @@ void Compiler::compileAll() {
         std::string fname = replaceAll(AST::addToImport[i], ">", "");
         if(std::count(Compiler::toImport.begin(), Compiler::toImport.end(), fname) == 0 &&
            std::count(Compiler::files.begin(), Compiler::files.end(), fname) == 0
-        ) {
-            Compiler::toImport.push_back(fname);
-        }
+        ) Compiler::toImport.push_back(fname);
     }
     for(int i=0; i<Compiler::toImport.size(); i++) {
         if(access(Compiler::toImport[i].c_str(), 0) != 0) {

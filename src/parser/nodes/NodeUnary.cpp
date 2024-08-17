@@ -111,6 +111,7 @@ LLVMValueRef NodeUnary::generate() {
             LLVMBuildStore(generator->builder, val, temp);
             val = temp;
         }
+        #if !(RAVE_OPAQUE_POINTERS)
         if(LLVM::isPointer(val) && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(val))) == LLVMArrayTypeKind) {
             return LLVMBuildPointerCast(
                 generator->builder,
@@ -119,6 +120,7 @@ LLVMValueRef NodeUnary::generate() {
                 "NodeUnary_bitcast"
             );
         }
+        #endif
         return val;
     }
     if(this->type == TokType::Ne) return LLVMBuildNot(generator->builder, this->base->generate(), "NodeUnary_not");

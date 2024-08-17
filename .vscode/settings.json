@@ -88,7 +88,22 @@
         "barrier": "cpp",
         "latch": "cpp",
         "syncstream": "cpp",
-        "strstream": "cpp"
+        "strstream": "cpp",
+        "__bit_reference": "cpp",
+        "__bits": "cpp",
+        "__config": "cpp",
+        "__debug": "cpp",
+        "__hash_table": "cpp",
+        "__locale": "cpp",
+        "__node_handle": "cpp",
+        "__nullptr": "cpp",
+        "__split_buffer": "cpp",
+        "__string": "cpp",
+        "__threading_support": "cpp",
+        "__tuple": "cpp",
+        "ios": "cpp",
+        "locale": "cpp",
+        "queue": "cpp"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/clang++"
 }

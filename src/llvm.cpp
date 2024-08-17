@@ -26,15 +26,46 @@ bool LLVM::isPointer(LLVMValueRef value) {
 }
 
 LLVMTypeRef LLVM::getPointerElType(LLVMValueRef value) {
+    #if LLVM_OPAQUE_POINTERS
     if(LLVMIsAAllocaInst(value)) return LLVMGetAllocatedType(value);
     if(LLVMIsAGlobalValue(value)) return LLVMGlobalGetValueType(value);
     if(LLVMIsAArgument(value)) return generator->genType(AST::funcTable[currScope->funcName]->getInternalArgType(value), -1);
+    if(LLVMIsConstant(value) && LLVMIsNull(value) && LLVM::isPointerType(LLVMTypeOf(value))) return LLVMInt8TypeInContext(generator->context);
+    if(LLVMIsACallInst(value)) {
+        std::string fName = LLVMGetValueName(LLVMGetCalledValue(value));
+        if(fName.find("_RaveF") != std::string::npos) fName = fName.substr(7);
+        while(isdigit(fName[0])) fName = fName.substr(1);
+
+        if(AST::funcTable.find(fName) != AST::funcTable.end()) {
+            if(instanceof<TypePointer>(AST::funcTable[fName]->getType())) return generator->genType(((TypePointer*)AST::funcTable[fName]->getType())->instance, -1);
+            else if(instanceof<TypeStruct>(AST::funcTable[fName]->getType())) return generator->genType(AST::funcTable[fName]->getType(), -1);
+        }
+        else {
+            for(auto &&kv : AST::funcTable) {
+                if(kv.second->linkName == fName) {
+                    if(instanceof<TypePointer>(kv.second->getType())) return generator->genType(((TypePointer*)kv.second->getType())->instance, -1);
+                    else if(instanceof<TypeStruct>(kv.second->getType())) return generator->genType(kv.second->getType(), -1);
+                    break;
+                }
+            }
+            
+        }
+
+        return LLVMGetReturnType(LLVMGetCalledFunctionType(value));
+    }
+    if(LLVMIsALoadInst(value)) return LLVM::getPointerElType(LLVMGetOperand(value, 0));
+    if(LLVMIsAIntToPtrInst(value)) return LLVMInt8TypeInContext(generator->context);
+    if(LLVMIsAGetElementPtrInst(value)) return LLVM::getPointerElType(LLVMGetOperand(value, 0));
+    std::cout << LLVMPrintValueToString(value) << std::endl; // For future debug
     return LLVMGetElementType(LLVMTypeOf(value));
+    #else
+    return LLVMGetElementType(LLVMTypeOf(value));
+    #endif
 }
 
 LLVMValueRef LLVM::load(LLVMValueRef value, const char* name) {
     #if LLVM_VERSION_MAJOR >= 15
-        return LLVMBuildLoad2(generator->builder, LLVMGetElementType(LLVMTypeOf(value)), value, name);
+        return LLVMBuildLoad2(generator->builder, LLVM::getPointerElType(value), value, name);
     #else
         return LLVMBuildLoad(generator->builder, value, name);
     #endif
@@ -42,7 +73,11 @@ LLVMValueRef LLVM::load(LLVMValueRef value, const char* name) {
 
 LLVMValueRef LLVM::call(LLVMValueRef fn, LLVMValueRef* args, unsigned int argsCount, const char* name) {
     #if LLVM_VERSION_MAJOR >= 15
+        #if LLVM_OPAQUE_POINTERS
+        return LLVMBuildCall2(generator->builder, LLVMGetReturnType(LLVMGlobalGetValueType(fn)), fn, args, argsCount, name);
+        #else
         return LLVMBuildCall2(generator->builder, LLVMGetReturnType(LLVMTypeOf(fn)), fn, args, argsCount, name);
+        #endif
     #else
         return LLVMBuildCall(generator->builder, fn, args, argsCount, name);
     #endif
@@ -50,7 +85,7 @@ LLVMValueRef LLVM::call(LLVMValueRef fn, LLVMValueRef* args, unsigned int argsCo
 
 LLVMValueRef LLVM::gep(LLVMValueRef ptr, LLVMValueRef* indices, unsigned int indicesCount, const char* name) {
     #if LLVM_VERSION_MAJOR >= 15
-        return LLVMBuildGEP2(generator->builder, LLVMGetElementType(LLVMTypeOf(ptr)), ptr, indices, indicesCount, name);
+        return LLVMBuildGEP2(generator->builder, LLVM::getPointerElType(ptr), ptr, indices, indicesCount, name);
     #else
         return LLVMBuildGEP(generator->builder, ptr, indices, indicesCount, name);
     #endif
@@ -58,7 +93,7 @@ LLVMValueRef LLVM::gep(LLVMValueRef ptr, LLVMValueRef* indices, unsigned int ind
 
 LLVMValueRef LLVM::inboundsGep(LLVMValueRef ptr, LLVMValueRef* indices, unsigned int indicesCount, const char* name) {
     #if LLVM_VERSION_MAJOR >= 15
-        return LLVMBuildInBoundsGEP2(generator->builder, LLVMGetElementType(LLVMTypeOf(ptr)), ptr, indices, indicesCount, name);
+        return LLVMBuildInBoundsGEP2(generator->builder, LLVM::getPointerElType(ptr), ptr, indices, indicesCount, name);
     #else
         return LLVMBuildInBoundsGEP(generator->builder, ptr, indices, indicesCount, name);
     #endif
@@ -66,7 +101,7 @@ LLVMValueRef LLVM::inboundsGep(LLVMValueRef ptr, LLVMValueRef* indices, unsigned
 
 LLVMValueRef LLVM::constInboundsGep(LLVMValueRef ptr, LLVMValueRef* indices, unsigned int indicesCount) {
     #if LLVM_VERSION_MAJOR >= 15
-        return LLVMConstInBoundsGEP2(LLVMGetElementType(LLVMTypeOf(ptr)), ptr, indices, indicesCount);
+        return LLVMConstInBoundsGEP2(LLVM::getPointerElType(ptr), ptr, indices, indicesCount);
     #else
         return LLVMConstInBoundsGEP(ptr, indices, indicesCount);
     #endif
@@ -75,7 +110,7 @@ LLVMValueRef LLVM::constInboundsGep(LLVMValueRef ptr, LLVMValueRef* indices, uns
 LLVMValueRef LLVM::structGep(LLVMValueRef ptr, unsigned int idx, const char* name) {
     #if LLVM_VERSION_MAJOR >= 15
         return LLVMBuildStructGEP2(
-            generator->builder, LLVMGetElementType(LLVMTypeOf(ptr)),
+            generator->builder, LLVM::getPointerElType(ptr),
             ptr, idx, name
         );
     #else
