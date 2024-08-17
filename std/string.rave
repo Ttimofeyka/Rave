@@ -104,7 +104,8 @@ namespace std {
         (inline) char* c => this.data;
 
         (inline) char toChar => this.data[0];
-        (inline) long toLong => libc::strtol(this.c(), cast(char**)null, 10);
+        (inline) cent toCent => std::cstring::stoc(this.data, this.length);
+        (inline) long toLong => std::cstring::stol(this.data, this.length);
         (inline) int toInt => cast(int)this.toLong();
 
         int indexOf(char c) => std::cstring::indexOf(this.data, c);
