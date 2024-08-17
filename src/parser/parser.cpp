@@ -51,6 +51,7 @@ with this file, You can obtain one at htypep://mozilla.org/MPL/2.0/.
 #include "../include/parser/nodes/NodeForeach.hpp"
 #include "../include/parser/nodes/NodeDefer.hpp"
 #include "../include/parser/nodes/NodeConstStruct.hpp"
+#include "../include/parser/nodes/NodeSlice.hpp"
 #include <inttypes.h>
 #include <sstream>
 
@@ -86,21 +87,21 @@ Parser::Parser(std::vector<Token*> tokens, std::string file) {
 }
 
 void Parser::error(std::string msg) {
-    std::cout << "\033[0;31mError in '"+this->file+"' file at "+std::to_string(this->peek()->line)+" line: "+msg+"\033[0;0m" << std::endl;
+    std::cout << "\033[0;31mError in '" + this->file + "' file at " + std::to_string(this->peek()->line)+ " line: " + msg + "\033[0;0m" << std::endl;
     std::exit(1);
 }
 
 void Parser::error(std::string msg, int line) {
-    std::cout << "\033[0;31mError in '"+this->file+"' file at "+std::to_string(line)+" line: "+msg+"\033[0;0m" << std::endl;
+    std::cout << "\033[0;31mError in '" + this->file + "' file at " + std::to_string(line) + " line: " + msg + "\033[0;0m" << std::endl;
     std::exit(1);
 }
 
 void Parser::warning(std::string msg) {
-    std::cout << "\033[0;33mWarning in '"+this->file+"' file at "+std::to_string(this->peek()->line)+" line: "+msg+"\033[0;0m" << std::endl;
+    std::cout << "\033[0;33mWarning in '" + this->file + "' file at "+  std::to_string(this->peek()->line) + " line: " + msg + "\033[0;0m" << std::endl;
 }
 
 void Parser::warning(std::string msg, int line) {
-    std::cout << "\033[0;33mWarning in '"+this->file+"' file at "+std::to_string(line)+" line: "+msg+"\033[0;0m" << std::endl;
+    std::cout << "\033[0;33mWarning in '" + this->file + "' file at " + std::to_string(line) + " line: " + msg + "\033[0;0m" << std::endl;
 }
 
 Token* Parser::peek() {return this->tokens[this->idx];}
@@ -170,7 +171,7 @@ Node* Parser::parseTopLevel(std::string s) {
 }
 
 Node* Parser::parseNamespace(std::string s) {
-    long loc = this->peek()->line; this->next();
+    int loc = this->peek()->line; this->next();
     std::string name = this->peek()->value; this->next();
 
     if(this->peek()->type != TokType::Rbra) this->error("expected token '{'!");
@@ -893,13 +894,13 @@ Type* Parser::parseType(bool cannotBeTemplate) {
 }
 
 bool Parser::isSlice() {
-    long idx = this->idx;
+    int idx = this->idx;
     this->next();
     int countOfRarr = 1;
     while(countOfRarr != 0) {
         if(this->peek()->type == TokType::Rarr) countOfRarr += 1;
         else if(this->peek()->type == TokType::Larr) countOfRarr -= 1;
-        else if(this->peek()->type == TokType::SliceOper || this->peek()->type == TokType::SlicePtrOper) {
+        else if(this->peek()->type == TokType::SliceOper) {
             this->idx = idx;
             return true;
         }
@@ -1326,7 +1327,7 @@ std::pair<Node*, Node*> Parser::parseCase(std::string f) {
 }
 
 Node* Parser::parseSwitch(std::string f) {
-    long line = this->peek()->line;
+    int line = this->peek()->line;
     this->next(); this->next();
     Node* expr = this->parseExpr();
     this->next();
@@ -1360,7 +1361,15 @@ NodeBlock* Parser::parseBlock(std::string s) {
 }
 
 Node* Parser::parseSlice(Node* base, std::string f) {
-    return nullptr;
+    int loc = peek()->line;
+    this->next();
+    Node* start = parseExpr(f);
+    if(peek()->type != TokType::SliceOper) error("expected token \"..\"!");
+    this->next();
+    Node* end = parseExpr(f);
+    if(peek()->type != TokType::Larr) error("expected token ']'!");
+    this->next();
+    return new NodeSlice(base, start, end, loc);
 }
 
 bool Parser::isDefinedLambda(bool updateIdx) {

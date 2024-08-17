@@ -9,7 +9,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/ast.hpp"
 #include "../../include/llvm.hpp"
 
-NodeArray::NodeArray(long loc, std::vector<Node*> values) {
+NodeArray::NodeArray(int loc, std::vector<Node*> values) {
     this->loc = loc;
     this->values = std::vector<Node*>(values);
 }
@@ -38,7 +38,7 @@ std::vector<LLVMValueRef> NodeArray::getValues() {
 LLVMValueRef NodeArray::generate() {
     std::vector<LLVMValueRef> genValues = this->getValues();
     if(isConst) return LLVMConstArray(this->type, genValues.data(), values.size());
-    LLVMValueRef arr = LLVMBuildAlloca(generator->builder, LLVMArrayType(this->type, this->values.size()), "NodeArray");
+    LLVMValueRef arr = LLVM::alloc(LLVMArrayType(this->type, this->values.size()), "NodeArray");
     for(int i=0; i<this->values.size(); i++) {
         LLVMBuildStore(
             generator->builder, genValues[i],

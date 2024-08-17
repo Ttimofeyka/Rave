@@ -16,8 +16,8 @@ class Lexer {
 public:
     std::string text = "";
     std::vector<Token*> tokens;
-    int64_t idx = 0;
-    int64_t line = 0;
+    int32_t idx = 0;
+    int32_t line = 0;
 
     inline char peek() {return text[idx];}
     inline char next() {idx += 1; return text[idx];}

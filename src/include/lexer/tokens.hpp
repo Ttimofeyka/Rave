@@ -52,7 +52,6 @@ enum TokType : char {
     VarArg,
 
     SliceOper,
-    SlicePtrOper,
 
     Rem,
 

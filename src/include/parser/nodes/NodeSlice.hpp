@@ -8,23 +8,24 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <llvm-c/Core.h>
 #include "Node.hpp"
-#include "../Types.hpp"
+#include "../Type.hpp"
 #include <vector>
 #include <string>
+#include <map>
+#include "../parser.hpp"
 
-class NodeArray : public Node {
+class NodeSlice : public Node {
 public:
+    Node* base;
+    Node* start;
+    Node* end;
     int loc;
-    std::vector<Node*> values;
-    LLVMTypeRef type;
-    bool isConst = true;
 
-    NodeArray(int loc, std::vector<Node*> values);
-
-    Type* getType() override;
-    std::vector<LLVMValueRef> getValues();
+    NodeSlice(Node* base, Node* start, Node* end, int loc);
+    
     LLVMValueRef generate() override;
-    void check() override;
+    Type* getType() override;
     Node* comptime() override;
     Node* copy() override;
+    void check() override;
 };
