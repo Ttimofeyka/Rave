@@ -355,7 +355,7 @@ LLVMValueRef NodeBinary::generate() {
             fValue = nget->generate();
 
             if(LLVMTypeOf(sValue) == LLVMTypeOf(fValue)) {
-                if(instanceof<NodeNull>(this->second)) sValue = LLVMConstNull(LLVMGetElementType(LLVMTypeOf(sValue)));
+                if(instanceof<NodeNull>(this->second)) sValue = LLVMConstNull(LLVM::getPointerElType(sValue));
             }
 
             if(nget->elementIsConst) {
@@ -363,8 +363,8 @@ LLVMValueRef NodeBinary::generate() {
                 return nullptr;
             }
 
-            if(LLVMGetElementType(LLVMTypeOf(fValue)) != LLVMTypeOf(sValue) && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(fValue))) == LLVMGetTypeKind(LLVMTypeOf(sValue))) {
-                if(LLVMGetTypeKind(LLVMTypeOf(sValue)) == LLVMIntegerTypeKind) sValue = LLVMBuildIntCast(generator->builder, sValue, LLVMGetElementType(LLVMTypeOf(fValue)), "NodeBinary_NodeGet_intc");
+            if(LLVM::getPointerElType(fValue) != LLVMTypeOf(sValue) && LLVMGetTypeKind(LLVM::getPointerElType(fValue)) == LLVMGetTypeKind(LLVMTypeOf(sValue))) {
+                if(LLVMGetTypeKind(LLVMTypeOf(sValue)) == LLVMIntegerTypeKind) sValue = LLVMBuildIntCast(generator->builder, sValue, LLVM::getPointerElType(fValue), "NodeBinary_NodeGet_intc");
             }
 
             return LLVMBuildStore(generator->builder, sValue, fValue);
@@ -401,17 +401,17 @@ LLVMValueRef NodeBinary::generate() {
 
             if(instanceof<NodeNull>(this->second)) {
                 ((NodeNull*)this->second)->type = nullptr;
-                ((NodeNull*)this->second)->lType = LLVMGetElementType(LLVMTypeOf(ptr));
+                ((NodeNull*)this->second)->lType = LLVM::getPointerElType(ptr);
             }
             LLVMValueRef value = this->second->generate();
 
             if(LLVMTypeOf(ptr) == LLVMPointerType(LLVMPointerType(LLVMTypeOf(value), 0), 0)) ptr = LLVM::load(ptr, "NodeBinary_NodeIndex_load");
 
-            if(LLVMGetElementType(LLVMTypeOf(ptr)) != LLVMTypeOf(value) && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) == LLVMGetTypeKind(LLVMTypeOf(value))) {
-                if(LLVMGetTypeKind(LLVMTypeOf(value)) == LLVMIntegerTypeKind) value = LLVMBuildIntCast(generator->builder, value, LLVMGetElementType(LLVMTypeOf(ptr)), "NodeBinary_NodeIndex_intc");
+            if(LLVM::getPointerElType(ptr) != LLVMTypeOf(value) && LLVMGetTypeKind(LLVM::getPointerElType(ptr)) == LLVMGetTypeKind(LLVMTypeOf(value))) {
+                if(LLVMGetTypeKind(LLVMTypeOf(value)) == LLVMIntegerTypeKind) value = LLVMBuildIntCast(generator->builder, value, LLVM::getPointerElType(ptr), "NodeBinary_NodeIndex_intc");
             }
 
-            if(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) == LLVMFloatTypeKind
+            if(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVM::getPointerElType(ptr)) == LLVMFloatTypeKind
              &&LLVMGetTypeKind(LLVMTypeOf(value)) == LLVMDoubleTypeKind) value = LLVMBuildFPCast(generator->builder, value, LLVMFloatTypeInContext(generator->context), "NodeBinary_dtof");
             
             return LLVMBuildStore(generator->builder, value, ptr);
@@ -419,10 +419,8 @@ LLVMValueRef NodeBinary::generate() {
         else if(instanceof<NodeDone>(this->first)) return LLVMBuildStore(generator->builder, this->second->generate(), this->first->generate());
     }
 
-    if(this->first->getType() != nullptr && this->second->getType() != nullptr && this->first->getType()->toString() != this->second->getType()->toString()) {
-        if(instanceof<NodeNull>(this->first)) ((NodeNull*)this->first)->type = this->second->getType();
-        else if(instanceof<NodeNull>(this->second)) ((NodeNull*)this->second)->type = this->first->getType();
-    }
+    if(instanceof<NodeNull>(this->first)) ((NodeNull*)this->first)->type = this->second->getType();
+    else if(instanceof<NodeNull>(this->second)) ((NodeNull*)this->second)->type = this->first->getType();   
 
     if(this->op == TokType::Rem) {
         Type* type = this->first->getType();

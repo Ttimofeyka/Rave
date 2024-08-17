@@ -13,6 +13,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeIndex.hpp"
 #include "../../include/parser/nodes/NodeBuiltin.hpp"
 #include "../../include/llvm.hpp"
+#include <iostream>
 
 NodeCast::NodeCast(Type* type, Node* value, int loc) {
     this->type = type;

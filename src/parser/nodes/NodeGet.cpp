@@ -109,7 +109,13 @@ LLVMValueRef NodeGet::checkIn(std::string structure) {
 LLVMValueRef NodeGet::generate() {
     if(instanceof<NodeIden>(this->base)) {
         LLVMValueRef ptr = checkStructure(currScope->getWithoutLoad(((NodeIden*)this->base)->name, loc));
-        std::string structName = std::string(LLVMGetStructName(LLVM::getPointerElType(ptr)));
+        LLVMTypeRef ty = LLVM::getPointerElType(ptr);
+        if(LLVMIsAArgument(ptr)) {
+            Type* inType = AST::funcTable[currScope->funcName]->getInternalArgType(ptr);
+            if(instanceof<TypePointer>(inType)) inType = ((TypePointer*)inType)->instance;
+            ty = generator->genType(inType, -1);
+        }
+        std::string structName = std::string(LLVMGetStructName(ty));
         LLVMValueRef f = this->checkIn(structName);
         if(f != nullptr) return f;
         if(this->isMustBePtr) return LLVM::structGep(

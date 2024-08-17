@@ -53,7 +53,7 @@ std::vector<LLVMValueRef> NodeCall::correctByLLVM(std::vector<LLVMValueRef> valu
         if(fas[i].type->toString() == "void*" || fas[i].type->toString() == "char*") {
             LLVMTypeRef type = LLVMTypeOf(params[i]);
             if(!LLVM::isPointerType(type)) params[i] = Binary::castValue(params[i], LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0), this->loc);
-            else if(LLVMGetTypeKind(LLVMGetElementType(type)) != LLVMIntegerTypeKind) params[i] = Binary::castValue(params[i], LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0), this->loc);
+            else if(LLVMGetTypeKind(LLVM::getPointerElType(params[i])) != LLVMIntegerTypeKind) params[i] = Binary::castValue(params[i], LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0), this->loc);
         }
         else if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(((TypePointer*)fas[i].type)->instance)) {
             LLVMTypeRef type = LLVMTypeOf(params[i]);
@@ -90,7 +90,7 @@ std::vector<LLVMValueRef> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg
         if(fas[i].type->toString() == "void*" || fas[i].type->toString() == "char*") {
             LLVMTypeRef type = LLVMTypeOf(params[i]);
             if(!LLVM::isPointerType(type)) params[i] = Binary::castValue(params[i], LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0), this->loc);
-            else if(LLVMGetTypeKind(LLVMGetElementType(type)) != LLVMIntegerTypeKind) params[i] = Binary::castValue(params[i], LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0), this->loc);
+            else if(LLVMGetTypeKind(LLVM::getPointerElType(params[i])) != LLVMIntegerTypeKind) params[i] = Binary::castValue(params[i], LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0), this->loc);
         }
         else if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(((TypePointer*)fas[i].type)->instance)) {
             LLVMTypeRef type = LLVMTypeOf(params[i]);
@@ -133,7 +133,7 @@ std::vector<LLVMValueRef> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg
         else if(instanceof<TypeFunc>(fas[i].type)) {
             TypeFunc* tfunc = (TypeFunc*)(fas[i].type);
             if(instanceof<TypeBasic>(tfunc->main) && ((TypeBasic*)(tfunc->main))->type == BasicType::Char) {
-                if(LLVM::isPointer(params[i]) && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(params[i]))) == LLVMFunctionTypeKind
+                if(LLVM::isPointer(params[i]) && LLVMGetTypeKind(LLVM::getPointerElType(params[i])) == LLVMFunctionTypeKind
                 && typeToString(LLVMTypeOf(params[i])).find("void ") == 0) {
                     // Casting void(...) to char(...)
                     params[i] = LLVMBuildPointerCast(generator->builder, params[i], generator->genType(fas[i].type, this->loc), "castVFtoCF");

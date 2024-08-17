@@ -29,7 +29,11 @@ LLVMTypeRef LLVM::getPointerElType(LLVMValueRef value) {
     #if RAVE_OPAQUE_POINTERS
     if(LLVMIsAAllocaInst(value)) return LLVMGetAllocatedType(value);
     if(LLVMIsAGlobalValue(value)) return LLVMGlobalGetValueType(value);
-    if(LLVMIsAArgument(value)) return generator->genType(AST::funcTable[currScope->funcName]->getInternalArgType(value), -1);
+    if(LLVMIsAArgument(value)) {
+        Type* ty = AST::funcTable[currScope->funcName]->getInternalArgType(value);
+        if(instanceof<TypePointer>(ty)) return generator->genType(((TypePointer*)ty)->instance, -1);
+        return generator->genType(ty, -1);
+    }
     if(LLVMIsConstant(value) && LLVMIsNull(value) && LLVM::isPointerType(LLVMTypeOf(value))) return LLVMInt8TypeInContext(generator->context);
     if(LLVMIsACallInst(value)) {
         std::string fName = LLVMGetValueName(LLVMGetCalledValue(value));
@@ -53,10 +57,7 @@ LLVMTypeRef LLVM::getPointerElType(LLVMValueRef value) {
 
         return LLVMGetReturnType(LLVMGetCalledFunctionType(value));
     }
-    if(LLVMIsALoadInst(value)) {
-        std::cout << LLVMPrintValueToString(value) << std::endl;
-        return LLVM::getPointerElType(LLVMGetOperand(value, 0));
-    }
+    if(LLVMIsALoadInst(value)) return LLVM::getPointerElType(LLVMGetOperand(value, 0));
     if(LLVMIsAIntToPtrInst(value)) return LLVMInt8TypeInContext(generator->context);
     if(LLVMIsAGetElementPtrInst(value)) return LLVM::getPointerElType(LLVMGetOperand(value, 0));
     std::cout << LLVMPrintValueToString(value) << std::endl; // For future debug
@@ -77,7 +78,7 @@ LLVMValueRef LLVM::load(LLVMValueRef value, const char* name) {
 LLVMValueRef LLVM::call(LLVMValueRef fn, LLVMValueRef* args, unsigned int argsCount, const char* name) {
     #if LLVM_VERSION_MAJOR >= 15
         #if RAVE_OPAQUE_POINTERS
-        return LLVMBuildCall2(generator->builder, LLVMGetReturnType(LLVMGlobalGetValueType(fn)), fn, args, argsCount, name);
+        return LLVMBuildCall2(generator->builder, LLVMGlobalGetValueType(fn), fn, args, argsCount, name);
         #else
         return LLVMBuildCall2(generator->builder, LLVMGetReturnType(LLVMTypeOf(fn)), fn, args, argsCount, name);
         #endif
