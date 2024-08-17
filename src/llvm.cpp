@@ -53,7 +53,10 @@ LLVMTypeRef LLVM::getPointerElType(LLVMValueRef value) {
 
         return LLVMGetReturnType(LLVMGetCalledFunctionType(value));
     }
-    if(LLVMIsALoadInst(value)) return LLVM::getPointerElType(LLVMGetOperand(value, 0));
+    if(LLVMIsALoadInst(value)) {
+        std::cout << LLVMPrintValueToString(value) << std::endl;
+        return LLVM::getPointerElType(LLVMGetOperand(value, 0));
+    }
     if(LLVMIsAIntToPtrInst(value)) return LLVMInt8TypeInContext(generator->context);
     if(LLVMIsAGetElementPtrInst(value)) return LLVM::getPointerElType(LLVMGetOperand(value, 0));
     std::cout << LLVMPrintValueToString(value) << std::endl; // For future debug

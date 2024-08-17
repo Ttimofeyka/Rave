@@ -197,7 +197,7 @@ LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options)
     this->context = LLVMContextCreate();
     this->lModule = LLVMModuleCreateWithNameInContext("rave", this->context);
 
-    #if (LLVM_VERSION >= 15) && !(LLVM_OPAQUE_POINTERS)
+    #if (LLVM_VERSION >= 15) && !(RAVE_OPAQUE_POINTERS)
     LLVMContextSetOpaquePointers(this->context, 0);
     #endif
 
