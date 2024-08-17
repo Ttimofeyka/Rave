@@ -6,12 +6,6 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import <std/thread>
 
-namespace libc {
-    extern(vararg, linkname: "sprintf") int cformat(char* str, char* fmt);
-    extern(linkname: "strtok") char* strtok(char* str, char* chars);
-    extern(linkname: "strtol") long strtol(char* str, char** end, int base);
-}
-
 namespace std {
     namespace cstring {
         int strlen(const(char)* s) {
@@ -179,5 +173,41 @@ namespace std {
             }
             buffer[i] = '\0';
         } => buffer;
+
+        long stol(const(char)* data, int length) {
+            bool isNegative = false;
+            int coeff = 1;
+
+            for(int i=length - 1; i>=0; i--) {
+                if(data[i] == '-') {
+                    isNegative = true;
+                    break;
+                }
+                else if((data[i] < '0') || (data[i] > '9')) break;
+                return += (cast(long)(data[i] - '0') * coeff);
+                coeff *= 10;
+            }
+            if(isNegative) return = -return;
+        }
+
+        (inline) long stol(const(char)* data) => std::cstring::stol(data, std::cstring::strlen(data));
+
+        cent stoc(const(char)* data, int length) {
+            bool isNegative = false;
+            int coeff = 1;
+
+            for(int i=length - 1; i>=0; i--) {
+                if(data[i] == '-') {
+                    isNegative = true;
+                    break;
+                }
+                else if((data[i] < '0') || (data[i] > '9')) break;
+                return += (cast(cent)(data[i] - '0') * coeff);
+                coeff *= 10;
+            }
+            if(isNegative) return = -return;
+        }
+
+        (inline) cent stoc(const(char)* data) => std::cstring::stoc(data, std::cstring::strlen(data));
     }
 }
