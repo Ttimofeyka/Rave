@@ -36,11 +36,7 @@ namespace std {
             return = true;
 
             if(length1 != length2) return = false;
-            else {
-                for(int i=0; i<length1; i++) {
-                    if(s1[i] != s2[i]) @return(false);
-                }
-            }
+            else return = std::cstring::strncmp(s1, s2, length1);
         }
 
         (nochecks) char* strstr(const(char)* str, const(char)* substr) {
