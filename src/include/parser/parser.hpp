@@ -60,7 +60,7 @@ public:
     Node* parseSlice(Node* base, std::string f = "");
     Node* parseStmt(std::string f = "");
     Node* parseBuiltin(std::string f = "");
-    Node* parseDefer(std::string f = "");
+    Node* parseDefer(bool isFunctionScope, std::string f = "");
     Node* parseIf(std::string f, bool isStatic);
     Node* parseSwitch(std::string f);
     std::pair<Node*, Node*> parseCase(std::string f);

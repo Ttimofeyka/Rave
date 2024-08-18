@@ -127,13 +127,33 @@ float a = 0;
 int b = cast(int)a;
 ```
 
-**defer [body/{body}]** - Generate a body before returning from a function.
+**defer [body/{body}]** - Generate a body before current block end. If there is no block, the behavior is like fdefer.
+
+Example:
+
+```d
+int x;
+std::input(&x);
+
+if(x == 0) {
+    void* ptr = std::malloc(32);
+    defer std::free(ptr);
+
+    // Some work with ptr...
+    ptr[0] = 'R';
+    ptr[1] = 'a';
+    ptr[2] = 'v';
+    ptr[3] = 'e';
+}
+```
+
+**fdefer [body/{body}]** - Generate a body before returning from a function.
 
 Example:
 
 ```d
 void* ptr = std::malloc(32);
-defer std::free(ptr);
+fdefer std::free(ptr);
 
 // Some work with ptr...
 ptr[0] = 'R';

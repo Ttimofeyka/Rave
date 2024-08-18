@@ -22,8 +22,9 @@ class NodeDefer : public Node {
 public:
     Node* instruction;
     int loc;
+    bool isFunctionScope;
 
-    NodeDefer(Node* instruction, int loc);
+    NodeDefer(Node* instruction, int loc, bool isFunctionScope);
     Type* getType() override;
     void check() override;
     LLVMValueRef generate() override;

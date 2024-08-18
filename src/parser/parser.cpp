@@ -1119,10 +1119,10 @@ Node* Parser::parseWhile(std::string f) {
     return new NodeWhile(cond, parseStmt(f), line, f);
 }
 
-Node* Parser::parseDefer(std::string f) {
+Node* Parser::parseDefer(bool isFunctionScope, std::string f) {
     int line = this->peek()->line;
     this->next();
-    return new NodeDefer(parseStmt(f), line);
+    return new NodeDefer(parseStmt(f), line, isFunctionScope);
 }
 
 Node* Parser::parseFor(std::string f) {
@@ -1226,7 +1226,8 @@ Node* Parser::parseStmt(std::string f) {
         if(id == "foreach") return this->parseForeach(f);
         if(id == "break") return this->parseBreak();
         if(id == "switch") return this->parseSwitch(f);
-        if(id == "defer") return this->parseDefer(f);
+        if(id == "fdefer") return this->parseDefer(true, f);
+        if(id == "defer") return this->parseDefer(false, f);
         if(id == "extern" || id == "volatile" || id == "const") return this->parseDecl(f);
         if(this->tokens[this->idx+1]->type == TokType::Rarr && this->tokens[this->idx+4]->type != TokType::Equ
            && this->tokens[this->idx+4]->type != TokType::Lpar && this->tokens[this->idx+4]->type != TokType::Rpar
