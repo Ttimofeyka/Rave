@@ -543,9 +543,6 @@ namespace std {
 
 @if(__RAVE_OS == "LINUX") {
     namespace std {
-        extern(vararg, linkname: "scanf") int scanf(char* fmt);
-        extern(linkname: "getchar") char getchar();
-
         std::file stdout;
 
         namespace io {
@@ -556,100 +553,61 @@ namespace std {
         }
 
         (inline) int putchar(char c) => std::stdout.write(&c, 1);
-
-        (volatile) int __putsSL = 0;
-        void puts(char* s) {
-            std::thread::spinlock::lock(&std::__putsSL);
-                for(int i=0; s[i] != '\0'; i+=1) std::putchar(s[i]);
-                std::putchar('\n');
-            std::thread::spinlock::unlock(&std::__putsSL);
-        }
-
-        (volatile) int __putswnlSL = 0;
-        void putswnl(char* s) {
-            std::thread::spinlock::lock(&std::__putswnlSL);
-                for(int i=0; s[i] != '\0'; i+=1) std::putchar(s[i]);
-            std::thread::spinlock::unlock(&std::__putswnlSL);
-        }
-
-        (volatile) int __putswnlSL2 = 0;
-        void putswnlS(std::string s) {
-            std::thread::spinlock::lock(&std::__putswnlSL2);
-                for(int i=0; i<s.length; i+=1) std::putchar(s.data[i]);
-            std::thread::spinlock::unlock(&std::__putswnlSL2);
-        }
-
-        (ctargs, inline) void fprint {
-            std::file f = @getArg(std::file, 0);
-            @skipArg();
-            std::string str = @callWithArgs(std::gsprint);
-            f.write(str.c(), 1, str.length);
-        }
-
-        (ctargs, inline) void fprintln {
-            @callWithArgs(std::fprint, '\n');
-        }
-
-        (ctargs, inline) void print {
-            std::string s = @callWithArgs(std::gsprint);
-            std::putswnlS(s);
-        }
-
-        (inline, ctargs) void println {
-            @callWithArgs(std::print, '\n');
-        }
     }
 }
 
 @else {
     namespace std {
-        extern(vararg, linkname: "scanf") int scanf(char* fmt);
-        extern(linkname: "getchar") char getchar();
         extern(linkname: "putchar") int putchar(char c);
-
-        (volatile) int __putsSL = 0;
-        void puts(char* s) {
-            std::thread::spinlock::lock(&std::__putsSL);
-                for(int i=0; s[i] != '\0'; i+=1) std::putchar(s[i]);
-                std::putchar('\n');
-            std::thread::spinlock::unlock(&std::__putsSL);
-        }
-
-        (volatile) int __putswnlSL = 0;
-        void putswnl(char* s) {
-            std::thread::spinlock::lock(&std::__putswnlSL);
-                for(int i=0; s[i] != '\0'; i+=1) std::putchar(s[i]);
-            std::thread::spinlock::unlock(&std::__putswnlSL);
-        }
-
-        (volatile) int __putswnlSL2 = 0;
-        void putswnlS(std::string s) {
-            std::thread::spinlock::lock(&std::__putswnlSL2);
-                for(int i=0; i<s.length; i+=1) std::putchar(s.data[i]);
-            std::thread::spinlock::unlock(&std::__putswnlSL2);
-        }
-
-        (ctargs, inline) void fprint {
-            std::file f = @getArg(std::file, 0);
-            @skipArg();
-            std::string str = @callWithArgs(std::gsprint);
-            f.write(str.c(), 1, str.length);
-        }
-
-        (ctargs, inline) void fprintln {
-            @callWithArgs(std::fprint, '\n');
-        }
-
-        (ctargs, inline) void print {
-            std::string s = @callWithArgs(std::gsprint);
-            std::putswnlS(s);
-        }
-
-        (inline, ctargs) void println {
-            @callWithArgs(std::print, '\n');
-        }
     }
 };
+
+namespace std {
+    extern(vararg, linkname: "scanf") int scanf(char* fmt);
+    extern(linkname: "getchar") char getchar();
+
+    (volatile) int __putsSL = 0;
+    void puts(char* s) {
+        std::thread::spinlock::lock(&std::__putsSL);
+            for(int i=0; s[i] != '\0'; i+=1) std::putchar(s[i]);
+            std::putchar('\n');
+        std::thread::spinlock::unlock(&std::__putsSL);
+    }
+
+    (volatile) int __putswnlSL = 0;
+    void putswnl(char* s) {
+        std::thread::spinlock::lock(&std::__putswnlSL);
+            for(int i=0; s[i] != '\0'; i+=1) std::putchar(s[i]);
+        std::thread::spinlock::unlock(&std::__putswnlSL);
+    }
+
+    (volatile) int __putswnlSL2 = 0;
+    void putswnlS(std::string s) {
+        std::thread::spinlock::lock(&std::__putswnlSL2);
+            for(int i=0; i<s.length; i+=1) std::putchar(s.data[i]);
+        std::thread::spinlock::unlock(&std::__putswnlSL2);
+    }
+
+    (ctargs, inline) void fprint {
+        std::file f = @getArg(std::file, 0);
+        @skipArg();
+        std::string str = @callWithArgs(std::gsprint);
+        f.write(str.c(), 1, str.length);
+    }
+
+    (ctargs, inline) void fprintln {
+        @callWithArgs(std::fprint, '\n');
+    }
+
+    (ctargs, inline) void print {
+        std::string s = @callWithArgs(std::gsprint);
+        std::putswnlS(s);
+    }
+
+    (inline, ctargs) void println {
+        @callWithArgs(std::print, '\n');
+    }
+}
 
 namespace std {
     (inline, ctargs) void input {
