@@ -55,6 +55,9 @@ namespace std {
 
             int remove(char* pathname) => std::file::linux::unlinkat(-100, pathname, 0);
             int getStat(int fd, std::fstat* buffer) => cast(int)std::syscall(std::sysctable::FStat, fd, buffer);
+
+            (inline) int __faccessat(int dirfd, char* fname, int mode, int flag) => cast(int)std::syscall(std::sysctable::FAccessAt, dirfd, fname, mode, flag);
+            int __access(char* fname, int flag) => std::file::__faccessat(std::file::atFdCwd, fname, flag, 0);
         }
     }
 };
@@ -63,6 +66,7 @@ namespace std {
     namespace std {
         namespace file {
             extern(C, linkname: "MoveFileW") char __rename(ushort* oldpath, ushort* newpath);
+            extern(linkname: "_access") int __access(char* fname, int flag);
         }
     }
 };
@@ -72,38 +76,6 @@ namespace std {
         namespace file {
             extern(linkname: "rename") int rename(char* oldpath, char* newpath);
             extern(linkname: "remove") int remove(char* pathname);
-        }
-    }
-};
-
-namespace libc {
-    extern(linkname: "fopen") libc::File* fopen(char* path, char* mode);
-    extern(linkname: "fclose") int fclose(libc::File* file);
-    extern(linkname: "ferror") int fhasError(libc::File* file);
-    extern(linkname: "fflush") int fflush(libc::File* file);
-    extern(linkname: "fscanf", vararg) int fscanf(libc::File* file, char* fmt);
-    extern(linkname: "feof") int feof(libc::File* file);
-    extern(linkname: "fgetc") char fgetc(libc::File* file);
-    extern(linkname: "fgets") char* fgets(char* s, int size, libc::File* file);
-    extern(linkname: "fread") int fread(void* buffer, int size, int n, libc::File* file);
-    extern(linkname: "fseek") int fseek(libc::File* stream, int offset, int origin);
-    extern(linkname: "ftell") int ftell(libc::File* stream);
-    extern(linkname: "fwrite") int fwrite(void* buffer, int size, int n, libc::File* stream);
-    extern(linkname: "getline") int getline(char** buffer, int* len, int fd);
-}
-
-@if(__RAVE_OS == "LINUX") {
-    namespace std {
-        namespace file {
-            extern(linkname: "access") int __access(char* fname, int flag);
-        }
-    }
-};
-
-@if(__RAVE_OS == "WINDOWS") {
-    namespace std {
-        namespace file {
-            extern(linkname: "_access") int __access(char* fname, int flag);
         }
     }
 };
@@ -131,135 +103,246 @@ namespace std {
 
 @if(__RAVE_OS == "LINUX") {
     namespace std {
-        namespace experimental {
-            struct file {
-                int fd;
-                char* buffer; // default: 1024
-                int bufferSize;
-                int bufferPos;
-                char* name;
-                char flushBufferSymbol;
+        struct file {
+            int fd;
+            char* buffer; // default: 1024
+            int bufferSize;
+            int bufferPos;
+            char* name;
+            char flushBufferSymbol;
 
-                std::experimental::file this(char* name) {
-                    std::experimental::file this;
-                    this.buffer = null;
-                    this.bufferSize = 1024;
-                    this.name = name;
-                    this.fd = -1;
-                    this.flushBufferSymbol = cast(char)-1;
-                } => this;
+            std::file this(char* name) {
+                std::file this;
+                this.buffer = null;
+                this.bufferSize = 1024;
+                this.name = name;
+                this.fd = -1;
+                this.flushBufferSymbol = cast(char)-1;
+            } => this;
 
-                std::experimental::file this(char* name, int bufferSize) {
-                    std::experimental::file this;
-                    this.buffer = null;
-                    this.bufferSize = bufferSize;
-                    this.name = name;
-                    this.fd = -1;
-                    this.flushBufferSymbol = cast(char)-1;
-                } => this;
+            std::file this(char* name, int bufferSize) {
+                std::file this;
+                this.buffer = null;
+                this.bufferSize = bufferSize;
+                this.name = name;
+                this.fd = -1;
+                this.flushBufferSymbol = cast(char)-1;
+            } => this;
 
-                void open(char* mode) {
-                    if(std::cstring::strcmp(mode, "r")) fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, name, std::file::rdOnly || std::file::oCreate, 448);
-                    else if(std::cstring::strcmp(mode, "w")) {
-                        fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, name, std::file::wrOnly || std::file::oCreate, 448);
-                        buffer = std::malloc(bufferSize);
-                        this.bufferPos = 0;
-                    }
-                    else if(std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr") || std::cstring::strcmp(mode, "r+") || std::cstring::strcmp(mode, "w+")) {
-                        fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, name, std::file::rdWrOnly || std::file::oCreate, 448);
-                        buffer = std::malloc(bufferSize);
-                        this.bufferPos = 0;
-                    }
-                    else fd = -1;
+            void open(char* mode) {
+                if(std::cstring::strcmp(mode, "r")) fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, name, std::file::rdOnly || std::file::oCreate, 448);
+                else if(std::cstring::strcmp(mode, "w")) {
+                    fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, name, std::file::wrOnly || std::file::oCreate, 448);
+                    buffer = std::malloc(bufferSize);
+                    this.bufferPos = 0;
                 }
-
-                void openFd(char* mode, int fd) {
-                    this.fd = fd;
-                    if(std::cstring::strcmp(mode, "w") || std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr") || std::cstring::strcmp(mode, "r+") || std::cstring::strcmp(mode, "w+")) {
-                        buffer = std::malloc(bufferSize);
-                        this.bufferPos = 0;
-                    }
+                else if(std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr") || std::cstring::strcmp(mode, "r+") || std::cstring::strcmp(mode, "w+")) {
+                    fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, name, std::file::rdWrOnly || std::file::oCreate, 448);
+                    buffer = std::malloc(bufferSize);
+                    this.bufferPos = 0;
                 }
+                else fd = -1;
+            }
 
-                (inline) bool isOpen => (fd >= 0);
-
-                void rename(char* to) {
-                    std::file::rename(this.name, to);
-                    this.name = to;
-                }
-
-                bool exists {
-                    if(fd == -1) return = std::file::exists(this.name);
-                    else return = true;
-                }
-
-                int seek(int flag, long offset) => cast(int)std::syscall(std::sysctable::LSeek, fd, flag, offset);
-
-                void flush {
-                    if((fd != -1) && (bufferPos > 0) && (buffer != null)) {
-                        std::syscall(std::sysctable::Write, fd, buffer, bufferPos);
-                        bufferPos = 0;
-                    }
-                }
-
-                int read(char* buffer, int bytes) {
-                    if(fd != -1) return = cast(int)std::syscall(std::sysctable::Read, fd, buffer, bytes);
-                    else return = -1;
-                }
-
-                int write(char* buf, int bytes) {
-                    if(fd != -1) {
-                        if(bytes < bufferSize) {
-                            for(int i=0; i<bytes; i++) {
-                                buffer[bufferPos] = buf[i];
-                                bufferPos += 1;
-                                if((buffer[bufferPos - 1] == flushBufferSymbol) || (bufferPos == bufferSize)) this.flush();
-                            }
-                        }
-                        else {
-                            this.flush();
-                            return = cast(int)std::syscall(std::sysctable::Write, fd, buf, bytes);
-                        }
-                    }
-                    else return = -1;
-                }
-
-                (inline) char getc {this.read(&return, 1);}
-                (inline) void putc(char c) {this.write(&c, 1);}
-
-                void close {
-                    if(fd != -1) {
-                        this.flush();
-                        std::syscall(std::sysctable::Close, fd);
-                        if(buffer != null) {
-                            std::free(buffer);
-                            buffer = null;
-                        }
-                        fd = -1;
-                    }
-                }
-
-                void ~this {
-                    if(this.fd != -1) {
-                        if(this.bufferPos > 0) {
-                            std::syscall(std::sysctable::Write, this.fd, this.buffer, this.bufferPos);
-                            this.bufferPos = 0;
-                        }
-                        std::syscall(std::sysctable::Close, this.fd);
-                        this.fd = -1;
-                    }
-
-                    if(this.buffer != null) {
-                        std::free(this.buffer);
-                        this.buffer = null;
-                    }
-
+            void openFd(char* mode, int fd) {
+                this.fd = fd;
+                if(std::cstring::strcmp(mode, "w") || std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr") || std::cstring::strcmp(mode, "r+") || std::cstring::strcmp(mode, "w+")) {
+                    buffer = std::malloc(bufferSize);
                     this.bufferPos = 0;
                 }
             }
+
+            (inline) bool isOpen => (fd >= 0);
+
+            void rename(char* to) {
+                std::file::rename(this.name, to);
+                this.name = to;
+            }
+
+            bool exists {
+                if(fd == -1) return = std::file::exists(this.name);
+                else return = true;
+            }
+
+            int seek(int flag, long offset) => cast(int)std::syscall(std::sysctable::LSeek, fd, flag, offset);
+
+            void flush {
+                if((fd != -1) && (bufferPos > 0) && (buffer != null)) {
+                    std::syscall(std::sysctable::Write, fd, buffer, bufferPos);
+                    bufferPos = 0;
+                }
+            }
+
+            int read(char* buffer, int bytes) {
+                if(fd != -1) return = cast(int)std::syscall(std::sysctable::Read, fd, buffer, bytes);
+                else return = -1;
+            }
+
+            int write(char* buf, int bytes) {
+                if(fd != -1) {
+                    if(bytes < bufferSize) {
+                        for(int i=0; i<bytes; i++) {
+                            buffer[bufferPos] = buf[i];
+                            bufferPos += 1;
+                            if((buffer[bufferPos - 1] == flushBufferSymbol) || (bufferPos == bufferSize)) this.flush();
+                        }
+                    }
+                    else {
+                        this.flush();
+                        return = cast(int)std::syscall(std::sysctable::Write, fd, buf, bytes);
+                    }
+                }
+                else return = -1;
+            }
+
+            (inline) char getc {this.read(&return, 1);}
+            (inline) int putc(char c) => this.write(&c, 1);
+
+            void close {
+                if(fd != -1) {
+                    this.flush();
+                    std::syscall(std::sysctable::Close, fd);
+                    if(buffer != null) {
+                        std::free(buffer);
+                        buffer = null;
+                    }
+                    fd = -1;
+                }
+            }
+
+            std::string readLine {
+                std::string buffer = "";
+                char ch = this.getc();
+                while((ch != '\n') && (ch != -1)) {
+                    buffer.add(ch);
+                    ch = this.getc();
+                }
+            } => buffer;
+
+            std::u8string u8ReadLine {
+                std::u8string buffer = "";
+                char ch = this.getc();
+                while((ch != '\n') && (ch != -1)) {
+                    buffer.add(ch);
+                    ch = this.getc();
+                }
+            } => buffer;
+
+            void ~this {
+                if(this.fd != -1) {
+                    if(this.bufferPos > 0) {
+                        std::syscall(std::sysctable::Write, this.fd, this.buffer, this.bufferPos);
+                        this.bufferPos = 0;
+                    }
+                    std::syscall(std::sysctable::Close, this.fd);
+                    this.fd = -1;
+                }
+
+                if(this.buffer != null) {
+                    std::free(this.buffer);
+                    this.buffer = null;
+                }
+
+                this.bufferPos = 0;
+            }
         }
     }
-}
+};
+
+@if(__RAVE_OS != "LINUX") {
+    namespace libc {
+        extern(linkname: "fopen") libc::File* fopen(char* path, char* mode);
+        extern(linkname: "fdopen") libc::File* fdopen(int fd, char* mode);
+        extern(linkname: "fclose") int fclose(libc::File* file);
+        extern(linkname: "ferror") int fhasError(libc::File* file);
+        extern(linkname: "fflush") int fflush(libc::File* file);
+        extern(linkname: "fscanf", vararg) int fscanf(libc::File* file, char* fmt);
+        extern(linkname: "feof") int feof(libc::File* file);
+        extern(linkname: "fgetc") char fgetc(libc::File* file);
+        extern(linkname: "fread") int fread(void* buffer, int size, int n, libc::File* file);
+        extern(linkname: "fseek") int fseek(libc::File* stream, int offset, int origin);
+        extern(linkname: "ftell") int ftell(libc::File* stream);
+        extern(linkname: "fwrite") int fwrite(void* buffer, int size, int n, libc::File* stream);
+        extern(linkname: "getline") int getline(char** buffer, int* len, int fd);
+    }
+
+    namespace std {
+        struct file {
+            libc::File* _file;
+            const(char)* name;
+            bool isOpen;
+
+            std::file this(const(char)* name) {
+                std::file this;
+                this.name = name;
+                this.isOpen = false;
+            } => this;
+
+            void operator=(std::file* one, char* two) {one[0] = std::file(two);}
+
+            void open(char* mode) {
+                this._file = libc::fopen(this.name, mode);
+                this.isOpen = (this._file != null);
+            }
+
+            void close {
+                if(this.isOpen) {
+                    libc::fclose(this._file);
+                    this.isOpen = false;
+                }
+            }
+
+            void ~this {
+                if(this._file != null) {
+                    if(this.isOpen) {
+                        libc::fclose(this._file);
+                        this.isOpen = false;
+                    }
+                }
+                this._file = null;
+            }
+
+            void rename(char* to) {
+                std::file::rename(this.name, to);
+                this.name = to;
+            }
+
+            void remove {std::file::remove(this.name);}
+
+            int read(void* buffer, int size, int n) => libc::fread(buffer, size, n, this._file);
+            int write(void* buffer, int size, int n) => libc::fwrite(buffer, size, n, this._file);
+
+            char getc => libc::fgetc(this._file);
+
+            int seek(int offset, int flag) => libc::fseek(this._file, offset, flag);
+
+            std::string readLine {
+                std::string buffer = "";
+                char ch = this.getc();
+                while((ch != '\n') && (ch != -1)) {
+                    buffer.add(ch);
+                    ch = this.getc();
+                }
+            } => buffer;
+
+            std::u8string u8ReadLine {
+                std::u8string buffer = "";
+                char ch = this.getc();
+                while((ch != '\n') && (ch != -1)) {
+                    buffer.add(ch);
+                    ch = this.getc();
+                }
+            } => buffer;
+
+            bool exists {
+                if(this.isOpen == false) return = std::file::exists(this.name);
+                else return = true;
+            }
+
+            int flush => libc::fflush(this._file);
+        }
+    }
+};
 
 @if(__RAVE_OS == "WINDOWS") {
     namespace std {
@@ -399,7 +482,7 @@ namespace std {
                 }
 
                 (inline) char getc {this.read(&return, 1);}
-                (inline) void putc(char c) {this.write(&c, 1);}
+                (inline) int putc(char c) => this.write(&c, 1);
 
                 void close {
                     if(fd != null) {
@@ -412,6 +495,24 @@ namespace std {
                         fd = null;
                     }
                 }
+
+                std::string readLine {
+                    std::string buffer = "";
+                    char ch = this.getc();
+                    while((ch != '\n') && (ch != -1)) {
+                        buffer.add(ch);
+                        ch = this.getc();
+                    }
+                } => buffer;
+
+                std::u8string u8ReadLine {
+                    std::u8string buffer = "";
+                    char ch = this.getc();
+                    while((ch != '\n') && (ch != -1)) {
+                        buffer.add(ch);
+                        ch = this.getc();
+                    }
+                } => buffer;
 
                 void ~this {
                     if(this.__name != null) {
@@ -440,53 +541,117 @@ namespace std {
     }
 }
 
+@if(__RAVE_OS == "LINUX") {
+    namespace std {
+        extern(vararg, linkname: "scanf") int scanf(char* fmt);
+        extern(linkname: "getchar") char getchar();
+
+        std::file stdout;
+
+        namespace io {
+            void initialize {
+                std::stdout = std::file("stdout", 2048);
+                std::stdout.openFd("w", 1);
+            }
+        }
+
+        (inline) int putchar(char c) => std::stdout.write(&c, 1);
+
+        (volatile) int __putsSL = 0;
+        void puts(char* s) {
+            std::thread::spinlock::lock(&std::__putsSL);
+                for(int i=0; s[i] != '\0'; i+=1) std::putchar(s[i]);
+                std::putchar('\n');
+            std::thread::spinlock::unlock(&std::__putsSL);
+        }
+
+        (volatile) int __putswnlSL = 0;
+        void putswnl(char* s) {
+            std::thread::spinlock::lock(&std::__putswnlSL);
+                for(int i=0; s[i] != '\0'; i+=1) std::putchar(s[i]);
+            std::thread::spinlock::unlock(&std::__putswnlSL);
+        }
+
+        (volatile) int __putswnlSL2 = 0;
+        void putswnlS(std::string s) {
+            std::thread::spinlock::lock(&std::__putswnlSL2);
+                for(int i=0; i<s.length; i+=1) std::putchar(s.data[i]);
+            std::thread::spinlock::unlock(&std::__putswnlSL2);
+        }
+
+        (ctargs, inline) void fprint {
+            std::file f = @getArg(std::file, 0);
+            @skipArg();
+            std::string str = @callWithArgs(std::gsprint);
+            f.write(str.c(), 1, str.length);
+        }
+
+        (ctargs, inline) void fprintln {
+            @callWithArgs(std::fprint, '\n');
+        }
+
+        (ctargs, inline) void print {
+            std::string s = @callWithArgs(std::gsprint);
+            std::putswnlS(s);
+        }
+
+        (inline, ctargs) void println {
+            @callWithArgs(std::print, '\n');
+        }
+    }
+}
+
+@else {
+    namespace std {
+        extern(vararg, linkname: "scanf") int scanf(char* fmt);
+        extern(linkname: "getchar") char getchar();
+        extern(linkname: "putchar") int putchar(char c);
+
+        (volatile) int __putsSL = 0;
+        void puts(char* s) {
+            std::thread::spinlock::lock(&std::__putsSL);
+                for(int i=0; s[i] != '\0'; i+=1) std::putchar(s[i]);
+                std::putchar('\n');
+            std::thread::spinlock::unlock(&std::__putsSL);
+        }
+
+        (volatile) int __putswnlSL = 0;
+        void putswnl(char* s) {
+            std::thread::spinlock::lock(&std::__putswnlSL);
+                for(int i=0; s[i] != '\0'; i+=1) std::putchar(s[i]);
+            std::thread::spinlock::unlock(&std::__putswnlSL);
+        }
+
+        (volatile) int __putswnlSL2 = 0;
+        void putswnlS(std::string s) {
+            std::thread::spinlock::lock(&std::__putswnlSL2);
+                for(int i=0; i<s.length; i+=1) std::putchar(s.data[i]);
+            std::thread::spinlock::unlock(&std::__putswnlSL2);
+        }
+
+        (ctargs, inline) void fprint {
+            std::file f = @getArg(std::file, 0);
+            @skipArg();
+            std::string str = @callWithArgs(std::gsprint);
+            f.write(str.c(), 1, str.length);
+        }
+
+        (ctargs, inline) void fprintln {
+            @callWithArgs(std::fprint, '\n');
+        }
+
+        (ctargs, inline) void print {
+            std::string s = @callWithArgs(std::gsprint);
+            std::putswnlS(s);
+        }
+
+        (inline, ctargs) void println {
+            @callWithArgs(std::print, '\n');
+        }
+    }
+};
+
 namespace std {
-    extern(vararg, linkname: "scanf") int scanf(char* fmt);
-    extern(linkname: "getchar") char getchar();
-    extern(linkname: "putchar") int putchar(char c);
-
-    (volatile) int __putsSL = 0;
-    void puts(char* s) {
-        std::thread::spinlock::lock(&std::__putsSL);
-            for(int i=0; s[i] != '\0'; i+=1) std::putchar(s[i]);
-            std::putchar('\n');
-        std::thread::spinlock::unlock(&std::__putsSL);
-    }
-
-    (volatile) int __putswnlSL = 0;
-    void putswnl(char* s) {
-        std::thread::spinlock::lock(&std::__putswnlSL);
-            for(int i=0; s[i] != '\0'; i+=1) std::putchar(s[i]);
-        std::thread::spinlock::unlock(&std::__putswnlSL);
-    }
-
-    (volatile) int __putswnlSL2 = 0;
-    void putswnlS(std::string s) {
-        std::thread::spinlock::lock(&std::__putswnlSL2);
-            for(int i=0; i<s.length; i+=1) std::putchar(s.data[i]);
-        std::thread::spinlock::unlock(&std::__putswnlSL2);
-    }
-
-    (ctargs, inline) void fprint {
-        std::file f = @getArg(std::file, 0);
-        @skipArg();
-        std::string str = @callWithArgs(std::gsprint);
-        f.write(str.c(), 1, str.length);
-    }
-
-    (ctargs, inline) void fprintln {
-        @callWithArgs(std::fprint, '\n');
-    }
-
-    (ctargs, inline) void print {
-        std::string s = @callWithArgs(std::gsprint);
-        std::putswnlS(s);
-    }
-
-    (inline, ctargs) void println {
-        @callWithArgs(std::print, '\n');
-    }
-
     (inline, ctargs) void input {
         @foreachArgs() {
             @if(@tNequals(@getCurrArgType(), float*)) {
@@ -578,86 +743,6 @@ namespace std {
             ch = std::getchar();
         }
     } => buffer;
-
-    struct file {
-        libc::File* _file;
-        const(char)* name;
-        bool isOpen;
-
-        std::file this(const(char)* name) {
-            std::file this;
-            this.name = name;
-            this.isOpen = false;
-        } => this;
-
-        void operator=(std::file* one, char* two) {one[0] = std::file(two);}
-
-        void open(char* mode) {
-            this._file = libc::fopen(this.name, mode);
-            this.isOpen = (this._file != null);
-        }
-
-        void close {
-            if(this.isOpen) {
-                libc::fclose(this._file);
-                this.isOpen = false;
-            }
-        }
-
-        void ~this {
-            if(this._file != null) {
-                if(this.isOpen) {
-                    libc::fclose(this._file);
-                    this.isOpen = false;
-                }
-            }
-            this._file = null;
-        }
-
-        void rename(char* to) {
-            std::file::rename(this.name, to);
-            this.name = to;
-        }
-
-        void remove {std::file::remove(this.name);}
-
-        int read(void* buffer, int size, int n) => libc::fread(buffer, size, n, this._file);
-        int write(void* buffer, int size, int n) => libc::fwrite(buffer, size, n, this._file);
-
-        char getc => libc::fgetc(this._file);
-        char* gets(char* buffer, int n) => libc::fgets(buffer, n, this._file);
-
-        int seek(int offset, int flag) => libc::fseek(this._file, offset, flag);
-
-        std::string readLine {
-            std::string buffer = "";
-            char ch = this.getc();
-            while((ch != '\n') && (ch != -1)) {
-                buffer.add(ch);
-                ch = this.getc();
-            }
-        } => buffer;
-
-        std::u8string u8ReadLine {
-            std::u8string buffer = "";
-            char ch = this.getc();
-            while((ch != '\n') && (ch != -1)) {
-                buffer.add(ch);
-                ch = this.getc();
-            }
-        } => buffer;
-
-        bool isEof => cast(bool)libc::feof(this._file);
-
-        bool hasError => cast(bool)libc::fhasError(this._file);
-
-        bool exists {
-            if(this.isOpen == false) return = std::file::exists(this.name);
-            else return = true;
-        }
-
-        int flush => libc::fflush(this._file);
-    }
 
     namespace ansi {
         alias black = "\033[30m";

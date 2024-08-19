@@ -12,7 +12,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeFor.hpp"
 #include "../../include/utils.hpp"
 
-NodeIf::NodeIf(Node* cond, Node* body, Node* _else, long loc, std::string funcName, bool isStatic) {
+NodeIf::NodeIf(Node* cond, Node* body, Node* _else, int loc, std::string funcName, bool isStatic) {
     this->cond = cond;
     this->body = body;
     this->_else = _else;

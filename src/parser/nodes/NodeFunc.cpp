@@ -27,6 +27,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeGet.hpp"
 #include "../../include/parser/nodes/NodeIndex.hpp"
 #include "../../include/parser/nodes/NodeCast.hpp"
+#include "../../include/parser/nodes/NodeCall.hpp"
 #include <llvm-c/Comdat.h>
 #include <llvm-c/Analysis.h>
 #include "../../include/compiler.hpp"
@@ -263,6 +264,9 @@ LLVMValueRef NodeFunc::generate() {
     if(this->name == "main") {
         linkName = "main";
         if(instanceof<TypeVoid>(this->type)) this->type = new TypeBasic(BasicType::Int);
+        if(!generator->settings.noEntry && !generator->settings.noStd) {
+            if(((NodeString*)AST::aliasTable["__RAVE_OS"])->value == "LINUX") block->nodes.insert(block->nodes.begin(), new NodeCall(loc, new NodeIden("std::io::initialize", -1), {}));
+        }
     }
 
     for(int i=0; i<this->mods.size(); i++) {

@@ -16,7 +16,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeIden.hpp"
 #include "../../include/utils.hpp"
 
-NodeWhile::NodeWhile(Node* cond, Node* body, long loc, std::string funcName) {
+NodeWhile::NodeWhile(Node* cond, Node* body, int loc, std::string funcName) {
     this->cond = cond;
     this->body = body;
     this->loc = loc;

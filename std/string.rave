@@ -4,7 +4,7 @@ Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-import <std/vector> <std/cstring> <std/ascii> <std/utf8>
+import <std/vector> <std/cstring> <std/ascii> <std/utf8> <std/utf32>
 import <std/thread> <std/strutil> <std/map> <std/hash>
 
 namespace std {
@@ -282,11 +282,18 @@ namespace std {
     }
 
     namespace string {
+        (inline) std::string fromNumber(cent n) {
+            char[40] tempBuffer;
+            std::cstring::ctos(n, &tempBuffer);
+            std::string sNumber = std::string(&tempBuffer);
+        } => sNumber;
+
         (inline) std::string fromNumber(long n) {
             char[24] tempBuffer;
             std::cstring::ltos(n, &tempBuffer);
             std::string sNumber = std::string(&tempBuffer);
         } => sNumber;
+
         (inline) std::string fromNumber(int n) => std::string::fromNumber(cast(long)n);
         (inline) std::string fromNumber(short n) => std::string::fromNumber(cast(long)n);
         (inline) std::string fromNumber(char n) => std::string::fromNumber(cast(long)n);
@@ -297,12 +304,11 @@ namespace std {
             std::cstring::dtos(n, precision, &tempBuffer);
             std::string sNumber = std::string(&tempBuffer);
         } => sNumber;
+
         (inline) std::string fromDouble(double n) => std::string::fromDoubleN(n, 8);
 
         (inline) std::string fromFloatN(float n, int precision) => std::string::fromDoubleN(cast(double)n, precision);
         (inline) std::string fromFloat(float n) => std::string::fromFloatN(n, 7);
-
-        (inline) std::string fromUNumber(char n) => std::string::fromUNumber(cast(short)n);
     }
 
     (ctargs) void sprintBuffer {
@@ -345,9 +351,10 @@ namespace std {
                             };
                             @if(@tEquals(@getCurrArgType(), std::u32string)) {
                                 std::u32string us = @getCurrArg(std::u32string);
-                                for(int i=0; i<us.length; i+=1) {
+                                if(us.data == null) result.appendC("null");
+                                else for(int i=0; i<us.length; i+=1) {
                                     char[4] buf;
-                                    int n = std::utf::encode(us.data[i], &buf[0]);
+                                    int n = std::utf32::encode(us.data[i], &buf[0]);
                                     if(n == 1) result.add(buf[0]);
                                     else if(n == 2) {
                                         result.add(buf[0]);
@@ -375,9 +382,10 @@ namespace std {
                             };
                             @if(@tEquals(@getCurrArgType(), int*)) {
                                 uint* utf8Text = @getCurrArg(uint*);
-                                for(int i=0; utf8Text[i] != '\0'; i+=1) {
+                                if(utf8Text == null) result.appendC("null");
+                                else for(int i=0; utf8Text[i] != '\0'; i+=1) {
                                     char[4] buf;
-                                    int n = std::utf::encode(utf8Text[i], &buf[0]);
+                                    int n = std::utf32::encode(utf8Text[i], &buf[0]);
                                     if(n == 1) result.add(buf[0]);
                                     else if(n == 2) {
                                         result.add(buf[0]);

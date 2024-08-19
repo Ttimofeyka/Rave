@@ -32,14 +32,14 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/Types.hpp"
 #include "../../include/compiler.hpp"
 
-NodeBuiltin::NodeBuiltin(std::string name, std::vector<Node*> args, long loc, NodeBlock* block) {
+NodeBuiltin::NodeBuiltin(std::string name, std::vector<Node*> args, int loc, NodeBlock* block) {
     this->name = name;
     this->args = std::vector<Node*>(args);
     this->loc = loc;
     this->block = block;
 }
 
-NodeBuiltin::NodeBuiltin(std::string name, std::vector<Node*> args, long loc, NodeBlock* block, Type* type, bool isImport, bool isTopLevel, int CTId) {
+NodeBuiltin::NodeBuiltin(std::string name, std::vector<Node*> args, int loc, NodeBlock* block, Type* type, bool isImport, bool isTopLevel, int CTId) {
     this->name = name;
     this->args = std::vector<Node*>(args);
     this->loc = loc;
@@ -242,9 +242,13 @@ LLVMValueRef NodeBuiltin::generate() {
         return result;
     }
     if(this->name == "if") {
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+
         Node* cond = this->args[0];
         if(instanceof<NodeBinary>(cond)) ((NodeBinary*)cond)->isStatic = true;
         AST::condStack[CTId] = cond;
+        CTId += 1;
+
         if(this->isImport) for(int i=0; i<this->block->nodes.size(); i++) {
             if(instanceof<NodeBuiltin>(this->block->nodes[i])) ((NodeBuiltin*)this->block->nodes[i])->isImport = true;
             else if(instanceof<NodeNamespace>(this->block->nodes[i])) ((NodeNamespace*)this->block->nodes[i])->isImported = true;
@@ -254,6 +258,22 @@ LLVMValueRef NodeBuiltin::generate() {
         }
         NodeIf* _if = new NodeIf(cond, block, nullptr, this->loc, (currScope == nullptr ? "" : currScope->funcName), true);
         _if->comptime();
+        CTId -= 1;
+        return nullptr;
+    }
+    if(this->name == "else") {
+        if(AST::condStack.find(CTId) != AST::condStack.end()) {
+            if(this->isImport) for(int i=0; i<this->block->nodes.size(); i++) {
+                if(instanceof<NodeBuiltin>(this->block->nodes[i])) ((NodeBuiltin*)this->block->nodes[i])->isImport = true;
+                else if(instanceof<NodeNamespace>(this->block->nodes[i])) ((NodeNamespace*)this->block->nodes[i])->isImported = true;
+                else if(instanceof<NodeFunc>(this->block->nodes[i])) ((NodeFunc*)this->block->nodes[i])->isExtern = true;
+                else if(instanceof<NodeVar>(this->block->nodes[i])) ((NodeVar*)this->block->nodes[i])->isExtern = true;
+                else if(instanceof<NodeStruct>(this->block->nodes[i])) ((NodeStruct*)this->block->nodes[i])->isImported = true;
+            }
+            NodeIf* _else = new NodeIf(new NodeUnary(loc, TokType::Ne, AST::condStack[CTId]), block, nullptr, loc, (currScope == nullptr ? "" : currScope->funcName), true);
+            _else->comptime();
+        }
+        else generator->error("using '@else' statement without '@if'!", loc);
         return nullptr;
     }
     if(this->name == "aliasExists") {

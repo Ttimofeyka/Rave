@@ -18,12 +18,12 @@ public:
     Node* cond = nullptr;
     Node* body = nullptr;
     Node* _else = nullptr;
-    long loc;
+    int loc;
     std::string funcName;
     bool isStatic = false;
     bool hasRets[2];
 
-    NodeIf(Node* cond, Node* body, Node* _else, long loc, std::string func, bool isStatic);
+    NodeIf(Node* cond, Node* body, Node* _else, int loc, std::string func, bool isStatic);
     Type* getType() override;
     void check() override;
     LLVMValueRef generate() override;

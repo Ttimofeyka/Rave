@@ -17,9 +17,9 @@ public:
     Node* cond;
     Node* body;
     std::string funcName;
-    long loc;
+    int loc;
 
-    NodeWhile(Node* cond, Node* body, long loc, std::string funcName);
+    NodeWhile(Node* cond, Node* body, int loc, std::string funcName);
     bool isReleased(std::string varName);
     Type* getType() override;
     LLVMValueRef generate() override;

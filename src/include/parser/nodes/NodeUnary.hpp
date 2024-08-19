@@ -15,12 +15,12 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 class NodeUnary : public Node {
 public:
-    long loc;
+    int loc;
     char type;
     Node* base;
     bool isEqu = false;
 
-    NodeUnary(long loc, char type, Node* base);
+    NodeUnary(int loc, char type, Node* base);
 
     LLVMValueRef generatePtr();
     LLVMValueRef generateConst();

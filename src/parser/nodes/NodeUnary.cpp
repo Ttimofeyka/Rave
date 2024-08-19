@@ -22,7 +22,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/ast.hpp"
 #include "../../include/llvm.hpp"
 
-NodeUnary::NodeUnary(long loc, char type, Node* base) {
+NodeUnary::NodeUnary(int loc, char type, Node* base) {
     this->loc = loc;
     this->type = type;
     this->base = base;

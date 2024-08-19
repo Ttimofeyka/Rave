@@ -21,15 +21,15 @@ class NodeBuiltin : public Node {
 public:
     std::string name;
     std::vector<Node*> args;
-    long loc;
+    int loc;
     Type* type = nullptr;
     NodeBlock* block;
     bool isImport = false;
     bool isTopLevel = false;
     int CTId = 0;
 
-    NodeBuiltin(std::string name, std::vector<Node*> args, long loc, NodeBlock* block);
-    NodeBuiltin(std::string name, std::vector<Node*> args, long loc, NodeBlock* block, Type* type, bool isImport, bool isTopLevel, int CTId);
+    NodeBuiltin(std::string name, std::vector<Node*> args, int loc, NodeBlock* block);
+    NodeBuiltin(std::string name, std::vector<Node*> args, int loc, NodeBlock* block, Type* type, bool isImport, bool isTopLevel, int CTId);
 
     NodeType* asType(int n, bool isCompTime = false);
     BigInt asNumber(int n);

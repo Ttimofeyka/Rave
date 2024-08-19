@@ -126,13 +126,17 @@ Node* Parser::parseTopLevel(std::string s) {
     else if(this->peek()->value == "type") return this->parseAliasType();
     else if(this->peek()->type == TokType::Builtin) {
         Token* tok = this->peek();
-        this->idx += 2;
+        this->next();
 
         std::vector<Node*> args;
-        while(this->peek()->type != TokType::Lpar) {
-            args.push_back(this->parseExpr(s));
-            if(this->peek()->type == TokType::Comma) this->next();
-        } this->next();
+        if(this->peek()->type == TokType::Rpar) {
+            this->next();
+            while(this->peek()->type != TokType::Lpar) {
+                args.push_back(this->parseExpr(s));
+                if(this->peek()->type == TokType::Comma) this->next();
+            } this->next();
+        }
+    
         NodeBlock* block = new NodeBlock({});
         if(this->peek()->type == TokType::Rbra) {
             this->next();
@@ -207,11 +211,15 @@ Node* Parser::parseBuiltin(std::string f) {
     NodeBlock* block;
     bool isTopLevel = false;
 
-    this->idx += 2;
-    while(this->peek()->type != TokType::Lpar) {
-        args.push_back(this->parseExpr(f));
-        if(this->peek()->type == TokType::Comma) this->next();
-    } this->next();
+    this->next();
+    if(this->peek()->type == TokType::Rpar) {
+        this->next();
+        while(this->peek()->type != TokType::Lpar) {
+            args.push_back(this->parseExpr(f));
+            if(this->peek()->type == TokType::Comma) this->next();
+        } this->next();
+    }
+
     if(this->peek()->type == TokType::Rbra) {
         if(f != "") block = this->parseBlock(f);
         else {
@@ -667,28 +675,31 @@ Node* Parser::parseAtom(std::string f) {
         return new NodeArray(t->line, values);
     }
     if(t->type == TokType::Builtin) {
-        this->next();
         std::string name = t->value;
         std::vector<Node*> args;
-        while(this->peek()->type != TokType::Lpar) {
-            if(isBasicType(this->peek()->value) || this->tokens[this->idx+1]->value == "*") {
-                Type* pType = this->parseType(true);
-                if(this->peek()->type != TokType::Comma && this->peek()->type != TokType::Lpar) {
-                    char op= this->peek()->type;
-                    Node* node;
-                    if(this->tokens[this->idx+1]->type == TokType::Builtin) node = this->parseAtom(f);
-                    else {
-                        this->next();
-                        node = new NodeType(this->parseType(true), this->peek()->line);
+        if(this->peek()->type == TokType::Rpar) {
+            this->next();
+            while(this->peek()->type != TokType::Lpar) {
+                if(isBasicType(this->peek()->value) || this->tokens[this->idx+1]->value == "*") {
+                    Type* pType = this->parseType(true);
+                    if(this->peek()->type != TokType::Comma && this->peek()->type != TokType::Lpar) {
+                        char op= this->peek()->type;
+                        Node* node;
+                        if(this->tokens[this->idx+1]->type == TokType::Builtin) node = this->parseAtom(f);
+                        else {
+                            this->next();
+                            node = new NodeType(this->parseType(true), this->peek()->line);
+                        }
+                        args.push_back(new NodeBinary(op, new NodeType(pType, this->peek()->line), node, this->peek()->line));
                     }
-                    args.push_back(new NodeBinary(op, new NodeType(pType, this->peek()->line), node, this->peek()->line));
+                    else args.push_back(new NodeType(pType, this->peek()->line));
                 }
-                else args.push_back(new NodeType(pType, this->peek()->line));
+                else args.push_back(this->parseExpr(f));
+                if(this->peek()->type == TokType::Comma) this->next();
             }
-            else args.push_back(this->parseExpr(f));
-            if(this->peek()->type == TokType::Comma) this->next();
+            this->next();
         }
-        this->next();
+
         NodeBlock* block;
         if(this->peek()->type == TokType::Rbra) block = parseBlock(f);
         else block = new NodeBlock({});
