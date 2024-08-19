@@ -55,7 +55,8 @@ genSettings analyzeArguments(std::vector<std::string>& arguments) {
             else if(settings.avxLevel > 2) settings.avxLevel = 2;
             i += 1;
         }
-        else if(arguments[i] == "-noFastMath") settings.noFastMath = true;
+        else if(arguments[i] == "-nfm" || arguments[i] == "--noFastMath") settings.noFastMath = true;
+        else if(arguments[i] == "-nio" || arguments[i] == "--noIoInit") settings.noIoInit = true;
         else if(arguments[i][0] == '-') settings.linkParams += arguments[i] + " ";
         else files.push_back(arguments[i]);
     }
@@ -74,6 +75,7 @@ int main(int argc, char** argv) {
         std::string help = std::string("Usage: rave [files] [options]")
         + "\nOptions:"
         + "\n\t--out (-o) <file> - Place the output into <file>."
+        + "\n\t-c - Do not create an output file (only object files)."
         + "\n\t--target (-t) <target> - Change the platform type to <target>."
         + "\n\t--emitLLVM, -emit-llvm (-eml) - Create output files with LLVM IR."
         + "\n\t--recompileStd (-rcs) - Recompile the standart library with flags and replacing the cache version (if available)."
@@ -89,8 +91,8 @@ int main(int argc, char** argv) {
         + "\n\t-native - Use optimizations from the current platform."
         + "\n\t-SSE <number> - Set the maximum supportable SSE version (0, 1, 2, 3)."
         + "\n\t-AVX <number> - Set the maximum supportable AVX version (0, 1, 2)."
-        + "\n\t-noFastMath - Disable fast math."
-        + "\n\t-c - Do not create an output file (only object files)."
+        + "\n\t--noFastMath (-nfm) - Disable fast math."
+        + "\n\t--noIoInit (-nio) - Disable the automatic std::io:initialize call at the beginning of 'main'."
         + "\nFor bug reporting, you can use Issues at https://github.com/Ttimofeyka/Rave.";
         std::cout << help << std::endl;
         return 0;

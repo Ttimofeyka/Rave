@@ -131,6 +131,7 @@ typedef struct genSettings {
     int avxLevel = 2;
     bool isNative = false;
     bool noFastMath = false;
+    bool noIoInit = false;
 
     #if defined(__linux__)
         std::string linker = "lld-11";

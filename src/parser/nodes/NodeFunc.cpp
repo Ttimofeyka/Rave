@@ -264,7 +264,7 @@ LLVMValueRef NodeFunc::generate() {
     if(this->name == "main") {
         linkName = "main";
         if(instanceof<TypeVoid>(this->type)) this->type = new TypeBasic(BasicType::Int);
-        if(!generator->settings.noEntry && !generator->settings.noStd) {
+        if(!generator->settings.noIoInit && !generator->settings.noEntry && !generator->settings.noStd) {
             if(((NodeString*)AST::aliasTable["__RAVE_OS"])->value == "LINUX") block->nodes.insert(block->nodes.begin(), new NodeCall(loc, new NodeIden("std::io::initialize", -1), {}));
         }
     }
