@@ -201,7 +201,7 @@ LLVMValueRef NodeVar::generate() {
                 LLVMTypeOf(val),
                 linkName.c_str()
             );
-            this->type = lTypeToType(LLVMTypeOf(val));
+            this->type = value->getType();
             LLVMSetInitializer(generator->globals[this->name], val);
             LLVMSetGlobalConstant(generator->globals[this->name], this->isConst);
             if(alignment != -1) LLVMSetAlignment(generator->globals[this->name], alignment);
@@ -275,7 +275,7 @@ LLVMValueRef NodeVar::generate() {
                     else {
                         LLVMValueRef val = this->value->generate();
                         currScope->localScope[this->name] = LLVM::alloc(LLVMTypeOf(val), name.c_str());
-                        this->type = lTypeToType(LLVMTypeOf(val));
+                        this->type = value->getType();
                         if(isVolatile) LLVMSetVolatile(currScope->localScope[this->name], true);
                         if(alignment != -1) LLVMSetAlignment(generator->globals[this->name], alignment);
                         else if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->localScope[this->name], generator->getAlignment(this->type));
@@ -286,7 +286,7 @@ LLVMValueRef NodeVar::generate() {
                 else {
                     LLVMValueRef val = this->value->generate();
                     currScope->localScope[this->name] = LLVM::alloc(LLVMTypeOf(val), name.c_str());
-                    this->type = lTypeToType(LLVMTypeOf(val));
+                    this->type = value->getType();
                     if(isVolatile) LLVMSetVolatile(currScope->localScope[this->name], true);
                     if(alignment != -1) LLVMSetAlignment(generator->globals[this->name], alignment);
                     else if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->localScope[this->name], generator->getAlignment(this->type));
@@ -297,7 +297,7 @@ LLVMValueRef NodeVar::generate() {
             else {
                 LLVMValueRef val = this->value->generate();
                 currScope->localScope[this->name] = LLVM::alloc(LLVMTypeOf(val), name.c_str());
-                this->type = lTypeToType(LLVMTypeOf(val));
+                this->type = value->getType();
                 if(isVolatile) LLVMSetVolatile(currScope->localScope[this->name], true);
                 if(alignment != -1) LLVMSetAlignment(generator->globals[this->name], alignment);
                 else if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->localScope[this->name], generator->getAlignment(this->type));

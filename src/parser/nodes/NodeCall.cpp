@@ -64,7 +64,12 @@ std::vector<LLVMValueRef> NodeCall::correctByLLVM(std::vector<LLVMValueRef> valu
             }
         }
         else if(!instanceof<TypePointer>(fas[i].type) && LLVM::isPointer(params[i])) {
-            if(LLVMIsAFunction(params[i]) == nullptr) params[i] = LLVM::load(params[i], "correctLoad");
+            if(LLVMIsAFunction(params[i]) == nullptr) {
+                if(instanceof<TypeStruct>(fas[i].type)) {
+                    params[i] = LLVMBuildLoad2(generator->builder, generator->genType(fas[i].type, loc), params[i], "correctLoad");
+                }
+                else params[i] = LLVM::load(params[i], "correctLoad");
+            }
         }
     }
     return params;
@@ -204,7 +209,7 @@ LLVMValueRef NodeCall::generate() {
                     std::vector<Type*> types;
                     std::string all = "<";
 
-                    for(int i=0; i<params.size(); i++) types.push_back(lTypeToType(LLVMTypeOf(params[i])));
+                    for(int i=0; i<params.size(); i++) types.push_back(lTypeToType(LLVMTypeOf(params[i]), params[i]));
                     while(types.size() > tnSize) types.pop_back();
     
                     if(types.size() == tnSize) {
@@ -360,7 +365,7 @@ LLVMValueRef NodeCall::generate() {
                 std::vector<LLVMValueRef> params = this->getParameters(nullptr, false);
                 std::vector<Type*> types;
                 params.insert(params.begin(), currScope->getWithoutLoad(idenFunc->name));
-                for(int i=0; i<params.size(); i++) types.push_back(lTypeToType(LLVMTypeOf(params[i])));
+                for(int i=0; i<params.size(); i++) types.push_back(lTypeToType(LLVMTypeOf(params[i]), params[i]));
 
                 std::pair<std::string, std::string> method = std::pair<std::string, std::string>(structure->name, getFunc->field);
                 
@@ -410,7 +415,7 @@ LLVMValueRef NodeCall::generate() {
             currScope->localScope["__RAVE_NG_NGC"] = result;
             currScope->localVars["__RAVE_NG_NGC"] = new NodeVar(
                 "__RAVE_NG_NGC", nullptr, false, false, false, {},
-                this->loc, lTypeToType(LLVMTypeOf(currScope->localScope["__RAVE_NG_NGC"]))
+                this->loc, lTypeToType(LLVMTypeOf(currScope->localScope["__RAVE_NG_NGC"]), result)
             );
 
             NodeCall* ncall2 = new NodeCall(this->loc, new NodeGet(new NodeIden("__RAVE_NG_NGC", this->loc), getFunc->field, getFunc->isMustBePtr, this->loc), this->args);
@@ -436,7 +441,7 @@ LLVMValueRef NodeCall::generate() {
             currScope->localScope["__RAVE_NG_NG"] = nget->generate();
             currScope->localVars["__RAVE_NG_NG"] = new NodeVar(
                 "__RAVE_NG_NG", nullptr, false, false, false, {},
-                this->loc, lTypeToType(LLVMTypeOf(currScope->localScope["__RAVE_NG_NG"]))
+                this->loc, lTypeToType(LLVMTypeOf(currScope->localScope["__RAVE_NG_NG"]), currScope->localScope["__RAVE_NG_NG"])
             );
 
             NodeCall* ncall2 = new NodeCall(this->loc, new NodeGet(new NodeIden("__RAVE_NG_NG", this->loc), getFunc->field, getFunc->isMustBePtr, this->loc), this->args);

@@ -131,7 +131,7 @@ extern LLVMGen* generator;
 extern Scope* currScope;
 extern LLVMTargetDataRef dataLayout;
 
-extern Type* lTypeToType(LLVMTypeRef t);
+extern Type* lTypeToType(LLVMTypeRef t, LLVMValueRef value);
 extern TypeFunc* callToTFunc(NodeCall* call);
 extern Scope* copyScope(Scope* original);
 std::string typeToString(LLVMTypeRef type);

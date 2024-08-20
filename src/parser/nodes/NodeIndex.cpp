@@ -142,10 +142,10 @@ LLVMValueRef NodeIndex::generate() {
 
         if(
             LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMStructTypeKind ||
-            (LLVM::isPointer(ptr) && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) == LLVMStructTypeKind)
+            (LLVM::isPointer(ptr) && LLVMGetTypeKind(LLVM::getPointerElType(ptr)) == LLVMStructTypeKind)
         ) {
             LLVMTypeRef structLType = LLVMTypeOf(ptr);
-            if(LLVMGetTypeKind(structLType) != LLVMStructTypeKind) structLType = LLVMGetElementType(structLType);
+            if(LLVMGetTypeKind(structLType) != LLVMStructTypeKind) structLType = LLVM::getPointerElType(ptr);
 
             Type* structType = new TypeStruct(std::string(LLVMGetStructName(structLType)));
             while(generator->toReplace.find(structType->toString()) != generator->toReplace.end()) structType = generator->toReplace[structType->toString()];
@@ -165,7 +165,7 @@ LLVMValueRef NodeIndex::generate() {
         }
 
         this->elementIsConst = nget->elementIsConst;
-        if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(ptr))) != LLVMArrayTypeKind) {ptr = LLVM::load(ptr, ("NodeIndex_NodeGet_load" + std::to_string(this->loc) + "_").c_str());}
+        if(LLVMGetTypeKind(LLVM::getPointerElType(ptr)) != LLVMArrayTypeKind) {ptr = LLVM::load(ptr, ("NodeIndex_NodeGet_load" + std::to_string(this->loc) + "_").c_str());}
         LLVMValueRef index = generator->byIndex(ptr, this->generateIndexes());
         if(isMustBePtr) return index;
         return LLVM::load(index, ("NodeIndex_NodeGet" + std::to_string(this->loc) + "_").c_str());

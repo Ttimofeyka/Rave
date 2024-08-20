@@ -8,6 +8,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <llvm-c/Target.h>
 #include "./include/parser/ast.hpp"
 #include "./include/parser/nodes/NodeFunc.hpp"
+#include "./include/parser/nodes/NodeStruct.hpp"
+#include "./include/parser/nodes/NodeVar.hpp"
 #include <iostream>
 
 #include <llvm/Target/TargetMachine.h>
@@ -59,7 +61,23 @@ LLVMTypeRef LLVM::getPointerElType(LLVMValueRef value) {
     }
     if(LLVMIsALoadInst(value)) return LLVM::getPointerElType(LLVMGetOperand(value, 0));
     if(LLVMIsAIntToPtrInst(value)) return LLVMInt8TypeInContext(generator->context);
-    if(LLVMIsAGetElementPtrInst(value)) return LLVM::getPointerElType(LLVMGetOperand(value, 0));
+    if(LLVMIsAGetElementPtrInst(value)) {
+        if(LLVMIsInBounds(value)) {
+            LLVMTypeRef elType = LLVM::getPointerElType(LLVMGetOperand(value, 0));
+    
+            if(LLVMGetTypeKind(elType) == LLVMStructTypeKind) {
+                std::string structName = LLVMGetStructName(elType);
+
+                if(AST::structTable.find(structName) != AST::structTable.end()) {
+                    std::string __number = LLVMPrintValueToString(LLVMGetOperand(value, 2));
+                    int number = std::stoi(__number.substr(4));
+                    std::vector<NodeVar*> variables = AST::structTable[structName]->getVariables();
+                    return generator->genType(variables[number]->getType(), -1);
+                }
+            }
+        }
+        return LLVM::getPointerElType(LLVMGetOperand(value, 0));
+    }
     std::cout << LLVMPrintValueToString(value) << std::endl; // For future debug
     return LLVMGetElementType(LLVMTypeOf(value));
     #else

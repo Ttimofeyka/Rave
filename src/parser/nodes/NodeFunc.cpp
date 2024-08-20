@@ -28,6 +28,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeIndex.hpp"
 #include "../../include/parser/nodes/NodeCast.hpp"
 #include "../../include/parser/nodes/NodeCall.hpp"
+#include "../../include/parser/nodes/NodeImport.hpp"
 #include <llvm-c/Comdat.h>
 #include <llvm-c/Analysis.h>
 #include "../../include/compiler.hpp"
@@ -264,9 +265,6 @@ LLVMValueRef NodeFunc::generate() {
     if(this->name == "main") {
         linkName = "main";
         if(instanceof<TypeVoid>(this->type)) this->type = new TypeBasic(BasicType::Int);
-        if(!generator->settings.noIoInit && !generator->settings.noEntry && !generator->settings.noStd) {
-            if(((NodeString*)AST::aliasTable["__RAVE_OS"])->value == "LINUX") block->nodes.insert(block->nodes.begin(), new NodeCall(loc, new NodeIden("std::io::initialize", -1), {}));
-        }
     }
 
     for(int i=0; i<this->mods.size(); i++) {
@@ -338,6 +336,7 @@ LLVMValueRef NodeFunc::generate() {
         LLVMSetComdatSelectionKind(comdat, LLVMAnyComdatSelectionKind);
         LLVMSetComdat(generator->functions[this->name], comdat);
         LLVMSetLinkage(generator->functions[this->name], LLVMLinkOnceODRLinkage);
+        this->isExtern = false;
     }
 
     if(!this->isExtern) {
@@ -401,7 +400,7 @@ LLVMValueRef NodeFunc::generate() {
 std::string NodeFunc::generateWithCtargs(std::vector<LLVMTypeRef> args) {
     std::vector<FuncArgSet> newArgs;
     for(int i=0; i<args.size(); i++) {
-        Type* newType = lTypeToType(args[i]);
+        Type* newType = lTypeToType(args[i], nullptr);
         newArgs.push_back(FuncArgSet{.name = "_RaveArg" + std::to_string(i), .type = newType, .internalTypes = {newType}});
     }
 

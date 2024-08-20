@@ -9,6 +9,6 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 NodeDone::NodeDone(LLVMValueRef value) {this->value = value;}
 void NodeDone::check() {this->isChecked = true;}
 LLVMValueRef NodeDone::generate() {return this->value;}
-Type* NodeDone::getType() {return lTypeToType(LLVMTypeOf(this->value));}
+Type* NodeDone::getType() {return lTypeToType(LLVMTypeOf(this->value), this->value);}
 Node* NodeDone::comptime() {return this;}
 Node* NodeDone::copy() {return new NodeDone(this->value);}

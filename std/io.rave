@@ -541,30 +541,10 @@ namespace std {
     }
 }
 
-@if(__RAVE_OS == "LINUX") {
-    namespace std {
-        std::file stdout;
-
-        namespace io {
-            void initialize {
-                std::stdout = std::file("stdout", 2048);
-                std::stdout.openFd("w", 1);
-            }
-        }
-
-        (inline) int putchar(char c) => std::stdout.write(&c, 1);
-    }
-}
-
-@else {
-    namespace std {
-        extern(linkname: "putchar") int putchar(char c);
-    }
-};
-
 namespace std {
     extern(vararg, linkname: "scanf") int scanf(char* fmt);
     extern(linkname: "getchar") char getchar();
+    extern(linkname: "putchar") int putchar(char c);
 
     (volatile) int __putsSL = 0;
     void puts(char* s) {

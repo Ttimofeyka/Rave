@@ -71,7 +71,12 @@ LLVMValueRef Binary::castValue(LLVMValueRef from, LLVMTypeRef to, int loc) {
                     generator->error("it is forbidden to cast pointers into arrays!", loc); return nullptr;
                 case LLVMStructTypeKind:
                     if(std::string(LLVMPrintValueToString(from)).find("null") != std::string::npos) return LLVMConstNull(to);
-                    generator->error("it is forbidden to cast pointers into structures!", loc); return nullptr;
+                    #if RAVE_OPAQUE_POINTERS
+                    return LLVMBuildLoad2(generator->builder, to, from, "castValueStoP");
+                    #else
+                    generator->error("it is forbidden to cast pointers into structures!", loc);
+                    return nullptr;
+                    #endif
                 default: return from;
             }
         case LLVMArrayTypeKind:
@@ -192,12 +197,12 @@ std::pair<std::string, std::string> NodeBinary::isOperatorOverload(LLVMValueRef 
         if(AST::structTable.find(structName) != AST::structTable.end()) {
             auto& operators = AST::structTable[structName]->operators;
             if(operators.find(op) != operators.end()) {
-                std::vector<Type*> types = {lTypeToType(type), lTypeToType(LLVMTypeOf(second))};
+                std::vector<Type*> types = {this->first->getType(), this->second->getType()};
                 std::string sTypes = typesToString(types);
                 if(operators[op].find(sTypes) != operators[op].end()) return {structName, sTypes};
             }
             else if(op == TokType::Nequal && operators.find(TokType::Equal) != operators.end()) {
-                std::vector<Type*> types = {lTypeToType(type), lTypeToType(LLVMTypeOf(second))};
+                std::vector<Type*> types = {this->first->getType(), this->second->getType()};
                 std::string sTypes = typesToString(types);
                 if(operators[TokType::Equal].find(sTypes) != operators[TokType::Equal].end()) return {"!" + structName, sTypes};
             }

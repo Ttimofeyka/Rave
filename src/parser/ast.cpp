@@ -369,7 +369,7 @@ void LLVMGen::addStrAttr(std::string name, LLVMAttributeIndex index, LLVMValueRe
     LLVMAddAttributeAtIndex(ptr, index, attr);
 }
 
-Type* lTypeToType(LLVMTypeRef t) {
+Type* lTypeToType(LLVMTypeRef t, LLVMValueRef value) {
     LLVMTypeKind kind = LLVMGetTypeKind(t);
     switch(kind) {
         case LLVMIntegerTypeKind: {
@@ -387,15 +387,21 @@ Type* lTypeToType(LLVMTypeRef t) {
         case LLVMHalfTypeKind: return new TypeBasic(BasicType::Half);
         case LLVMFloatTypeKind: return new TypeBasic(BasicType::Float);
         case LLVMDoubleTypeKind: return new TypeBasic(BasicType::Double);
-        case LLVMPointerTypeKind: return new TypePointer(lTypeToType(LLVMGetElementType(t)));
-        case LLVMArrayTypeKind: return new TypeArray(LLVMGetArrayLength(t), lTypeToType(LLVMGetElementType(t)));
+        case LLVMPointerTypeKind:
+            #if RAVE_OPAQUE_POINTERS
+            if(value == nullptr) return new TypePointer(new TypeBasic(BasicType::Char));
+            return new TypePointer(lTypeToType(LLVM::getPointerElType(value), nullptr));
+            #else
+            return new TypePointer(lTypeToType(LLVMGetElementType(t), nullptr));
+            #endif
+        case LLVMArrayTypeKind: return new TypeArray(LLVMGetArrayLength(t), lTypeToType(LLVMGetElementType(t), value)); // Maybe wrong?
         case LLVMStructTypeKind: return new TypeStruct(LLVMGetStructName(t));
         case LLVMFunctionTypeKind: {
             std::string sT = LLVMPrintTypeToString(t);
             return getType(trim(sT.substr(0, sT.find_last_of('('))));
         }
         case LLVMVoidTypeKind: return new TypeVoid();
-        case LLVMVectorTypeKind: return new TypeVector(lTypeToType(LLVMGetElementType(t)), LLVMGetVectorSize(t));
+        case LLVMVectorTypeKind: return new TypeVector(lTypeToType(LLVMGetElementType(t), nullptr), LLVMGetVectorSize(t));
         default: break;
     }
     generator->error("assert: lTypeToType", -1);
