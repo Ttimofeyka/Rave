@@ -17,6 +17,7 @@ NodeChar::NodeChar(std::string value, bool isWide) {
 
 Node* NodeChar::copy() {return new NodeChar(this->value, this->isWide);}
 Type* NodeChar::getType() {return new TypeBasic(isWide ? BasicType::Uint : BasicType::Char);}
+Type* NodeChar::getLType() {return this->getType();}
 Node* NodeChar::comptime() {return this;}
 void NodeChar::check() {this->isChecked = true;}
 

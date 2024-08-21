@@ -21,6 +21,7 @@ NodeConstStruct::NodeConstStruct(std::string name, std::vector<Node*> values, in
 }
 
 Type* NodeConstStruct::getType() {return new TypeStruct(this->structName);}
+Type* NodeConstStruct::getLType() {return this->getType();}
 Node* NodeConstStruct::comptime() {return this;}
 Node* NodeConstStruct::copy() {return new NodeConstStruct(this->structName, this->values, this->loc);}
 void NodeConstStruct::check() {this->isChecked = true;}
