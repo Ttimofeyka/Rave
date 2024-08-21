@@ -16,4 +16,5 @@ LLVMValueRef Node::generate() {
 void Node::check() {this->isChecked = true;}
 Node* Node::comptime() {return this;}
 Type* Node::getType() {return nullptr;}
+Type* Node::getLType() {return nullptr;}
 Node* Node::copy() {return nullptr;}

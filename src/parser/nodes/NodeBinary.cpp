@@ -188,12 +188,13 @@ NodeBinary::NodeBinary(char op, Node* first, Node* second, int loc, bool isStati
     this->isStatic = isStatic;
 }
 
-std::pair<std::string, std::string> NodeBinary::isOperatorOverload(LLVMValueRef first, LLVMValueRef second, char op) {
+std::pair<std::string, std::string> NodeBinary::isOperatorOverload(Node* first, Node* second, char op) {
     if(first == nullptr || second == nullptr) return {"", ""};
 
-    LLVMTypeRef type = LLVMTypeOf(first);
-    if(LLVMGetTypeKind(type) == LLVMStructTypeKind || (LLVM::isPointer(first) && LLVMGetTypeKind(LLVM::getPointerElType(first)) == LLVMStructTypeKind)) {
-        std::string structName = LLVMGetStructName(type);
+    Type* type = first->getLType();
+
+    if(instanceof<TypeStruct>(type) || (instanceof<TypePointer>(type) && instanceof<TypeStruct>(((TypePointer*)type)->instance))) {
+        std::string structName = (instanceof<TypeStruct>(type) ? ((TypeStruct*)type)->name : ((TypeStruct*)(((TypePointer*)type)->instance))->name);
         if(AST::structTable.find(structName) != AST::structTable.end()) {
             auto& operators = AST::structTable[structName]->operators;
             if(operators.find(op) != operators.end()) {
@@ -266,6 +267,21 @@ Type* NodeBinary::getType() {
     return nullptr;
 }
 
+Type* NodeBinary::getLType() {
+    switch(this->op) {
+        case TokType::Equ: case TokType::PluEqu: case TokType::MinEqu: case TokType::DivEqu: case TokType::MulEqu: return new TypeVoid();
+        case TokType::Equal: case TokType::Nequal: case TokType::More: case TokType::Less: case TokType::MoreEqual: case TokType::LessEqual:
+        case TokType::And: case TokType::Or: return new TypeBasic(BasicType::Bool);
+        default:
+            Type* firstType = this->first->getLType();
+            Type* secondType = this->second->getLType();
+            if(firstType == nullptr) return secondType;
+            if(secondType == nullptr) return firstType;
+            return (firstType->getSize() >= secondType->getSize()) ? firstType : secondType;
+    }
+    return nullptr;
+}
+
 LLVMValueRef NodeBinary::generate() {
     bool isAliasIden = (this->first != nullptr && instanceof<NodeIden>(this->first) && AST::aliasTable.find(((NodeIden*)this->first)->name) != AST::aliasTable.end());
     if(this->op == TokType::PluEqu || this->op == TokType::MinEqu || this->op == TokType::MulEqu || this->op == TokType::DivEqu) {
@@ -313,27 +329,26 @@ LLVMValueRef NodeBinary::generate() {
 
             NodeVar* nvar = currScope->getVar(id->name, this->loc);
             
-            LLVMValueRef vSecond = nullptr;
             if(instanceof<TypeStruct>(nvar->type) || (instanceof<TypePointer>(nvar->type) && instanceof<TypeStruct>(((TypePointer*)nvar->type)->instance))
                &&!instanceof<TypeStruct>(this->second->getType()) || (instanceof<TypePointer>(this->second->getType()) && instanceof<TypeStruct>(((TypePointer*)this->second->getType())->instance))
             ) {
-                LLVMValueRef vFirst = this->first->generate();
-                vSecond = this->second->generate();
-                std::pair<std::string, std::string> opOverload = isOperatorOverload(vFirst, vSecond, this->op);
+                std::pair<std::string, std::string> opOverload = isOperatorOverload(first, second, this->op);
                 if(opOverload.first != "") {
                     nvar->isAllocated = currScope->detectMemoryLeaks && true; // @detectMemoryLeaks
                     if(opOverload.first[0] == '!') return (new NodeUnary(this->loc, TokType::Ne, (new NodeCall(
                         this->loc, new NodeIden(AST::structTable[opOverload.first.substr(1)]->operators[this->op][opOverload.second]->name, this->loc),
-                        std::vector<Node*>({this->first, new NodeDone(vSecond)})))))->generate();
+                        std::vector<Node*>({first, second})))))->generate();
                     return (new NodeCall(
                         this->loc, new NodeIden(AST::structTable[opOverload.first]->operators[this->op][opOverload.second]->name, this->loc),
-                        std::vector<Node*>({this->first, new NodeDone(vSecond)})))->generate();
+                        std::vector<Node*>({first, second})))->generate();
                 }
                 else if(instanceof<TypeBasic>(this->second->getType())) {
                     generator->error("an attempt to change value of the structure as the variable '" + id->name + "' without overloading!", this->loc);
                     return nullptr;
                 }
             }
+
+            LLVMValueRef vSecond = second->generate();
 
             LLVMValueRef value = currScope->get(id->name, this->loc);
 
@@ -433,21 +448,21 @@ LLVMValueRef NodeBinary::generate() {
         return (new NodeCast(instanceof<TypeVoid>(type) ? new TypeBasic(BasicType::Double) : type, new NodeBuiltin("fmodf", {this->first, this->second}, this->loc, nullptr), this->loc))->generate();
     }
 
-    LLVMValueRef vFirst = this->first->generate();
-    LLVMValueRef vSecond = this->second->generate();
-
     if(instanceof<TypeStruct>(this->first->getType()) || instanceof<TypePointer>(this->first->getType())
      && !instanceof<TypeStruct>(this->second->getType()) && !instanceof<TypePointer>(this->second->getType())) {
-        std::pair<std::string, std::string> opOverload = isOperatorOverload(vFirst, vSecond, this->op);
+        std::pair<std::string, std::string> opOverload = isOperatorOverload(first, second, this->op);
         if(opOverload.first != "") {
             if(opOverload.first[0] == '!') return LLVMBuildNot(generator->builder, (new NodeCall(
                 this->loc, new NodeIden(AST::structTable[opOverload.first.substr(1)]->operators[TokType::Equal][opOverload.second]->name, this->loc),
-                std::vector<Node*>({new NodeDone(vFirst), new NodeDone(vSecond)})))->generate(), "callNot");
+                std::vector<Node*>({first, second})))->generate(), "callNot");
             return (new NodeCall(
                 this->loc, new NodeIden(AST::structTable[opOverload.first]->operators[this->op][opOverload.second]->name, this->loc),
-                std::vector<Node*>({new NodeDone(vFirst), new NodeDone(vSecond)})))->generate();
+                std::vector<Node*>({first, second})))->generate();
         }
     }
+
+    LLVMValueRef vFirst = this->first->generate();
+    LLVMValueRef vSecond = this->second->generate();
 
     LLVMTypeRef vFirstType = LLVMTypeOf(vFirst);
     LLVMTypeRef vSecondType = LLVMTypeOf(vSecond);

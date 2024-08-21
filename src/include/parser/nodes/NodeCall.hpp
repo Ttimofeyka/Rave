@@ -25,6 +25,7 @@ public:
     NodeCall(int loc, Node* func, std::vector<Node*> args);
     LLVMValueRef generate() override;
     Type* getType() override;
+    Type* getLType() override;
     std::vector<Type*> getTypes();
     std::vector<LLVMValueRef> getParameters(NodeFunc* nfunc, bool isVararg, std::vector<FuncArgSet> fas = std::vector<FuncArgSet>());
     std::vector<LLVMValueRef> correctByLLVM(std::vector<LLVMValueRef> values, std::vector<FuncArgSet> fas);

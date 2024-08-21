@@ -21,4 +21,5 @@ public:
     Node* copy() override;
     Node* comptime() override;
     Type* getType() override;
+    Type* getLType() override;
 };

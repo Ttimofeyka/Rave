@@ -25,6 +25,7 @@ Node* NodeAsm::copy() {
 }
 
 Type* NodeAsm::getType() {return this->type;}
+Type* NodeAsm::getLType() {return this->type;}
 Node* NodeAsm::comptime() {return nullptr;}
 void NodeAsm::check() {this->isChecked = true;}
 

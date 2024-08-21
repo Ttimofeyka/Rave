@@ -17,6 +17,7 @@ NodeString::NodeString(std::string value, bool isWide) {
 
 Node* NodeString::copy() {return new NodeString(this->value, this->isWide);}
 Type* NodeString::getType() {return new TypePointer(new TypeBasic((isWide ? BasicType::Uint : BasicType::Char)));}
+Type* NodeString::getLType() {return new TypePointer(new TypeBasic((isWide ? BasicType::Uint : BasicType::Char)));}
 Node* NodeString::comptime() {return this;}
 void NodeString::check() {this->isChecked = true;}
 

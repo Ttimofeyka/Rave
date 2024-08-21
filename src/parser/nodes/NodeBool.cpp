@@ -12,5 +12,6 @@ NodeBool::NodeBool(bool value) {this->value = value;}
 void NodeBool::check() {this->isChecked = true;}
 LLVMValueRef NodeBool::generate() {return LLVMConstInt(LLVMInt1TypeInContext(generator->context), this->value, false);}
 Type* NodeBool::getType() {return new TypeBasic(BasicType::Bool);}
+Type* NodeBool::getLType() {return new TypeBasic(BasicType::Bool);}
 Node* NodeBool::copy() {return new NodeBool(this->value);}
 Node* NodeBool::comptime() {return this;}

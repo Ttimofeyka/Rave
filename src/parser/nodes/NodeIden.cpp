@@ -48,6 +48,21 @@ Node* NodeIden::comptime() {
     return AST::aliasTable[this->name];
 }
 
+Type* NodeIden::getLType() {
+    if(AST::aliasTable.find(this->name) != AST::aliasTable.end()) return AST::aliasTable[this->name]->getType();
+    if(AST::funcTable.find(this->name) != AST::funcTable.end()) return AST::funcTable[this->name]->getType();
+    if(!currScope->has(this->name) && !currScope->hasAtThis(this->name)) {
+        if(generator->toReplace.find(this->name) != generator->toReplace.end()) {
+            NodeIden* newNode = new NodeIden(generator->toReplace[this->name]->toString(), loc);
+            newNode->isMustBePtr = this->isMustBePtr;
+            return newNode->getLType();
+        }
+        generator->error("unknown identifier '" + this->name + "'!", this->loc);
+        return nullptr;
+    }
+    return currScope->getVar(this->name, this->loc)->getType();
+}
+
 LLVMValueRef NodeIden::generate() {
     if(AST::aliasTable.find(this->name) != AST::aliasTable.end()) return AST::aliasTable[this->name]->generate();
     else if(currScope != nullptr && currScope->aliasTable.find(this->name) != currScope->aliasTable.end()) return currScope->aliasTable[this->name]->generate();

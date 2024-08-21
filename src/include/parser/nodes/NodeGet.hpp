@@ -23,6 +23,7 @@ public:
     LLVMValueRef checkIn(std::string structure);
     LLVMValueRef generate() override;
     Type* getType() override;
+    Type* getLType() override;
     Node* comptime() override;
     Node* copy() override;
     void check() override;

@@ -60,6 +60,8 @@ Type* NodeGet::getType() {
     return nullptr;
 }
 
+Type* NodeGet::getLType() {return this->getType();}
+
 LLVMValueRef NodeGet::checkStructure(LLVMValueRef ptr) {
     LLVMTypeRef type = LLVMTypeOf(ptr);
     

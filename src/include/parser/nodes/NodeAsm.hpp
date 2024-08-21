@@ -23,6 +23,7 @@ public:
 
     NodeAsm(std::string line, bool isVolatile, Type* type, std::string additions, std::vector<Node*> values, long loc);
     Type* getType() override;
+    Type* getLType() override;
     void check() override;
     LLVMValueRef generate() override;
     Node* comptime() override;

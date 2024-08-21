@@ -18,6 +18,7 @@ NodeAliasType::NodeAliasType(std::string name, Type* value, long loc) {
 }
 
 Type* NodeAliasType::getType() {return this->value;}
+Type* NodeAliasType::getLType() {return this->value;}
 LLVMValueRef NodeAliasType::generate() {return nullptr;}
 Node* NodeAliasType::comptime() {return new NodeType(this->value, this->loc);}
 Node* NodeAliasType::copy() {return new NodeAliasType(this->name, this->value->copy(), this->loc);}

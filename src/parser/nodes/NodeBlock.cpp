@@ -5,6 +5,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 #include "../../include/parser/nodes/NodeBlock.hpp"
+#include "../../include/parser/Types.hpp"
 #include "../../include/utils.hpp"
 
 NodeBlock::NodeBlock(std::vector<Node*> nodes) {
@@ -28,7 +29,8 @@ void NodeBlock::check() {
 }
 
 Node* NodeBlock::comptime() {return this;}
-Type* NodeBlock::getType() {return nullptr;}
+Type* NodeBlock::getType() {return new TypeVoid();}
+Type* NodeBlock::getLType() {return new TypeVoid();}
 
 LLVMValueRef NodeBlock::generate() {
     for(int i=0; i<this->nodes.size(); i++) if(this->nodes[i] != nullptr) this->nodes[i]->generate();

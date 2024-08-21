@@ -33,8 +33,9 @@ public:
 
     LLVMValueRef generate() override;
     Type* getType() override;
+    Type* getLType() override;
     Node* comptime() override;
     Node* copy() override;
     void check() override;
-    std::pair<std::string, std::string> isOperatorOverload(LLVMValueRef first, LLVMValueRef second, char op);
+    std::pair<std::string, std::string> isOperatorOverload(Node* first, Node* second, char op);
 };

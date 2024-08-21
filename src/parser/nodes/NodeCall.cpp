@@ -40,6 +40,10 @@ Type* NodeCall::getType() {
     return this->func->getType();
 }
 
+Type* NodeCall::getLType() {
+    return this->getType();
+}
+
 std::vector<Type*> NodeCall::getTypes() {
     std::vector<Type*> arr;
     for(int i=0; i<this->args.size(); i++) arr.push_back(this->args[i]->getType());

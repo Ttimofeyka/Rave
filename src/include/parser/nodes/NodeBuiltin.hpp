@@ -37,6 +37,7 @@ public:
     std::string getAliasName(int n);
     std::string asStringIden(int n);
     Type* getType() override;
+    Type* getLType() override;
     void check() override;
     LLVMValueRef generate() override;
     Node* comptime() override;

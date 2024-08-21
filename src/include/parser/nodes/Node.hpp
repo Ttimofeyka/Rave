@@ -22,5 +22,6 @@ public:
     virtual void check();
     virtual Node* comptime();
     virtual Type* getType();
+    virtual Type* getLType();
     virtual Node* copy();
 };

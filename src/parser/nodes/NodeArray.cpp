@@ -19,6 +19,8 @@ Type* NodeArray::getType() {
     return new TypeVoid();
 }
 
+Type* NodeArray::getLType() {return this->getType();}
+
 std::vector<LLVMValueRef> NodeArray::getValues() {
     std::vector<LLVMValueRef> buffer;
     LLVMValueRef v0 = values[0]->generate();

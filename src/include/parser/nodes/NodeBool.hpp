@@ -18,6 +18,7 @@ public:
 
     NodeBool(bool value);
     Type* getType() override;
+    Type* getLType() override;
     void check() override;
     LLVMValueRef generate() override;
     Node* comptime() override;

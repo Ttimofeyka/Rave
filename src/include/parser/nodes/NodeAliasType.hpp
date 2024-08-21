@@ -22,6 +22,7 @@ public:
 
     NodeAliasType(std::string name, Type* value, long loc);
     Type* getType() override;
+    Type* getLType() override;
     void check() override;
     LLVMValueRef generate() override;
     Node* comptime() override;

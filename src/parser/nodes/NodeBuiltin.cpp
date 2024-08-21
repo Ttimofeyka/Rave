@@ -62,7 +62,21 @@ Type* NodeBuiltin::getType() {
     if(this->name[0] == '@') this->name = this->name.substr(1);
     if(this->name == "trunc" || this->name == "fmodf") return this->args[0]->getType();
     if(this->name == "getCurrArg") return asType(0)->type;
+    if(this->name == "isNumeric" || this->name == "isVector" || this->name == "isPointer"
+    || this->name == "isArray" || this->name == "aliasExists" || this->name == "tEquals"
+    || this->name == "tNequals" || this->name == "isStructure" || this->name == "hasMethod"
+    || this->name == "hasDestructor" || this->name == "contains") return new TypeBasic(BasicType::Bool);
+    if(this->name == "sizeOf" || this->name == "argsLength") return new TypeBasic(BasicType::Int);
+    if(this->name == "vAdd" || this->name == "vSub" || this->name == "vMul" || this->name == "vDiv"
+    || this->name == "vShuffle" || this->name == "vHAdd32x4" || this->name == "vHAdd16x8"
+    || this->name == "vSumAll") return args[0]->getType();
+    if(this->name == "typeToString") return new TypePointer(new TypeBasic(BasicType::Char));
+    if(this->name == "minOf" || this->name == "maxOf") return new TypeBasic(BasicType::Ulong);
     return new TypeVoid();
+}
+
+Type* NodeBuiltin::getLType() {
+    return this->getType();
 }
 
 void NodeBuiltin::check() {this->isChecked = true;}
@@ -352,7 +366,7 @@ LLVMValueRef NodeBuiltin::generate() {
         if(instanceof<TypeStruct>(asType(0)->type)) return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 1, false);
         return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 0, false);
     }
-    if(this->name == "tsNumeric") {
+    if(this->name == "isNumeric") {
         if(instanceof<TypeBasic>(asType(0)->type)) return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 1, false);
         return LLVMConstInt(LLVMInt1TypeInContext(generator->context), 0, false);
     }

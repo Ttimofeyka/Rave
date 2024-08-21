@@ -50,6 +50,7 @@ Node* NodeStruct::copy() {
 }
 
 Type* NodeStruct::getType() {return new TypeVoid();}
+Type* NodeStruct::getLType() {return new TypeVoid();}
 
 LLVMTypeRef NodeStruct::asConstType() {
     std::vector<LLVMTypeRef> types = this->getParameters(false);

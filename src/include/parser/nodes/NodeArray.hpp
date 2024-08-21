@@ -22,6 +22,7 @@ public:
     NodeArray(int loc, std::vector<Node*> values);
 
     Type* getType() override;
+    Type* getLType() override;
     std::vector<LLVMValueRef> getValues();
     LLVMValueRef generate() override;
     void check() override;
