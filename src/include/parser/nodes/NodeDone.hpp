@@ -17,6 +17,7 @@ public:
     NodeDone(LLVMValueRef value);
     LLVMValueRef generate() override;
     Type* getType() override;
+    Type* getLType() override;
     Node* comptime() override;
     Node* copy() override;
     void check() override;

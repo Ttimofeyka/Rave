@@ -401,31 +401,11 @@ LLVMValueRef NodeBinary::generate() {
             LLVMValueRef ptr = ind->generate();
             if(ind->elementIsConst) generator->error("An attempt to change the constant element!", loc);
 
-            bool isNoOperators = instanceof<NodeIden>(ind->element) && currScope->getVar(((NodeIden*)ind->element)->name, this->loc)->isNoOperators;
-
-            if(!isNoOperators && std::string(LLVMPrintValueToString(ptr)).find("([])") != std::string::npos) {
-                LLVMValueRef structValue = LLVMGetOperand(ptr, 0);
-                while(LLVM::isPointer(structValue)) structValue = LLVM::load(structValue, "NodeBinary_NodeIndex_[]=_load");
-    
-                std::string structName = LLVMGetStructName(LLVMTypeOf(structValue));
-                auto structIt = AST::structTable.find(structName);
-    
-                if(structIt != AST::structTable.end() && structIt->second->operators.count(TokType::Lbra)) {
-                    for(const auto& [_, func] : structIt->second->operators[TokType::Lbra]) {
-                        LLVMInstructionEraseFromParent(ptr);
-                        return (new NodeCall(loc, new NodeIden(func->name, loc), 
-                            {new NodeDone(LLVMGetOperand(ptr, 0)), ind->indexes[0], second}))->generate();
-                    }
-                }
-            }
-
             if(instanceof<NodeNull>(this->second)) {
                 ((NodeNull*)this->second)->type = nullptr;
                 ((NodeNull*)this->second)->lType = LLVM::getPointerElType(ptr);
             }
             LLVMValueRef value = this->second->generate();
-
-            if(LLVMTypeOf(ptr) == LLVMPointerType(LLVMPointerType(LLVMTypeOf(value), 0), 0)) ptr = LLVM::load(ptr, "NodeBinary_NodeIndex_load");
 
             if(LLVM::getPointerElType(ptr) != LLVMTypeOf(value) && LLVMGetTypeKind(LLVM::getPointerElType(ptr)) == LLVMGetTypeKind(LLVMTypeOf(value))) {
                 if(LLVMGetTypeKind(LLVMTypeOf(value)) == LLVMIntegerTypeKind) value = LLVMBuildIntCast(generator->builder, value, LLVM::getPointerElType(ptr), "NodeBinary_NodeIndex_intc");

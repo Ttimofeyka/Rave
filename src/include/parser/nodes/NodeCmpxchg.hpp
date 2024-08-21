@@ -21,6 +21,7 @@ public:
 
     NodeCmpxchg(Node* ptr, Node* value1, Node* value2, int loc);
     Type* getType() override;
+    Type* getLType() override;
     void check() override;
     LLVMValueRef generate() override;
     Node* comptime() override;

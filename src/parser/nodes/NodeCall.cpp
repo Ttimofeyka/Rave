@@ -31,19 +31,6 @@ NodeCall::NodeCall(int loc, Node* func, std::vector<Node*> args) {
     this->args = std::vector<Node*>(args);
 }
 
-Type* NodeCall::getType() {
-    if(instanceof<NodeIden>(this->func)) {
-        if(AST::funcTable.find((((NodeIden*)this->func)->name + typesToString(this->getTypes()))) != AST::funcTable.end()) return AST::funcTable[(((NodeIden*)this->func)->name + typesToString(this->getTypes()))]->getType();
-        if(AST::funcTable.find(((NodeIden*)this->func)->name) != AST::funcTable.end()) return AST::funcTable[((NodeIden*)this->func)->name]->type;
-        return new TypePointer(new TypeVoid());
-    }
-    return this->func->getType();
-}
-
-Type* NodeCall::getLType() {
-    return this->getType();
-}
-
 std::vector<Type*> NodeCall::getTypes() {
     std::vector<Type*> arr;
     for(int i=0; i<this->args.size(); i++) arr.push_back(this->args[i]->getType());
@@ -176,6 +163,28 @@ std::vector<FuncArgSet> tfaToFas(std::vector<TypeFuncArg*> tfa) {
     std::vector<FuncArgSet> fas;
     for(int i=0; i<tfa.size(); i++) fas.push_back(FuncArgSet{.name = tfa[i]->name, .type = tfa[i]->type});
     return fas;
+}
+
+Type* NodeCall::getType() {
+    if(instanceof<NodeIden>(this->func)) {
+        NodeIden* niden = (NodeIden*)this->func;
+        if(AST::funcTable.find((niden->name + typesToString(this->getTypes()))) != AST::funcTable.end()) return AST::funcTable[(((NodeIden*)this->func)->name + typesToString(this->getTypes()))]->getType();
+        if(AST::funcTable.find(niden->name) != AST::funcTable.end()) return AST::funcTable[((NodeIden*)this->func)->name]->type;
+        if(currScope->has(niden->name)) {
+            if(!instanceof<TypeFunc>(currScope->getVar(niden->name, this->loc)->type)) {
+                generator->error("undefined function '" + niden->name + "'!", this->loc);
+                return nullptr;
+            }
+            TypeFunc* fn = (TypeFunc*)currScope->getVar(niden->name, this->loc)->type;
+            return fn->main;
+        }
+        return new TypePointer(new TypeVoid());
+    }
+    return this->func->getType();
+}
+
+Type* NodeCall::getLType() {
+    return this->getType();
 }
 
 LLVMValueRef NodeCall::generate() {

@@ -19,6 +19,7 @@ public:
 
     NodeChar(std::string value, bool isWide);
     Type* getType() override;
+    Type* getLType() override;
     LLVMValueRef generate() override;
     Node* copy() override;
     Node* comptime() override;

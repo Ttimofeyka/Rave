@@ -31,6 +31,8 @@ Type* NodeCast::getType() {return this->type->copy();}
 Node* NodeCast::copy() {return new NodeCast(this->type->copy(), this->value->copy(), this->loc);}
 Node* NodeCast::comptime() {return nullptr;}
 
+Type* NodeCast::getLType() {return this->getType();}
+
 LLVMValueRef NodeCast::generate() {
     LLVMValueRef result = nullptr;
 

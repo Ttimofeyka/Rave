@@ -26,6 +26,7 @@ public:
 
     NodeDefer(Node* instruction, int loc, bool isFunctionScope);
     Type* getType() override;
+    Type* getLType() override;
     void check() override;
     LLVMValueRef generate() override;
     Node* comptime() override;
