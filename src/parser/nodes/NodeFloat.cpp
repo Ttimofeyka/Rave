@@ -24,6 +24,17 @@ Type* NodeFloat::getType() {
     return this->type;
 }
 
+Type* NodeFloat::getLType() {
+    if(this->isMustBeFloat) {
+        if(this->type == nullptr || ((TypeBasic*)this->type)->type != BasicType::Float) this->type = new TypeBasic(BasicType::Float);
+        return new TypeBasic(BasicType::Float);
+    }
+    if(this->type == nullptr) this->type = new TypeBasic(BasicType::Double);
+    else if(this->type->type == BasicType::Half) return new TypeBasic(BasicType::Half);
+    else if(this->type->type == BasicType::Bhalf) return new TypeBasic(BasicType::Bhalf);
+    return new TypeBasic(BasicType::Double);
+}
+
 LLVMValueRef NodeFloat::generate() {
     if(this->isMustBeFloat) {
         if(this->type == nullptr || ((TypeBasic*)this->type)->type != BasicType::Float) this->type = new TypeBasic(BasicType::Float);
@@ -40,5 +51,6 @@ Node* NodeFloat::copy() {
     nf->isMustBeFloat = this->isMustBeFloat;
     return nf;
 }
+
 void NodeFloat::check() {this->isChecked = true;}
 Node* NodeFloat::comptime() {return this;}

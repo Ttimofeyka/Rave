@@ -26,6 +26,7 @@ public:
     NodeForeach(NodeIden* elName, Node* varData, Node* varLength, NodeBlock* block, std::string funcName, long loc);
     bool isReleased(std::string varName);
     Type* getType() override;
+    Type* getLType() override;
     void check() override;
     LLVMValueRef generate() override;
     Node* comptime() override;
