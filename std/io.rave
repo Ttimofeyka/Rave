@@ -572,7 +572,7 @@ namespace std {
         std::file f = @getArg(std::file, 0);
         @skipArg();
         std::string str = @callWithArgs(std::gsprint);
-        f.write(str.c(), 1, str.length);
+        f.write(str.c(), str.length);
     }
 
     (ctargs, inline) void fprintln {
