@@ -485,3 +485,14 @@ Type* NodeFunc::getInternalArgType(LLVMValueRef value) {
 
     return nullptr;
 }
+
+Type* NodeFunc::getArgType(int n) {
+    return args[n].type;
+}
+
+Type* NodeFunc::getArgType(std::string name) {
+    for(int i=0; i<args.size(); i++) {
+        if(args[i].name == name) return args[i].type;
+    }
+    return nullptr;
+}

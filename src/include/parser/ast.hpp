@@ -125,7 +125,7 @@ public:
 
     // New functions (recommended)
 
-    
+    RaveValue get2(std::string name, int loc = -1);
 
     bool has(std::string name);
     bool hasAtThis(std::string name);

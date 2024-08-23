@@ -71,6 +71,8 @@ public:
     Node* copy() override;
     void check() override;
     bool isReleased(int n);
+    Type* getArgType(int n);
+    Type* getArgType(std::string name);
     Type* getInternalArgType(LLVMValueRef value);
     std::string generateWithCtargs(std::vector<LLVMTypeRef> args);
     LLVMValueRef generateWithTemplate(std::vector<Type*> types, std::string all);

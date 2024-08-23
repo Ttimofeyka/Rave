@@ -476,6 +476,36 @@ LLVMValueRef Scope::get(std::string name, int loc) {
     return value;
 }
 
+RaveValue Scope::get2(std::string name, int loc) {
+    RaveValue value = {nullptr, nullptr};
+
+    if(AST::aliasTable.find(name) != AST::aliasTable.end()) value = {AST::aliasTable[name]->generate(), AST::aliasTable[name]->getLType()};
+    else if(this->aliasTable.find(name) != this->aliasTable.end()) value = {this->aliasTable[name]->generate(), this->aliasTable[name]->getLType()};
+    else if(localScope.find(name) != localScope.end()) value = localScope[name];
+    else if(generator->globals.find(name) != generator->globals.end()) value = {generator->globals[name], AST::varTable[name]->getLType()};
+    else if(generator->functions.find(this->funcName) != generator->functions.end()) {
+        if(this->args.find(name) == this->args.end()) {
+            if(generator->functions.find(name) != generator->functions.end()) generator->error(name, loc);
+        }
+        else return {LLVMGetParam(generator->functions[this->funcName], this->args[name]), AST::funcTable[this->funcName]->getArgType(name)};
+    }
+    else if(value.value == nullptr && hasAtThis(name)) {
+        NodeVar* nv = this->getVar("this", loc);
+        TypeStruct* ts = nullptr;
+        if(instanceof<TypeStruct>(nv->type)) ts = (TypeStruct*)nv->type;
+        else if(instanceof<TypePointer>(nv->type) && instanceof<TypeStruct>(((TypePointer*)nv->type)->instance)) ts = (TypeStruct*)(((TypePointer*)nv->type)->instance);
+        if(ts != nullptr && AST::structTable.find(ts->toString()) != AST::structTable.end() &&
+           AST::structsNumbers.find({ts->toString(), name}) != AST::structsNumbers.end()) {
+            NodeGet* nget = new NodeGet(new NodeIden("this", loc), name, true, loc);
+            value = {nget->generate(), nget->getLType()};
+        }
+    }
+
+    if(value.value == nullptr) generator->error("undefined variable '" + name + "'!", loc);
+    if(instanceof<TypePointer>(value.type)) value = LLVM::load(value, "scopeGetLoad", loc);
+    return value;
+}
+
 LLVMValueRef Scope::getWithoutLoad(std::string name, int loc) {
     if(AST::aliasTable.find(name) != AST::aliasTable.end()) return AST::aliasTable[name]->generate();
     if(this->aliasTable.find(name) != this->aliasTable.end()) return this->aliasTable[name]->generate();
