@@ -95,6 +95,7 @@ NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, boo
 }
 
 Type* NodeVar::getType() {return this->type->copy();}
+Type* NodeVar::getLType() {return new TypePointer(this->getType());}
 Node* NodeVar::comptime() {return this;}
 
 Node* NodeVar::copy() {
