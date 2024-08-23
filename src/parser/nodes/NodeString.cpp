@@ -44,5 +44,5 @@ LLVMValueRef NodeString::generate() {
         LLVMConstInt(LLVMInt32TypeInContext(generator->context), 0, false)
     };
 
-    return LLVM::constInboundsGep(globalStr, indices, 2);
+    return LLVM::cInboundsGep(globalStr, indices, 2);
 }

@@ -93,6 +93,10 @@ LLVMValueRef LLVM::load(LLVMValueRef value, const char* name) {
     #endif
 }
 
+RaveValue LLVM::load(RaveValue value, const char* name, int loc) {
+    return {LLVMBuildLoad2(generator->builder, generator->genType(value.type, loc), value.value, name), value.type->getElType()};
+}
+
 LLVMValueRef LLVM::call(LLVMValueRef fn, LLVMValueRef* args, unsigned int argsCount, const char* name) {
     #if LLVM_VERSION_MAJOR >= 15
         #if RAVE_OPAQUE_POINTERS
@@ -105,27 +109,19 @@ LLVMValueRef LLVM::call(LLVMValueRef fn, LLVMValueRef* args, unsigned int argsCo
     #endif
 }
 
+LLVMValueRef LLVM::cInboundsGep(LLVMValueRef ptr, LLVMValueRef* indices, unsigned int indicesCount) {
+    #if LLVM_VERSION_MAJOR >= 15
+        return LLVMConstInBoundsGEP2(LLVM::getPointerElType(ptr), ptr, indices, indicesCount);
+    #else
+        return LLVMConstInBoundsGEP(ptr, indices, indicesCount);
+    #endif
+}
+
 LLVMValueRef LLVM::gep(LLVMValueRef ptr, LLVMValueRef* indices, unsigned int indicesCount, const char* name) {
     #if LLVM_VERSION_MAJOR >= 15
         return LLVMBuildGEP2(generator->builder, LLVM::getPointerElType(ptr), ptr, indices, indicesCount, name);
     #else
         return LLVMBuildGEP(generator->builder, ptr, indices, indicesCount, name);
-    #endif
-}
-
-LLVMValueRef LLVM::inboundsGep(LLVMValueRef ptr, LLVMValueRef* indices, unsigned int indicesCount, const char* name) {
-    #if LLVM_VERSION_MAJOR >= 15
-        return LLVMBuildInBoundsGEP2(generator->builder, LLVM::getPointerElType(ptr), ptr, indices, indicesCount, name);
-    #else
-        return LLVMBuildInBoundsGEP(generator->builder, ptr, indices, indicesCount, name);
-    #endif
-}
-
-LLVMValueRef LLVM::constInboundsGep(LLVMValueRef ptr, LLVMValueRef* indices, unsigned int indicesCount) {
-    #if LLVM_VERSION_MAJOR >= 15
-        return LLVMConstInBoundsGEP2(LLVM::getPointerElType(ptr), ptr, indices, indicesCount);
-    #else
-        return LLVMConstInBoundsGEP(ptr, indices, indicesCount);
     #endif
 }
 
@@ -145,6 +141,13 @@ LLVMValueRef LLVM::alloc(LLVMTypeRef type, const char* name) {
     LLVMValueRef value = LLVMBuildAlloca(generator->builder, type, name);
     LLVMPositionBuilderAtEnd(generator->builder, generator->currBB);
     return value;
+}
+
+RaveValue LLVM::alloc(Type* type, const char* name) {
+    LLVMPositionBuilder(generator->builder, LLVMGetFirstBasicBlock(generator->functions[currScope->funcName]), LLVMGetFirstInstruction(LLVMGetFirstBasicBlock(generator->functions[currScope->funcName])));
+    LLVMValueRef value = LLVMBuildAlloca(generator->builder, generator->genType(type, -1), name);
+    LLVMPositionBuilderAtEnd(generator->builder, generator->currBB);
+    return {value, new TypePointer(type)};
 }
 
 LLVMValueRef LLVM::alloc(LLVMValueRef size, const char* name) {

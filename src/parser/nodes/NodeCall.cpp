@@ -425,10 +425,10 @@ LLVMValueRef NodeCall::generate() {
             if(currScope->localVars.find("__RAVE_NG_NGC") != currScope->localVars.end() && currScope->localVars["__RAVE_NG_NGC"] != nullptr) delete currScope->localVars["__RAVE_NG_NGC"];
 
             // Creating a temp variable
-            currScope->localScope["__RAVE_NG_NGC"] = result;
+            currScope->localScope["__RAVE_NG_NGC"] = {result, lTypeToType(LLVMTypeOf(result), result)};
             currScope->localVars["__RAVE_NG_NGC"] = new NodeVar(
                 "__RAVE_NG_NGC", nullptr, false, false, false, {},
-                this->loc, lTypeToType(LLVMTypeOf(currScope->localScope["__RAVE_NG_NGC"]), result)
+                this->loc, lTypeToType(LLVMTypeOf(currScope->localScope["__RAVE_NG_NGC"].value), result)
             );
 
             NodeCall* ncall2 = new NodeCall(this->loc, new NodeGet(new NodeIden("__RAVE_NG_NGC", this->loc), getFunc->field, getFunc->isMustBePtr, this->loc), this->args);
@@ -450,11 +450,13 @@ LLVMValueRef NodeCall::generate() {
 
             if(currScope->localVars.find("__RAVE_NG_NG") != currScope->localVars.end() && currScope->localVars["__RAVE_NG_NG"] != nullptr) delete currScope->localVars["__RAVE_NG_NG"];
 
+            LLVMValueRef ngetG = nget->generate();
+
             // Creating a temp variable
-            currScope->localScope["__RAVE_NG_NG"] = nget->generate();
+            currScope->localScope["__RAVE_NG_NG"] = {ngetG, lTypeToType(LLVMTypeOf(ngetG), ngetG)};
             currScope->localVars["__RAVE_NG_NG"] = new NodeVar(
                 "__RAVE_NG_NG", nullptr, false, false, false, {},
-                this->loc, lTypeToType(LLVMTypeOf(currScope->localScope["__RAVE_NG_NG"]), currScope->localScope["__RAVE_NG_NG"])
+                this->loc, lTypeToType(LLVMTypeOf(ngetG), ngetG)
             );
 
             NodeCall* ncall2 = new NodeCall(this->loc, new NodeGet(new NodeIden("__RAVE_NG_NG", this->loc), getFunc->field, getFunc->isMustBePtr, this->loc), this->args);

@@ -45,6 +45,7 @@ public:
     Type* check(Type* parent) override;
     bool isFloat();
     std::string toString() override;
+    Type* getElType() override;
 };
 
 class TypePointer : public Type {
@@ -56,6 +57,7 @@ public:
     Type* copy() override;
     int getSize() override;
     std::string toString() override;
+    Type* getElType() override;
 };
 
 class TypeArray : public Type {
@@ -68,6 +70,7 @@ public:
     Type* copy() override;
     int getSize() override;
     std::string toString() override;
+    Type* getElType() override;
 };
 
 class TypeAlias : public Type {
@@ -77,6 +80,7 @@ public:
     Type* check(Type* parent) override;
     int getSize() override;
     std::string toString() override;
+    Type* getElType() override;
 };
 
 class TypeVoid : public Type {
@@ -86,6 +90,7 @@ public:
     Type* check(Type* parent) override;
     int getSize() override;
     std::string toString() override;
+    Type* getElType() override;
 };
 
 class TypeConst : public Type {
@@ -97,6 +102,7 @@ public:
     Type* check(Type* parent) override;
     int getSize() override;
     std::string toString() override;
+    Type* getElType() override;
 };
 
 class TypeStruct : public Type {
@@ -111,6 +117,7 @@ public:
     void updateByTypes();
     int getSize() override;
     std::string toString() override;
+    Type* getElType() override;
 };
 
 class TypeFuncArg : public Type {
@@ -123,6 +130,7 @@ public:
     Type* check(Type* parent) override;
     int getSize() override;
     std::string toString() override;
+    Type* getElType() override;
 };
 
 class TypeFunc : public Type {
@@ -135,6 +143,7 @@ public:
     int getSize() override;
     std::string toString() override;
     Type* check(Type* parent) override;
+    Type* getElType() override;
 };
 
 class TypeBuiltin : public Type {
@@ -148,6 +157,7 @@ public:
     int getSize() override;
     std::string toString() override;
     Type* check(Type* parent) override;
+    Type* getElType() override;
 };
 
 class TypeCall : public Type {
@@ -160,6 +170,7 @@ public:
     Type* copy() override;
     int getSize() override;
     Type* check(Type* parent) override;
+    Type* getElType() override;
 };
 
 class TypeAuto : public Type {
@@ -169,6 +180,7 @@ public:
     Type* check(Type* parent) override;
     int getSize() override;
     std::string toString() override;
+    Type* getElType() override;
 };
 
 class TypeLLVM : public Type {
@@ -179,6 +191,7 @@ public:
     Type* check(Type* parent) override;
     int getSize() override;
     std::string toString() override;
+    Type* getElType() override;
 };
 
 class TypeVector : public Type {
@@ -191,6 +204,7 @@ public:
     Type* check(Type* parent) override;
     int getSize() override;
     std::string toString() override;
+    Type* getElType() override;
 };
 
 class TypeDivided : public Type {
@@ -203,6 +217,7 @@ public:
     Type* check(Type* parent) override;
     int getSize() override;
     std::string toString() override;
+    Type* getElType() override;
 };
 
 Type* getType(std::string id);

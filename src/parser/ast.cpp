@@ -434,7 +434,7 @@ Scope::Scope(std::string funcName, std::map<std::string, int> args, std::map<std
     this->args = std::map<std::string, int>(args);
     this->argVars = std::map<std::string, NodeVar*>(argVars);
     this->aliasTable = std::map<std::string, Node*>();
-    this->localScope = std::map<std::string, LLVMValueRef>();
+    this->localScope = std::map<std::string, RaveValue>();
     this->localVars = std::map<std::string, NodeVar*>();
 }
 
@@ -450,7 +450,7 @@ LLVMValueRef Scope::get(std::string name, int loc) {
     LLVMValueRef value = nullptr;
     if(AST::aliasTable.find(name) != AST::aliasTable.end()) value = AST::aliasTable[name]->generate();
     else if(this->aliasTable.find(name) != this->aliasTable.end()) value = this->aliasTable[name]->generate();
-    else if(this->localScope.find(name) != this->localScope.end()) value = this->localScope[name];
+    else if(this->localScope.find(name) != this->localScope.end()) value = this->localScope[name].value;
     else if(generator->globals.find(name) != generator->globals.end()) value = generator->globals[name];
     else if(generator->functions.find(this->funcName) != generator->functions.end()) {
         if(this->args.find(name) == this->args.end()) {
@@ -479,7 +479,7 @@ LLVMValueRef Scope::get(std::string name, int loc) {
 LLVMValueRef Scope::getWithoutLoad(std::string name, int loc) {
     if(AST::aliasTable.find(name) != AST::aliasTable.end()) return AST::aliasTable[name]->generate();
     if(this->aliasTable.find(name) != this->aliasTable.end()) return this->aliasTable[name]->generate();
-    if(this->localScope.find(name) != this->localScope.end()) return this->localScope[name];
+    if(this->localScope.find(name) != this->localScope.end()) return this->localScope[name].value;
     if(generator->globals.find(name) != generator->globals.end()) return generator->globals[name];
     if(this->has("this") && (AST::funcTable.find(this->funcName) != AST::funcTable.end() && AST::funcTable[this->funcName]->isMethod)) {
         NodeVar* nv = this->getVar("this", loc);

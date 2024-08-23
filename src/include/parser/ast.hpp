@@ -17,6 +17,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "./Types.hpp"
 #include "./nodes/Node.hpp"
 #include "../json.hpp"
+#include "../llvm.hpp"
 #include <vector>
 
 class NodeVar;
@@ -71,13 +72,13 @@ public:
     genSettings settings;
     nlohmann::json options;
     
-    std::map<std::string,LLVMValueRef> globals;
-    std::map<std::string,LLVMValueRef> functions;
-    std::map<std::string,LLVMTypeRef> structures;
-    std::map<int32_t,Loop> activeLoops;
+    std::map<std::string, LLVMValueRef> globals;
+    std::map<std::string, LLVMValueRef> functions;
+    std::map<std::string, LLVMTypeRef> structures;
+    std::map<int32_t, Loop> activeLoops;
 
-    std::map<std::string,std::string> neededFunctions;
-    std::map<std::string,Type*> toReplace;
+    std::map<std::string, std::string> neededFunctions;
+    std::map<std::string, Type*> toReplace;
 
     LLVMBasicBlockRef currBB;
 
@@ -102,7 +103,7 @@ public:
 
 class Scope {
 public:
-    std::map<std::string, LLVMValueRef> localScope;
+    std::map<std::string, RaveValue> localScope;
     std::map<std::string, int> args;
     std::string funcName;
     LLVMBasicBlockRef blockExit;
@@ -110,16 +111,22 @@ public:
     std::map<std::string, NodeVar*> localVars;
     std::map<std::string, NodeVar*> argVars;
     std::map<std::string, Node*> aliasTable;
-    bool inTry = false;
     LLVMBasicBlockRef fnEnd;
     LLVMBasicBlockRef elseIfEnd = nullptr;
     bool detectMemoryLeaks = false;
 
     Scope(std::string funcName, std::map<std::string, int> args, std::map<std::string, NodeVar*> argVars);
 
+    // Old functions (not recommended)
+
     LLVMValueRef get(std::string name, int loc = -1);
     LLVMValueRef getWithoutLoad(std::string name, int loc = -1);
     NodeVar* getVar(std::string name, int loc = -1);
+
+    // New functions (recommended)
+
+    
+
     bool has(std::string name);
     bool hasAtThis(std::string name);
     bool locatedAtThis(std::string name);
