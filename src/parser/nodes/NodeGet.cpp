@@ -60,7 +60,42 @@ Type* NodeGet::getType() {
     return nullptr;
 }
 
-Type* NodeGet::getLType() {return this->getType();}
+Type* NodeGet::getLType() {
+    Type* baseType = this->base->getType();
+    TypeStruct* ts = nullptr;
+
+    if(instanceof<TypeStruct>(baseType)) ts = static_cast<TypeStruct*>(baseType);
+    else if(instanceof<TypePointer>(baseType)) ts = static_cast<TypeStruct*>(static_cast<TypePointer*>(baseType)->instance);
+    else return baseType;
+
+    if(!ts) {
+        generator->error("type '" + baseType->toString() + "' is not a structure!", loc);
+        return nullptr;
+    }
+
+    // Replace ts if needed
+    auto it = generator->toReplace.find(ts->name);
+    while(it != generator->toReplace.end()) {
+        ts = static_cast<TypeStruct*>(it->second);
+        it = generator->toReplace.find(ts->name);
+    }
+
+    // Check method table
+    auto methodIt = AST::methodTable.find({ts->name, this->field});
+    if(methodIt != AST::methodTable.end()) return methodIt->second->getType();
+
+    // Check struct numbers
+    auto structIt = AST::structsNumbers.find({ts->name, this->field});
+    if(structIt != AST::structsNumbers.end()) return isMustBePtr ? new TypePointer(structIt->second.var->getLType()) : structIt->second.var->getLType();
+
+    // Check for generic types
+    for(const auto& x : generator->toReplace) {
+        if(x.first.find('<') != std::string::npos) return x.second;
+    }
+
+    generator->error("structure '" + ts->name + "' does not contain element '" + field + "'!", loc);
+    return nullptr;
+}
 
 LLVMValueRef NodeGet::checkStructure(LLVMValueRef ptr) {
     LLVMTypeRef type = LLVMTypeOf(ptr);
