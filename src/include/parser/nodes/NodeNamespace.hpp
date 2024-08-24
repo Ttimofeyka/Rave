@@ -16,14 +16,14 @@ class NodeNamespace : public Node {
 public:
     std::vector<std::string> names;
     std::vector<Node*> nodes;
-    long loc;
+    int loc;
     bool isImported = false;
     bool hidePrivated = false;
 
-    NodeNamespace(std::string name, std::vector<Node*> nodes, long loc);
-    NodeNamespace(std::vector<std::string> names, std::vector<Node*> nodes, long loc);
+    NodeNamespace(std::string name, std::vector<Node*> nodes, int loc);
+    NodeNamespace(std::vector<std::string> names, std::vector<Node*> nodes, int loc);
     Type* getType() override;
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     Node* copy() override;
     Node* comptime() override;
     void check() override;

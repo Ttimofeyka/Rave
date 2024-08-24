@@ -16,12 +16,12 @@ class NodeRet : public Node {
 public:
     Node* value;
     std::string parent;
-    long loc;
+    int loc;
 
-    NodeRet(Node* value, std::string parent, long loc);
+    NodeRet(Node* value, std::string parent, int loc);
 
     Type* getType() override;
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     Node* copy() override;
     Node* comptime() override;
     void check() override;

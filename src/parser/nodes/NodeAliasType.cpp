@@ -10,7 +10,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/utils.hpp"
 #include "../../include/parser/ast.hpp"
 
-NodeAliasType::NodeAliasType(std::string name, Type* value, long loc) {
+NodeAliasType::NodeAliasType(std::string name, Type* value, int loc) {
     this->name = name;
     this->origName = name;
     this->value = value;
@@ -18,8 +18,7 @@ NodeAliasType::NodeAliasType(std::string name, Type* value, long loc) {
 }
 
 Type* NodeAliasType::getType() {return this->value;}
-Type* NodeAliasType::getLType() {return this->value;}
-LLVMValueRef NodeAliasType::generate() {return nullptr;}
+RaveValue NodeAliasType::generate() {return {};}
 Node* NodeAliasType::comptime() {return new NodeType(this->value, this->loc);}
 Node* NodeAliasType::copy() {return new NodeAliasType(this->name, this->value->copy(), this->loc);}
 

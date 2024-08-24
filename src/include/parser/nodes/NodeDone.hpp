@@ -12,12 +12,12 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 class NodeDone : public Node {
 public:
-    LLVMValueRef value;
+    RaveValue value;
 
-    NodeDone(LLVMValueRef value);
-    LLVMValueRef generate() override;
+    NodeDone(RaveValue value);
+    RaveValue generate() override;
     Type* getType() override;
-    Type* getLType() override;
+    
     Node* comptime() override;
     Node* copy() override;
     void check() override;

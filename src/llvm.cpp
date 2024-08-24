@@ -18,140 +18,37 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <llvm/Transforms/IPO.h>
 #include <llvm/IR/LegacyPassManager.h>
 
-bool LLVM::isPointerType(LLVMTypeRef type) {
-    return LLVMGetTypeKind(type) == LLVMPointerTypeKind;
-}
-
-bool LLVM::isPointer(LLVMValueRef value) {
-    if(LLVMIsAGlobalVariable(value) || LLVMIsAAllocaInst(value) || LLVMIsAIntToPtrInst(value) || LLVMIsAGetElementPtrInst(value)) return true;
-    return LLVM::isPointerType(LLVMTypeOf(value));
-}
-
-LLVMTypeRef LLVM::getPointerElType(LLVMValueRef value) {
-    #if RAVE_OPAQUE_POINTERS
-    if(LLVMIsAAllocaInst(value)) return LLVMGetAllocatedType(value);
-    if(LLVMIsAGlobalValue(value)) return LLVMGlobalGetValueType(value);
-    if(LLVMIsAArgument(value)) {
-        Type* ty = AST::funcTable[currScope->funcName]->getInternalArgType(value);
-        if(instanceof<TypePointer>(ty)) return generator->genType(((TypePointer*)ty)->instance, -1);
-        return generator->genType(ty, -1);
-    }
-    if(LLVMIsConstant(value) && LLVMIsNull(value) && LLVM::isPointerType(LLVMTypeOf(value))) return LLVMInt8TypeInContext(generator->context);
-    if(LLVMIsACallInst(value)) {
-        std::string fName = LLVMGetValueName(LLVMGetCalledValue(value));
-        if(fName.find("_RaveF") != std::string::npos) fName = fName.substr(7);
-        while(isdigit(fName[0])) fName = fName.substr(1);
-
-        if(AST::funcTable.find(fName) != AST::funcTable.end()) {
-            if(instanceof<TypePointer>(AST::funcTable[fName]->getType())) return generator->genType(((TypePointer*)AST::funcTable[fName]->getType())->instance, -1);
-            else if(instanceof<TypeStruct>(AST::funcTable[fName]->getType())) return generator->genType(AST::funcTable[fName]->getType(), -1);
-        }
-        else {
-            for(auto &&kv : AST::funcTable) {
-                if(kv.second->linkName == fName) {
-                    if(instanceof<TypePointer>(kv.second->getType())) return generator->genType(((TypePointer*)kv.second->getType())->instance, -1);
-                    else if(instanceof<TypeStruct>(kv.second->getType())) return generator->genType(kv.second->getType(), -1);
-                    break;
-                }
-            }
-            
-        }
-
-        return LLVMGetReturnType(LLVMGetCalledFunctionType(value));
-    }
-    if(LLVMIsALoadInst(value)) return LLVM::getPointerElType(LLVMGetOperand(value, 0));
-    if(LLVMIsAIntToPtrInst(value)) return LLVMInt8TypeInContext(generator->context);
-    if(LLVMIsAGetElementPtrInst(value)) {
-        if(LLVMIsInBounds(value)) {
-            LLVMTypeRef elType = LLVM::getPointerElType(LLVMGetOperand(value, 0));
-    
-            if(LLVMGetTypeKind(elType) == LLVMStructTypeKind) {
-                std::string structName = LLVMGetStructName(elType);
-
-                if(AST::structTable.find(structName) != AST::structTable.end()) {
-                    std::string __number = LLVMPrintValueToString(LLVMGetOperand(value, 2));
-                    int number = std::stoi(__number.substr(4));
-                    std::vector<NodeVar*> variables = AST::structTable[structName]->getVariables();
-                    return generator->genType(variables[number]->getType(), -1);
-                }
-            }
-        }
-        return LLVM::getPointerElType(LLVMGetOperand(value, 0));
-    }
-    std::cout << LLVMPrintValueToString(value) << std::endl; // For future debug
-    return LLVMGetElementType(LLVMTypeOf(value));
-    #else
-    return LLVMGetElementType(LLVMTypeOf(value));
-    #endif
-}
-
-LLVMValueRef LLVM::load(LLVMValueRef value, const char* name) {
-    #if LLVM_VERSION_MAJOR >= 15
-        return LLVMBuildLoad2(generator->builder, LLVM::getPointerElType(value), value, name);
-    #else
-        return LLVMBuildLoad(generator->builder, value, name);
-    #endif
-}
-
 RaveValue LLVM::load(RaveValue value, const char* name, int loc) {
     return {LLVMBuildLoad2(generator->builder, generator->genType(value.type, loc), value.value, name), value.type->getElType()};
 }
 
-LLVMValueRef LLVM::call(LLVMValueRef fn, LLVMValueRef* args, unsigned int argsCount, const char* name) {
-    #if LLVM_VERSION_MAJOR >= 15
-        #if RAVE_OPAQUE_POINTERS
-        return LLVMBuildCall2(generator->builder, LLVMGlobalGetValueType(fn), fn, args, argsCount, name);
-        #else
-        return LLVMBuildCall2(generator->builder, LLVMGetReturnType(LLVMTypeOf(fn)), fn, args, argsCount, name);
-        #endif
-    #else
-        return LLVMBuildCall(generator->builder, fn, args, argsCount, name);
-    #endif
+RaveValue LLVM::call(RaveValue fn, LLVMValueRef* args, unsigned int argsCount, const char* name) {
+    TypeFunc* tfunc = instanceof<TypePointer>(fn.type) ? (TypeFunc*)fn.type->getElType() : (TypeFunc*)fn.type;
+    return {LLVMBuildCall2(generator->builder, generator->genType(tfunc, -1), fn.value, args, argsCount, name), tfunc->main};
 }
 
-LLVMValueRef LLVM::cInboundsGep(LLVMValueRef ptr, LLVMValueRef* indices, unsigned int indicesCount) {
-    #if LLVM_VERSION_MAJOR >= 15
-        return LLVMConstInBoundsGEP2(LLVM::getPointerElType(ptr), ptr, indices, indicesCount);
-    #else
-        return LLVMConstInBoundsGEP(ptr, indices, indicesCount);
-    #endif
+RaveValue LLVM::cInboundsGep(RaveValue ptr, LLVMValueRef* indices, unsigned int indicesCount) {
+    return {LLVMConstInBoundsGEP2(generator->genType(ptr.type->getElType(), -1), ptr.value, indices, indicesCount), ptr.type->getElType()};
 }
 
-LLVMValueRef LLVM::gep(LLVMValueRef ptr, LLVMValueRef* indices, unsigned int indicesCount, const char* name) {
-    #if LLVM_VERSION_MAJOR >= 15
-        return LLVMBuildGEP2(generator->builder, LLVM::getPointerElType(ptr), ptr, indices, indicesCount, name);
-    #else
-        return LLVMBuildGEP(generator->builder, ptr, indices, indicesCount, name);
-    #endif
+RaveValue LLVM::gep(RaveValue ptr, LLVMValueRef* indices, unsigned int indicesCount, const char* name) {
+    return {LLVMBuildGEP2(generator->builder, generator->genType(ptr.type->getElType(), -1), ptr.value, indices, indicesCount, name), ptr.type->getElType()};
 }
 
-LLVMValueRef LLVM::structGep(LLVMValueRef ptr, unsigned int idx, const char* name) {
-    #if LLVM_VERSION_MAJOR >= 15
-        return LLVMBuildStructGEP2(
-            generator->builder, LLVM::getPointerElType(ptr),
-            ptr, idx, name
-        );
-    #else
-        return LLVMBuildStructGEP(generator->builder, ptr, idx, name);
-    #endif
-}
+RaveValue LLVM::structGep(RaveValue ptr, unsigned int idx, const char* name) {
+    TypeStruct* ts = instanceof<TypePointer>(ptr.type) ? (TypeStruct*)ptr.type->getElType() : (TypeStruct*)ptr.type;
 
-LLVMValueRef LLVM::alloc(LLVMTypeRef type, const char* name) {
-    LLVMPositionBuilder(generator->builder, LLVMGetFirstBasicBlock(generator->functions[currScope->funcName]), LLVMGetFirstInstruction(LLVMGetFirstBasicBlock(generator->functions[currScope->funcName])));
-    LLVMValueRef value = LLVMBuildAlloca(generator->builder, type, name);
-    LLVMPositionBuilderAtEnd(generator->builder, generator->currBB);
-    return value;
+    return {LLVMBuildStructGEP2(
+        generator->builder, generator->genType(ts, -1),
+        ptr.value, idx, name
+    ), new TypePointer(AST::structTable[ts->name]->getVariables()[idx]->getType())};
 }
 
 RaveValue LLVM::alloc(Type* type, const char* name) {
-    LLVMPositionBuilder(generator->builder, LLVMGetFirstBasicBlock(generator->functions[currScope->funcName]), LLVMGetFirstInstruction(LLVMGetFirstBasicBlock(generator->functions[currScope->funcName])));
+    LLVMPositionBuilder(generator->builder, LLVMGetFirstBasicBlock(generator->functions[currScope->funcName].value), LLVMGetFirstInstruction(LLVMGetFirstBasicBlock(generator->functions[currScope->funcName].value)));
     LLVMValueRef value = LLVMBuildAlloca(generator->builder, generator->genType(type, -1), name);
     LLVMPositionBuilderAtEnd(generator->builder, generator->currBB);
     return {value, new TypePointer(type)};
-}
-
-LLVMValueRef LLVM::alloc(LLVMValueRef size, const char* name) {
-    return LLVMBuildArrayAlloca(generator->builder, LLVMInt8TypeInContext(generator->context), size, name);
 }
 
 void LLVM::setFastMath(LLVMBuilderRef builder, bool infs, bool nans, bool arcp, bool nsz) {
@@ -167,4 +64,14 @@ void LLVM::setFastMathAll(LLVMBuilderRef builder, bool value) {
     llvm::FastMathFlags flags;
     flags.setFast(value);
     llvm::unwrap(builder)->setFastMathFlags(flags);
+}
+
+LLVMValueRef LLVM::makeInt(size_t n, unsigned long long value, bool isUnsigned) {
+    return LLVMConstInt(LLVMIntTypeInContext(generator->context, n), value, isUnsigned);
+}
+
+RaveValue LLVM::makeCArray(Type* ty, std::vector<RaveValue> values) {
+    std::vector<LLVMValueRef> data;
+    for(int i=0; i<values.size(); i++) data.push_back(values[i].value);
+    return {LLVMConstArray(generator->genType(ty, -1), data.data(), data.size()), new TypeArray(data.size(), ty)};
 }

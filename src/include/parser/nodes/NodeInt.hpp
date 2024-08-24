@@ -27,7 +27,7 @@ public:
     NodeInt(BigInt value, unsigned char sys = 10);
     NodeInt(BigInt value, char type, Type* isVarVal, unsigned char sys, bool isUnsigned, bool isMustBeLong);
     Type* getType() override;
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     Node* copy() override;
     Node* comptime() override;
     void check() override;

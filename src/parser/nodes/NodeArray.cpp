@@ -19,17 +19,19 @@ Type* NodeArray::getType() {
     return new TypeVoid();
 }
 
-Type* NodeArray::getLType() {return this->getType();}
+std::vector<RaveValue> NodeArray::getValues() {
+    std::vector<RaveValue> buffer;
+    RaveValue v0 = values[0]->generate();
 
-std::vector<LLVMValueRef> NodeArray::getValues() {
-    std::vector<LLVMValueRef> buffer;
-    LLVMValueRef v0 = values[0]->generate();
     buffer.push_back(v0);
-    this->type = LLVMTypeOf(v0);
-    if(!LLVMIsConstant(v0)) isConst = false;
+    this->type = v0.type;
+
+    if(!LLVMIsConstant(v0.value)) isConst = false;
+
     for(int i=1; i<this->values.size(); i++) {
         buffer.push_back(values[i]->generate());
-        if(!LLVMIsConstant(buffer[buffer.size() - 1])) {
+
+        if(!LLVMIsConstant(buffer[buffer.size() - 1].value)) {
             isConst = false;
             break;
         }
@@ -37,17 +39,17 @@ std::vector<LLVMValueRef> NodeArray::getValues() {
     return buffer;
 }
 
-LLVMValueRef NodeArray::generate() {
-    std::vector<LLVMValueRef> genValues = this->getValues();
-    if(isConst) return LLVMConstArray(this->type, genValues.data(), values.size());
-    LLVMValueRef arr = LLVM::alloc(LLVMArrayType(this->type, this->values.size()), "NodeArray");
+RaveValue NodeArray::generate() {
+    std::vector<RaveValue> genValues = this->getValues();
+    if(isConst) return LLVM::makeCArray(this->type, genValues);
+
+    RaveValue arr = LLVM::alloc(new TypeArray(this->values.size(), this->type), "NodeArray");
+
     for(int i=0; i<this->values.size(); i++) {
-        LLVMBuildStore(
-            generator->builder, genValues[i],
-            generator->byIndex(arr, std::vector<LLVMValueRef>({LLVMConstInt(LLVMInt32TypeInContext(generator->context), i, false)}))
-        );
+        LLVMBuildStore(generator->builder, genValues[i].value, generator->byIndex(arr, std::vector<LLVMValueRef>({LLVM::makeInt(32, i, false)})).value);
     }
-    return LLVM::load(arr, "loadNodeArray");
+
+    return LLVM::load(arr, "loadNodeArray", loc);
 }
 
 void NodeArray::check() {this->isChecked = true;}

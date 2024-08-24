@@ -16,9 +16,9 @@ public:
 
     NodeBreak(int loc);
     int getWhileLoop();
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     Type* getType() override;
-    Type* getLType() override;
+    
     Node* comptime() override;
     Node* copy() override;
     void check() override;

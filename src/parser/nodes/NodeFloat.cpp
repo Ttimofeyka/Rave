@@ -24,26 +24,15 @@ Type* NodeFloat::getType() {
     return this->type;
 }
 
-Type* NodeFloat::getLType() {
+RaveValue NodeFloat::generate() {
     if(this->isMustBeFloat) {
         if(this->type == nullptr || ((TypeBasic*)this->type)->type != BasicType::Float) this->type = new TypeBasic(BasicType::Float);
-        return new TypeBasic(BasicType::Float);
+        return {LLVMConstReal(LLVMFloatTypeInContext(generator->context), this->value), new TypeBasic(BasicType::Float)};
     }
     if(this->type == nullptr) this->type = new TypeBasic(BasicType::Double);
-    else if(this->type->type == BasicType::Half) return new TypeBasic(BasicType::Half);
-    else if(this->type->type == BasicType::Bhalf) return new TypeBasic(BasicType::Bhalf);
-    return new TypeBasic(BasicType::Double);
-}
-
-LLVMValueRef NodeFloat::generate() {
-    if(this->isMustBeFloat) {
-        if(this->type == nullptr || ((TypeBasic*)this->type)->type != BasicType::Float) this->type = new TypeBasic(BasicType::Float);
-        return LLVMConstReal(LLVMFloatTypeInContext(generator->context), this->value);
-    }
-    if(this->type == nullptr) this->type = new TypeBasic(BasicType::Double);
-    else if(this->type->type == BasicType::Half) return LLVMConstReal(LLVMHalfTypeInContext(generator->context), this->value);
-    else if(this->type->type == BasicType::Bhalf) return LLVMConstReal(LLVMBFloatTypeInContext(generator->context), this->value);
-    return LLVMConstReal(LLVMDoubleTypeInContext(generator->context), this->value);
+    else if(this->type->type == BasicType::Half) return {LLVMConstReal(LLVMHalfTypeInContext(generator->context), this->value), new TypeBasic(BasicType::Half)};
+    else if(this->type->type == BasicType::Bhalf) return {LLVMConstReal(LLVMBFloatTypeInContext(generator->context), this->value), new TypeBasic(BasicType::Bhalf)};
+    return {LLVMConstReal(LLVMDoubleTypeInContext(generator->context), this->value), new TypeBasic(BasicType::Double)};
 }
 
 Node* NodeFloat::copy() {

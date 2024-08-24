@@ -60,7 +60,7 @@ namespace AST {
 
 extern std::string typesToString(std::vector<FuncArgSet> args);
 extern std::string typesToString(std::vector<Type*> args);
-extern std::vector<Type*> parametersToTypes(std::vector<LLVMValueRef> params);
+extern std::vector<Type*> parametersToTypes(std::vector<RaveValue> params);
 
 class LLVMGen {
 public:
@@ -72,8 +72,8 @@ public:
     genSettings settings;
     nlohmann::json options;
     
-    std::map<std::string, LLVMValueRef> globals;
-    std::map<std::string, LLVMValueRef> functions;
+    std::map<std::string, RaveValue> globals;
+    std::map<std::string, RaveValue> functions;
     std::map<std::string, LLVMTypeRef> structures;
     std::map<int32_t, Loop> activeLoops;
 
@@ -93,7 +93,7 @@ public:
     std::string mangle(std::string name, bool isFunc, bool isMethod);
 
     LLVMTypeRef genType(Type* type, int loc);
-    LLVMValueRef byIndex(LLVMValueRef value, std::vector<LLVMValueRef> indexes);
+    RaveValue byIndex(RaveValue value, std::vector<LLVMValueRef> indexes);
     void addAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, int loc, unsigned long value = 0);
     void addStrAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, int loc, std::string value = "");
     Type* setByTypeList(std::vector<Type*> list);
@@ -119,13 +119,9 @@ public:
 
     // Old functions (not recommended)
 
-    LLVMValueRef get(std::string name, int loc = -1);
-    LLVMValueRef getWithoutLoad(std::string name, int loc = -1);
+    RaveValue get(std::string name, int loc = -1);
+    RaveValue getWithoutLoad(std::string name, int loc = -1);
     NodeVar* getVar(std::string name, int loc = -1);
-
-    // New functions (recommended)
-
-    RaveValue get2(std::string name, int loc = -1);
 
     bool has(std::string name);
     bool hasAtThis(std::string name);
@@ -138,7 +134,6 @@ extern LLVMGen* generator;
 extern Scope* currScope;
 extern LLVMTargetDataRef dataLayout;
 
-extern Type* lTypeToType(LLVMTypeRef t, LLVMValueRef value);
 extern TypeFunc* callToTFunc(NodeCall* call);
 extern Scope* copyScope(Scope* original);
 std::string typeToString(LLVMTypeRef type);

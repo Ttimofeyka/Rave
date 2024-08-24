@@ -13,7 +13,6 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 NodeBreak::NodeBreak(int loc) {this->loc = loc;}
 void NodeBreak::check() {this->isChecked = true;}
 Type* NodeBreak::getType() {return new TypeVoid();}
-Type* NodeBreak::getLType() {return new TypeVoid();}
 Node* NodeBreak::comptime() {return this;}
 Node* NodeBreak::copy() {return new NodeBreak(this->loc);}
 
@@ -23,9 +22,12 @@ int NodeBreak::getWhileLoop() {
     return i;
 }
 
-LLVMValueRef NodeBreak::generate() {
+RaveValue NodeBreak::generate() {
     if(generator->activeLoops.empty()) generator->error("attempt to call 'break' out of the loop!", this->loc);
     int id = this->getWhileLoop();
+
     generator->activeLoops[generator->activeLoops.size()-1].hasEnd = true;
-    return LLVMBuildBr(generator->builder, generator->activeLoops[id].end);
+    LLVMBuildBr(generator->builder, generator->activeLoops[id].end);
+
+    return {};
 }

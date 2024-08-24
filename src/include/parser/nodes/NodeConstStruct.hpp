@@ -22,9 +22,9 @@ public:
 
     NodeConstStruct(std::string structName, std::vector<Node*> values, int loc);
     
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     Type* getType() override;
-    Type* getLType() override;
+    
     Node* comptime() override;
     Node* copy() override;
     void check() override;

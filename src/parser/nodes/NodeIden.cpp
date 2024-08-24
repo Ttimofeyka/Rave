@@ -48,30 +48,21 @@ Node* NodeIden::comptime() {
     return AST::aliasTable[this->name];
 }
 
-Type* NodeIden::getLType() {
-    if(AST::aliasTable.find(this->name) != AST::aliasTable.end()) return AST::aliasTable[this->name]->getType();
-    if(AST::funcTable.find(this->name) != AST::funcTable.end()) return AST::funcTable[this->name]->getType();
-    if(!currScope->has(this->name) && !currScope->hasAtThis(this->name)) {
-        if(generator->toReplace.find(this->name) != generator->toReplace.end()) {
-            NodeIden* newNode = new NodeIden(generator->toReplace[this->name]->toString(), loc);
-            newNode->isMustBePtr = this->isMustBePtr;
-            return newNode->getLType();
-        }
-        generator->error("unknown identifier '" + this->name + "'!", this->loc);
-        return nullptr;
-    }
-    return currScope->getVar(this->name, this->loc)->getType();
-}
-
-LLVMValueRef NodeIden::generate() {
+RaveValue NodeIden::generate() {
     if(AST::aliasTable.find(this->name) != AST::aliasTable.end()) return AST::aliasTable[this->name]->generate();
-    else if(currScope != nullptr && currScope->aliasTable.find(this->name) != currScope->aliasTable.end()) return currScope->aliasTable[this->name]->generate();
     if(generator->functions.find(this->name) != generator->functions.end()) {
-        generator->addAttr("noinline", LLVMAttributeFunctionIndex, generator->functions[this->name], loc);
+        generator->addAttr("noinline", LLVMAttributeFunctionIndex, generator->functions[this->name].value, loc);
         return generator->functions[this->name];
     }
-    if(currScope == nullptr && AST::varTable.find(this->name) != AST::varTable.end()) return generator->globals[AST::varTable[this->name]->name];
-    if(!currScope->has(this->name) && !currScope->hasAtThis(this->name)) {generator->error("unknown identifier '" + this->name + "'!", loc); return nullptr;}
-    if(this->isMustBePtr) return currScope->getWithoutLoad(this->name, this->loc);
-    return currScope->get(this->name, this->loc);
+    if(AST::varTable.find(this->name) != AST::varTable.end()) return generator->globals[AST::varTable[this->name]->name];
+
+    if(currScope != nullptr) {
+        if(currScope->has(this->name) || currScope->hasAtThis(this->name)) {
+            if(isMustBePtr) return currScope->getWithoutLoad(this->name, loc);
+            return currScope->get(this->name, loc);
+        }
+    }
+    
+    generator->error("unknown identifier '" + this->name + "'!", loc);
+    return {};
 }

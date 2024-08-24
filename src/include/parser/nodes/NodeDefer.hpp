@@ -26,9 +26,9 @@ public:
 
     NodeDefer(Node* instruction, int loc, bool isFunctionScope);
     Type* getType() override;
-    Type* getLType() override;
+    
     void check() override;
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     Node* comptime() override;
     Node* copy() override;
 };

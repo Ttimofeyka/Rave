@@ -17,21 +17,16 @@ struct RaveValue {
 };
 
 namespace LLVM {
-    extern LLVMValueRef load(LLVMValueRef value, const char* name);
-    extern LLVMValueRef call(LLVMValueRef fn, LLVMValueRef* args, unsigned int argsCount, const char* name);
-    extern LLVMValueRef gep(LLVMValueRef ptr, LLVMValueRef* indices, unsigned int indicesCount, const char* name);
-    extern LLVMValueRef cInboundsGep(LLVMValueRef ptr, LLVMValueRef* indices, unsigned int indicesCount);
-    extern LLVMValueRef structGep(LLVMValueRef ptr, unsigned int idx, const char* name);
-    extern LLVMValueRef alloc(LLVMTypeRef type, const char* name);
-    extern LLVMValueRef alloc(LLVMValueRef size, const char* name);
-
     extern RaveValue load(RaveValue value, const char* name, int loc);
     extern RaveValue alloc(Type* type, const char* name);
-
-    extern bool isPointerType(LLVMTypeRef type);
-    extern bool isPointer(LLVMValueRef value);
-    extern LLVMTypeRef getPointerElType(LLVMValueRef value);
+    extern RaveValue call(RaveValue fn, LLVMValueRef* args, unsigned int argsCount, const char* name);
+    extern RaveValue gep(RaveValue ptr, LLVMValueRef* indices, unsigned int indicesCount, const char* name);
+    extern RaveValue cInboundsGep(RaveValue ptr, LLVMValueRef* indices, unsigned int indicesCount);
+    extern RaveValue structGep(RaveValue ptr, unsigned int idx, const char* name);
 
     extern void setFastMath(LLVMBuilderRef builder, bool infs, bool nans, bool arcp, bool nsz);
     extern void setFastMathAll(LLVMBuilderRef builder, bool value);
+
+    extern LLVMValueRef makeInt(size_t n, unsigned long long value, bool isUnsigned);
+    extern RaveValue makeCArray(Type* ty, std::vector<RaveValue> values);
 }

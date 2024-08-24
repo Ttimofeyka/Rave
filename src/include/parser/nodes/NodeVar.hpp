@@ -41,9 +41,9 @@ public:
     NodeVar(std::string name, Node* value, bool isExtern, bool isConst, bool isGlobal, std::vector<DeclarMod> mods, int loc, Type* type, bool isVolatile, bool isChanged, bool noZeroInit);
     NodeVar(std::string name, Node* value, bool isExtern, bool isConst, bool isGlobal, std::vector<DeclarMod> mods, int loc, Type* type, bool isVolatile, bool isChanged, bool noZeroInit, bool isInternal);
 
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     Type* getType() override;
-    Type* getLType() override;
+    
     Node* comptime() override;
     Node* copy() override;
     void check() override;

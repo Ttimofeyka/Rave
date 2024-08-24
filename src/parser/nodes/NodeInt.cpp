@@ -48,13 +48,22 @@ Type* NodeInt::getType() {
     return new TypeBasic(unsignedTypes[baseType - BasicType::Char]);
 }
 
-LLVMValueRef NodeInt::generate() {
+RaveValue NodeInt::generate() {
     LLVMTypeRef intType = nullptr;
     char baseType = BasicType::Int;
 
-    if(isMustBeLong) intType = LLVMInt64TypeInContext(generator->context);
-    else if(isMustBeShort) intType = LLVMInt16TypeInContext(generator->context);
-    else if(isMustBeChar) intType = LLVMInt8TypeInContext(generator->context);
+    if(isMustBeLong) {
+        baseType = BasicType::Long;
+        intType = LLVMInt64TypeInContext(generator->context);
+    }
+    else if(isMustBeShort) {
+        baseType = BasicType::Short;
+        intType = LLVMInt16TypeInContext(generator->context);
+    }
+    else if(isMustBeChar) {
+        baseType == BasicType::Char;
+        intType = LLVMInt8TypeInContext(generator->context);
+    }
     else if(this->isVarVal != nullptr && instanceof<TypeBasic>(this->isVarVal)) {
         baseType = ((TypeBasic*)this->isVarVal)->type;
         intType = getTypeForBasicType(baseType);
@@ -75,7 +84,7 @@ LLVMValueRef NodeInt::generate() {
     }
 
     this->type = baseType;
-    return LLVMConstIntOfString(intType, value.to_string().c_str(), this->sys);
+    return {LLVMConstIntOfString(intType, value.to_string().c_str(), this->sys), new TypeBasic(baseType)};
 }
 
 LLVMTypeRef NodeInt::getTypeForBasicType(char type) {

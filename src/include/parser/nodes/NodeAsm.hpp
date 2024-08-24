@@ -19,13 +19,13 @@ public:
     std::vector<Node*> values;
     bool isVolatile = false;
     Type* type;
-    long loc;
+    int loc;
 
-    NodeAsm(std::string line, bool isVolatile, Type* type, std::string additions, std::vector<Node*> values, long loc);
+    NodeAsm(std::string line, bool isVolatile, Type* type, std::string additions, std::vector<Node*> values, int loc);
     Type* getType() override;
-    Type* getLType() override;
+    
     void check() override;
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     Node* comptime() override;
     Node* copy() override;
 };

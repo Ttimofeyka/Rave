@@ -53,8 +53,8 @@ Node* NodeImport::comptime() {return this;}
 Node* NodeImport::copy() {return new NodeImport(this->file, this->functions, this->loc);}
 void NodeImport::check() {this->isChecked = true;}
 
-LLVMValueRef NodeImport::generate() {
-    if(std::find(AST::importedFiles.begin(), AST::importedFiles.end(), this->file) != AST::importedFiles.end() || this->file == generator->file) return nullptr;
+RaveValue NodeImport::generate() {
+    if(std::find(AST::importedFiles.begin(), AST::importedFiles.end(), this->file) != AST::importedFiles.end() || this->file == generator->file) return {};
 
     if(this->file.find("/.rave") != std::string::npos) {
         std::string dirPath = this->file.substr(0, this->file.size() - 5);
@@ -66,13 +66,13 @@ LLVMValueRef NodeImport::generate() {
                 delete imp;
             }
         }
-        return nullptr;
+        return {};
     }
 
     if(AST::parsed.find(this->file) == AST::parsed.end()) {
         if(!fs::exists(this->file)) {
             generator->error("file '" + this->file + "' does not exist!", this->loc);
-            return nullptr;
+            return {};
         }
 
         std::ifstream fContent(this->file);
@@ -146,7 +146,7 @@ LLVMValueRef NodeImport::generate() {
     Compiler::genTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     generator->file = oldFile;
     AST::importedFiles.push_back(this->file);
-    return nullptr;
+    return {};
 }
 
 NodeImports::NodeImports(std::vector<NodeImport*> imports, int loc) {
@@ -164,9 +164,9 @@ Node* NodeImports::copy() {
     return new NodeImports(buffer, this->loc);
 }
 
-LLVMValueRef NodeImports::generate() {
+RaveValue NodeImports::generate() {
     for(int i=0; i<this->imports.size(); i++) {
         if(this->imports[i] != nullptr) this->imports[i]->generate();
     }
-    return nullptr;
+    return {};
 }

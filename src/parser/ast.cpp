@@ -52,32 +52,11 @@ TypeFunc* callToTFunc(NodeCall* call) {
     return new TypeFunc(getType(((NodeIden*)call->func)->name), argTypes);
 }
 
-std::vector<Type*> parametersToTypes(std::vector<LLVMValueRef> params) {
+std::vector<Type*> parametersToTypes(std::vector<RaveValue> params) {
     if(params.empty()) return {};
     std::vector<Type*> types;
 
-    for(int i=0; i<params.size(); i++) {
-        if(params[i] == nullptr) continue;
-        LLVMTypeRef t = LLVMTypeOf(params[i]);
-        if(LLVM::isPointerType(t)) {
-            if(LLVMGetTypeKind(LLVMGetElementType(t)) == LLVMStructTypeKind) types.push_back(new TypeStruct(std::string(LLVMGetStructName(LLVMGetElementType(t)))));
-            else types.push_back(new TypePointer(nullptr));
-        }
-        else if(LLVMGetTypeKind(t) == LLVMIntegerTypeKind) {
-            if(t == LLVMInt32TypeInContext(generator->context)) types.push_back(new TypeBasic(BasicType::Int));
-            else if(t == LLVMInt64TypeInContext(generator->context)) types.push_back(new TypeBasic(BasicType::Long));
-            else if(t == LLVMInt16TypeInContext(generator->context)) types.push_back(new TypeBasic(BasicType::Short));
-            else if(t == LLVMInt8TypeInContext(generator->context)) types.push_back(new TypeBasic(BasicType::Char));
-            else if(t == LLVMInt1TypeInContext(generator->context)) types.push_back(new TypeBasic(BasicType::Bool));
-            else types.push_back(new TypeBasic(BasicType::Cent));
-        }
-        else if(LLVMGetTypeKind(t) == LLVMHalfTypeKind) types.push_back(new TypeBasic(BasicType::Half));
-        else if(LLVMGetTypeKind(t) == LLVMHalfTypeKind) types.push_back(new TypeBasic(BasicType::Bhalf));
-        else if(LLVMGetTypeKind(t) == LLVMFloatTypeKind) types.push_back(new TypeBasic(BasicType::Float));
-        else if(LLVMGetTypeKind(t) == LLVMDoubleTypeKind) types.push_back(new TypeBasic(BasicType::Double));
-        else if(LLVMGetTypeKind(t) == LLVMStructTypeKind) types.push_back(new TypeStruct(std::string(LLVMGetStructName(t))));
-        else if(LLVMGetTypeKind(t) == LLVMArrayTypeKind) types.push_back(new TypeArray(0, nullptr));
-    }
+    for(int i=0; i<params.size(); i++) types.push_back(params[i].type);
     return types;
 }
 
@@ -197,30 +176,37 @@ LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options)
     this->context = LLVMContextCreate();
     this->lModule = LLVMModuleCreateWithNameInContext("rave", this->context);
 
-    #if (LLVM_VERSION >= 15) && !(RAVE_OPAQUE_POINTERS)
     LLVMContextSetOpaquePointers(this->context, 0);
-    #endif
 
     if(settings.sseLevel > 2 && options["ssse3"].template get<bool>()) {
-        functions["llvm.x86.ssse3.phadd.d.128"] = LLVMAddFunction(lModule, "llvm.x86.ssse3.phadd.d.128", LLVMFunctionType(
+        functions["llvm.x86.ssse3.phadd.d.128"] = {LLVMAddFunction(lModule, "llvm.x86.ssse3.phadd.d.128", LLVMFunctionType(
             LLVMVectorType(LLVMInt32TypeInContext(context), 4),
             std::vector<LLVMTypeRef>({LLVMVectorType(LLVMInt32TypeInContext(context), 4), LLVMVectorType(LLVMInt32TypeInContext(context), 4)}).data(),
             2, false
-        ));
+        )), new TypeFunc(
+            new TypeVector(new TypeBasic(BasicType::Int), 4),
+            {new TypeFuncArg(new TypeVector(new TypeBasic(BasicType::Int), 4), "v1"), new TypeFuncArg(new TypeVector(new TypeBasic(BasicType::Int), 4), "v2")}
+        )};
 
-        functions["llvm.x86.ssse3.phadd.sw.128"] = LLVMAddFunction(lModule, "llvm.x86.ssse3.phadd.sw.128", LLVMFunctionType(
+        functions["llvm.x86.ssse3.phadd.sw.128"] = {LLVMAddFunction(lModule, "llvm.x86.ssse3.phadd.sw.128", LLVMFunctionType(
             LLVMVectorType(LLVMInt16TypeInContext(context), 8),
             std::vector<LLVMTypeRef>({LLVMVectorType(LLVMInt16TypeInContext(context), 8), LLVMVectorType(LLVMInt16TypeInContext(context), 8)}).data(),
             2, false
-        ));
+        )), new TypeFunc(
+            new TypeVector(new TypeBasic(BasicType::Short), 8),
+            {new TypeFuncArg(new TypeVector(new TypeBasic(BasicType::Short), 8), "v1"), new TypeFuncArg(new TypeVector(new TypeBasic(BasicType::Short), 8), "v2")}
+        )};
     }
 
     if(settings.sseLevel > 2 && options["sse"].template get<int>() > 2) {
-        functions["llvm.x86.sse3.hadd.ps"] = LLVMAddFunction(lModule, "llvm.x86.sse3.hadd.ps", LLVMFunctionType(
+        functions["llvm.x86.sse3.hadd.ps"] = {LLVMAddFunction(lModule, "llvm.x86.sse3.hadd.ps", LLVMFunctionType(
             LLVMVectorType(LLVMFloatTypeInContext(context), 4),
             std::vector<LLVMTypeRef>({LLVMVectorType(LLVMFloatTypeInContext(context), 4), LLVMVectorType(LLVMFloatTypeInContext(context), 4)}).data(),
             2, false
-        ));
+        )), new TypeFunc(
+            new TypeVector(new TypeBasic(BasicType::Float), 4),
+            {new TypeFuncArg(new TypeVector(new TypeBasic(BasicType::Float), 4), "v1"), new TypeFuncArg(new TypeVector(new TypeBasic(BasicType::Float), 4), "v2")}
+        )};
     }
 
     this->neededFunctions["free"] = "std::free";
@@ -339,20 +325,14 @@ LLVMTypeRef LLVMGen::genType(Type* type, int loc) {
     return nullptr;
 }
 
-LLVMValueRef LLVMGen::byIndex(LLVMValueRef value, std::vector<LLVMValueRef> indexes) {
-    if(LLVMGetTypeKind(LLVMTypeOf(value)) == LLVMArrayTypeKind) return byIndex(
+RaveValue LLVMGen::byIndex(RaveValue value, std::vector<LLVMValueRef> indexes) {
+    if(instanceof<TypeArray>(value.type)) return byIndex(
         LLVM::gep(value, std::vector<LLVMValueRef>({LLVMConstInt(LLVMInt32TypeInContext(generator->context), 0, false)}).data(), 2, "gep_byIndex"), indexes
     );
 
-    #if !(RAVE_OPAQUE_POINTERS)
-    if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(value))) == LLVMArrayTypeKind) value = LLVMBuildPointerCast(
-        generator->builder,value,LLVMPointerType(LLVMGetElementType(LLVMGetElementType(LLVMTypeOf(value))),0),"ptrc_byIndex"
-    );
-    #endif
-
     if(indexes.size() > 1) {
-        LLVMValueRef oneGep = LLVM::gep(value, std::vector<LLVMValueRef>({indexes[0]}).data(), 1, "gep2_byIndex");
-        return byIndex(oneGep,std::vector<LLVMValueRef>(indexes.begin() + 1, indexes.end()));
+        RaveValue oneGep = LLVM::gep(value, std::vector<LLVMValueRef>({indexes[0]}).data(), 1, "gep2_byIndex");
+        return byIndex(oneGep, std::vector<LLVMValueRef>(indexes.begin() + 1, indexes.end()));
     }
     return LLVM::gep(value,indexes.data(), indexes.size(), "gep3_byIndex");
 }
@@ -367,45 +347,6 @@ void LLVMGen::addStrAttr(std::string name, LLVMAttributeIndex index, LLVMValueRe
     LLVMAttributeRef attr = LLVMCreateStringAttribute(generator->context,name.c_str(),name.size(),value.c_str(),value.size());
     if(attr == nullptr) this->error("unknown attribute '" + name + "'!",loc);
     LLVMAddAttributeAtIndex(ptr, index, attr);
-}
-
-Type* lTypeToType(LLVMTypeRef t, LLVMValueRef value) {
-    LLVMTypeKind kind = LLVMGetTypeKind(t);
-    switch(kind) {
-        case LLVMIntegerTypeKind: {
-            unsigned bitWidth = LLVMGetIntTypeWidth(t);
-            switch(bitWidth) {
-                case 1: return new TypeBasic(BasicType::Bool);
-                case 8: return new TypeBasic(BasicType::Char);
-                case 16: return new TypeBasic(BasicType::Short);
-                case 32: return new TypeBasic(BasicType::Int);
-                case 64: return new TypeBasic(BasicType::Long);
-                default: return new TypeBasic(BasicType::Cent);
-            }
-        }
-        case LLVMBFloatTypeKind: return new TypeBasic(BasicType::Bhalf);
-        case LLVMHalfTypeKind: return new TypeBasic(BasicType::Half);
-        case LLVMFloatTypeKind: return new TypeBasic(BasicType::Float);
-        case LLVMDoubleTypeKind: return new TypeBasic(BasicType::Double);
-        case LLVMPointerTypeKind:
-            #if RAVE_OPAQUE_POINTERS
-            if(value == nullptr) return new TypePointer(new TypeBasic(BasicType::Char));
-            return new TypePointer(lTypeToType(LLVM::getPointerElType(value), nullptr));
-            #else
-            return new TypePointer(lTypeToType(LLVMGetElementType(t), nullptr));
-            #endif
-        case LLVMArrayTypeKind: return new TypeArray(LLVMGetArrayLength(t), lTypeToType(LLVMGetElementType(t), value)); // Maybe wrong?
-        case LLVMStructTypeKind: return new TypeStruct(LLVMGetStructName(t));
-        case LLVMFunctionTypeKind: {
-            std::string sT = LLVMPrintTypeToString(t);
-            return getType(trim(sT.substr(0, sT.find_last_of('('))));
-        }
-        case LLVMVoidTypeKind: return new TypeVoid();
-        case LLVMVectorTypeKind: return new TypeVector(lTypeToType(LLVMGetElementType(t), nullptr), LLVMGetVectorSize(t));
-        default: break;
-    }
-    generator->error("assert: lTypeToType", -1);
-    return nullptr;
 }
 
 int LLVMGen::getAlignment(Type* type) {
@@ -446,48 +387,18 @@ void Scope::remove(std::string name) {
     else if(this->aliasTable.find(name) != this->aliasTable.end()) this->aliasTable.erase(name);
 }
 
-LLVMValueRef Scope::get(std::string name, int loc) {
-    LLVMValueRef value = nullptr;
-    if(AST::aliasTable.find(name) != AST::aliasTable.end()) value = AST::aliasTable[name]->generate();
-    else if(this->aliasTable.find(name) != this->aliasTable.end()) value = this->aliasTable[name]->generate();
-    else if(this->localScope.find(name) != this->localScope.end()) value = this->localScope[name].value;
-    else if(generator->globals.find(name) != generator->globals.end()) value = generator->globals[name];
-    else if(generator->functions.find(this->funcName) != generator->functions.end()) {
-        if(this->args.find(name) == this->args.end()) {
-            if(generator->functions.find(name) != generator->functions.end()) return generator->functions[name];
-        }
-        else return LLVMGetParam(generator->functions[this->funcName], this->args[name]);
-    }
-    if(value == nullptr && this->has("this") && (AST::funcTable.find(this->funcName) != AST::funcTable.end() && AST::funcTable[this->funcName]->isMethod)) {
-        NodeVar* nv = this->getVar("this", loc);
-        TypeStruct* ts = nullptr;
-        if(instanceof<TypeStruct>(nv->type)) ts = (TypeStruct*)nv->type;
-        else if(instanceof<TypePointer>(nv->type) && instanceof<TypeStruct>(((TypePointer*)nv->type)->instance)) ts = (TypeStruct*)(((TypePointer*)nv->type)->instance);
-        if(ts != nullptr && AST::structTable.find(ts->toString()) != AST::structTable.end() &&
-           AST::structsNumbers.find({ts->toString(), name}) != AST::structsNumbers.end()) {
-            value = (new NodeGet(new NodeIden("this", loc), name, true, loc))->generate();
-        }
-    }
-    if(value == nullptr) {
-        generator->error("undefined variable '" + name + "'!", loc);
-        return nullptr;
-    }
-    if(LLVM::isPointer(value)) value = LLVM::load(value, "scopeGetLoad");
-    return value;
-}
-
-RaveValue Scope::get2(std::string name, int loc) {
+RaveValue Scope::get(std::string name, int loc) {
     RaveValue value = {nullptr, nullptr};
 
-    if(AST::aliasTable.find(name) != AST::aliasTable.end()) value = {AST::aliasTable[name]->generate(), AST::aliasTable[name]->getLType()};
-    else if(this->aliasTable.find(name) != this->aliasTable.end()) value = {this->aliasTable[name]->generate(), this->aliasTable[name]->getLType()};
+    if(AST::aliasTable.find(name) != AST::aliasTable.end()) value = AST::aliasTable[name]->generate();
+    else if(this->aliasTable.find(name) != this->aliasTable.end()) value = this->aliasTable[name]->generate();
     else if(localScope.find(name) != localScope.end()) value = localScope[name];
-    else if(generator->globals.find(name) != generator->globals.end()) value = {generator->globals[name], AST::varTable[name]->getLType()};
+    else if(generator->globals.find(name) != generator->globals.end()) value = generator->globals[name];
     else if(generator->functions.find(this->funcName) != generator->functions.end()) {
         if(this->args.find(name) == this->args.end()) {
             if(generator->functions.find(name) != generator->functions.end()) generator->error(name, loc);
         }
-        else return {LLVMGetParam(generator->functions[this->funcName], this->args[name]), AST::funcTable[this->funcName]->getArgType(name)};
+        else return {LLVMGetParam(generator->functions[this->funcName].value, this->args[name]), AST::funcTable[this->funcName]->getArgType(name)};
     }
     else if(value.value == nullptr && hasAtThis(name)) {
         NodeVar* nv = this->getVar("this", loc);
@@ -497,7 +408,7 @@ RaveValue Scope::get2(std::string name, int loc) {
         if(ts != nullptr && AST::structTable.find(ts->toString()) != AST::structTable.end() &&
            AST::structsNumbers.find({ts->toString(), name}) != AST::structsNumbers.end()) {
             NodeGet* nget = new NodeGet(new NodeIden("this", loc), name, true, loc);
-            value = {nget->generate(), nget->getLType()};
+            value = nget->generate();
         }
     }
 
@@ -506,23 +417,24 @@ RaveValue Scope::get2(std::string name, int loc) {
     return value;
 }
 
-LLVMValueRef Scope::getWithoutLoad(std::string name, int loc) {
+RaveValue Scope::getWithoutLoad(std::string name, int loc) {
     if(AST::aliasTable.find(name) != AST::aliasTable.end()) return AST::aliasTable[name]->generate();
     if(this->aliasTable.find(name) != this->aliasTable.end()) return this->aliasTable[name]->generate();
-    if(this->localScope.find(name) != this->localScope.end()) return this->localScope[name].value;
+    if(this->localScope.find(name) != this->localScope.end()) return this->localScope[name];
     if(generator->globals.find(name) != generator->globals.end()) return generator->globals[name];
-    if(this->has("this") && (AST::funcTable.find(this->funcName) != AST::funcTable.end() && AST::funcTable[this->funcName]->isMethod)) {
+    if(hasAtThis(name)) {
         NodeVar* nv = this->getVar("this", loc);
         TypeStruct* ts = nullptr;
         if(instanceof<TypeStruct>(nv->type)) ts = (TypeStruct*)nv->type;
         else if(instanceof<TypePointer>(nv->type) && instanceof<TypeStruct>(((TypePointer*)nv->type)->instance)) ts = (TypeStruct*)(((TypePointer*)nv->type)->instance);
         if(ts != nullptr && AST::structTable.find(ts->toString()) != AST::structTable.end() &&
            AST::structsNumbers.find({ts->toString(), name}) != AST::structsNumbers.end()) {
-            return (new NodeGet(new NodeIden("this", loc), name, true, loc))->generate();
+            NodeGet* nget = new NodeGet(new NodeIden("this", loc), name, true, loc);
+            return nget->generate();
         }
     }
-    if(this->args.find(name) == this->args.end()) generator->error("undefined identifier '"+name+"' at function '"+this->funcName+"'!", loc);
-    return LLVMGetParam(generator->functions[this->funcName], this->args[name]);
+    if(this->args.find(name) == this->args.end()) generator->error("undefined identifier '" + name + "' at function '" + this->funcName + "'!", loc);
+    return {LLVMGetParam(generator->functions[this->funcName].value, this->args[name]), AST::funcTable[this->funcName]->getArgType(name)};
 }
 
 bool Scope::has(std::string name) {

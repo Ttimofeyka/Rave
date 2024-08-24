@@ -13,12 +13,12 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 class NodePtoi : public Node {
 public:
     Node* value;
-    long loc;
+    int loc;
 
-    NodePtoi(Node* value, long loc);
+    NodePtoi(Node* value, int loc);
     ~NodePtoi() {delete this->value;}
     Type* getType() override;
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     Node* copy() override;
     Node* comptime() override;
     void check() override;

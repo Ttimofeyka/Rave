@@ -15,7 +15,7 @@ namespace AST {
     extern std::map<std::string, NodeFunc*> funcTable;
 }
 
-NodeRet::NodeRet(Node* value, std::string parent, long loc) {
+NodeRet::NodeRet(Node* value, std::string parent, int loc) {
     this->value = (value == nullptr ? nullptr : value->copy());
     this->parent = parent;
     this->loc = loc;
@@ -43,10 +43,12 @@ void NodeRet::setParentBlock(Loop value, int n) {
     }
 }
 
-LLVMValueRef NodeRet::generate() {
-    if(currScope == nullptr || !currScope->has("return")) return nullptr;
+RaveValue NodeRet::generate() {
+    if(currScope == nullptr || !currScope->has("return")) return {};
+
     if(this->value == nullptr) this->value = new NodeNull(nullptr, this->loc);
-    return LLVMBuildStore(generator->builder, this->value->generate(), currScope->getWithoutLoad("return", this->loc));
+    LLVMBuildStore(generator->builder, this->value->generate().value, currScope->getWithoutLoad("return", this->loc).value);
+
     currScope->funcHasRet = true;
-    return nullptr;
+    return {};
 }

@@ -8,6 +8,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <llvm-c/Core.h>
 #include "../Type.hpp"
+#include "../../llvm.hpp"
 
 struct RetGenStmt {
     LLVMBasicBlockRef where;
@@ -18,10 +19,9 @@ class Node {
 public:
     bool isChecked = false;
 
-    virtual LLVMValueRef generate();
+    virtual RaveValue generate();
     virtual void check();
     virtual Node* comptime();
     virtual Type* getType();
-    virtual Type* getLType();
     virtual Node* copy();
 };

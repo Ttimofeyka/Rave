@@ -27,6 +27,6 @@ public:
     void check() override;
     Type* getType() override;
     Node* comptime() override;
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     Node* copy() override;
 };

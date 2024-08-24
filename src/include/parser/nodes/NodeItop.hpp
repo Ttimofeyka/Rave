@@ -14,12 +14,12 @@ class NodeItop : public Node {
 public:
     Node* value;
     Type* type;
-    long loc;
+    int loc;
 
-    NodeItop(Node* value, Type* type, long loc);
+    NodeItop(Node* value, Type* type, int loc);
     ~NodeItop() {delete this->value; delete this->type;}
     Type* getType() override;
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     Node* copy() override;
     Node* comptime() override;
     void check() override;

@@ -15,7 +15,6 @@ NodeDefer::NodeDefer(Node* instruction, int loc, bool isFunctionScope) {
 }
 
 Type* NodeDefer::getType() {return new TypeVoid();}
-Type* NodeDefer::getLType() {return new TypeVoid();}
 
 void NodeDefer::check() {}
 
@@ -23,7 +22,7 @@ Node* NodeDefer::comptime() {return this;}
 
 Node* NodeDefer::copy() {return new NodeDefer(this->instruction->copy(), this->loc, this->isFunctionScope);}
 
-LLVMValueRef NodeDefer::generate() {
+RaveValue NodeDefer::generate() {
     if(!isFunctionScope) {
         if(generator->activeLoops.size() > 0) {
             Loop loop = generator->activeLoops[generator->activeLoops.size() - 1];
@@ -42,7 +41,7 @@ LLVMValueRef NodeDefer::generate() {
 
             delete currScope;
             currScope = oldScope;
-            return nullptr;
+            return {};
         }
     }
 
@@ -62,5 +61,5 @@ LLVMValueRef NodeDefer::generate() {
         currScope = oldScope;
     }
 
-    return nullptr;
+    return {};
 }

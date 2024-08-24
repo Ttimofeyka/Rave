@@ -24,9 +24,9 @@ public:
     NodeFor(std::vector<Node*> presets, Node* cond, std::vector<Node*> afters, NodeBlock* block, std::string funcName, int loc);
     bool isReleased(std::string varName);
     Type* getType() override;
-    Type* getLType() override;
+    
     void check() override;
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     Node* comptime() override;
     Node* copy() override;
 };

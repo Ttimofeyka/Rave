@@ -18,7 +18,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 class NodeLambda : public Node {
 public:
-    long loc;
+    int loc;
     std::string name;
     LLVMValueRef f;
     LLVMBuilderRef builder;
@@ -29,9 +29,9 @@ public:
     std::vector<NodeRet*> rets;
     std::vector<RetGenStmt> genRets;
 
-    NodeLambda(long loc, TypeFunc* tf, NodeBlock* block, std::string name = "");
+    NodeLambda(int loc, TypeFunc* tf, NodeBlock* block, std::string name = "");
     Type* getType() override;
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     Node* copy() override;
     Node* comptime() override;
     void check() override;

@@ -24,7 +24,7 @@ public:
     NodeSwitch(Node* expr, Node* _default, std::vector<std::pair<Node*, Node*>> statements, int loc, std::string func);
     Type* getType() override;
     void check() override;
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     Node* comptime() override;
     Node* copy() override;
 };

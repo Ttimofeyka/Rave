@@ -16,15 +16,15 @@ class NodeArray : public Node {
 public:
     int loc;
     std::vector<Node*> values;
-    LLVMTypeRef type;
+    Type* type;
     bool isConst = true;
 
     NodeArray(int loc, std::vector<Node*> values);
 
     Type* getType() override;
-    Type* getLType() override;
-    std::vector<LLVMValueRef> getValues();
-    LLVMValueRef generate() override;
+    
+    std::vector<RaveValue> getValues();
+    RaveValue generate() override;
     void check() override;
     Node* comptime() override;
     Node* copy() override;

@@ -23,7 +23,7 @@ public:
 
     NodeSlice(Node* base, Node* start, Node* end, int loc);
     
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     Type* getType() override;
     Node* comptime() override;
     Node* copy() override;

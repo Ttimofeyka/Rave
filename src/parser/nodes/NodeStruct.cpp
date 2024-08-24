@@ -50,7 +50,6 @@ Node* NodeStruct::copy() {
 }
 
 Type* NodeStruct::getType() {return new TypeVoid();}
-Type* NodeStruct::getLType() {return new TypeVoid();}
 
 LLVMTypeRef NodeStruct::asConstType() {
     std::vector<LLVMTypeRef> types = this->getParameters(false);
@@ -240,8 +239,8 @@ std::vector<Node*> NodeStruct::copyElements() {
     return buffer;
 }
 
-LLVMValueRef NodeStruct::generate() {
-    if(this->templateNames.size() > 0 || this->noCompile) return nullptr;
+RaveValue NodeStruct::generate() {
+    if(this->templateNames.size() > 0 || this->noCompile) return {};
 
     std::map<std::string, NodeBuiltin*> builtins;
 
@@ -263,7 +262,7 @@ LLVMValueRef NodeStruct::generate() {
         Node* result = data.second->comptime();
         if(result == nullptr || (instanceof<NodeBool>(result) && !((NodeBool*)result)->value)) {
             generator->error("The '" + data.first+  "' builtin failed when generating the structure '" + this->name + "'!", this->loc);
-            return nullptr;
+            return {};
         }
     }
 
@@ -338,7 +337,7 @@ LLVMValueRef NodeStruct::generate() {
         this->methods[i]->check();
         this->methods[i]->generate();
     }
-    return nullptr;
+    return {};
 }
 
 LLVMTypeRef NodeStruct::genWithTemplate(std::string sTypes, std::vector<Type*> types) {

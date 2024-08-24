@@ -21,29 +21,33 @@ NodeConstStruct::NodeConstStruct(std::string name, std::vector<Node*> values, in
 }
 
 Type* NodeConstStruct::getType() {return new TypeStruct(this->structName);}
-Type* NodeConstStruct::getLType() {return this->getType();}
 Node* NodeConstStruct::comptime() {return this;}
 Node* NodeConstStruct::copy() {return new NodeConstStruct(this->structName, this->values, this->loc);}
 void NodeConstStruct::check() {this->isChecked = true;}
 
-LLVMValueRef NodeConstStruct::generate() {
+RaveValue NodeConstStruct::generate() {
     LLVMTypeRef constStructType = generator->genType(new TypeStruct(this->structName), this->loc);
-    std::vector<LLVMValueRef> llvmValues;
+    std::vector<RaveValue> llvmValues;
 
     bool isConst = true;
 
     for(int i=0; i<this->values.size(); i++) {
-        LLVMValueRef generated = this->values[i]->generate();
+        RaveValue generated = this->values[i]->generate();
 
-        if(!LLVMIsConstant(generated)) isConst = false;
+        if(!LLVMIsConstant(generated.value)) isConst = false;
 
         llvmValues.push_back(generated);
     }
 
-    if(isConst) return LLVMConstNamedStruct(constStructType, llvmValues.data(), llvmValues.size());
+    if(isConst) {
+        std::vector<LLVMValueRef> __data;
+        for(int i=0; i<llvmValues.size(); i++) __data.push_back(llvmValues[i].value);
+
+        return {LLVMConstNamedStruct(constStructType, __data.data(), __data.size()), this->getType()};
+    }
     else {
         if(currScope == nullptr) generator->error("constant structure with dynamic values cannot be created outside a function!", this->loc);
-        LLVMValueRef temp = LLVM::alloc(constStructType, "constStruct_temp");
+        RaveValue temp = LLVM::alloc(new TypeStruct(this->structName), "constStruct_temp");
 
         std::vector<std::string> elements;
         for(int i=0; i<AST::structTable[this->structName]->elements.size(); i++) {
@@ -54,6 +58,6 @@ LLVMValueRef NodeConstStruct::generate() {
             (new NodeBinary(TokType::Equ, new NodeGet(new NodeDone(temp), elements[i], true, this->loc), new NodeDone(llvmValues[i]), this->loc))->generate();
         }
 
-        return LLVM::load(temp, "constStruct_tempLoad");
+        return LLVM::load(temp, "constStruct_tempLoad", loc);
     }
 }
