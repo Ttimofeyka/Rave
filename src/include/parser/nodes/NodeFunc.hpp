@@ -74,6 +74,6 @@ public:
     Type* getArgType(int n);
     Type* getArgType(std::string name);
     Type* getInternalArgType(LLVMValueRef value);
-    std::string generateWithCtargs(std::vector<LLVMTypeRef> args);
-    LLVMValueRef generateWithTemplate(std::vector<Type*> types, std::string all);
+    std::string generateWithCtargs(std::vector<Type*> args);
+    RaveValue generateWithTemplate(std::vector<Type*> types, std::string all);
 };
