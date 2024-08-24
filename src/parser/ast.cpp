@@ -176,8 +176,6 @@ LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options)
     this->context = LLVMContextCreate();
     this->lModule = LLVMModuleCreateWithNameInContext("rave", this->context);
 
-    LLVMContextSetOpaquePointers(this->context, 0);
-
     if(settings.sseLevel > 2 && options["ssse3"].template get<bool>()) {
         functions["llvm.x86.ssse3.phadd.d.128"] = {LLVMAddFunction(lModule, "llvm.x86.ssse3.phadd.d.128", LLVMFunctionType(
             LLVMVectorType(LLVMInt32TypeInContext(context), 4),
