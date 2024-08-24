@@ -23,7 +23,7 @@ public:
     std::string funcName;
     int loc;
 
-    NodeForeach(NodeIden* elName, Node* varData, Node* varLength, NodeBlock* block, std::string funcName, long loc);
+    NodeForeach(NodeIden* elName, Node* varData, Node* varLength, NodeBlock* block, std::string funcName, int loc);
     bool isReleased(std::string varName);
     Type* getType() override;
     
