@@ -62,18 +62,6 @@ int4 vector;
 int value = @vGet(vector, 0); // 2
 ```
 
-**@vAdd, @vSub, @vMul, @vDiv (vector1, vector2)** - Performs an arithmetic operation on all elements between two vectors, returning the output vector as a result.
-
-NOTE: You can use standard arithmetic operators for most types of vectors instead of builtins.
-
-Example:
-
-```d
-float4 vector = @vFrom(float4, 10f);
-vector = @vMul(vector, vector);
-float value = @vGet(vector, 0); // 100f
-```
-
 **@vShuffle(vector1, vector2, array)** - Returns a shuffled vector with the specified mask.
 
 Example:

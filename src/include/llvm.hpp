@@ -19,6 +19,7 @@ struct RaveValue {
 namespace LLVM {
     extern RaveValue load(RaveValue value, const char* name, int loc);
     extern RaveValue alloc(Type* type, const char* name);
+    extern RaveValue alloc(RaveValue size, const char* name);
     extern RaveValue call(RaveValue fn, LLVMValueRef* args, unsigned int argsCount, const char* name);
     extern RaveValue gep(RaveValue ptr, LLVMValueRef* indices, unsigned int indicesCount, const char* name);
     extern RaveValue cInboundsGep(RaveValue ptr, LLVMValueRef* indices, unsigned int indicesCount);

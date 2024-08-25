@@ -51,6 +51,10 @@ RaveValue LLVM::alloc(Type* type, const char* name) {
     return {value, new TypePointer(type)};
 }
 
+RaveValue LLVM::alloc(RaveValue size, const char* name) {
+    return {LLVMBuildArrayAlloca(generator->builder, LLVMInt8TypeInContext(generator->context), size.value, name), new TypePointer(new TypeBasic(BasicType::Char))};
+}
+
 void LLVM::setFastMath(LLVMBuilderRef builder, bool infs, bool nans, bool arcp, bool nsz) {
     llvm::FastMathFlags flags;
     if(infs) flags.setNoInfs(true);
