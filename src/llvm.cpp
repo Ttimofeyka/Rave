@@ -19,12 +19,28 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <llvm/IR/LegacyPassManager.h>
 
 RaveValue LLVM::load(RaveValue value, const char* name, int loc) {
-    return {LLVMBuildLoad2(generator->builder, generator->genType(value.type, loc), value.value, name), value.type->getElType()};
+    return {LLVMBuildLoad2(generator->builder, generator->genType(value.type->getElType(), loc), value.value, name), value.type->getElType()};
 }
 
 RaveValue LLVM::call(RaveValue fn, LLVMValueRef* args, unsigned int argsCount, const char* name) {
     TypeFunc* tfunc = instanceof<TypePointer>(fn.type) ? (TypeFunc*)fn.type->getElType() : (TypeFunc*)fn.type;
-    return {LLVMBuildCall2(generator->builder, generator->genType(tfunc, -1), fn.value, args, argsCount, name), tfunc->main};
+
+    std::vector<LLVMTypeRef> types;
+    for(int i=0; i<tfunc->args.size(); i++) types.push_back(generator->genType(tfunc->args[i]->type, -1));
+
+    return {LLVMBuildCall2(generator->builder, LLVMFunctionType(generator->genType(tfunc->main, -1), types.data(), types.size(), tfunc->isVarArg), fn.value, args, argsCount, name), tfunc->main};
+}
+
+RaveValue LLVM::call(RaveValue fn, std::vector<RaveValue> args, const char* name) {
+    TypeFunc* tfunc = instanceof<TypePointer>(fn.type) ? (TypeFunc*)fn.type->getElType() : (TypeFunc*)fn.type;
+    std::vector<LLVMValueRef> lArgs;
+    
+    for(int i=0; i<args.size(); i++) lArgs.push_back(args[i].value);
+
+    std::vector<LLVMTypeRef> types;
+    for(int i=0; i<tfunc->args.size(); i++) types.push_back(generator->genType(tfunc->args[i]->type, -1));
+
+    return {LLVMBuildCall2(generator->builder, LLVMFunctionType(generator->genType(tfunc->main, -1), types.data(), types.size(), tfunc->isVarArg), fn.value, lArgs.data(), lArgs.size(), name), tfunc->main};
 }
 
 RaveValue LLVM::cInboundsGep(RaveValue ptr, LLVMValueRef* indices, unsigned int indicesCount) {
@@ -32,7 +48,7 @@ RaveValue LLVM::cInboundsGep(RaveValue ptr, LLVMValueRef* indices, unsigned int 
 }
 
 RaveValue LLVM::gep(RaveValue ptr, LLVMValueRef* indices, unsigned int indicesCount, const char* name) {
-    return {LLVMBuildGEP2(generator->builder, generator->genType(ptr.type->getElType(), -1), ptr.value, indices, indicesCount, name), ptr.type->getElType()};
+    return {LLVMBuildGEP2(generator->builder, generator->genType(ptr.type->getElType(), -1), ptr.value, indices, indicesCount, name), new TypePointer(ptr.type->getElType())};
 }
 
 RaveValue LLVM::structGep(RaveValue ptr, unsigned int idx, const char* name) {

@@ -39,14 +39,35 @@ RaveValue NodeCast::generate() {
         if(tbasic->type == BasicType::Bool && tbasic->toString() != "bool") {
             return (new NodeCast(new TypeStruct(tbasic->toString()), this->value, this->loc))->generate();
         }
+
         result = this->value->generate();
         if(instanceof<TypeBasic>(result.type)) {
-            if(tbasic->isFloat()) return {LLVMBuildSIToFP(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_itof"), this->type};
+            TypeBasic* tbasic2 = (TypeBasic*)result.type;
+
+            if(tbasic->isFloat() && !tbasic2->isFloat()) return {
+                LLVMBuildSIToFP(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_itof"),
+                this->type
+            };
+            else if(tbasic->isFloat() && tbasic2->isFloat()) return {
+                LLVMBuildFPCast(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_ftof"),
+                this->type
+            };
+            else if(!tbasic->isFloat() && tbasic2->isFloat()) return {
+                LLVMBuildFPToSI(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_ftoi"),
+                this->type
+            };
             return {LLVMBuildIntCast(generator->builder, result.value, generator->genType(type, loc), "NodeCast_itoi"), this->type};
         }
 
         if(instanceof<TypePointer>(result.type)) {
             if(!tbasic->isFloat()) return {LLVMBuildPtrToInt(generator->builder, result.value, generator->genType(tbasic, this->loc), "NodeCast_ptoi"), this->type};
+            return {
+                LLVMBuildSIToFP(
+                    generator->builder, LLVMBuildPtrToInt(generator->builder, result.value, LLVMInt64TypeInContext(generator->context), "NodeCast_temp"),
+                    generator->genType(this->type, loc), "NodeCast_ptof"
+                ),
+                this->type
+            };
             generator->error("casting a pointer to the float is prohibited!", loc);
         }
 

@@ -320,11 +320,40 @@ RaveValue NodeFunc::generate() {
         return {};
     }*/
 
-    TypeFunc* tfunc = new TypeFunc(this->type, {});
+    TypeFunc* tfunc = new TypeFunc(this->type, {}, this->isVararg);
+
+    Type* parent = nullptr;
+    Type* ty = type;
+
+    while(instanceof<TypePointer>(ty) || instanceof<TypeArray>(ty)) ty = ty->getElType();
+
+    if(instanceof<TypeStruct>(ty)) {
+        if(generator->toReplace.find(ty->toString()) != generator->toReplace.end()) {
+            if(parent == nullptr) this->type = generator->toReplace[ty->toString()];
+            else if(instanceof<TypePointer>(parent)) ((TypePointer*)parent)->instance = generator->toReplace[ty->toString()];
+            else ((TypeArray*)parent)->element = generator->toReplace[ty->toString()];
+        }
+    }
+
     for(int i=0; i<args.size(); i++) {
         // TODO: cdecl64 support
+        ty = args[i].type;
+        parent = nullptr;
+
+        while(instanceof<TypePointer>(ty) || instanceof<TypeArray>(ty)) ty = ty->getElType();
+        if(instanceof<TypeStruct>(ty) && generator->toReplace.find(ty->toString()) != generator->toReplace.end()) {
+            if(parent == nullptr) args[i].type = generator->toReplace[ty->toString()];
+            else if(instanceof<TypePointer>(parent)) ((TypePointer*)parent)->instance = generator->toReplace[ty->toString()];
+            else ((TypeArray*)parent)->element = generator->toReplace[ty->toString()];
+        }
+
         tfunc->args.push_back(new TypeFuncArg(args[i].type, args[i].name));
     }
+
+    tfunc->main = this->type;
+
+    LLVMValueRef fn = LLVMGetNamedFunction(generator->lModule, linkName.c_str());
+    if(fn != nullptr) return {};
 
     generator->functions[this->name] = {LLVMAddFunction(
         generator->lModule, linkName.c_str(),

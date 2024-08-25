@@ -70,7 +70,10 @@ Type* TypePointer::check(Type* parent) {
 
 int TypePointer::getSize() {return 8;}
 std::string TypePointer::toString() {return instance->toString() + "*";}
-Type* TypePointer::getElType() {return instance;}
+Type* TypePointer::getElType() {
+    while(instanceof<TypeConst>(instance)) instance = instance->getElType();
+    return instanceof<TypeVoid>(instance) ? new TypeBasic(BasicType::Char) : instance;
+}
 
 // TypeArray
 TypeArray::TypeArray(int count, Type* element) {
@@ -202,9 +205,10 @@ int TypeFuncArg::getSize() {return this->type->getSize();}
 Type* TypeFuncArg::getElType() {return this->type->getElType();}
 
 // TypeFunc
-TypeFunc::TypeFunc(Type* main, std::vector<TypeFuncArg*> args) {
+TypeFunc::TypeFunc(Type* main, std::vector<TypeFuncArg*> args, bool isVarArg) {
     this->main = main;
     this->args = args;
+    this->isVarArg = isVarArg;
 }
 
 int TypeFunc::getSize() {return 8;}
@@ -213,7 +217,7 @@ Type* TypeFunc::copy() {
     std::vector<TypeFuncArg*> _copied;
 
     for(int i=0; i<this->args.size(); i++) _copied.push_back((TypeFuncArg*)this->args[i]->copy());
-    return new TypeFunc(this->main->copy(), _copied);
+    return new TypeFunc(this->main->copy(), _copied, isVarArg);
 }
 
 std::string TypeFunc::toString() {return "NotImplemented";}

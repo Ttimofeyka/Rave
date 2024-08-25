@@ -113,7 +113,13 @@ RaveValue NodeUnary::generate() {
         return val;
     }
     if(this->type == TokType::Ne) {
-        RaveValue toRet = this->base->generate();
+        if(instanceof<NodeIden>(base)) ((NodeIden*)base)->isMustBePtr = false;
+        else if(instanceof<NodeIndex>(base)) ((NodeIndex*)base)->isMustBePtr = false;
+        else if(instanceof<NodeGet>(base)) ((NodeGet*)base)->isMustBePtr = false;
+    
+        RaveValue toRet = base->generate();
+        if(instanceof<TypePointer>(toRet.type)) toRet = LLVM::load(toRet, "NodeUnary_Ne_load", loc);
+    
         return {LLVMBuildNot(generator->builder, toRet.value, "NodeUnary_not"), toRet.type};
     }
     if(this->type == TokType::Multiply) {

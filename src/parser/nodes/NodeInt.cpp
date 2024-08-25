@@ -61,7 +61,7 @@ RaveValue NodeInt::generate() {
         intType = LLVMInt16TypeInContext(generator->context);
     }
     else if(isMustBeChar) {
-        baseType == BasicType::Char;
+        baseType = BasicType::Char;
         intType = LLVMInt8TypeInContext(generator->context);
     }
     else if(this->isVarVal != nullptr && instanceof<TypeBasic>(this->isVarVal)) {

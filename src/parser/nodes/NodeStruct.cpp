@@ -81,6 +81,7 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                     func->isMethod = false;
                     func->isChecked = false;
                 }
+
                 func->name = this->origname;
                 func->namespacesNames = std::vector<std::string>(this->namespacesNames);
                 func->isTemplatePart = this->isLinkOnce;
@@ -359,10 +360,10 @@ LLVMTypeRef NodeStruct::genWithTemplate(std::string sTypes, std::vector<Type*> t
             if(AST::structTable.find(((TypeStruct*)types[i])->name) == AST::structTable.end() && !((TypeStruct*)types[i])->types.empty()) generator->genType(types[i], this->loc);
         }
         generator->toReplace[templateNames[i]] = types[i];
-        _fn += templateNames[i]+",";
+        _fn += templateNames[i] + ",";
     }
 
-    generator->toReplace[name+_fn.substr(0, _fn.size()-1)+">"] = new TypeStruct(name+sTypes);
+    generator->toReplace[name+_fn.substr(0, _fn.size()-1) + ">"] = new TypeStruct(name+sTypes);
 
     NodeStruct* _struct = new NodeStruct(name+sTypes, this->copyElements(), this->loc, "", {}, this->mods);
     _struct->isTemplated = true;

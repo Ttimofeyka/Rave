@@ -137,8 +137,9 @@ class TypeFunc : public Type {
 public:
     Type* main;
     std::vector<TypeFuncArg*> args;
+    bool isVarArg;
 
-    TypeFunc(Type* main, std::vector<TypeFuncArg*> args);
+    TypeFunc(Type* main, std::vector<TypeFuncArg*> args, bool isVarArg);
     Type* copy() override;
     int getSize() override;
     std::string toString() override;

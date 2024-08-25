@@ -32,7 +32,7 @@ RaveValue NodeAsm::generate() {
     std::vector<LLVMValueRef> values;
     std::vector<LLVMTypeRef> types;
 
-    TypeFunc* tfunc = new TypeFunc(this->type, {});
+    TypeFunc* tfunc = new TypeFunc(this->type, {}, false);
 
     for(int i=0; i<this->values.size(); i++) {
         RaveValue value = this->values[i]->generate();

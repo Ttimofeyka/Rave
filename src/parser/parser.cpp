@@ -885,7 +885,7 @@ Type* Parser::parseType(bool cannotBeTemplate) {
 
             ty = new TypeArray(cnt, ty);
         }
-        else if(this->peek()->type == TokType::Rpar) ty = new TypeFunc(ty, this->parseFuncArgs());
+        else if(this->peek()->type == TokType::Rpar) ty = new TypeFunc(ty, this->parseFuncArgs(), false);
         else {
             std::vector<Type*> tTypes;
             std::string tTypesString = "";

@@ -254,7 +254,18 @@ RaveValue NodeBuiltin::generate() {
 
             result = {LLVMBuildFMul(generator->builder, LLVMBuildFSub(generator->builder, one.value, result.value, "NodeBuiltin_fmodf"), two.value, "NodeBuiltin_fmodf_fmul"), ty};
         }
-        else result = {LLVMBuildSRem(generator->builder, one.value, two.value, "NodeBuiltin_fmodf_srem"), ty};
+        else {
+            if(one.type->getSize() > two.type->getSize()) {
+                two.value = LLVMBuildIntCast2(generator->builder, two.value, generator->genType(one.type, loc), false, "NodeBuiltin_fmodf_itoi");
+                two.type = one.type;
+            }
+            else {
+                one.value = LLVMBuildIntCast2(generator->builder, one.value, generator->genType(two.type, loc), false, "NodeBuiltin_fmodf_itoi");
+                one.type = two.type;
+            }
+
+            result = {LLVMBuildSRem(generator->builder, one.value, two.value, "NodeBuiltin_fmodf_srem"), ty};
+        }
 
         return result;
     }

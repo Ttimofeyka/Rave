@@ -68,6 +68,10 @@ RaveValue NodeGet::checkStructure(RaveValue ptr) {
     }
     
     while(instanceof<TypePointer>(ptr.type->getElType())) ptr = LLVM::load(ptr, "NodeGet_checkStructure_load", loc);
+
+    while(generator->toReplace.find(ptr.type->getElType()->toString()) != generator->toReplace.end()) {
+        ((TypePointer*)ptr.type)->instance = generator->toReplace[ptr.type->getElType()->toString()];
+    }
     
     return ptr;
 }
@@ -98,7 +102,7 @@ RaveValue NodeGet::generate() {
         RaveValue ptr = checkStructure(currScope->getWithoutLoad(((NodeIden*)this->base)->name, loc));
         Type* ty = ptr.type;
 
-        std::string structName = ty->toString();
+        std::string structName = ty->getElType()->toString();
         RaveValue f = this->checkIn(structName);
         if(f.value != nullptr) return f;
 

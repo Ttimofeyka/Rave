@@ -49,7 +49,7 @@ TypeFunc* callToTFunc(NodeCall* call) {
         else if(instanceof<NodeIden>(call->args[i])) argTypes.push_back(new TypeFuncArg(getType(((NodeIden*)call->args[i])->name), ""));
         else if(instanceof<NodeType>(call->args[i])) argTypes.push_back(new TypeFuncArg(((NodeType*)call->args[i])->type, ""));
     }
-    return new TypeFunc(getType(((NodeIden*)call->func)->name), argTypes);
+    return new TypeFunc(getType(((NodeIden*)call->func)->name), argTypes, false);
 }
 
 std::vector<Type*> parametersToTypes(std::vector<RaveValue> params) {
@@ -183,7 +183,8 @@ LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options)
             2, false
         )), new TypeFunc(
             new TypeVector(new TypeBasic(BasicType::Int), 4),
-            {new TypeFuncArg(new TypeVector(new TypeBasic(BasicType::Int), 4), "v1"), new TypeFuncArg(new TypeVector(new TypeBasic(BasicType::Int), 4), "v2")}
+            {new TypeFuncArg(new TypeVector(new TypeBasic(BasicType::Int), 4), "v1"), new TypeFuncArg(new TypeVector(new TypeBasic(BasicType::Int), 4), "v2")},
+            false
         )};
 
         functions["llvm.x86.ssse3.phadd.sw.128"] = {LLVMAddFunction(lModule, "llvm.x86.ssse3.phadd.sw.128", LLVMFunctionType(
@@ -192,7 +193,8 @@ LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options)
             2, false
         )), new TypeFunc(
             new TypeVector(new TypeBasic(BasicType::Short), 8),
-            {new TypeFuncArg(new TypeVector(new TypeBasic(BasicType::Short), 8), "v1"), new TypeFuncArg(new TypeVector(new TypeBasic(BasicType::Short), 8), "v2")}
+            {new TypeFuncArg(new TypeVector(new TypeBasic(BasicType::Short), 8), "v1"), new TypeFuncArg(new TypeVector(new TypeBasic(BasicType::Short), 8), "v2")},
+            false
         )};
     }
 
@@ -203,7 +205,8 @@ LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options)
             2, false
         )), new TypeFunc(
             new TypeVector(new TypeBasic(BasicType::Float), 4),
-            {new TypeFuncArg(new TypeVector(new TypeBasic(BasicType::Float), 4), "v1"), new TypeFuncArg(new TypeVector(new TypeBasic(BasicType::Float), 4), "v2")}
+            {new TypeFuncArg(new TypeVector(new TypeBasic(BasicType::Float), 4), "v1"), new TypeFuncArg(new TypeVector(new TypeBasic(BasicType::Float), 4), "v2")},
+            false
         )};
     }
 
@@ -303,6 +306,7 @@ LLVMTypeRef LLVMGen::genType(Type* type, int loc) {
                 return this->genType(type, loc);
             }
             else if(AST::aliasTypes.find(s->name) != AST::aliasTypes.end()) return this->genType(AST::aliasTypes[s->name], loc);
+            
             this->error("unknown structure '" + s->name + "'!", loc);
         }
         return this->structures[s->name];
@@ -313,7 +317,7 @@ LLVMTypeRef LLVMGen::genType(Type* type, int loc) {
         if(instanceof<TypeVoid>(tf->main)) {delete tf->main; tf->main = new TypeBasic(BasicType::Char);}
         std::vector<LLVMTypeRef> types;
         for(int i=0; i<tf->args.size(); i++) types.push_back(this->genType(tf->args[i]->type, loc));
-        return LLVMPointerType(LLVMFunctionType(this->genType(tf->main,loc), types.data(), types.size(), false), 0);
+        return LLVMPointerType(LLVMFunctionType(this->genType(tf->main, loc), types.data(), types.size(), false), 0);
     }
     if(instanceof<TypeFuncArg>(type)) return this->genType(((TypeFuncArg*)type)->type, loc);
     if(instanceof<TypeConst>(type)) return this->genType(((TypeConst*)type)->instance, loc);
@@ -332,18 +336,18 @@ RaveValue LLVMGen::byIndex(RaveValue value, std::vector<LLVMValueRef> indexes) {
         RaveValue oneGep = LLVM::gep(value, std::vector<LLVMValueRef>({indexes[0]}).data(), 1, "gep2_byIndex");
         return byIndex(oneGep, std::vector<LLVMValueRef>(indexes.begin() + 1, indexes.end()));
     }
-    return LLVM::gep(value,indexes.data(), indexes.size(), "gep3_byIndex");
+    return LLVM::gep(value, indexes.data(), indexes.size(), "gep3_byIndex");
 }
 
 void LLVMGen::addAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, int loc, unsigned long value) {
     int id = LLVMGetEnumAttributeKindForName(name.c_str(), name.size());
-    if(id == 0) this->error("unknown attribute '" + name + "'!",loc);
+    if(id == 0) this->error("unknown attribute '" + name + "'!", loc);
     LLVMAddAttributeAtIndex(ptr, index, LLVMCreateEnumAttribute(generator->context, id, value));
 }
 
 void LLVMGen::addStrAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, int loc, std::string value) {
     LLVMAttributeRef attr = LLVMCreateStringAttribute(generator->context,name.c_str(),name.size(),value.c_str(),value.size());
-    if(attr == nullptr) this->error("unknown attribute '" + name + "'!",loc);
+    if(attr == nullptr) this->error("unknown attribute '" + name + "'!", loc);
     LLVMAddAttributeAtIndex(ptr, index, attr);
 }
 
@@ -398,7 +402,8 @@ RaveValue Scope::get(std::string name, int loc) {
         }
         else return {LLVMGetParam(generator->functions[this->funcName].value, this->args[name]), AST::funcTable[this->funcName]->getArgType(name)};
     }
-    else if(value.value == nullptr && hasAtThis(name)) {
+    
+    if(value.value == nullptr && hasAtThis(name)) {
         NodeVar* nv = this->getVar("this", loc);
         TypeStruct* ts = nullptr;
         if(instanceof<TypeStruct>(nv->type)) ts = (TypeStruct*)nv->type;
@@ -410,7 +415,7 @@ RaveValue Scope::get(std::string name, int loc) {
         }
     }
 
-    if(value.value == nullptr) generator->error("undefined variable '" + name + "'!", loc);
+    if(value.value == nullptr) generator->error("undefined identifier '" + name + "' at function '" + this->funcName + "'!", loc);
     if(instanceof<TypePointer>(value.type)) value = LLVM::load(value, "scopeGetLoad", loc);
     return value;
 }
