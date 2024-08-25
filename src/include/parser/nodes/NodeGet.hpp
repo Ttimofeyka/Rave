@@ -19,6 +19,8 @@ public:
     bool elementIsConst = false;
 
     NodeGet(Node* base, std::string field, bool isMustBePtr, int loc);
+    RaveValue checkStructure(RaveValue ptr);
+    RaveValue checkIn(std::string structure);
     RaveValue generate() override;
     Type* getType() override;
     
