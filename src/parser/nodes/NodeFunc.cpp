@@ -335,19 +335,48 @@ RaveValue NodeFunc::generate() {
         }
     }
 
-    for(int i=0; i<args.size(); i++) {
+    if(name.find('<') != std::string::npos && name.find("([]") != std::string::npos) {
+        args[0].type = new TypePointer(new TypeStruct(name.substr(0, name.find('('))));
+        tfunc->args.push_back(new TypeFuncArg(args[0].type, args[0].name));
+
+        for(int i=1; i<args.size(); i++) {
+            // TODO: cdecl64 support
+            Type* cp = args[i].type->copy();
+            ty = cp;
+            parent = nullptr;
+
+            while(instanceof<TypePointer>(ty) || instanceof<TypeArray>(ty)) {
+                parent = ty;
+                ty = ty->getElType();
+            }
+
+            if(instanceof<TypeStruct>(ty) && generator->toReplace.find(ty->toString()) != generator->toReplace.end()) {
+                if(parent == nullptr) args[i].type = generator->toReplace[ty->toString()];
+                else if(instanceof<TypePointer>(parent)) ((TypePointer*)parent)->instance = generator->toReplace[ty->toString()];
+                else ((TypeArray*)parent)->element = generator->toReplace[ty->toString()];
+            }
+
+            tfunc->args.push_back(new TypeFuncArg(cp, args[i].name));
+        }
+    }
+    else for(int i=0; i<args.size(); i++) {
         // TODO: cdecl64 support
-        ty = args[i].type;
+        Type* cp = args[i].type->copy();
+        ty = cp;
         parent = nullptr;
 
-        while(instanceof<TypePointer>(ty) || instanceof<TypeArray>(ty)) ty = ty->getElType();
+        while(instanceof<TypePointer>(ty) || instanceof<TypeArray>(ty)) {
+            parent = ty;
+            ty = ty->getElType();
+        }
+
         if(instanceof<TypeStruct>(ty) && generator->toReplace.find(ty->toString()) != generator->toReplace.end()) {
             if(parent == nullptr) args[i].type = generator->toReplace[ty->toString()];
             else if(instanceof<TypePointer>(parent)) ((TypePointer*)parent)->instance = generator->toReplace[ty->toString()];
             else ((TypeArray*)parent)->element = generator->toReplace[ty->toString()];
         }
 
-        tfunc->args.push_back(new TypeFuncArg(args[i].type, args[i].name));
+        tfunc->args.push_back(new TypeFuncArg(cp, args[i].name));
     }
 
     tfunc->main = this->type;

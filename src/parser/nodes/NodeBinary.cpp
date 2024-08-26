@@ -321,6 +321,7 @@ RaveValue NodeBinary::generate() {
                &&!instanceof<TypeStruct>(this->second->getType()) || (instanceof<TypePointer>(this->second->getType()) && instanceof<TypeStruct>(((TypePointer*)this->second->getType())->instance))
             ) {
                 std::pair<std::string, std::string> opOverload = isOperatorOverload(vFirst, vSecond, this->op);
+
                 if(opOverload.first != "") {
                     if(opOverload.first[0] == '!') return (new NodeUnary(this->loc, TokType::Ne, (new NodeCall(
                         this->loc, new NodeIden(AST::structTable[opOverload.first.substr(1)]->operators[this->op][opOverload.second]->name, this->loc),

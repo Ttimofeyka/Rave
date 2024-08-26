@@ -62,9 +62,12 @@ Type* NodeGet::getType() {
 
 RaveValue NodeGet::checkStructure(RaveValue ptr) {
     if(!instanceof<TypePointer>(ptr.type)) {
-        RaveValue temp = LLVM::alloc(ptr.type, "NodeGet_checkStructure");
-        LLVMBuildStore(generator->builder, ptr.value, temp.value);
-        return temp;
+        if(LLVMIsAArgument(ptr.value) && LLVMGetTypeKind(LLVMTypeOf(ptr.value)) == LLVMPointerTypeKind) ptr.type = new TypePointer(ptr.type);
+        else {
+            RaveValue temp = LLVM::alloc(ptr.type, "NodeGet_checkStructure");
+            LLVMBuildStore(generator->builder, ptr.value, temp.value);
+            return temp;
+        }
     }
     
     while(instanceof<TypePointer>(ptr.type->getElType())) ptr = LLVM::load(ptr, "NodeGet_checkStructure_load", loc);
