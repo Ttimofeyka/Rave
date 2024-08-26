@@ -38,9 +38,18 @@ RaveValue LLVM::call(RaveValue fn, std::vector<RaveValue> args, const char* name
     for(int i=0; i<args.size(); i++) lArgs.push_back(args[i].value);
 
     std::vector<LLVMTypeRef> types;
-    for(int i=0; i<tfunc->args.size(); i++) types.push_back(generator->genType(tfunc->args[i]->type, -1));
+    for(int i=0; i<tfunc->args.size(); i++) {
+        if(instanceof<TypeStruct>(tfunc->args[i]->type)) {
+            TypeStruct* tstruct = (TypeStruct*)tfunc->args[i]->type;
+            if(AST::structTable.find(tstruct->name) == AST::structTable.end() && generator->toReplace.find(tstruct->name) == generator->toReplace.end()) {
+                types.push_back(generator->genType(args[i].type->getElType(), -2));
+            }
+            else types.push_back(generator->genType(tfunc->args[i]->type, -2));
+        }
+        else types.push_back(generator->genType(tfunc->args[i]->type, -2));
+    }
 
-    return {LLVMBuildCall2(generator->builder, LLVMFunctionType(generator->genType(tfunc->main, -1), types.data(), types.size(), tfunc->isVarArg), fn.value, lArgs.data(), lArgs.size(), name), tfunc->main};
+    return {LLVMBuildCall2(generator->builder, LLVMFunctionType(generator->genType(tfunc->main, -2), types.data(), types.size(), tfunc->isVarArg), fn.value, lArgs.data(), lArgs.size(), name), tfunc->main};
 }
 
 RaveValue LLVM::cInboundsGep(RaveValue ptr, LLVMValueRef* indices, unsigned int indicesCount) {

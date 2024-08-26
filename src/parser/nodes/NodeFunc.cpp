@@ -325,7 +325,10 @@ RaveValue NodeFunc::generate() {
     Type* parent = nullptr;
     Type* ty = type;
 
-    while(instanceof<TypePointer>(ty) || instanceof<TypeArray>(ty)) ty = ty->getElType();
+    while(instanceof<TypePointer>(ty) || instanceof<TypeArray>(ty)) {
+        parent = ty;
+        ty = ty->getElType();
+    }
 
     if(instanceof<TypeStruct>(ty)) {
         if(generator->toReplace.find(ty->toString()) != generator->toReplace.end()) {

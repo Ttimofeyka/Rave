@@ -4,11 +4,9 @@
             "name": "Linux",
             "includePath": [
                 "${workspaceFolder}/**",
-                "/usr/lib/llvm-11/include",
-                "/usr/lib/llvm-13/include",
-                "/usr/lib/llvm-14/include",
                 "/usr/lib/llvm-15/include",
-                "/usr/lib/llvm-16/include"
+                "/usr/lib/llvm-16/include",
+                "/usr/lib/llvm-18/include"
             ],
             "defines": [],
             "cStandard": "c17",

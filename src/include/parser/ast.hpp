@@ -9,7 +9,11 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <string>
 #include <map>
 #include <llvm-c/Core.h>
+
+#if LLVM_VERSION < 17
 #include <llvm-c/Initialization.h>
+#endif
+
 #include <llvm-c/lto.h>
 #include <llvm-c/Target.h>
 #include "../utils.hpp"
