@@ -332,6 +332,11 @@ RaveValue LLVMGen::byIndex(RaveValue value, std::vector<LLVMValueRef> indexes) {
         LLVM::gep(value, std::vector<LLVMValueRef>({LLVMConstInt(LLVMInt32TypeInContext(generator->context), 0, false)}).data(), 2, "gep_byIndex"), indexes
     );
 
+    if(instanceof<TypeArray>(value.type->getElType())) {
+        Type* newType = new TypePointer(value.type->getElType()->getElType());
+        value.type = newType;
+    }
+
     if(indexes.size() > 1) {
         RaveValue oneGep = LLVM::gep(value, std::vector<LLVMValueRef>({indexes[0]}).data(), 1, "gep2_byIndex");
         return byIndex(oneGep, std::vector<LLVMValueRef>(indexes.begin() + 1, indexes.end()));

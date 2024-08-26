@@ -132,10 +132,10 @@ RaveValue NodeIndex::generate() {
         }
 
         RaveValue index = generator->byIndex(ptr, this->generateIndexes());
-        if(instanceof<TypePointer>(index.type) && instanceof<TypeArray>(index.type->getElType())) {
+        /*if(instanceof<TypePointer>(index.type) && instanceof<TypeArray>(index.type->getElType())) {
             index.type = new TypePointer(((TypeArray*)index.type->getElType())->element);
             index.value = LLVMBuildBitCast(generator->builder, index.value, generator->genType(index.type, loc), "bitc");
-        }
+        }*/
         if(isMustBePtr) return index;
         return LLVM::load(index, ("NodeIndex_NodeIden_load_" + std::to_string(this->loc) + "_").c_str(), loc);
     }
