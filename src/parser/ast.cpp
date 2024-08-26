@@ -336,6 +336,7 @@ RaveValue LLVMGen::byIndex(RaveValue value, std::vector<LLVMValueRef> indexes) {
         RaveValue oneGep = LLVM::gep(value, std::vector<LLVMValueRef>({indexes[0]}).data(), 1, "gep2_byIndex");
         return byIndex(oneGep, std::vector<LLVMValueRef>(indexes.begin() + 1, indexes.end()));
     }
+
     return LLVM::gep(value, indexes.data(), indexes.size(), "gep3_byIndex");
 }
 
