@@ -113,6 +113,9 @@ std::vector<RaveValue> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg, s
                 }
             }
         }
+        else if(!instanceof<TypePointer>(fas[i].type) && instanceof<TypePointer>(params[i].type)) {
+            params[i] = LLVM::load(params[i], "NodeCall_getParameters_load", loc);
+        }
         else if(instanceof<TypeBasic>(fas[i].type) && instanceof<TypeBasic>(params[i].type) && !((TypeBasic*)params[i].type)->isFloat()) {
             TypeBasic* tbasic = (TypeBasic*)(fas[i].type);
             if(!tbasic->isFloat() && tbasic->type != ((TypeBasic*)params[i].type)->type) {
