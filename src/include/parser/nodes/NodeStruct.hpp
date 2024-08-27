@@ -55,9 +55,9 @@ public:
     std::vector<LLVMTypeRef> getParameters(bool isLinkOnce);
     std::vector<NodeVar*> getVariables();
     LLVMTypeRef genWithTemplate(std::string sTypes, std::vector<Type*> types);
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     Type* getType() override;
-    Type* getLType() override;
+    
     Node* comptime() override;
     Node* copy() override;
     void check() override;

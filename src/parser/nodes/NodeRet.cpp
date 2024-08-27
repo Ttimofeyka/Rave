@@ -10,12 +10,15 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeFunc.hpp"
 #include "../../include/parser/nodes/NodeNull.hpp"
 #include "../../include/parser/nodes/NodeLambda.hpp"
+#include "../../include/parser/nodes/NodeIden.hpp"
+#include "../../include/parser/nodes/NodeGet.hpp"
+#include "../../include/parser/nodes/NodeIndex.hpp"
 
 namespace AST {
     extern std::map<std::string, NodeFunc*> funcTable;
 }
 
-NodeRet::NodeRet(Node* value, std::string parent, long loc) {
+NodeRet::NodeRet(Node* value, std::string parent, int loc) {
     this->value = (value == nullptr ? nullptr : value->copy());
     this->parent = parent;
     this->loc = loc;
@@ -43,10 +46,18 @@ void NodeRet::setParentBlock(Loop value, int n) {
     }
 }
 
-LLVMValueRef NodeRet::generate() {
-    if(currScope == nullptr || !currScope->has("return")) return nullptr;
+RaveValue NodeRet::generate() {
+    if(currScope == nullptr || !currScope->has("return")) return {};
+
     if(this->value == nullptr) this->value = new NodeNull(nullptr, this->loc);
-    return LLVMBuildStore(generator->builder, this->value->generate(), currScope->getWithoutLoad("return", this->loc));
+    
+    RaveValue generated = value->generate();
+    RaveValue ptr = currScope->getWithoutLoad("return", loc);
+
+    if(generated.type->toString() == ptr.type->toString()) generated = LLVM::load(generated, "NodeRet_load", loc);
+
+    LLVMBuildStore(generator->builder, generated.value, ptr.value);
+
     currScope->funcHasRet = true;
-    return nullptr;
+    return {};
 }

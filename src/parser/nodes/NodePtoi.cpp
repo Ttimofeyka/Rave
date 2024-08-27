@@ -10,7 +10,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodePtoi.hpp"
 #include "../../include/parser/ast.hpp"
 
-NodePtoi::NodePtoi(Node* value, long loc) {this->value = value; this->loc = loc;}
+NodePtoi::NodePtoi(Node* value, int loc) {this->value = value; this->loc = loc;}
 
 Type* NodePtoi::getType() {return new TypeBasic(BasicType::Int);}
 Node* NodePtoi::comptime() {return this;}
@@ -22,11 +22,6 @@ void NodePtoi::check() {
     if(!oldCheck) this->value->check();
 }
 
-LLVMValueRef NodePtoi::generate() {
-    return LLVMBuildPtrToInt(
-        generator->builder,
-        this->value->generate(),
-        LLVMInt64TypeInContext(generator->context),
-        "ptoi"
-    );
+RaveValue NodePtoi::generate() {
+    return {LLVMBuildPtrToInt(generator->builder, this->value->generate().value, LLVMInt64TypeInContext(generator->context), "ptoi"), new TypeBasic(BasicType::Long)};
 }

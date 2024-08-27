@@ -45,15 +45,15 @@ void NodeWhile::check() {
     }
 }
 
-LLVMValueRef NodeWhile::generate() {
+RaveValue NodeWhile::generate() {
     auto& function = generator->functions[currScope->funcName];
-    LLVMBasicBlockRef condBlock = LLVMAppendBasicBlock(function, "cond");
-    LLVMBasicBlockRef whileBlock = LLVMAppendBasicBlock(function, "while");
-    currScope->blockExit = LLVMAppendBasicBlock(function, "exit");
+    LLVMBasicBlockRef condBlock = LLVMAppendBasicBlock(function.value, "cond");
+    LLVMBasicBlockRef whileBlock = LLVMAppendBasicBlock(function.value, "while");
+    currScope->blockExit = LLVMAppendBasicBlock(function.value, "exit");
 
     LLVMBuildBr(generator->builder, condBlock);
     LLVMPositionBuilderAtEnd(generator->builder, condBlock);
-    LLVMBuildCondBr(generator->builder, this->cond->generate(), whileBlock, currScope->blockExit);
+    LLVMBuildCondBr(generator->builder, this->cond->generate().value, whileBlock, currScope->blockExit);
     LLVMPositionBuilderAtEnd(generator->builder, whileBlock);
 
     size_t selfNumber = generator->activeLoops.size();
@@ -86,7 +86,7 @@ LLVMValueRef NodeWhile::generate() {
     delete currScope;
     currScope = oldScope;
 
-    return nullptr;
+    return {};
 }
 
 bool NodeWhile::isReleased(std::string varName) {

@@ -9,7 +9,11 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <string>
 #include <map>
 #include <llvm-c/Core.h>
+
+#if LLVM_VERSION < 17
 #include <llvm-c/Initialization.h>
+#endif
+
 #include <llvm-c/lto.h>
 #include <llvm-c/Target.h>
 #include "../utils.hpp"
@@ -17,6 +21,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "./Types.hpp"
 #include "./nodes/Node.hpp"
 #include "../json.hpp"
+#include "../llvm.hpp"
 #include <vector>
 
 class NodeVar;
@@ -59,7 +64,7 @@ namespace AST {
 
 extern std::string typesToString(std::vector<FuncArgSet> args);
 extern std::string typesToString(std::vector<Type*> args);
-extern std::vector<Type*> parametersToTypes(std::vector<LLVMValueRef> params);
+extern std::vector<Type*> parametersToTypes(std::vector<RaveValue> params);
 
 class LLVMGen {
 public:
@@ -71,13 +76,13 @@ public:
     genSettings settings;
     nlohmann::json options;
     
-    std::map<std::string,LLVMValueRef> globals;
-    std::map<std::string,LLVMValueRef> functions;
-    std::map<std::string,LLVMTypeRef> structures;
-    std::map<int32_t,Loop> activeLoops;
+    std::map<std::string, RaveValue> globals;
+    std::map<std::string, RaveValue> functions;
+    std::map<std::string, LLVMTypeRef> structures;
+    std::map<int32_t, Loop> activeLoops;
 
-    std::map<std::string,std::string> neededFunctions;
-    std::map<std::string,Type*> toReplace;
+    std::map<std::string, std::string> neededFunctions;
+    std::map<std::string, Type*> toReplace;
 
     LLVMBasicBlockRef currBB;
 
@@ -92,7 +97,7 @@ public:
     std::string mangle(std::string name, bool isFunc, bool isMethod);
 
     LLVMTypeRef genType(Type* type, int loc);
-    LLVMValueRef byIndex(LLVMValueRef value, std::vector<LLVMValueRef> indexes);
+    RaveValue byIndex(RaveValue value, std::vector<LLVMValueRef> indexes);
     void addAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, int loc, unsigned long value = 0);
     void addStrAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, int loc, std::string value = "");
     Type* setByTypeList(std::vector<Type*> list);
@@ -102,7 +107,7 @@ public:
 
 class Scope {
 public:
-    std::map<std::string, LLVMValueRef> localScope;
+    std::map<std::string, RaveValue> localScope;
     std::map<std::string, int> args;
     std::string funcName;
     LLVMBasicBlockRef blockExit;
@@ -110,16 +115,18 @@ public:
     std::map<std::string, NodeVar*> localVars;
     std::map<std::string, NodeVar*> argVars;
     std::map<std::string, Node*> aliasTable;
-    bool inTry = false;
     LLVMBasicBlockRef fnEnd;
     LLVMBasicBlockRef elseIfEnd = nullptr;
     bool detectMemoryLeaks = false;
 
     Scope(std::string funcName, std::map<std::string, int> args, std::map<std::string, NodeVar*> argVars);
 
-    LLVMValueRef get(std::string name, int loc = -1);
-    LLVMValueRef getWithoutLoad(std::string name, int loc = -1);
+    // Old functions (not recommended)
+
+    RaveValue get(std::string name, int loc = -1);
+    RaveValue getWithoutLoad(std::string name, int loc = -1);
     NodeVar* getVar(std::string name, int loc = -1);
+
     bool has(std::string name);
     bool hasAtThis(std::string name);
     bool locatedAtThis(std::string name);
@@ -131,7 +138,6 @@ extern LLVMGen* generator;
 extern Scope* currScope;
 extern LLVMTargetDataRef dataLayout;
 
-extern Type* lTypeToType(LLVMTypeRef t, LLVMValueRef value);
 extern TypeFunc* callToTFunc(NodeCall* call);
 extern Scope* copyScope(Scope* original);
 std::string typeToString(LLVMTypeRef type);

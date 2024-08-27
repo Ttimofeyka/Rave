@@ -8,7 +8,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeLambda.hpp"
 #include "../../include/parser/nodes/NodeFunc.hpp"
 
-NodeLambda::NodeLambda(long loc, TypeFunc* tf, NodeBlock* block, std::string name) {
+NodeLambda::NodeLambda(int loc, TypeFunc* tf, NodeBlock* block, std::string name) {
     this->loc = loc;
     this->tf = tf;
     this->block = block;
@@ -26,7 +26,7 @@ std::vector<LLVMTypeRef> NodeLambda::generateTypes() {
     return buffer;
 }
 
-LLVMValueRef NodeLambda::generate() {
+RaveValue NodeLambda::generate() {
     this->type = this->tf->main;
 
     const auto& activeLoops = generator->activeLoops;
@@ -47,7 +47,7 @@ LLVMValueRef NodeLambda::generate() {
     auto nf = new NodeFunc("__RAVE_LAMBDA" + std::to_string(lambdaId), std::move(fas), block, false, {}, this->loc, this->tf->main, {});
     nf->check();
     nf->isComdat = true;
-    LLVMValueRef func = nf->generate();
+    RaveValue func = nf->generate();
 
     generator->activeLoops = activeLoops;
     generator->builder = builder;

@@ -36,9 +36,8 @@ Node* NodeFor::copy() {
 Node* NodeFor::comptime() {return this;}
 void NodeFor::check() {this->isChecked = true;}
 Type* NodeFor::getType() {return new TypeVoid();}
-Type* NodeFor::getLType() {return new TypeVoid();}
 
-LLVMValueRef NodeFor::generate() {
+RaveValue NodeFor::generate() {
     for(int i=0; i<this->presets.size(); i++) {
         this->presets[i]->check();
         this->presets[i]->generate();
@@ -47,7 +46,7 @@ LLVMValueRef NodeFor::generate() {
 
     NodeWhile* nwhile = new NodeWhile(this->cond, this->block, this->loc, this->funcName);
     nwhile->check();
-    LLVMValueRef result = nwhile->generate();
+    RaveValue result = nwhile->generate();
 
     for(int i=0; i<this->presets.size(); i++) {
         if(instanceof<NodeVar>(this->presets[i])) {

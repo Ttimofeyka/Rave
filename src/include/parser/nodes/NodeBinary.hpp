@@ -31,11 +31,11 @@ public:
 
     NodeBinary(char op, Node* first, Node* second, int loc, bool isStatic = false);
 
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     Type* getType() override;
-    Type* getLType() override;
+    
     Node* comptime() override;
     Node* copy() override;
     void check() override;
-    std::pair<std::string, std::string> isOperatorOverload(Node* first, Node* second, char op);
+    std::pair<std::string, std::string> isOperatorOverload(RaveValue first, RaveValue second, char op);
 };

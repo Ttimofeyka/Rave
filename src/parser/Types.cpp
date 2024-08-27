@@ -17,9 +17,11 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 TypeBasic::TypeBasic(char ty) {
     this->type = ty;
 }
+
 Type* TypeBasic::copy() {
     return new TypeBasic(this->type);
 }
+
 int TypeBasic::getSize() {
     switch(this->type) {
         case BasicType::Bool: return 1;
@@ -31,7 +33,9 @@ int TypeBasic::getSize() {
         default: return 0;
     }
 }
+
 bool TypeBasic::isFloat() {return (this->type == BasicType::Float) || (this->type == BasicType::Double || this->type == BasicType::Half || this->type == BasicType::Bhalf);}
+
 std::string TypeBasic::toString() {
     switch(this->type) {
         case BasicType::Bool: return "bool";
@@ -46,36 +50,49 @@ std::string TypeBasic::toString() {
         default: return "BasicUnknown";
     }
 }
+
 Type* TypeBasic::check(Type* parent) {return nullptr;}
+Type* TypeBasic::getElType() {return this;}
 
 // TypePointer
 TypePointer::TypePointer(Type* instance) {
     this->instance = instance;
 }
+
 Type* TypePointer::copy() {
     return new TypePointer(instance->copy());
 }
+
 Type* TypePointer::check(Type* parent) {
     if(!instanceof<TypeBasic>(this->instance)) this->instance->check(this);
     return nullptr; 
 }
+
 int TypePointer::getSize() {return 8;}
-std::string TypePointer::toString() {return instance->toString()+"*";}
+std::string TypePointer::toString() {return instance->toString() + "*";}
+Type* TypePointer::getElType() {
+    while(instanceof<TypeConst>(instance)) instance = instance->getElType();
+    return instanceof<TypeVoid>(instance) ? new TypeBasic(BasicType::Char) : instance;
+}
 
 // TypeArray
 TypeArray::TypeArray(int count, Type* element) {
     this->count = count;
     this->element = element;
 }
+
 Type* TypeArray::copy() {
     return new TypeArray(count, element->copy());
 }
+
 Type* TypeArray::check(Type* parent) {
     if(!instanceof<TypeBasic>(this->element)) this->element->check(this);
     return nullptr;
 }
+
 int TypeArray::getSize() {return this->count * this->element->getSize();}
-std::string TypeArray::toString() {return this->element->toString()+"["+std::to_string(this->count)+"]";}
+std::string TypeArray::toString() {return this->element->toString() + "[" + std::to_string(this->count) + "]";}
+Type* TypeArray::getElType() {return element;}
 
 // TypeAlias
 TypeAlias::TypeAlias() {}
@@ -83,6 +100,7 @@ Type* TypeAlias::copy() {return new TypeAlias();}
 std::string TypeAlias::toString() {return "alias";}
 Type* TypeAlias::check(Type* parent) {return nullptr;}
 int TypeAlias::getSize() {return 0;}
+Type* TypeAlias::getElType() {return this;}
 
 // TypeVoid
 TypeVoid::TypeVoid() {}
@@ -90,27 +108,32 @@ Type* TypeVoid::check(Type* parent) {return nullptr;}
 Type* TypeVoid::copy() {return new TypeVoid();}
 int TypeVoid::getSize() {return 0;}
 std::string TypeVoid::toString() {return "void";}
+Type* TypeVoid::getElType() {return this;}
 
 // TypeConst
 TypeConst::TypeConst(Type* instance) {this->instance = instance;}
 Type* TypeConst::copy() {return new TypeConst(this->instance->copy());}
 Type* TypeConst::check(Type* parent) {this->instance->check(nullptr); return nullptr;}
 int TypeConst::getSize() {return this->instance->getSize();}
-std::string TypeConst::toString() {return "const(" + this->instance->toString() + ")";}
+std::string TypeConst::toString() {return this->instance->toString();}
+Type* TypeConst::getElType() {return this->instance->getElType();}
 
 // TypeStruct
 TypeStruct::TypeStruct(std::string name) {
     this->name = name;
 }
+
 TypeStruct::TypeStruct(std::string name, std::vector<Type*> types) {
     this->name = name;
     this->types = types;
 }
+
 Type* TypeStruct::copy() {
     std::vector<Type*> typesCopy;
     for(int i=0; i<this->types.size(); i++) typesCopy.push_back(this->types[i]->copy());
     return new TypeStruct(this->name, typesCopy);
 }
+
 void TypeStruct::updateByTypes() {
     if(this->name.find('<') != std::string::npos) {
         this->name = this->name.substr(0, this->name.find('<')) + "<";
@@ -118,6 +141,7 @@ void TypeStruct::updateByTypes() {
         this->name = this->name.substr(0, this->name.size()-1) + ">";
     }
 }
+
 int TypeStruct::getSize() {
     Type* t = this;
     while(generator->toReplace.find(t->toString()) != generator->toReplace.end()) t = generator->toReplace[t->toString()];
@@ -139,6 +163,7 @@ int TypeStruct::getSize() {
     }
     return t->getSize();
 }
+
 Type* TypeStruct::check(Type* parent) {
     if(AST::aliasTypes.find(this->name) != AST::aliasTypes.end()) {
         Type* _t = AST::aliasTypes[name];
@@ -163,32 +188,41 @@ Type* TypeStruct::check(Type* parent) {
     }
     return nullptr;
 }
+
 std::string TypeStruct::toString() {return this->name;}
+Type* TypeStruct::getElType() {return this;}
 
 // TypeFuncArg
 TypeFuncArg::TypeFuncArg(Type* type, std::string name) {
     this->type = type;
     this->name = name;
 }
+
 Type* TypeFuncArg::copy() {return new TypeFuncArg(this->type->copy(), this->name);}
 Type* TypeFuncArg::check(Type* parent) {return nullptr;}
 std::string TypeFuncArg::toString() {return this->name;}
 int TypeFuncArg::getSize() {return this->type->getSize();}
+Type* TypeFuncArg::getElType() {return this->type->getElType();}
 
 // TypeFunc
-TypeFunc::TypeFunc(Type* main, std::vector<TypeFuncArg*> args) {
+TypeFunc::TypeFunc(Type* main, std::vector<TypeFuncArg*> args, bool isVarArg) {
     this->main = main;
     this->args = args;
+    this->isVarArg = isVarArg;
 }
+
 int TypeFunc::getSize() {return 8;}
+
 Type* TypeFunc::copy() {
     std::vector<TypeFuncArg*> _copied;
 
     for(int i=0; i<this->args.size(); i++) _copied.push_back((TypeFuncArg*)this->args[i]->copy());
-    return new TypeFunc(this->main->copy(), _copied);
+    return new TypeFunc(this->main->copy(), _copied, isVarArg);
 }
+
 std::string TypeFunc::toString() {return "NotImplemented";}
 Type* TypeFunc::check(Type* parent) {return nullptr;}
+Type* TypeFunc::getElType() {return this;}
 
 // TypeBuiltin
 TypeBuiltin::TypeBuiltin(std::string name, std::vector<Node*> args, NodeBlock* block) {
@@ -196,20 +230,24 @@ TypeBuiltin::TypeBuiltin(std::string name, std::vector<Node*> args, NodeBlock* b
     this->args = args;
     this->block = block;
 }
+
 int TypeBuiltin::getSize() {return 0;}
 Type* TypeBuiltin::copy() {return new TypeBuiltin(this->name, this->args, (NodeBlock*)(this->block->copy()));}
 std::string TypeBuiltin::toString() {return this->name;}
 Type* TypeBuiltin::check(Type* parent) {return nullptr;}
+Type* TypeBuiltin::getElType() {return this;}
 
 // TypeCall
 TypeCall::TypeCall(std::string name, std::vector<Node*> args) {
     this->name = name;
     this->args = args;
 }
+
 std::string TypeCall::toString() {return "FuncCall";}
 Type* TypeCall::copy() {return new TypeCall(this->name, this->args);}
 int TypeCall::getSize() {return 0;}
 Type* TypeCall::check(Type* parent) {return nullptr;}
+Type* TypeCall::getElType() {return this;}
 
 // TypeAuto
 TypeAuto::TypeAuto() {}
@@ -217,6 +255,7 @@ Type* TypeAuto::copy() {return new TypeAuto();}
 int TypeAuto::getSize() {return 0;}
 Type* TypeAuto::check(Type* parent) {return nullptr;}
 std::string TypeAuto::toString() {return "";}
+Type* TypeAuto::getElType() {return this;}
 
 // TypeLLVM
 TypeLLVM::TypeLLVM(LLVMTypeRef tr) {this->tr = tr;}
@@ -224,6 +263,7 @@ Type* TypeLLVM::copy() {return new TypeLLVM(this->tr);}
 int TypeLLVM::getSize() {return 0;}
 Type* TypeLLVM::check(Type* parent) {return nullptr;}
 std::string TypeLLVM::toString() {return "";}
+Type* TypeLLVM::getElType() {return this;}
 
 // TypeVector
 TypeVector::TypeVector(Type* mainType, int count) {this->mainType = mainType; this->count = count;}
@@ -231,17 +271,21 @@ Type* TypeVector::copy() {return new TypeVector(mainType, count);}
 int TypeVector::getSize() {return mainType->getSize() * count;}
 Type* TypeVector::check(Type* parent) {return nullptr;}
 std::string TypeVector::toString() {return "<" + mainType->toString() + " x " + std::to_string(count) + ">";}
+Type* TypeVector::getElType() {return mainType;}
 
 // TypeDivided
 TypeDivided::TypeDivided(Type* mainType, std::vector<Type*> divided) {this->mainType = mainType; this->divided = divided;}
 Type* TypeDivided::copy() {return new TypeDivided(mainType, divided);}
+
 int TypeDivided::getSize() {
     int sum = 0;
     for(int i=0; i<divided.size(); i++) sum += divided[i]->getSize();
     return sum;
 }
+
 Type* TypeDivided::check(Type* parent) {return nullptr;}
 std::string TypeDivided::toString() {return "NotImplemented2";}
+Type* TypeDivided::getElType() {return this;}
 
 Type* getType(std::string id) {
     if(id == "bool") return new TypeBasic(BasicType::Bool);

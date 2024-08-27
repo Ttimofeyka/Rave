@@ -20,7 +20,8 @@ public:
 
     NodeIndex(Node* element, std::vector<Node*> indexes, int loc);
     Type* getType() override;
-    LLVMValueRef generate() override;
+    
+    RaveValue generate() override;
     Node* copy() override;
     Node* comptime() override;
     void check() override;

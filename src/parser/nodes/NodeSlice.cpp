@@ -29,14 +29,14 @@ Type* NodeSlice::getType() {
     BigInt one = ((NodeInt*)start)->value;
     BigInt two = ((NodeInt*)end)->value;
     if((two <= one) || (one < 0) || (instanceof<TypeArray>(base->getType()) && ((TypeArray*)base->getType())->count < two.to_int())) generator->error("incorrect slice values!", loc);
-    return new TypeArray(one.to_int(), base->getType());
+    return new TypeArray(two.to_int() - one.to_int(), base->getType());
 }
 
 Node* NodeSlice::comptime() {return this;}
 Node* NodeSlice::copy() {return new NodeSlice(this->base, this->start, this->end, this->loc);}
 void NodeSlice::check() {this->isChecked = true;}
 
-LLVMValueRef NodeSlice::generate() {
+RaveValue NodeSlice::generate() {
     if(!instanceof<NodeInt>(start) || !instanceof<NodeInt>(end)) generator->error("NodeSlice temporarily supports only constant numbers!", loc); // TODO: Rework it
     int one = ((NodeInt*)start)->value.to_int();
     int two = ((NodeInt*)end)->value.to_int();
@@ -46,14 +46,15 @@ LLVMValueRef NodeSlice::generate() {
     else if(instanceof<NodeGet>(base)) ((NodeGet*)base)->isMustBePtr = false;
     else if(instanceof<NodeIndex>(base)) ((NodeIndex*)base)->isMustBePtr = false;
 
-    LLVMValueRef lBase = base->generate();
-    LLVMValueRef buffer = LLVM::alloc(LLVMArrayType(LLVMGetElementType(LLVMTypeOf(lBase)), two - one), "NodeSlice_buffer");
-    LLVMValueRef tempBuffer = LLVM::load(buffer, "load");
+    RaveValue lBase = base->generate();
+    RaveValue buffer = LLVM::alloc(new TypeArray(two - one, lBase.type->getElType()), "NodeSlice_buffer");
+    RaveValue tempBuffer = LLVM::load(buffer, "load", loc);
 
-    for(int i=one, j=0; i<two; i++, j++) {
-        if(LLVMGetTypeKind(LLVMTypeOf(lBase)) == LLVMArrayTypeKind)
-            tempBuffer = LLVMBuildInsertValue(generator->builder, tempBuffer, LLVMBuildExtractValue(generator->builder, lBase, j, "extract"), j, "insert");
+    if(instanceof<TypeArray>(lBase.type)) for(int i=one, j=0; i<two; i++, j++) {
+        tempBuffer.value = LLVMBuildInsertValue(generator->builder, tempBuffer.value, LLVMBuildExtractValue(generator->builder, lBase.value, j, "extract"), j, "insert");
     }
+
+
 
     return tempBuffer;
 }

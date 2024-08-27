@@ -44,7 +44,7 @@ Type* NodeUnary::getType() {
     return nullptr;
 }
 
-LLVMValueRef NodeUnary::generatePtr() {
+RaveValue NodeUnary::generatePtr() {
     if(instanceof<NodeIden>(this->base)) ((NodeIden*)this->base)->isMustBePtr = true;
     if(instanceof<NodeIndex>(this->base)) ((NodeIndex*)this->base)->isMustBePtr = true;
     if(instanceof<NodeGet>(this->base)) ((NodeGet*)this->base)->isMustBePtr = true;
@@ -57,34 +57,33 @@ void NodeUnary::check() {
     if(!oldCheck) this->base->check();
 }
 
-LLVMValueRef NodeUnary::generateConst() {
+RaveValue NodeUnary::generateConst() {
     if(this->type == TokType::Minus) {
-        LLVMValueRef bs = this->base->generate();
-        #if LLVM_VERSION_MAJOR >= 15
-            return (LLVMGetTypeKind(LLVMTypeOf(bs)) == LLVMIntegerTypeKind) ? LLVMBuildNeg(generator->builder, bs, "") : LLVMBuildFNeg(generator->builder, bs, "");
-        #else
-            return (LLVMGetTypeKind(LLVMTypeOf(bs)) == LLVMIntegerTypeKind) ? LLVMConstNeg(bs) : LLVMConstFNeg(bs);
-        #endif
+        RaveValue bs = this->base->generate();
+        if(instanceof<TypeBasic>(bs.type) && !((TypeBasic*)bs.type)->isFloat()) return {LLVMBuildNeg(generator->builder, bs.value, ""), bs.type};
+        return {LLVMBuildFNeg(generator->builder, bs.value, ""), bs.type};
     }
-    return nullptr;
+    return {};
 }
 
-LLVMValueRef NodeUnary::generate() {
+RaveValue NodeUnary::generate() {
     if(this->type == TokType::Minus) {
-        LLVMValueRef bs = this->base->generate();
-        return (LLVMGetTypeKind(LLVMTypeOf(bs)) == LLVMIntegerTypeKind) ? LLVMBuildNeg(generator->builder, bs, "NodeUnary_neg") : LLVMBuildFNeg(generator->builder, bs, "NodeUnary_fneg");
+        RaveValue bs = this->base->generate();
+        if(instanceof<TypeBasic>(bs.type) && !((TypeBasic*)bs.type)->isFloat()) return {LLVMBuildNeg(generator->builder, bs.value, "NodeUnary_neg"), bs.type};
+        return {LLVMBuildFNeg(generator->builder, bs.value, "NodeUnary_fneg"), bs.type};
     }
     if(this->type == TokType::GetPtr) {
-        LLVMValueRef val;
+        RaveValue val;
+
         if(instanceof<NodeGet>(this->base)) {
             ((NodeGet*)this->base)->isMustBePtr = true;
             val = this->base->generate();
         }
         else if(instanceof<NodeCall>(this->base)) {
             NodeCall* call = (NodeCall*)this->base;
-            auto gcall = call->generate();
-            auto temp = LLVM::alloc(LLVMTypeOf(gcall), "NodeUnary_temp");
-            LLVMBuildStore(generator->builder, gcall, temp);
+            RaveValue gcall = call->generate();
+            auto temp = LLVM::alloc(gcall.type, "NodeUnary_temp");
+            LLVMBuildStore(generator->builder, gcall.value, temp.value);
             val = temp;
         }
         else if(instanceof<NodeBinary>(this->base)) val = generator->byIndex(this->base->generate(), std::vector<LLVMValueRef>({LLVMConstInt(LLVMInt32TypeInContext(generator->context), 0, false)}));
@@ -95,9 +94,9 @@ LLVMValueRef NodeUnary::generate() {
                 return id->generate();
             }
             else if(instanceof<TypeArray>(currScope->getVar(id->name, this->loc)->type)) {
-                val = LLVM::inboundsGep(currScope->getWithoutLoad(id->name),
+                val = LLVM::gep(currScope->getWithoutLoad(id->name),
                     std::vector<LLVMValueRef>({LLVMConstInt(LLVMInt32Type(), 0, false), LLVMConstInt(LLVMInt32Type(), 0, false)}).data(),
-                2, "NodeUnary_ingep");
+                2, "NodeUnary_gep");
             }
             else val = currScope->getWithoutLoad(id->name);
         }
@@ -107,55 +106,54 @@ LLVMValueRef NodeUnary::generate() {
         }
         else if(instanceof<NodeArray>(this->base)) {
             val = this->base->generate();
-            LLVMValueRef temp = LLVM::alloc(LLVMTypeOf(val), "NodeUnary_NA_temp");
-            LLVMBuildStore(generator->builder, val, temp);
+            RaveValue temp = LLVM::alloc(val.type, "NodeUnary_NA_temp");
+            LLVMBuildStore(generator->builder, val.value, temp.value);
             val = temp;
         }
-        #if !(RAVE_OPAQUE_POINTERS)
-        if(LLVM::isPointer(val) && LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(val))) == LLVMArrayTypeKind) {
-            return LLVMBuildPointerCast(
-                generator->builder,
-                val,
-                LLVMPointerType(LLVMGetElementType(LLVMGetElementType(LLVMTypeOf(val))),0),
-                "NodeUnary_bitcast"
-            );
-        }
-        #endif
         return val;
     }
-    if(this->type == TokType::Ne) return LLVMBuildNot(generator->builder, this->base->generate(), "NodeUnary_not");
+    if(this->type == TokType::Ne) {
+        if(instanceof<NodeIden>(base)) ((NodeIden*)base)->isMustBePtr = false;
+        else if(instanceof<NodeIndex>(base)) ((NodeIndex*)base)->isMustBePtr = false;
+        else if(instanceof<NodeGet>(base)) ((NodeGet*)base)->isMustBePtr = false;
+    
+        RaveValue toRet = base->generate();
+        if(instanceof<TypePointer>(toRet.type)) toRet = LLVM::load(toRet, "NodeUnary_Ne_load", loc);
+    
+        return {LLVMBuildNot(generator->builder, toRet.value, "NodeUnary_not"), toRet.type};
+    }
     if(this->type == TokType::Multiply) {
-        LLVMValueRef _base = this->base->generate();
-        return LLVM::load(_base, "NodeUnary_multiply_load");
+        RaveValue _base = this->base->generate();
+        return LLVM::load(_base, "NodeUnary_multiply_load", loc);
     }
     if(this->type == TokType::Destructor) {
-        LLVMValueRef val2 = this->generatePtr();
-        LLVMTypeRef val2Type = LLVMTypeOf(val2);
+        RaveValue val2 = this->generatePtr();
 
-        if(LLVMGetTypeKind(val2Type) != LLVMPointerTypeKind
-        && LLVMGetTypeKind(val2Type) != LLVMStructTypeKind) generator->error("the attempt to call the destructor is not in the structure!", this->loc); 
-        if(LLVMGetTypeKind(val2Type) == LLVMPointerTypeKind) {
-            if(LLVMGetTypeKind(LLVMGetElementType(val2Type)) == LLVMPointerTypeKind) {
-                if(LLVMGetTypeKind(LLVMGetElementType(LLVMGetElementType(val2Type))) == LLVMStructTypeKind) val2 = LLVM::load(val2, "NodeCall_destructor_load");
+        if(!instanceof<TypePointer>(val2.type)
+        && !instanceof<TypeStruct>(val2.type)) generator->error("the attempt to call the destructor without structure!", this->loc);
+
+        if(instanceof<TypePointer>(val2.type)) {
+            if(instanceof<TypePointer>(val2.type->getElType()) && instanceof<TypePointer>(val2.type->getElType()->getElType())) {
+                val2 = LLVM::load(val2, "NodeCall_destructor_load", loc);
             }
         }
         
-        if(LLVMGetTypeKind(val2Type) != LLVMPointerTypeKind) {
-            LLVMValueRef temp = LLVM::alloc(val2Type, "NodeUnary_temp");
-            LLVMBuildStore(generator->builder, val2, temp);
+        if(!instanceof<TypePointer>(val2.type)) {
+            RaveValue temp = LLVM::alloc(val2.type, "NodeUnary_temp");
+            LLVMBuildStore(generator->builder, val2.value, temp.value);
             val2 = temp;
         }
 
-        if(LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(val2))) != LLVMStructTypeKind) generator->error("the attempt to call the destructor is not in the structure!", this->loc);
+        if(!instanceof<TypeStruct>(val2.type->getElType())) generator->error("the attempt to call the destructor is not in the structure!", this->loc);
 
-        std::string struc = std::string(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(val2))));
+        std::string struc = ((TypeStruct*)val2.type->getElType())->toString();
         if(AST::structTable[struc]->destructor == nullptr) {
             if(instanceof<NodeIden>(this->base)) {
                 NodeIden* id = (NodeIden*)this->base;
                 if(currScope->localVars.find(id->name) == currScope->localVars.end() && !instanceof<TypeStruct>(currScope->localVars[id->name]->type)) {
                     return (new NodeCall(this->loc, new NodeIden("std::free", this->loc), {this->base}))->generate();
                 }
-                return nullptr;
+                return {nullptr, nullptr};
             }
             return (new NodeCall(this->loc, new NodeIden("std::free", this->loc), {base}))->generate();
         }
@@ -166,8 +164,8 @@ LLVMValueRef NodeUnary::generate() {
         }
         return (new NodeCall(this->loc, new NodeIden(AST::structTable[struc]->destructor->name, this->loc), {this->base}))->generate();
     }
-    std::cout << "NodeUnary undefined operator. Operator " << (int)this->type << std::endl;
-    return nullptr;
+    generator->error("NodeUnary undefined operator!", loc);
+    return {};
 }
 
 Node* NodeUnary::comptime() {

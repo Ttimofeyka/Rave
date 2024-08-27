@@ -14,17 +14,17 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 class NodeAliasType : public Node {
 public:
-    long loc;
+    int loc;
     std::string name;
     std::string origName;
     Type* value;
     std::vector<std::string> namespacesNames;
 
-    NodeAliasType(std::string name, Type* value, long loc);
+    NodeAliasType(std::string name, Type* value, int loc);
     Type* getType() override;
-    Type* getLType() override;
+    
     void check() override;
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     Node* comptime() override;
     Node* copy() override;
 };

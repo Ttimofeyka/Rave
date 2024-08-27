@@ -60,38 +60,30 @@ Type* NodeGet::getType() {
     return nullptr;
 }
 
-Type* NodeGet::getLType() {return this->getType();}
-
-LLVMValueRef NodeGet::checkStructure(LLVMValueRef ptr) {
-    LLVMTypeRef type = LLVMTypeOf(ptr);
-    
-    if(!LLVM::isPointerType(type)) {
-        LLVMValueRef temp = LLVM::alloc(type, "NodeGet_checkStructure");
-        LLVMBuildStore(generator->builder, ptr, temp);
-        return temp;
-    }
-    else {
-        if(
-            (LLVMIsAAllocaInst(ptr) && LLVMGetTypeKind(LLVMGetAllocatedType(ptr)) == LLVMPointerTypeKind) ||
-            (LLVMIsAGetElementPtrInst(ptr) && LLVM::isPointer(LLVMGetArgOperand(ptr, 0)))
-        ) {
-            ptr = LLVM::load(ptr, "NodeGet_checkStructure");
-            if(!LLVM::isPointer(ptr)) {
-                LLVMValueRef inst = ptr;
-                ptr = LLVMGetArgOperand(ptr, 0);
-                LLVMInstructionEraseFromParent(inst);
-            }
+RaveValue NodeGet::checkStructure(RaveValue ptr) {
+    if(!instanceof<TypePointer>(ptr.type)) {
+        if(LLVMIsAArgument(ptr.value) && LLVMGetTypeKind(LLVMTypeOf(ptr.value)) == LLVMPointerTypeKind) ptr.type = new TypePointer(ptr.type);
+        else {
+            RaveValue temp = LLVM::alloc(ptr.type, "NodeGet_checkStructure");
+            LLVMBuildStore(generator->builder, ptr.value, temp.value);
+            return temp;
         }
+    }
+    
+    while(instanceof<TypePointer>(ptr.type->getElType())) ptr = LLVM::load(ptr, "NodeGet_checkStructure_load", loc);
+
+    while(generator->toReplace.find(ptr.type->getElType()->toString()) != generator->toReplace.end()) {
+        ((TypePointer*)ptr.type)->instance = generator->toReplace[ptr.type->getElType()->toString()];
     }
     
     return ptr;
 }
 
-LLVMValueRef NodeGet::checkIn(std::string structure) {
+RaveValue NodeGet::checkIn(std::string structure) {
     auto structIt = AST::structTable.find(structure);
     if(structIt == AST::structTable.end()) {
         generator->error("structure '" + structure + "' does not exist!", loc);
-        return nullptr;
+        return {};
     }
 
     const auto member = std::make_pair(structure, field);
@@ -101,93 +93,98 @@ LLVMValueRef NodeGet::checkIn(std::string structure) {
         auto methodIt = AST::methodTable.find(member);
         if(methodIt != AST::methodTable.end()) return generator->functions[methodIt->second->name];
         generator->error("structure '" + structure + "' does not contain element '" + field + "'!", loc);
-        return nullptr;
+        return {};
     }
 
     elementIsConst = instanceof<TypeConst>(numberIt->second.var->type);
-    return nullptr;
+    return {nullptr, nullptr};
 }
 
-LLVMValueRef NodeGet::generate() {
+RaveValue NodeGet::generate() {
     if(instanceof<NodeIden>(this->base)) {
-        LLVMValueRef ptr = checkStructure(currScope->getWithoutLoad(((NodeIden*)this->base)->name, loc));
-        LLVMTypeRef ty = LLVM::getPointerElType(ptr);
-        if(LLVMIsAArgument(ptr)) {
-            Type* inType = AST::funcTable[currScope->funcName]->getInternalArgType(ptr);
-            if(instanceof<TypePointer>(inType)) inType = ((TypePointer*)inType)->instance;
-            ty = generator->genType(inType, -1);
-        }
-        std::string structName = std::string(LLVMGetStructName(ty));
-        LLVMValueRef f = this->checkIn(structName);
-        if(f != nullptr) return f;
+        RaveValue ptr = checkStructure(currScope->getWithoutLoad(((NodeIden*)this->base)->name, loc));
+        Type* ty = ptr.type;
+
+        std::string structName = ty->getElType()->toString();
+        RaveValue f = this->checkIn(structName);
+        if(f.value != nullptr) return f;
+
         if(this->isMustBePtr) return LLVM::structGep(
             ptr,
             AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
             "NodeGet_generate_Iden_ptr"
         );
+
         return LLVM::load(LLVM::structGep(
             ptr,
             AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
             "NodeGet_generate_Iden_preload"
-        ), "NodeGet_generate_Iden_load");
+        ), "NodeGet_generate_Iden_load", loc);
     }
 
     if(instanceof<NodeIndex>(this->base) || instanceof<NodeGet>(this->base)) {
         if(instanceof<NodeIndex>(this->base)) ((NodeIndex*)this->base)->isMustBePtr = true;
         else ((NodeGet*)this->base)->isMustBePtr = true;
 
-        LLVMValueRef ptr = checkStructure(this->base->generate());
-        std::string structName = std::string(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(ptr))));
-        LLVMValueRef f = checkIn(structName);
+        RaveValue ptr = checkStructure(this->base->generate());
+        std::string structName = ptr.type->getElType()->toString();
+        RaveValue f = checkIn(structName);
 
-        if(f != nullptr) return f;
+        if(f.value != nullptr) return f;
+
         if(this->isMustBePtr) return LLVM::structGep(
             ptr,
             AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
             "NodeGet_generate_Index_ptr"
         );
+
         return LLVM::load(LLVM::structGep(
             ptr,
             AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
             "NodeGet_generate_Index_preload"
-        ), "NodeGet_generate_Index_load");
+        ), "NodeGet_generate_Index_load", loc);
     }
 
     if(instanceof<NodeCall>(this->base)) {
         NodeCall* ncall = (NodeCall*)this->base;
         Type* ty = ncall->getType();
         std::string structName = "";
+
         if(ty != nullptr && instanceof<TypeStruct>(ty)) {
             structName = ((TypeStruct*)ty)->name;
-            LLVMValueRef f = checkIn(structName);
-            if(f != nullptr) return f;
+            RaveValue f = checkIn(structName);
+            if(f.value != nullptr) return f;
         }
-        LLVMValueRef ptr = checkStructure(ncall->generate());
-        if(structName == "") structName = std::string(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(ptr))));
+
+        RaveValue ptr = checkStructure(ncall->generate());
+        if(structName == "") structName = ptr.type->getElType()->toString();
 
         if(this->isMustBePtr) return LLVM::structGep(
             ptr,
             AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
             "NodeGet_generate_Index_ptr"
         );
+
         return LLVM::load(LLVM::structGep(
             ptr,
             AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
             "NodeGet_generate_Index_preload"
-        ), "NodeGet_generate_Index_load");
+        ), "NodeGet_generate_Index_load", loc);
     }
 
     if(instanceof<NodeDone>(this->base)) {
         NodeDone* ndone = (NodeDone*)this->base;
         Type* ty = ndone->getType();
         std::string structName = "";
+
         if(ty != nullptr && instanceof<TypeStruct>(ty)) {
             structName = ((TypeStruct*)ty)->name;
-            LLVMValueRef f = checkIn(structName);
-            if(f != nullptr) return f;
+            RaveValue f = checkIn(structName);
+            if(f.value != nullptr) return f;
         }
-        LLVMValueRef ptr = checkStructure(ndone->generate());
-        if(structName == "") structName = std::string(LLVMGetStructName(LLVMGetElementType(LLVMTypeOf(ptr))));
+
+        RaveValue ptr = checkStructure(ndone->generate());
+        if(structName == "") structName = ptr.type->getElType()->toString();
 
         if(this->isMustBePtr) return LLVM::structGep(
             ptr,
@@ -198,11 +195,11 @@ LLVMValueRef NodeGet::generate() {
             ptr,
             AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
             "NodeGet_generate_Index_preload"
-        ), "NodeGet_generate_Index_load");
+        ), "NodeGet_generate_Index_load", loc);
     }
 
     generator->error("assert into NodeGet (" + std::string(typeid(this->base[0]).name()) + ")", this->loc);
-    return nullptr;
+    return {};
 }
 
 void NodeGet::check() {this->isChecked = true;}

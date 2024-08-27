@@ -9,12 +9,11 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 class Type;
 
-LLVMValueRef Node::generate() {
-    return nullptr;
+RaveValue Node::generate() {
+    return {};
 }
 
 void Node::check() {this->isChecked = true;}
 Node* Node::comptime() {return this;}
 Type* Node::getType() {return nullptr;}
-Type* Node::getLType() {return nullptr;}
 Node* Node::copy() {return nullptr;}

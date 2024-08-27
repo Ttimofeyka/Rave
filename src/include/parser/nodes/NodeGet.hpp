@@ -19,11 +19,11 @@ public:
     bool elementIsConst = false;
 
     NodeGet(Node* base, std::string field, bool isMustBePtr, int loc);
-    LLVMValueRef checkStructure(LLVMValueRef ptr);
-    LLVMValueRef checkIn(std::string structure);
-    LLVMValueRef generate() override;
+    RaveValue checkStructure(RaveValue ptr);
+    RaveValue checkIn(std::string structure);
+    RaveValue generate() override;
     Type* getType() override;
-    Type* getLType() override;
+    
     Node* comptime() override;
     Node* copy() override;
     void check() override;

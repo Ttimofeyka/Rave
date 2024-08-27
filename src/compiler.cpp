@@ -20,19 +20,21 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <llvm-c/IRReader.h>
 #include <llvm-c/Orc.h>
 
-#if LLVM_VERSION >= 14
 #include <llvm-c/OrcEE.h>
 #include <llvm-c/Transforms/PassBuilder.h>
-#endif
 
 #include <llvm-c/Remarks.h>
 #include <llvm-c/Linker.h>
+
+#if LLVM_VERSION < 17
 #include <llvm-c/Transforms/InstCombine.h>
 #include <llvm-c/Transforms/Utils.h>
 #include <llvm-c/Transforms/Vectorize.h>
 #include <llvm-c/Transforms/PassManagerBuilder.h>
 #include <llvm-c/Transforms/IPO.h>
 #include <llvm-c/Transforms/Scalar.h>
+#endif
+
 #include <llvm-c/Target.h>
 
 #ifdef _WIN32
@@ -337,6 +339,7 @@ void Compiler::compile(std::string file) {
 
     for(int i=0; i<parser->nodes.size(); i++) parser->nodes[i]->generate();
 
+    #if LLVM_VERSION < 17
     LLVMPassManagerRef pm = LLVMCreatePassManager();
 
     if(Compiler::settings.optLevel > 0) {
@@ -387,6 +390,15 @@ void Compiler::compile(std::string file) {
     }
 
     LLVMRunPassManager(pm, generator->lModule);
+    #else
+    LLVMPassBuilderOptionsRef pbOptions = LLVMCreatePassBuilderOptions();
+
+    if(Compiler::settings.optLevel == 1) LLVMRunPasses(generator->lModule, "default<O1>", machine, pbOptions);
+    else if(Compiler::settings.optLevel == 2) LLVMRunPasses(generator->lModule, "default<O2>", machine, pbOptions);
+    else if(Compiler::settings.optLevel == 3) LLVMRunPasses(generator->lModule, "default<O3>", machine, pbOptions);
+
+    LLVMDisposePassBuilderOptions(pbOptions);
+    #endif
 
     LLVMTargetMachineEmitToFile(machine, generator->lModule, (char*)(std::regex_replace(file, std::regex("\\.rave"), ".o")).c_str(), LLVMObjectFile, &errors);
     if(errors != nullptr) {

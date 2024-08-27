@@ -18,9 +18,9 @@ public:
 
     NodeCast(Type* type, Node* value, int loc);
     ~NodeCast() {if(this->value != nullptr) delete this->value;}
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     Type* getType() override;
-    Type* getLType() override;
+    
     Node* comptime() override;
     Node* copy() override;
     void check() override;

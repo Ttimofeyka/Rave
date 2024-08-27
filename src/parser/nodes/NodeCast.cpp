@@ -31,60 +31,77 @@ Type* NodeCast::getType() {return this->type->copy();}
 Node* NodeCast::copy() {return new NodeCast(this->type->copy(), this->value->copy(), this->loc);}
 Node* NodeCast::comptime() {return nullptr;}
 
-Type* NodeCast::getLType() {return this->getType();}
-
-LLVMValueRef NodeCast::generate() {
-    LLVMValueRef result = nullptr;
+RaveValue NodeCast::generate() {
+    RaveValue result = {nullptr, nullptr};
 
     if(instanceof<TypeBasic>(this->type)) {
         TypeBasic* tbasic = (TypeBasic*)this->type;
         if(tbasic->type == BasicType::Bool && tbasic->toString() != "bool") {
             return (new NodeCast(new TypeStruct(tbasic->toString()), this->value, this->loc))->generate();
         }
+
         result = this->value->generate();
-        if(LLVMGetTypeKind(LLVMTypeOf(result)) == LLVMIntegerTypeKind) {
-            if(tbasic->isFloat()) return LLVMBuildSIToFP(generator->builder, result, generator->genType(this->type, this->loc), "NodeCast_itof");
-            return LLVMBuildIntCast(generator->builder, result, generator->genType(type, loc), "NodeCast_itoi");
+        if(instanceof<TypeBasic>(result.type)) {
+            TypeBasic* tbasic2 = (TypeBasic*)result.type;
+
+            if(tbasic->isFloat() && !tbasic2->isFloat()) return {
+                LLVMBuildSIToFP(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_itof"),
+                this->type
+            };
+            else if(tbasic->isFloat() && tbasic2->isFloat()) return {
+                LLVMBuildFPCast(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_ftof"),
+                this->type
+            };
+            else if(!tbasic->isFloat() && tbasic2->isFloat()) return {
+                LLVMBuildFPToSI(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_ftoi"),
+                this->type
+            };
+            return {LLVMBuildIntCast(generator->builder, result.value, generator->genType(type, loc), "NodeCast_itoi"), this->type};
         }
 
-        if(LLVM::isPointer(result)) {
-            if(!tbasic->isFloat()) return LLVMBuildPtrToInt(generator->builder, result, generator->genType(tbasic, this->loc), "NodeCast_ptoi");
-            return LLVM::load(LLVMBuildPointerCast(generator->builder, result, LLVMPointerType(generator->genType(this->type, this->loc), 0), "NodeCast_ptofLoad"), "NodeCast_ptofLoadC");
+        if(instanceof<TypePointer>(result.type)) {
+            if(!tbasic->isFloat()) return {LLVMBuildPtrToInt(generator->builder, result.value, generator->genType(tbasic, this->loc), "NodeCast_ptoi"), this->type};
+            return {
+                LLVMBuildSIToFP(
+                    generator->builder, LLVMBuildPtrToInt(generator->builder, result.value, LLVMInt64TypeInContext(generator->context), "NodeCast_temp"),
+                    generator->genType(this->type, loc), "NodeCast_ptof"
+                ),
+                this->type
+            };
+            generator->error("casting a pointer to the float is prohibited!", loc);
         }
 
-        if(LLVMGetTypeKind(LLVMTypeOf(result)) == LLVMStructTypeKind) {
-            LLVMValueRef _temp = LLVM::alloc(LLVMTypeOf(result), "NodeCast_stoiTemp");
-            LLVMBuildStore(generator->builder, result, _temp);
-            if(tbasic->isFloat()) return LLVMBuildSIToFP(generator->builder, LLVMBuildPtrToInt(generator->builder, _temp, LLVMInt32TypeInContext(generator->context), "NodeCast_ptoi_stop"), generator->genType(type,loc), "NodeCast_ptoi_stopC");
-            return LLVMBuildPtrToInt(generator->builder, _temp, LLVMInt32TypeInContext(generator->context), "NodeCast_stoi");
-        }
+        if(instanceof<TypeStruct>(result.type)) generator->error("casting a structure to the basic type is prohibited!", loc);
 
-        if(tbasic->isFloat()) return LLVMBuildFPCast(generator->builder, result, generator->genType(this->type, this->loc), "NodeCast_ftof");
-        return LLVMBuildFPToSI(generator->builder, result, generator->genType(this->type, this->loc), "NodeCast_ftoi");
+        if(tbasic->isFloat()) return {LLVMBuildFPCast(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_ftof"), this->type};
+        return {LLVMBuildFPToSI(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_ftoi"), this->type};
     }
 
     result = this->value->generate();
     if(instanceof<TypePointer>(this->type)) {
         TypePointer* tpointer = (TypePointer*)this->type;
-        if(LLVMGetTypeKind(LLVMTypeOf(result)) == LLVMIntegerTypeKind) return LLVMBuildIntToPtr(generator->builder, result, generator->genType(tpointer, this->loc), "NodeCast_itop");
-        if(LLVMGetTypeKind(LLVMTypeOf(result)) == LLVMStructTypeKind) {
+        if(instanceof<TypeBasic>(result.type)) return {LLVMBuildIntToPtr(generator->builder, result.value, generator->genType(tpointer, this->loc), "NodeCast_itop"), this->type};
+        if(instanceof<TypeStruct>(result.type)) {
             if(instanceof<NodeIden>(this->value)) {((NodeIden*)this->value)->isMustBePtr = true; result = this->value->generate();}
             else if(instanceof<NodeGet>(this->value)) {((NodeGet*)this->value)->isMustBePtr = true; result = this->value->generate();}
             else if(instanceof<NodeIndex>(this->value)) {((NodeIndex*)this->value)->isMustBePtr = true; result = this->value->generate();}
         }
-        return LLVMBuildPointerCast(generator->builder, result, generator->genType(this->type, this->loc), "NodeCast_ptop");
+        return {LLVMBuildPointerCast(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_ptop"), this->type};
     }
     if(instanceof<TypeFunc>(this->type)) {
         TypeFunc* tfunc = (TypeFunc*)this->type;
-        if(LLVMGetTypeKind(LLVMTypeOf(result)) == LLVMIntegerTypeKind) return LLVMBuildIntToPtr(generator->builder, result, generator->genType(tfunc, this->loc), "NodeCast_itofn");
-        return LLVMBuildPointerCast(generator->builder, result, generator->genType(tfunc, this->loc), "NodeCast_ptop");
+        if(instanceof<TypeBasic>(result.type)) return {LLVMBuildIntToPtr(generator->builder, result.value, generator->genType(tfunc, this->loc), "NodeCast_itofn"), this->type};
+        return {LLVMBuildPointerCast(generator->builder, result.value, generator->genType(tfunc, this->loc), "NodeCast_ptop"), this->type};
     }
     if(instanceof<TypeStruct>(this->type)) {
         TypeStruct* tstruct = (TypeStruct*)this->type;
         if(generator->toReplace.find(tstruct->name) != generator->toReplace.end()) return (new NodeCast(generator->toReplace[tstruct->name], this->value, this->loc))->generate();
-        LLVMValueRef ptrResult = LLVM::alloc(LLVMTypeOf(result), "NodeCast_ptrResult");
-        LLVMBuildStore(generator->builder, result, ptrResult);
-        return LLVM::load(LLVMBuildBitCast(generator->builder, ptrResult, LLVMPointerType(generator->genType(tstruct, this->loc), 0), "NodeCast_tempFn"), "NodeCast_fnload");
+        RaveValue ptrResult = LLVM::alloc(result.type, "NodeCast_ptrResult");
+        LLVMBuildStore(generator->builder, result.value, ptrResult.value);
+        return LLVM::load({
+            LLVMBuildBitCast(generator->builder, ptrResult.value, LLVMPointerType(generator->genType(tstruct, this->loc), 0), "NodeCast_tempFn"),
+            new TypePointer(tstruct)
+        }, "NodeCast_fnload", loc);
     }
     if(instanceof<TypeBuiltin>(this->type)) {
         TypeBuiltin* tbuiltin = (TypeBuiltin*)this->type;
@@ -93,6 +110,7 @@ LLVMValueRef NodeCast::generate() {
         this->type = nb->type;
         return this->generate();
     }
+
     generator->error("NodeCast assert!", this->loc);
-    return nullptr;
+    return {};
 }

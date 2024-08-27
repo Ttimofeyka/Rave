@@ -22,7 +22,7 @@ public:
     NodeWhile(Node* cond, Node* body, int loc, std::string funcName);
     bool isReleased(std::string varName);
     Type* getType() override;
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     Node* copy() override;
     Node* comptime() override;
     void check() override;

@@ -24,10 +24,10 @@ Type* NodeSwitch::getType() {return new TypeVoid();}
 
 void NodeSwitch::check() {}
 
-LLVMValueRef NodeSwitch::generate() {
+RaveValue NodeSwitch::generate() {
     if(statements.empty()) {
         generator->error("at least 1 case is required in switch!", loc);
-        return nullptr;
+        return {};
     }
 
     std::vector<NodeIf*> ifVector;
@@ -47,7 +47,7 @@ LLVMValueRef NodeSwitch::generate() {
     ifVector[0]->check();
     ifVector[0]->generate();
 
-    return nullptr;
+    return {};
 }
 
 Node* NodeSwitch::comptime() {return this;}

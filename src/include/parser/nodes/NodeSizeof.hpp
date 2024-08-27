@@ -16,7 +16,7 @@ public:
     long loc;
 
     NodeSizeof(Node* value, long loc);
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     Type* getType() override;
     Node* comptime() override;
     Node* copy() override;

@@ -23,8 +23,8 @@ public:
     NodeFloat(double value, TypeBasic* type);
     ~NodeFloat() {if(this->type != nullptr) delete this->type;}
     Type* getType() override;
-    Type* getLType() override;
-    LLVMValueRef generate() override;
+    
+    RaveValue generate() override;
     Node* copy() override;
     Node* comptime() override;
     void check() override;

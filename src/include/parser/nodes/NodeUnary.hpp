@@ -22,11 +22,11 @@ public:
 
     NodeUnary(int loc, char type, Node* base);
 
-    LLVMValueRef generatePtr();
-    LLVMValueRef generateConst();
+    RaveValue generatePtr();
+    RaveValue generateConst();
     void check() override;
     Type* getType() override;
     Node* comptime() override;
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     Node* copy() override;
 };

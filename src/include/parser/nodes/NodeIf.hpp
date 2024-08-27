@@ -26,7 +26,7 @@ public:
     NodeIf(Node* cond, Node* body, Node* _else, int loc, std::string func, bool isStatic);
     Type* getType() override;
     void check() override;
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     Node* comptime() override;
     Node* copy() override;
 };

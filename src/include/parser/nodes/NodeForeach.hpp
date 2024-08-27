@@ -23,12 +23,12 @@ public:
     std::string funcName;
     int loc;
 
-    NodeForeach(NodeIden* elName, Node* varData, Node* varLength, NodeBlock* block, std::string funcName, long loc);
+    NodeForeach(NodeIden* elName, Node* varData, Node* varLength, NodeBlock* block, std::string funcName, int loc);
     bool isReleased(std::string varName);
     Type* getType() override;
-    Type* getLType() override;
+    
     void check() override;
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     Node* comptime() override;
     Node* copy() override;
 };

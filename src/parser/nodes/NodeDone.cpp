@@ -6,10 +6,9 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "../../include/parser/nodes/NodeDone.hpp"
 
-NodeDone::NodeDone(LLVMValueRef value) {this->value = value;}
+NodeDone::NodeDone(RaveValue value) {this->value = value;}
 void NodeDone::check() {this->isChecked = true;}
-LLVMValueRef NodeDone::generate() {return this->value;}
-Type* NodeDone::getType() {return lTypeToType(LLVMTypeOf(this->value), this->value);}
-Type* NodeDone::getLType() {return this->getType();}
+RaveValue NodeDone::generate() {return this->value;}
+Type* NodeDone::getType() {return value.type;}
 Node* NodeDone::comptime() {return this;}
 Node* NodeDone::copy() {return new NodeDone(this->value);}

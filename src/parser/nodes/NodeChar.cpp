@@ -17,14 +17,19 @@ NodeChar::NodeChar(std::string value, bool isWide) {
 
 Node* NodeChar::copy() {return new NodeChar(this->value, this->isWide);}
 Type* NodeChar::getType() {return new TypeBasic(isWide ? BasicType::Uint : BasicType::Char);}
-Type* NodeChar::getLType() {return this->getType();}
 Node* NodeChar::comptime() {return this;}
 void NodeChar::check() {this->isChecked = true;}
 
-LLVMValueRef NodeChar::generate() {
+RaveValue NodeChar::generate() {
     if(this->value.size() > 1 && this->value[0] == '\\') {
-        if(isdigit(this->value[1])) return LLVMConstInt(isWide ? LLVMInt32TypeInContext(generator->context) : LLVMInt8TypeInContext(generator->context), std::stol(this->value.substr(1)), false);
+        if(isdigit(this->value[1])) return {LLVM::makeInt(isWide ? 32 : 8, std::stol(value.substr(1)), false), new TypeBasic(isWide ? BasicType::Int : BasicType::Char)};
+        switch(this->value[1]) {
+            case 'n': return {LLVM::makeInt(isWide ? 32 : 8, 10, false), new TypeBasic(isWide ? BasicType::Int : BasicType::Char)};
+            case 'v': return {LLVM::makeInt(isWide ? 32 : 8, 11, false), new TypeBasic(isWide ? BasicType::Int : BasicType::Char)};
+            case 'r': return {LLVM::makeInt(isWide ? 32 : 8, 13, false), new TypeBasic(isWide ? BasicType::Int : BasicType::Char)};
+            default: break;
+        }
     }
-    if(this->value.size() < 2) return LLVMConstInt(isWide ? LLVMInt32TypeInContext(generator->context) : LLVMInt8TypeInContext(generator->context), this->value[0], false);
-    return LLVMConstInt(LLVMInt32TypeInContext(generator->context), utf8::utf8to32(this->value)[0], false);
+    if(this->value.size() < 2) return {LLVM::makeInt(isWide ? 32 : 8, value[0], false), new TypeBasic(isWide ? BasicType::Int : BasicType::Char)};
+    return {LLVM::makeInt(32, utf8::utf8to32(this->value)[0], false), new TypeBasic(BasicType::Int)};
 }

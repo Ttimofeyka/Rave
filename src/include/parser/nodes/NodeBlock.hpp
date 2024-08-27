@@ -16,10 +16,10 @@ public:
     std::vector<Node*> nodes;
 
     NodeBlock(std::vector<Node*> nodes);
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     void check() override;
     Node* copy() override;
     Node* comptime() override;
     Type* getType() override;
-    Type* getLType() override;
+    
 };

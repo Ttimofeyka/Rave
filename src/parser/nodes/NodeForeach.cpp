@@ -20,7 +20,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeInt.hpp"
 #include <iostream>
 
-NodeForeach::NodeForeach(NodeIden* elName, Node* varData, Node* varLength, NodeBlock* block, std::string funcName, long loc) {
+NodeForeach::NodeForeach(NodeIden* elName, Node* varData, Node* varLength, NodeBlock* block, std::string funcName, int loc) {
     this->elName = elName;
     this->varData = varData;
     this->varLength = varLength;
@@ -36,9 +36,8 @@ Node* NodeForeach::copy() {
 Node* NodeForeach::comptime() {return nullptr;}
 void NodeForeach::check() {this->isChecked = true;}
 Type* NodeForeach::getType() {return new TypeVoid();}
-Type* NodeForeach::getLType() {return new TypeVoid();}
 
-LLVMValueRef NodeForeach::generate() {
+RaveValue NodeForeach::generate() {
     if(this->varLength == nullptr) {
         if(instanceof<NodeIden>(varData)) {
             NodeIden* niVarData = (NodeIden*)varData;
@@ -48,7 +47,7 @@ LLVMValueRef NodeForeach::generate() {
                     NodeStruct* ns = (NodeStruct*)AST::structTable[ts->name];
                     if(ns->dataVar == "" || ns->lengthVar == "") {
                         generator->error("structure '" + ts->name + "' doesn't contain the parameters data or length!", this->loc);
-                        return nullptr;
+                        return {};
                     }
                     this->varLength = new NodeGet(niVarData, ns->lengthVar, false, this->loc);
                     this->varData = new NodeGet(niVarData, ns->dataVar, false, this->loc);
@@ -76,11 +75,11 @@ LLVMValueRef NodeForeach::generate() {
 
     NodeWhile* nwhile = new NodeWhile(new NodeBinary(TokType::Less, new NodeIden("__RAVE_FOREACH_N" + std::to_string(this->loc), this->loc), varLength, this->loc), this->block, this->loc, this->funcName);
     nwhile->check();
-    LLVMValueRef result = nwhile->generate();
+    RaveValue result = nwhile->generate();
 
     currScope->remove("__RAVE_FOREACH_N" + std::to_string(this->loc));
 
-    return nullptr;
+    return {};
 }
 
 bool NodeForeach::isReleased(std::string varName) {

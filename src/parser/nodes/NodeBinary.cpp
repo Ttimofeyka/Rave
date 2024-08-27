@@ -188,10 +188,10 @@ NodeBinary::NodeBinary(char op, Node* first, Node* second, int loc, bool isStati
     this->isStatic = isStatic;
 }
 
-std::pair<std::string, std::string> NodeBinary::isOperatorOverload(Node* first, Node* second, char op) {
-    if(first == nullptr || second == nullptr) return {"", ""};
+std::pair<std::string, std::string> NodeBinary::isOperatorOverload(RaveValue first, RaveValue second, char op) {
+    if(first.value == nullptr || second.value == nullptr) return {"", ""};
 
-    Type* type = first->getLType();
+    Type* type = first.type;
 
     if(instanceof<TypeStruct>(type) || (instanceof<TypePointer>(type) && instanceof<TypeStruct>(((TypePointer*)type)->instance))) {
         std::string structName = (instanceof<TypeStruct>(type) ? ((TypeStruct*)type)->name : ((TypeStruct*)(((TypePointer*)type)->instance))->name);
@@ -267,25 +267,10 @@ Type* NodeBinary::getType() {
     return nullptr;
 }
 
-Type* NodeBinary::getLType() {
-    switch(this->op) {
-        case TokType::Equ: case TokType::PluEqu: case TokType::MinEqu: case TokType::DivEqu: case TokType::MulEqu: return new TypeVoid();
-        case TokType::Equal: case TokType::Nequal: case TokType::More: case TokType::Less: case TokType::MoreEqual: case TokType::LessEqual:
-        case TokType::And: case TokType::Or: return new TypeBasic(BasicType::Bool);
-        default:
-            Type* firstType = this->first->getLType();
-            Type* secondType = this->second->getLType();
-            if(firstType == nullptr) return secondType;
-            if(secondType == nullptr) return firstType;
-            return (firstType->getSize() >= secondType->getSize()) ? firstType : secondType;
-    }
-    return nullptr;
-}
-
-LLVMValueRef NodeBinary::generate() {
+RaveValue NodeBinary::generate() {
     bool isAliasIden = (this->first != nullptr && instanceof<NodeIden>(this->first) && AST::aliasTable.find(((NodeIden*)this->first)->name) != AST::aliasTable.end());
     if(this->op == TokType::PluEqu || this->op == TokType::MinEqu || this->op == TokType::MulEqu || this->op == TokType::DivEqu) {
-        LLVMValueRef value;
+        RaveValue value;
         NodeBinary* bin;
         switch(this->op) {
             case TokType::PluEqu:
@@ -300,20 +285,20 @@ LLVMValueRef NodeBinary::generate() {
             case TokType::DivEqu:
                 bin = new NodeBinary(TokType::Equ, this->first->copy(), new NodeBinary(TokType::Divide, this->first->copy(), this->second->copy(), loc), loc);
                 bin->check(); value = bin->generate(); delete bin; return value;
-            default: return nullptr;
+            default: return {};
         }
     }
 
     if(this->op == TokType::Equ) {
         if((instanceof<NodeCall>(second) || instanceof<NodeCast>(second)) && instanceof<TypeVoid>(second->getType())) {
             generator->error("an attempt to store a void to the variable!", this->loc);
-            return nullptr;
+            return {};
         }
 
         if(instanceof<NodeIden>(first)) {
             NodeIden* id = ((NodeIden*)first);
 
-            if(isAliasIden) {AST::aliasTable[id->name] = this->second->copy(); return nullptr;}
+            if(isAliasIden) {AST::aliasTable[id->name] = this->second->copy(); return {};}
 
             if(currScope->locatedAtThis(id->name)) {
                 this->first = new NodeGet(new NodeIden("this", this->loc), id->name, true, id->loc);
@@ -322,72 +307,70 @@ LLVMValueRef NodeBinary::generate() {
 
             if(currScope->getVar(id->name, this->loc)->isConst && id->name != "this" && currScope->getVar(id->name, this->loc)->isChanged) {
                 generator->error("an attempt to change the value of a constant variable!", this->loc);
-                return nullptr;
+                return {};
             }
 
             if(!currScope->getVar(id->name, this->loc)->isChanged) currScope->hasChanged(id->name);
 
             NodeVar* nvar = currScope->getVar(id->name, this->loc);
+
+            RaveValue vFirst = first->generate();
+            RaveValue vSecond = second->generate();
             
             if(instanceof<TypeStruct>(nvar->type) || (instanceof<TypePointer>(nvar->type) && instanceof<TypeStruct>(((TypePointer*)nvar->type)->instance))
                &&!instanceof<TypeStruct>(this->second->getType()) || (instanceof<TypePointer>(this->second->getType()) && instanceof<TypeStruct>(((TypePointer*)this->second->getType())->instance))
             ) {
-                std::pair<std::string, std::string> opOverload = isOperatorOverload(first, second, this->op);
+                std::pair<std::string, std::string> opOverload = isOperatorOverload(vFirst, vSecond, this->op);
+
                 if(opOverload.first != "") {
-                    nvar->isAllocated = currScope->detectMemoryLeaks && true; // @detectMemoryLeaks
                     if(opOverload.first[0] == '!') return (new NodeUnary(this->loc, TokType::Ne, (new NodeCall(
                         this->loc, new NodeIden(AST::structTable[opOverload.first.substr(1)]->operators[this->op][opOverload.second]->name, this->loc),
-                        std::vector<Node*>({first, second})))))->generate();
+                        std::vector<Node*>({new NodeDone(vFirst), new NodeDone(vSecond)})))))->generate();
                     return (new NodeCall(
                         this->loc, new NodeIden(AST::structTable[opOverload.first]->operators[this->op][opOverload.second]->name, this->loc),
-                        std::vector<Node*>({first, second})))->generate();
+                        std::vector<Node*>({new NodeDone(vFirst), new NodeDone(vSecond)})))->generate();
                 }
                 else if(instanceof<TypeBasic>(this->second->getType())) {
                     generator->error("an attempt to change value of the structure as the variable '" + id->name + "' without overloading!", this->loc);
-                    return nullptr;
+                    return {};
                 }
             }
 
-            LLVMValueRef vSecond = second->generate();
+            RaveValue value = currScope->getWithoutLoad(id->name, this->loc);
 
-            LLVMValueRef value = currScope->get(id->name, this->loc);
+            if(vSecond.type->toString() == value.type->toString()) vSecond = LLVM::load(vSecond, "NodeBinary_NodeIden_load", loc);
 
-            LLVMTypeRef lType = LLVMTypeOf(value);
-            if(instanceof<NodeNull>(this->second)) {((NodeNull*)(this->second))->type = nullptr; ((NodeNull*)this->second)->lType = lType;}
-
-            if(vSecond == nullptr) vSecond = this->second->generate();
-            vSecond = Binary::castValue(vSecond, lType, this->loc);
-            if(LLVM::isPointer(vSecond) && LLVMGetTypeKind(LLVM::getPointerElType(vSecond)) == LLVMStructTypeKind) {
-                nvar->isAllocated = currScope->detectMemoryLeaks && true; // @detectMemoryLeaks
+            if(instanceof<NodeNull>(this->second)) {
+                ((NodeNull*)(this->second))->type = value.type->getElType();
+                vSecond = second->generate();
             }
-            return LLVMBuildStore(generator->builder, vSecond, currScope->getWithoutLoad(id->name, this->loc));
+
+            //if(LLVM::isPointer(vSecond) && LLVMGetTypeKind(LLVM::getPointerElType(vSecond)) == LLVMStructTypeKind) {
+            //    nvar->isAllocated = currScope->detectMemoryLeaks && true; // @detectMemoryLeaks
+            //}
+            LLVMBuildStore(generator->builder, vSecond.value, value.value);
+            return {};
         }
         else if(instanceof<NodeGet>(this->first)) {
             NodeGet* nget = (NodeGet*)this->first;
-            LLVMValueRef fValue = nget->generate();
+            RaveValue fValue = nget->generate();
+
             if(instanceof<NodeNull>(this->second)) {
-                ((NodeNull*)this->second)->type = nullptr;
-                ((NodeNull*)this->second)->lType = LLVMTypeOf(fValue);
+                ((NodeNull*)this->second)->type = fValue.type->getElType();
             }
-            LLVMValueRef sValue = this->second->generate();
+
+            RaveValue sValue = this->second->generate();
 
             nget->isMustBePtr = true;
             fValue = nget->generate();
 
-            if(LLVMTypeOf(sValue) == LLVMTypeOf(fValue)) {
-                if(instanceof<NodeNull>(this->second)) sValue = LLVMConstNull(LLVM::getPointerElType(sValue));
-            }
-
             if(nget->elementIsConst) {
                 generator->error("An attempt to change the constant element!", loc);
-                return nullptr;
+                return {};
             }
-
-            if(LLVM::getPointerElType(fValue) != LLVMTypeOf(sValue) && LLVMGetTypeKind(LLVM::getPointerElType(fValue)) == LLVMGetTypeKind(LLVMTypeOf(sValue))) {
-                if(LLVMGetTypeKind(LLVMTypeOf(sValue)) == LLVMIntegerTypeKind) sValue = LLVMBuildIntCast(generator->builder, sValue, LLVM::getPointerElType(fValue), "NodeBinary_NodeGet_intc");
-            }
-
-            return LLVMBuildStore(generator->builder, sValue, fValue);
+ 
+            LLVMBuildStore(generator->builder, sValue.value, fValue.value);
+            return {};
         }
         else if(instanceof<NodeIndex>(this->first)) {
             NodeIndex* ind = (NodeIndex*)this->first;
@@ -398,25 +381,22 @@ LLVMValueRef NodeBinary::generate() {
                 return this->generate();
             }
 
-            LLVMValueRef ptr = ind->generate();
+            RaveValue ptr = ind->generate();
             if(ind->elementIsConst) generator->error("An attempt to change the constant element!", loc);
 
             if(instanceof<NodeNull>(this->second)) {
-                ((NodeNull*)this->second)->type = nullptr;
-                ((NodeNull*)this->second)->lType = LLVM::getPointerElType(ptr);
-            }
-            LLVMValueRef value = this->second->generate();
-
-            if(LLVM::getPointerElType(ptr) != LLVMTypeOf(value) && LLVMGetTypeKind(LLVM::getPointerElType(ptr)) == LLVMGetTypeKind(LLVMTypeOf(value))) {
-                if(LLVMGetTypeKind(LLVMTypeOf(value)) == LLVMIntegerTypeKind) value = LLVMBuildIntCast(generator->builder, value, LLVM::getPointerElType(ptr), "NodeBinary_NodeIndex_intc");
+                ((NodeNull*)this->second)->type = ptr.type->getElType();
             }
 
-            if(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMPointerTypeKind && LLVMGetTypeKind(LLVM::getPointerElType(ptr)) == LLVMFloatTypeKind
-             &&LLVMGetTypeKind(LLVMTypeOf(value)) == LLVMDoubleTypeKind) value = LLVMBuildFPCast(generator->builder, value, LLVMFloatTypeInContext(generator->context), "NodeBinary_dtof");
+            RaveValue value = this->second->generate();
             
-            return LLVMBuildStore(generator->builder, value, ptr);
+            LLVMBuildStore(generator->builder, value.value, ptr.value);
+            return {};
         }
-        else if(instanceof<NodeDone>(this->first)) return LLVMBuildStore(generator->builder, this->second->generate(), this->first->generate());
+        else if(instanceof<NodeDone>(this->first)) {
+            LLVMBuildStore(generator->builder, this->second->generate().value, this->first->generate().value);
+            return {};
+        }
     }
 
     if(instanceof<NodeNull>(this->first)) ((NodeNull*)this->first)->type = this->second->getType();
@@ -428,62 +408,76 @@ LLVMValueRef NodeBinary::generate() {
         return (new NodeCast(instanceof<TypeVoid>(type) ? new TypeBasic(BasicType::Double) : type, new NodeBuiltin("fmodf", {this->first, this->second}, this->loc, nullptr), this->loc))->generate();
     }
 
+    RaveValue vFirst = this->first->generate();
+    RaveValue vSecond = this->second->generate();
+
     if(instanceof<TypeStruct>(this->first->getType()) || instanceof<TypePointer>(this->first->getType())
      && !instanceof<TypeStruct>(this->second->getType()) && !instanceof<TypePointer>(this->second->getType())) {
-        std::pair<std::string, std::string> opOverload = isOperatorOverload(first, second, this->op);
+        std::pair<std::string, std::string> opOverload = isOperatorOverload(vFirst, vSecond, this->op);
         if(opOverload.first != "") {
-            if(opOverload.first[0] == '!') return LLVMBuildNot(generator->builder, (new NodeCall(
+            if(opOverload.first[0] == '!') return (new NodeUnary(loc, TokType::Ne, (new NodeCall(
                 this->loc, new NodeIden(AST::structTable[opOverload.first.substr(1)]->operators[TokType::Equal][opOverload.second]->name, this->loc),
-                std::vector<Node*>({first, second})))->generate(), "callNot");
+                std::vector<Node*>({first, second})))))->generate();
             return (new NodeCall(
                 this->loc, new NodeIden(AST::structTable[opOverload.first]->operators[this->op][opOverload.second]->name, this->loc),
                 std::vector<Node*>({first, second})))->generate();
         }
     }
 
-    LLVMValueRef vFirst = this->first->generate();
-    LLVMValueRef vSecond = this->second->generate();
+    while(instanceof<TypeConst>(vFirst.type)) vFirst.type = vFirst.type->getElType();
+    while(instanceof<TypeConst>(vSecond.type)) vSecond.type = vSecond.type->getElType();
 
-    LLVMTypeRef vFirstType = LLVMTypeOf(vFirst);
-    LLVMTypeRef vSecondType = LLVMTypeOf(vSecond);
-    LLVMTypeKind vFirstTypeKind = LLVMGetTypeKind(vFirstType);
-    LLVMTypeKind vSecondTypeKind = LLVMGetTypeKind(vSecondType);
-
-    if(vFirstTypeKind == vSecondTypeKind && vFirstType != vSecondType) {
-        if(vFirstTypeKind == LLVMIntegerTypeKind) vFirst = LLVMBuildIntCast(generator->builder, vFirst, vSecondType, "NodeBinary_intc");
-    }
-    else if(vFirstTypeKind != vSecondTypeKind) {
-        if(vFirstTypeKind == LLVMFloatTypeKind || vFirstTypeKind == LLVMDoubleTypeKind) {
-            if(vSecondTypeKind == LLVMFloatTypeKind || vSecondTypeKind == LLVMDoubleTypeKind
-             ||vSecondTypeKind == LLVMIntegerTypeKind) vSecond = Binary::castValue(vSecond, LLVMTypeOf(vFirst), this->loc);
-        }
-        else if(vSecondTypeKind == LLVMFloatTypeKind || vSecondTypeKind == LLVMDoubleTypeKind) {
-            if(vFirstTypeKind == LLVMFloatTypeKind || vFirstTypeKind == LLVMDoubleTypeKind || vFirstTypeKind == LLVMIntegerTypeKind)
-                vFirst = Binary::castValue(vFirst, LLVMTypeOf(vSecond), this->loc);
+    if(instanceof<TypeBasic>(vFirst.type) && instanceof<TypeBasic>(vSecond.type) && vFirst.type->toString() != vSecond.type->toString()) {
+        // Casting numbers types
+        if(((TypeBasic*)vFirst.type)->isFloat()) {
+            if(((TypeBasic*)vSecond.type)->isFloat()) {
+                if(vFirst.type->getSize() > vSecond.type->getSize()) {
+                    vSecond.value = LLVMBuildFPCast(generator->builder, vSecond.value, generator->genType(vFirst.type, loc), "NodeBinary_ftof");
+                    vSecond.type = vFirst.type;
+                }
+                else {
+                    vFirst.value = LLVMBuildFPCast(generator->builder, vFirst.value, generator->genType(vSecond.type, loc), "NodeBinary_ftof");
+                    vFirst.type = vSecond.type;
+                }
+            }
+            else {
+                vSecond.value = LLVMBuildSIToFP(generator->builder, vSecond.value, generator->genType(vFirst.type, loc), "NodeBinary_itof");
+                vSecond.type = vFirst.type;
+            }
         }
         else {
-            generator->error("value types '" + this->first->getType()->toString() + "' and '" + this->second->getType()->toString() + "' are incompatible!", loc);
-            return nullptr;
+            if(((TypeBasic*)vSecond.type)->isFloat()) {
+                vFirst.value = LLVMBuildSIToFP(generator->builder, vFirst.value, generator->genType(vSecond.type, loc), "NodeBinary_itof");
+                vFirst.type = vSecond.type;
+            }
+            else {
+                if(vFirst.type->getSize() > vSecond.type->getSize()) {
+                    vSecond.value = LLVMBuildIntCast2(generator->builder, vSecond.value, generator->genType(vFirst.type, loc), false, "NodeBinary_itoi");
+                    vSecond.type = vFirst.type;
+                }
+                else {
+                    vFirst.value = LLVMBuildIntCast2(generator->builder, vFirst.value, generator->genType(vSecond.type, loc), false, "NodeBinary_itoi");
+                    vFirst.type = vSecond.type;
+                }
+            }
         }
     }
-    else if(vFirstType != vSecondType) {
-        if(LLVMABISizeOfType(generator->targetData, vFirstType) > LLVMABISizeOfType(generator->targetData, vSecondType)) vSecond = Binary::castValue(vSecond, vFirstType, this->loc);
-        else vFirst = Binary::castValue(vFirst, vSecondType, this->loc);
-    }
+
+    if(vFirst.type->toString() != vSecond.type->toString()) generator->error("value types '" + vFirst.type->toString() + "' and '" + vSecond.type->toString() + "' are incompatible!", loc);
     
     switch(this->op) {
-        case TokType::Plus: return Binary::sum(vFirst, vSecond, this->loc);
-        case TokType::Minus: return Binary::sub(vFirst, vSecond, this->loc);
-        case TokType::Multiply: return Binary::mul(vFirst, vSecond, this->loc);
-        case TokType::Divide: return Binary::div(vFirst, vSecond, this->loc);
+        case TokType::Plus: return {Binary::sum(vFirst.value, vSecond.value, this->loc), vFirst.type};
+        case TokType::Minus: return {Binary::sub(vFirst.value, vSecond.value, this->loc), vFirst.type};
+        case TokType::Multiply: return {Binary::mul(vFirst.value, vSecond.value, this->loc), vFirst.type};
+        case TokType::Divide: return {Binary::div(vFirst.value, vSecond.value, this->loc), vFirst.type};
         case TokType::Equal: case TokType::Nequal:
         case TokType::Less: case TokType::More:
-        case TokType::LessEqual: case TokType::MoreEqual: return Binary::compare(vFirst, vSecond, this->op, this->loc);
-        case TokType::And: return LLVMBuildAnd(generator->builder, vFirst, vSecond, "NodeBinary_and");
-        case TokType::Or: return LLVMBuildOr(generator->builder, vFirst, vSecond, "NodeBinary_or");
-        case TokType::BitXor: return LLVMBuildXor(generator->builder, vFirst, vSecond, "NodeBinary_xor");
-        case TokType::BitLeft: return LLVMBuildShl(generator->builder, vFirst, vSecond, "NodeBinary_and");
-        case TokType::BitRight: return LLVMBuildLShr(generator->builder, vFirst, vSecond, "NodeBinary_and");
-        default: generator->error("undefined operator " + std::to_string(this->op) + "!", this->loc); return nullptr;
+        case TokType::LessEqual: case TokType::MoreEqual: return {Binary::compare(vFirst.value, vSecond.value, this->op, this->loc), new TypeBasic(BasicType::Bool)};
+        case TokType::And: return {LLVMBuildAnd(generator->builder, vFirst.value, vSecond.value, "NodeBinary_and"), vFirst.type};
+        case TokType::Or: return {LLVMBuildOr(generator->builder, vFirst.value, vSecond.value, "NodeBinary_or"), vFirst.type};
+        case TokType::BitXor: return {LLVMBuildXor(generator->builder, vFirst.value, vSecond.value, "NodeBinary_xor"), vFirst.type};
+        case TokType::BitLeft: return {LLVMBuildShl(generator->builder, vFirst.value, vSecond.value, "NodeBinary_and"), vFirst.type};
+        case TokType::BitRight: return {LLVMBuildLShr(generator->builder, vFirst.value, vSecond.value, "NodeBinary_and"), vFirst.type};
+        default: generator->error("undefined operator " + std::to_string(this->op) + "!", this->loc); return {};
     }
 }

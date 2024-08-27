@@ -191,4 +191,3 @@ extern std::string exePath;
 extern bool endsWith(const std::string &str, const std::string &suffix);
 
 #define RAVE_DEBUG_MODE false
-#define RAVE_OPAQUE_POINTERS false

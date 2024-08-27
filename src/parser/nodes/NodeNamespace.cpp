@@ -12,14 +12,14 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/utils.hpp"
 #include <string>
 
-NodeNamespace::NodeNamespace(std::string name, std::vector<Node*> nodes, long loc) {
+NodeNamespace::NodeNamespace(std::string name, std::vector<Node*> nodes, int loc) {
     this->loc = loc;
     this->nodes = std::vector<Node*>(nodes);
     this->names = std::vector<std::string>();
     this->names.push_back(name);
 }
 
-NodeNamespace::NodeNamespace(std::vector<std::string> names, std::vector<Node*> nodes, long loc) {
+NodeNamespace::NodeNamespace(std::vector<std::string> names, std::vector<Node*> nodes, int loc) {
     this->loc = loc;
     this->nodes = std::vector<Node*>(nodes);
     this->names = std::vector<std::string>();
@@ -93,7 +93,7 @@ void NodeNamespace::check() {
     }
 }
 
-LLVMValueRef NodeNamespace::generate() {
+RaveValue NodeNamespace::generate() {
     for(int i=0; i<this->nodes.size(); i++) {
         if(this->nodes[i] == nullptr) continue;
         if(instanceof<NodeFunc>(this->nodes[i])) {
@@ -142,5 +142,5 @@ LLVMValueRef NodeNamespace::generate() {
             this->nodes[i]->generate();
         }
     }
-    return nullptr;
+    return {};
 }

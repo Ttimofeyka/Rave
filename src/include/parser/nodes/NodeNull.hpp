@@ -15,12 +15,11 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 class NodeNull : public Node {
 public:
     Type* type;
-    LLVMTypeRef lType;
-    long loc;
+    int loc;
 
-    NodeNull(Type* type, long loc);
+    NodeNull(Type* type, int loc);
     Type* getType() override;
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     void check() override;
     Node* comptime() override;
     Node* copy() override;

@@ -33,9 +33,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <llvm-c/Analysis.h>
 #include "../../include/compiler.hpp"
 #include "../../include/llvm.hpp"
-#include "../../include/callconv.hpp"
 
-NodeFunc::NodeFunc(std::string name, std::vector<FuncArgSet> args, NodeBlock* block, bool isExtern, std::vector<DeclarMod> mods, long loc, Type* type, std::vector<std::string> templateNames) {
+NodeFunc::NodeFunc(std::string name, std::vector<FuncArgSet> args, NodeBlock* block, bool isExtern, std::vector<DeclarMod> mods, int loc, Type* type, std::vector<std::string> templateNames) {
     this->name = name;
     this->origName = name;
     this->args = std::vector<FuncArgSet>(args);
@@ -126,7 +125,8 @@ void NodeFunc::check() {
 
 LLVMTypeRef* NodeFunc::getParameters(int callConv) {
     std::vector<LLVMTypeRef> buffer;
-    buffer.reserve(getCountOfInternalArgs(args));
+    // buffer.reserve(getCountOfInternalArgs(args));
+    buffer.reserve(args.size());
 
     for(int i=0; i<args.size(); i++) {
         FuncArgSet arg = args[i];
@@ -251,11 +251,11 @@ LLVMTypeRef* NodeFunc::getParameters(int callConv) {
     return this->genTypes.data();
 }
 
-LLVMValueRef NodeFunc::generate() {
-    if(this->noCompile) return nullptr;
+RaveValue NodeFunc::generate() {
+    if(this->noCompile) return {};
     if(!this->templateNames.empty() && !this->isTemplate) {
         this->isExtern = false;
-        return nullptr;
+        return {};
     }
 
     linkName = generator->mangle(this->name, true, this->isMethod);
@@ -294,7 +294,7 @@ LLVMValueRef NodeFunc::generate() {
         else if(this->mods[i].name == "arrayable") this->isArrayable = true;
         else if(this->mods[i].name.size() > 0 && this->mods[i].name[0] == '@') builtins[this->mods[i].name.substr(1)] = ((NodeBuiltin*)this->mods[i].genValue);
     }
-    if(!this->isTemplate && this->isCtargs) return nullptr;
+    if(!this->isTemplate && this->isCtargs) return {};
 
     std::map<std::string, Type*> oldReplace = std::map<std::string, Type*>(generator->toReplace);
     if(this->isTemplate) {
@@ -306,43 +306,112 @@ LLVMValueRef NodeFunc::generate() {
         Node* result = data.second->comptime();
         if(result == nullptr || (instanceof<NodeBool>(result) && !((NodeBool*)result)->value)) {
             generator->error("The '" + data.first+  "' builtin failed when generating the function '" + this->name + "'!", this->loc);
-            return nullptr;
+            return {};
         }
     }
 
-    if(this->isCdecl64) this->args = normalizeArgsCdecl64(this->args, this->loc);
+    // if(this->isCdecl64) this->args = normalizeArgsCdecl64(this->args, this->loc);
 
     this->getParameters(callConv);
-    LLVMValueRef get = LLVMGetNamedFunction(generator->lModule, linkName.c_str());
+    // TODO
+    /*LLVMValueRef get = LLVMGetNamedFunction(generator->lModule, linkName.c_str());
     if(get != nullptr) {
         if(generator->functions.find(this->name) == generator->functions.end()) generator->functions[this->name] = get;
-        return nullptr;
+        return {};
+    }*/
+
+    TypeFunc* tfunc = new TypeFunc(this->type, {}, this->isVararg);
+
+    Type* parent = nullptr;
+    Type* ty = type;
+
+    while(instanceof<TypePointer>(ty) || instanceof<TypeArray>(ty)) {
+        parent = ty;
+        ty = ty->getElType();
     }
 
-    generator->functions[this->name] = LLVMAddFunction(
+    if(instanceof<TypeStruct>(ty)) {
+        if(generator->toReplace.find(ty->toString()) != generator->toReplace.end()) {
+            if(parent == nullptr) this->type = generator->toReplace[ty->toString()];
+            else if(instanceof<TypePointer>(parent)) ((TypePointer*)parent)->instance = generator->toReplace[ty->toString()];
+            else ((TypeArray*)parent)->element = generator->toReplace[ty->toString()];
+        }
+    }
+
+    if(name.find('<') != std::string::npos && name.find("([]") != std::string::npos) {
+        args[0].type = new TypePointer(new TypeStruct(name.substr(0, name.find('('))));
+        tfunc->args.push_back(new TypeFuncArg(args[0].type, args[0].name));
+
+        for(int i=1; i<args.size(); i++) {
+            // TODO: cdecl64 support
+            Type* cp = args[i].type->copy();
+            ty = cp;
+            parent = nullptr;
+
+            while(instanceof<TypePointer>(ty) || instanceof<TypeArray>(ty)) {
+                parent = ty;
+                ty = ty->getElType();
+            }
+
+            if(instanceof<TypeStruct>(ty) && generator->toReplace.find(ty->toString()) != generator->toReplace.end()) {
+                if(parent == nullptr) args[i].type = generator->toReplace[ty->toString()];
+                else if(instanceof<TypePointer>(parent)) ((TypePointer*)parent)->instance = generator->toReplace[ty->toString()];
+                else ((TypeArray*)parent)->element = generator->toReplace[ty->toString()];
+            }
+
+            tfunc->args.push_back(new TypeFuncArg(cp, args[i].name));
+        }
+    }
+    else for(int i=0; i<args.size(); i++) {
+        // TODO: cdecl64 support
+        Type* cp = args[i].type->copy();
+        ty = cp;
+        parent = nullptr;
+
+        while(instanceof<TypePointer>(ty) || instanceof<TypeArray>(ty)) {
+            parent = ty;
+            ty = ty->getElType();
+        }
+
+        if(instanceof<TypeStruct>(ty) && generator->toReplace.find(ty->toString()) != generator->toReplace.end()) {
+            if(parent == nullptr) args[i].type = generator->toReplace[ty->toString()];
+            else if(instanceof<TypePointer>(parent)) ((TypePointer*)parent)->instance = generator->toReplace[ty->toString()];
+            else ((TypeArray*)parent)->element = generator->toReplace[ty->toString()];
+        }
+
+        tfunc->args.push_back(new TypeFuncArg(cp, args[i].name));
+    }
+
+    tfunc->main = this->type;
+
+    LLVMValueRef fn = LLVMGetNamedFunction(generator->lModule, linkName.c_str());
+    if(fn != nullptr) return {};
+
+    generator->functions[this->name] = {LLVMAddFunction(
         generator->lModule, linkName.c_str(),
-        LLVMFunctionType(generator->genType(this->type, loc), this->genTypes.data(), getCountOfInternalArgs(this->args), this->isVararg)
-    );
+        // LLVMFunctionType(generator->genType(this->type, loc), this->genTypes.data(), getCountOfInternalArgs(this->args), this->isVararg)
+        LLVMFunctionType(generator->genType(this->type, loc), this->genTypes.data(), args.size(), this->isVararg)
+    ), tfunc};
 
-    LLVMSetFunctionCallConv(generator->functions[this->name], callConv);
+    LLVMSetFunctionCallConv(generator->functions[this->name].value, callConv);
 
-    if(this->isInline) generator->addAttr("alwaysinline", LLVMAttributeFunctionIndex, generator->functions[this->name], this->loc);
+    if(this->isInline) generator->addAttr("alwaysinline", LLVMAttributeFunctionIndex, generator->functions[this->name].value, this->loc);
     else if(this->isNoOpt) {
-        generator->addAttr("noinline", LLVMAttributeFunctionIndex, generator->functions[this->name], this->loc);
-        generator->addAttr("optnone", LLVMAttributeFunctionIndex, generator->functions[this->name], this->loc);
+        generator->addAttr("noinline", LLVMAttributeFunctionIndex, generator->functions[this->name].value, this->loc);
+        generator->addAttr("optnone", LLVMAttributeFunctionIndex, generator->functions[this->name].value, this->loc);
     }
     if(this->isTemplatePart || this->isTemplate || this->isCtargsPart || this->isComdat) {
         LLVMComdatRef comdat = LLVMGetOrInsertComdat(generator->lModule, linkName.c_str());
         LLVMSetComdatSelectionKind(comdat, LLVMAnyComdatSelectionKind);
-        LLVMSetComdat(generator->functions[this->name], comdat);
-        LLVMSetLinkage(generator->functions[this->name], LLVMLinkOnceODRLinkage);
+        LLVMSetComdat(generator->functions[this->name].value, comdat);
+        LLVMSetLinkage(generator->functions[this->name].value, LLVMLinkOnceODRLinkage);
         this->isExtern = false;
     }
 
     if(!this->isExtern) {
         if(this->isCtargsPart || this->isCtargs) generator->currentBuiltinArg = 0;
-        LLVMBasicBlockRef entry = LLVMAppendBasicBlockInContext(generator->context, generator->functions[this->name], "entry");
-        this->exitBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[this->name], "exit");
+        LLVMBasicBlockRef entry = LLVMAppendBasicBlockInContext(generator->context, generator->functions[this->name].value, "entry");
+        this->exitBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[this->name].value, "exit");
         this->builder = LLVMCreateBuilderInContext(generator->context);
         generator->builder = this->builder;
         LLVMPositionBuilderAtEnd(generator->builder, entry);
@@ -366,11 +435,11 @@ LLVMValueRef NodeFunc::generate() {
 
         if(!currScope->funcHasRet) LLVMBuildBr(generator->builder, this->exitBlock);
 
-        LLVMMoveBasicBlockAfter(this->exitBlock, LLVMGetLastBasicBlock(generator->functions[this->name]));
+        LLVMMoveBasicBlockAfter(this->exitBlock, LLVMGetLastBasicBlock(generator->functions[this->name].value));
 
-        uint32_t bbLength = LLVMCountBasicBlocks(generator->functions[currScope->funcName]);
+        uint32_t bbLength = LLVMCountBasicBlocks(generator->functions[currScope->funcName].value);
         LLVMBasicBlockRef* basicBlocks = (LLVMBasicBlockRef*)malloc(sizeof(LLVMBasicBlockRef)*bbLength);
-        LLVMGetBasicBlocks(generator->functions[currScope->funcName], basicBlocks);
+        LLVMGetBasicBlocks(generator->functions[currScope->funcName].value, basicBlocks);
             for(int i=0; i<bbLength; i++) {
                 if(basicBlocks[i] != nullptr && std::string(LLVMGetBasicBlockName(basicBlocks[i])) != "exit" && LLVMGetBasicBlockTerminator(basicBlocks[i]) == nullptr) {
                     LLVMPositionBuilderAtEnd(generator->builder, basicBlocks[i]);
@@ -381,7 +450,7 @@ LLVMValueRef NodeFunc::generate() {
 
         LLVMPositionBuilderAtEnd(generator->builder, this->exitBlock);
 
-        if(!instanceof<TypeVoid>(this->type)) LLVMBuildRet(generator->builder, currScope->get("return", this->loc));
+        if(!instanceof<TypeVoid>(this->type)) LLVMBuildRet(generator->builder, currScope->get("return", this->loc).value);
         else LLVMBuildRetVoid(generator->builder);
 
         generator->builder = nullptr;
@@ -389,18 +458,18 @@ LLVMValueRef NodeFunc::generate() {
     }
     if(this->isTemplate) generator->toReplace = std::map<std::string, Type*>(oldReplace);
 
-    if(LLVMVerifyFunction(generator->functions[this->name], LLVMPrintMessageAction)) {
-        std::string content = LLVMPrintValueToString(generator->functions[this->name]);
+    if(LLVMVerifyFunction(generator->functions[this->name].value, LLVMPrintMessageAction)) {
+        std::string content = LLVMPrintValueToString(generator->functions[this->name].value);
         if(content.length() > 12000) content = content.substr(0, 12000) + "...";
         generator->error("LLVM errors into the function '" + this->name + "'! Content:\n" + content, this->loc);
     }
     return generator->functions[this->name];
 }
 
-std::string NodeFunc::generateWithCtargs(std::vector<LLVMTypeRef> args) {
+std::string NodeFunc::generateWithCtargs(std::vector<Type*> args) {
     std::vector<FuncArgSet> newArgs;
     for(int i=0; i<args.size(); i++) {
-        Type* newType = lTypeToType(args[i], nullptr);
+        Type* newType = args[i];
         newArgs.push_back(FuncArgSet{.name = "_RaveArg" + std::to_string(i), .type = newType, .internalTypes = {newType}});
     }
 
@@ -427,7 +496,7 @@ std::string NodeFunc::generateWithCtargs(std::vector<LLVMTypeRef> args) {
     return _n;
 }
 
-LLVMValueRef NodeFunc::generateWithTemplate(std::vector<Type*> types, std::string all) {
+RaveValue NodeFunc::generateWithTemplate(std::vector<Type*> types, std::string all) {
     auto activeLoops = std::map<int32_t, Loop>(generator->activeLoops);
     auto builder = generator->builder;
     auto currBB = generator->currBB;
@@ -437,7 +506,7 @@ LLVMValueRef NodeFunc::generateWithTemplate(std::vector<Type*> types, std::strin
     _f->isTemplate = true;
     _f->check();
     _f->templateTypes = std::vector<Type*>(types);
-    LLVMValueRef v = _f->generate();
+    RaveValue v = _f->generate();
 
     generator->activeLoops = activeLoops;
     generator->builder = builder;
@@ -449,7 +518,6 @@ LLVMValueRef NodeFunc::generateWithTemplate(std::vector<Type*> types, std::strin
 
 Node* NodeFunc::comptime() {return this;}
 Type* NodeFunc::getType() {return this->type;}
-Type* NodeFunc::getLType() {return this->type;}
 
 Node* NodeFunc::copy() {return new NodeFunc(this->name, this->args, (NodeBlock*)this->block->copy(), this->isExtern, this->mods, this->loc, this->type->copy(), this->templateNames);}
 
@@ -483,5 +551,16 @@ Type* NodeFunc::getInternalArgType(LLVMValueRef value) {
         }
     }
 
+    return nullptr;
+}
+
+Type* NodeFunc::getArgType(int n) {
+    return args[n].type;;
+}
+
+Type* NodeFunc::getArgType(std::string name) {
+    for(int i=0; i<args.size(); i++) {
+        if(args[i].name == name) return args[i].type;
+    }
     return nullptr;
 }

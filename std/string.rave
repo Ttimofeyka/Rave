@@ -17,6 +17,7 @@ namespace std {
 
         std::string this(char* str) {
             std::string this;
+
             if(str != null) {
                 this.length = std::cstring::strlen(str);
                 this.capacity = (this.length * 2) + 2;
@@ -24,7 +25,7 @@ namespace std {
                 this.data = std::malloc(this.capacity);
 
                 int i = 0;
-                while(i<this.length) {
+                while(i < this.length) {
                     this.data[i] = str[i];
                     i += 1;
                 }
@@ -47,7 +48,7 @@ namespace std {
             this.data[0] = '\0';
         } => this;
 
-        void operator=(std::string* one, char* two) {one[0] = std::string(two);}
+        (nochecks) void operator=(std::string* one, char* two) {one[0] = std::string(two);}
 
         void ~this {
             if(this.data != null) {

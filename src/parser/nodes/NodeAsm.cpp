@@ -9,7 +9,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/ast.hpp"
 #include "../../include/llvm.hpp"
 
-NodeAsm::NodeAsm(std::string line, bool isVolatile, Type* type, std::string additions, std::vector<Node*> values, long loc) {
+NodeAsm::NodeAsm(std::string line, bool isVolatile, Type* type, std::string additions, std::vector<Node*> values, int loc) {
     this->line = line;
     this->isVolatile = isVolatile;
     this->type = type;
@@ -25,23 +25,24 @@ Node* NodeAsm::copy() {
 }
 
 Type* NodeAsm::getType() {return this->type;}
-Type* NodeAsm::getLType() {return this->type;}
 Node* NodeAsm::comptime() {return nullptr;}
 void NodeAsm::check() {this->isChecked = true;}
 
-LLVMValueRef NodeAsm::generate() {
+RaveValue NodeAsm::generate() {
     std::vector<LLVMValueRef> values;
     std::vector<LLVMTypeRef> types;
 
+    TypeFunc* tfunc = new TypeFunc(this->type, {}, false);
+
     for(int i=0; i<this->values.size(); i++) {
-        LLVMValueRef value = this->values[i]->generate();
-        values.push_back(value);
-        types.push_back(LLVMTypeOf(value));
+        RaveValue value = this->values[i]->generate();
+        tfunc->args.push_back(new TypeFuncArg(value.type, "i" + std::to_string(i)));
+
+        values.push_back(value.value);
+        types.push_back(LLVMTypeOf(value.value));
     }
-    
-    #if LLVM_VERSION >= 13
-    
-    return LLVM::call(LLVMGetInlineAsm(
+
+    return LLVM::call({LLVMGetInlineAsm(
         LLVMFunctionType(generator->genType(this->type, this->loc), types.data(), types.size(), false),
         (char*)this->line.c_str(),
         this->line.size(),
@@ -51,20 +52,5 @@ LLVMValueRef NodeAsm::generate() {
         false,
         LLVMInlineAsmDialectATT,
         false
-    ), values.data(), values.size(), (instanceof<TypeVoid>(this->type) ? "" : "asm_"));
-    
-    #else
-    
-    return LLVM::call(LLVMGetInlineAsm(
-        LLVMFunctionType(generator->genType(this->type, this->loc), types.data(), types.size(), false),
-        (char*)this->line.c_str(),
-        this->line.size(),
-        (char*)this->additions.c_str(),
-        this->additions.size(),
-        this->isVolatile,
-        false,
-        LLVMInlineAsmDialectATT
-    ), values.data(), values.size(), (instanceof<TypeVoid>(this->type) ? "" : "asm_"));
-    
-    #endif
+    ), tfunc}, values.data(), values.size(), (instanceof<TypeVoid>(this->type) ? "" : "asm_"));
 }

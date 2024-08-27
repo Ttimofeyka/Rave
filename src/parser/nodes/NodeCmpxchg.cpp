@@ -17,11 +17,12 @@ NodeCmpxchg::NodeCmpxchg(Node* ptr, Node* value1, Node* value2, int loc) {
 
 Node* NodeCmpxchg::copy() {return new NodeCmpxchg(this->ptr->copy(), this->value1->copy(), this->value2->copy(), this->loc);}
 Type* NodeCmpxchg::getType() {return new TypeVoid();}
-Type* NodeCmpxchg::getLType() {return new TypeVoid();}
 void NodeCmpxchg::check() {this->isChecked = true;}
-Node* NodeCmpxchg::comptime() {return nullptr;}
+Node* NodeCmpxchg::comptime() {return this;}
 
-LLVMValueRef NodeCmpxchg::generate() {
-    return LLVMBuildAtomicCmpXchg(generator->builder, this->ptr->generate(), this->value1->generate(), this->value2->generate(),
-    LLVMAtomicOrderingSequentiallyConsistent, LLVMAtomicOrderingSequentiallyConsistent, false);
+RaveValue NodeCmpxchg::generate() {
+    return {LLVMBuildAtomicCmpXchg(
+        generator->builder, this->ptr->generate().value, this->value1->generate().value,
+        this->value2->generate().value, LLVMAtomicOrderingSequentiallyConsistent, LLVMAtomicOrderingSequentiallyConsistent, false
+    ), this->ptr->getType()};
 }

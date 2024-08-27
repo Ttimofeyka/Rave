@@ -21,7 +21,7 @@ public:
     NodeImport(std::string file, std::vector<std::string> functions, int loc);
     Type* getType() override;
     void check() override;
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     Node* comptime() override;
     Node* copy() override;
 };
@@ -34,7 +34,7 @@ public:
     NodeImports(std::vector<NodeImport*> imports, int loc);
     Type* getType() override;
     void check() override;
-    LLVMValueRef generate() override;
+    RaveValue generate() override;
     Node* comptime() override;
     Node* copy() override;
 };

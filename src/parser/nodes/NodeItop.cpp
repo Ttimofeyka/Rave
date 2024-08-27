@@ -10,7 +10,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeItop.hpp"
 #include "../../include/parser/ast.hpp"
 
-NodeItop::NodeItop(Node* value, Type* type, long loc) {
+NodeItop::NodeItop(Node* value, Type* type, int loc) {
     this->value = value;
     this->type = type;
     this->loc = loc;
@@ -26,12 +26,7 @@ void NodeItop::check() {
     if(!oldCheck) this->value->check();
 }
 
-LLVMValueRef NodeItop::generate() {
-    LLVMValueRef _int = this->value->generate();
-    return LLVMBuildIntToPtr(
-        generator->builder,
-        _int,
-        generator->genType(this->type,this->loc),
-        "itop"
-    );
+RaveValue NodeItop::generate() {
+    RaveValue _int = this->value->generate();
+    return {LLVMBuildIntToPtr(generator->builder, _int.value, generator->genType(this->type, this->loc), "itop"), this->type};
 }

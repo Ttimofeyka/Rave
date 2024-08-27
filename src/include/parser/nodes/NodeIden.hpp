@@ -22,8 +22,8 @@ public:
     NodeIden(std::string name, int loc, bool isMustBePtr);
 
     Type* getType() override;
-    Type* getLType() override;
-    LLVMValueRef generate() override;
+    
+    RaveValue generate() override;
     Node* copy() override;
     Node* comptime() override;
     void check() override;

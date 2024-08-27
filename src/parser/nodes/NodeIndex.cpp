@@ -66,7 +66,7 @@ Node* NodeIndex::comptime() {return this;}
 
 std::vector<LLVMValueRef> NodeIndex::generateIndexes() {
     std::vector<LLVMValueRef> buffer;
-    for(int i=0; i<this->indexes.size(); i++) buffer.push_back(this->indexes[i]->generate());
+    for(int i=0; i<this->indexes.size(); i++) buffer.push_back(this->indexes[i]->generate().value);
     return buffer;
 }
 
@@ -81,7 +81,7 @@ bool NodeIndex::isElementConst(Type* type) {
     return false;
 }
 
-LLVMValueRef NodeIndex::generate() {
+RaveValue NodeIndex::generate() {
     if(instanceof<NodeIden>(this->element)) {
         NodeIden* id = (NodeIden*)this->element;
         Type* _t = currScope->getVar(id->name, this->loc)->type;
@@ -110,14 +110,14 @@ LLVMValueRef NodeIndex::generate() {
             if(instanceof<TypeConst>(((TypeArray*)_t)->element)) this->elementIsConst = true;
         }
         else if(instanceof<TypeConst>(_t)) this->elementIsConst = this->isElementConst(((TypeConst*)_t)->instance);
-        LLVMValueRef ptr = currScope->get(id->name, this->loc);
+        RaveValue ptr = currScope->get(id->name, this->loc);
 
-        if(LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMArrayTypeKind && LLVMGetTypeKind(LLVMTypeOf(currScope->getWithoutLoad(id->name, this->loc))) == LLVMArrayTypeKind) {
-            LLVMValueRef copyVal = LLVM::alloc(LLVMTypeOf(ptr), ("NodeIndex_copyVal_"+std::to_string(this->loc)+"_").c_str());
-            LLVMBuildStore(generator->builder, ptr, copyVal);
+        if(instanceof<TypeArray>(ptr.type) && instanceof<TypeArray>(currScope->getWithoutLoad(id->name, this->loc).type)) {
+            RaveValue copyVal = LLVM::alloc(ptr.type, ("NodeIndex_copyVal_" + std::to_string(this->loc) + "_").c_str());
+            LLVMBuildStore(generator->builder, ptr.value, copyVal.value);
             ptr = copyVal;
         }
-        else if(!LLVM::isPointer(ptr)) ptr = currScope->getWithoutLoad(id->name, this->loc);
+        else if(!instanceof<TypePointer>(ptr.type)) ptr = currScope->getWithoutLoad(id->name, this->loc);
 
         if(!generator->settings.noChecks && generator->settings.optLevel <= 2 &&
             ((AST::funcTable.find(currScope->funcName) != AST::funcTable.end() && AST::funcTable[currScope->funcName]->isNoChecks == false)
@@ -131,23 +131,23 @@ LLVMValueRef NodeIndex::generate() {
             }
         }
 
-        LLVMValueRef index = generator->byIndex(ptr, this->generateIndexes());
+        RaveValue index = generator->byIndex(ptr, this->generateIndexes());
+        /*if(instanceof<TypePointer>(index.type) && instanceof<TypeArray>(index.type->getElType())) {
+            index.type = new TypePointer(((TypeArray*)index.type->getElType())->element);
+            index.value = LLVMBuildBitCast(generator->builder, index.value, generator->genType(index.type, loc), "bitc");
+        }*/
         if(isMustBePtr) return index;
-        return LLVM::load(index, ("NodeIndex_NodeIden_load_"+std::to_string(this->loc)+"_").c_str());
+        return LLVM::load(index, ("NodeIndex_NodeIden_load_" + std::to_string(this->loc) + "_").c_str(), loc);
     }
     if(instanceof<NodeGet>(this->element)) {
         NodeGet* nget = (NodeGet*)this->element;
         nget->isMustBePtr = true;
-        LLVMValueRef ptr = nget->generate();
+        RaveValue ptr = nget->generate();
 
-        if(
-            LLVMGetTypeKind(LLVMTypeOf(ptr)) == LLVMStructTypeKind ||
-            (LLVM::isPointer(ptr) && LLVMGetTypeKind(LLVM::getPointerElType(ptr)) == LLVMStructTypeKind)
-        ) {
-            LLVMTypeRef structLType = LLVMTypeOf(ptr);
-            if(LLVMGetTypeKind(structLType) != LLVMStructTypeKind) structLType = LLVM::getPointerElType(ptr);
+        if(instanceof<TypeStruct>(ptr.type) || (instanceof<TypePointer>(ptr.type) && instanceof<TypeStruct>(ptr.type->getElType()))) {
+            Type* structType = ptr.type;
+            if(!instanceof<TypeStruct>(structType)) structType = ptr.type->getElType();
 
-            Type* structType = new TypeStruct(std::string(LLVMGetStructName(structLType)));
             while(generator->toReplace.find(structType->toString()) != generator->toReplace.end()) structType = generator->toReplace[structType->toString()];
             if(instanceof<TypeStruct>(structType)) {
                 std::string structName = structType->toString();
@@ -165,14 +165,14 @@ LLVMValueRef NodeIndex::generate() {
         }
 
         this->elementIsConst = nget->elementIsConst;
-        if(LLVMGetTypeKind(LLVM::getPointerElType(ptr)) != LLVMArrayTypeKind) {ptr = LLVM::load(ptr, ("NodeIndex_NodeGet_load" + std::to_string(this->loc) + "_").c_str());}
-        LLVMValueRef index = generator->byIndex(ptr, this->generateIndexes());
+        if(!instanceof<TypeArray>(ptr.type->getElType())) {ptr = LLVM::load(ptr, ("NodeIndex_NodeGet_load" + std::to_string(this->loc) + "_").c_str(), loc);}
+        RaveValue index = generator->byIndex(ptr, this->generateIndexes());
         if(isMustBePtr) return index;
-        return LLVM::load(index, ("NodeIndex_NodeGet" + std::to_string(this->loc) + "_").c_str());
+        return LLVM::load(index, ("NodeIndex_NodeGet" + std::to_string(this->loc) + "_").c_str(), loc);
     }
     if(instanceof<NodeCall>(this->element)) {
         NodeCall* ncall = (NodeCall*)this->element;
-        LLVMValueRef vr = ncall->generate();
+        RaveValue vr = ncall->generate();
 
         if(!generator->settings.noChecks && generator->settings.optLevel <= 2 &&
             ((AST::funcTable.find(currScope->funcName) != AST::funcTable.end() && AST::funcTable[currScope->funcName]->isNoChecks == false)
@@ -186,18 +186,18 @@ LLVMValueRef NodeIndex::generate() {
             }
         }
 
-        LLVMValueRef index = generator->byIndex(vr, this->generateIndexes());
+        RaveValue index = generator->byIndex(vr, this->generateIndexes());
         if(isMustBePtr) return index;
-        return LLVM::load(index, ("NodeIndex_NodeCall_load" + std::to_string(this->loc)+"_").c_str());
+        return LLVM::load(index, ("NodeIndex_NodeCall_load" + std::to_string(this->loc) + "_").c_str(), loc);
     }
     if(instanceof<NodeDone>(element)) {
-        LLVMValueRef index = generator->byIndex(element->generate(), this->generateIndexes());
+        RaveValue index = generator->byIndex(element->generate(), this->generateIndexes());
         if(isMustBePtr) return index;
-        return LLVM::load(index, "NodeDone_load");
+        return LLVM::load(index, "NodeDone_load", loc);
     }
     if(instanceof<NodeCast>(this->element)) {
         NodeCast* ncast = (NodeCast*)this->element;
-        LLVMValueRef val = ncast->generate();
+        RaveValue val = ncast->generate();
 
         if(!generator->settings.noChecks && generator->settings.optLevel <= 2 &&
             ((AST::funcTable.find(currScope->funcName) != AST::funcTable.end() && AST::funcTable[currScope->funcName]->isNoChecks == false)
@@ -211,13 +211,13 @@ LLVMValueRef NodeIndex::generate() {
             }
         }
 
-        LLVMValueRef index = generator->byIndex(val, this->generateIndexes());
+        RaveValue index = generator->byIndex(val, this->generateIndexes());
         if(isMustBePtr) return index;
-        return LLVM::load(index, "NodeIndex_NodeCast_load");
+        return LLVM::load(index, "NodeIndex_NodeCast_load", loc);
     }
     if(instanceof<NodeUnary>(this->element)) {
         NodeUnary* nunary = (NodeUnary*)this->element;
-        LLVMValueRef val = nunary->generate();
+        RaveValue val = nunary->generate();
 
         if(!generator->settings.noChecks && generator->settings.optLevel <= 2 &&
             ((AST::funcTable.find(currScope->funcName) != AST::funcTable.end() && AST::funcTable[currScope->funcName]->isNoChecks == false)
@@ -231,9 +231,10 @@ LLVMValueRef NodeIndex::generate() {
             }
         }
 
-        LLVMValueRef index = generator->byIndex(val, this->generateIndexes());
+        RaveValue index = generator->byIndex(val, this->generateIndexes());
         return index;
     }
+
     generator->error("NodeIndex::generate assert!",this->loc);
-    return nullptr;
+    return {};
 }

@@ -30,9 +30,8 @@ void NodeBlock::check() {
 
 Node* NodeBlock::comptime() {return this;}
 Type* NodeBlock::getType() {return new TypeVoid();}
-Type* NodeBlock::getLType() {return new TypeVoid();}
 
-LLVMValueRef NodeBlock::generate() {
+RaveValue NodeBlock::generate() {
     for(int i=0; i<this->nodes.size(); i++) if(this->nodes[i] != nullptr) this->nodes[i]->generate();
-    return nullptr;
+    return {};
 }

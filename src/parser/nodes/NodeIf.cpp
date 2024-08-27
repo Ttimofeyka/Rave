@@ -72,27 +72,28 @@ void NodeIf::check() {
     }
 }
 
-LLVMValueRef NodeIf::generate() {
+RaveValue NodeIf::generate() {
     if(isStatic) {
         this->comptime();
-        return nullptr;
+        return {};
     }
-    LLVMBasicBlockRef thenBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[currScope->funcName], "then");
-	LLVMBasicBlockRef elseBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[currScope->funcName], "else");
+
+    LLVMBasicBlockRef thenBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[currScope->funcName].value, "then");
+	LLVMBasicBlockRef elseBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[currScope->funcName].value, "else");
 	LLVMBasicBlockRef endBlock = nullptr;
 
     if(this->_else != nullptr && instanceof<NodeIf>(this->_else)) {
-        if(currScope->elseIfEnd == nullptr) currScope->elseIfEnd = LLVMAppendBasicBlockInContext(generator->context, generator->functions[currScope->funcName], "elseIfEnd");
+        if(currScope->elseIfEnd == nullptr) currScope->elseIfEnd = LLVMAppendBasicBlockInContext(generator->context, generator->functions[currScope->funcName].value, "elseIfEnd");
         endBlock = currScope->elseIfEnd;
     }
     else {
-        endBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[currScope->funcName], "end");
+        endBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[currScope->funcName].value, "end");
         currScope->elseIfEnd = nullptr;
     }
 
     auto origScope = currScope;
 
-    LLVMBuildCondBr(generator->builder, this->cond->generate(), thenBlock, elseBlock);
+    LLVMBuildCondBr(generator->builder, this->cond->generate().value, thenBlock, elseBlock);
 
     int selfNum = generator->activeLoops.size();
     generator->activeLoops[selfNum] = Loop{.isActive = true, .start = thenBlock, .end = endBlock, .hasEnd = false, .isIf = true, .loopRets = std::vector<LoopReturn>(), .owner = this};
@@ -140,7 +141,7 @@ LLVMValueRef NodeIf::generate() {
 
     if(hasEnd1 && hasEnd2 && generator->activeLoops.size() == 0) LLVMBuildRet(generator->builder, LLVMConstNull(generator->genType(AST::funcTable[currScope->funcName]->type, this->loc)));
     
-    return nullptr;
+    return {};
 }
 
 Node* NodeIf::comptime() {

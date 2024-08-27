@@ -7,9 +7,9 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace std {
     namespace ascii {
         (inline) bool isSpace(char c) => (c == ' ') || (c == '\r') || (c == '\t') || (c == '\n') || (c == '\v');
-        (inline) bool isPrint(char c) => (c >= 32) && (c <= 126);
-        (inline) bool isLower(char c) => (c > 96) && (c < 123);
-        (inline) bool isUpper(char c) => (c > 64) && (c < 91);
+        (inline) bool isPrint(char c) => (c >= 32c) && (c <= 126c);
+        (inline) bool isLower(char c) => (c > 96c) && (c < 123c);
+        (inline) bool isUpper(char c) => (c > 64c) && (c < 91c);
         (inline) bool isDigit(char c) => (c >= '0') && (c <= '9');
 
         (inline) char toLower(char c) {
