@@ -17,14 +17,14 @@ void main {
     // Output: 16
 
     // Multiply
-    a = @vMul(a, a);
+    a = a * a;
 
     c = @vGet(a, 2);
     std::println(c);
     // Output: 256
 
     // Divide
-    a = @vDiv(a, a);
+    a = a / a;
 
     c = @vGet(a, 2);
     std::println(c);
