@@ -393,10 +393,9 @@ void Compiler::compile(std::string file) {
     #else
     LLVMPassBuilderOptionsRef pbOptions = LLVMCreatePassBuilderOptions();
 
-    if(Compiler::settings.optLevel == 0) LLVMRunPasses(generator->lModule, "always-inline", machine, pbOptions);
-    else if(Compiler::settings.optLevel == 1) LLVMRunPasses(generator->lModule, "default<O1>", machine, pbOptions);
+    if(Compiler::settings.optLevel == 1) LLVMRunPasses(generator->lModule, "default<O1>", machine, pbOptions);
     else if(Compiler::settings.optLevel == 2) LLVMRunPasses(generator->lModule, "default<O2>", machine, pbOptions);
-    else LLVMRunPasses(generator->lModule, "default<O3>", machine, pbOptions);
+    else if(Compiler::settings.optLevel == 3) LLVMRunPasses(generator->lModule, "default<O3>", machine, pbOptions);
 
     LLVMDisposePassBuilderOptions(pbOptions);
     #endif
