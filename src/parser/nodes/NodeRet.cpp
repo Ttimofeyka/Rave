@@ -13,6 +13,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeIden.hpp"
 #include "../../include/parser/nodes/NodeGet.hpp"
 #include "../../include/parser/nodes/NodeIndex.hpp"
+#include "../../include/parser/nodes/NodeVar.hpp"
 
 namespace AST {
     extern std::map<std::string, NodeFunc*> funcTable;
@@ -49,9 +50,9 @@ void NodeRet::setParentBlock(Loop value, int n) {
 RaveValue NodeRet::generate() {
     if(currScope == nullptr || !currScope->has("return")) return {};
 
-    if(this->value == nullptr) this->value = new NodeNull(nullptr, this->loc);
+    if(this->value == nullptr) this->value = new NodeNull(currScope->getVar("return", loc)->getType(), this->loc);
     
-    RaveValue generated = value->generate();
+    RaveValue generated = value->generate();    
     RaveValue ptr = currScope->getWithoutLoad("return", loc);
 
     if(generated.type->toString() == ptr.type->toString()) generated = LLVM::load(generated, "NodeRet_load", loc);
