@@ -54,6 +54,8 @@ namespace std {
             if(this.data != null) {
                 std::free(this.data);
                 this.data = null;
+                this.length = 0;
+                this.capacity = 0;
             }
         }
 
