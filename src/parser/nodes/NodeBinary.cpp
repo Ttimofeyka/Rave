@@ -427,6 +427,9 @@ RaveValue NodeBinary::generate() {
     while(instanceof<TypeConst>(vFirst.type)) vFirst.type = vFirst.type->getElType();
     while(instanceof<TypeConst>(vSecond.type)) vSecond.type = vSecond.type->getElType();
 
+    if(instanceof<TypePointer>(vFirst.type) && !instanceof<TypePointer>(vSecond.type)) vFirst = LLVM::load(vFirst, "NodeBinary_loadF", loc);
+    else if(instanceof<TypePointer>(vSecond.type) && !instanceof<TypePointer>(vFirst.type)) vSecond = LLVM::load(vSecond, "NodeBinary_loadS", loc);
+
     if(instanceof<TypeBasic>(vFirst.type) && instanceof<TypeBasic>(vSecond.type) && vFirst.type->toString() != vSecond.type->toString()) {
         // Casting numbers types
         if(((TypeBasic*)vFirst.type)->isFloat()) {

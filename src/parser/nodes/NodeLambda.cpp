@@ -44,9 +44,9 @@ RaveValue NodeLambda::generate() {
     const auto lambdaId = generator->lambdas++;
     AST::lambdaTable["lambda" + std::to_string(lambdaId)] = this;
 
-    auto nf = new NodeFunc("__RAVE_LAMBDA" + std::to_string(lambdaId), std::move(fas), block, false, {}, this->loc, this->tf->main, {});
-    nf->check();
+    auto nf = new NodeFunc("__RAVE_LAMBDA" + std::to_string(lambdaId), fas, block, false, {}, this->loc, this->type, {});
     nf->isComdat = true;
+    nf->check();
     RaveValue func = nf->generate();
 
     generator->activeLoops = activeLoops;

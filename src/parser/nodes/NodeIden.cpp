@@ -54,7 +54,7 @@ RaveValue NodeIden::generate() {
         generator->addAttr("noinline", LLVMAttributeFunctionIndex, generator->functions[this->name].value, loc);
         return generator->functions[this->name];
     }
-    if(AST::varTable.find(this->name) != AST::varTable.end()) return generator->globals[AST::varTable[this->name]->name];
+    if(generator->globals.find(name) != generator->globals.end()) return generator->globals[name];
 
     if(currScope != nullptr) {
         if(currScope->has(this->name) || currScope->hasAtThis(this->name)) {

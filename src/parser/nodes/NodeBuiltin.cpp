@@ -222,6 +222,9 @@ RaveValue NodeBuiltin::generate() {
     if(this->name == "fmodf") {
         // one = step, two = 0
         RaveValue one = this->args[0]->generate(), two = this->args[1]->generate();
+        if(instanceof<TypePointer>(one.type)) one = LLVM::load(one, "fmodf_load", loc);
+        if(instanceof<TypePointer>(two.type)) two = LLVM::load(two, "fmodf_load", loc);
+
         if(!instanceof<TypeBasic>(one.type)) generator->error("the argument must have a numeric type!", loc);
 
         TypeBasic* ty = (TypeBasic*)one.type;

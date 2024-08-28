@@ -1416,7 +1416,6 @@ Node* Parser::parseLambda() {
         name = peek()->value;
         next();
     }
-    else error("a declaration name must be identifier!");
 
     if(peek()->type == TokType::ShortRet) {
         this->next();

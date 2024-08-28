@@ -390,7 +390,7 @@ RaveValue NodeFunc::generate() {
     generator->functions[this->name] = {LLVMAddFunction(
         generator->lModule, linkName.c_str(),
         // LLVMFunctionType(generator->genType(this->type, loc), this->genTypes.data(), getCountOfInternalArgs(this->args), this->isVararg)
-        LLVMFunctionType(generator->genType(this->type, loc), this->genTypes.data(), args.size(), this->isVararg)
+        LLVMFunctionType(generator->genType(this->type, loc), this->genTypes.data(), genTypes.size(), this->isVararg)
     ), tfunc};
 
     LLVMSetFunctionCallConv(generator->functions[this->name].value, callConv);

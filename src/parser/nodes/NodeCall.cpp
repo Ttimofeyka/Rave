@@ -54,7 +54,7 @@ std::vector<RaveValue> NodeCall::correctByLLVM(std::vector<RaveValue> values, st
         }
         else if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(((TypePointer*)fas[i].type)->instance)) {
             if(!instanceof<TypePointer>(params[i].type)) {
-                RaveValue temp = LLVM::alloc(params[i].type, "NodeCall_getParameters_temp");
+                RaveValue temp = LLVM::alloc(params[i].type, "NodeCall_getParameters_tempForStore");
                 LLVMBuildStore(generator->builder, params[i].value, temp.value);
                 params[i] = temp;
             }
@@ -114,7 +114,10 @@ std::vector<RaveValue> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg, s
             }
         }
         else if(!instanceof<TypePointer>(fas[i].type) && instanceof<TypePointer>(params[i].type)) {
-            params[i] = LLVM::load(params[i], "NodeCall_getParameters_load", loc);
+            if(instanceof<TypeStruct>(fas[i].type)) {
+                if(AST::structTable.find(fas[i].type->toString()) != AST::structTable.end()) params[i] = LLVM::load(params[i], "NodeCall_getParameters_load", loc);
+            }
+            else params[i] = LLVM::load(params[i], "NodeCall_getParameters_load", loc);
         }
         else if(instanceof<TypeBasic>(fas[i].type) && instanceof<TypeBasic>(params[i].type) && !((TypeBasic*)params[i].type)->isFloat()) {
             TypeBasic* tbasic = (TypeBasic*)(fas[i].type);
@@ -225,12 +228,14 @@ RaveValue NodeCall::generate() {
 
                     if(AST::funcTable.find(idenFunc->name + __typesAll) != AST::funcTable.end()) {
                         // If it was already generated - call it
-                        std::vector<RaveValue> params = this->getParameters(nullptr, false);
+                        std::vector<RaveValue> params = this->getParameters(AST::funcTable[idenFunc->name + __typesAll], false, AST::funcTable[idenFunc->name + __typesAll]->args);
                         return LLVM::call(generator->functions[idenFunc->name + __typesAll], params, instanceof<TypeVoid>(AST::funcTable[idenFunc->name + __typesAll]->type) ? "" : "callFunc");
                     }
 
                     size_t tnSize = AST::funcTable[idenFunc->name]->templateNames.size();
-                    std::vector<RaveValue> params = this->getParameters(nullptr, false);
+                    NodeFunc* nfunc = AST::funcTable[idenFunc->name];
+
+                    std::vector<RaveValue> params = this->getParameters(nfunc, false);
                     std::vector<Type*> types;
                     std::string all = "<";
 
