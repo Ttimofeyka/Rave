@@ -212,6 +212,8 @@ import <std/io>
                 reqline.append(data);
 
                 void* ssl_ctx = ssl::ctxNew(ssl::methodTLS1_2());
+                defer std::ctxFree(ssl_ctx);
+
                 std::socket sock = std::socket();
 
                 if(port == "") port = "443";
@@ -284,13 +286,11 @@ import <std/io>
                             resp.success = 0;
                             return = resp;
 
-
                             // free up and closing a socket
                             ~headline_parts;
                             ~headline;
                             ~status;
                             sock.close();
-                            ssl::ctxFree(ssl_ctx);
                         }
                     }
                 }
