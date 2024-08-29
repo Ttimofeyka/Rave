@@ -76,7 +76,12 @@ std::vector<RaveValue> NodeCall::correctByLLVM(std::vector<RaveValue> values, st
 std::vector<RaveValue> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg, std::vector<FuncArgSet> fas) {
     std::vector<RaveValue> params;
     if(this->args.size() != fas.size()) {
-        for(int i=0; i<this->args.size(); i++) params.push_back(this->args[i]->generate());
+        for(int i=0; i<this->args.size(); i++) {
+            if(instanceof<NodeIden>(args[i])) ((NodeIden*)args[i])->isMustBePtr = false;
+            else if(instanceof<NodeIndex>(args[i])) ((NodeIndex*)args[i])->isMustBePtr = false;
+            else if(instanceof<NodeGet>(args[i])) ((NodeGet*)args[i])->isMustBePtr = false;
+            params.push_back(this->args[i]->generate());
+        }
         return params;
     }
 

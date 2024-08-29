@@ -54,7 +54,10 @@ RaveValue NodeIden::generate() {
         generator->addAttr("noinline", LLVMAttributeFunctionIndex, generator->functions[this->name].value, loc);
         return generator->functions[this->name];
     }
-    if(generator->globals.find(name) != generator->globals.end()) return generator->globals[name];
+    if(generator->globals.find(name) != generator->globals.end()) {
+        if(isMustBePtr) return generator->globals[name];
+        return LLVM::load(generator->globals[name], "NodeIden_load", loc);
+    }
 
     if(currScope != nullptr) {
         if(currScope->has(this->name) || currScope->hasAtThis(this->name)) {
