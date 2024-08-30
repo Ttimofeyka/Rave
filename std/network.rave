@@ -212,7 +212,7 @@ import <std/io>
                 reqline.append(data);
 
                 void* ssl_ctx = ssl::ctxNew(ssl::methodTLS1_2());
-                defer std::ctxFree(ssl_ctx);
+                defer ssl::ctxFree(ssl_ctx);
 
                 std::socket sock = std::socket();
 
