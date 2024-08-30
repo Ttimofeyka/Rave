@@ -288,7 +288,11 @@ LLVMTypeRef LLVMGen::genType(Type* type, int loc) {
             if(AST::structTable.find(s->name) != AST::structTable.end() && AST::structTable[s->name]->templateNames.size() > 0) {
                 generator->error("trying to generate template structure without templates!", loc);
             }
-            if(this->toReplace.find(s->name) != this->toReplace.end()) return this->genType(this->toReplace[s->name], loc);
+
+            if(this->toReplace.find(s->name) != this->toReplace.end()) {
+                return this->genType(this->toReplace[s->name], loc);
+            }
+
             if(s->name.find('<') != std::string::npos) {
                 TypeStruct* sCopy = (TypeStruct*)s->copy();
                 for(int i=0; i<sCopy->types.size(); i++) sCopy->types[i] = this->setByTypeList(getTrueTypeList(sCopy->types[i]));
@@ -300,6 +304,7 @@ LLVMTypeRef LLVMGen::genType(Type* type, int loc) {
                     return AST::structTable[origStruct]->genWithTemplate(sCopy->name.substr(sCopy->name.find('<'), sCopy->name.size()), sCopy->types);
                 }
             }
+
             if(AST::structTable.find(s->name) != AST::structTable.end()) {
                 AST::structTable[s->name]->check();
                 AST::structTable[s->name]->generate();

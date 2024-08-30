@@ -144,6 +144,7 @@ namespace std {
             for(int i=0; i<mapSize; i++) {
                 std::hashmap::Entry<K, V>* entry = table[i];
                 std::hashmap::Entry<K, V>* old = null;
+
                 while(entry != null) {
                     old = entry;
                     entry = entry.next;
@@ -160,6 +161,7 @@ namespace std {
                 for(int i=0; i<this.mapSize; i++) {
                     std::hashmap::Entry<K, V>* entry = this.table[i];
                     std::hashmap::Entry<K, V>* old = null;
+
                     while(entry != null) {
                         old = entry;
                         entry = entry.next;

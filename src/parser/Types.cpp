@@ -186,6 +186,7 @@ Type* TypeStruct::check(Type* parent) {
             tc->instance = _t;
         }
     }
+
     return nullptr;
 }
 

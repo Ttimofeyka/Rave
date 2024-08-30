@@ -105,7 +105,13 @@ RaveValue NodeGet::generate() {
         RaveValue ptr = checkStructure(currScope->getWithoutLoad(((NodeIden*)this->base)->name, loc));
         Type* ty = ptr.type;
 
-        std::string structName = ty->getElType()->toString();
+        TypeStruct* tstruct = (TypeStruct*)ty->getElType();
+        for(int i=0; i<tstruct->types.size(); i++) {
+            if(generator->toReplace.find(tstruct->types[i]->toString()) != generator->toReplace.end()) tstruct->types[i] = generator->toReplace[tstruct->types[i]->toString()];
+        }
+        if(tstruct->types.size() > 0) tstruct->updateByTypes();
+
+        std::string structName = tstruct->toString();
         RaveValue f = this->checkIn(structName);
         if(f.value != nullptr) return f;
 
@@ -127,7 +133,14 @@ RaveValue NodeGet::generate() {
         else ((NodeGet*)this->base)->isMustBePtr = true;
 
         RaveValue ptr = checkStructure(this->base->generate());
-        std::string structName = ptr.type->getElType()->toString();
+
+        TypeStruct* tstruct = (TypeStruct*)ptr.type->getElType();
+        for(int i=0; i<tstruct->types.size(); i++) {
+            if(generator->toReplace.find(tstruct->types[i]->toString()) != generator->toReplace.end()) tstruct->types[i] = generator->toReplace[tstruct->types[i]->toString()];
+        }
+        if(tstruct->types.size() > 0) tstruct->updateByTypes();
+
+        std::string structName = tstruct->toString();
         RaveValue f = checkIn(structName);
 
         if(f.value != nullptr) return f;

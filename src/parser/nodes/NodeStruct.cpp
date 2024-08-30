@@ -363,68 +363,33 @@ LLVMTypeRef NodeStruct::genWithTemplate(std::string sTypes, std::vector<Type*> t
         _fn += templateNames[i] + ",";
     }
 
-    generator->toReplace[name+_fn.substr(0, _fn.size()-1) + ">"] = new TypeStruct(name+sTypes);
+    generator->toReplace[name + _fn.substr(0, _fn.size()-1) + ">"] = new TypeStruct(name+sTypes);
 
-    NodeStruct* _struct = new NodeStruct(name+sTypes, this->copyElements(), this->loc, "", {}, this->mods);
+    NodeStruct* _struct = new NodeStruct(name + sTypes, this->copyElements(), this->loc, "", {}, this->mods);
     _struct->isTemplated = true;
     _struct->isComdat = true;
 
-    _struct->check();
     for(int i=0; i<_struct->elements.size(); i+=1) {
         if(instanceof<NodeVar>(_struct->elements[i])) {
-            NodeVar* nv = ((NodeVar*)_struct->elements[i]);
-            std::vector<Type*> types = {nv->type->copy()};
-            int typesIdx = 0;
-            bool needToReplace = false;
-            while(true) {
-                Type* ty = types[typesIdx];
-                if(instanceof<TypeBasic>(ty) || instanceof<TypeFunc>(ty)) break;
-                else if(instanceof<TypePointer>(ty)) {
-                    types.push_back(((TypePointer*)ty)->instance);
-                    typesIdx += 1;
-                }
-                else if(instanceof<TypeArray>(ty)) {
-                    types.push_back(((TypeArray*)ty)->element);
-                    typesIdx += 1;
-                }
-                else if(instanceof<TypeStruct>(ty)) {
-                    if(generator->toReplace.find(((TypeStruct*)ty)->name) != generator->toReplace.end()) {
-                        needToReplace = true;
-                        types.push_back(generator->toReplace[((TypeStruct*)ty)->name]);
-                        typesIdx += 1;
-                    }
-                    break;
-                }
-                else break;
+            Type* parent = nullptr;
+            Type* ty = ((NodeVar*)_struct->elements[i])->type;
+
+            while(instanceof<TypeConst>(ty) || instanceof<TypePointer>(ty) || instanceof<TypeArray>(ty)) {
+                parent = ty;
+                ty = ty->getElType();
             }
-            if(needToReplace) {
-                Type* doneType = types[typesIdx];
-                if(typesIdx == 0) nv->type = doneType->copy();
-                else {
-                    while(true) {
-                        typesIdx -= 1;
-                        if(typesIdx < 0) break;
-                        if(instanceof<TypePointer>(types[typesIdx])) {
-                            ((TypePointer*)types[typesIdx])->instance = doneType->copy();
-                            doneType = types[typesIdx]->copy();
-                        }
-                        else if(instanceof<TypeArray>(types[typesIdx])) {
-                            ((TypeArray*)types[typesIdx])->element = doneType->copy();
-                            doneType = types[typesIdx]->copy();
-                        }
-                        else if(instanceof<TypeStruct>(types[typesIdx])) {
-                            if(((TypeStruct*)types[typesIdx])->name.find('<') != std::string::npos) {
-                                ((TypeStruct*)types[typesIdx])->updateByTypes();
-                                doneType = types[typesIdx]->copy();
-                            }
-                        }
-                    }
-                    nv->type = doneType->copy();
-                }
+
+            if(instanceof<TypeStruct>(ty)) {
+                while(generator->toReplace.find(ty->toString()) != generator->toReplace.end()) ty = generator->toReplace[ty->toString()];
+
+                if(parent == nullptr) ((NodeVar*)_struct->elements[i])->type = ty;
+                else if(instanceof<TypeConst>(parent)) ((TypeConst*)parent)->instance = ty;
+                else if(instanceof<TypePointer>(parent)) ((TypePointer*)parent)->instance = ty;
+                else if(instanceof<TypeArray>(parent)) ((TypeArray*)parent)->element = ty;
             }
-            _struct->elements[i] = nv;
         }
     }
+    _struct->check();
     _struct->generate();
 
     generator->activeLoops = std::map<int32_t, Loop>(activeLoops);
