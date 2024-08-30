@@ -119,7 +119,7 @@ RaveValue NodeIndex::generate() {
         }
         else if(!instanceof<TypePointer>(ptr.type)) ptr = currScope->getWithoutLoad(id->name, this->loc);
 
-        if(!generator->settings.noChecks && generator->settings.optLevel <= 2 &&
+        if(!generator->settings.noChecks && generator->settings.optLevel <= 2 && !LLVMIsAConstant(ptr.value) &&
             ((AST::funcTable.find(currScope->funcName) != AST::funcTable.end() && AST::funcTable[currScope->funcName]->isNoChecks == false)
             || AST::funcTable.find(currScope->funcName) == AST::funcTable.end())
         ) {
