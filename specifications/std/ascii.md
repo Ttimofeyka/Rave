@@ -34,7 +34,7 @@ Example:
 ```d
 char upChar = std::ascii::toUpper('a'); // A
 char noChange = std::ascii::toUpper('0'); // 0
-char lowerChar = std::ascii::toLower('A'); // A
+char lowerChar = std::ascii::toLower('A'); // a
 ```
 
 ## std::ascii::isDigit
