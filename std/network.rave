@@ -3,7 +3,10 @@ This Source Code Form is subject to the terms of the Mozilla
 Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
+
 // Original created via GeckoNerd - https://geckonerd.pw
+
+// NOTE: This code may be outdated and unstable. To be redone.
 
 import <std/string>
 import <std/vector>
@@ -50,23 +53,19 @@ import <std/io>
                         if(url[p] != ':') {
                             this.protocol.add(url[p]);
                             p += 1;
-                        } else {
+                        }
+                        else {
                             p += 3; // skip the double slash
                             state += 1;
                         }
-                    } else {
+                    }
+                    else {
                         if(state == 1) {
-                            if(url[p] != '/') {
-                                this.host.add(url[p]);
-                                p += 1;
-                            } else {
-                                p += 1;
-                                state += 1;
-                            }
-                        } else {
-                            this.path.add(url[p]);
-                            p += 1;
+                            if(url[p] != '/') this.host.add(url[p]);
+                            else state += 1;
                         }
+                        else this.path.add(url[p]);
+                        p += 1;
                     }
                   }
                 } => this;
@@ -242,14 +241,13 @@ import <std/io>
                             return = resp_fail_ssl;
                         }
                         else {
-
                             // do other stuff
                             ssl::write(conn, reqline.data, reqline.length);
 
                             std::string buffer = "";
                             defer ~buffer;
 
-                            char[513] char_buffer; // just in case 513 instead of 512
+                            char[512] char_buffer;
 
                             while(ssl::read(conn, &char_buffer, 512) > 0) {
                                 buffer.appendC(&char_buffer);
@@ -276,9 +274,8 @@ import <std/io>
                                         ip += 2;
                                         break;
                                     }
-                                } else {
-                                    ip += 1;
                                 }
+                                else ip += 1;
                             }
 
                             std::string resptext = buffer.substring(ip, buffer.length);
