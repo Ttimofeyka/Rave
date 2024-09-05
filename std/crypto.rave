@@ -18,16 +18,12 @@ namespace std {
 
             std::string encrypt(std::string s, int key) {
                 std::string buffer = "";
-                for(int i=0; i<s.length; i+=1) {
-                    buffer.add(std::crypto::caesar::encryptChar(s.data[i], key));
-                }
+                for(int i=0; i<s.length; i+=1) buffer.add(std::crypto::caesar::encryptChar(s.data[i], key));
             } => buffer;
 
             std::string decrypt(std::string s, int key) {
                 std::string buffer = "";
-                for(int i=0; i<s.length; i+=1) {
-                    buffer.add(std::crypto::caesar::decryptChar(s.data[i], key));
-                }
+                for(int i=0; i<s.length; i+=1) buffer.add(std::crypto::caesar::decryptChar(s.data[i], key));
             } => buffer;
         }
 
@@ -39,9 +35,7 @@ namespace std {
 
             std::string encrypt(std::string s) {
                 std::string buffer = "";
-                for(int i=0; i<s.length; i+=1) {
-                    buffer.add(std::crypto::atbash::encryptChar(s.data[i]));
-                }
+                for(int i=0; i<s.length; i+=1) buffer.add(std::crypto::atbash::encryptChar(s.data[i]));
             }
         }
     }
