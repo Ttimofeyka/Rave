@@ -29,7 +29,7 @@ namespace std {
             if(value < cast(ABS_T)null) value = -value;
         }
 
-        (inlinem @tNequals(GETSIGN_T, void)) char getSign<GETSIGN_T>(GETSIGN_T value) {
+        (inline, @tNequals(GETSIGN_T, void)) char getSign<GETSIGN_T>(GETSIGN_T value) {
             return = 1;
             if(value < cast(GETSIGN_T)null) return = -1;
         }
