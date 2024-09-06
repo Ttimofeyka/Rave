@@ -21,9 +21,9 @@ Example:
 ```d
 std::file f = std::file("foo.txt");
 f.open("w");
-std::fprint(f, "Hello, world!\n");
-// Or
-std::fprintln(f, "Hello, world!");
+    std::fprint(&f, "Hello, world!\n");
+    // Or
+    std::fprintln(&f, "Hello, world!");
 f.close();
 ```
 

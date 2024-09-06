@@ -50,10 +50,12 @@ Node* NodeIden::comptime() {
 
 RaveValue NodeIden::generate() {
     if(AST::aliasTable.find(this->name) != AST::aliasTable.end()) return AST::aliasTable[this->name]->generate();
+
     if(generator->functions.find(this->name) != generator->functions.end()) {
         generator->addAttr("noinline", LLVMAttributeFunctionIndex, generator->functions[this->name].value, loc);
         return generator->functions[this->name];
     }
+
     if(generator->globals.find(name) != generator->globals.end()) {
         if(isMustBePtr) return generator->globals[name];
         return LLVM::load(generator->globals[name], "NodeIden_load", loc);

@@ -392,6 +392,7 @@ RaveValue NodeCall::generate() {
                 std::vector<RaveValue> params = this->getParameters(nullptr, false);
                 std::vector<Type*> types;
                 params.insert(params.begin(), currScope->getWithoutLoad(idenFunc->name));
+                if(instanceof<TypePointer>(params[0].type->getElType())) params[0] = LLVM::load(params[0], "NodeCall_load", loc);
                 for(int i=0; i<params.size(); i++) types.push_back(params[i].type);
 
                 std::pair<std::string, std::string> method = std::pair<std::string, std::string>(structure->name, getFunc->field);
