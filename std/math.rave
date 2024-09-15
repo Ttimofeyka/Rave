@@ -46,8 +46,14 @@ namespace std {
             if((return < 0) && (return != f)) return = return - 1f;
         }
 
+        half floor(half f) {
+            return = (cast(half)(cast(int)f));
+            if((return < 0) && (return != f)) return = return - 1h;
+        }
+
         double ceil(double d) => -(std::math::floor(-d));
         float ceil(float f) => -(std::math::floor(-f));
+        half ceil(half f) => -(std::math::floor(-f));
 
         double exp(double x) {
             return = 1.0 + x;
@@ -126,13 +132,11 @@ namespace std {
 
         double sqrt(double d) {
             return = 1.0;
-            for(int i=0; i<=10; i+=1) return = return - (return * return - d) / (2 * return);
+            for(int i=0; i<=10; i+=1) return = return - (((return * return) - d) / (2d * return));
         }
 
-        float sqrt(float f) {
-            return = 1.0;
-            for(int i=0; i<=10; i+=1) return = return - (return * return - f) / (2 * return);
-        }
+        float sqrt(float f) => cast(float)std::math::sqrt(cast(double)f);
+        half sqrt(half hf) => cast(half)std::math::sqrt(cast(double)hf);
 
         double acos(double d) {
             double negate = cast(double)(d < 0.0);
@@ -336,18 +340,24 @@ namespace std {
 
         double fma(double a, double b, double c) => (a * b) + c;
         float fma(float a, float b, float c) => (a * b) + c;
+        half fma(half a, half b, half c) => (a * b) + c;
 
         double tan(double d) => std::math::sin(d) / std::math::cos(d);
         float tan(float f) => std::math::sin(f) / std::math::cos(f);
 
         double mod(double x) {
-            return = 1.0;
-            if((x % 1.0) != 0.0) return = (x % 1.0);
+            return = 1.0d;
+            if((x % 1.0d) != 0.0d) return = (x % 1.0d);
         }
 
         float mod(float x) {
-            return = 1.0;
-            if((x % 1.0) != 0.0) return = (x % 1.0);
+            return = 1.0f;
+            if((x % 1.0f) != 0.0f) return = (x % 1.0f);
+        }
+
+        half mod(half x) {
+            return = 1.0h;
+            if((x % 1.0h) != 0.0h) return = (x % 1.0h);
         }
 
         double round(double x, int n) {
@@ -378,6 +388,7 @@ namespace std {
 
         double dsigmoid(double x) => x * (1 - x);
         float dsigmoid(float x) => x * (1 - x);
+        half dsigmoid(half x) => x * (1 - x);
 
         void softmax(double* x, int size) {
             double maxValue = x[0];
@@ -435,6 +446,7 @@ namespace std {
 
         double relu(double x) => std::math::max(0.0d, x);
         float relu(float x) => std::math::max(0.0f, x);
+        half relu(half x) => std::math::max(0.0h, x);
 
         double drelu(double x) {
             if(x >= 0.0) return = 1.0d;
@@ -444,6 +456,11 @@ namespace std {
         float drelu(float x) {
             if(x >= 0.0) return = 1.0f;
             else return = 0.0f;
+        }
+
+        half drelu(half x) {
+            if(x >= 0.0) return = 1.0h;
+            else return = 0.0h;
         }
     }
 }

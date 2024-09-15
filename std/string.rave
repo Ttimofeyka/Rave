@@ -422,6 +422,17 @@ namespace std {
                         if(s.data != null) result.append(s);
                         else result.appendC("null");
                     };
+                    @if(@tEquals(@getCurrArgType(), half)) {
+                        nBuffer = [
+                           '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+                           '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+                           '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+                           '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
+                           '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
+                        ];
+                        std::cstring::dtos(@getCurrArg(double), 6, &nBuffer);
+                        result.appendC(cast(char*)&nBuffer);
+                    };
                 };
                 @if(@tEquals(@getCurrArgType(), double)) {
                     nBuffer = [
