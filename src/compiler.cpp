@@ -223,6 +223,12 @@ void Compiler::compile(std::string file) {
         if(ssse3 && settings.sseLevel > 2) {Compiler::features += "+ssse3,"; sse = 3;}
         if(avx > 0 && settings.avxLevel > 0) {Compiler::features += "+avx,"; avx = 1;}
         if(avx > 1 && settings.avxLevel > 1) {Compiler::features += "+avx2,"; avx = 2;}
+        if(ravePlatform == "X86_64") {
+            Compiler::features += "+64bit,+fma,+f16c,";
+        }
+        else if(ravePlatform == "X86") Compiler::features += "+fma,";
+        else if(ravePlatform == "AARCH64") Compiler::features += "+64bit,";
+
         if(Compiler::features.length() > 0) Compiler::features = Compiler::features.substr(0, Compiler::features.length() - 1);
     }
     else Compiler::features = std::string(LLVMGetHostCPUFeatures());
