@@ -8,12 +8,15 @@ namespace std {
     namespace math {
         alias PI = 3.14159265358979323846d;
         alias PI_f = 3.141592653589793f;
+        alias PI_hf = 3.140625h;
 
         (inline) double degToRad(double d) => (d * std::math::PI / 180d);
         (inline) float degToRad(float d) => (d * std::math::PI_f / 180f);
+        (inline) half degToRad(half hf) => (hf * std::math::PI_hf / 180h);
 
         (inline) double radToDeg(double r) => (r * 180 / std::math::PI);
         (inline) float radToDeg(float r) => (r * 180f / std::math::PI_f);
+        (inline) half radToDeg(half r) => (r * 180h / std::math::PI_hf);
 
         long factorial(int n) {
             return = 1;
