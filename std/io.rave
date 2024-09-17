@@ -627,7 +627,7 @@ namespace std {
     }
 
     (inline, ctargs) void finput {
-        std::file f = @getArg(std::file, 0);
+        std::file* f = @getArg(std::file*, 0);
         @skipArg();
         @foreachArgs() {
             @if(@tNequals(@getCurrArgType(), float*)) {
