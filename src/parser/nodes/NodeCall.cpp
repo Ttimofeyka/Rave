@@ -468,6 +468,21 @@ RaveValue NodeCall::generate() {
             NodeCall* ncall2 = new NodeCall(this->loc, new NodeGet(new NodeIden("__RAVE_NG_NG", this->loc), getFunc->field, getFunc->isMustBePtr, this->loc), this->args);
             return ncall2->generate();
         }
+        else if(instanceof<NodeIndex>(getFunc->base)) {
+            NodeIndex* nindex = (NodeIndex*)getFunc->base;
+
+            if(currScope->localVars.find("__RAVE_NG_NI") != currScope->localVars.end() && currScope->localVars["__RAVE_NG_NI"] != nullptr) delete currScope->localVars["__RAVE_NG_NI"];
+
+            // Creating a temp variable
+            currScope->localScope["__RAVE_NG_NI"] = nindex->generate();
+            currScope->localVars["__RAVE_NG_NI"] = new NodeVar(
+                "__RAVE_NG_NI", nullptr, false, false, false, {},
+                this->loc, currScope->localScope["__RAVE_NG_NI"].type
+            );
+
+            NodeCall* ncall2 = new NodeCall(this->loc, new NodeGet(new NodeIden("__RAVE_NG_NI", this->loc), getFunc->field, getFunc->isMustBePtr, this->loc), this->args);
+            return ncall2->generate();
+        }
         generator->error("a call of this kind (NodeGet + " + std::string(typeid(this->func[0]).name()) + ") is temporarily unavailable!", this->loc);
     }
     if(instanceof<NodeUnary>(this->func)) {
