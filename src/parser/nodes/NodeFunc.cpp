@@ -470,6 +470,8 @@ std::string NodeFunc::generateWithCtargs(std::vector<Type*> args) {
     std::vector<FuncArgSet> newArgs;
     for(int i=0; i<args.size(); i++) {
         Type* newType = args[i];
+        if(instanceof<TypePointer>(newType) && instanceof<TypeArray>(newType->getElType())) newType = new TypePointer(newType->getElType()->getElType());
+    
         newArgs.push_back(FuncArgSet{.name = "_RaveArg" + std::to_string(i), .type = newType, .internalTypes = {newType}});
     }
 
