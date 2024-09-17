@@ -47,11 +47,11 @@ Example:
 ```d
 std::file f = std::file("foo.txt");
 f.open("r");
-std::finput(f, &foo);
+std::finput(&f, &foo);
 f.close();
 ```
 
-## readLine
+## readLine/u8ReadLine
 
 A function for reading a line from the console.
 
@@ -59,6 +59,7 @@ Example:
 
 ```d
 std::string str = std::readLine();
+std::u8string str2 = std::u8ReadLine();
 ```
 
 ## std::file
@@ -82,7 +83,7 @@ std::file f = std::file("test.txt");
 f.rename("test2.txt");
 ```
 
-## exists
+### exists
 
 A method for checking the existence of a file.
 

@@ -58,3 +58,31 @@ Example:
 ```d
 int index = std::cstring::indexOf("String", 'r');
 ```
+
+## std::cstring::ltos, std::cstring::ctos
+
+Convert an integer to a string by writing the result to a pointer to the buffer.
+
+`ltos` - 64-bit number, `ctos` - 128-bit number.
+
+Example:
+
+```d
+char[8] buffer;
+std::cstring::ltos(1l, &buffer);
+std::println(&buffer); // 1
+```
+
+## std::cstring::dtos
+
+Convert a floating-point number to a string by writing the result to a pointer to the buffer.
+
+You can set the number of digits after the decimal point.
+
+Example:
+
+```d
+char[8] buffer;
+std::cstring::dtos(1.155d, 1, &buffer);
+std::println(&buffer); // 1.1
+```
