@@ -9,6 +9,7 @@ namespace std {
         alias PI = 3.14159265358979323846d;
         alias PI_f = 3.141592653589793f;
         alias PI_hf = 3.140625h;
+        alias NAN = cast(float)0x7FF8000000000000;
 
         (inline) double degToRad(double d) => (d * std::math::PI / 180d);
         (inline) float degToRad(float d) => (d * std::math::PI_f / 180f);
@@ -17,6 +18,33 @@ namespace std {
         (inline) double radToDeg(double r) => (r * 180 / std::math::PI);
         (inline) float radToDeg(float r) => (r * 180f / std::math::PI_f);
         (inline) half radToDeg(half r) => (r * 180h / std::math::PI_hf);
+
+        (inline) bool isNAN(double d) {
+            // Interpret the double as an unsigned 64-bit integer
+            ulong bits = (cast(ulong*)&d)[0];
+        
+            // Extract the exponent and fraction parts
+            ulong exponent = (bits >. 52) && 0x7FF;
+            ulong fraction = bits && 0xFFFFFFFFFFFFF;
+        } => (exponent == 0x7FF) && (fraction != 0);
+
+        (inline) bool isNAN(float f) {
+            // Interpret the float as an unsigned 32-bit integer
+            uint bits = (cast(uint*)&f)[0];
+
+            // Extract the exponent and fraction parts
+            uint exponent = (bits >. 23) && 0xFF;
+            uint fraction = bits && 0x7FFFFF;
+        } => (exponent == 0xFF) && (fraction != 0);
+
+        (inline) bool isNAN(half hf) {
+            // Interpret the half as an unsigned 16-bit integer
+            ushort bits = (cast(ushort*)&hf)[0];
+
+            // Extract the exponent and fraction parts
+            ushort exponent = (bits >. 10) && 0x1F;
+            ushort fraction = bits && 0x3FF;
+        } => (exponent == 0x1F) && (fraction != 0);
 
         long factorial(int n) {
             return = 1;
