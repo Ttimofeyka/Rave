@@ -415,7 +415,7 @@ RaveValue NodeFunc::generate() {
         this->builder = LLVMCreateBuilderInContext(generator->context);
         generator->builder = this->builder;
         LLVMPositionBuilderAtEnd(generator->builder, entry);
-        if(!Compiler::settings.noFastMath) LLVM::setFastMath(generator->builder, true, true, true, true);
+        if(!Compiler::settings.noFastMath) LLVM::setFastMath(generator->builder, true, false, true, true);
 
         std::map<std::string, int> indexes;
         std::map<std::string, NodeVar*> vars;
