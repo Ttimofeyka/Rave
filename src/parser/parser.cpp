@@ -34,6 +34,7 @@ with this file, You can obtain one at htypep://mozilla.org/MPL/2.0/.
 #include "../include/parser/nodes/NodeStruct.hpp"
 #include "../include/parser/nodes/NodeNull.hpp"
 #include "../include/parser/nodes/NodeBreak.hpp"
+#include "../include/parser/nodes/NodeContinue.hpp"
 #include "../include/parser/nodes/NodeArray.hpp"
 #include "../include/parser/nodes/NodeUnary.hpp"
 #include "../include/parser/nodes/NodeGet.hpp"
@@ -1236,6 +1237,7 @@ Node* Parser::parseStmt(std::string f) {
         if(id == "for") return this->parseFor(f);
         if(id == "foreach") return this->parseForeach(f);
         if(id == "break") return this->parseBreak();
+        if(id == "continue") return this->parseContinue();
         if(id == "switch") return this->parseSwitch(f);
         if(id == "fdefer") return this->parseDefer(true, f);
         if(id == "defer") return this->parseDefer(false, f);
@@ -1305,6 +1307,13 @@ Node* Parser::parseBreak() {
     Node* nbreak = new NodeBreak(this->peek()->line);
     this->next();
     return nbreak;
+}
+
+Node* Parser::parseContinue() {
+    this->next();
+    Node* ncontinue = new NodeContinue(this->peek()->line);
+    this->next();
+    return ncontinue;
 }
 
 Node* Parser::parseIf(std::string f, bool isStatic) {

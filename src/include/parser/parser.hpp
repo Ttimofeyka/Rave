@@ -69,6 +69,7 @@ public:
     Node* parseForeach(std::string f);
     Node* parseOperatorOverload(Type* type, std::string s);
     Node* parseBreak();
+    Node* parseContinue();
     Node* parseConstantStructure(std::string structName);
     std::vector<FuncArgSet> parseFuncArgSets();
     std::vector<Node*> parseIndexes();
