@@ -34,6 +34,30 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/compiler.hpp"
 #include "../../include/llvm.hpp"
 
+Type* getTypeBySize(int size) {
+    if(size == 8) return new TypeBasic(BasicType::Char);
+    else if(size == 16) return new TypeBasic(BasicType::Short);
+    else if(size == 32) return new TypeBasic(BasicType::Int);
+    else if(size == 64) return new TypeBasic(BasicType::Long);
+    else return new TypeBasic(BasicType::Cent);
+}
+
+int getCountOfInternalArgs(NodeFunc* nfunc) {
+    int size = 0;
+
+    for(int i=0; i<nfunc->args.size(); i++) {
+        for(int j=0; j<nfunc->args[i].internalTypes.size(); j++) {
+            if(instanceof<TypeDivided>(nfunc->args[i].internalTypes[0])) {
+                TypeDivided* tdivided = (TypeDivided*)nfunc->args[i].internalTypes[0];
+                size += tdivided->divided.size();
+            }
+            else size += 1;
+        }
+    }
+
+    return size;
+}
+
 NodeFunc::NodeFunc(std::string name, std::vector<FuncArgSet> args, NodeBlock* block, bool isExtern, std::vector<DeclarMod> mods, int loc, Type* type, std::vector<std::string> templateNames) {
     this->name = name;
     this->origName = name;
@@ -125,8 +149,8 @@ void NodeFunc::check() {
 
 LLVMTypeRef* NodeFunc::getParameters(int callConv) {
     std::vector<LLVMTypeRef> buffer;
-    // buffer.reserve(getCountOfInternalArgs(args));
-    buffer.reserve(args.size());
+    buffer.reserve(getCountOfInternalArgs(this));
+    // buffer.reserve(args.size());
 
     for(int i=0; i<args.size(); i++) {
         FuncArgSet arg = args[i];
@@ -138,100 +162,13 @@ LLVMTypeRef* NodeFunc::getParameters(int callConv) {
             arg.name = "_RaveArgument" + arg.name;
 
             if(isCdecl64) {
-                if(instanceof<TypeStruct>(arg.type) && (arg.internalTypes.size() > 1 || arg.internalTypes[0]->toString() != arg.type->toString())) {
-                    // Replace with another types
-                    if(arg.internalTypes.size() == 1) {
-                        if(instanceof<TypeDivided>(arg.internalTypes[0])) {
-                            // Cast a structure to a pointer of the main type and set it
-                            TypeDivided* tdivided = (TypeDivided*)arg.internalTypes[0];
+                if(instanceof<TypeStruct>(arg.type) && ((TypeStruct*)arg.type)->isSimple()) {
+                    int tSize = arg.type->getSize();
+                    int tElCount = ((TypeStruct*)arg.type)->getElCount();
 
-                            this->block->nodes.emplace(
-                                this->block->nodes.begin(),
-                                new NodeVar(oldName, new NodeIden("_cdecl64_" + arg.name, loc), false, false, false, {}, loc, arg.type, false, false, false, true)
-                            );
-
-                            this->block->nodes.emplace(
-                                this->block->nodes.begin(),
-                                new NodeBinary(
-                                    TokType::Equ,
-                                    new NodeIndex(new NodeCast(new TypePointer(tdivided->mainType), new NodeIden("_cdecl64_" + arg.name, loc), loc), {new NodeInt(0)}, loc),
-                                    new NodeIden(arg.name, loc), loc
-                                )
-                            );
-                        }
-                        else if(instanceof<TypeVector>(arg.internalTypes[0])) {
-                            // Cast a structure to a pointer of the vector type and set it
-                            TypeVector* tvector = (TypeVector*)arg.internalTypes[0];
-
-                            this->block->nodes.emplace(
-                                this->block->nodes.begin(),
-                                new NodeVar(oldName, new NodeIden("_cdecl64_" + arg.name, loc), false, false, false, {}, loc, arg.type, false, false, false, true)
-                            );
-
-                            this->block->nodes.emplace(
-                                this->block->nodes.begin(),
-                                new NodeBinary(
-                                    TokType::Equ,
-                                    new NodeIndex(new NodeCast(new TypePointer(tvector), new NodeIden("_cdecl64_" + arg.name, loc), loc), {new NodeInt(0)}, loc),
-                                    new NodeIden(arg.name, loc), loc
-                                )
-                            );
-                        }
-                        else {
-                            // Just set as a first element of the structure
-                            this->block->nodes.emplace(
-                                this->block->nodes.begin(),
-                                new NodeVar(oldName, new NodeIden("_cdecl64_" + arg.name, loc), false, false, false, {}, loc, arg.type, false, false, false, true)
-                            );
-
-                            this->block->nodes.emplace(
-                                this->block->nodes.begin(),
-                                new NodeBinary(
-                                    TokType::Equ,
-                                    new NodeGet(new NodeIden("_cdecl64_" + arg.name, loc), AST::structTable[arg.type->toString()]->getVariables()[0]->name, true, loc),
-                                    new NodeIden(arg.name, loc), loc
-                                )
-                            );
-                        }
-
-                        this->block->nodes.emplace(
-                            this->block->nodes.begin(),
-                            new NodeVar("_cdecl64_" + arg.name, nullptr, false, false, false, {}, this->loc, arg.type, false, false, false, false)
-                        );
-                    }
-                    else if(arg.internalTypes.size() == 2) {
-                        if(instanceof<TypeVector>(arg.internalTypes[0])) {
-                            TypeVector* tvector = (TypeVector*)arg.internalTypes[0];
-                            TypeBasic* tbasic = (TypeBasic*)arg.internalTypes[1];
-
-                            this->block->nodes.emplace(
-                                this->block->nodes.begin(),
-                                new NodeVar(oldName, new NodeIden("_cdecl64_" + arg.name, loc), false, false, false, {}, loc, arg.type, false, false, false, true)
-                            );
-
-                            this->block->nodes.emplace(
-                                this->block->nodes.begin(),
-                                new NodeBinary(
-                                    TokType::Equ,
-                                    new NodeIndex(new NodeCast(new TypePointer(tvector), new NodeIden("_cdecl64_" + arg.name, loc), loc), {new NodeInt(0)}, loc),
-                                    new NodeIden(arg.name, loc), loc
-                                )
-                            );
-                        }
-                        else this->block->nodes.emplace(
-                            this->block->nodes.begin(),
-                            new NodeVar(oldName, new NodeIden(arg.name, this->loc), false, false, false, {}, this->loc, arg.type, false, false, false, true)
-                        );
-                    }
-                    else this->block->nodes.emplace(
-                        this->block->nodes.begin(),
-                        new NodeVar(oldName, new NodeIden(arg.name, this->loc), false, false, false, {}, this->loc, arg.type, false, false, false, true)
-                    );
+                    if(tElCount == 2) arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize / 2), {getTypeBySize(tSize / 2), getTypeBySize(tSize / 2)});
+                    else if(tElCount == 3) arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize / 3), {getTypeBySize(tSize / 3), getTypeBySize(tSize / 3), getTypeBySize(tSize / 3)});
                 }
-                else this->block->nodes.emplace(
-                    this->block->nodes.begin(),
-                    new NodeVar(oldName, new NodeIden(arg.name, this->loc), false, false, false, {}, this->loc, arg.type, false, false, false, true)
-                );
             }
             else this->block->nodes.emplace(
                 this->block->nodes.begin(),
