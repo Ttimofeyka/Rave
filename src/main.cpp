@@ -18,46 +18,49 @@ genSettings options;
 std::string exePath;
 bool helpCalled = false;
 
+// Analyzing command-line arguments.
 genSettings analyzeArguments(std::vector<std::string>& arguments) {
     genSettings settings;
     for(int i=0; i<arguments.size(); i++) {
-        if(arguments[i] == "-o" || arguments[i] == "--out") {outFile = arguments[i+1]; i += 1;}
-        else if(arguments[i] == "-np" || arguments[i] == "--noPrelude") settings.noPrelude = true;
-        else if(arguments[i] == "-eml" || arguments[i] == "--emitLLVM" || arguments[i] == "-emit-llvm") settings.emitLLVM = true;
-        else if(arguments[i] == "-l" || arguments[i] == "--link") {settings.linkParams += "-l" + arguments[i+1] + " "; i += 1;}
-        else if(arguments[i] == "-rcs" || arguments[i] == "--recompileStd") settings.recompileStd = true;
-        else if(arguments[i] == "-c") {settings.onlyObject = true; settings.isStatic = true;}
-        else if(arguments[i] == "-ne" || arguments[i] == "--noEntry") settings.noEntry = true;
-        else if(arguments[i] == "-ns" || arguments[i] == "--noStd") settings.noStd = true;
-        else if(arguments[i] == "-nc" || arguments[i] == "--noChecks") settings.noChecks = true;
-        else if(arguments[i] == "-O0") settings.optLevel = 0;
-        else if(arguments[i] == "-O1") settings.optLevel = 1;
-        else if(arguments[i] == "-O2") settings.optLevel = 2;
-        else if(arguments[i] == "-O3") settings.optLevel = 3;
-        else if(arguments[i] == "-Ofast") {settings.optLevel = 3; settings.noChecks = true;}
-        else if(arguments[i].find("-O") == 0) settings.optLevel = 1;
-        else if(arguments[i] == "-s" || arguments[i] == "--shared") {settings.linkParams += "-shared "; settings.isPIE = true; settings.isPIC = false;}
-        else if(arguments[i] == "-sof" || arguments[i] == "--saveObjectFiles") settings.saveObjectFiles = true;
-        else if(arguments[i] == "-dw" || arguments[i] == "--disableWarnings") settings.disableWarnings = true;
-        else if(arguments[i] == "--debug") Compiler::debugMode = true;
-        else if(arguments[i] == "-t" || arguments[i] == "--target") {outType = arguments[i + 1]; i += 1;}
-        else if(arguments[i] == "-h" || arguments[i] == "--help") helpCalled = true;
-        else if(arguments[i] == "-native") settings.isNative = true;
+        if(arguments[i] == "-o" || arguments[i] == "--out") {outFile = arguments[i + 1]; i += 1;} // Output file
+        else if(arguments[i] == "-np" || arguments[i] == "--noPrelude") settings.noPrelude = true; // Disables importing of std/prelude
+        else if(arguments[i] == "-eml" || arguments[i] == "--emitLLVM" || arguments[i] == "-emit-llvm") settings.emitLLVM = true; // Enables output of .ll files
+        else if(arguments[i] == "-l" || arguments[i] == "--link") {settings.linkParams += "-l" + arguments[i + 1] + " "; i += 1;} // Adds library to the linker
+        else if(arguments[i] == "-rcs" || arguments[i] == "--recompileStd") settings.recompileStd = true; // Recompiles the standard library
+        else if(arguments[i] == "-c") {settings.onlyObject = true; settings.isStatic = true;} // Enables onlyObject mode
+        else if(arguments[i] == "-ne" || arguments[i] == "--noEntry") settings.noEntry = true; // Disables 'main' function as entry
+        else if(arguments[i] == "-ns" || arguments[i] == "--noStd") settings.noStd = true; // Disables auto-linking with the standard library
+        else if(arguments[i] == "-nc" || arguments[i] == "--noChecks") settings.noChecks = true; // Disables runtime checks
+        else if(arguments[i] == "-O0") settings.optLevel = 0; // Sets the optimization level to 0
+        else if(arguments[i] == "-O1") settings.optLevel = 1; // Sets the optimization level to 1
+        else if(arguments[i] == "-O2") settings.optLevel = 2; // Sets the optimization level to 2
+        else if(arguments[i] == "-O3") settings.optLevel = 3; // Sets the optimization level to 3
+        else if(arguments[i] == "-Ofast") {settings.optLevel = 3; settings.noChecks = true;} // Sets the optimization level to 3, disables runtime checks (Ofast mode)
+        else if(arguments[i].find("-O") == 0) settings.optLevel = 1; // Sets the optimization level to 1 as undefined
+        else if(arguments[i] == "-s" || arguments[i] == "--shared") {settings.linkParams += "-shared "; settings.isPIE = true; settings.isPIC = false;} // Enables shared mode for linker
+        else if(arguments[i] == "-sof" || arguments[i] == "--saveObjectFiles") settings.saveObjectFiles = true; // Saves object files after completing of linking
+        else if(arguments[i] == "-dw" || arguments[i] == "--disableWarnings") settings.disableWarnings = true; // Disables any warnings
+        else if(arguments[i] == "--debug") Compiler::debugMode = true; // Enables debug mode
+        else if(arguments[i] == "-t" || arguments[i] == "--target") {outType = arguments[i + 1]; i += 1;} // Sets the target platform type
+        else if(arguments[i] == "-h" || arguments[i] == "--help") helpCalled = true; // Outputs all possible arguments
+        else if(arguments[i] == "-native") settings.isNative = true; // Enables native mode (for better optimizations)
         else if(arguments[i] == "-SSE") {
+            // Sets the level of supportable SSE
             settings.sseLevel = std::stoi(arguments[i + 1]);
             if(settings.sseLevel < 0) settings.sseLevel = 0;
             else if(settings.sseLevel > 3) settings.sseLevel = 3;
             i += 1;
         }
         else if(arguments[i] == "-AVX") {
+            // Sets the level of supportable AVX
             settings.avxLevel = std::stoi(arguments[i + 1]);
             if(settings.avxLevel < 0) settings.avxLevel = 0;
             else if(settings.avxLevel > 2) settings.avxLevel = 2;
             i += 1;
         }
-        else if(arguments[i] == "-nfm" || arguments[i] == "--noFastMath") settings.noFastMath = true;
-        else if(arguments[i] == "-nio" || arguments[i] == "--noIoInit") settings.noIoInit = true;
-        else if(arguments[i][0] == '-') settings.linkParams += arguments[i] + " ";
+        else if(arguments[i] == "-nfm" || arguments[i] == "--noFastMath") settings.noFastMath = true; // Disables fast math
+        else if(arguments[i] == "-nio" || arguments[i] == "--noIoInit") settings.noIoInit = true; // Disables io initialize (temporarily does nothing)
+        else if(arguments[i][0] == '-') settings.linkParams += arguments[i] + " "; // Adds unknown argument to the linker
         else files.push_back(arguments[i]);
     }
     return settings;

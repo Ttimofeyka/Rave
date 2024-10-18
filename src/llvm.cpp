@@ -18,10 +18,12 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <llvm/Transforms/IPO.h>
 #include <llvm/IR/LegacyPassManager.h>
 
+// Wrapper for the LLVMBuildLoad2 function using RaveValue.
 RaveValue LLVM::load(RaveValue value, const char* name, int loc) {
     return {LLVMBuildLoad2(generator->builder, generator->genType(value.type->getElType(), loc), value.value, name), value.type->getElType()};
 }
 
+// Wrapper for the LLVMBuildCall2 function using RaveValue.
 RaveValue LLVM::call(RaveValue fn, LLVMValueRef* args, unsigned int argsCount, const char* name) {
     TypeFunc* tfunc = instanceof<TypePointer>(fn.type) ? (TypeFunc*)fn.type->getElType() : (TypeFunc*)fn.type;
 
@@ -31,6 +33,7 @@ RaveValue LLVM::call(RaveValue fn, LLVMValueRef* args, unsigned int argsCount, c
     return {LLVMBuildCall2(generator->builder, LLVMFunctionType(generator->genType(tfunc->main, -1), types.data(), types.size(), tfunc->isVarArg), fn.value, args, argsCount, name), tfunc->main};
 }
 
+// Wrapper for the LLVMBuildCall2 function using RaveValue; accepts a vector of RaveValue instead of pointer to LLVMValueRef.
 RaveValue LLVM::call(RaveValue fn, std::vector<RaveValue> args, const char* name) {
     TypeFunc* tfunc = instanceof<TypePointer>(fn.type) ? (TypeFunc*)fn.type->getElType() : (TypeFunc*)fn.type;
     std::vector<LLVMValueRef> lArgs;
@@ -52,14 +55,17 @@ RaveValue LLVM::call(RaveValue fn, std::vector<RaveValue> args, const char* name
     return {LLVMBuildCall2(generator->builder, LLVMFunctionType(generator->genType(tfunc->main, -2), types.data(), types.size(), tfunc->isVarArg), fn.value, lArgs.data(), lArgs.size(), name), tfunc->main};
 }
 
+// Wrapper for the LLVMConstInBoundsGEP2 function using RaveValue.
 RaveValue LLVM::cInboundsGep(RaveValue ptr, LLVMValueRef* indices, unsigned int indicesCount) {
     return {LLVMConstInBoundsGEP2(generator->genType(ptr.type->getElType(), -1), ptr.value, indices, indicesCount), ptr.type->getElType()};
 }
 
+// Wrapper for the LLVMBuildGEP2 function using RaveValue.
 RaveValue LLVM::gep(RaveValue ptr, LLVMValueRef* indices, unsigned int indicesCount, const char* name) {
     return {LLVMBuildGEP2(generator->builder, generator->genType(ptr.type->getElType(), -1), ptr.value, indices, indicesCount, name), new TypePointer(ptr.type->getElType())};
 }
 
+// Wrapper for the LLVMBuildStructGEP2 function using RaveValue.
 RaveValue LLVM::structGep(RaveValue ptr, unsigned int idx, const char* name) {
     TypeStruct* ts = instanceof<TypePointer>(ptr.type) ? (TypeStruct*)ptr.type->getElType() : (TypeStruct*)ptr.type;
 
@@ -69,6 +75,7 @@ RaveValue LLVM::structGep(RaveValue ptr, unsigned int idx, const char* name) {
     ), new TypePointer(AST::structTable[ts->name]->getVariables()[idx]->getType())};
 }
 
+// Wrapper for the LLVMBuildAlloca function using RaveValue. Builds alloca at the first basic block for saving stack memory (C behaviour).
 RaveValue LLVM::alloc(Type* type, const char* name) {
     LLVMPositionBuilder(generator->builder, LLVMGetFirstBasicBlock(generator->functions[currScope->funcName].value), LLVMGetFirstInstruction(LLVMGetFirstBasicBlock(generator->functions[currScope->funcName].value)));
     LLVMValueRef value = LLVMBuildAlloca(generator->builder, generator->genType(type, -1), name);
@@ -76,10 +83,12 @@ RaveValue LLVM::alloc(Type* type, const char* name) {
     return {value, new TypePointer(type)};
 }
 
+// Wrapper for the LLVMBuildArrayAlloca function using RaveValue.
 RaveValue LLVM::alloc(RaveValue size, const char* name) {
     return {LLVMBuildArrayAlloca(generator->builder, LLVMInt8TypeInContext(generator->context), size.value, name), new TypePointer(new TypeBasic(BasicType::Char))};
 }
 
+// Enables/disables fast math.
 void LLVM::setFastMath(LLVMBuilderRef builder, bool infs, bool nans, bool arcp, bool nsz) {
     llvm::FastMathFlags flags;
     if(infs) flags.setNoInfs(true);
@@ -89,16 +98,19 @@ void LLVM::setFastMath(LLVMBuilderRef builder, bool infs, bool nans, bool arcp, 
     llvm::unwrap(builder)->setFastMathFlags(flags);
 }
 
+// Enables/disables all flags of fast math.
 void LLVM::setFastMathAll(LLVMBuilderRef builder, bool value) {
     llvm::FastMathFlags flags;
     flags.setFast(value);
     llvm::unwrap(builder)->setFastMathFlags(flags);
 }
 
+// Wrapper for the LLVMConstInt function.
 LLVMValueRef LLVM::makeInt(size_t n, unsigned long long value, bool isUnsigned) {
     return LLVMConstInt(LLVMIntTypeInContext(generator->context, n), value, isUnsigned);
 }
 
+// Wrapper for LLVMConstArray function.
 RaveValue LLVM::makeCArray(Type* ty, std::vector<RaveValue> values) {
     std::vector<LLVMValueRef> data;
     for(int i=0; i<values.size(); i++) data.push_back(values[i].value);
