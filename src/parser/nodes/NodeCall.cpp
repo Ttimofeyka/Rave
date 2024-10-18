@@ -112,7 +112,7 @@ std::vector<RaveValue> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg, s
                     params[i].type = new TypePointer(params[i].type);
                 }
                 else {
-                    RaveValue temp = LLVM::alloc(params[i].type, "NodeCall_getParameters_temp");
+                    RaveValue temp = LLVM::alloc(params[i].type, "getParameters_temp");
                     LLVMBuildStore(generator->builder, params[i].value, temp.value);
                     params[i] = temp;
                 }
@@ -120,9 +120,9 @@ std::vector<RaveValue> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg, s
         }
         else if(!instanceof<TypePointer>(fas[i].type) && instanceof<TypePointer>(params[i].type)) {
             if(instanceof<TypeStruct>(fas[i].type)) {
-                if(AST::structTable.find(fas[i].type->toString()) != AST::structTable.end()) params[i] = LLVM::load(params[i], "NodeCall_getParameters_load", loc);
+                if(AST::structTable.find(fas[i].type->toString()) != AST::structTable.end()) params[i] = LLVM::load(params[i], "getParameters_load", loc);
             }
-            else params[i] = LLVM::load(params[i], "NodeCall_getParameters_load", loc);
+            else params[i] = LLVM::load(params[i], "getParameters_load", loc);
         }
         else if(instanceof<TypeBasic>(fas[i].type) && instanceof<TypeBasic>(params[i].type) && !((TypeBasic*)params[i].type)->isFloat()) {
             TypeBasic* tbasic = (TypeBasic*)(fas[i].type);
@@ -138,15 +138,14 @@ std::vector<RaveValue> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg, s
                 params[i].type = fas[i].type;
             }
         }
-        /*else if(this->isCdecl64 && instanceof<TypeBasic>(fas[i].type) && LLVMGetTypeKind(LLVMTypeOf(params[i])) == LLVMStructTypeKind) {
-            TypeBasic* tbasic = (TypeBasic*)(fas[i].type);
-            if(!tbasic->isFloat()) {
-                LLVMValueRef temp = LLVM::alloc(LLVMTypeOf(params[i]), "StructToI_cdecl64_getParameters_temp");
-                LLVMBuildStore(generator->builder, params[i], temp);
-                temp = LLVMBuildPointerCast(generator->builder, temp, LLVMPointerType(generator->genType(tbasic, this->loc), 0), "StructToI_cdecl64_getParameters");
-                params[i] = LLVM::load(temp, "StructToI_cdecl64_getParameters_load");
+        else if(this->isCdecl64 && instanceof<TypeDivided>(fas[i].internalTypes[0])) {
+            if(!instanceof<TypePointer>(params[i].type)) {
+                RaveValue temp = LLVM::alloc(params[i].type, "getParameters_stotd_temp");
+                LLVMBuildStore(generator->builder, params[i].value, temp.value);
+                params[i].value = temp.value;
             }
-        }*/
+            params[i].value = LLVMBuildLoad2(generator->builder, generator->genType(((TypeDivided*)fas[i].internalTypes[0])->mainType, loc), params[i].value, "getParameters_stotd");
+        }
         else if(instanceof<TypeFunc>(fas[i].type)) {
             TypeFunc* tfunc = (TypeFunc*)(fas[i].type);
             if(instanceof<TypeBasic>(tfunc->main) && ((TypeBasic*)(tfunc->main))->type == BasicType::Char) {

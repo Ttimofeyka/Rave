@@ -337,7 +337,11 @@ int TypeDivided::getSize() {
 }
 
 Type* TypeDivided::check(Type* parent) {return nullptr;}
-std::string TypeDivided::toString() {return "NotImplemented2";}
+
+std::string TypeDivided::toString() {
+    return this->mainType->toString() + " {" + std::to_string(this->divided.size()) + " x " + this->divided[0]->toString() + "}";
+}
+
 Type* TypeDivided::getElType() {return this;}
 
 Type* getType(std::string id) {

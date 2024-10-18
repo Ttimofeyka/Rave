@@ -150,7 +150,6 @@ void NodeFunc::check() {
 LLVMTypeRef* NodeFunc::getParameters(int callConv) {
     std::vector<LLVMTypeRef> buffer;
     buffer.reserve(getCountOfInternalArgs(this));
-    // buffer.reserve(args.size());
 
     for(int i=0; i<args.size(); i++) {
         FuncArgSet arg = args[i];
@@ -166,8 +165,9 @@ LLVMTypeRef* NodeFunc::getParameters(int callConv) {
                     int tSize = arg.type->getSize();
                     int tElCount = ((TypeStruct*)arg.type)->getElCount();
 
-                    if(tElCount == 2) arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize / 2), {getTypeBySize(tSize / 2), getTypeBySize(tSize / 2)});
-                    else if(tElCount == 3) arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize / 3), {getTypeBySize(tSize / 3), getTypeBySize(tSize / 3), getTypeBySize(tSize / 3)});
+                    if(tElCount == 2) arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize), {getTypeBySize(tSize / 2), getTypeBySize(tSize / 2)});
+                    else if(tElCount == 3) arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize), {getTypeBySize(tSize / 3), getTypeBySize(tSize / 3), getTypeBySize(tSize / 3)});
+                    else if(tElCount == 4) arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize), {getTypeBySize(tSize / 4), getTypeBySize(tSize / 4), getTypeBySize(tSize / 4), getTypeBySize(tSize / 4)});
                 }
             }
             else this->block->nodes.emplace(
@@ -247,15 +247,7 @@ RaveValue NodeFunc::generate() {
         }
     }
 
-    // if(this->isCdecl64) this->args = normalizeArgsCdecl64(this->args, this->loc);
-
     this->getParameters(callConv);
-    // TODO
-    /*LLVMValueRef get = LLVMGetNamedFunction(generator->lModule, linkName.c_str());
-    if(get != nullptr) {
-        if(generator->functions.find(this->name) == generator->functions.end()) generator->functions[this->name] = get;
-        return {};
-    }*/
 
     TypeFunc* tfunc = new TypeFunc(this->type, {}, this->isVararg);
 
@@ -280,7 +272,6 @@ RaveValue NodeFunc::generate() {
         tfunc->args.push_back(new TypeFuncArg(args[0].type, args[0].name));
 
         for(int i=1; i<args.size(); i++) {
-            // TODO: cdecl64 support
             Type* cp = args[i].type->copy();
             ty = cp;
             parent = nullptr;
@@ -300,7 +291,11 @@ RaveValue NodeFunc::generate() {
         }
     }
     else for(int i=0; i<args.size(); i++) {
-        // TODO: cdecl64 support
+        if(instanceof<TypeDivided>(args[i].internalTypes[0])) {
+            tfunc->args.push_back(new TypeFuncArg(((TypeDivided*)args[i].internalTypes[0])->mainType, args[i].name));
+            continue;
+        }
+
         Type* cp = args[i].type->copy();
         ty = cp;
         parent = nullptr;
@@ -326,8 +321,7 @@ RaveValue NodeFunc::generate() {
 
     generator->functions[this->name] = {LLVMAddFunction(
         generator->lModule, linkName.c_str(),
-        // LLVMFunctionType(generator->genType(this->type, loc), this->genTypes.data(), getCountOfInternalArgs(this->args), this->isVararg)
-        LLVMFunctionType(generator->genType(this->type, loc), this->genTypes.data(), genTypes.size(), this->isVararg)
+        LLVMFunctionType(generator->genType(this->type, loc), this->genTypes.data(), this->genTypes.size(), this->isVararg)
     ), tfunc};
 
     LLVMSetFunctionCallConv(generator->functions[this->name].value, callConv);
