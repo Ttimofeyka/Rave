@@ -44,7 +44,7 @@ import <std/math>
     }
 };
 
-@if(__RAVE_SSE >= 2) {
+@if((__RAVE_AVX < 2) && (__RAVE_SSE >= 2)) {
     // Using SSE instructions (faster, but requires SSE2 and higher)
 
     namespace std {
@@ -104,10 +104,10 @@ import <std/math>
             void scale(float* matrix, float* target, int rows, int columns, float scalar) {
                 float4 scalarVec = @vFrom(float4, scalar);
                 const(int) rc = (rows * columns);
-                for(int i=0; i<rc; i++) {
+                for(int i=0; i<rc; i+=4) {
                     if((i + 3) < rc) {
                         float4 buffer = @vLoad(float4, &matrix[i], false) * scalarVec;
-                        @vStore(buffer, target, false);
+                        @vStore(buffer, itop(float*, ptoi(target) + (sizeof(float) * i)), false);
                     }
                     else {
                         // Handle the remaining elements that are not a multiple of 4
@@ -161,6 +161,134 @@ import <std/math>
                         target[j * rows + (i + 1)] = matrix[(i + 1) * columns + j];
                         target[j * rows + (i + 2)] = matrix[(i + 2) * columns + j];
                         target[j * rows + (i + 3)] = matrix[(i + 3) * columns + j];
+                    }
+                }
+            }
+        }
+    }
+};
+
+@if(__RAVE_AVX >= 2) {
+    // Using AVX instructions (fastest, but requires AVX2)
+
+    namespace std {
+        namespace matrix {
+            void multiply(float* left, float* right, float* result, int rows, int columns, int inners) {
+                for(int row=0; row<rows; row++) {
+                    for(int inner=0; inner<inners; inner++) {
+                        float8 leftVec = @vFrom(float8, left[row * inners + inner], false);
+                        for(int col=0; col<columns; col+=8) {
+                            if((col + 7) < columns) {
+                                float8 rightVec = @vLoad(float8, &right[inner * columns + col], false);
+                                float8 resultVec = @vLoad(float8, &result[row * columns + col], false) + (leftVec * rightVec);
+                                @vStore(resultVec, &result[row * columns + col], false);
+                            }
+                            else {
+                                // Handle the remaining elements that are not a multiple of 8
+                                for(int i=col; i<columns; i++) result[row * columns + i] += left[row * inners + inner] * right[inner * columns + i];
+                                break; // Exit the loop since we've handled all columns
+                            }
+                        }
+                    }
+                }
+            }
+
+            void add(float* left, float* right, float* target, int rows, int columns) {
+                for(int i=0; i<rows; i++) {
+                    for(int j=0; j<columns; j++) {
+                        if((j + 7) < columns) {
+                            float8 buffer = @vLoad(float8, &left[i * columns + j], false) + @vLoad(float8, &right[i * columns + j], false);
+                            @vStore(buffer, &target[i * columns + j], false);
+                        }
+                        else {
+                            // Handle the remaining elements that are not a multiple of 8
+                            for(int z=j; z<columns; z++) target[i * columns + j] = left[i * columns + j] + right[i * columns + j];
+                            break; // Exit the loop since we've handled all columns
+                        }
+                    }
+                }
+            }
+
+            void sub(float* left, float* right, float* target, int rows, int columns) {
+                for(int i=0; i<rows; i++) {
+                    for(int j=0; j<columns; j++) {
+                        if((j + 7) < columns) {
+                            float8 buffer = @vLoad(float8, &left[i * columns + j], false) - @vLoad(float8, &right[i * columns + j], false);
+                            @vStore(buffer, &target[i * columns + j], false);
+                        }
+                        else {
+                            // Handle the remaining elements that are not a multiple of 8
+                            for(int z=j; z<columns; z++) target[i * columns + j] = left[i * columns + j] - right[i * columns + j];
+                            break; // Exit the loop since we've handled all columns
+                        }
+                    }
+                }
+            }
+
+            void scale(float* matrix, float* target, int rows, int columns, float scalar) {
+                float8 scalarVec = @vFrom(float8, scalar);
+                const(int) rc = (rows * columns);
+                for(int i=0; i<rc; i+=4) {
+                    if((i + 3) < rc) {
+                        float8 buffer = @vLoad(float8, &matrix[i], false) * scalarVec;
+                        @vStore(buffer, itop(float*, ptoi(target) + (sizeof(float) * i)), false);
+                    }
+                    else {
+                        // Handle the remaining elements that are not a multiple of 8
+                        for(int j=i; j<rc; j++) target[j] = matrix[j] * scalar;
+                        break; // Exit the loop since we've handled all elements
+                    }
+                }
+            }
+
+            void transpose(float* matrix, float* target, int rows, int columns) {
+                int i;
+                int j;
+                for(i=0; i<=rows; i+=8) {
+                    if((i + 7) < rows) break;
+                    for(j=0; j<=columns; j+=8) {
+                        if((j + 7) < columns) break;
+                        // Load 8x8 block from source matrix
+                        float8 row1 = @vLoad(float8, &matrix[i * columns + j], false);
+                        float8 row2 = @vLoad(float8, &matrix[(i + 1) * columns + j], false);
+                        float8 row3 = @vLoad(float8, &matrix[(i + 2) * columns + j], false);
+                        float8 row4 = @vLoad(float8, &matrix[(i + 3) * columns + j], false);
+
+                        // Transpose the 8x8 block using @vShuffle
+                        float8 tmp1 = @vShuffle(row1, row2, [1, 0, 1, 0]);
+                        float8 tmp2 = @vShuffle(row3, row4, [1, 0, 1, 0]);
+                        float8 tmp3 = @vShuffle(row1, row2, [3, 2, 3, 2]);
+                        float8 tmp4 = @vShuffle(row3, row4, [3, 2, 3, 2]);
+
+                        row1 = @vShuffle(tmp1, tmp2, [2, 0, 2, 0]);
+                        row2 = @vShuffle(tmp1, tmp2, [3, 1, 3, 1]);
+                        row3 = @vShuffle(tmp3, tmp4, [2, 0, 2, 0]);
+                        row4 = @vShuffle(tmp3, tmp4, [3, 1, 3, 1]);
+
+                        // Store the transposed 8x8 block to the target matrix
+                        @vStore(row1, &target[j * rows + i], false);
+                        @vStore(row2, &target[(j + 1) * rows + i], false);
+                        @vStore(row3, &target[(j + 2) * rows + i], false);
+                        @vStore(row4, &target[(j + 3) * rows + i], false);
+                    }
+                }
+
+                // Handle remaining rows
+                for(; i<rows; i++) {
+                    for(j=0; j<columns; j++) target[j * rows + i] = matrix[i * columns + j];
+                }
+
+                // Handle remaining columns
+                for(i=0; i<rows; i+=8) {
+                    for(; j<columns - (columns % 8); j++) {
+                        target[j * rows + i] = matrix[i * columns + j];
+                        target[j * rows + (i + 1)] = matrix[(i + 1) * columns + j];
+                        target[j * rows + (i + 2)] = matrix[(i + 2) * columns + j];
+                        target[j * rows + (i + 3)] = matrix[(i + 3) * columns + j];
+                        target[j * rows + (i + 4)] = matrix[(i + 4) * columns + j];
+                        target[j * rows + (i + 5)] = matrix[(i + 5) * columns + j];
+                        target[j * rows + (i + 6)] = matrix[(i + 6) * columns + j];
+                        target[j * rows + (i + 7)] = matrix[(i + 7) * columns + j];
                     }
                 }
             }
