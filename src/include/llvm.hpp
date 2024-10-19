@@ -11,6 +11,10 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 class Type;
 
+/*
+Improved version of old LLVMValueRef.
+Includes type of value as replace of LLVMTypeOf.
+*/
 struct RaveValue {
     LLVMValueRef value;
     Type* type;

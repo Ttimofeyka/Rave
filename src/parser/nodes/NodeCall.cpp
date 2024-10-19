@@ -19,7 +19,6 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeBinary.hpp"
 #include "../../include/parser/nodes/NodeInt.hpp"
 #include "../../include/parser/nodes/NodeType.hpp"
-// #include "../../include/callconv.hpp"
 #include "../../include/parser/Types.hpp"
 #include "../../include/parser/ast.hpp"
 #include "../../include/lexer/lexer.hpp"
@@ -31,12 +30,14 @@ NodeCall::NodeCall(int loc, Node* func, std::vector<Node*> args) {
     this->args = std::vector<Node*>(args);
 }
 
+// Get a vector of arguments types
 std::vector<Type*> NodeCall::getTypes() {
     std::vector<Type*> arr;
     for(int i=0; i<this->args.size(); i++) arr.push_back(this->args[i]->getType());
     return arr;
 }
 
+// Correct arguments by using a vector of FuncArgSet
 std::vector<RaveValue> NodeCall::correctByLLVM(std::vector<RaveValue> values, std::vector<FuncArgSet> fas) {
     std::vector<RaveValue> params = std::vector<RaveValue>(values);
     if(fas.empty() || params.size() != fas.size()) return params;
@@ -73,10 +74,12 @@ std::vector<RaveValue> NodeCall::correctByLLVM(std::vector<RaveValue> values, st
     return params;
 }
 
+// Generate parameters
 std::vector<RaveValue> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg, std::vector<FuncArgSet> fas) {
     std::vector<RaveValue> params;
     if(this->args.size() != fas.size()) {
         for(int i=0; i<this->args.size(); i++) {
+            // If this is a NodeIden/NodeIndex/NodeGet - set the 'isMustBePtr' to false
             if(instanceof<NodeIden>(args[i])) ((NodeIden*)args[i])->isMustBePtr = false;
             else if(instanceof<NodeIndex>(args[i])) ((NodeIndex*)args[i])->isMustBePtr = false;
             else if(instanceof<NodeGet>(args[i])) ((NodeGet*)args[i])->isMustBePtr = false;
@@ -160,8 +163,6 @@ std::vector<RaveValue> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg, s
             }
         }
     }
-
-    // if(nfunc != nullptr && nfunc->isCdecl64) params = normalizeCallCdecl64(nfunc->args, params, loc);
     
     return params;
 }
