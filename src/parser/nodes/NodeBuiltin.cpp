@@ -389,10 +389,6 @@ RaveValue NodeBuiltin::generate() {
         if(instanceof<TypeBasic>(asType(0)->type)) return {LLVM::makeInt(1, 1, false), new TypeBasic(BasicType::Bool)};
         return {LLVM::makeInt(1, 0, false), new TypeBasic(BasicType::Bool)};
     }
-    if(this->name == "detectMemoryLeaks") {
-        if(currScope != nullptr) currScope->detectMemoryLeaks = asBool(0)->value;
-        return {};
-    }
     if(this->name == "echo") {
         std::string buffer = "";
         for(int i=0; i<this->args.size(); i++) buffer += this->asStringIden(i);
