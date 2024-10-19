@@ -144,8 +144,10 @@ void TypeStruct::updateByTypes() {
 
 int TypeStruct::getSize() {
     Type* t = this;
+
     while(generator->toReplace.find(t->toString()) != generator->toReplace.end()) t = generator->toReplace[t->toString()];
     while(AST::aliasTypes.find(t->toString()) != AST::aliasTypes.end()) t = AST::aliasTypes[t->toString()];
+
     if(instanceof<TypeStruct>(t)) {
         TypeStruct* ts = (TypeStruct*)t;
         if(AST::structTable.find(ts->name) == AST::structTable.end()) generator->error("undefined structure '" + ts->name + "'!", -1);
@@ -162,6 +164,56 @@ int TypeStruct::getSize() {
         return size;
     }
     return t->getSize();
+}
+
+bool TypeStruct::isSimple() {
+    Type* t = this;
+
+    while(generator->toReplace.find(t->toString()) != generator->toReplace.end()) t = generator->toReplace[t->toString()];
+    while(AST::aliasTypes.find(t->toString()) != AST::aliasTypes.end()) t = AST::aliasTypes[t->toString()];
+
+    if(instanceof<TypeStruct>(t)) {
+        TypeStruct* ts = (TypeStruct*)t;
+        if(AST::structTable.find(ts->name) == AST::structTable.end()) generator->error("undefined structure '" + ts->name + "'!", -1);
+        if(!ts->types.empty()) {
+            AST::structTable[ts->name]->genWithTemplate(ts->name.substr(ts->name.find('<')), ts->types);
+        }
+
+        for(int i=0; i<AST::structTable[ts->name]->elements.size(); i++) {
+            if(AST::structTable[ts->name]->elements[i] != nullptr && instanceof<NodeVar>(AST::structTable[ts->name]->elements[i])) {
+                NodeVar* nvar = (NodeVar*)AST::structTable[ts->name]->elements[i];
+                if(!instanceof<TypeBasic>(nvar->type)) return false;
+            }
+        }
+
+        return true;
+    }
+    return true;
+}
+
+int TypeStruct::getElCount() {
+    Type* t = this;
+
+    while(generator->toReplace.find(t->toString()) != generator->toReplace.end()) t = generator->toReplace[t->toString()];
+    while(AST::aliasTypes.find(t->toString()) != AST::aliasTypes.end()) t = AST::aliasTypes[t->toString()];
+
+    if(instanceof<TypeStruct>(t)) {
+        TypeStruct* ts = (TypeStruct*)t;
+        if(AST::structTable.find(ts->name) == AST::structTable.end()) generator->error("undefined structure '" + ts->name + "'!", -1);
+        if(!ts->types.empty()) {
+            AST::structTable[ts->name]->genWithTemplate(ts->name.substr(ts->name.find('<')), ts->types);
+        }
+
+        int size = 0;
+
+        for(int i=0; i<AST::structTable[ts->name]->elements.size(); i++) {
+            if(AST::structTable[ts->name]->elements[i] != nullptr && instanceof<NodeVar>(AST::structTable[ts->name]->elements[i])) size += 1;
+        }
+
+        return size;
+    }
+
+    return 1;
 }
 
 Type* TypeStruct::check(Type* parent) {
@@ -285,7 +337,11 @@ int TypeDivided::getSize() {
 }
 
 Type* TypeDivided::check(Type* parent) {return nullptr;}
-std::string TypeDivided::toString() {return "NotImplemented2";}
+
+std::string TypeDivided::toString() {
+    return this->mainType->toString() + " {" + std::to_string(this->divided.size()) + " x " + this->divided[0]->toString() + "}";
+}
+
 Type* TypeDivided::getElType() {return this;}
 
 Type* getType(std::string id) {

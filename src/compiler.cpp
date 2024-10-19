@@ -93,11 +93,15 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
     Compiler::files = files;
     
     if(access((exePath + "options.json").c_str(), 0) == 0) {
+        // If file exists - read it
+
         std::ifstream fOptions(exePath + "options.json");
         Compiler::options = nlohmann::json::parse(fOptions);
         if(fOptions.is_open()) fOptions.close();
     }
     else {
+        // If file does not exist - create it with default settings
+
         std::ofstream fOptions(exePath + "options.json");
         std::string __features = LLVMGetHostCPUFeatures();
         int sse = 3;
@@ -139,6 +143,7 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
     if(Compiler::settings.noEntry) linkString += "--no-entry ";
 }
 
+// Clears all possible global variables.
 void Compiler::clearAll() {
     AST::varTable.clear();
     AST::funcTable.clear();
@@ -221,8 +226,11 @@ void Compiler::compile(std::string file) {
         if(sse > 1 && settings.sseLevel > 1) {Compiler::features += "+sse2,"; sse = 2;}
         if(sse > 2 && settings.sseLevel > 2) {Compiler::features += "+sse3,"; sse = 3;}
         if(ssse3 && settings.sseLevel > 2) {Compiler::features += "+ssse3,"; sse = 3;}
-        if(avx > 0 && settings.avxLevel > 0) {Compiler::features += "+avx,"; avx = 1;}
-        if(avx > 1 && settings.avxLevel > 1) {Compiler::features += "+avx2,"; avx = 2;}
+        if(avx > 0 && settings.avxLevel > 0) {
+            Compiler::features += "+avx,";
+            if(avx > 1 && settings.avxLevel > 1) {Compiler::features += "+avx2,"; avx = 2;}
+            else avx = 1;
+        }
         if(ravePlatform == "X86_64") {
             Compiler::features += "+64bit,+fma,+f16c,";
         }
@@ -279,6 +287,8 @@ void Compiler::compile(std::string file) {
     }
     else Compiler::outType = "unknown";
 
+    // Begin of LLVM initializing
+
     LLVMInitializeX86TargetInfo();
     LLVMInitializeAArch64TargetInfo();
     LLVMInitializePowerPCTargetInfo();
@@ -313,6 +323,8 @@ void Compiler::compile(std::string file) {
     LLVMInitializeMipsTargetMC();
     LLVMInitializeARMTargetMC();
     LLVMInitializeAVRTargetMC();
+
+    // End of LLVM initializing
 
     char* errors = nullptr;
     LLVMTargetRef target;
@@ -506,6 +518,7 @@ void Compiler::compileAll() {
         std::exit(result.status);
         return;
     }
+
     for(int i=0; i<toRemove.size(); i++) std::remove(toRemove[i].c_str());
     std::cout << "Time spent by lexer: " << std::to_string(Compiler::lexTime) << "ms\nTime spent by parser: " << std::to_string(Compiler::parseTime) << "ms\nTime spent by generator: " << std::to_string(Compiler::genTime) << "ms" << std::endl;
 }

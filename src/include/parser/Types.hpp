@@ -115,6 +115,8 @@ public:
     Type* copy() override;
     Type* check(Type* parent) override;
     void updateByTypes();
+    bool isSimple();
+    int getElCount();
     int getSize() override;
     std::string toString() override;
     Type* getElType() override;

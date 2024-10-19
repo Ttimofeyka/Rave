@@ -19,7 +19,6 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeBinary.hpp"
 #include "../../include/parser/nodes/NodeInt.hpp"
 #include "../../include/parser/nodes/NodeType.hpp"
-// #include "../../include/callconv.hpp"
 #include "../../include/parser/Types.hpp"
 #include "../../include/parser/ast.hpp"
 #include "../../include/lexer/lexer.hpp"
@@ -31,12 +30,14 @@ NodeCall::NodeCall(int loc, Node* func, std::vector<Node*> args) {
     this->args = std::vector<Node*>(args);
 }
 
+// Get a vector of arguments types
 std::vector<Type*> NodeCall::getTypes() {
     std::vector<Type*> arr;
     for(int i=0; i<this->args.size(); i++) arr.push_back(this->args[i]->getType());
     return arr;
 }
 
+// Correct arguments by using a vector of FuncArgSet
 std::vector<RaveValue> NodeCall::correctByLLVM(std::vector<RaveValue> values, std::vector<FuncArgSet> fas) {
     std::vector<RaveValue> params = std::vector<RaveValue>(values);
     if(fas.empty() || params.size() != fas.size()) return params;
@@ -73,10 +74,12 @@ std::vector<RaveValue> NodeCall::correctByLLVM(std::vector<RaveValue> values, st
     return params;
 }
 
+// Generate parameters
 std::vector<RaveValue> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg, std::vector<FuncArgSet> fas) {
     std::vector<RaveValue> params;
     if(this->args.size() != fas.size()) {
         for(int i=0; i<this->args.size(); i++) {
+            // If this is a NodeIden/NodeIndex/NodeGet - set the 'isMustBePtr' to false
             if(instanceof<NodeIden>(args[i])) ((NodeIden*)args[i])->isMustBePtr = false;
             else if(instanceof<NodeIndex>(args[i])) ((NodeIndex*)args[i])->isMustBePtr = false;
             else if(instanceof<NodeGet>(args[i])) ((NodeGet*)args[i])->isMustBePtr = false;
@@ -112,7 +115,7 @@ std::vector<RaveValue> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg, s
                     params[i].type = new TypePointer(params[i].type);
                 }
                 else {
-                    RaveValue temp = LLVM::alloc(params[i].type, "NodeCall_getParameters_temp");
+                    RaveValue temp = LLVM::alloc(params[i].type, "getParameters_temp");
                     LLVMBuildStore(generator->builder, params[i].value, temp.value);
                     params[i] = temp;
                 }
@@ -120,9 +123,9 @@ std::vector<RaveValue> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg, s
         }
         else if(!instanceof<TypePointer>(fas[i].type) && instanceof<TypePointer>(params[i].type)) {
             if(instanceof<TypeStruct>(fas[i].type)) {
-                if(AST::structTable.find(fas[i].type->toString()) != AST::structTable.end()) params[i] = LLVM::load(params[i], "NodeCall_getParameters_load", loc);
+                if(AST::structTable.find(fas[i].type->toString()) != AST::structTable.end()) params[i] = LLVM::load(params[i], "getParameters_load", loc);
             }
-            else params[i] = LLVM::load(params[i], "NodeCall_getParameters_load", loc);
+            else params[i] = LLVM::load(params[i], "getParameters_load", loc);
         }
         else if(instanceof<TypeBasic>(fas[i].type) && instanceof<TypeBasic>(params[i].type) && !((TypeBasic*)params[i].type)->isFloat()) {
             TypeBasic* tbasic = (TypeBasic*)(fas[i].type);
@@ -138,15 +141,14 @@ std::vector<RaveValue> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg, s
                 params[i].type = fas[i].type;
             }
         }
-        /*else if(this->isCdecl64 && instanceof<TypeBasic>(fas[i].type) && LLVMGetTypeKind(LLVMTypeOf(params[i])) == LLVMStructTypeKind) {
-            TypeBasic* tbasic = (TypeBasic*)(fas[i].type);
-            if(!tbasic->isFloat()) {
-                LLVMValueRef temp = LLVM::alloc(LLVMTypeOf(params[i]), "StructToI_cdecl64_getParameters_temp");
-                LLVMBuildStore(generator->builder, params[i], temp);
-                temp = LLVMBuildPointerCast(generator->builder, temp, LLVMPointerType(generator->genType(tbasic, this->loc), 0), "StructToI_cdecl64_getParameters");
-                params[i] = LLVM::load(temp, "StructToI_cdecl64_getParameters_load");
+        else if(this->isCdecl64 && instanceof<TypeDivided>(fas[i].internalTypes[0])) {
+            if(!instanceof<TypePointer>(params[i].type)) {
+                RaveValue temp = LLVM::alloc(params[i].type, "getParameters_stotd_temp");
+                LLVMBuildStore(generator->builder, params[i].value, temp.value);
+                params[i].value = temp.value;
             }
-        }*/
+            params[i].value = LLVMBuildLoad2(generator->builder, generator->genType(((TypeDivided*)fas[i].internalTypes[0])->mainType, loc), params[i].value, "getParameters_stotd");
+        }
         else if(instanceof<TypeFunc>(fas[i].type)) {
             TypeFunc* tfunc = (TypeFunc*)(fas[i].type);
             if(instanceof<TypeBasic>(tfunc->main) && ((TypeBasic*)(tfunc->main))->type == BasicType::Char) {
@@ -161,8 +163,6 @@ std::vector<RaveValue> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg, s
             }
         }
     }
-
-    // if(nfunc != nullptr && nfunc->isCdecl64) params = normalizeCallCdecl64(nfunc->args, params, loc);
     
     return params;
 }
