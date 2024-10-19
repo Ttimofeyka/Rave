@@ -226,8 +226,11 @@ void Compiler::compile(std::string file) {
         if(sse > 1 && settings.sseLevel > 1) {Compiler::features += "+sse2,"; sse = 2;}
         if(sse > 2 && settings.sseLevel > 2) {Compiler::features += "+sse3,"; sse = 3;}
         if(ssse3 && settings.sseLevel > 2) {Compiler::features += "+ssse3,"; sse = 3;}
-        if(avx > 0 && settings.avxLevel > 0) {Compiler::features += "+avx,"; avx = 1;}
-        if(avx > 1 && settings.avxLevel > 1) {Compiler::features += "+avx2,"; avx = 2;}
+        if(avx > 0 && settings.avxLevel > 0) {
+            Compiler::features += "+avx,";
+            if(avx > 1 && settings.avxLevel > 1) {Compiler::features += "+avx2,"; avx = 2;}
+            else avx = 1;
+        }
         if(ravePlatform == "X86_64") {
             Compiler::features += "+64bit,+fma,+f16c,";
         }
