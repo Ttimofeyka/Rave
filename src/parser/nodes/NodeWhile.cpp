@@ -71,14 +71,6 @@ RaveValue NodeWhile::generate() {
     
     if(!generator->activeLoops[selfNumber].hasEnd) LLVMBuildBr(generator->builder, condBlock);
 
-    if(auto* nb = dynamic_cast<NodeBlock*>(this->body)) {
-        for(const auto& node : nb->nodes) {
-            if(auto* nodeVar = dynamic_cast<NodeVar*>(node)) {
-                if(nodeVar->isAllocated) generator->warning("@detectMemoryLeaks: the variable '" + nodeVar->name + "' is not released!", nodeVar->loc);
-            }
-        }
-    }
-
     LLVMPositionBuilderAtEnd(generator->builder, generator->activeLoops[selfNumber].end);
     generator->currBB = generator->activeLoops[selfNumber].end;
     generator->activeLoops.erase(selfNumber);

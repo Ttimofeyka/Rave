@@ -60,7 +60,7 @@ import <std/time> <std/sysc> <std/io>
 
 @if(__RAVE_OS != "LINUX") {
     namespace std {
-        cent randNext;
+        cent randNext = 0;
 
         void __randomGen {
             if(std::randNext == 0) {

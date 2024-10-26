@@ -54,7 +54,5 @@ RaveValue NodeSlice::generate() {
         tempBuffer.value = LLVMBuildInsertValue(generator->builder, tempBuffer.value, LLVMBuildExtractValue(generator->builder, lBase.value, j, "extract"), j, "insert");
     }
 
-
-
     return tempBuffer;
 }
