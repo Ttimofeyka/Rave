@@ -41,6 +41,8 @@ std::vector<RaveValue> NodeArray::getValues() {
 
 RaveValue NodeArray::generate() {
     std::vector<RaveValue> genValues = this->getValues();
+
+    // If this is a constant array - just return LLVM constant array with provided values
     if(isConst) return LLVM::makeCArray(this->type, genValues);
 
     RaveValue arr = LLVM::alloc(new TypeArray(this->values.size(), this->type), "NodeArray");

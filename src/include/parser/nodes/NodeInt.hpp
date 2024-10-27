@@ -13,6 +13,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <string>
 #include "../../BigInt.hpp"
 
+// AST variant of an integer number.
+
 class NodeInt : public Node {
 public:
     BigInt value;

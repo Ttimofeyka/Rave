@@ -12,6 +12,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <vector>
 #include <string>
 
+// Class of importing another files.
+
 class NodeImport : public Node {
 public:
     std::string file;
@@ -25,6 +27,8 @@ public:
     Node* comptime() override;
     Node* copy() override;
 };
+
+// Multiple NodeImport instances.
 
 class NodeImports : public Node {
 public:
