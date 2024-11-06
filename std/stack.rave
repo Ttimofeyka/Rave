@@ -1,0 +1,94 @@
+/*
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+
+import <std/memory> <std/map>
+
+namespace std {
+    struct stack<STACK_T> {
+        (noOperators) STACK_T* data;
+        int capacity;
+        int length;
+
+        (arrayable) std::stack<STACK_T> this {
+            std::stack<STACK_T> this;
+            this.data = cast(STACK_T*)std::malloc(sizeof(STACK_T));
+            this.capacity = sizeof(STACK_T);
+            this.length = 0;
+        } => this;
+
+        std::stack<STACK_T> this(STACK_T* data, int size) {
+            std::stack<STACK_T> this;
+            this.data = cast(STACK_T*)std::malloc(sizeof(STACK_T) * size);
+            this.capacity = sizeof(STACK_T) * size;
+            this.length = size;
+            std::memcpy(cast(char*)this.data, cast(char*)data, size * sizeof(STACK_T));
+        } => this;
+
+        void push(STACK_T value) {
+            if((this.length * sizeof(STACK_T)) == this.capacity) {
+                this.data = cast(STACK_T*)std::realloc(cast(void*)this.data, this.capacity, this.capacity * 2);
+                this.capacity = this.capacity * 2;
+            }
+
+            this.data[this.length] = value;
+            this.length = this.length + 1;
+        }
+
+        STACK_T top => this.data[this.length - 1];
+
+        STACK_T pop {
+            return = this.top();
+
+            @if(__RAVE_RUNTIME_CHECKS) {
+                if(this.length > 0) {
+                    for(int i=(this.length - 1); i<this.length; i+=1) {
+                        if((i + 1) < this.length) this.data[i] = this.data[i + 1];
+                    }
+                    this.length = this.length - 1;
+                }
+            };
+
+            @if(!(__RAVE_RUNTIME_CHECKS)) {
+                for(int i=(this.length - 1); i<this.length; i+=1) {
+                    if((i + 1) < this.length) this.data[i] = this.data[i + 1];
+                }
+                this.length = this.length - 1;
+            };
+        }
+
+        (inline) void assign(std::stack<STACK_T> of) {
+            for(int i=0; i<of.length; i+=1) {this.push(of.data[i]);}
+        }
+
+        std::stack<STACK_T> copy {
+            std::stack<STACK_T> buffer;
+            buffer.data = cast(STACK_T*)std::malloc(this.capacity);
+            buffer.capacity = this.capacity;
+            buffer.length = this.length;
+
+            for(int i=0; i<this.length; i+=1) buffer.data[i] = this.data[i];
+        } => buffer;
+
+        std::stack<STACK_T> operator+(std::stack<STACK_T> one, std::stack<STACK_T> two) {
+            std::stack<STACK_T> cp = one.copy();
+            cp.assign(two);
+        } => cp;
+
+        void ~this {
+            if(this.data != null) {
+                std::free(cast(void*)this.data);
+                this.data = null;
+                this.length = 0;
+                this.capacity = 0;
+            }
+        }
+
+        int hash {
+            return = this.length + (this.capacity * sizeof(STACK_T));
+            for(int i=0; i<this.length; i++) return = return * i + 5213 + (return <. 6) + (return >. 2);
+        }
+    }
+}
