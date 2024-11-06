@@ -63,7 +63,7 @@ namespace std {
 
         std::vector<VECTOR_T> copy {
             std::vector<VECTOR_T> buffer;
-            buffer.data = cast(VECTOR_T*)std::malloc(sizeof(std::vector<VECTOR_T>));
+            buffer.data = cast(VECTOR_T*)std::malloc(this.capacity);
             buffer.capacity = this.capacity;
             buffer.length = this.length;
 
