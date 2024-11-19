@@ -1,0 +1,279 @@
+/*
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+
+import <std/string> <std/utf8> <std/map> <std/vector> <std/cstring> <std/ascii> <std/io>
+
+namespace std {
+    namespace json {
+        namespace ValueType {
+            alias Integer = 0;
+            alias Real = 1;
+            alias Boolean = 2;
+            alias String = 3;
+            alias Object = 4;
+            alias Array = 5;
+        }
+
+        struct Value {
+            void* value;
+            int type;
+            int length;
+            char* name;
+
+            std::json::Value this {std::json::Value this;} => this;
+
+            void makeBoolean(bool value) {
+                this.type = std::json::ValueType::Boolean;
+                this.value = cast(void*)value;
+                this.length = 1;
+                this.name = null;
+            }
+
+            void makeInteger(long value) {
+                this.type = std::json::ValueType::Integer;
+
+                long* ptr = cast(void*)std::malloc(8);
+                ptr[0] = value;
+                this.value = ptr;
+                
+                this.length = 1;
+                this.name = null;
+            }
+
+            void makeReal(double value) {
+                this.type = std::json::ValueType::Real;
+                
+                double* ptr = cast(void*)std::malloc(8);
+                ptr[0] = value;
+                this.value = ptr;
+
+                this.length = 1;
+                this.name = null;
+            }
+
+            void makeString(char* cstring, int len) {
+                this.type = std::json::ValueType::String;
+                this.value = cstring;
+                this.length = len;
+                this.name = null;
+            }
+
+            void makeArray(std::json::Value* values, int length) {
+                this.type = std::json::ValueType::Array;
+                this.value = cast(void*)values;
+                this.length = length;
+                this.name = null;
+            }
+
+            void makeObject(std::json::Value* kv, int length) {
+                this.type = std::json::ValueType::Object;
+                this.value = cast(void*)kv;
+                this.length = length;
+                this.name = null;
+            }
+
+            long asLong => (cast(long*)value)[0];
+
+            bool asBoolean => (cast(bool)value);
+            
+            double asDouble => (cast(double*)value)[0];
+
+            char* asCString => value;
+
+            std::string asString => std::string(value);
+
+            std::u8string asU8String => std::u8string(value);
+
+            std::json::Value* asArray => cast(std::json::Value*)value;
+
+            std::json::Value* asObject => cast(std::json::Value*)value;
+
+            bool isVariable => (this.name == null);
+
+            void ~this {
+                if((this.value != null) && (this.type != std::json::ValueType::Boolean)) {
+                    if((this.type == std::json::ValueType::Integer) || (this.type == std::json::ValueType::Real || this.type == std::json::ValueType::String)) std::free(this.value);
+                    else {
+                        // Free every element of array or object
+                        std::json::Value* elements = cast(std::json::Value*)(this.value);
+                        for(int i=0; i<this.length; i++) {
+                            std::json::Value element = elements[0];
+                            ~element;
+                        }
+                    }
+                    std::free(this.value);
+                    this.value = null;
+                    this.length = 0;
+                }
+            }
+        }
+
+        namespace parser {
+            std::json::Value(std::string*, std::string, int*) __parseObject;
+
+            void skip(std::string data, int* idx) {
+                while((std::ascii::isSpace(data.at(idx[0]))) && (idx[0] < data.length)) idx[0] += 1;
+            }
+
+            std::json::Value parseBoolean(std::string data, int* idx) {
+                bool value = false;
+
+                if((idx[0] + 5) < data.length) {
+                    if((data.at(idx[0]) == 't') && (data.at(idx[0] + 1) == 'r') && (data.at(idx[0] + 2) == 'u') && (data.at(idx[0] + 3) == 'e')) {
+                        value = true;
+                        idx[0] += 4;
+                    }
+                    else if((data.at(idx[0]) == 'f') && (data.at(idx[0] + 1) == 'a') && (data.at(idx[0] + 2) == 'l') && (data.at(idx[0] + 3) == 's') && (data.at(idx[0] + 4) == 'e')) idx[0] += 5;
+                }
+
+                return.makeBoolean(value);
+            }
+            
+            std::json::Value parseNumber(std::string* buffer, std::string data, int* idx) {
+                bool isFloat = false;
+
+                std::json::parser::skip(data, idx);
+                buffer.length = 0;
+
+                if(data.at(idx[0]) == '-') {
+                    buffer.add('-');
+                    idx[0] += 1;
+                }
+                else if(data.at(idx[0]) == '+') idx[0] += 1;
+
+                while((idx[0] < data.length) && std::ascii::isDigit(data.at(idx[0]))) {
+                    buffer.add(data.at(idx[0]));
+                    idx[0] += 1;
+                    std::json::parser::skip(data, idx);
+
+                    if(data.at(idx[0]) == '.') {
+                        isFloat = true;
+                        buffer.add('.');
+                        idx[0] += 1;
+                    }
+                }
+
+                if(isFloat) return.makeReal(buffer.toDouble());
+                else return.makeInteger(buffer.toLong());
+            }
+
+            std::json::Value parseString(std::string* buffer, std::string data, int* idx) {
+                std::json::parser::skip(data, idx);
+                buffer.length = 0;
+
+                idx[0] += 1; // skip first "
+                while((idx[0] < data.length) && (data.at(idx[0]) != '"')) {
+                    if((data.at(idx[0]) == '\\') && (data.at(idx[0] + 1) == '"')) {
+                        buffer.add('\\');
+                        buffer.add('"');
+                        idx[0] += 2;
+                    }
+                    else {
+                        buffer.add(data.at(idx[0]));
+                        idx[0] += 1;
+                    }
+                }
+                idx[0] += 1; // skip last "
+
+                char* dat = std::malloc(buffer.length + 1);
+
+                return.makeString(dat, buffer.length);
+            }
+
+            std::json::Value parseArray(std::string* buffer, std::string data, int* idx) {
+                std::json::parser::skip(data, idx);
+
+                std::vector<std::json::Value> array = std::vector<std::json::Value>();
+
+                idx[0] += 1; // skip [
+                while((idx[0] < data.length) && (data.at(idx[0]) != ']')) {
+                    std::json::parser::skip(data, idx);
+                    if((data.at(idx[0]) == '-') || (data.at(idx[0]) == '+') || std::ascii::isDigit(data.at(idx[0]))) array.add(std::json::parser::parseNumber(buffer, data, idx));
+                    else if((data.at(idx[0]) == '\"')) array.add(std::json::parser::parseString(buffer, data, idx));
+                    else if((data.at(idx[0]) == '[')) array.add(std::json::parser::parseArray(buffer, data, idx));
+                    else if((data.at(idx[0]) == '{')) array.add(std::json::parser::__parseObject(buffer, data, idx));
+                    else array.add(std::json::parser::parseBoolean(data, idx));
+
+                    std::json::parser::skip(data, idx);
+                    if(data.at(idx[0]) == ',') idx[0] += 1;
+                }
+                idx[0] += 1; // skip ]
+
+                return.makeArray(array.data, array.length);
+            }
+
+            char* parseVarName(std::string* buffer, std::string data, int* idx) {
+                // TODO: Add checks for possible " errors
+                buffer.length = 0;
+                
+                idx[0] += 1; // skip first "
+                while((idx[0] < data.length) && (data.at(idx[0]) != '"')) {
+                    if((data.at(idx[0]) == '\\') && (data.at(idx[0] + 1) == '"')) {
+                        buffer.add('\\');
+                        buffer.add('"');
+                        idx[0] += 2;
+                    }
+                    else {
+                        buffer.add(data.at(idx[0]));
+                        idx[0] += 1;
+                    }
+                }
+                idx[0] += 1; // skip last "
+
+                return = std::malloc(buffer.length + 1);
+                for(int i=0; i<buffer.length; i++) return[i] = buffer[0].at(i);
+            }
+
+            std::json::Value parseObject(std::string* buffer, std::string data, int* idx) {
+                std::json::parser::skip(data, idx);
+
+                std::vector<std::json::Value> object = std::vector<std::json::Value>();
+
+                idx[0] += 1; // skip {
+                while((idx[0] < data.length) && (data.at(idx[0]) != '}')) {
+                    std::json::parser::skip(data, idx);
+                    // Current symbol must be '"'
+                    // TODO: Add check for possible errors
+                    if(data.at(idx[0]) == '"') {
+                        std::json::Value variable;
+                        char* varName = std::json::parser::parseVarName(buffer, data, idx);
+
+                        std::json::parser::skip(data, idx);
+                        if(data.at(idx[0]) == ':') idx[0] += 1;
+                        std::json::parser::skip(data, idx);
+
+                        if((data.at(idx[0]) == '-') || (data.at(idx[0]) == '+') || std::ascii::isDigit(data.at(idx[0]))) variable = std::json::parser::parseNumber(buffer, data, idx);
+                        else if(data.at(idx[0]) == '"') variable = std::json::parser::parseString(buffer, data, idx);
+                        else if(data.at(idx[0]) == '[') variable = std::json::parser::parseArray(buffer, data, idx);
+                        else if(data.at(idx[0]) == '{') variable = std::json::parser::parseObject(buffer, data, idx);
+                        else variable = std::json::parser::parseBoolean(data, idx);
+
+                        variable.name = varName;
+                        object.add(variable);
+
+                        std::json::parser::skip(data, idx);
+                        if(data.at(idx[0]) == ',') idx[0] += 1;
+                    }
+                    else idx[0] += 1;
+                }
+                idx[0] += 1; // skip }
+
+                return.makeObject(object.data, object.length);
+            }
+        }
+
+        std::json::Value parse(std::string data) {
+            std::json::parser::__parseObject = std::json::parser::parseObject;
+
+            int idx = 0;
+            std::string buffer = ""; // Create a temp buffer for parsing
+
+            return = std::json::parser::parseObject(&buffer, data, &idx);
+
+            ~buffer;
+        }
+    }
+}
