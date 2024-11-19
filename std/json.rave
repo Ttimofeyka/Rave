@@ -5,7 +5,6 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 import <std/string> <std/utf8> <std/map> <std/vector> <std/cstring> <std/ascii>
-import <std/io>
 
 namespace std {
     namespace json {
