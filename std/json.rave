@@ -90,9 +90,7 @@ namespace std {
 
             std::u8string asU8String => std::u8string(value);
 
-            std::json::Value* asArray => cast(std::json::Value*)value;
-
-            std::json::Value* asObject => cast(std::json::Value*)value;
+            std::json::Value* asPointer => cast(std::json::Value*)value;
 
             int indexOf(char* name) {
                 return = -1;
