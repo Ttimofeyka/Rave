@@ -4,11 +4,13 @@ Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-import <std/string> <std/utf8> <std/map> <std/vector> <std/cstring> <std/ascii> <std/io>
+import <std/string> <std/utf8> <std/map> <std/vector> <std/cstring> <std/ascii>
+import <std/io>
 
 namespace std {
     namespace json {
         namespace ValueType {
+            alias Nothing = -1;
             alias Integer = 0;
             alias Real = 1;
             alias Boolean = 2;
@@ -77,6 +79,8 @@ namespace std {
 
             long asLong => (cast(long*)value)[0];
 
+            int asInt => (cast(int)this.asLong());
+
             bool asBoolean => (cast(bool)value);
             
             double asDouble => (cast(double*)value)[0];
@@ -91,16 +95,72 @@ namespace std {
 
             std::json::Value* asObject => cast(std::json::Value*)value;
 
+            int indexOf(char* name) {
+                return = -1;
+                if(this.type == std::json::ValueType::Object) {
+                    std::json::Value* values = cast(std::json::Value*)this.value;
+                    for(int i=0; i<this.length; i++) {
+                        if((values[i].name != null) && (std::cstring::strcmp(values[i].name, name))) {
+                            return = i;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            (inline) int indexOf(std::string name) => this.indexOf(name.data);
+
+            (inline) bool contains(char* name) => this.indexOf(name) != -1;
+
+            (inline) bool contains(std::string name) => this.indexOf(name) != -1;
+            
+            std::json::Value get(char* name) {
+                return.value = null;
+                return.name = null;
+                return.length = -1;
+                return.type = std::json::ValueType::Nothing;
+
+                if(this.type == std::json::ValueType::Object) {
+                    std::json::Value* values = cast(std::json::Value*)this.value;
+                    for(int i=0; i<this.length; i++) {
+                        if((values[i].name != null) && (std::cstring::strcmp(values[i].name, name))) {
+                            return.value = values[i].value;
+                            return.name = values[i].name;
+                            return.length = values[i].length;
+                            return.type = values[i].type;
+                            break;
+                        }
+                    }
+                }
+            }
+
+            bool set(char* name, std::json::Value jValue) {
+                int idx = this.indexOf(name);
+
+                if(idx != -1) {
+                    std::json::Value* values = cast(std::json::Value*)this.value;
+                    values[idx] = jValue;
+                }
+                else {
+                    // Just expand the object
+                    this.value = std::realloc(this.value, sizeof(std::json::Value) * this.length, sizeof(std::json::Value) * (this.length + 1));
+                    std::json::Value* values = cast(std::json::Value*)this.value;
+                    this.length += 1;
+                    values[this.length - 1] = jValue;
+                }
+            }
+
+            (inline) std::json::Value get(std::string name) => this.get(name.data);
+
             bool isVariable => (this.name == null);
 
             void ~this {
                 if((this.value != null) && (this.type != std::json::ValueType::Boolean)) {
-                    if((this.type == std::json::ValueType::Integer) || (this.type == std::json::ValueType::Real || this.type == std::json::ValueType::String)) std::free(this.value);
-                    else {
+                    if((this.type == std::json::ValueType::Array) || (this.type == std::json::ValueType::Object)) {
                         // Free every element of array or object
                         std::json::Value* elements = cast(std::json::Value*)(this.value);
                         for(int i=0; i<this.length; i++) {
-                            std::json::Value element = elements[0];
+                            std::json::Value element = elements[i];
                             ~element;
                         }
                     }
@@ -178,9 +238,11 @@ namespace std {
                 }
                 idx[0] += 1; // skip last "
 
-                char* dat = std::malloc(buffer.length + 1);
+                char* sbuf = std::malloc(buffer.length + 1);
+                for(int i=0; i<buffer.length; i++) sbuf[i] = buffer.data[i];
+                sbuf[buffer.length] = '\0';
 
-                return.makeString(dat, buffer.length);
+                return.makeString(sbuf, buffer.length);
             }
 
             std::json::Value parseArray(std::string* buffer, std::string data, int* idx) {
@@ -225,6 +287,7 @@ namespace std {
 
                 return = std::malloc(buffer.length + 1);
                 for(int i=0; i<buffer.length; i++) return[i] = buffer[0].at(i);
+                return[buffer.length] = '\0';
             }
 
             std::json::Value parseObject(std::string* buffer, std::string data, int* idx) {
