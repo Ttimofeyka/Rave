@@ -246,5 +246,7 @@ namespace std {
             if(decimalPoint != -1) return += fraction / fractionScale;
             if(isNegative) return = -return;
         }
+
+        (inline) double stod(const(char)* data) => std::cstring::stod(data, std::cstring::strlen(data));
     }
 }

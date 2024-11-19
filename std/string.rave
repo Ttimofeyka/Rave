@@ -110,6 +110,7 @@ namespace std {
         (inline) cent toCent => std::cstring::stoc(this.data, this.length);
         (inline) long toLong => std::cstring::stol(this.data, this.length);
         (inline) int toInt => cast(int)this.toLong();
+        (inline) double toDouble => std::cstring::stod(this.data, this.length);
 
         int indexOf(char c) => std::cstring::indexOf(this.data, c);
 
