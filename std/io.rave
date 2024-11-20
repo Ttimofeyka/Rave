@@ -337,7 +337,7 @@ namespace std {
             std::string readLine {
                 std::string buffer = "";
                 char ch = this.getc();
-                while((ch != '\n') && (ch != 0)) {
+                while((ch != '\n') && (cast(int)ch) != -1) {
                     buffer.add(ch);
                     ch = this.getc();
                 }
@@ -346,7 +346,7 @@ namespace std {
             std::u8string u8ReadLine {
                 std::u8string buffer = "";
                 char ch = this.getc();
-                while((ch != '\n') && (ch != 0)) {
+                while((ch != '\n') && (cast(int)ch) != -1) {
                     buffer.add(ch);
                     ch = this.getc();
                 }
@@ -355,7 +355,7 @@ namespace std {
             std::string readAll {
                 std::string buffer = "";
                 char ch = this.getc();
-                while(ch != 0) {
+                while((cast(int)ch) != -1) {
                     buffer.add(ch);
                     ch = this.getc();
                 }
@@ -364,7 +364,7 @@ namespace std {
             std::u8string u8ReadAll {
                 std::u8string buffer = "";
                 char ch = this.getc();
-                while(ch != 0) {
+                while((cast(int)ch) != -1) {
                     buffer.add(ch);
                     ch = this.getc();
                 }
