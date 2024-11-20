@@ -104,19 +104,18 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 func->isTemplatePart = this->isLinkOnce;
                 func->isComdat = this->isComdat;
                 func->isChecked = false;
-                Type* outType = this->constructors[0]->type;
+
+                Type* outType = (!this->constructors.empty() ? this->constructors[0]->type : new TypePointer(new TypeStruct(this->name)));
                 if(instanceof<TypeStruct>(outType)) outType = new TypePointer(outType);
+
                 this->destructor->args = std::vector<FuncArgSet>({FuncArgSet{.name = "this", .type = outType, .internalTypes = {outType}}});
+
                 if(isImported) {
                     func->isExtern = true;
                     func->check();
                     continue;
                 }
-                if(!instanceof<TypeStruct>(this->constructors[0]->type)) this->destructor->block->nodes.push_back(new NodeCall(
-                        func->loc,
-                        new NodeIden("std::free", this->destructor->loc),
-                        std::vector<Node*>({new NodeIden("this", this->destructor->loc)})
-                ));
+
                 func->check();
             }
             else if(func->origName.find('(') != std::string::npos) {
@@ -328,7 +327,7 @@ RaveValue NodeStruct::generate() {
             this->destructor->check();
         }
         else {
-            Type* thisType = new TypePointer(this->constructors[0]->type);
+            Type* thisType = new TypePointer(!this->constructors.empty() ? this->constructors[0]->type : new TypeStruct(this->name));
             this->destructor->args = {FuncArgSet{.name = "this", .type = thisType, .internalTypes = {thisType}}};
             this->destructor->check();
         }
