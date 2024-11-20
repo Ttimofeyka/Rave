@@ -24,8 +24,6 @@ namespace std {
             int length;
             char* name;
 
-            std::json::Value this {std::json::Value this;} => this;
-
             void makeBoolean(bool value) {
                 this.type = std::json::ValueType::Boolean;
                 this.value = cast(void*)value;
