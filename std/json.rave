@@ -221,9 +221,14 @@ namespace std {
 
                 idx[0] += 1; // skip first "
                 while((idx[0] < data.length) && (data.at(idx[0]) != '"')) {
-                    if((data.at(idx[0]) == '\\') && (data.at(idx[0] + 1) == '"')) {
-                        buffer.add('\\');
-                        buffer.add('"');
+                    if((data.at(idx[0]) == '\\')) {
+                        switch(data.at(idx[0] + 1)) {
+                            case('"') buffer.add('"');
+                            case('n') buffer.add('\n');
+                            case('r') buffer.add('\r');
+                            case('t') buffer.add('\t');
+                            case('\'') buffer.add('\'');
+                        }
                         idx[0] += 2;
                     }
                     else {
