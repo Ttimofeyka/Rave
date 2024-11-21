@@ -48,7 +48,10 @@ void NodeRet::setParentBlock(Loop value, int n) {
 }
 
 RaveValue NodeRet::generate() {
-    if(currScope == nullptr || !currScope->has("return")) return {};
+    if(currScope == nullptr || !currScope->has("return")) {
+        value->generate();
+        return {};
+    }
 
     if(this->value == nullptr) this->value = new NodeNull(currScope->getVar("return", loc)->getType(), this->loc);
     
