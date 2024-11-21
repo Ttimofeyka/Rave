@@ -129,25 +129,123 @@ namespace std {
                 }
             }
 
-            bool set(char* name, std::json::Value jValue) {
+            void set(char* name, std::json::Value value) {
                 int idx = this.indexOf(name);
 
                 if(idx != -1) {
                     std::json::Value* values = cast(std::json::Value*)this.value;
-                    values[idx] = jValue;
+                    if(values[idx].value != null) ~(values[idx]);
+                    values[idx] = value;
+                    values[idx].name = name;
                 }
                 else {
                     // Just expand the object
                     this.value = std::realloc(this.value, sizeof(std::json::Value) * this.length, sizeof(std::json::Value) * (this.length + 1));
                     std::json::Value* values = cast(std::json::Value*)this.value;
                     this.length += 1;
-                    values[this.length - 1] = jValue;
+                    values[this.length - 1] = value;
+                    values[this.length - 1].name = name;
                 }
+            }
+
+            void setCString(char* name, char* cStr, int len) {
+                char* ptr = std::malloc(len + 1);
+                for(int i=0; i<len; i++) ptr[i] = cStr[i];
+                ptr[len] = '\0';
+
+                std::json::Value newStr;
+                newStr.makeString(ptr, len);
+                this.set(name, newStr);
+            }
+
+            (inline) void setCString(char* name, char* cStr) => this.setCString(name, cStr, std::cstring::strlen(cStr));
+
+            (inline) void setString(char* name, std::string str) => this.setCString(name, str.data, str.length);
+
+            (inline) void setU8String(char* name, std::u8string str) => this.setCString(name, str.data, str.bytes);
+
+            void setLong(char* name, long number) {
+                std::json::Value newInteger;
+                newInteger.makeInteger(number);
+                this.set(name, newInteger);
+            }
+
+            (inline) void setInteger(char* name, int number) => this.setLong(name, cast(long)number);
+
+            (inline) void setShort(char* name, short number) => this.setLong(name, cast(long)number);
+
+            void setDouble(char* name, double number) {
+                std::json::Value newReal;
+                newReal.makeReal(number);
+                this.set(name, newReal);
+            }
+
+            void setArray(char* name, std::json::Value* ptr, int len) {
+                std::json::Value* newPtr = cast(std::json::Value*)std::malloc(sizeof(std::json::Value) * (len + 1));
+                for(int i=0; i<len; i++) newPtr[i] = ptr[i];
+
+                std::json::Value newArray;
+                newArray.makeArray(ptr, len);
+                this.set(name, newArray);
+            }
+
+            void setObject(char* name, std::json::Value* ptr, int len) {
+                std::json::Value* newPtr = cast(std::json::Value*)std::malloc(sizeof(std::json::Value) * (len + 1));
+                for(int i=0; i<len; i++) newPtr[i] = ptr[i];
+
+                std::json::Value newObject;
+                newObject.makeObject(ptr, len);
+                this.set(name, newObject);
             }
 
             (inline) std::json::Value get(std::string name) => this.get(name.data);
 
             bool isVariable => (this.name == null);
+
+            std::string toString {
+                char[24] buffer;
+                if(this.type == std::json::ValueType::Integer) return = std::string(std::cstring::ltos(this.asLong(), &buffer));
+                else if(this.type == std::json::ValueType::Real) return = std::string(std::cstring::dtos(this.asDouble(), 8, &buffer));
+                else if(this.type == std::json::ValueType::Boolean) {
+                    if(this.asBoolean()) return = std::string("true");
+                    else return = std::string("false");
+                }
+                else if(this.type == std::json::ValueType::String) {
+                    return = std::string("\"");
+                    return.appendC(this.value);
+                    return.add('\"');
+                }
+                else if(this.type == std::json::ValueType::Array) {
+                    return = std::string("[");
+                    std::json::Value* values = this.asPointer();
+
+                    for(int i=0; i<this.length; i++) {
+                        std::string buffer = values[i].toString();
+                        return.append(buffer);
+                        if((i + 1) < this.length) return.add(',');
+                        ~buffer;
+                    }
+                    
+                    return.add(']');
+                }
+                else if(this.type == std::json::ValueType::Object) {
+                    return = std::string("{");
+                    std::json::Value* values = this.asPointer();
+
+                    for(int i=0; i<this.length; i++) {
+                        std::string buffer = values[i].toString();
+                        return.add('"');
+                        return.appendC(values[i].name);
+                        return.appendC("\":");
+                        return.append(buffer);
+                        if((i + 1) < this.length) return.add(',');
+                        ~buffer;
+                    }
+                    
+                    return.add('}');
+                }
+                else return = std::string("null");
+            }
 
             void ~this {
                 if((this.value != null) && (this.type != std::json::ValueType::Boolean)) {
