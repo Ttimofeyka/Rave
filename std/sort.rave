@@ -1,0 +1,27 @@
+/*
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+
+import <std/memory>
+
+namespace std {
+    // Quicksort method
+    void sort<SORT_T>(SORT_T* ptr, uint length) {
+        if((ptr != null) && (length > 1)) {
+            SORT_T pivot = ptr[length - 1];
+            uint iLargest = 0;
+            for(uint i=0; i < length - 1; i++) {
+                if(ptr[i] < pivot) {
+                    std::swap(&ptr[iLargest], &ptr[i], sizeof(SORT_T));
+                    iLargest += 1;
+                }
+            }
+
+            std::swap(&ptr[iLargest], &ptr[length - 1], sizeof(SORT_T));
+            if(iLargest > 1) std::sort<SORT_T>(ptr, iLargest);
+            if(length - iLargest - 1 > 1) std::sort<SORT_T>(itop(SORT_T*, ptoi(ptr) + iLargest + 1), length - iLargest - 1);
+        }
+    }
+}
