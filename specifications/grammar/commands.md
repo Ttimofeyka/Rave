@@ -90,15 +90,11 @@ vint.add(10);
 vint.add(20);
 vint.add(30);
 
-foreach(el; vint) {
-    std::println(el);
-}
+foreach(number; vint) std::println(number);
 
 // Or
 
-foreach(el; vint.data; vint.length) {
-    std::println(el);
-}
+foreach(number; vint.data; vint.length) std::println(number);
 ```
 
 **switch(expr) {case(expr) {} default {}}** - It works like a switch in C, except for one thing - break and continue are prohibited in switch.
