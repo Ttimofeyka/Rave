@@ -34,6 +34,8 @@ namespace std {
             std::memcpy(cast(char*)this.data, cast(char*)data, size * sizeof(VECTOR_T));
         } => this;
 
+        (inline) VECTOR_T* ptr => this.data;
+
         void add(VECTOR_T value) {
             if((this.length * sizeof(VECTOR_T)) == this.capacity) {
                 this.data = cast(VECTOR_T*)std::realloc(cast(void*)this.data, this.capacity, this.capacity * 2);
