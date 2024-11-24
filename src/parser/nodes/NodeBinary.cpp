@@ -411,6 +411,9 @@ RaveValue NodeBinary::generate() {
     RaveValue vFirst = this->first->generate();
     RaveValue vSecond = this->second->generate();
 
+    while(instanceof<TypeConst>(vFirst.type)) vFirst.type = vFirst.type->getElType();
+    while(instanceof<TypeConst>(vSecond.type)) vSecond.type = vSecond.type->getElType();
+
     if(instanceof<TypeStruct>(this->first->getType()) || instanceof<TypePointer>(this->first->getType())
      && !instanceof<TypeStruct>(this->second->getType()) && !instanceof<TypePointer>(this->second->getType())) {
         std::pair<std::string, std::string> opOverload = isOperatorOverload(vFirst, vSecond, this->op);
@@ -424,11 +427,10 @@ RaveValue NodeBinary::generate() {
         }
     }
 
-    while(instanceof<TypeConst>(vFirst.type)) vFirst.type = vFirst.type->getElType();
-    while(instanceof<TypeConst>(vSecond.type)) vSecond.type = vSecond.type->getElType();
-
     if(instanceof<TypePointer>(vFirst.type) && !instanceof<TypePointer>(vSecond.type)) vFirst = LLVM::load(vFirst, "NodeBinary_loadF", loc);
     else if(instanceof<TypePointer>(vSecond.type) && !instanceof<TypePointer>(vFirst.type)) vSecond = LLVM::load(vSecond, "NodeBinary_loadS", loc);
+
+    if(generator->toReplace.find(vFirst.type->toString()) != generator->toReplace.end()) vFirst.type = generator->toReplace[vFirst.type->toString()];
 
     if(instanceof<TypeBasic>(vFirst.type) && instanceof<TypeBasic>(vSecond.type) && vFirst.type->toString() != vSecond.type->toString()) {
         // Casting numbers types

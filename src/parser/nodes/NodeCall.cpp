@@ -300,6 +300,7 @@ RaveValue NodeCall::generate() {
             std::vector<RaveValue> params = this->getParameters(AST::funcTable[idenFunc->name], false, AST::funcTable[idenFunc->name]->args);
             return LLVM::call(generator->functions[idenFunc->name], params, (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
         }
+
         if(currScope->has(idenFunc->name)) {
             if(!instanceof<TypeFunc>(currScope->getVar(idenFunc->name, this->loc)->type)) generator->error("undefined function '" + idenFunc->name + "'!", this->loc);
 
@@ -307,6 +308,7 @@ RaveValue NodeCall::generate() {
             std::vector<RaveValue> params = this->getParameters(nullptr, false, tfaToFas(fn->args));
             return LLVM::call(currScope->get(idenFunc->name), params, (instanceof<TypeVoid>(fn->main) ? "" : "callFunc"));
         }
+
         if(idenFunc->name.find('<') != std::string::npos && AST::funcTable.find(idenFunc->name.substr(0, idenFunc->name.find('<'))) != AST::funcTable.end()) {
             std::string mainName = idenFunc->name.substr(0, idenFunc->name.find('<'));
 
@@ -322,7 +324,9 @@ RaveValue NodeCall::generate() {
             }
 
             std::string sTypes = idenFunc->name.substr(idenFunc->name.find('<') + 1);
-            Lexer* tLexer = new Lexer(sTypes.substr(0, sTypes.size() - 1), 1);
+            sTypes = sTypes.substr(0, sTypes.length() - 1);
+
+            Lexer* tLexer = new Lexer(sTypes, 1);
             Parser* tParser = new Parser(tLexer->tokens, "(builtin)");
 
             std::vector<Type*> types;
@@ -331,7 +335,32 @@ RaveValue NodeCall::generate() {
                 if(tParser->peek()->type == TokType::Comma) tParser->next();
             }
 
-            AST::funcTable[mainName]->generateWithTemplate(types, idenFunc->name + (mainName.find('[') != std::string::npos ? callTypes : ""));
+            for(int i=0; i<types.size(); i++) {
+                Type* current = types[i];
+                Type* previous = nullptr;
+                
+                while(instanceof<TypeConst>(current) || instanceof<TypeArray>(current) || instanceof<TypePointer>(current) || instanceof<TypeStruct>(current)) {
+                    if(instanceof<TypeConst>(current)) {previous = current; current = ((TypeConst*)previous)->instance;}
+                    else if(instanceof<TypeArray>(current)) {previous = current; current = ((TypeArray*)previous)->element;}
+                    else if(instanceof<TypePointer>(current)) {previous = current; current = ((TypePointer*)previous)->instance;}
+                    else {
+                        while(generator->toReplace.find(current->toString()) != generator->toReplace.end()) current = generator->toReplace[current->toString()];
+
+                        if(previous == nullptr) types[i] = current->copy();
+                        else if(instanceof<TypeConst>(previous)) ((TypeConst*)previous)->instance = current->copy();
+                        else if(instanceof<TypeArray>(previous)) ((TypeArray*)previous)->element = current->copy();
+                        else ((TypePointer*)previous)->instance = current->copy();
+                        break;
+                    }
+                }
+            }
+
+            sTypes = "";
+            for(int i=0; i<types.size(); i++) sTypes += types[i]->toString() + ",";
+            sTypes = sTypes.substr(0, sTypes.length() - 1);
+
+            if(AST::funcTable.find(mainName + sTypes) != AST::funcTable.end()) return (new NodeCall(loc, new NodeIden(mainName + sTypes, loc), args))->generate();
+            AST::funcTable[mainName]->generateWithTemplate(types, mainName + sTypes + (mainName.find('[') != std::string::npos ? callTypes : ""));
 
             delete tLexer;
             delete tParser;
