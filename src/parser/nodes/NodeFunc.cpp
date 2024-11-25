@@ -29,6 +29,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeCast.hpp"
 #include "../../include/parser/nodes/NodeCall.hpp"
 #include "../../include/parser/nodes/NodeImport.hpp"
+#include "../../include/parser/nodes/NodeForeach.hpp"
 #include <llvm-c/Comdat.h>
 #include <llvm-c/Analysis.h>
 #include "../../include/compiler.hpp"
@@ -359,8 +360,19 @@ RaveValue NodeFunc::generate() {
         generator->currBB = entry;
         currScope->fnEnd = this->exitBlock;
 
-        if(!instanceof<TypeVoid>(this->type)) this->block->nodes.insert(this->block->nodes.begin(), new NodeVar("return", new NodeNull(this->type, this->loc), false, false, false, {}, this->loc, this->type, false));
+        if(!instanceof<TypeVoid>(this->type)) {
+            this->block->nodes.insert(this->block->nodes.begin(), new NodeVar("return", new NodeNull(this->type, this->loc), false, false, false, {}, this->loc, this->type, false));
+            ((NodeVar*)this->block->nodes[0])->isUsed = true;
+        }
         this->block->generate();
+
+        for(int i=0; i<block->nodes.size(); i++) {
+            if(instanceof<NodeIf>(block->nodes[i])) ((NodeIf*)block->nodes[i])->optimize();
+            else if(instanceof<NodeFor>(block->nodes[i])) ((NodeFor*)block->nodes[i])->optimize();
+            else if(instanceof<NodeWhile>(block->nodes[i])) ((NodeWhile*)block->nodes[i])->optimize();
+            else if(instanceof<NodeForeach>(block->nodes[i])) ((NodeForeach*)block->nodes[i])->optimize();
+            else if(instanceof<NodeVar>(block->nodes[i]) && !((NodeVar*)block->nodes[i])->isGlobal && !((NodeVar*)block->nodes[i])->isUsed) generator->warning("unused variable '" + ((NodeVar*)block->nodes[i])->name + "'!", loc);
+        }
 
         currScope->fnEnd = this->exitBlock;
 
@@ -387,6 +399,7 @@ RaveValue NodeFunc::generate() {
         generator->builder = nullptr;
         currScope = nullptr;
     }
+
     if(this->isTemplate) generator->toReplace = std::map<std::string, Type*>(oldReplace);
 
     if(LLVMVerifyFunction(generator->functions[this->name].value, LLVMPrintMessageAction)) {
@@ -453,24 +466,6 @@ Node* NodeFunc::comptime() {return this;}
 Type* NodeFunc::getType() {return this->type;}
 
 Node* NodeFunc::copy() {return new NodeFunc(this->name, this->args, (NodeBlock*)this->block->copy(), this->isExtern, this->mods, this->loc, this->type->copy(), this->templateNames);}
-
-bool NodeFunc::isReleased(int n) {
-    for(int i=0; i<this->block->nodes.size(); i++) {
-        if(instanceof<NodeUnary>(this->block->nodes[i])) {
-            NodeUnary* nunary = (NodeUnary*)this->block->nodes[i];
-            if(nunary->type == TokType::Destructor && instanceof<NodeIden>(nunary->base)) {
-                if(((NodeIden*)nunary->base)->name == this->origArgs[n].name) return true;
-            }
-        }
-        else if(instanceof<NodeWhile>(this->block->nodes[i])) {
-            if(((NodeWhile*)this->block->nodes[i])->isReleased(this->origArgs[n].name)) return true;
-        }
-        else if(instanceof<NodeFor>(this->block->nodes[i])) {
-            if(((NodeFor*)this->block->nodes[i])->isReleased(this->origArgs[n].name)) return true;
-        }
-    }
-    return false;
-}
 
 Type* NodeFunc::getInternalArgType(LLVMValueRef value) {
     std::string __n = LLVMPrintValueToString(value);

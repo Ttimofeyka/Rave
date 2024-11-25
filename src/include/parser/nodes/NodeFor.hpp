@@ -22,7 +22,7 @@ public:
     int loc;
 
     NodeFor(std::vector<Node*> presets, Node* cond, std::vector<Node*> afters, NodeBlock* block, std::string funcName, int loc);
-    bool isReleased(std::string varName);
+    void optimize();
     Type* getType() override;
     
     void check() override;

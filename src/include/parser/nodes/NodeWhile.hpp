@@ -20,7 +20,7 @@ public:
     int loc;
 
     NodeWhile(Node* cond, Node* body, int loc, std::string funcName);
-    bool isReleased(std::string varName);
+    void optimize();
     Type* getType() override;
     RaveValue generate() override;
     Node* copy() override;

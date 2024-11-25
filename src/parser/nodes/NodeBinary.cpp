@@ -312,6 +312,8 @@ RaveValue NodeBinary::generate() {
 
             if(!currScope->getVar(id->name, this->loc)->isChanged) currScope->hasChanged(id->name);
 
+            if(currScope->localVars.find(id->name) != currScope->localVars.end()) currScope->localVars[id->name]->isUsed = true;
+
             NodeVar* nvar = currScope->getVar(id->name, this->loc);
 
             RaveValue vFirst = first->generate();

@@ -102,7 +102,10 @@ RaveValue NodeGet::checkIn(std::string structure) {
 
 RaveValue NodeGet::generate() {
     if(instanceof<NodeIden>(this->base)) {
-        RaveValue ptr = checkStructure(currScope->getWithoutLoad(((NodeIden*)this->base)->name, loc));
+        NodeIden* niden = ((NodeIden*)this->base);
+
+        if(currScope->localVars.find(niden->name) != currScope->localVars.end()) currScope->localVars[niden->name]->isUsed = true;
+        RaveValue ptr = checkStructure(currScope->getWithoutLoad(niden->name, loc));
         Type* ty = ptr.type;
 
         TypeStruct* tstruct = (TypeStruct*)ty->getElType();

@@ -18,6 +18,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeGet.hpp"
 #include "../../include/parser/nodes/NodeIndex.hpp"
 #include "../../include/parser/nodes/NodeInt.hpp"
+#include "../../include/parser/nodes/NodeIf.hpp"
 #include <iostream>
 
 NodeForeach::NodeForeach(NodeIden* elName, Node* varData, Node* varLength, NodeBlock* block, std::string funcName, int loc) {
@@ -82,22 +83,12 @@ RaveValue NodeForeach::generate() {
     return {};
 }
 
-bool NodeForeach::isReleased(std::string varName) {
-    if(instanceof<NodeBlock>(this->block)) {
-        NodeBlock* nblock = (NodeBlock*)this->block;
-        for(int i=0; i<nblock->nodes.size(); i++) {
-            if(instanceof<NodeUnary>(nblock->nodes[i]) && ((NodeUnary*)nblock->nodes[i])->type == TokType::Destructor
-            && instanceof<NodeIden>(((NodeUnary*)nblock->nodes[i])->base) && ((NodeIden*)((NodeUnary*)nblock->nodes[i])->base)->name == varName) return true;
-            if(instanceof<NodeWhile>(nblock->nodes[i])) {
-                if(((NodeWhile*)nblock->nodes[i])->isReleased(varName)) return true;
-            }
-            if(instanceof<NodeFor>(nblock->nodes[i])) {
-                if(((NodeFor*)nblock->nodes[i])->isReleased(varName)) return true;
-            }
-            if(instanceof<NodeForeach>(nblock->nodes[i])) {
-                if(((NodeForeach*)nblock->nodes[i])->isReleased(varName)) return true;
-            }
-        }
+void NodeForeach::optimize() {
+    for(int i=0; i<block->nodes.size(); i++) {
+        if(instanceof<NodeIf>(block->nodes[i])) ((NodeIf*)block->nodes[i])->optimize();
+        else if(instanceof<NodeFor>(block->nodes[i])) ((NodeFor*)block->nodes[i])->optimize();
+        else if(instanceof<NodeWhile>(block->nodes[i])) ((NodeWhile*)block->nodes[i])->optimize();
+        else if(instanceof<NodeForeach>(block->nodes[i])) ((NodeForeach*)block->nodes[i])->optimize();
+        else if(instanceof<NodeVar>(block->nodes[i]) && !((NodeVar*)block->nodes[i])->isGlobal && !((NodeVar*)block->nodes[i])->isUsed) generator->warning("unused variable '" + ((NodeVar*)block->nodes[i])->name + "'!", loc);
     }
-    return false;
 }

@@ -24,7 +24,7 @@ public:
     int loc;
 
     NodeForeach(NodeIden* elName, Node* varData, Node* varLength, NodeBlock* block, std::string funcName, int loc);
-    bool isReleased(std::string varName);
+    void optimize();
     Type* getType() override;
     
     void check() override;

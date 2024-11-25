@@ -93,12 +93,16 @@ RaveValue NodeUnary::generate() {
                 id->isMustBePtr = true;
                 return id->generate();
             }
-            else if(instanceof<TypeArray>(currScope->getVar(id->name, this->loc)->type)) {
-                val = LLVM::gep(currScope->getWithoutLoad(id->name),
-                    std::vector<LLVMValueRef>({LLVMConstInt(LLVMInt32Type(), 0, false), LLVMConstInt(LLVMInt32Type(), 0, false)}).data(),
-                2, "NodeUnary_gep");
+            else {
+                if(currScope->localVars.find(id->name) != currScope->localVars.end()) currScope->localVars[id->name]->isUsed = true;
+
+                if(instanceof<TypeArray>(currScope->getVar(id->name, this->loc)->type)) {
+                    val = LLVM::gep(currScope->getWithoutLoad(id->name),
+                        std::vector<LLVMValueRef>({LLVMConstInt(LLVMInt32Type(), 0, false), LLVMConstInt(LLVMInt32Type(), 0, false)}).data(),
+                    2, "NodeUnary_gep");
+                }
+                else val = currScope->getWithoutLoad(id->name);
             }
-            else val = currScope->getWithoutLoad(id->name);
         }
         else if(instanceof<NodeIndex>(this->base)) {
             ((NodeIndex*)this->base)->isMustBePtr = true;

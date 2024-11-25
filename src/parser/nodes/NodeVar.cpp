@@ -160,6 +160,8 @@ RaveValue NodeVar::generate() {
     int alignment = -1;
  
     if(currScope == nullptr) {
+        this->isUsed = true; // Maybe rework it?
+
         bool noMangling = false;
 
         for(int i=0; i<this->mods.size(); i++) {

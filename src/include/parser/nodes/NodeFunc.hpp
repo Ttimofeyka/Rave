@@ -70,7 +70,6 @@ public:
     Node* comptime() override;
     Node* copy() override;
     void check() override;
-    bool isReleased(int n);
     Type* getArgType(int n);
     Type* getArgType(std::string name);
     Type* getInternalArgType(LLVMValueRef value);

@@ -42,9 +42,10 @@ Type* NodeIden::getType() {
 
 Node* NodeIden::comptime() {
     if(AST::aliasTable.find(this->name) == AST::aliasTable.end()) {
-        generator->error("unknown alias '" + name + "'!",loc);
+        generator->error("unknown alias '" + name + "'!", loc);
         return nullptr;
     }
+
     return AST::aliasTable[this->name];
 }
 
@@ -57,12 +58,16 @@ RaveValue NodeIden::generate() {
     }
 
     if(generator->globals.find(name) != generator->globals.end()) {
+        AST::varTable[name]->isUsed = true;
+
         if(isMustBePtr) return generator->globals[name];
         return LLVM::load(generator->globals[name], "NodeIden_load", loc);
     }
 
     if(currScope != nullptr) {
         if(currScope->has(this->name) || currScope->hasAtThis(this->name)) {
+            if(currScope->localVars.find(name) != currScope->localVars.end()) currScope->localVars[name]->isUsed = true;
+
             if(isMustBePtr) return currScope->getWithoutLoad(this->name, loc);
             return currScope->get(this->name, loc);
         }

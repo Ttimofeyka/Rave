@@ -24,6 +24,7 @@ public:
     bool hasRets[2];
 
     NodeIf(Node* cond, Node* body, Node* _else, int loc, std::string func, bool isStatic);
+    void optimize();
     Type* getType() override;
     void check() override;
     RaveValue generate() override;

@@ -5,6 +5,11 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 #include "../../include/parser/nodes/NodeBlock.hpp"
+#include "../../include/parser/nodes/NodeWhile.hpp"
+#include "../../include/parser/nodes/NodeFor.hpp"
+#include "../../include/parser/nodes/NodeForeach.hpp"
+#include "../../include/parser/nodes/NodeIf.hpp"
+#include "../../include/parser/nodes/NodeVar.hpp"
 #include "../../include/parser/Types.hpp"
 #include "../../include/utils.hpp"
 

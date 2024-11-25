@@ -481,7 +481,10 @@ bool Scope::locatedAtThis(std::string name) {
 NodeVar* Scope::getVar(std::string name, int loc) {
     if(this->localVars.find(name) != this->localVars.end()) return this->localVars[name];
     if(AST::varTable.find(name) != AST::varTable.end()) return AST::varTable[name];
-    if(this->argVars.find(name) != this->argVars.end()) return this->argVars[name];
+    if(this->argVars.find(name) != this->argVars.end()) {
+        this->argVars[name]->isUsed = true;
+        return this->argVars[name];
+    }
     if(this->aliasTable.find(name) != this->aliasTable.end()) return (new NodeVar(name, this->aliasTable[name]->copy(), false, false, false, {}, loc, this->aliasTable[name]->getType()));
     if(this->has("this") && (AST::funcTable.find(this->funcName) != AST::funcTable.end() && AST::funcTable[this->funcName]->isMethod)) {
         NodeVar* nv = this->getVar("this", loc);

@@ -36,6 +36,7 @@ public:
     bool isNoOperators = false;
     bool isNoCopy = false;
     bool isInternal = false;
+    bool isUsed = false;
 
     NodeVar(std::string name, Node* value, bool isExtern, bool isConst, bool isGlobal, std::vector<DeclarMod> mods, int loc, Type* type, bool isVolatile = false);
     NodeVar(std::string name, Node* value, bool isExtern, bool isConst, bool isGlobal, std::vector<DeclarMod> mods, int loc, Type* type, bool isVolatile, bool isChanged, bool noZeroInit);

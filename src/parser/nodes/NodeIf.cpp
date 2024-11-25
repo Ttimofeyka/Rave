@@ -10,6 +10,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeFunc.hpp"
 #include "../../include/parser/nodes/NodeWhile.hpp"
 #include "../../include/parser/nodes/NodeFor.hpp"
+#include "../../include/parser/nodes/NodeForeach.hpp"
+#include "../../include/parser/nodes/NodeVar.hpp"
 #include "../../include/utils.hpp"
 
 NodeIf::NodeIf(Node* cond, Node* body, Node* _else, int loc, std::string funcName, bool isStatic) {
@@ -142,6 +144,42 @@ RaveValue NodeIf::generate() {
     if(hasEnd1 && hasEnd2 && generator->activeLoops.size() == 0) LLVMBuildRet(generator->builder, LLVMConstNull(generator->genType(AST::funcTable[currScope->funcName]->type, this->loc)));
     
     return {};
+}
+
+void NodeIf::optimize() {
+    if(body != nullptr) {
+        if(instanceof<NodeIf>(body)) ((NodeIf*)body)->optimize();
+        else if(instanceof<NodeFor>(body)) ((NodeFor*)body)->optimize();
+        else if(instanceof<NodeWhile>(body)) ((NodeWhile*)body)->optimize();
+        else if(instanceof<NodeForeach>(body)) ((NodeForeach*)body)->optimize();
+        else if(instanceof<NodeBlock>(body)) {
+            NodeBlock* nblock = (NodeBlock*)body;
+            for(int i=0; i<nblock->nodes.size(); i++) {
+                if(instanceof<NodeIf>(nblock->nodes[i])) ((NodeIf*)nblock->nodes[i])->optimize();
+                else if(instanceof<NodeFor>(nblock->nodes[i])) ((NodeFor*)nblock->nodes[i])->optimize();
+                else if(instanceof<NodeWhile>(nblock->nodes[i])) ((NodeWhile*)nblock->nodes[i])->optimize();
+                else if(instanceof<NodeForeach>(nblock->nodes[i])) ((NodeForeach*)nblock->nodes[i])->optimize();
+                else if(instanceof<NodeVar>(nblock->nodes[i]) && !((NodeVar*)nblock->nodes[i])->isGlobal && !((NodeVar*)nblock->nodes[i])->isUsed) generator->warning("unused variable '" + ((NodeVar*)nblock->nodes[i])->name + "'!", loc);
+            }
+        }
+    }
+
+    if(_else != nullptr) {
+        if(instanceof<NodeIf>(_else)) ((NodeIf*)_else)->optimize();
+        else if(instanceof<NodeFor>(_else)) ((NodeFor*)_else)->optimize();
+        else if(instanceof<NodeWhile>(_else)) ((NodeWhile*)_else)->optimize();
+        else if(instanceof<NodeForeach>(_else)) ((NodeForeach*)_else)->optimize();
+        else if(instanceof<NodeBlock>(_else)) {
+            NodeBlock* nblock = (NodeBlock*)_else;
+            for(int i=0; i<nblock->nodes.size(); i++) {
+                if(instanceof<NodeIf>(nblock->nodes[i])) ((NodeIf*)nblock->nodes[i])->optimize();
+                else if(instanceof<NodeFor>(nblock->nodes[i])) ((NodeFor*)nblock->nodes[i])->optimize();
+                else if(instanceof<NodeWhile>(nblock->nodes[i])) ((NodeWhile*)nblock->nodes[i])->optimize();
+                else if(instanceof<NodeForeach>(nblock->nodes[i])) ((NodeForeach*)nblock->nodes[i])->optimize();
+                else if(instanceof<NodeVar>(nblock->nodes[i]) && !((NodeVar*)nblock->nodes[i])->isGlobal && !((NodeVar*)nblock->nodes[i])->isUsed) generator->warning("unused variable '" + ((NodeVar*)nblock->nodes[i])->name + "'!", loc);
+            }
+        }
+    }
 }
 
 Node* NodeIf::comptime() {

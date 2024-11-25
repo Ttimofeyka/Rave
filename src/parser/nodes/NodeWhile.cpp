@@ -81,22 +81,21 @@ RaveValue NodeWhile::generate() {
     return {};
 }
 
-bool NodeWhile::isReleased(std::string varName) {
-    if(instanceof<NodeBlock>(this->body)) {
-        NodeBlock* nblock = (NodeBlock*)this->body;
-        for(int i=0; i<nblock->nodes.size(); i++) {
-            if(instanceof<NodeUnary>(nblock->nodes[i]) && ((NodeUnary*)nblock->nodes[i])->type == TokType::Destructor
-            && instanceof<NodeIden>(((NodeUnary*)nblock->nodes[i])->base) && ((NodeIden*)((NodeUnary*)nblock->nodes[i])->base)->name == varName) return true;
-            if(instanceof<NodeWhile>(nblock->nodes[i])) {
-                if(((NodeWhile*)nblock->nodes[i])->isReleased(varName)) return true;
-            }
-            if(instanceof<NodeFor>(nblock->nodes[i])) {
-                if(((NodeFor*)nblock->nodes[i])->isReleased(varName)) return true;
-            }
-            if(instanceof<NodeForeach>(nblock->nodes[i])) {
-                if(((NodeForeach*)nblock->nodes[i])->isReleased(varName)) return true;
+void NodeWhile::optimize() {
+    if(body != nullptr) {
+        if(instanceof<NodeIf>(body)) ((NodeIf*)body)->optimize();
+        else if(instanceof<NodeFor>(body)) ((NodeFor*)body)->optimize();
+        else if(instanceof<NodeWhile>(body)) ((NodeWhile*)body)->optimize();
+        else if(instanceof<NodeForeach>(body)) ((NodeForeach*)body)->optimize();
+        else if(instanceof<NodeBlock>(body)) {
+            NodeBlock* nblock = (NodeBlock*)body;
+            for(int i=0; i<nblock->nodes.size(); i++) {
+                if(instanceof<NodeIf>(nblock->nodes[i])) ((NodeIf*)nblock->nodes[i])->optimize();
+                else if(instanceof<NodeFor>(nblock->nodes[i])) ((NodeFor*)nblock->nodes[i])->optimize();
+                else if(instanceof<NodeWhile>(nblock->nodes[i])) ((NodeWhile*)nblock->nodes[i])->optimize();
+                else if(instanceof<NodeForeach>(nblock->nodes[i])) ((NodeForeach*)nblock->nodes[i])->optimize();
+                else if(instanceof<NodeVar>(nblock->nodes[i]) && !((NodeVar*)nblock->nodes[i])->isGlobal && !((NodeVar*)nblock->nodes[i])->isUsed) generator->warning("unused variable '" + ((NodeVar*)nblock->nodes[i])->name + "'!", loc);
             }
         }
     }
-    return false;
 }

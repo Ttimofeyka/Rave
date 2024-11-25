@@ -84,7 +84,9 @@ bool NodeIndex::isElementConst(Type* type) {
 RaveValue NodeIndex::generate() {
     if(instanceof<NodeIden>(this->element)) {
         NodeIden* id = (NodeIden*)this->element;
+        if(currScope->localVars.find(id->name) != currScope->localVars.end()) currScope->localVars[id->name]->isUsed = true;
         Type* _t = currScope->getVar(id->name, this->loc)->type;
+
         if(instanceof<TypeStruct>(_t) || ((instanceof<TypePointer>(_t) && instanceof<TypeStruct>(((TypePointer*)_t)->instance)))) {
             Type* tstruct = nullptr;
             if(instanceof<TypeStruct>(_t)) tstruct = _t;
