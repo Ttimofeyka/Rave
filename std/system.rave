@@ -4,13 +4,13 @@ Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-import <std/utf8>
+import <std/utf8> <std/process>
 
 namespace std {
     extern(linkname: "system") int system(char* cmd);
 }
 
-@if((__RAVE_OS == "LINUX")) {
+@if(__RAVE_OS == "LINUX") {
     import <std/sysc>
 
     namespace std {
