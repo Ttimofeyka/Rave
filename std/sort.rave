@@ -12,6 +12,7 @@ namespace std {
         if((ptr != null) && (length > 1)) {
             SORT_T pivot = ptr[length - 1];
             uint iLargest = 0;
+
             for(uint i=0; i < length - 1; i++) {
                 if(ptr[i] < pivot) {
                     std::swap(&ptr[iLargest], &ptr[i], sizeof(SORT_T));
@@ -21,7 +22,7 @@ namespace std {
 
             std::swap(&ptr[iLargest], &ptr[length - 1], sizeof(SORT_T));
             if(iLargest > 1) std::sort<SORT_T>(ptr, iLargest);
-            if(length - iLargest - 1 > 1) std::sort<SORT_T>(itop(SORT_T*, ptoi(ptr) + iLargest + 1), length - iLargest - 1);
+            if(length - iLargest - 1 > 1) std::sort<SORT_T>(itop(SORT_T*, ptoi(ptr) + (sizeof(SORT_T) * iLargest) + sizeof(SORT_T)), length - iLargest - 1);
         }
     }
 }
