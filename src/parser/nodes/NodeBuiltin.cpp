@@ -66,7 +66,7 @@ Type* NodeBuiltin::getType() {
     || this->name == "isArray" || this->name == "aliasExists" || this->name == "tEquals"
     || this->name == "tNequals" || this->name == "isStructure" || this->name == "hasMethod"
     || this->name == "hasDestructor" || this->name == "contains") return new TypeBasic(BasicType::Bool);
-    if(this->name == "sizeOf" || this->name == "argsLength") return new TypeBasic(BasicType::Int);
+    if(this->name == "sizeOf" || this->name == "argsLength" || this->name == "getCurrArgNumber") return new TypeBasic(BasicType::Int);
     if(this->name == "vAdd" || this->name == "vSub" || this->name == "vMul" || this->name == "vDiv"
     || this->name == "vShuffle" || this->name == "vHAdd32x4" || this->name == "vHAdd16x8"
     || this->name == "vSumAll") return args[0]->getType();
@@ -321,6 +321,7 @@ RaveValue NodeBuiltin::generate() {
     }
     if(this->name == "sizeOf") return {LLVM::makeInt(32, (asType(0)->type)->getSize() / 8, false), new TypeBasic(BasicType::Bool)};
     if(this->name == "argsLength") return (new NodeInt(AST::funcTable[currScope->funcName]->args.size()))->generate();
+    if(this->name == "getCurrArgNumber") return (new NodeInt(generator->currentBuiltinArg))->generate();
     if(this->name == "callWithArgs") {
         std::vector<Node*> nodes;
         for(int i=generator->currentBuiltinArg; i<AST::funcTable[currScope->funcName]->args.size(); i++) {
