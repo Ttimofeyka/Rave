@@ -5,10 +5,32 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 @if(__RAVE_OS == "LINUX") {
-    import <std/sysc>
+    import <std/sysc> <std/time>
 
     namespace std {
         namespace process {
+            struct rusage {
+	            std::timeVal ru_utime;
+	            std::timeVal ru_stime;
+
+	            long ru_maxrss;
+	            long ru_ixrss;
+	            long ru_idrss;
+	            long ru_isrss;
+	            long ru_minflt;
+	            long ru_majflt;
+	            long ru_nswap;
+	            long ru_inblock;
+	            long ru_oublock;
+	            long ru_msgsnd;
+	            long ru_msgrcv;
+	            long ru_nsignals;
+	            long ru_nvcsw;
+	            long ru_nivcsw;
+
+	            long[16] __reserved;
+            }
+
             alias cloneVM = 0x00000100;
             alias cloneFS = 0x00000200;
             alias cloneFiles = 0x00000400;
@@ -24,8 +46,37 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
             alias cloneParentSetTID = 0x00100000;
             alias cloneChildClearTID = 0x00200000;
 
+            extern(linkname: "environ") char** environment;
+
+            (inline) int isTermSignal(int s) => s && 0x7F;
+            (inline) int isNormalExit(int s) => !(std::process::isTermSignal(s));
+            (inline) int getExitStatus(int s) => ((s) && 0xFF00) >. 8;
+
+            (inline) int execve(char* fName, char** argv, char** envp) => cast(int)std::syscall(std::sysctable::Execve);
+            (inline) int clone(int(void*) fn, void* stack, int flags, void* arg, int* pTID, void* tls, int* cTID) => cast(int)std::syscall(std::sysctable::Clone, fn, stack, flags, arg, pTID, tls, cTID);
+            (inline) int fork => cast(int)std::process::clone(cast(int(void*))null, null, 0, null, null, null, null);
+            (inline) uint wait4(uint pid, int* status, int options, std::process::rusage* rusage) => cast(int)std::syscall(std::sysctable::Wait4, pid, status, options, rusage);
+            (inline) int waitpid(uint pid, int* status, int options) {std::process::rusage ru;} => std::process::wait4(pid, status, options, &ru);
+
             (inline) int getPID => cast(int)std::syscall(std::sysctable::GetPID);
             (inline) int getPPID => cast(int)std::syscall(std::sysctable::GetPPID);
+
+            (ctargs) int execl {
+                char* path = @getCurrArg(char*);
+
+                @skipArg();
+
+                uint count = @argsLength() - 1;
+
+                char** argv = cast(char**)std::malloc(count * sizeof(char*));
+                if(count > 0) defer std::free(argv);
+
+                @foreachArgs() {
+                    argv[@getCurrArgNumber() - 1] = @getCurrArg(char*);
+                };
+
+                return = std::process::execve(path, argv, std::process::environment);
+            }
         }
     }
 };
