@@ -824,8 +824,8 @@ Node* NodeBuiltin::comptime() {
                 case BasicType::Char: return new NodeInt(-128);
                 case BasicType::Short: return new NodeInt(-32768);
                 case BasicType::Int: return new NodeInt(-2147483647);
-                case BasicType::Long: return new NodeInt(-9223372036854775807);
-                // TODO: Add BasicType::Cent
+                case BasicType::Long: return new NodeInt(BigInt("-9223372036854775807"));
+                case BasicType::Cent: return new NodeInt(BigInt("170141183460469231731687303715884105728"));
                 default: return new NodeInt(0);
             }
         }
@@ -847,8 +847,9 @@ Node* NodeBuiltin::comptime() {
                 case BasicType::Int: return new NodeInt(2147483647);
                 case BasicType::Uint: return new NodeInt(4294967295);
                 case BasicType::Long: return new NodeInt(9223372036854775807);
-                case BasicType::Ulong: return new NodeInt(18446744073709551615ull);
-                // TODO: Add BasicType::Cent
+                case BasicType::Ulong: return new NodeInt(BigInt("18446744073709551615"));
+                case BasicType::Cent: return new NodeInt(BigInt("170141183460469231731687303715884105727"));
+                case BasicType::Ucent: return new NodeInt(BigInt("340282366920938463463374607431768211455"));
                 default: return new NodeInt(0);
             }
         }
