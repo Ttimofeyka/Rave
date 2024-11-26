@@ -79,6 +79,15 @@ namespace std {
             cp.assign(two);
         } => cp;
 
+        void clear {
+            if(capacity > ((sizeof(STACK_T) * 4))) {
+                std::free(this.data);
+                this.data = cast(STACK_T*)std::malloc(sizeof(STACK_T));
+                this.capacity = sizeof(STACK_T);
+            }
+            this.length = 0;
+        }
+
         void ~this {
             if(this.data != null) {
                 std::free(cast(void*)this.data);
