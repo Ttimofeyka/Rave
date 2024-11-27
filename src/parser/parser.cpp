@@ -733,8 +733,7 @@ Node* Parser::parseStruct(std::vector<DeclarMod> mods) {
     if(this->peek()->type == TokType::Less) {
         this->next();
         while(this->peek()->type != TokType::More) {
-            templateNames.push_back(this->peek()->value);
-            this->next();
+            templateNames.push_back(this->parseType()->toString());
             if(this->peek()->type == TokType::Comma) this->next();
         }
         this->next();
@@ -867,6 +866,26 @@ std::vector<TypeFuncArg*> Parser::parseFuncArgs() {
 }
 
 Type* Parser::parseType(bool cannotBeTemplate) {
+    if(this->peek()->type == TokType::Builtin && this->peek()->value == "@value") {
+        // @value(type, name) is used for entering values right into structure template.
+        this->next();
+        if(this->peek()->type != TokType::Rpar) this->error("expected token '('!");
+        this->next();
+
+        Type* mainType = this->parseType();
+        if(this->peek()->type != TokType::Comma) this->error("expected token ','!");
+        this->next();
+
+        if(this->peek()->type != TokType::Identifier) this->error("expected identifier!");
+        std::string name = this->peek()->value;
+        this->next();
+
+        if(this->peek()->type != TokType::Lpar) this->error("expected token ')'!");
+        this->next();
+
+        return new TypeTemplateMemberDefinition(mainType, name);
+    }
+
     Type* ty = this->parseTypeAtom();
     while(
         this->peek()->type == TokType::Multiply || this->peek()->type == TokType::Rarr ||
@@ -874,17 +893,16 @@ Type* Parser::parseType(bool cannotBeTemplate) {
     ) {
         if(this->peek()->type == TokType::Multiply) {this->next(); ty = new TypePointer(ty);}
         else if(this->peek()->type == TokType::Rarr) {
-            int cnt = 0;
+            Node* count = nullptr;
             this->next();
-            if(this->peek()->type == TokType::Number) cnt = std::stoi(this->peek()->value);
-            this->next();
+            count = parseExpr();
             
             if(this->peek()->type != TokType::Larr) {
                 if(this->tokens[this->idx + 1]->type != TokType::Equ) this->error("expected token ']'!");
             }
             else this->next();
 
-            ty = new TypeArray(cnt, ty);
+            ty = new TypeArray(count, ty);
         }
         else if(this->peek()->type == TokType::Rpar) ty = new TypeFunc(ty, this->parseFuncArgs(), false);
         else {
@@ -892,7 +910,11 @@ Type* Parser::parseType(bool cannotBeTemplate) {
             std::string tTypesString = "";
             this->next();
             while(this->peek()->type != TokType::More) {
-                tTypes.push_back(this->parseType(cannotBeTemplate));
+                if(this->peek()->type == TokType::Number || this->peek()->type == TokType::HexNumber || this->peek()->type == TokType::FloatNumber) {
+                    Node* number = this->parseAtom();
+                    tTypes.push_back(new TypeTemplateMember(number->getType(), number));
+                }
+                else tTypes.push_back(this->parseType(cannotBeTemplate));
 
                 if(this->peek()->type == TokType::Comma) this->next();
                 else if(this->peek()->type != TokType::More) this->error("expected token '>'!");

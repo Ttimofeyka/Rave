@@ -41,6 +41,8 @@ Type* NodeIden::getType() {
 }
 
 Node* NodeIden::comptime() {
+    if(generator != nullptr && generator->toReplaceValues.find(name) != generator->toReplaceValues.end()) return generator->toReplaceValues[name]->comptime();
+
     if(AST::aliasTable.find(this->name) == AST::aliasTable.end()) {
         generator->error("unknown alias '" + name + "'!", loc);
         return nullptr;

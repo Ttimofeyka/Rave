@@ -9,6 +9,9 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../include/utils.hpp"
 #include "../include/parser/nodes/NodeStruct.hpp"
 #include "../include/parser/nodes/NodeVar.hpp"
+#include "../include/parser/nodes/NodeInt.hpp"
+#include "../include/parser/nodes/NodeString.hpp"
+#include "../include/parser/nodes/NodeFloat.hpp"
 #include <iostream>
 
 // Type
@@ -76,7 +79,7 @@ Type* TypePointer::getElType() {
 }
 
 // TypeArray
-TypeArray::TypeArray(int count, Type* element) {
+TypeArray::TypeArray(Node* count, Type* element) {
     this->count = count;
     this->element = element;
 }
@@ -90,8 +93,8 @@ Type* TypeArray::check(Type* parent) {
     return nullptr;
 }
 
-int TypeArray::getSize() {return this->count * this->element->getSize();}
-std::string TypeArray::toString() {return this->element->toString() + "[" + std::to_string(this->count) + "]";}
+int TypeArray::getSize() {return ((NodeInt*)this->count->comptime())->value.to_int() * this->element->getSize();}
+std::string TypeArray::toString() {return this->element->toString() + "[" + std::to_string(((NodeInt*)this->count->comptime())->value.to_int()) + "]";}
 Type* TypeArray::getElType() {return element;}
 
 // TypeAlias
@@ -137,7 +140,7 @@ Type* TypeStruct::copy() {
 void TypeStruct::updateByTypes() {
     if(this->name.find('<') != std::string::npos) {
         this->name = this->name.substr(0, this->name.find('<')) + "<";
-        for(int i=0; i<this->types.size(); i++) this->name += this->types[i]->toString()+",";
+        for(int i=0; i<this->types.size(); i++) this->name += this->types[i]->toString() + ",";
         this->name = this->name.substr(0, this->name.size()-1) + ">";
     }
 }
@@ -244,6 +247,35 @@ Type* TypeStruct::check(Type* parent) {
 
 std::string TypeStruct::toString() {return this->name;}
 Type* TypeStruct::getElType() {return this;}
+
+// TypeTemplateMember
+TypeTemplateMember::TypeTemplateMember(Type* type, Node* value) {
+    this->type = type;
+    this->value = value;
+}
+
+Type* TypeTemplateMember::copy() {return new TypeTemplateMember(this->type->copy(), this->value);}
+Type* TypeTemplateMember::check(Type* parent) {return nullptr;}
+std::string TypeTemplateMember::toString() {
+    if(instanceof<NodeInt>(value)) return "@" + type->toString() + ((NodeInt*)value)->value.to_string();
+    else if(instanceof<NodeFloat>(value)) return "@" + type->toString() + std::to_string(((NodeFloat*)value)->value);
+    else if(instanceof<NodeString>(value)) return "@" + type->toString() + "\"" + ((NodeString*)value)->value + "\"";
+    return "@" + type->toString();
+}
+int TypeTemplateMember::getSize() {return this->type->getSize();}
+Type* TypeTemplateMember::getElType() {return this->type->getElType();}
+
+// TypeTemplateMemberDefinition
+TypeTemplateMemberDefinition::TypeTemplateMemberDefinition(Type* type, std::string name) {
+    this->type = type;
+    this->name = name;
+}
+
+Type* TypeTemplateMemberDefinition::copy() {return new TypeTemplateMemberDefinition(this->type->copy(), this->name);}
+Type* TypeTemplateMemberDefinition::check(Type* parent) {return nullptr;}
+std::string TypeTemplateMemberDefinition::toString() {return this->name;}
+int TypeTemplateMemberDefinition::getSize() {return this->type->getSize();}
+Type* TypeTemplateMemberDefinition::getElType() {return this->type->getElType();}
 
 // TypeFuncArg
 TypeFuncArg::TypeFuncArg(Type* type, std::string name) {

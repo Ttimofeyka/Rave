@@ -10,6 +10,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "./include/parser/nodes/NodeFunc.hpp"
 #include "./include/parser/nodes/NodeStruct.hpp"
 #include "./include/parser/nodes/NodeVar.hpp"
+#include "./include/parser/nodes/NodeInt.hpp"
 #include <iostream>
 
 #include <llvm/Target/TargetMachine.h>
@@ -114,5 +115,5 @@ LLVMValueRef LLVM::makeInt(size_t n, unsigned long long value, bool isUnsigned) 
 RaveValue LLVM::makeCArray(Type* ty, std::vector<RaveValue> values) {
     std::vector<LLVMValueRef> data;
     for(int i=0; i<values.size(); i++) data.push_back(values[i].value);
-    return {LLVMConstArray(generator->genType(ty, -1), data.data(), data.size()), new TypeArray(data.size(), ty)};
+    return {LLVMConstArray(generator->genType(ty, -1), data.data(), data.size()), new TypeArray(new NodeInt(data.size()), ty)};
 }

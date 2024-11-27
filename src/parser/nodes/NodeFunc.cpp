@@ -110,7 +110,8 @@ void NodeFunc::check() {
             TypeStruct* ts = (TypeStruct*)this->type;
             for(int i=0; i<ts->types.size(); i++) {
                 if(ts->types[i] != nullptr) {
-                    while(generator->toReplace.find(ts->types[i]->toString()) != generator->toReplace.end()) {
+                    if(generator->toReplace.find(ts->types[i]->toString() + "@") != generator->toReplace.end()) ts->types[i] = generator->toReplace[ts->types[i]->toString() + "@"];
+                    else while(generator->toReplace.find(ts->types[i]->toString()) != generator->toReplace.end()) {
                         ts->types[i] = generator->toReplace[ts->types[i]->toString()];
                     }
                 }
@@ -366,7 +367,7 @@ RaveValue NodeFunc::generate() {
         }
         this->block->generate();
 
-        for(int i=0; i<block->nodes.size(); i++) {
+        if(!Compiler::settings.disableWarnings) for(int i=0; i<block->nodes.size(); i++) {
             if(instanceof<NodeIf>(block->nodes[i])) ((NodeIf*)block->nodes[i])->optimize();
             else if(instanceof<NodeFor>(block->nodes[i])) ((NodeFor*)block->nodes[i])->optimize();
             else if(instanceof<NodeWhile>(block->nodes[i])) ((NodeWhile*)block->nodes[i])->optimize();

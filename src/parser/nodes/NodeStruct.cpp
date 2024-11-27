@@ -346,6 +346,7 @@ LLVMTypeRef NodeStruct::genWithTemplate(std::string sTypes, std::vector<Type*> t
     LLVMBasicBlockRef currBB = generator->currBB;
     Scope* _scope = currScope;
     std::map<std::string, Type*> toReplace = std::map<std::string, Type*>(generator->toReplace);
+    std::map<std::string, Node*> toReplaceValues = std::map<std::string, Node*>(generator->toReplaceValues);
 
     std::string _fn = "<";
 
@@ -358,11 +359,20 @@ LLVMTypeRef NodeStruct::genWithTemplate(std::string sTypes, std::vector<Type*> t
         if(instanceof<TypeStruct>(types[i])) {
             if(AST::structTable.find(((TypeStruct*)types[i])->name) == AST::structTable.end() && !((TypeStruct*)types[i])->types.empty()) generator->genType(types[i], this->loc);
         }
-        generator->toReplace[templateNames[i]] = types[i];
-        _fn += templateNames[i] + ",";
+
+        if(instanceof<TypeTemplateMember>(types[i])) {
+            // Value instead type
+            generator->toReplaceValues[templateNames[i]] = ((TypeTemplateMember*)types[i])->value;
+            generator->toReplace[templateNames[i] + "@"] = types[i];
+            _fn += templateNames[i] + ",";
+        }
+        else {
+            generator->toReplace[templateNames[i]] = types[i];
+            _fn += templateNames[i] + ",";
+        }
     }
 
-    generator->toReplace[name + _fn.substr(0, _fn.size()-1) + ">"] = new TypeStruct(name+sTypes);
+    generator->toReplace[name + _fn.substr(0, _fn.size()-1) + ">"] = new TypeStruct(name + sTypes);
 
     NodeStruct* _struct = new NodeStruct(name + sTypes, this->copyElements(), this->loc, "", {}, this->mods);
     _struct->isTemplated = true;
@@ -396,6 +406,7 @@ LLVMTypeRef NodeStruct::genWithTemplate(std::string sTypes, std::vector<Type*> t
     generator->currBB = currBB;
     currScope = _scope;
     generator->toReplace = std::map<std::string, Type*>(toReplace);
+    generator->toReplaceValues = std::map<std::string, Node*>(toReplaceValues);
 
     return generator->structures[_struct->name];
 }

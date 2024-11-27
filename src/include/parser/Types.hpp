@@ -62,10 +62,10 @@ public:
 
 class TypeArray : public Type {
 public:
-    int count;
+    Node* count;
     Type* element;
 
-    TypeArray(int count, Type* element);
+    TypeArray(Node* count, Type* element);
     Type* check(Type* parent) override;
     Type* copy() override;
     int getSize() override;
@@ -117,6 +117,32 @@ public:
     void updateByTypes();
     bool isSimple();
     int getElCount();
+    int getSize() override;
+    std::string toString() override;
+    Type* getElType() override;
+};
+
+class TypeTemplateMember : public Type {
+public:
+    Type* type;
+    Node* value;
+
+    TypeTemplateMember(Type* type, Node* value);
+    Type* copy() override;
+    Type* check(Type* parent) override;
+    int getSize() override;
+    std::string toString() override;
+    Type* getElType() override;
+};
+
+class TypeTemplateMemberDefinition : public Type {
+public:
+    std::string name;
+    Type* type;
+
+    TypeTemplateMemberDefinition(Type* type, std::string name);
+    Type* copy() override;
+    Type* check(Type* parent) override;
     int getSize() override;
     std::string toString() override;
     Type* getElType() override;

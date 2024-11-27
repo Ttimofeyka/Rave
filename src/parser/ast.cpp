@@ -17,6 +17,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../include/parser/nodes/NodeCall.hpp"
 #include "../include/parser/nodes/NodeType.hpp"
 #include "../include/parser/nodes/NodeGet.hpp"
+#include "../include/parser/nodes/NodeInt.hpp"
 #include "../include/json.hpp"
 #include "../include/compiler.hpp"
 #include <iostream>
@@ -112,7 +113,7 @@ std::string typeToString(Type* arg) {
         }
     }
     else if(instanceof<TypeArray>(arg)) {
-        std::string buffer = "a" + std::to_string(((TypeArray*)arg)->count);
+        std::string buffer = "a" + std::to_string(((NodeInt*)((TypeArray*)arg)->count->comptime())->value.to_int());
         Type* element = ((TypeArray*)arg)->element;
 
         while(element != nullptr && !instanceof<TypeBasic>(element) && !instanceof<TypeFunc>(element) && !instanceof<TypeStruct>(element)) {
@@ -281,7 +282,7 @@ LLVMTypeRef LLVMGen::genType(Type* type, int loc) {
         if(instanceof<TypeVoid>(((TypePointer*)type)->instance)) return LLVMPointerType(LLVMInt8TypeInContext(this->context),0);
         return LLVMPointerType(this->genType(((TypePointer*)type)->instance, loc),0);
     }
-    if(instanceof<TypeArray>(type)) return LLVMArrayType(this->genType(((TypeArray*)type)->element, loc),((TypeArray*)type)->count);
+    if(instanceof<TypeArray>(type)) return LLVMArrayType(this->genType(((TypeArray*)type)->element, loc), ((NodeInt*)((TypeArray*)type)->count->comptime())->value.to_int());
     if(instanceof<TypeStruct>(type)) {
         TypeStruct* s = (TypeStruct*)type;
         if(this->structures.find(s->name) == this->structures.end()) {
@@ -404,6 +405,7 @@ RaveValue Scope::get(std::string name, int loc) {
     RaveValue value = {nullptr, nullptr};
 
     if(AST::aliasTable.find(name) != AST::aliasTable.end()) value = AST::aliasTable[name]->generate();
+    else if(generator->toReplaceValues.find(name) != generator->toReplaceValues.end()) value = generator->toReplaceValues[name]->generate();
     else if(this->aliasTable.find(name) != this->aliasTable.end()) value = this->aliasTable[name]->generate();
     else if(localScope.find(name) != localScope.end()) value = localScope[name];
     else if(generator->globals.find(name) != generator->globals.end()) value = generator->globals[name];
@@ -432,6 +434,7 @@ RaveValue Scope::get(std::string name, int loc) {
 }
 
 RaveValue Scope::getWithoutLoad(std::string name, int loc) {
+    if(generator->toReplaceValues.find(name) != generator->toReplaceValues.end()) return generator->toReplaceValues[name]->generate();
     if(AST::aliasTable.find(name) != AST::aliasTable.end()) return AST::aliasTable[name]->generate();
     if(this->aliasTable.find(name) != this->aliasTable.end()) return this->aliasTable[name]->generate();
     if(this->localScope.find(name) != this->localScope.end()) return this->localScope[name];

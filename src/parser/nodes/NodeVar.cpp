@@ -37,7 +37,7 @@ NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, boo
 
     if(value != nullptr && instanceof<TypeArray>(type) && ((TypeArray*)type)->count == 0) {
         // Set the count of array elements to the count of values
-        ((TypeArray*)this->type)->count = ((NodeArray*)this->value)->values.size();
+        ((TypeArray*)this->type)->count = new NodeInt(((NodeArray*)this->value)->values.size());
     }
 }
 
@@ -61,9 +61,9 @@ NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, boo
         if(this->mods[i].name == "noCopy") this->isNoCopy = true;
     }
 
-    if(value != nullptr && instanceof<TypeArray>(type) && ((TypeArray*)type)->count == 0) {
+    if(value != nullptr && instanceof<TypeArray>(type) && ((TypeArray*)type)->count == nullptr) {
         // Set the count of array elements to the count of values
-        ((TypeArray*)this->type)->count = ((NodeArray*)this->value)->values.size();
+        ((TypeArray*)this->type)->count = new NodeInt(((NodeArray*)this->value)->values.size());
     }
 }
 
@@ -88,9 +88,9 @@ NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, boo
         if(this->mods[i].name == "noCopy") this->isNoCopy = true;
     }
 
-    if(value != nullptr && instanceof<TypeArray>(type) && ((TypeArray*)type)->count == 0) {
+    if(value != nullptr && instanceof<TypeArray>(type) && ((TypeArray*)type)->count == nullptr) {
         // Set the count of array elements to the count of values
-        ((TypeArray*)this->type)->count = ((NodeArray*)this->value)->values.size();
+        ((TypeArray*)this->type)->count = new NodeInt(((NodeArray*)this->value)->values.size());
     }
 }
 

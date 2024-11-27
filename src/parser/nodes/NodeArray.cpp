@@ -5,6 +5,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 #include "../../include/parser/nodes/NodeArray.hpp"
+#include "../../include/parser/nodes/NodeInt.hpp"
 #include "../../include/utils.hpp"
 #include "../../include/parser/ast.hpp"
 #include "../../include/llvm.hpp"
@@ -15,7 +16,7 @@ NodeArray::NodeArray(int loc, std::vector<Node*> values) {
 }
 
 Type* NodeArray::getType() {
-    if(this->values.size() > 0) return new TypeArray(this->values.size(), this->values[0]->getType());
+    if(this->values.size() > 0) return new TypeArray(new NodeInt(this->values.size()), this->values[0]->getType());
     return new TypeVoid();
 }
 
@@ -45,7 +46,7 @@ RaveValue NodeArray::generate() {
     // If this is a constant array - just return LLVM constant array with provided values
     if(isConst) return LLVM::makeCArray(this->type, genValues);
 
-    RaveValue arr = LLVM::alloc(new TypeArray(this->values.size(), this->type), "NodeArray");
+    RaveValue arr = LLVM::alloc(new TypeArray(new NodeInt(this->values.size()), this->type), "NodeArray");
 
     for(int i=0; i<this->values.size(); i++) {
         LLVMBuildStore(generator->builder, genValues[i].value, generator->byIndex(arr, std::vector<LLVMValueRef>({LLVM::makeInt(32, i, false)})).value);

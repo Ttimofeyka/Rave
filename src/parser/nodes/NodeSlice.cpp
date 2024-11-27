@@ -28,8 +28,8 @@ Type* NodeSlice::getType() {
     if(!instanceof<NodeInt>(start) || !instanceof<NodeInt>(end)) generator->error("NodeSlice temporarily supports only constant numbers!", loc); // TODO: Rework it
     BigInt one = ((NodeInt*)start)->value;
     BigInt two = ((NodeInt*)end)->value;
-    if((two <= one) || (one < 0) || (instanceof<TypeArray>(base->getType()) && ((TypeArray*)base->getType())->count < two.to_int())) generator->error("incorrect slice values!", loc);
-    return new TypeArray(two.to_int() - one.to_int(), base->getType());
+    if((two <= one) || (one < 0) || (instanceof<TypeArray>(base->getType()) && ((NodeInt*)((TypeArray*)base->getType())->count->comptime())->value.to_int() < two.to_int())) generator->error("incorrect slice values!", loc);
+    return new TypeArray(new NodeInt(two.to_int() - one.to_int()), base->getType());
 }
 
 Node* NodeSlice::comptime() {return this;}
@@ -40,14 +40,14 @@ RaveValue NodeSlice::generate() {
     if(!instanceof<NodeInt>(start) || !instanceof<NodeInt>(end)) generator->error("NodeSlice temporarily supports only constant numbers!", loc); // TODO: Rework it
     int one = ((NodeInt*)start)->value.to_int();
     int two = ((NodeInt*)end)->value.to_int();
-    if((two <= one) || (one < 0) || (instanceof<TypeArray>(base->getType()) && ((TypeArray*)base->getType())->count < two)) generator->error("incorrect slice values!", loc);
+    if((two <= one) || (one < 0) || (instanceof<TypeArray>(base->getType()) && ((NodeInt*)((TypeArray*)base->getType())->count->comptime())->value.to_int() < two)) generator->error("incorrect slice values!", loc);
 
     if(instanceof<NodeIden>(base)) ((NodeIden*)base)->isMustBePtr = false;
     else if(instanceof<NodeGet>(base)) ((NodeGet*)base)->isMustBePtr = false;
     else if(instanceof<NodeIndex>(base)) ((NodeIndex*)base)->isMustBePtr = false;
 
     RaveValue lBase = base->generate();
-    RaveValue buffer = LLVM::alloc(new TypeArray(two - one, lBase.type->getElType()), "NodeSlice_buffer");
+    RaveValue buffer = LLVM::alloc(new TypeArray(new NodeInt(two - one), lBase.type->getElType()), "NodeSlice_buffer");
     RaveValue tempBuffer = LLVM::load(buffer, "load", loc);
 
     if(instanceof<TypeArray>(lBase.type)) for(int i=one, j=0; i<two; i++, j++) {

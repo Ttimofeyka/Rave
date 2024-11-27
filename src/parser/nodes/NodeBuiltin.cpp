@@ -601,7 +601,7 @@ RaveValue NodeBuiltin::generate() {
         TypeArray* tarray = (TypeArray*)this->args[2]->getType();
         if(!instanceof<TypeBasic>(tarray->element) || ((TypeBasic*)tarray->element)->type != BasicType::Int)
             generator->error("the third argument must be a constant array of integers!", this->loc);
-        if(tarray->count < 1) generator->error("the constant array cannot be empty!", this->loc);
+        if(((NodeInt*)tarray->count->comptime())->value.to_int() < 1) generator->error("the constant array cannot be empty!", this->loc);
 
         std::vector<LLVMValueRef> values;
         for(int i=0; i<((NodeArray*)this->args[2])->values.size(); i++) values.push_back(((NodeArray*)this->args[2])->values[i]->generate().value);

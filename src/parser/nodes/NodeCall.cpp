@@ -280,7 +280,7 @@ RaveValue NodeCall::generate() {
                         isChanged = true;
                         TypeArray* tarray = (TypeArray*)this->args[i]->getType();
                         newArgs.push_back(new NodeUnary(this->loc, TokType::GetPtr, this->args[i]));
-                        newArgs.push_back(new NodeInt(tarray->count));
+                        newArgs.push_back(tarray->count->comptime());
                     }
                     else newArgs.push_back(this->args[i]);
                 }
@@ -331,7 +331,11 @@ RaveValue NodeCall::generate() {
 
             std::vector<Type*> types;
             while(tParser->peek()->type != TokType::Eof) {
-                types.push_back(tParser->parseType(true));
+                if(tParser->peek()->type == TokType::Number || tParser->peek()->type == TokType::HexNumber || tParser->peek()->type == TokType::FloatNumber) {
+                    Node* value = tParser->parseExpr();
+                    types.push_back(new TypeTemplateMember(value->getType(), value));
+                }
+                else types.push_back(tParser->parseType(true));
                 if(tParser->peek()->type == TokType::Comma) tParser->next();
             }
 
@@ -375,7 +379,11 @@ RaveValue NodeCall::generate() {
             std::vector<Type*> types;
             sTypes = "";
             while(tParser->peek()->type != TokType::Eof) {
-                types.push_back(tParser->parseType(true));
+                if(tParser->peek()->type == TokType::Number || tParser->peek()->type == TokType::HexNumber || tParser->peek()->type == TokType::FloatNumber) {
+                    Node* value = tParser->parseExpr();
+                    types.push_back(new TypeTemplateMember(value->getType(), value));
+                }
+                else types.push_back(tParser->parseType(true));
                 if(tParser->peek()->type == TokType::Comma) tParser->next();
             }
 

@@ -83,6 +83,7 @@ public:
 
     std::map<std::string, std::string> neededFunctions;
     std::map<std::string, Type*> toReplace;
+    std::map<std::string, Node*> toReplaceValues;
 
     LLVMBasicBlockRef currBB;
 
