@@ -47,9 +47,9 @@ void NodeWhile::check() {
 
 RaveValue NodeWhile::generate() {
     auto& function = generator->functions[currScope->funcName];
-    LLVMBasicBlockRef condBlock = LLVMAppendBasicBlock(function.value, "cond");
-    LLVMBasicBlockRef whileBlock = LLVMAppendBasicBlock(function.value, "while");
-    currScope->blockExit = LLVMAppendBasicBlock(function.value, "exit");
+    LLVMBasicBlockRef condBlock = LLVM::makeBlock("cond", function.value);
+    LLVMBasicBlockRef whileBlock = LLVM::makeBlock("while", function.value);
+    currScope->blockExit = LLVM::makeBlock("exit", function.value);
 
     LLVMBuildBr(generator->builder, condBlock);
     LLVMPositionBuilderAtEnd(generator->builder, condBlock);

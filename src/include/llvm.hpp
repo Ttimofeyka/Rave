@@ -7,6 +7,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #pragma once
 
 #include <vector>
+#include <string>
 #include <llvm-c/Core.h>
 
 class Type;
@@ -35,4 +36,7 @@ namespace LLVM {
 
     extern LLVMValueRef makeInt(size_t n, unsigned long long value, bool isUnsigned);
     extern RaveValue makeCArray(Type* ty, std::vector<RaveValue> values);
+
+    extern LLVMBasicBlockRef makeBlock(std::string name, LLVMValueRef function);
+    extern LLVMBasicBlockRef makeBlock(std::string name, std::string fName);
 }

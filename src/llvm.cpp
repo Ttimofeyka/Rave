@@ -12,6 +12,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "./include/parser/nodes/NodeVar.hpp"
 #include "./include/parser/nodes/NodeInt.hpp"
 #include <iostream>
+#include <string>
 
 #include <llvm/Target/TargetMachine.h>
 #include <llvm/IR/IRBuilder.h>
@@ -116,4 +117,13 @@ RaveValue LLVM::makeCArray(Type* ty, std::vector<RaveValue> values) {
     std::vector<LLVMValueRef> data;
     for(int i=0; i<values.size(); i++) data.push_back(values[i].value);
     return {LLVMConstArray(generator->genType(ty, -1), data.data(), data.size()), new TypeArray(new NodeInt(data.size()), ty)};
+}
+
+// Wrappers for LLVMAppendBasicBlockInContext
+LLVMBasicBlockRef LLVM::makeBlock(std::string name, LLVMValueRef function) {
+    return LLVMAppendBasicBlockInContext(generator->context, function, name.c_str());
+}
+
+LLVMBasicBlockRef LLVM::makeBlock(std::string name, std::string fName) {
+    return LLVM::makeBlock(name, generator->functions[fName].value);
 }

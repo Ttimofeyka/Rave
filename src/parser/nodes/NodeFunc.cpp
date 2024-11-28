@@ -343,8 +343,8 @@ RaveValue NodeFunc::generate() {
 
     if(!this->isExtern) {
         if(this->isCtargsPart || this->isCtargs) generator->currentBuiltinArg = 0;
-        LLVMBasicBlockRef entry = LLVMAppendBasicBlockInContext(generator->context, generator->functions[this->name].value, "entry");
-        this->exitBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[this->name].value, "exit");
+        LLVMBasicBlockRef entry = LLVM::makeBlock("entry", name);
+        this->exitBlock = LLVM::makeBlock("exit", name);
         this->builder = LLVMCreateBuilderInContext(generator->context);
         generator->builder = this->builder;
         LLVMPositionBuilderAtEnd(generator->builder, entry);

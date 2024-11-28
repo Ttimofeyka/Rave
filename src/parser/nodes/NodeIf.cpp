@@ -80,16 +80,16 @@ RaveValue NodeIf::generate() {
         return {};
     }
 
-    LLVMBasicBlockRef thenBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[currScope->funcName].value, "then");
-	LLVMBasicBlockRef elseBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[currScope->funcName].value, "else");
+    LLVMBasicBlockRef thenBlock = LLVM::makeBlock("then", currScope->funcName);
+	LLVMBasicBlockRef elseBlock = LLVM::makeBlock("else", currScope->funcName);
 	LLVMBasicBlockRef endBlock = nullptr;
 
     if(this->_else != nullptr && instanceof<NodeIf>(this->_else)) {
-        if(currScope->elseIfEnd == nullptr) currScope->elseIfEnd = LLVMAppendBasicBlockInContext(generator->context, generator->functions[currScope->funcName].value, "elseIfEnd");
+        if(currScope->elseIfEnd == nullptr) currScope->elseIfEnd = LLVM::makeBlock("elseIfEnd", currScope->funcName);
         endBlock = currScope->elseIfEnd;
     }
     else {
-        endBlock = LLVMAppendBasicBlockInContext(generator->context, generator->functions[currScope->funcName].value, "end");
+        endBlock = LLVM::makeBlock("end", currScope->funcName);
         currScope->elseIfEnd = nullptr;
     }
 
