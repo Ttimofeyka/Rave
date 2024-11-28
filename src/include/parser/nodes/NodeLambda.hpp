@@ -26,8 +26,6 @@ public:
     TypeFunc* tf;
     Type* type;
     NodeBlock* block;
-    std::vector<NodeRet*> rets;
-    std::vector<RetGenStmt> genRets;
 
     NodeLambda(int loc, TypeFunc* tf, NodeBlock* block, std::string name = "");
     Type* getType() override;
