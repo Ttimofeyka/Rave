@@ -16,6 +16,7 @@ public:
     std::string field;
     int loc;
     bool isMustBePtr = false;
+    bool isPtrForIndex = false;
     bool elementIsConst = false;
 
     NodeGet(Node* base, std::string field, bool isMustBePtr, int loc);

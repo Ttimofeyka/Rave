@@ -72,6 +72,7 @@ RaveValue NodeUnary::generate() {
         if(instanceof<TypeBasic>(bs.type) && !((TypeBasic*)bs.type)->isFloat()) return {LLVMBuildNeg(generator->builder, bs.value, "NodeUnary_neg"), bs.type};
         return {LLVMBuildFNeg(generator->builder, bs.value, "NodeUnary_fneg"), bs.type};
     }
+
     if(this->type == TokType::GetPtr) {
         RaveValue val;
 
@@ -114,8 +115,10 @@ RaveValue NodeUnary::generate() {
             LLVMBuildStore(generator->builder, val.value, temp.value);
             val = temp;
         }
+
         return val;
     }
+
     if(this->type == TokType::Ne) {
         if(instanceof<NodeIden>(base)) ((NodeIden*)base)->isMustBePtr = false;
         else if(instanceof<NodeIndex>(base)) ((NodeIndex*)base)->isMustBePtr = false;
@@ -126,10 +129,12 @@ RaveValue NodeUnary::generate() {
     
         return {LLVMBuildNot(generator->builder, toRet.value, "NodeUnary_not"), toRet.type};
     }
+
     if(this->type == TokType::Multiply) {
         RaveValue _base = this->base->generate();
         return LLVM::load(_base, "NodeUnary_multiply_load", loc);
     }
+
     if(this->type == TokType::Destructor) {
         RaveValue val2 = this->generatePtr();
 
@@ -168,6 +173,7 @@ RaveValue NodeUnary::generate() {
         }
         return (new NodeCall(this->loc, new NodeIden(AST::structTable[struc]->destructor->name, this->loc), {this->base}))->generate();
     }
+
     generator->error("NodeUnary undefined operator!", loc);
     return {};
 }

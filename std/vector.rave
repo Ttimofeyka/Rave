@@ -101,6 +101,16 @@ namespace std {
             };
         }
 
+        (inline) VECTOR_T* operator[]&(std::vector<VECTOR_T>* v, int index) {
+            @if(__RAVE_RUNTIME_CHECKS) {
+                if((index >= 0) && (index < v.length)) return = itop(VECTOR_T*, ptoi(v.data) + (sizeof(VECTOR_T) * index));
+            };
+
+            @if(!(__RAVE_RUNTIME_CHECKS)) {
+                return = itop(VECTOR_T*, ptoi(v.data) + (sizeof(VECTOR_T) * index));
+            };
+        }
+
         (inline) void swap(int first, int second) {
             @if(__RAVE_RUNTIME_CHECKS) {
                 if(((first >= 0) && (first < this.length)) && ((second >= 0) && (second < this.length))) {

@@ -141,6 +141,7 @@ RaveValue NodeIndex::generate() {
         if(isMustBePtr) return index;
         return LLVM::load(index, ("NodeIndex_NodeIden_load_" + std::to_string(this->loc) + "_").c_str(), loc);
     }
+
     if(instanceof<NodeGet>(this->element)) {
         NodeGet* nget = (NodeGet*)this->element;
         nget->isMustBePtr = true;
@@ -169,9 +170,11 @@ RaveValue NodeIndex::generate() {
         this->elementIsConst = nget->elementIsConst;
         if(!instanceof<TypeArray>(ptr.type->getElType())) {ptr = LLVM::load(ptr, ("NodeIndex_NodeGet_load" + std::to_string(this->loc) + "_").c_str(), loc);}
         RaveValue index = generator->byIndex(ptr, this->generateIndexes());
+
         if(isMustBePtr) return index;
         return LLVM::load(index, ("NodeIndex_NodeGet" + std::to_string(this->loc) + "_").c_str(), loc);
     }
+
     if(instanceof<NodeCall>(this->element)) {
         NodeCall* ncall = (NodeCall*)this->element;
         RaveValue vr = ncall->generate();
@@ -192,11 +195,13 @@ RaveValue NodeIndex::generate() {
         if(isMustBePtr) return index;
         return LLVM::load(index, ("NodeIndex_NodeCall_load" + std::to_string(this->loc) + "_").c_str(), loc);
     }
+
     if(instanceof<NodeDone>(element)) {
         RaveValue index = generator->byIndex(element->generate(), this->generateIndexes());
         if(isMustBePtr) return index;
         return LLVM::load(index, "NodeDone_load", loc);
     }
+
     if(instanceof<NodeCast>(this->element)) {
         NodeCast* ncast = (NodeCast*)this->element;
         RaveValue val = ncast->generate();
@@ -217,8 +222,25 @@ RaveValue NodeIndex::generate() {
         if(isMustBePtr) return index;
         return LLVM::load(index, "NodeIndex_NodeCast_load", loc);
     }
+
     if(instanceof<NodeUnary>(this->element)) {
         NodeUnary* nunary = (NodeUnary*)this->element;
+        Type* nunaryType = nunary->base->getType();
+
+        if((nunary->type == TokType::GetPtr) && (instanceof<TypeStruct>(nunaryType) || (instanceof<TypePointer>(nunaryType) && instanceof<TypeStruct>(((TypePointer*)nunaryType)->instance)))) {
+            TypeStruct* tstruct = instanceof<TypeStruct>(nunaryType) ? (TypeStruct*)nunaryType : (TypeStruct*)(((TypePointer*)nunaryType)->instance);
+            
+            if(AST::structTable.find(tstruct->name) != AST::structTable.end()) {
+                auto& operators = AST::structTable[tstruct->name]->operators;
+                if(operators.find('&') != operators.end()) {
+                    std::map<std::string, NodeFunc*> functions = operators['&'];
+                    Node* value = nunary;
+
+                    for(auto &&i : functions) return (new NodeCall(loc, new NodeIden(i.second->name, loc), {nunary, indexes[0]}))->generate();
+                }
+            }
+        }
+
         RaveValue val = nunary->generate();
 
         if(!generator->settings.noChecks && generator->settings.optLevel <= 2 &&

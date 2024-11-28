@@ -1038,10 +1038,18 @@ Node* Parser::parseSuffix(Node* base, std::string f) {
         }
         else if(this->peek()->type == TokType::Dot) {
             this->next();
+
             bool isPtr = (this->peek()->type == TokType::GetPtr);
             if(isPtr) this->next();
-            std::string field = this->peek()->value; this->next();
+
+            std::string field = this->peek()->value;
+            this->next();
+
             if(this->peek()->type == TokType::Rpar) base = this->parseCall(new NodeGet(base, field, isPtr, this->peek()->line));
+            else if(isPtr && this->peek()->type == TokType::Rarr) {
+                base = new NodeGet(base, field, this->peek()->type == TokType::Equ || isPtr, this->peek()->line);
+                ((NodeGet*)base)->isPtrForIndex = true;
+            }
             else if(this->peek()->type == TokType::Less) {
                 if(this->isTemplate()) {
                     std::vector<Type*> types;
