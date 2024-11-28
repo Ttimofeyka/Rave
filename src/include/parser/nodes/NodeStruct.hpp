@@ -29,7 +29,7 @@ public:
     std::vector<std::string> namespacesNames;
     int loc;
     std::string origname;
-    std::vector<NodeFunc*>  constructors;
+    std::vector<NodeFunc*> constructors;
     NodeFunc* destructor;
     NodeFunc* with;
     std::vector<NodeFunc*> methods;

@@ -140,10 +140,6 @@ void NodeFunc::check() {
 
         AST::funcTable[this->name] = this;
         for(int i=0; i<this->block->nodes.size(); i++) {
-            if(instanceof<NodeRet>(this->block->nodes[i])) ((NodeRet*)this->block->nodes[i])->parent = this->name;
-            else if(instanceof<NodeIf>(this->block->nodes[i])) ((NodeIf*)this->block->nodes[i])->funcName = this->name;
-            else if(instanceof<NodeWhile>(this->block->nodes[i])) ((NodeWhile*)this->block->nodes[i])->funcName = this->name;
-            else if(instanceof<NodeFor>(this->block->nodes[i])) ((NodeFor*)this->block->nodes[i])->funcName = this->name;
             this->block->nodes[i]->check();
         }
     }
@@ -227,12 +223,12 @@ RaveValue NodeFunc::generate() {
         else if(this->mods[i].name == "linkname") linkName = this->mods[i].value;
         else if(this->mods[i].name == "ctargs") this->isCtargs = true;
         else if(this->mods[i].name == "comdat") this->isComdat = true;
-        else if(this->mods[i].name == "safe") this->isSafe = true;
         else if(this->mods[i].name == "nochecks") this->isNoChecks = true;
         else if(this->mods[i].name == "noOptimize") this->isNoOpt = true;
         else if(this->mods[i].name == "arrayable") this->isArrayable = true;
         else if(this->mods[i].name.size() > 0 && this->mods[i].name[0] == '@') builtins[this->mods[i].name.substr(1)] = ((NodeBuiltin*)this->mods[i].genValue);
     }
+
     if(!this->isTemplate && this->isCtargs) return {};
 
     std::map<std::string, Type*> oldReplace = std::map<std::string, Type*>(generator->toReplace);

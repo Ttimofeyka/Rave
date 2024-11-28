@@ -122,8 +122,6 @@ public:
 
     Scope(std::string funcName, std::map<std::string, int> args, std::map<std::string, NodeVar*> argVars);
 
-    // Old functions (not recommended)
-
     RaveValue get(std::string name, int loc = -1);
     RaveValue getWithoutLoad(std::string name, int loc = -1);
     NodeVar* getVar(std::string name, int loc = -1);

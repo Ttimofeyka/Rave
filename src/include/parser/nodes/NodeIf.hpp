@@ -19,11 +19,10 @@ public:
     Node* body = nullptr;
     Node* _else = nullptr;
     int loc;
-    std::string funcName;
     bool isStatic = false;
     bool hasRets[2];
 
-    NodeIf(Node* cond, Node* body, Node* _else, int loc, std::string func, bool isStatic);
+    NodeIf(Node* cond, Node* body, Node* _else, int loc, bool isStatic);
     void optimize();
     Type* getType() override;
     void check() override;

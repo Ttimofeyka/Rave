@@ -287,7 +287,7 @@ RaveValue NodeBuiltin::generate() {
             else if(instanceof<NodeVar>(this->block->nodes[i])) ((NodeVar*)this->block->nodes[i])->isExtern = true;
             else if(instanceof<NodeStruct>(this->block->nodes[i])) ((NodeStruct*)this->block->nodes[i])->isImported = true;
         }
-        NodeIf* _if = new NodeIf(cond, block, nullptr, this->loc, (currScope == nullptr ? "" : currScope->funcName), true);
+        NodeIf* _if = new NodeIf(cond, block, nullptr, this->loc, true);
         _if->comptime();
         CTId -= 1;
 
@@ -302,7 +302,7 @@ RaveValue NodeBuiltin::generate() {
                 else if(instanceof<NodeVar>(this->block->nodes[i])) ((NodeVar*)this->block->nodes[i])->isExtern = true;
                 else if(instanceof<NodeStruct>(this->block->nodes[i])) ((NodeStruct*)this->block->nodes[i])->isImported = true;
             }
-            NodeIf* _else = new NodeIf(new NodeUnary(loc, TokType::Ne, AST::condStack[CTId]), block, nullptr, loc, (currScope == nullptr ? "" : currScope->funcName), true);
+            NodeIf* _else = new NodeIf(new NodeUnary(loc, TokType::Ne, AST::condStack[CTId]), block, nullptr, loc, true);
             _else->comptime();
         }
         else generator->error("using '@else' statement without '@if'!", loc);

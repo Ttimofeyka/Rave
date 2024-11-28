@@ -18,10 +18,9 @@ public:
     Node* cond;
     std::vector<Node*> afters;
     NodeBlock* block;
-    std::string funcName;
     int loc;
 
-    NodeFor(std::vector<Node*> presets, Node* cond, std::vector<Node*> afters, NodeBlock* block, std::string funcName, int loc);
+    NodeFor(std::vector<Node*> presets, Node* cond, std::vector<Node*> afters, NodeBlock* block, int loc);
     void optimize();
     Type* getType() override;
     

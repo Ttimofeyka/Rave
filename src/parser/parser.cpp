@@ -270,7 +270,7 @@ Node* Parser::parseOperatorOverload(Type* type, std::string s) {
     if(this->peek()->type == TokType::ShortRet) {
         NodeBlock* nb = new NodeBlock({});
         this->next();
-        nb->nodes.push_back(new NodeRet(this->parseExpr("operator"), name, _t->line));
+        nb->nodes.push_back(new NodeRet(this->parseExpr("operator"), _t->line));
         if(this->peek()->type == TokType::Semicolon) this->next();
         return new NodeFunc(name, args, nb, false, {}, _t->line, type, {});
     }
@@ -279,7 +279,7 @@ Node* Parser::parseOperatorOverload(Type* type, std::string s) {
     NodeBlock* nb = this->parseBlock("operator");
     if(this->peek()->type == TokType::ShortRet) {
         this->next();
-        nb->nodes.push_back(new NodeRet(this->parseExpr("operator"), name, _t->line));
+        nb->nodes.push_back(new NodeRet(this->parseExpr("operator"), _t->line));
     }
     return new NodeFunc(name, args, nb, false, {}, _t->line, type, {});
 }
@@ -367,7 +367,7 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
                 if(this->peek()->type != TokType::Semicolon) this->error("expected token ';'!");
                 this->next();
             }
-            return new NodeFunc(name, args, new NodeBlock({new NodeRet(expr, name, loc)}), isExtern, mods, loc, type, templates);
+            return new NodeFunc(name, args, new NodeBlock({new NodeRet(expr, loc)}), isExtern, mods, loc, type, templates);
         }
         else if(this->peek()->type == TokType::Semicolon) {
             this->next();
@@ -380,7 +380,7 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
             if(this->peek()->type == TokType::Semicolon) next();
 
             if(instanceof<TypeVoid>(type)) block->nodes.push_back(n);
-            else block->nodes.push_back(new NodeRet(n, name, loc));
+            else block->nodes.push_back(new NodeRet(n, loc));
         }
         return new NodeFunc(name, args, block, isExtern, mods, loc, type, templates);
     }
@@ -391,7 +391,7 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
             Node* n = this->parseExpr();
             if(this->peek()->type == TokType::Semicolon) this->next();
             if(instanceof<TypeVoid>(type)) block->nodes.push_back(n);
-            else block->nodes.push_back(new NodeRet(n, name, this->peek()->line));
+            else block->nodes.push_back(new NodeRet(n, this->peek()->line));
         }
         return new NodeFunc(name, {}, block, isExtern, mods, loc, type, templates);
     }
@@ -403,7 +403,7 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
             this->next();
         }
 
-        if(!instanceof<TypeVoid>(type)) return new NodeFunc(name, {}, new NodeBlock({new NodeRet(n, name, loc)}), isExtern, mods, loc, type, templates);
+        if(!instanceof<TypeVoid>(type)) return new NodeFunc(name, {}, new NodeBlock({new NodeRet(n, loc)}), isExtern, mods, loc, type, templates);
         return new NodeFunc(name, {}, new NodeBlock({n}), isExtern, mods, loc, type, templates);
     }
     else if(this->peek()->type == TokType::Semicolon) {
@@ -1206,7 +1206,7 @@ Node* Parser::parseFor(std::string f) {
 
     Node* stmt = this->parseStmt(f);
     if(!instanceof<NodeBlock>(stmt)) stmt = new NodeBlock(std::vector<Node*>({stmt}));
-    return new NodeFor(presets, cond, afters, (NodeBlock*)stmt, f, line);
+    return new NodeFor(presets, cond, afters, (NodeBlock*)stmt, line);
 }
 
 Node* Parser::parseForeach(std::string f) {
@@ -1227,7 +1227,7 @@ Node* Parser::parseForeach(std::string f) {
         this->idx += 1;
         Node* stmt = this->parseStmt(f);
         if(!instanceof<NodeBlock>(stmt)) stmt = new NodeBlock(std::vector<Node*>({stmt}));
-        return new NodeForeach(elName, dataVar, nullptr, (NodeBlock*)stmt, f, line);
+        return new NodeForeach(elName, dataVar, nullptr, (NodeBlock*)stmt, line);
     }
 
     if(this->peek()->type != TokType::Semicolon) {
@@ -1241,7 +1241,7 @@ Node* Parser::parseForeach(std::string f) {
 
     Node* stmt = this->parseStmt(f);
     if(!instanceof<NodeBlock>(stmt)) stmt = new NodeBlock(std::vector<Node*>({stmt}));
-    return new NodeForeach(elName, dataVar, lengthVar, (NodeBlock*)stmt, f, line);
+    return new NodeForeach(elName, dataVar, lengthVar, (NodeBlock*)stmt, line);
 }
 
 Node* Parser::parseStmt(std::string f) {
@@ -1351,9 +1351,9 @@ Node* Parser::parseIf(std::string f, bool isStatic) {
     Node* body = this->parseStmt(f);
     if(this->peek()->value == "else") {
         this->next();
-        return new NodeIf(cond, body,  this->parseStmt(f), line, f, isStatic);
+        return new NodeIf(cond, body, this->parseStmt(f), line, isStatic);
     }
-    return new NodeIf(cond, body, nullptr, line, f, isStatic);
+    return new NodeIf(cond, body, nullptr, line, isStatic);
 }
 
 std::pair<Node*, Node*> Parser::parseCase(std::string f) {
@@ -1389,7 +1389,7 @@ Node* Parser::parseSwitch(std::string f) {
     }
     if(this->peek()->type != TokType::Eof) this->next();
 
-    return new NodeSwitch(expr, _default, statements, line, f);
+    return new NodeSwitch(expr, _default, statements, line);
 }
 
 NodeBlock* Parser::parseBlock(std::string s) {
@@ -1451,14 +1451,14 @@ Node* Parser::parseLambda() {
     if(peek()->type == TokType::ShortRet) {
         this->next();
         Node* value = this->parseExpr();
-        return new NodeLambda(loc, (TypeFunc*)type,new NodeBlock({new NodeRet(value, "lambda", loc)}), name);
+        return new NodeLambda(loc, (TypeFunc*)type,new NodeBlock({new NodeRet(value, loc)}), name);
     }
 
     NodeBlock* b = this->parseBlock("lambda");
     if(peek()->type == TokType::ShortRet) {
         next();
         Node* value = this->parseExpr();
-        b->nodes.push_back(new NodeRet(value, "lambda", loc));
+        b->nodes.push_back(new NodeRet(value, loc));
     }
     return new NodeLambda(loc, (TypeFunc*)type, b, name);
 }

@@ -26,7 +26,7 @@ RaveValue NodeSizeof::generate() {
         if(instanceof<TypeBasic>(tp)) {
             switch(((TypeBasic*)tp)->type) {
                 case BasicType::Uchar: case BasicType::Char: case BasicType::Bool: return {LLVMConstInt(LLVMInt32TypeInContext(generator->context), 1, false), new TypeBasic(BasicType::Int)};
-                case BasicType::Ushort: case BasicType::Short: return {LLVMConstInt(LLVMInt32TypeInContext(generator->context), 2, false), new TypeBasic(BasicType::Int)};
+                case BasicType::Ushort: case BasicType::Short: case BasicType::Half: case BasicType::Bhalf: return {LLVMConstInt(LLVMInt32TypeInContext(generator->context), 2, false), new TypeBasic(BasicType::Int)};
                 case BasicType::Uint: case BasicType::Int:
                 case BasicType::Float: return {LLVMConstInt(LLVMInt32TypeInContext(generator->context), 4, false), new TypeBasic(BasicType::Int)};
                 case BasicType::Ulong: case BasicType::Long:

@@ -15,10 +15,9 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 class NodeRet : public Node {
 public:
     Node* value;
-    std::string parent;
     int loc;
 
-    NodeRet(Node* value, std::string parent, int loc);
+    NodeRet(Node* value, int loc);
 
     Type* getType() override;
     RaveValue generate() override;

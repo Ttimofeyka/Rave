@@ -108,6 +108,7 @@ LLVMValueRef Binary::sum(LLVMValueRef one, LLVMValueRef two, int loc) {
 LLVMValueRef Binary::sub(LLVMValueRef one, LLVMValueRef two, int loc) {
     LLVMValueRef oneCasted = one;
     LLVMValueRef twoCasted = two;
+
     if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMGetTypeKind(LLVMTypeOf(two))) {
         if(LLVMTypeOf(one) != LLVMTypeOf(two)) oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;
     }
@@ -120,6 +121,7 @@ LLVMValueRef Binary::sub(LLVMValueRef one, LLVMValueRef two, int loc) {
 LLVMValueRef Binary::mul(LLVMValueRef one, LLVMValueRef two, int loc) {
     LLVMValueRef oneCasted = one;
     LLVMValueRef twoCasted = two;
+
     if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMGetTypeKind(LLVMTypeOf(two))) {
         if(LLVMTypeOf(one) != LLVMTypeOf(two)) {
             oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;
@@ -134,6 +136,7 @@ LLVMValueRef Binary::mul(LLVMValueRef one, LLVMValueRef two, int loc) {
 LLVMValueRef Binary::div(LLVMValueRef one, LLVMValueRef two, int loc) {
     LLVMValueRef oneCasted = one;
     LLVMValueRef twoCasted = two;
+
     if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMGetTypeKind(LLVMTypeOf(two))) {
         if(LLVMTypeOf(one) != LLVMTypeOf(two)) {
             oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc);
@@ -149,6 +152,7 @@ LLVMValueRef Binary::div(LLVMValueRef one, LLVMValueRef two, int loc) {
 LLVMValueRef Binary::compare(LLVMValueRef one, LLVMValueRef two, char op, int loc) {
     LLVMValueRef oneCasted = one;
     LLVMValueRef twoCasted = two;
+
     if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMGetTypeKind(LLVMTypeOf(two))) {
         if(LLVMTypeOf(one) != LLVMTypeOf(two)) {
             oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;
@@ -347,9 +351,6 @@ RaveValue NodeBinary::generate() {
                 vSecond = second->generate();
             }
 
-            //if(LLVM::isPointer(vSecond) && LLVMGetTypeKind(LLVM::getPointerElType(vSecond)) == LLVMStructTypeKind) {
-            //    nvar->isAllocated = currScope->detectMemoryLeaks && true; // @detectMemoryLeaks
-            //}
             LLVMBuildStore(generator->builder, vSecond.value, value.value);
             return {};
         }

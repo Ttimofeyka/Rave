@@ -19,9 +19,8 @@ public:
     Node* _default = nullptr;
     std::vector<std::pair<Node*, Node*>> statements;
     int loc;
-    std::string funcName;
 
-    NodeSwitch(Node* expr, Node* _default, std::vector<std::pair<Node*, Node*>> statements, int loc, std::string func);
+    NodeSwitch(Node* expr, Node* _default, std::vector<std::pair<Node*, Node*>> statements, int loc);
     Type* getType() override;
     void check() override;
     RaveValue generate() override;

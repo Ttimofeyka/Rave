@@ -12,11 +12,10 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeIf.hpp"
 #include "../../include/utils.hpp"
 
-NodeSwitch::NodeSwitch(Node* expr, Node* _default, std::vector<std::pair<Node*, Node*>> statements, int loc, std::string func) {
+NodeSwitch::NodeSwitch(Node* expr, Node* _default, std::vector<std::pair<Node*, Node*>> statements, int loc) {
     this->expr = expr;
     this->statements = statements;
     this->loc = loc;
-    this->funcName = func;
     this->_default = _default;
 }
 
@@ -36,7 +35,7 @@ RaveValue NodeSwitch::generate() {
     for(const auto& statement : statements) {
         ifVector.push_back(new NodeIf(
             new NodeBinary(TokType::Equal, expr, statement.first, loc),
-            statement.second, nullptr, loc, funcName, false
+            statement.second, nullptr, loc, false
         ));
     }
 
@@ -54,6 +53,6 @@ Node* NodeSwitch::comptime() {return this;}
 Node* NodeSwitch::copy() {
     return new NodeSwitch(
         this->expr->copy(), (this->_default == nullptr ? nullptr : this->_default->copy()),
-        std::vector<std::pair<Node*, Node*>>(this->statements), this->loc, this->funcName
+        std::vector<std::pair<Node*, Node*>>(this->statements), this->loc
     );
 }

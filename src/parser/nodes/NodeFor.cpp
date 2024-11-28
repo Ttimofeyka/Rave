@@ -17,12 +17,11 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/ast.hpp"
 #include <iostream>
 
-NodeFor::NodeFor(std::vector<Node*> presets, Node* cond, std::vector<Node*> afters, NodeBlock* block, std::string funcName, int loc) {
+NodeFor::NodeFor(std::vector<Node*> presets, Node* cond, std::vector<Node*> afters, NodeBlock* block, int loc) {
     this->presets = std::vector<Node*>(presets);
     this->cond = cond;
     this->afters = std::vector<Node*>(afters);
     this->block = block;
-    this->funcName = funcName;
     this->loc = loc;
 }
 
@@ -31,7 +30,7 @@ Node* NodeFor::copy() {
     std::vector<Node*> afters;
     for(int i=0; i<this->presets.size(); i++) presets.push_back(this->presets[i]->copy());
     for(int i=0; i<this->afters.size(); i++) afters.push_back(this->afters[i]->copy());
-    return new NodeFor(presets, (NodeBinary*)(this->cond->copy()), this->afters, (NodeBlock*)(this->block->copy()), this->funcName, this->loc);
+    return new NodeFor(presets, (NodeBinary*)(this->cond->copy()), this->afters, (NodeBlock*)(this->block->copy()), this->loc);
 }
 
 Node* NodeFor::comptime() {return this;}
@@ -46,7 +45,7 @@ RaveValue NodeFor::generate() {
 
     for(int i=0; i<this->afters.size(); i++) this->block->nodes.push_back(this->afters[i]);
 
-    NodeWhile* nwhile = new NodeWhile(this->cond, this->block, this->loc, this->funcName);
+    NodeWhile* nwhile = new NodeWhile(this->cond, this->block, this->loc, currScope->funcName);
     nwhile->check();
     RaveValue result = nwhile->generate();
 

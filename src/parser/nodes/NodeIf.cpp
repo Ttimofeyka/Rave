@@ -14,12 +14,11 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeVar.hpp"
 #include "../../include/utils.hpp"
 
-NodeIf::NodeIf(Node* cond, Node* body, Node* _else, int loc, std::string funcName, bool isStatic) {
+NodeIf::NodeIf(Node* cond, Node* body, Node* _else, int loc, bool isStatic) {
     this->cond = cond;
     this->body = body;
     this->_else = _else;
     this->loc = loc;
-    this->funcName = funcName;
     this->isStatic = isStatic;
 }
 
@@ -30,44 +29,6 @@ void NodeIf::check() {
     this->isChecked = true;
 
     if(!oldCheck) {
-        if(this->body != nullptr) {
-            if(instanceof<NodeRet>(this->body)) {
-                ((NodeRet*)this->body)->parent = this->funcName;
-                this->hasRets[0] = true;
-            }
-            else if(instanceof<NodeBlock>(this->body)) {
-                NodeBlock* nb = (NodeBlock*)this->body;
-                for(int i=0; i<nb->nodes.size(); i++) {
-                    if(instanceof<NodeRet>(nb->nodes[i])) {
-                        ((NodeRet*)nb->nodes[i])->parent = this->funcName;
-                        this->hasRets[0] = true;
-                    }
-                    else if(instanceof<NodeIf>(nb->nodes[i])) ((NodeIf*)nb->nodes[i])->funcName = this->funcName;
-                    else if(instanceof<NodeWhile>(nb->nodes[i])) ((NodeWhile*)nb->nodes[i])->funcName = this->funcName;
-                    else if(instanceof<NodeFor>(nb->nodes[i])) ((NodeFor*)nb->nodes[i])->funcName = this->funcName;
-                }
-            }
-        }
-
-        if(this->_else != nullptr) {
-            if(instanceof<NodeRet>(this->_else)) {
-                ((NodeRet*)this->_else)->parent = this->funcName;
-                this->hasRets[1] = true;
-            }
-            else if(instanceof<NodeBlock>(this->_else)) {
-                NodeBlock* nb = (NodeBlock*)this->_else;
-                for(int i=0; i<nb->nodes.size(); i++) {
-                    if(instanceof<NodeRet>(nb->nodes[i])) {
-                        ((NodeRet*)nb->nodes[i])->parent = this->funcName;
-                        this->hasRets[1] = true;
-                    }
-                    else if(instanceof<NodeIf>(nb->nodes[i])) ((NodeIf*)nb->nodes[i])->funcName = this->funcName;
-                    else if(instanceof<NodeWhile>(nb->nodes[i])) ((NodeWhile*)nb->nodes[i])->funcName = this->funcName;
-                    else if(instanceof<NodeFor>(nb->nodes[i])) ((NodeFor*)nb->nodes[i])->funcName = this->funcName;
-                }
-            }
-        }
-
         this->cond->check();
         if(this->body != nullptr) this->body->check();
         if(this->_else != nullptr) this->_else->check();
@@ -108,8 +69,6 @@ RaveValue NodeIf::generate() {
     if(this->body != nullptr) this->body->generate();
     if(!generator->activeLoops[selfNum].hasEnd) LLVMBuildBr(generator->builder, endBlock);
 
-    if(generator->activeLoops[selfNum].loopRets.size() > 0) AST::funcTable[currScope->funcName]->rets.push_back(generator->activeLoops[selfNum].loopRets[0].ret);
-
     bool hasEnd1 = generator->activeLoops[selfNum].hasEnd;
 
     generator->activeLoops[selfNum] = Loop{.isActive = true, .start = elseBlock, .end = endBlock, .hasEnd = false, .isIf = true, .loopRets = std::vector<LoopReturn>(), .owner = this};
@@ -124,8 +83,6 @@ RaveValue NodeIf::generate() {
     if(!generator->activeLoops[selfNum].hasEnd) LLVMBuildBr(generator->builder, endBlock);
 
     bool hasEnd2 = generator->activeLoops[selfNum].hasEnd;
-
-    if(generator->activeLoops[selfNum].loopRets.size() > 0) AST::funcTable[currScope->funcName]->rets.push_back(generator->activeLoops[selfNum].loopRets[0].ret);
 
     currScope = origScope;
 
@@ -195,4 +152,4 @@ Node* NodeIf::comptime() {
     return nullptr;
 }
 
-Node* NodeIf::copy() {return new NodeIf(this->cond->copy(), (this->body == nullptr ? nullptr : this->body->copy()), (this->_else == nullptr ? nullptr : this->_else->copy()), this->loc, this->funcName, this->isStatic);}
+Node* NodeIf::copy() {return new NodeIf(this->cond->copy(), (this->body == nullptr ? nullptr : this->body->copy()), (this->_else == nullptr ? nullptr : this->_else->copy()), this->loc, this->isStatic);}

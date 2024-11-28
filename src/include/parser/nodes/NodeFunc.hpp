@@ -31,8 +31,6 @@ public:
 
     NodeBlock* block;
 
-    std::vector<NodeRet*> rets;
-    std::vector<RetGenStmt> genRets;
     std::vector<DeclarMod> mods;
 
     int loc;
@@ -50,7 +48,6 @@ public:
     bool isCtargs = false;
     bool isCtargsPart = false;
     bool isComdat = false;
-    bool isSafe = false;
     bool isFakeMethod = false;
     bool isNoNamespaces = false;
     bool isNoChecks = false;

@@ -28,21 +28,7 @@ Node* NodeWhile::comptime() {return this;}
 Node* NodeWhile::copy() {return new NodeWhile(this->cond->copy(), this->body->copy(), this->loc, this->funcName);}
 
 void NodeWhile::check() {
-    bool oldCheck = this->isChecked;
     this->isChecked = true;
-
-    if(this->body != nullptr && !oldCheck) {
-        if(instanceof<NodeRet>(this->body)) ((NodeRet*)this->body)->parent = this->funcName;
-        else if(instanceof<NodeBlock>(this->body)) {
-            NodeBlock* nb = (NodeBlock*)this->body;
-            for(int i=0; i<nb->nodes.size(); i++) {
-                if(instanceof<NodeRet>(nb->nodes[i])) ((NodeRet*)nb->nodes[i])->parent = this->funcName;
-                else if(instanceof<NodeIf>(nb->nodes[i])) ((NodeIf*)nb->nodes[i])->funcName = this->funcName;
-                else if(instanceof<NodeWhile>(nb->nodes[i])) ((NodeWhile*)nb->nodes[i])->funcName = this->funcName;
-                else if(instanceof<NodeFor>(nb->nodes[i])) ((NodeFor*)nb->nodes[i])->funcName = this->funcName;
-            }
-        }
-    }
 }
 
 RaveValue NodeWhile::generate() {

@@ -21,17 +21,16 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeIf.hpp"
 #include <iostream>
 
-NodeForeach::NodeForeach(NodeIden* elName, Node* varData, Node* varLength, NodeBlock* block, std::string funcName, int loc) {
+NodeForeach::NodeForeach(NodeIden* elName, Node* varData, Node* varLength, NodeBlock* block, int loc) {
     this->elName = elName;
     this->varData = varData;
     this->varLength = varLength;
     this->block = block;
-    this->funcName = funcName;
     this->loc = loc;
 }
 
 Node* NodeForeach::copy() {
-    return new NodeForeach((NodeIden*)this->elName->copy(), this->varData->copy(), (varLength != nullptr ? this->varLength->copy() : nullptr), (NodeBlock*)this->block->copy(), this->funcName, this->loc);
+    return new NodeForeach((NodeIden*)this->elName->copy(), this->varData->copy(), (varLength != nullptr ? this->varLength->copy() : nullptr), (NodeBlock*)this->block->copy(), this->loc);
 }
 
 Node* NodeForeach::comptime() {return nullptr;}
@@ -74,7 +73,7 @@ RaveValue NodeForeach::generate() {
 
     this->block->nodes.push_back(new NodeBinary(TokType::PluEqu, new NodeIden("__RAVE_FOREACH_N" + std::to_string(this->loc), this->loc), new NodeInt(1), this->loc));
 
-    NodeWhile* nwhile = new NodeWhile(new NodeBinary(TokType::Less, new NodeIden("__RAVE_FOREACH_N" + std::to_string(this->loc), this->loc), varLength, this->loc), this->block, this->loc, this->funcName);
+    NodeWhile* nwhile = new NodeWhile(new NodeBinary(TokType::Less, new NodeIden("__RAVE_FOREACH_N" + std::to_string(this->loc), this->loc), varLength, this->loc), this->block, this->loc, currScope->funcName);
     nwhile->check();
     RaveValue result = nwhile->generate();
 

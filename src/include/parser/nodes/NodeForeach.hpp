@@ -20,10 +20,9 @@ public:
     NodeBlock* block;
     Node* varData;
     Node* varLength;
-    std::string funcName;
     int loc;
 
-    NodeForeach(NodeIden* elName, Node* varData, Node* varLength, NodeBlock* block, std::string funcName, int loc);
+    NodeForeach(NodeIden* elName, Node* varData, Node* varLength, NodeBlock* block, int loc);
     void optimize();
     Type* getType() override;
     

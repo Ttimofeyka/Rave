@@ -19,20 +19,17 @@ namespace AST {
     extern std::map<std::string, NodeFunc*> funcTable;
 }
 
-NodeRet::NodeRet(Node* value, std::string parent, int loc) {
+NodeRet::NodeRet(Node* value, int loc) {
     this->value = (value == nullptr ? nullptr : value->copy());
-    this->parent = parent;
     this->loc = loc;
 }
 
-Node* NodeRet::copy() {return new NodeRet(this->value->copy(), this->parent, this->loc);}
+Node* NodeRet::copy() {return new NodeRet(this->value->copy(), this->loc);}
 Type* NodeRet::getType() {return this->value->getType();}
 Node* NodeRet::comptime() {return this;}
 
 void NodeRet::check() {
-    bool oldCheck = this->isChecked;
     this->isChecked = true;
-    if(!oldCheck && AST::funcTable.find(this->parent) != AST::funcTable.end()) AST::funcTable[this->parent]->rets.push_back(this);
 }
 
 Loop NodeRet::getParentBlock(int n) {
