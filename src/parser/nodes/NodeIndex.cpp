@@ -134,10 +134,7 @@ RaveValue NodeIndex::generate() {
         }
 
         RaveValue index = generator->byIndex(ptr, this->generateIndexes());
-        /*if(instanceof<TypePointer>(index.type) && instanceof<TypeArray>(index.type->getElType())) {
-            index.type = new TypePointer(((TypeArray*)index.type->getElType())->element);
-            index.value = LLVMBuildBitCast(generator->builder, index.value, generator->genType(index.type, loc), "bitc");
-        }*/
+
         if(isMustBePtr) return index;
         return LLVM::load(index, ("NodeIndex_NodeIden_load_" + std::to_string(this->loc) + "_").c_str(), loc);
     }
@@ -145,6 +142,26 @@ RaveValue NodeIndex::generate() {
     if(instanceof<NodeGet>(this->element)) {
         NodeGet* nget = (NodeGet*)this->element;
         nget->isMustBePtr = true;
+
+        if(nget->isPtrForIndex) {
+            RaveValue ptr = nget->generate();
+            if(instanceof<TypePointer>(((TypePointer*)ptr.type)->instance)) ptr = LLVM::load(ptr, "NodeIndex_NodeGet_ptrIndex", loc);
+
+            RaveValue index = indexes[0]->generate();
+            index.type = new TypeBasic(BasicType::Long);
+            index.value = LLVMBuildIntCast(generator->builder, index.value, LLVMInt64TypeInContext(generator->context), "icast");
+            
+            ptr.value = LLVMBuildIntToPtr(
+                generator->builder,
+                LLVMBuildAdd(generator->builder, LLVMBuildMul(
+                    generator->builder,
+                    LLVM::makeInt(64, (((TypePointer*)(ptr.type))->instance->getSize()) / 8, false), index.value, "add"
+                ), LLVMBuildPtrToInt(generator->builder, ptr.value, LLVMInt64TypeInContext(generator->context), "itop"), "add2"),
+                generator->genType(ptr.type, loc), "ptoi"
+            );
+            return ptr;
+        }
+
         RaveValue ptr = nget->generate();
 
         if(instanceof<TypeStruct>(ptr.type) || (instanceof<TypePointer>(ptr.type) && instanceof<TypeStruct>(ptr.type->getElType()))) {

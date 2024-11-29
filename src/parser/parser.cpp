@@ -1254,14 +1254,15 @@ Node* Parser::parseForeach(std::string f) {
 
 Node* Parser::parseStmt(std::string f) {
     bool isStatic = false;
-    if(this->peek()->value == "static") {isStatic = true; this->next();}
 
+    if(this->peek()->value == "static") {isStatic = true; this->next();}
     if(this->peek()->type == TokType::Rbra) return this->parseBlock(f);
     if(this->peek()->type == TokType::Semicolon) {this->next(); return this->parseStmt(f);}
     if(this->peek()->type == TokType::Eof) return nullptr;
     if(this->peek()->type == TokType::Identifier && (this->tokens[this->idx + 1]->type == TokType::Less)) return this->parseDecl(f);
     if(this->peek()->type == TokType::Identifier) {
         std::string id = this->peek()->value;
+
         if(id == "if") return this->parseIf(f, isStatic);
         if(id == "while") return this->parseWhile(f);
         if(id == "for") return this->parseFor(f);
@@ -1293,8 +1294,10 @@ Node* Parser::parseStmt(std::string f) {
             else this->next();
             return expr;
         } this->idx -= 1;
+
         return this->parseDecl(f);
     }
+
     if(this->peek()->type == TokType::Rpar) {
         std::vector<DeclarMod> mods;
         this->next();
@@ -1316,13 +1319,18 @@ Node* Parser::parseStmt(std::string f) {
                 value = this->peek()->value;
                 this->next();
             }
+
             mods.push_back(DeclarMod{.name = name, .value = value});
+
             if(this->peek()->type == TokType::Comma) this->next();
             else if(this->peek()->type == TokType::Lpar) break;
         } this->next();
+
         return parseDecl(f, mods);
     }
+
     if(this->peek()->type == TokType::Builtin) return this->parseBuiltin(f);
+
     Node* expr = this->parseExpr(f);
     if(this->peek()->type == TokType::Lbra) this->next();
     else {

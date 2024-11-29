@@ -219,5 +219,11 @@ RaveValue NodeGet::generate() {
 }
 
 void NodeGet::check() {this->isChecked = true;}
-Node* NodeGet::copy() {return new NodeGet(this->base->copy(), this->field, this->isMustBePtr, this->loc);}
+
+Node* NodeGet::copy() {
+    NodeGet* nget = new NodeGet(this->base->copy(), this->field, this->isMustBePtr, this->loc);
+    nget->isPtrForIndex = this->isPtrForIndex;
+    return nget;
+}
+
 Node* NodeGet::comptime() {return this;}

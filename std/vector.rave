@@ -103,11 +103,11 @@ namespace std {
 
         (inline) VECTOR_T* operator[]&(std::vector<VECTOR_T>* v, int index) {
             @if(__RAVE_RUNTIME_CHECKS) {
-                if((index >= 0) && (index < v.length)) return = itop(VECTOR_T*, ptoi(v.data) + (sizeof(VECTOR_T) * index));
+                if((index >= 0) && (index < v.length)) return = v.&data[index];
             };
 
             @if(!(__RAVE_RUNTIME_CHECKS)) {
-                return = itop(VECTOR_T*, ptoi(v.data) + (sizeof(VECTOR_T) * index));
+                return = v.&data[index];
             };
         }
 
