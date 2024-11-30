@@ -235,7 +235,6 @@ void Compiler::compile(std::string file) {
             Compiler::features += "+64bit,+fma,+f16c,";
         }
         else if(ravePlatform == "X86") Compiler::features += "+fma,";
-        else if(ravePlatform == "AARCH64") Compiler::features += "+64bit,";
 
         if(Compiler::features.length() > 0) Compiler::features = Compiler::features.substr(0, Compiler::features.length() - 1);
     }
