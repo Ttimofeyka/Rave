@@ -289,7 +289,7 @@ RaveValue NodeFunc::generate() {
         }
     }
     else for(int i=0; i<args.size(); i++) {
-        if(instanceof<TypeDivided>(args[i].internalTypes[0])) {
+        if(!args[i].internalTypes.empty() && instanceof<TypeDivided>(args[i].internalTypes[0])) {
             tfunc->args.push_back(new TypeFuncArg(((TypeDivided*)args[i].internalTypes[0])->mainType, args[i].name));
             continue;
         }
