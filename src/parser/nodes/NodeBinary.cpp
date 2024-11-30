@@ -342,7 +342,7 @@ RaveValue NodeBinary::generate() {
 
             RaveValue value = currScope->getWithoutLoad(id->name, this->loc);
 
-            if(vSecond.type->toString() == value.type->toString()) vSecond = LLVM::load(vSecond, "NodeBinary_NodeIden_load", loc);
+            if(vSecond.type && vSecond.type->toString() == value.type->toString()) vSecond = LLVM::load(vSecond, "NodeBinary_NodeIden_load", loc);
 
             if(instanceof<NodeNull>(this->second)) {
                 ((NodeNull*)(this->second))->type = value.type->getElType();
