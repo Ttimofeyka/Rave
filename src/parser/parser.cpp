@@ -895,7 +895,7 @@ Type* Parser::parseType(bool cannotBeTemplate) {
         else if(this->peek()->type == TokType::Rarr) {
             Node* count = nullptr;
             this->next();
-            count = parseExpr();
+            if(peek()->type != TokType::Larr) count = parseExpr();
             
             if(this->peek()->type != TokType::Larr) {
                 if(this->tokens[this->idx + 1]->type != TokType::Equ) this->error("expected token ']'!");

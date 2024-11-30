@@ -123,9 +123,7 @@ LLVMValueRef Binary::mul(LLVMValueRef one, LLVMValueRef two, int loc) {
     LLVMValueRef twoCasted = two;
 
     if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMGetTypeKind(LLVMTypeOf(two))) {
-        if(LLVMTypeOf(one) != LLVMTypeOf(two)) {
-            oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;
-        }
+        if(LLVMTypeOf(one) != LLVMTypeOf(two)) oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;
     }
     else {oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;}
 
