@@ -286,45 +286,6 @@ void Compiler::compile(std::string file) {
     }
     else Compiler::outType = "unknown";
 
-    // Begin of LLVM initializing
-
-    LLVMInitializeX86TargetInfo();
-    LLVMInitializeAArch64TargetInfo();
-    LLVMInitializePowerPCTargetInfo();
-    LLVMInitializeMipsTargetInfo();
-    LLVMInitializeARMTargetInfo();
-    LLVMInitializeAVRTargetInfo();
-
-    LLVMInitializeX86Target();
-    LLVMInitializeAArch64Target();
-    LLVMInitializePowerPCTarget();
-    LLVMInitializeMipsTarget();
-    LLVMInitializeARMTarget();
-    LLVMInitializeAVRTarget();
-
-    LLVMInitializeX86AsmParser();
-    LLVMInitializeAArch64AsmParser();
-    LLVMInitializePowerPCAsmParser();
-    LLVMInitializeMipsAsmParser();
-    LLVMInitializeARMAsmParser();
-    LLVMInitializeAVRAsmParser();
-
-    LLVMInitializeX86AsmPrinter();
-    LLVMInitializeAArch64AsmPrinter();
-    LLVMInitializePowerPCAsmPrinter();
-    LLVMInitializeMipsAsmPrinter();
-    LLVMInitializeARMAsmPrinter();
-    LLVMInitializeAVRAsmPrinter();
-
-    LLVMInitializeX86TargetMC();
-    LLVMInitializeAArch64TargetMC();
-    LLVMInitializePowerPCTargetMC();
-    LLVMInitializeMipsTargetMC();
-    LLVMInitializeARMTargetMC();
-    LLVMInitializeAVRTargetMC();
-
-    // End of LLVM initializing
-
     char* errors = nullptr;
     LLVMTargetRef target;
     char* triple = LLVMNormalizeTargetTriple(Compiler::outType.c_str());
@@ -433,6 +394,45 @@ void Compiler::compile(std::string file) {
 }
 
 void Compiler::compileAll() {
+    // Begin of LLVM initializing
+
+    LLVMInitializeX86TargetInfo();
+    LLVMInitializeAArch64TargetInfo();
+    LLVMInitializePowerPCTargetInfo();
+    LLVMInitializeMipsTargetInfo();
+    LLVMInitializeARMTargetInfo();
+    LLVMInitializeAVRTargetInfo();
+
+    LLVMInitializeX86Target();
+    LLVMInitializeAArch64Target();
+    LLVMInitializePowerPCTarget();
+    LLVMInitializeMipsTarget();
+    LLVMInitializeARMTarget();
+    LLVMInitializeAVRTarget();
+
+    LLVMInitializeX86AsmParser();
+    LLVMInitializeAArch64AsmParser();
+    LLVMInitializePowerPCAsmParser();
+    LLVMInitializeMipsAsmParser();
+    LLVMInitializeARMAsmParser();
+    LLVMInitializeAVRAsmParser();
+
+    LLVMInitializeX86AsmPrinter();
+    LLVMInitializeAArch64AsmPrinter();
+    LLVMInitializePowerPCAsmPrinter();
+    LLVMInitializeMipsAsmPrinter();
+    LLVMInitializeARMAsmPrinter();
+    LLVMInitializeAVRAsmPrinter();
+
+    LLVMInitializeX86TargetMC();
+    LLVMInitializeAArch64TargetMC();
+    LLVMInitializePowerPCTargetMC();
+    LLVMInitializeMipsTargetMC();
+    LLVMInitializeARMTargetMC();
+    LLVMInitializeAVRTargetMC();
+
+    // End of LLVM initializing
+
     AST::debugMode = Compiler::debugMode;
     std::vector<std::string> toRemove;
     for(int i=0; i<Compiler::files.size(); i++) {
