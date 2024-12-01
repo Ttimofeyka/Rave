@@ -141,6 +141,45 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
     if(Compiler::settings.isPIE) linkString += "-fPIE ";
     if(Compiler::settings.noStd) linkString += "-nostdlib ";
     if(Compiler::settings.noEntry) linkString += "--no-entry ";
+
+    // Begin of LLVM initializing
+
+    LLVMInitializeX86TargetInfo();
+    LLVMInitializeAArch64TargetInfo();
+    LLVMInitializePowerPCTargetInfo();
+    LLVMInitializeMipsTargetInfo();
+    LLVMInitializeARMTargetInfo();
+    LLVMInitializeAVRTargetInfo();
+
+    LLVMInitializeX86Target();
+    LLVMInitializeAArch64Target();
+    LLVMInitializePowerPCTarget();
+    LLVMInitializeMipsTarget();
+    LLVMInitializeARMTarget();
+    LLVMInitializeAVRTarget();
+
+    LLVMInitializeX86AsmParser();
+    LLVMInitializeAArch64AsmParser();
+    LLVMInitializePowerPCAsmParser();
+    LLVMInitializeMipsAsmParser();
+    LLVMInitializeARMAsmParser();
+    LLVMInitializeAVRAsmParser();
+
+    LLVMInitializeX86AsmPrinter();
+    LLVMInitializeAArch64AsmPrinter();
+    LLVMInitializePowerPCAsmPrinter();
+    LLVMInitializeMipsAsmPrinter();
+    LLVMInitializeARMAsmPrinter();
+    LLVMInitializeAVRAsmPrinter();
+
+    LLVMInitializeX86TargetMC();
+    LLVMInitializeAArch64TargetMC();
+    LLVMInitializePowerPCTargetMC();
+    LLVMInitializeMipsTargetMC();
+    LLVMInitializeARMTargetMC();
+    LLVMInitializeAVRTargetMC();
+
+    // End of LLVM initializing
 }
 
 // Clears all possible global variables.
@@ -298,7 +337,7 @@ void Compiler::compile(std::string file) {
 
     LLVMGetTargetFromTriple(triple, &target, &errors);
     if(errors != nullptr) {
-        Compiler::error("target from triple: " + std::string(errors));
+        Compiler::error("target from triple \"" + std::string(triple) + "\": " + std::string(errors));
         std::exit(1);
     }
     else LLVMDisposeErrorMessage(errors);
@@ -394,45 +433,6 @@ void Compiler::compile(std::string file) {
 }
 
 void Compiler::compileAll() {
-    // Begin of LLVM initializing
-
-    LLVMInitializeX86TargetInfo();
-    LLVMInitializeAArch64TargetInfo();
-    LLVMInitializePowerPCTargetInfo();
-    LLVMInitializeMipsTargetInfo();
-    LLVMInitializeARMTargetInfo();
-    LLVMInitializeAVRTargetInfo();
-
-    LLVMInitializeX86Target();
-    LLVMInitializeAArch64Target();
-    LLVMInitializePowerPCTarget();
-    LLVMInitializeMipsTarget();
-    LLVMInitializeARMTarget();
-    LLVMInitializeAVRTarget();
-
-    LLVMInitializeX86AsmParser();
-    LLVMInitializeAArch64AsmParser();
-    LLVMInitializePowerPCAsmParser();
-    LLVMInitializeMipsAsmParser();
-    LLVMInitializeARMAsmParser();
-    LLVMInitializeAVRAsmParser();
-
-    LLVMInitializeX86AsmPrinter();
-    LLVMInitializeAArch64AsmPrinter();
-    LLVMInitializePowerPCAsmPrinter();
-    LLVMInitializeMipsAsmPrinter();
-    LLVMInitializeARMAsmPrinter();
-    LLVMInitializeAVRAsmPrinter();
-
-    LLVMInitializeX86TargetMC();
-    LLVMInitializeAArch64TargetMC();
-    LLVMInitializePowerPCTargetMC();
-    LLVMInitializeMipsTargetMC();
-    LLVMInitializeARMTargetMC();
-    LLVMInitializeAVRTargetMC();
-
-    // End of LLVM initializing
-
     AST::debugMode = Compiler::debugMode;
     std::vector<std::string> toRemove;
     for(int i=0; i<Compiler::files.size(); i++) {
@@ -449,16 +449,18 @@ void Compiler::compileAll() {
                 LLVMPrintModuleToFile(generator->lModule, (Compiler::files[i]+".ll").c_str(), &err);
             }
             std::string compiledFile = std::regex_replace(Compiler::files[i], std::regex("\\.rave"), ".o");
-            Compiler::linkString += compiledFile+" ";
+            Compiler::linkString += compiledFile + " ";
             if(!Compiler::settings.saveObjectFiles) toRemove.push_back(compiledFile);
         }
     }
+
     for(int i=0; i<AST::addToImport.size(); i++) {
         std::string fname = replaceAll(AST::addToImport[i], ">", "");
         if(std::count(Compiler::toImport.begin(), Compiler::toImport.end(), fname) == 0 &&
            std::count(Compiler::files.begin(), Compiler::files.end(), fname) == 0
         ) Compiler::toImport.push_back(fname);
     }
+
     for(int i=0; i<Compiler::toImport.size(); i++) {
         if(access(Compiler::toImport[i].c_str(), 0) != 0) {
             Compiler::error("file '" + Compiler::files[i] + "' does not exists!");
@@ -519,5 +521,6 @@ void Compiler::compileAll() {
     }
 
     for(int i=0; i<toRemove.size(); i++) std::remove(toRemove[i].c_str());
+
     std::cout << "Time spent by lexer: " << std::to_string(Compiler::lexTime) << "ms\nTime spent by parser: " << std::to_string(Compiler::parseTime) << "ms\nTime spent by generator: " << std::to_string(Compiler::genTime) << "ms" << std::endl;
 }
