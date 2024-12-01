@@ -778,6 +778,14 @@ Node* NodeBuiltin::comptime() {
         while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
         return new NodeBool(instanceof<TypePointer>(ty));
     }
+    if(this->name == "getArgType") {
+        this->type = currScope->getVar("_RaveArg" + asNumber(1).to_string())->type;
+        return new NodeType(this->type, loc);
+    }
+    if(this->name == "getCurrArgType") {
+        this->type = currScope->getVar("_RaveArg" + std::to_string(generator->currentBuiltinArg), this->loc)->type;
+        return new NodeType(this->type, loc);
+    }
     if(this->name == "contains") return new NodeBool(asStringIden(0).find(asStringIden(1)) != std::string::npos);
     if(this->name == "hasMethod") {
         Type* ty = asType(0)->type;
