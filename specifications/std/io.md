@@ -108,3 +108,17 @@ f.open("r");
 std::string line = f.readLine();
 f.close();
 ```
+
+### readAll/u8ReadAll
+
+The method for reading all content from the file. u8ReadAll uses `std::u8string`.
+
+Example:
+
+```d
+std::file f = std::file("test.txt");
+f.open("r");
+std::string line = f.readAll();
+f.close();
+```
+
