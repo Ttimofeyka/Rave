@@ -442,12 +442,6 @@ Node* Parser::parseConstantStructure(std::string structName) {
     std::vector<Node*> values;
 
     while(this->peek()->type != TokType::Lbra) {
-        /*if(this->peek()->type == TokType::Identifier && this->tokens[this->idx + 1]->type == TokType::Equ) {
-            std::string elementName = this->peek()->value;
-            this->idx += 2;
-            values.push_back(new NodeBinary(TokType::Equ, new NodeIden(peek()->value, peek()->line), parseExpr(structName), peek()->line));
-        }
-        else values.push_back(parseExpr(structName));*/
         values.push_back(parseExpr(structName));
         if(this->peek()->type == TokType::Comma) this->next();
         else if(this->peek()->type != TokType::Lbra) this->error("expected token '}'!");
@@ -657,6 +651,12 @@ Node* Parser::parseAtom(std::string f) {
             if(isDefinedLambda()) return parseLambda();
             else this->idx += 1;
         }
+
+        if(isBasicType(t->value)) {
+            this->idx -= 1;
+            return new NodeType(parseType(), t->line);
+        }
+
         return new NodeIden(t->value, this->peek()->line);
     }
     if(t->type == TokType::Rpar) {
