@@ -25,6 +25,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeCall.hpp"
 #include "../../include/parser/nodes/NodeFunc.hpp"
 #include "../../include/parser/nodes/NodeUnary.hpp"
+#include "../../include/parser/nodes/NodeType.hpp"
 #include "../../include/llvm.hpp"
 #include "../../include/compiler.hpp"
 #include <iostream>
@@ -224,17 +225,22 @@ Node* NodeBinary::comptime() {
     while(instanceof<NodeIden>(first) && AST::aliasTable.find(((NodeIden*)first)->name) != AST::aliasTable.end()) first = AST::aliasTable[((NodeIden*)first)->name];
     while(instanceof<NodeIden>(second) && AST::aliasTable.find(((NodeIden*)second)->name) != AST::aliasTable.end()) second = AST::aliasTable[((NodeIden*)second)->name];
     
-    while(!instanceof<NodeBool>(first) && !instanceof<NodeString>(first) && !instanceof<NodeIden>(first) && !instanceof<NodeInt>(first) && !instanceof<NodeFloat>(first)) first = first->comptime();
-    while(!instanceof<NodeBool>(second) && !instanceof<NodeString>(second) && !instanceof<NodeIden>(second) && !instanceof<NodeInt>(second) && !instanceof<NodeFloat>(second)) second = second->comptime();
+    while(!instanceof<NodeType>(first) && !instanceof<NodeBool>(first) && !instanceof<NodeString>(first) && !instanceof<NodeIden>(first) && !instanceof<NodeInt>(first) && !instanceof<NodeFloat>(first)) first = first->comptime();
+    while(!instanceof<NodeType>(second) && !instanceof<NodeBool>(second) && !instanceof<NodeString>(second) && !instanceof<NodeIden>(second) && !instanceof<NodeInt>(second) && !instanceof<NodeFloat>(second)) second = second->comptime();
 
     switch(this->op) {
         case TokType::Equal:
             if(instanceof<NodeString>(first) && instanceof<NodeString>(second)) return new NodeBool(((NodeString*)first)->value == ((NodeString*)second)->value);
             if(instanceof<NodeBool>(first) && instanceof<NodeBool>(second)) return new NodeBool(((NodeBool*)first)->value == ((NodeBool*)second)->value);
+            if(instanceof<NodeType>(first) && instanceof<NodeType>(second)) {
+                
+                return new NodeBool(((NodeType*)first)->type->toString() == ((NodeType*)second)->type->toString());
+            }
             return new NodeBool(false);
         case TokType::Nequal:
             if(instanceof<NodeString>(first) && instanceof<NodeString>(second)) return new NodeBool(((NodeString*)first)->value != ((NodeString*)second)->value);
             if(instanceof<NodeBool>(first) && instanceof<NodeBool>(second)) return new NodeBool(((NodeBool*)first)->value != ((NodeBool*)second)->value);
+             if(instanceof<NodeType>(first) && instanceof<NodeType>(second)) return new NodeBool(((NodeType*)first)->type->toString() != ((NodeType*)second)->type->toString());
             return new NodeBool(false);
         case TokType::And: return new NodeBool(((NodeBool*)first->comptime())->value && ((NodeBool*)second->comptime())->value);
         case TokType::Or: return new NodeBool(((NodeBool*)first->comptime())->value || ((NodeBool*)second->comptime())->value);
