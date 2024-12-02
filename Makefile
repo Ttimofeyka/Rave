@@ -12,7 +12,14 @@ LLVM_STATIC ?= 0
 
 COMPILER ?= $(CXX)
 
+WINBUILD = 0
 ifdef OS
+	ifeq ($(OS),Windows_NT)
+		WINBUILD = 1
+	endif
+endif
+
+ifeq ($(WINBUILD),1)
 	LLVM_VERSION = 16
 	BIN = rave.exe
 	SRC = $(patsubst ".\\%",$ .\src\\%, $(shell getFiles))
@@ -42,14 +49,26 @@ else
 	SRC = $(shell find . -name *.cpp)
 endif
 
+ifeq ($(WINBUILD),0)
 OBJ = $(SRC:%.cpp=%.o)
+else
+OBJ = $(SRC:%.cpp=%.obj)
+endif
 
 all: $(BIN)
 
+ifeq ($(WINBUILD),0)
+$(BIN): $(OBJ)
+	$(COMPILER) $(OBJ) -o $@ $(LLVM_FLAGS) -DLLVM_VERSION=$(LLVM_VERSION) -lstdc++fs
+%.o: %.cpp
+	$(COMPILER) -c $< -o $@ -DLLVM_VERSION=$(LLVM_VERSION) -std=c++17 -Wno-deprecated $(FLAGS) $(LLVM_FLAGS) -fexceptions
+else
 $(BIN): $(OBJ)
 	$(COMPILER) $(OBJ) -o $@ $(LLVM_LINK_FLAGS) -DLLVM_VERSION=$(LLVM_VERSION) -lstdc++
-%.o: %.cpp
+%.obj: %.cpp
 	$(COMPILER) -c $< -o $@ -DLLVM_VERSION=$(LLVM_VERSION) -std=c++17 -Wno-deprecated $(FLAGS) $(LLVM_COMPILE_FLAGS) -fexceptions
+endif
 
 clean:
-	rm -rf src/*.o src/parser/*.o src/parser/nodes/*.o src/lexer/*.o
+	rm -rf src/*.o src/parser/*.o src/parser/nodes/*.o src/lexer/*.o \
+		src/*.obj src/parser/*.obj src/parser/nodes/*.obj src/lexer/*.obj
