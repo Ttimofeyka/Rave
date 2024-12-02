@@ -118,7 +118,7 @@ Example:
 ```d
 std::file f = std::file("test.txt");
 f.open("r");
-std::string line = f.readAll();
+std::string buffer = f.readAll();
 f.close();
 ```
 
