@@ -13,6 +13,7 @@ LLVM_STATIC ?= 0
 COMPILER ?= $(CXX)
 
 ifdef OS
+	LLVM_VERSION = 16
 	BIN = rave.exe
 	SRC = $(patsubst ".\\%",$ .\src\\%, $(shell getFiles))
 	LLVM_FLAGS = ./LLVM/lib/LLVM-C.lib `llvm-config --cflags`
