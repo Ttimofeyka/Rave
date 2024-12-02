@@ -50,9 +50,9 @@ else
 endif
 
 ifeq ($(WINBUILD),0)
-OBJ = $(SRC:%.cpp=%.o)
+OBJ = $(SRC:%.cpp=obj/linux/%.o)
 else
-OBJ = $(SRC:%.cpp=%.obj)
+OBJ = $(SRC:%.cpp=obj/win/%.o)
 endif
 
 all: $(BIN)
@@ -60,15 +60,16 @@ all: $(BIN)
 ifeq ($(WINBUILD),0)
 $(BIN): $(OBJ)
 	$(COMPILER) $(OBJ) -o $@ $(LLVM_FLAGS) -DLLVM_VERSION=$(LLVM_VERSION) -lstdc++fs
-%.o: %.cpp
+obj/linux/%.o: %.cpp
+	$(shell mkdir -p obj/linux/src/parser/nodes obj/linux/src/lexer)
 	$(COMPILER) -c $< -o $@ -DLLVM_VERSION=$(LLVM_VERSION) -std=c++17 -Wno-deprecated $(FLAGS) $(LLVM_FLAGS) -fexceptions
 else
 $(BIN): $(OBJ)
 	$(COMPILER) $(OBJ) -o $@ $(LLVM_LINK_FLAGS) -DLLVM_VERSION=$(LLVM_VERSION) -lstdc++
-%.obj: %.cpp
+obj/win/%.o: %.cpp
+	$(shell mkdir -p obj/win/src/parser/nodes obj/win/src/lexer)
 	$(COMPILER) -c $< -o $@ -DLLVM_VERSION=$(LLVM_VERSION) -std=c++17 -Wno-deprecated $(FLAGS) $(LLVM_COMPILE_FLAGS) -fexceptions
 endif
 
 clean:
-	rm -rf src/*.o src/parser/*.o src/parser/nodes/*.o src/lexer/*.o \
-		src/*.obj src/parser/*.obj src/parser/nodes/*.obj src/lexer/*.obj
+	rm -rf obj
