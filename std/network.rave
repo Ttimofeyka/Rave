@@ -100,9 +100,11 @@ import <std/io>
                         }
                         // TODO: IPv6
                     }
-                    if(found == false) return = host;
+
+                    if(!found) return = host;
                 }
             }
+
             struct Header {
                 // TODO
             }
@@ -113,7 +115,7 @@ import <std/io>
                 int status_code;
                 int success;
 
-                std::network::Response this() {
+                std::network::Response this {
                     std::network::Response this;
                 } => this;
             }
@@ -153,11 +155,11 @@ import <std/io>
                         sock.write(reqline.data);
 
                         std::string buffer = "";
-                        char[513] char_buffer; // just in case 513 instead of 512
+                        char[512] char_buffer;
 
                         while(sock.read(&char_buffer, 512) > 0) {
                             buffer.appendC(&char_buffer);
-                            for(int i=0; i<512; i+=1) {char_buffer[i] = 0;} // clear it!
+                            std::memset(&char_buffer, 0, 512);
                         }
 
                         // parse data
@@ -251,7 +253,7 @@ import <std/io>
 
                             while(ssl::read(conn, &char_buffer, 512) > 0) {
                                 buffer.appendC(&char_buffer);
-                                for(int i=0; i<512; i+=1) char_buffer[i] = 0; // clear it!
+                                std::memset(&char_buffer, 0, 512);
                             }
 
                             // parse data
