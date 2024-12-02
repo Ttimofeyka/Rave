@@ -16,7 +16,8 @@ ifdef OS
 	LLVM_VERSION = 16
 	BIN = rave.exe
 	SRC = $(patsubst ".\\%",$ .\src\\%, $(shell getFiles))
-	LLVM_FLAGS = ./LLVM/lib/LLVM-C.lib `llvm-config --cflags`
+	LLVM_COMPILE_FLAGS = `llvm-config --cflags`
+	LLVM_LINK_FLAGS = ./LLVM/lib/LLVM-C.lib
 else
 	ifneq (, $(shell command -v llvm-config-16))
  		LLVM_VERSION = 16
@@ -46,9 +47,9 @@ OBJ = $(SRC:%.cpp=%.o)
 all: $(BIN)
 
 $(BIN): $(OBJ)
-	$(COMPILER) $(OBJ) -o $@ $(LLVM_FLAGS) -DLLVM_VERSION=$(LLVM_VERSION) -lstdc++fs
+	$(COMPILER) $(OBJ) -o $@ $(LLVM_LINK_FLAGS) -DLLVM_VERSION=$(LLVM_VERSION) -lstdc++
 %.o: %.cpp
-	$(COMPILER) -c $< -o $@ -DLLVM_VERSION=$(LLVM_VERSION) -std=c++17 -Wno-deprecated $(FLAGS) $(LLVM_FLAGS) -fexceptions -lstdc++fs
+	$(COMPILER) -c $< -o $@ -DLLVM_VERSION=$(LLVM_VERSION) -std=c++17 -Wno-deprecated $(FLAGS) $(LLVM_COMPILE_FLAGS) -fexceptions
 
 clean:
 	rm -rf src/*.o src/parser/*.o src/parser/nodes/*.o src/lexer/*.o
