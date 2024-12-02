@@ -51,12 +51,4 @@ $(BIN): $(OBJ)
 	$(COMPILER) -c $< -o $@ -DLLVM_VERSION=$(LLVM_VERSION) -std=c++17 -Wno-deprecated $(FLAGS) $(LLVM_FLAGS) -fexceptions -lstdc++fs
 
 clean:
-ifdef OS
-ifneq ($(findstring cmd.exe, $(SHELL)), cmd.exe)
 	rm -rf src/*.o src/parser/*.o src/parser/nodes/*.o src/lexer/*.o
-else
-	del /s src\*.o
-endif
-else
-	rm -rf src/*.o src/parser/*.o src/parser/nodes/*.o src/lexer/*.o
-endif
