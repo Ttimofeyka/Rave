@@ -52,7 +52,11 @@ $(BIN): $(OBJ)
 
 clean:
 ifdef OS
+ifneq ($(findstring cmd.exe, $(SHELL)), cmd.exe)
+	rm -rf src/*.o src/parser/*.o src/parser/nodes/*.o src/lexer/*.o
+else
 	del /s src\*.o
+endif
 else
 	rm -rf src/*.o src/parser/*.o src/parser/nodes/*.o src/lexer/*.o
 endif
