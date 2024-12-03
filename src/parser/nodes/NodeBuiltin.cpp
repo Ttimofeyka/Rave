@@ -95,22 +95,22 @@ NodeType* NodeBuiltin::asType(int n, bool isCompTime) {
         if(name == "void") return new NodeType(new TypeVoid(), this->loc);
         if(name == "bool") return new NodeType(basicTypes[BasicType::Bool], this->loc);
         if(name == "char") return new NodeType(basicTypes[BasicType::Char], this->loc);
-        if(name == "uchar") return new NodeType(new TypeBasic(BasicType::Uchar), this->loc);
-        if(name == "short") return new NodeType(new TypeBasic(BasicType::Short), this->loc);
-        if(name == "ushort") return new NodeType(new TypeBasic(BasicType::Ushort), this->loc);
+        if(name == "uchar") return new NodeType(basicTypes[BasicType::Uchar], this->loc);
+        if(name == "short") return new NodeType(basicTypes[BasicType::Short], this->loc);
+        if(name == "ushort") return new NodeType(basicTypes[BasicType::Ushort], this->loc);
         if(name == "int") return new NodeType(basicTypes[BasicType::Int], this->loc);
-        if(name == "uint") return new NodeType(new TypeBasic(BasicType::Uint), this->loc);
-        if(name == "long") return new NodeType(new TypeBasic(BasicType::Long), this->loc);
-        if(name == "ulong") return new NodeType(new TypeBasic(BasicType::Ulong), this->loc);
-        if(name == "cent") return new NodeType(new TypeBasic(BasicType::Cent), this->loc);
-        if(name == "ucent") return new NodeType(new TypeBasic(BasicType::Ucent), this->loc);
-        if(name == "float") return new NodeType(new TypeBasic(BasicType::Float), this->loc);
-        if(name == "double") return new NodeType(new TypeBasic(BasicType::Double), this->loc);
-        if(name == "float4") return new NodeType(new TypeVector(new TypeBasic(BasicType::Float), 8), this->loc);
-        if(name == "float8") return new NodeType(new TypeVector(new TypeBasic(BasicType::Float), 8), this->loc);
+        if(name == "uint") return new NodeType(basicTypes[BasicType::Uint], this->loc);
+        if(name == "long") return new NodeType(basicTypes[BasicType::Long], this->loc);
+        if(name == "ulong") return new NodeType(basicTypes[BasicType::Ulong], this->loc);
+        if(name == "cent") return new NodeType(basicTypes[BasicType::Cent], this->loc);
+        if(name == "ucent") return new NodeType(basicTypes[BasicType::Ucent], this->loc);
+        if(name == "float") return new NodeType(basicTypes[BasicType::Float], this->loc);
+        if(name == "double") return new NodeType(basicTypes[BasicType::Double], this->loc);
+        if(name == "float4") return new NodeType(new TypeVector(basicTypes[BasicType::Float], 8), this->loc);
+        if(name == "float8") return new NodeType(new TypeVector(basicTypes[BasicType::Float], 8), this->loc);
         if(name == "int4") return new NodeType(new TypeVector(basicTypes[BasicType::Int], 4), this->loc);
         if(name == "int8") return new NodeType(new TypeVector(basicTypes[BasicType::Int], 8), this->loc);
-        if(name == "short8") return new NodeType(new TypeVector(new TypeBasic(BasicType::Short), 8), this->loc);
+        if(name == "short8") return new NodeType(new TypeVector(basicTypes[BasicType::Short], 8), this->loc);
         return new NodeType(new TypeStruct(name), this->loc);
     }
     if(instanceof<NodeBuiltin>(this->args[n])) {
@@ -693,17 +693,17 @@ RaveValue NodeBuiltin::generate() {
         Type* type = asType(0)->type;
 
         if(!instanceof<TypeVoid>(type) && !instanceof<TypeBasic>(type)) generator->error("the type must be a basic!", this->loc);
-        if(instanceof<TypeVoid>(type)) return {LLVM::makeInt(64, 0, false), new TypeBasic(BasicType::Long)};
+        if(instanceof<TypeVoid>(type)) return {LLVM::makeInt(64, 0, false), basicTypes[BasicType::Long]};
         else {
             TypeBasic* btype = (TypeBasic*)type;
             switch(btype->type) {
-                case BasicType::Bool: return {LLVM::makeInt(64, 0, false), new TypeBasic(BasicType::Long)};
-                case BasicType::Char: return {LLVM::makeInt(64, -128, false), new TypeBasic(BasicType::Long)};
-                case BasicType::Short: return {LLVM::makeInt(64, -32768, false), new TypeBasic(BasicType::Long)};
-                case BasicType::Int: return {LLVM::makeInt(64, -2147483647, false), new TypeBasic(BasicType::Long)};
-                case BasicType::Long: return {LLVM::makeInt(64, -9223372036854775807, false), new TypeBasic(BasicType::Long)};
+                case BasicType::Bool: return {LLVM::makeInt(64, 0, false), basicTypes[BasicType::Long]};
+                case BasicType::Char: return {LLVM::makeInt(64, -128, false), basicTypes[BasicType::Long]};
+                case BasicType::Short: return {LLVM::makeInt(64, -32768, false), basicTypes[BasicType::Long]};
+                case BasicType::Int: return {LLVM::makeInt(64, -2147483647, false), basicTypes[BasicType::Long]};
+                case BasicType::Long: return {LLVM::makeInt(64, -9223372036854775807, false), basicTypes[BasicType::Long]};
                 // TODO: Add BasicType::Cent
-                default: return {LLVM::makeInt(64, 0, false), new TypeBasic(BasicType::Long)};
+                default: return {LLVM::makeInt(64, 0, false), basicTypes[BasicType::Long]};
             }
         }
     }
@@ -712,21 +712,21 @@ RaveValue NodeBuiltin::generate() {
         Type* type = asType(0)->type;
 
         if(!instanceof<TypeVoid>(type) && !instanceof<TypeBasic>(type)) generator->error("the type must be a basic!", this->loc);
-        if(instanceof<TypeVoid>(type)) return {LLVM::makeInt(64, 0, false), new TypeBasic(BasicType::Long)};
+        if(instanceof<TypeVoid>(type)) return {LLVM::makeInt(64, 0, false), basicTypes[BasicType::Long]};
         else {
             TypeBasic* btype = (TypeBasic*)type;
             switch(btype->type) {
-                case BasicType::Bool: return {LLVM::makeInt(64, 1, false), new TypeBasic(BasicType::Long)};
-                case BasicType::Char: return {LLVM::makeInt(64, 127, false), new TypeBasic(BasicType::Long)};
-                case BasicType::Uchar: return {LLVM::makeInt(64, 255, false), new TypeBasic(BasicType::Long)};
-                case BasicType::Short: return {LLVM::makeInt(64, 32767, false), new TypeBasic(BasicType::Long)};
-                case BasicType::Ushort: return {LLVM::makeInt(64, 65535, false), new TypeBasic(BasicType::Long)};
-                case BasicType::Int: return {LLVM::makeInt(64, 2147483647, false), new TypeBasic(BasicType::Long)};
-                case BasicType::Uint: return {LLVM::makeInt(64, 4294967295, false), new TypeBasic(BasicType::Long)};
-                case BasicType::Long: return {LLVM::makeInt(64, 9223372036854775807, false), new TypeBasic(BasicType::Long)};
+                case BasicType::Bool: return {LLVM::makeInt(64, 1, false), basicTypes[BasicType::Long]};
+                case BasicType::Char: return {LLVM::makeInt(64, 127, false), basicTypes[BasicType::Long]};
+                case BasicType::Uchar: return {LLVM::makeInt(64, 255, false), basicTypes[BasicType::Long]};
+                case BasicType::Short: return {LLVM::makeInt(64, 32767, false), basicTypes[BasicType::Long]};
+                case BasicType::Ushort: return {LLVM::makeInt(64, 65535, false), basicTypes[BasicType::Long]};
+                case BasicType::Int: return {LLVM::makeInt(64, 2147483647, false), basicTypes[BasicType::Long]};
+                case BasicType::Uint: return {LLVM::makeInt(64, 4294967295, false), basicTypes[BasicType::Long]};
+                case BasicType::Long: return {LLVM::makeInt(64, 9223372036854775807, false), basicTypes[BasicType::Long]};
                 case BasicType::Ulong: return {LLVM::makeInt(64, 18446744073709551615ull, false), new TypeBasic(BasicType::Ulong)};
                 // TODO: Add BasicType::Cent and BasicType::Ucent
-                default: return {LLVM::makeInt(64, 0, false), new TypeBasic(BasicType::Long)};
+                default: return {LLVM::makeInt(64, 0, false), basicTypes[BasicType::Long]};
             }
         }
     }
