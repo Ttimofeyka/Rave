@@ -38,10 +38,7 @@ RaveValue NodeString::generate() {
         LLVMSetInitializer(globalStr, LLVMConstArray(elemType, values.data(), values.size()));
     }
 
-    LLVMValueRef indices[2] = {
-        LLVMConstInt(LLVMInt32TypeInContext(generator->context), 0, false),
-        LLVMConstInt(LLVMInt32TypeInContext(generator->context), 0, false)
-    };
+    LLVMValueRef indices[2] = {LLVM::makeInt(32, 0, false), LLVM::makeInt(32, 0, false)};
 
     Type* tp = new TypePointer(new TypeBasic(isWide ? BasicType::Int : BasicType::Char));
 
