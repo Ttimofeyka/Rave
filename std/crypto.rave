@@ -7,36 +7,86 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import <std/string> <std/ascii>
 
 namespace std {
-    namespace crypto {
-        namespace caesar {
-            char encryptChar(char c, int key) {
-                if(std::ascii::isUpper(c)) return = ((c + key - 'A') % (cast(char)26)) + 'A';
-                else if(std::ascii::isLower(c)) return = ((c + key - 'a') % (cast(char)26)) + 'a';
-            } => c;
+    namespace caesar {
+        char encodeChar(char c, int key) {
+            if(std::ascii::isUpper(c)) return = ((c + key - 'A') % (cast(char)26)) + 'A';
+            else if(std::ascii::isLower(c)) return = ((c + key - 'a') % (cast(char)26)) + 'a';
+        } => c;
 
-            (inline) char decryptChar(char c, int key) => std::crypto::caesar::encryptChar(c, 26 - key);
+        (inline) char decodeChar(char c, int key) => std::caesar::encodeChar(c, 26 - key);
 
-            std::string encrypt(std::string s, int key) {
-                std::string buffer = "";
-                for(int i=0; i<s.length; i+=1) buffer.add(std::crypto::caesar::encryptChar(s.data[i], key));
-            } => buffer;
+        std::string encode(std::string s, int key) {
+            std::string buffer = "";
+            for(int i=0; i<s.length; i+=1) buffer.add(std::caesar::encodeChar(s.data[i], key));
+        } => buffer;
 
-            std::string decrypt(std::string s, int key) {
-                std::string buffer = "";
-                for(int i=0; i<s.length; i+=1) buffer.add(std::crypto::caesar::decryptChar(s.data[i], key));
-            } => buffer;
+        std::string decode(std::string s, int key) {
+            std::string buffer = "";
+            for(int i=0; i<s.length; i+=1) buffer.add(std::caesar::decodeChar(s.data[i], key));
+        } => buffer;
+    }
+
+    namespace atbash {
+        char encodeChar(char c) {
+            if(std::ascii::isUpper(c)) return = 'Z' - (c - 'A');
+            else return = 'z' - (c - 'a');
         }
 
-        namespace atbash {
-            char encryptChar(char c) {
-                if(std::ascii::isUpper(c)) return = 'Z' - (c - 'A');
-                else return = 'z' - (c - 'a');
+        std::string encode(std::string s) {
+            std::string buffer = "";
+            for(int i=0; i<s.length; i+=1) buffer.add(std::atbash::encodeChar(s.data[i]));
+        }
+    }
+
+    namespace base16 {
+        char* table = "0123456789ABCDEF";
+        
+        std::string encode(char* src, uint length) {
+            if(length < 1) @return("");
+
+            uint outlength = (length * 2) + 1;
+
+            return = std::string(outlength);
+            return.length = outlength;
+
+            for(uint i=0; i<length; i++) {
+                return.set(2 * i, std::base16::table[(src[i] >. 4) && 0xF]);
+                return.set((2 * i) + 1, std::base16::table[src[i] && 0xF]);
             }
 
-            std::string encrypt(std::string s) {
-                std::string buffer = "";
-                for(int i=0; i<s.length; i+=1) buffer.add(std::crypto::atbash::encryptChar(s.data[i]));
-            }
+            return.set(2 * length, '\0');
         }
+
+        (inline) std::string encode(char* src) => std::base16::encode(src, std::cstring::strlen(src));
+
+        (inline) std::string encode(std::string str) => std::base16::encode(str.data, str.length);
+
+        std::string decode(char* src, uint length) {
+            if((length < 2) || ((length % 2) != 0)) @return("");
+
+            uint outlength = length / 2;
+
+            return = std::string(outlength + 1);
+            return.length = outlength;
+
+            for(uint i=0; i<length; i+=2) {
+                uchar high;
+                uchar low;
+
+                if(std::ascii::isDigit(src[i])) high = src[i] - '0';
+                else high = (std::ascii::toUpper(src[i]) - 'A') + 10c;
+
+                if(std::ascii::isDigit(src[i + 1])) low = src[i + 1] - '0';
+                else low = (std::ascii::toUpper(src[i + 1]) - 'A') + 10c;
+
+                return.set(i / 2, cast(char)((high <. 4) || low));
+            }
+
+            return.set(outlength, '\0');
+        }
+
+        (inline) std::string decode(char* src) => std::base16::decode(src, std::cstring::strlen(src));
+
+        (inline) std::string decode(std::string str) => std::base16::decode(str.data, str.length);
     }
 }
