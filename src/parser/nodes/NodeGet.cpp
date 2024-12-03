@@ -101,121 +101,56 @@ RaveValue NodeGet::checkIn(std::string structure) {
 }
 
 RaveValue NodeGet::generate() {
+    RaveValue ptr;
+    std::string structName;
+    Type* ty = nullptr;
+
     if(instanceof<NodeIden>(this->base)) {
-        NodeIden* niden = ((NodeIden*)this->base);
-
+        NodeIden* niden = static_cast<NodeIden*>(this->base);
         if(currScope->localVars.find(niden->name) != currScope->localVars.end()) currScope->localVars[niden->name]->isUsed = true;
-        RaveValue ptr = checkStructure(currScope->getWithoutLoad(niden->name, loc));
-        Type* ty = ptr.type;
-
-        TypeStruct* tstruct = (TypeStruct*)ty->getElType();
-        for(int i=0; i<tstruct->types.size(); i++) {
-            if(generator->toReplace.find(tstruct->types[i]->toString()) != generator->toReplace.end()) tstruct->types[i] = generator->toReplace[tstruct->types[i]->toString()];
-        }
-        if(tstruct->types.size() > 0) tstruct->updateByTypes();
-
-        std::string structName = tstruct->toString();
-        RaveValue f = this->checkIn(structName);
-        if(f.value != nullptr) return f;
-
-        if(this->isMustBePtr) return LLVM::structGep(
-            ptr,
-            AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
-            "NodeGet_generate_Iden_ptr"
-        );
-
-        return LLVM::load(LLVM::structGep(
-            ptr,
-            AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
-            "NodeGet_generate_Iden_preload"
-        ), "NodeGet_generate_Iden_load", loc);
+        ptr = checkStructure(currScope->getWithoutLoad(niden->name, loc));
+        ty = ptr.type;
     }
-
-    if(instanceof<NodeIndex>(this->base) || instanceof<NodeGet>(this->base)) {
-        if(instanceof<NodeIndex>(this->base)) ((NodeIndex*)this->base)->isMustBePtr = true;
-        else ((NodeGet*)this->base)->isMustBePtr = true;
-
-        RaveValue ptr = checkStructure(this->base->generate());
-
-        TypeStruct* tstruct = (TypeStruct*)ptr.type->getElType();
-        for(int i=0; i<tstruct->types.size(); i++) {
-            if(generator->toReplace.find(tstruct->types[i]->toString()) != generator->toReplace.end()) tstruct->types[i] = generator->toReplace[tstruct->types[i]->toString()];
-        }
-        if(tstruct->types.size() > 0) tstruct->updateByTypes();
-
-        std::string structName = tstruct->toString();
-        RaveValue f = checkIn(structName);
-
-        if(f.value != nullptr) return f;
-
-        if(this->isMustBePtr) return LLVM::structGep(
-            ptr,
-            AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
-            "NodeGet_generate_Index_ptr"
-        );
-
-        return LLVM::load(LLVM::structGep(
-            ptr,
-            AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
-            "NodeGet_generate_Index_preload"
-        ), "NodeGet_generate_Index_load", loc);
+    else if(instanceof<NodeIndex>(this->base) || instanceof<NodeGet>(this->base)) {
+        if(instanceof<NodeIndex>(this->base)) static_cast<NodeIndex*>(this->base)->isMustBePtr = true;
+        else static_cast<NodeGet*>(this->base)->isMustBePtr = true;
+        ptr = checkStructure(this->base->generate());
     }
-
-    if(instanceof<NodeCall>(this->base)) {
-        NodeCall* ncall = (NodeCall*)this->base;
-        Type* ty = ncall->getType();
-        std::string structName = "";
-
+    else if(instanceof<NodeCall>(this->base) || instanceof<NodeDone>(this->base)) {
+        Node* node = this->base;
+        ty = node->getType();
         if(ty != nullptr && instanceof<TypeStruct>(ty)) {
-            structName = ((TypeStruct*)ty)->name;
+            structName = static_cast<TypeStruct*>(ty)->name;
             RaveValue f = checkIn(structName);
             if(f.value != nullptr) return f;
         }
-
-        RaveValue ptr = checkStructure(ncall->generate());
-        if(structName == "") structName = ptr.type->getElType()->toString();
-
-        if(this->isMustBePtr) return LLVM::structGep(
-            ptr,
-            AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
-            "NodeGet_generate_Index_ptr"
-        );
-
-        return LLVM::load(LLVM::structGep(
-            ptr,
-            AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
-            "NodeGet_generate_Index_preload"
-        ), "NodeGet_generate_Index_load", loc);
+        ptr = checkStructure(node->generate());
+    }
+    else {
+        generator->error("assert into NodeGet (" + std::string(typeid(this->base[0]).name()) + ")", this->loc);
+        return {};
     }
 
-    if(instanceof<NodeDone>(this->base)) {
-        NodeDone* ndone = (NodeDone*)this->base;
-        Type* ty = ndone->getType();
-        std::string structName = "";
+    TypeStruct* tstruct = static_cast<TypeStruct*>(ty ? ty->getElType() : ptr.type->getElType());
 
-        if(ty != nullptr && instanceof<TypeStruct>(ty)) {
-            structName = ((TypeStruct*)ty)->name;
-            RaveValue f = checkIn(structName);
-            if(f.value != nullptr) return f;
-        }
-
-        RaveValue ptr = checkStructure(ndone->generate());
-        if(structName == "") structName = ptr.type->getElType()->toString();
-
-        if(this->isMustBePtr) return LLVM::structGep(
-            ptr,
-            AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
-            "NodeGet_generate_Index_ptr"
-        );
-        return LLVM::load(LLVM::structGep(
-            ptr,
-            AST::structsNumbers[std::pair<std::string, std::string>(structName, this->field)].number,
-            "NodeGet_generate_Index_preload"
-        ), "NodeGet_generate_Index_load", loc);
+    for(auto& type : tstruct->types) {
+        auto it = generator->toReplace.find(type->toString());
+        if(it != generator->toReplace.end()) type = it->second;
     }
 
-    generator->error("assert into NodeGet (" + std::string(typeid(this->base[0]).name()) + ")", this->loc);
-    return {};
+    if(!tstruct->types.empty()) tstruct->updateByTypes();
+
+    if(structName.empty()) structName = tstruct->toString();
+
+    RaveValue f = checkIn(structName);
+    if(f.value != nullptr) return f;
+
+    auto structPair = std::make_pair(structName, this->field);
+    int fieldNumber = AST::structsNumbers[structPair].number;
+
+    if(this->isMustBePtr) return LLVM::structGep(ptr, fieldNumber, "NodeGet_generate_ptr");
+
+    return LLVM::load(LLVM::structGep(ptr, fieldNumber, "NodeGet_generate_preload"), "NodeGet_generate_load", loc);
 }
 
 void NodeGet::check() {this->isChecked = true;}
