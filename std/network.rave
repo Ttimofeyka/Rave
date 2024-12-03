@@ -239,11 +239,10 @@ import <std/io>
                         int err = ssl::connect(conn);
                         if(err != 1) { 
                             std::network::Response resp_fail_ssl = std::network::Response();
-                            resp_fail_ssl.success = -200; // handshake failed err
+                            resp_fail_ssl.success = -200; // handshake failed
                             return = resp_fail_ssl;
                         }
                         else {
-                            // do other stuff
                             ssl::write(conn, reqline.data, reqline.length);
 
                             std::string buffer = "";
