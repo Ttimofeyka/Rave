@@ -16,14 +16,14 @@ namespace std {
         (inline) char decodeChar(char c, int key) => std::caesar::encodeChar(c, 26 - key);
 
         std::string encode(std::string s, int key) {
-            std::string buffer = "";
-            for(int i=0; i<s.length; i+=1) buffer.add(std::caesar::encodeChar(s.data[i], key));
-        } => buffer;
+            return = "";
+            for(int i=0; i<s.length; i+=1) return.add(std::caesar::encodeChar(s.data[i], key));
+        }
 
         std::string decode(std::string s, int key) {
-            std::string buffer = "";
-            for(int i=0; i<s.length; i+=1) buffer.add(std::caesar::decodeChar(s.data[i], key));
-        } => buffer;
+            return = "";
+            for(int i=0; i<s.length; i+=1) return.add(std::caesar::decodeChar(s.data[i], key));
+        }
     }
 
     namespace atbash {
@@ -33,8 +33,8 @@ namespace std {
         }
 
         std::string encode(std::string s) {
-            std::string buffer = "";
-            for(int i=0; i<s.length; i+=1) buffer.add(std::atbash::encodeChar(s.data[i]));
+            return = "";
+            for(int i=0; i<s.length; i+=1) return.add(std::atbash::encodeChar(s.data[i]));
         }
     }
 
