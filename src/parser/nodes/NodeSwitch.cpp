@@ -39,7 +39,7 @@ RaveValue NodeSwitch::generate() {
         ));
     }
 
-    for(int i=0; i<ifVector.size()-1; i++) ifVector[i]->_else = ifVector[i + 1];
+    for(int i=0; i<ifVector.size() - 1; i++) ifVector[i]->_else = ifVector[i + 1];
 
     ifVector.back()->_else = _default;
 
@@ -50,6 +50,7 @@ RaveValue NodeSwitch::generate() {
 }
 
 Node* NodeSwitch::comptime() {return this;}
+
 Node* NodeSwitch::copy() {
     return new NodeSwitch(
         this->expr->copy(), (this->_default == nullptr ? nullptr : this->_default->copy()),

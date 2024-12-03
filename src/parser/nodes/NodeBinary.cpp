@@ -264,7 +264,7 @@ Type* NodeBinary::getType() {
     switch(this->op) {
         case TokType::Equ: case TokType::PluEqu: case TokType::MinEqu: case TokType::DivEqu: case TokType::MulEqu: return new TypeVoid();
         case TokType::Equal: case TokType::Nequal: case TokType::More: case TokType::Less: case TokType::MoreEqual: case TokType::LessEqual:
-        case TokType::And: case TokType::Or: return new TypeBasic(BasicType::Bool);
+        case TokType::And: case TokType::Or: return basicTypes[BasicType::Bool];
         default:
             Type* firstType = this->first->getType();
             Type* secondType = this->second->getType();
@@ -412,7 +412,7 @@ RaveValue NodeBinary::generate() {
     if(this->op == TokType::Rem) {
         Type* type = this->first->getType();
         if(instanceof<TypeBasic>(type) && (((TypeBasic*)type)->type == BasicType::Float || ((TypeBasic*)type)->type == BasicType::Double)) return (new NodeBuiltin("fmodf", {this->first, this->second}, this->loc, nullptr))->generate();
-        return (new NodeCast(instanceof<TypeVoid>(type) ? new TypeBasic(BasicType::Double) : type, new NodeBuiltin("fmodf", {this->first, this->second}, this->loc, nullptr), this->loc))->generate();
+        return (new NodeCast(instanceof<TypeVoid>(type) ? basicTypes[BasicType::Double] : type, new NodeBuiltin("fmodf", {this->first, this->second}, this->loc, nullptr), this->loc))->generate();
     }
 
     RaveValue vFirst = this->first->generate();
@@ -484,7 +484,7 @@ RaveValue NodeBinary::generate() {
         case TokType::Divide: return {Binary::div(vFirst.value, vSecond.value, this->loc), vFirst.type};
         case TokType::Equal: case TokType::Nequal:
         case TokType::Less: case TokType::More:
-        case TokType::LessEqual: case TokType::MoreEqual: return {Binary::compare(vFirst.value, vSecond.value, this->op, this->loc), new TypeBasic(BasicType::Bool)};
+        case TokType::LessEqual: case TokType::MoreEqual: return {Binary::compare(vFirst.value, vSecond.value, this->op, this->loc), basicTypes[BasicType::Bool]};
         case TokType::And: return {LLVMBuildAnd(generator->builder, vFirst.value, vSecond.value, "NodeBinary_and"), vFirst.type};
         case TokType::Or: return {LLVMBuildOr(generator->builder, vFirst.value, vSecond.value, "NodeBinary_or"), vFirst.type};
         case TokType::BitXor: return {LLVMBuildXor(generator->builder, vFirst.value, vSecond.value, "NodeBinary_xor"), vFirst.type};

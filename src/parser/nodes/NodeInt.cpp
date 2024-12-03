@@ -26,9 +26,9 @@ Node* NodeInt::comptime() {return this;}
 void NodeInt::check() {this->isChecked = true;}
 
 Type* NodeInt::getType() {
-    if(this->isMustBeLong) return new TypeBasic(BasicType::Long);
-    if(this->isMustBeShort) return new TypeBasic(BasicType::Short);
-    if(this->isMustBeChar) return new TypeBasic(BasicType::Char);
+    if(this->isMustBeLong) return basicTypes[BasicType::Long];
+    if(this->isMustBeShort) return basicTypes[BasicType::Short];
+    if(this->isMustBeChar) return basicTypes[BasicType::Char];
 
     char baseType;
     if(this->isVarVal != nullptr && instanceof<TypeBasic>(this->isVarVal)) baseType = (((TypeBasic*)this->isVarVal)->type);
@@ -38,14 +38,14 @@ Type* NodeInt::getType() {
         else baseType = BasicType::Cent;
     }
 
-    if(!isUnsigned) return new TypeBasic(baseType);
+    if(!isUnsigned) return basicTypes[baseType];
 
     constexpr char unsignedTypes[] = {
         BasicType::Uchar, BasicType::Ushort, BasicType::Uint,
         BasicType::Ulong, BasicType::Ucent
     };
     
-    return new TypeBasic(unsignedTypes[baseType - BasicType::Char]);
+    return basicTypes[unsignedTypes[baseType - BasicType::Char]];
 }
 
 RaveValue NodeInt::generate() {
@@ -84,7 +84,7 @@ RaveValue NodeInt::generate() {
     }
 
     this->type = baseType;
-    return {LLVMConstIntOfString(intType, value.to_string().c_str(), this->sys), new TypeBasic(baseType)};
+    return {LLVMConstIntOfString(intType, value.to_string().c_str(), this->sys), basicTypes[baseType]};
 }
 
 LLVMTypeRef NodeInt::getTypeForBasicType(char type) {

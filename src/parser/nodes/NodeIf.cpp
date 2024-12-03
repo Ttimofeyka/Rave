@@ -20,6 +20,8 @@ NodeIf::NodeIf(Node* cond, Node* body, Node* _else, int loc, bool isStatic) {
     this->_else = _else;
     this->loc = loc;
     this->isStatic = isStatic;
+    this->isLikely = false;
+    this->isUnlikely = false;
 }
 
 Type* NodeIf::getType() {return new TypeVoid();}
@@ -56,7 +58,12 @@ RaveValue NodeIf::generate() {
 
     auto origScope = currScope;
 
-    LLVMBuildCondBr(generator->builder, this->cond->generate().value, thenBlock, elseBlock);
+    RaveValue condValue = cond->generate();
+
+    if(isLikely) LLVM::call(generator->functions["llvm.expect.i1"], {condValue, {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]}}, "likely");
+    else if(isUnlikely) LLVM::call(generator->functions["llvm.expect.i1"], {condValue, {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]}}, "unlikely");
+
+    LLVMBuildCondBr(generator->builder, condValue.value, thenBlock, elseBlock);
 
     int selfNum = generator->activeLoops.size();
     generator->activeLoops[selfNum] = Loop{.isActive = true, .start = thenBlock, .end = endBlock, .hasEnd = false, .isIf = true, .loopRets = std::vector<LoopReturn>(), .owner = this};
@@ -152,4 +159,9 @@ Node* NodeIf::comptime() {
     return nullptr;
 }
 
-Node* NodeIf::copy() {return new NodeIf(this->cond->copy(), (this->body == nullptr ? nullptr : this->body->copy()), (this->_else == nullptr ? nullptr : this->_else->copy()), this->loc, this->isStatic);}
+Node* NodeIf::copy() {
+    NodeIf* _if = new NodeIf(this->cond->copy(), (this->body == nullptr ? nullptr : this->body->copy()), (this->_else == nullptr ? nullptr : this->_else->copy()), this->loc, this->isStatic);
+    _if->isLikely = this->isLikely;
+    _if->isUnlikely = this->isUnlikely;
+    return _if;
+}

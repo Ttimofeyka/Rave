@@ -48,6 +48,8 @@ public:
     Type* getElType() override;
 };
 
+extern std::map<char, TypeBasic*> basicTypes;
+
 class TypePointer : public Type {
 public:
     Type* instance;

@@ -39,7 +39,7 @@ Type* NodeIndex::getType() {
     
     if(instanceof<TypePointer>(type)) {
         Type* tp = static_cast<TypePointer*>(type)->instance;
-        return instanceof<TypeVoid>(tp) ? new TypeBasic(BasicType::Char) : tp;
+        return instanceof<TypeVoid>(tp) ? basicTypes[BasicType::Char] : tp;
     }
     
     if(instanceof<TypeArray>(type)) return static_cast<TypeArray*>(type)->element;
@@ -148,7 +148,7 @@ RaveValue NodeIndex::generate() {
             if(instanceof<TypePointer>(((TypePointer*)ptr.type)->instance)) ptr = LLVM::load(ptr, "NodeIndex_NodeGet_ptrIndex", loc);
 
             RaveValue index = indexes[0]->generate();
-            index.type = new TypeBasic(BasicType::Long);
+            index.type = basicTypes[BasicType::Long];
             index.value = LLVMBuildIntCast(generator->builder, index.value, LLVMInt64TypeInContext(generator->context), "icast");
             
             ptr.value = LLVMBuildIntToPtr(
