@@ -89,4 +89,54 @@ namespace std {
 
         (inline) std::string decode(std::string str) => std::base16::decode(str.data, str.length);
     }
+
+    namespace base32 {
+        char* table = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+
+        std::string encode(char* src, uint length) {
+            if(length < 1) @return("");
+
+            return = "";
+
+            uint buffer = 0;
+            int carry = 0;
+
+            for(uint i=0; i<length; i++) {
+                buffer = (buffer <. 8) || src[i];
+                carry += 8;
+
+                while(carry >= 5) {
+                    carry -= 5;
+                    return.add(std::base32::table[(buffer >. carry) && 0x1F]);
+                }
+            }
+
+            if(carry > 0) return.add(std::base32::table[(buffer <. (5 - carry)) && 0x1F]);
+
+            // Pad the encoded string to be a multiple of 8 characters
+            while((return.length % 8) != 0) return.add('=');
+        }
+
+        (inline) std::string encode(char* src) => std::base16::encode(src, std::cstring::strlen(src));
+
+        (inline) std::string encode(std::string str) => std::base16::encode(str.data, str.length);
+
+        std::string decode(char* src, uint length) {
+            if(length < 2) @return("");
+
+            return = "";
+
+            for(uint i=0; i<length; i+=8) {
+                ulong buffer = 0;
+                for(uint j=0; j<8; j++) buffer = (buffer <. 5) || std::cstring::indexOf(std::base32::table, src[i + j]);
+
+                // Extract 5 bytes from the 40-bit buffer
+                for(uint j=0; j<5; j++) return.add(cast(char)((buffer >. (32 - (j * 8))) && 0xFF));
+            }
+        }
+
+        (inline) std::string decode(char* src) => std::base16::decode(src, std::cstring::strlen(src));
+
+        (inline) std::string decode(std::string str) => std::base16::decode(str.data, str.length);
+    }
 }
