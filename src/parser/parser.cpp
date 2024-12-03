@@ -1095,55 +1095,38 @@ Node* Parser::parseBasic(std::string f) {return this->parseSuffix(this->parsePre
 
 Node* Parser::parseExpr(std::string f) {
     std::vector<Token*> operatorStack;
-	std::vector<Node*> nodeStack;
-	uint32_t nodeStackSize = 0;
-	uint32_t operatorStackSize = 0;
+    std::vector<Node*> nodeStack;
 
-	nodeStack.insert(nodeStack.begin(), this->parseBasic(f));
-	nodeStackSize += 1;
+    nodeStack.push_back(parseBasic(f));
 
-    while(operators.find(this->peek()->type) != operators.end()) {
-		if(operatorStack.empty()) {
-			operatorStack.insert(operatorStack.begin(), this->peek());
-			operatorStackSize += 1;
-            this->next();
-		}
-		else {
-			auto tok = this->peek();
-            this->next();
-			auto type = tok->type;
-			int prec = operators[type];
-			while(operatorStackSize > 0 && prec <= operators[operatorStack.front()->type]) {
-				auto lhs = nodeStack.front(); nodeStack.erase(nodeStack.begin());
-				auto rhs = nodeStack.front(); nodeStack.erase(nodeStack.begin());
+    while(operators.find(peek()->type) != operators.end()) {
+        auto tok = peek();
 
-				nodeStack.insert(nodeStack.begin(), new NodeBinary(operatorStack.front()->type, lhs, rhs, tok->line));
-				nodeStackSize -= 1;
+        next();
 
-				operatorStack.erase(operatorStack.begin());
-				operatorStackSize -= 1;
-			}
+        int prec = operators[tok->type];
 
-			operatorStack.insert(operatorStack.begin(), tok);
-			operatorStackSize += 1;
-		}
+        while(!operatorStack.empty() && prec <= operators[operatorStack.back()->type]) {
+            auto rhs = nodeStack.back(); nodeStack.pop_back();
+            auto lhs = nodeStack.back(); nodeStack.pop_back();
 
-		nodeStack.insert(nodeStack.begin(), this->parseBasic(f));
-		nodeStackSize += 1;
-	}
+            nodeStack.push_back(new NodeBinary(operatorStack.back()->type, lhs, rhs, operatorStack.back()->line));
+            operatorStack.pop_back();
+        }
 
-	while(!operatorStack.empty()) {
-		auto rhs = nodeStack.front(); nodeStack.erase(nodeStack.begin());
-		auto lhs = nodeStack.front(); nodeStack.erase(nodeStack.begin());
+        operatorStack.push_back(tok);
+        nodeStack.push_back(this->parseBasic(f));
+    }
 
-		nodeStack.insert(nodeStack.begin(), new NodeBinary(operatorStack.front()->type, lhs, rhs, operatorStack.front()->line));
-		nodeStackSize -= 1;
+    while(!operatorStack.empty()) {
+        auto rhs = nodeStack.back(); nodeStack.pop_back();
+        auto lhs = nodeStack.back(); nodeStack.pop_back();
 
-		operatorStack.erase(operatorStack.begin());
-		operatorStackSize -= 1;
-	}
+        nodeStack.push_back(new NodeBinary(operatorStack.back()->type, lhs, rhs, operatorStack.back()->line));
+        operatorStack.pop_back();
+    }
 
-    return nodeStack.front();
+    return nodeStack.back();
 }
 
 Node* Parser::parseWhile(std::string f) {
