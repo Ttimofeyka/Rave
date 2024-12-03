@@ -1340,6 +1340,13 @@ Node* Parser::parseContinue() {
 Node* Parser::parseIf(std::string f, bool isStatic) {
     int line = this->peek()->line;
     this->next();
+
+    bool isLikely = false;
+    bool isUnlikely = false;
+
+    if(this->peek()->value == "likely") {isLikely = true; this->next();}
+    else if(this->peek()->value == "unlikely") {isUnlikely = true; this->next();}
+
     if(this->peek()->type != TokType::Rpar) this->error("expected token '('!");
 
     this->next();
@@ -1347,12 +1354,23 @@ Node* Parser::parseIf(std::string f, bool isStatic) {
     if(this->peek()->type != TokType::Lpar) this->error("expected token ')'!");
     this->next();
 
+    NodeIf* _if = nullptr;
+
     Node* body = this->parseStmt(f);
     if(this->peek()->value == "else") {
         this->next();
-        return new NodeIf(cond, body, this->parseStmt(f), line, isStatic);
+    
+        if(this->peek()->value == "likely") {isUnlikely = true; this->next();}
+        else if(this->peek()->value == "unlikely") {isLikely = true; this->next();}
+    
+        _if = new NodeIf(cond, body, this->parseStmt(f), line, isStatic);
     }
-    return new NodeIf(cond, body, nullptr, line, isStatic);
+    else _if = new NodeIf(cond, body, nullptr, line, isStatic);
+
+    _if->isLikely = isLikely;
+    _if->isUnlikely = isUnlikely;
+
+    return _if;
 }
 
 std::pair<Node*, Node*> Parser::parseCase(std::string f) {

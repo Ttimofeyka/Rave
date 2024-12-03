@@ -20,6 +20,8 @@ public:
     Node* _else = nullptr;
     int loc;
     bool isStatic = false;
+    bool isLikely = false;
+    bool isUnlikely = false;
     bool hasRets[2];
 
     NodeIf(Node* cond, Node* body, Node* _else, int loc, bool isStatic);
