@@ -7,37 +7,6 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import <std/string> <std/ascii>
 
 namespace std {
-    namespace caesar {
-        char encodeChar(char c, int key) {
-            if(std::ascii::isUpper(c)) return = ((c + key - 'A') % (cast(char)26)) + 'A';
-            else if(std::ascii::isLower(c)) return = ((c + key - 'a') % (cast(char)26)) + 'a';
-        } => c;
-
-        (inline) char decodeChar(char c, int key) => std::caesar::encodeChar(c, 26 - key);
-
-        std::string encode(std::string s, int key) {
-            return = "";
-            for(int i=0; i<s.length; i+=1) return.add(std::caesar::encodeChar(s.data[i], key));
-        }
-
-        std::string decode(std::string s, int key) {
-            return = "";
-            for(int i=0; i<s.length; i+=1) return.add(std::caesar::decodeChar(s.data[i], key));
-        }
-    }
-
-    namespace atbash {
-        char encodeChar(char c) {
-            if(std::ascii::isUpper(c)) return = 'Z' - (c - 'A');
-            else return = 'z' - (c - 'a');
-        }
-
-        std::string encode(std::string s) {
-            return = "";
-            for(int i=0; i<s.length; i+=1) return.add(std::atbash::encodeChar(s.data[i]));
-        }
-    }
-
     namespace base16 {
         char* table = "0123456789ABCDEF";
         
