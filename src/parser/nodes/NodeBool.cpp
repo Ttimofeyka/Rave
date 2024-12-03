@@ -10,7 +10,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 NodeBool::NodeBool(bool value) {this->value = value;}
 void NodeBool::check() {this->isChecked = true;}
-RaveValue NodeBool::generate() {return {LLVM::makeInt(1, value, false), new TypeBasic(BasicType::Bool)};}
-Type* NodeBool::getType() {return new TypeBasic(BasicType::Bool);}
+RaveValue NodeBool::generate() {return {LLVM::makeInt(1, value, false), basicTypes[BasicType::Bool]};}
+Type* NodeBool::getType() {return basicTypes[BasicType::Bool];}
 Node* NodeBool::copy() {return new NodeBool(this->value);}
 Node* NodeBool::comptime() {return this;}

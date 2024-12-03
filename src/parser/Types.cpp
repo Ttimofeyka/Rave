@@ -57,6 +57,8 @@ std::string TypeBasic::toString() {
 Type* TypeBasic::check(Type* parent) {return nullptr;}
 Type* TypeBasic::getElType() {return this;}
 
+std::map<char, TypeBasic*> basicTypes;
+
 // TypePointer
 TypePointer::TypePointer(Type* instance) {
     this->instance = instance;
@@ -377,21 +379,21 @@ std::string TypeDivided::toString() {
 Type* TypeDivided::getElType() {return this;}
 
 Type* getType(std::string id) {
-    if(id == "bool") return new TypeBasic(BasicType::Bool);
-    else if(id == "char") return new TypeBasic(BasicType::Char); 
-    else if(id == "uchar") return new TypeBasic(BasicType::Uchar);
-    else if(id == "short") return new TypeBasic(BasicType::Short);
-    else if(id == "ushort") return new TypeBasic(BasicType::Ushort);
-    else if(id == "int") return new TypeBasic(BasicType::Int);
-    else if(id == "uint") return new TypeBasic(BasicType::Uint);
-    else if(id == "long") return new TypeBasic(BasicType::Long);
-    else if(id == "ulong") return new TypeBasic(BasicType::Ulong);
-    else if(id == "cent") return new TypeBasic(BasicType::Cent);
-    else if(id == "ucent") return new TypeBasic(BasicType::Ucent);
-    else if(id == "half") return new TypeBasic(BasicType::Half);
-    else if(id == "bhalf") return new TypeBasic(BasicType::Bhalf);
-    else if(id == "float") return new TypeBasic(BasicType::Float);
-    else if(id == "double") return new TypeBasic(BasicType::Double);
+    if(id == "bool") return basicTypes[BasicType::Bool];
+    else if(id == "char") return basicTypes[BasicType::Char];
+    else if(id == "uchar") return basicTypes[BasicType::Uchar];
+    else if(id == "short") return basicTypes[BasicType::Short];
+    else if(id == "ushort") return basicTypes[BasicType::Ushort];
+    else if(id == "int") return basicTypes[BasicType::Int];
+    else if(id == "uint") return basicTypes[BasicType::Uint];
+    else if(id == "long") return basicTypes[BasicType::Long];
+    else if(id == "ulong") return basicTypes[BasicType::Ulong];
+    else if(id == "cent") return basicTypes[BasicType::Cent];
+    else if(id == "ucent") return basicTypes[BasicType::Ucent];
+    else if(id == "half") return basicTypes[BasicType::Half];
+    else if(id == "bhalf") return basicTypes[BasicType::Bhalf];
+    else if(id == "float") return basicTypes[BasicType::Float];
+    else if(id == "double") return basicTypes[BasicType::Double];
     else if(id == "void") return new TypeVoid();
     else if(id == "alias") return new TypeAlias();
     else if(id == "int4") return new TypeVector(new TypeBasic(BasicType::Int), 4);

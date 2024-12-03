@@ -180,6 +180,22 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
     LLVMInitializeAVRTargetMC();
 
     // End of LLVM initializing
+
+    basicTypes[BasicType::Bool] = new TypeBasic(BasicType::Bool);
+    basicTypes[BasicType::Char] = new TypeBasic(BasicType::Char);
+    basicTypes[BasicType::Uchar] = new TypeBasic(BasicType::Uchar);
+    basicTypes[BasicType::Short] = new TypeBasic(BasicType::Short);
+    basicTypes[BasicType::Ushort] = new TypeBasic(BasicType::Ushort);
+    basicTypes[BasicType::Int] = new TypeBasic(BasicType::Int);
+    basicTypes[BasicType::Uint] = new TypeBasic(BasicType::Uint);
+    basicTypes[BasicType::Long] = new TypeBasic(BasicType::Long);
+    basicTypes[BasicType::Ulong] = new TypeBasic(BasicType::Ulong);
+    basicTypes[BasicType::Cent] = new TypeBasic(BasicType::Cent);
+    basicTypes[BasicType::Ucent] = new TypeBasic(BasicType::Ucent);
+    basicTypes[BasicType::Half] = new TypeBasic(BasicType::Half);
+    basicTypes[BasicType::Bhalf] = new TypeBasic(BasicType::Bhalf);
+    basicTypes[BasicType::Float] = new TypeBasic(BasicType::Float);
+    basicTypes[BasicType::Double] = new TypeBasic(BasicType::Double);
 }
 
 // Clears all possible global variables.

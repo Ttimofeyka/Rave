@@ -60,8 +60,8 @@ RaveValue NodeIf::generate() {
 
     RaveValue condValue = cond->generate();
 
-    if(isLikely) LLVM::call(generator->functions["llvm.expect.i1"], {condValue, {LLVM::makeInt(1, 1, false), new TypeBasic(BasicType::Bool)}}, "likely");
-    else if(isUnlikely) LLVM::call(generator->functions["llvm.expect.i1"], {condValue, {LLVM::makeInt(1, 0, false), new TypeBasic(BasicType::Bool)}}, "unlikely");
+    if(isLikely) LLVM::call(generator->functions["llvm.expect.i1"], {condValue, {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]}}, "likely");
+    else if(isUnlikely) LLVM::call(generator->functions["llvm.expect.i1"], {condValue, {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]}}, "unlikely");
 
     LLVMBuildCondBr(generator->builder, condValue.value, thenBlock, elseBlock);
 

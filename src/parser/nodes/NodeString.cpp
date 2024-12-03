@@ -16,7 +16,7 @@ NodeString::NodeString(std::string value, bool isWide) {
 }
 
 Node* NodeString::copy() {return new NodeString(this->value, this->isWide);}
-Type* NodeString::getType() {return new TypePointer(new TypeBasic((isWide ? BasicType::Uint : BasicType::Char)));}
+Type* NodeString::getType() {return new TypePointer(basicTypes[isWide ? BasicType::Uint : BasicType::Char]);}
 Node* NodeString::comptime() {return this;}
 void NodeString::check() {this->isChecked = true;}
 
@@ -40,7 +40,7 @@ RaveValue NodeString::generate() {
 
     LLVMValueRef indices[2] = {LLVM::makeInt(32, 0, false), LLVM::makeInt(32, 0, false)};
 
-    Type* tp = new TypePointer(new TypeBasic(isWide ? BasicType::Int : BasicType::Char));
+    Type* tp = new TypePointer(basicTypes[isWide ? BasicType::Int : BasicType::Char]);
 
     return {LLVM::cInboundsGep({globalStr, tp}, indices, 2).value, tp};
 }

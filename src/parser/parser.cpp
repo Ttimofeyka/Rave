@@ -488,24 +488,24 @@ Node* Parser::parseAtom(std::string f) {
             else if(this->peek()->value[0] == 'f') {
                 // Float-type
                 this->next();
-                NodeFloat* nfloat = new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Float));
+                NodeFloat* nfloat = new NodeFloat(std::stod(t->value), basicTypes[BasicType::Float]);
                 nfloat->isMustBeFloat = true;
                 return nfloat;
             }
             else if(this->peek()->value[0] == 'd') {
                 // Double-type
                 this->next();
-                return new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Double));
+                return new NodeFloat(std::stod(t->value), basicTypes[BasicType::Double]);
             }
             else if(this->peek()->value[0] == 'h') {
                 // Half-type
                 this->next();
-                return new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Half));
+                return new NodeFloat(std::stod(t->value), basicTypes[BasicType::Half]);
             }
             else if(this->peek()->value[0] == 'b' && this->peek()->value[1] == 'h') {
                 // Bhalf-type
                 this->next();
-                return new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Bhalf));
+                return new NodeFloat(std::stod(t->value), basicTypes[BasicType::Bhalf]);
             }
         }
         return new NodeInt(BigInt(t->value));
@@ -515,24 +515,24 @@ Node* Parser::parseAtom(std::string f) {
             if(this->peek()->value == "d") {
                 // Double-type
                 this->next();
-                return new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Double));
+                return new NodeFloat(std::stod(t->value), basicTypes[BasicType::Double]);
             }
             else if(this->peek()->value == "f") {
                 // Float-type
                 this->next();
-                NodeFloat* nfloat = new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Float));
+                NodeFloat* nfloat = new NodeFloat(std::stod(t->value), basicTypes[BasicType::Float]);
                 nfloat->isMustBeFloat = true;
                 return nfloat;
             }
             if(this->peek()->value == "h") {
                 // Half-type
                 this->next();
-                return new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Half));
+                return new NodeFloat(std::stod(t->value), basicTypes[BasicType::Half]);
             }
             else if(this->peek()->value == "bh") {
                 // Bhalf-type
                 this->next();
-                return new NodeFloat(std::stod(t->value), new TypeBasic(BasicType::Bhalf));
+                return new NodeFloat(std::stod(t->value), basicTypes[BasicType::Bhalf]);
             }
         }
         return new NodeFloat(std::stod(t->value));

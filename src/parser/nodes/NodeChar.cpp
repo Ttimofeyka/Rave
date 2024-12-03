@@ -16,20 +16,20 @@ NodeChar::NodeChar(std::string value, bool isWide) {
 }
 
 Node* NodeChar::copy() {return new NodeChar(this->value, this->isWide);}
-Type* NodeChar::getType() {return new TypeBasic(isWide ? BasicType::Uint : BasicType::Char);}
+Type* NodeChar::getType() {return isWide ? basicTypes[BasicType::Int] : basicTypes[BasicType::Char];}
 Node* NodeChar::comptime() {return this;}
 void NodeChar::check() {this->isChecked = true;}
 
 RaveValue NodeChar::generate() {
     if(this->value.size() > 1 && this->value[0] == '\\') {
-        if(isdigit(this->value[1])) return {LLVM::makeInt(isWide ? 32 : 8, std::stol(value.substr(1)), false), new TypeBasic(isWide ? BasicType::Int : BasicType::Char)};
+        if(isdigit(this->value[1])) return {LLVM::makeInt(isWide ? 32 : 8, std::stol(value.substr(1)), false), isWide ? basicTypes[BasicType::Int] : basicTypes[BasicType::Char]};
         switch(this->value[1]) {
-            case 'n': return {LLVM::makeInt(isWide ? 32 : 8, 10, false), new TypeBasic(isWide ? BasicType::Int : BasicType::Char)};
-            case 'v': return {LLVM::makeInt(isWide ? 32 : 8, 11, false), new TypeBasic(isWide ? BasicType::Int : BasicType::Char)};
-            case 'r': return {LLVM::makeInt(isWide ? 32 : 8, 13, false), new TypeBasic(isWide ? BasicType::Int : BasicType::Char)};
+            case 'n': return {LLVM::makeInt(isWide ? 32 : 8, 10, false), isWide ? basicTypes[BasicType::Int] : basicTypes[BasicType::Char]};
+            case 'v': return {LLVM::makeInt(isWide ? 32 : 8, 11, false), isWide ? basicTypes[BasicType::Int] : basicTypes[BasicType::Char]};
+            case 'r': return {LLVM::makeInt(isWide ? 32 : 8, 13, false), isWide ? basicTypes[BasicType::Int] : basicTypes[BasicType::Char]};
             default: break;
         }
     }
-    if(this->value.size() < 2) return {LLVM::makeInt(isWide ? 32 : 8, value[0], false), new TypeBasic(isWide ? BasicType::Int : BasicType::Char)};
-    return {LLVM::makeInt(32, utf8::utf8to32(this->value)[0], false), new TypeBasic(BasicType::Int)};
+    if(this->value.size() < 2) return {LLVM::makeInt(isWide ? 32 : 8, value[0], false), isWide ? basicTypes[BasicType::Int] : basicTypes[BasicType::Char]};
+    return {LLVM::makeInt(32, utf8::utf8to32(this->value)[0], false), isWide ? basicTypes[BasicType::Int] : basicTypes[BasicType::Char]};
 }

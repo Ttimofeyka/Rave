@@ -11,13 +11,13 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <iostream>
 
 NodeFloat::NodeFloat(double value) {this->value = value;}
-NodeFloat::NodeFloat(double value, bool isDouble) {if(isDouble) this->type = new TypeBasic(BasicType::Double); this->value = value;}
+NodeFloat::NodeFloat(double value, bool isDouble) {if(isDouble) this->type = basicTypes[BasicType::Double]; this->value = value;}
 NodeFloat::NodeFloat(double value, TypeBasic* type) {this->value = value; this->type = type;}
 
 Type* NodeFloat::getType() {
     if(this->type != nullptr) return this->type;
     if(this->isMustBeFloat) {
-        this->type = new TypeBasic(BasicType::Float);
+        this->type = basicTypes[BasicType::Float];
         return this->type;
     }
     this->type = new TypeBasic((this->value > std::numeric_limits<float>::max()) ? BasicType::Double : (BasicType::Float));
@@ -26,13 +26,13 @@ Type* NodeFloat::getType() {
 
 RaveValue NodeFloat::generate() {
     if(this->isMustBeFloat) {
-        if(this->type == nullptr || ((TypeBasic*)this->type)->type != BasicType::Float) this->type = new TypeBasic(BasicType::Float);
-        return {LLVMConstReal(LLVMFloatTypeInContext(generator->context), this->value), new TypeBasic(BasicType::Float)};
+        if(this->type == nullptr || ((TypeBasic*)this->type)->type != BasicType::Float) this->type = basicTypes[BasicType::Float];
+        return {LLVMConstReal(LLVMFloatTypeInContext(generator->context), this->value), basicTypes[BasicType::Float]};
     }
-    if(this->type == nullptr) this->type = new TypeBasic(BasicType::Double);
-    else if(this->type->type == BasicType::Half) return {LLVMConstReal(LLVMHalfTypeInContext(generator->context), this->value), new TypeBasic(BasicType::Half)};
-    else if(this->type->type == BasicType::Bhalf) return {LLVMConstReal(LLVMBFloatTypeInContext(generator->context), this->value), new TypeBasic(BasicType::Bhalf)};
-    return {LLVMConstReal(LLVMDoubleTypeInContext(generator->context), this->value), new TypeBasic(BasicType::Double)};
+    if(this->type == nullptr) this->type = basicTypes[BasicType::Double];
+    else if(this->type->type == BasicType::Half) return {LLVMConstReal(LLVMHalfTypeInContext(generator->context), this->value), basicTypes[BasicType::Half]};
+    else if(this->type->type == BasicType::Bhalf) return {LLVMConstReal(LLVMBFloatTypeInContext(generator->context), this->value), basicTypes[BasicType::Bhalf]};
+    return {LLVMConstReal(LLVMDoubleTypeInContext(generator->context), this->value), basicTypes[BasicType::Double]};
 }
 
 Node* NodeFloat::copy() {

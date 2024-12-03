@@ -36,11 +36,11 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/llvm.hpp"
 
 Type* getTypeBySize(int size) {
-    if(size == 8) return new TypeBasic(BasicType::Char);
-    else if(size == 16) return new TypeBasic(BasicType::Short);
-    else if(size == 32) return new TypeBasic(BasicType::Int);
-    else if(size == 64) return new TypeBasic(BasicType::Long);
-    else return new TypeBasic(BasicType::Cent);
+    if(size == 8) return basicTypes[BasicType::Char];
+    else if(size == 16) return basicTypes[BasicType::Short];
+    else if(size == 32) return basicTypes[BasicType::Int];
+    else if(size == 64) return basicTypes[BasicType::Long];
+    else return basicTypes[BasicType::Cent];
 }
 
 int getCountOfInternalArgs(NodeFunc* nfunc) {
@@ -199,7 +199,7 @@ RaveValue NodeFunc::generate() {
 
     if(this->name == "main") {
         linkName = "main";
-        if(instanceof<TypeVoid>(this->type)) this->type = new TypeBasic(BasicType::Int);
+        if(instanceof<TypeVoid>(this->type)) this->type = basicTypes[BasicType::Int];
     }
 
     for(int i=0; i<this->mods.size(); i++) {
