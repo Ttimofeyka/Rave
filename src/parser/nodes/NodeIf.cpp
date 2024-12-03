@@ -24,7 +24,7 @@ NodeIf::NodeIf(Node* cond, Node* body, Node* _else, int loc, bool isStatic) {
     this->isUnlikely = false;
 }
 
-Type* NodeIf::getType() {return new TypeVoid();}
+Type* NodeIf::getType() {return typeVoid;}
 
 void NodeIf::check() {
     bool oldCheck = this->isChecked;

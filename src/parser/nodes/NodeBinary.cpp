@@ -262,7 +262,7 @@ Node* NodeBinary::comptime() {
 
 Type* NodeBinary::getType() {
     switch(this->op) {
-        case TokType::Equ: case TokType::PluEqu: case TokType::MinEqu: case TokType::DivEqu: case TokType::MulEqu: return new TypeVoid();
+        case TokType::Equ: case TokType::PluEqu: case TokType::MinEqu: case TokType::DivEqu: case TokType::MulEqu: return typeVoid;
         case TokType::Equal: case TokType::Nequal: case TokType::More: case TokType::Less: case TokType::MoreEqual: case TokType::LessEqual:
         case TokType::And: case TokType::Or: return basicTypes[BasicType::Bool];
         default:

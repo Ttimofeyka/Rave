@@ -49,7 +49,7 @@ Node* NodeStruct::copy() {
     return new NodeStruct(this->origname, cElements, this->loc, this->extends, this->templateNames, this->mods);
 }
 
-Type* NodeStruct::getType() {return new TypeVoid();}
+Type* NodeStruct::getType() {return typeVoid;}
 
 LLVMTypeRef NodeStruct::asConstType() {
     std::vector<LLVMTypeRef> types = this->getParameters(false);
@@ -305,7 +305,7 @@ RaveValue NodeStruct::generate() {
         this->destructor = new NodeFunc(
             "~" + this->origname, std::vector<FuncArgSet>(),
             new NodeBlock({new NodeCall(this->loc, new NodeIden("std::free", this->loc), {new NodeIden("this", this->loc)})}), false,
-            std::vector<DeclarMod>(), this->loc, new TypeVoid(), std::vector<std::string>()
+            std::vector<DeclarMod>(), this->loc, typeVoid, std::vector<std::string>()
         );
         this->destructor->namespacesNames = std::vector<std::string>(this->namespacesNames);
         this->destructor->isComdat = this->isComdat;

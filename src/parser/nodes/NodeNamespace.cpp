@@ -32,7 +32,7 @@ Node* NodeNamespace::copy() {
     return new NodeNamespace(std::vector<std::string>(this->names), cNodes, this->loc);
 }
 
-Type* NodeNamespace::getType() {return new TypeVoid();}
+Type* NodeNamespace::getType() {return typeVoid;}
 Node* NodeNamespace::comptime() {return nullptr;}
 
 void NodeNamespace::check() {

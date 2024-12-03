@@ -608,7 +608,7 @@ Node* Parser::parseAtom(std::string f) {
                 type = this->parseType();
                 if(this->peek()->type == TokType::Comma) this->next();
             }
-            else type = new TypeVoid();
+            else type = typeVoid;
             std::string line = this->peek()->value;
             std::string additions = "";
             std::vector<Node*> args;
@@ -822,7 +822,7 @@ Type* Parser::parseTypeAtom() {
     if(this->peek()->type == TokType::Identifier) {
         std::string id = this->peek()->value;
         this->next();
-        if(id == "void") return new TypeVoid();
+        if(id == "void") return typeVoid;
         else if(id == "auto") return new TypeAuto();
         else if(id == "const") {
             if(this->peek()->type == TokType::Rpar) this->next();

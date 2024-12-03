@@ -35,7 +35,7 @@ Node* NodeForeach::copy() {
 
 Node* NodeForeach::comptime() {return nullptr;}
 void NodeForeach::check() {this->isChecked = true;}
-Type* NodeForeach::getType() {return new TypeVoid();}
+Type* NodeForeach::getType() {return typeVoid;}
 
 RaveValue NodeForeach::generate() {
     if(this->varLength == nullptr) {

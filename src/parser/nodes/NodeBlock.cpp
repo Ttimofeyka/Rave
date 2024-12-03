@@ -34,7 +34,7 @@ void NodeBlock::check() {
 }
 
 Node* NodeBlock::comptime() {return this;}
-Type* NodeBlock::getType() {return new TypeVoid();}
+Type* NodeBlock::getType() {return typeVoid;}
 
 RaveValue NodeBlock::generate() {
     for(int i=0; i<this->nodes.size(); i++) if(this->nodes[i] != nullptr) this->nodes[i]->generate();

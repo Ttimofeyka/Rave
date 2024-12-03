@@ -34,7 +34,7 @@ Type* NodeUnary::getType() {
             if(instanceof<TypeArray>(this->base->getType())) return new TypePointer(((TypeArray*)this->base->getType())->element);
             return new TypePointer(this->base->getType());
         case TokType::Minus: case TokType::Ne: return this->base->getType();
-        case TokType::Destructor: return new TypeVoid();
+        case TokType::Destructor: return typeVoid;
         case TokType::Multiply:
             Type* ty = this->base->getType();
             if(instanceof<TypePointer>(ty)) return ((TypePointer*)ty)->instance;

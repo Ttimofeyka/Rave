@@ -14,7 +14,7 @@ NodeDefer::NodeDefer(Node* instruction, int loc, bool isFunctionScope) {
     this->isFunctionScope = isFunctionScope;
 }
 
-Type* NodeDefer::getType() {return new TypeVoid();}
+Type* NodeDefer::getType() {return typeVoid;}
 
 void NodeDefer::check() {}
 

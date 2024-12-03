@@ -252,3 +252,5 @@ public:
 };
 
 Type* getType(std::string id);
+
+extern TypeVoid* typeVoid;

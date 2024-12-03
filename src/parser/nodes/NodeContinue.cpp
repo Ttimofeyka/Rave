@@ -12,7 +12,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 NodeContinue::NodeContinue(int loc) {this->loc = loc;}
 void NodeContinue::check() {this->isChecked = true;}
-Type* NodeContinue::getType() {return new TypeVoid();}
+Type* NodeContinue::getType() {return typeVoid;}
 Node* NodeContinue::comptime() {return this;}
 Node* NodeContinue::copy() {return new NodeContinue(this->loc);}
 

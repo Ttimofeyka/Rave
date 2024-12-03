@@ -19,7 +19,7 @@ NodeSwitch::NodeSwitch(Node* expr, Node* _default, std::vector<std::pair<Node*, 
     this->_default = _default;
 }
 
-Type* NodeSwitch::getType() {return new TypeVoid();}
+Type* NodeSwitch::getType() {return typeVoid;}
 
 void NodeSwitch::check() {}
 

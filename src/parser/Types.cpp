@@ -378,6 +378,8 @@ std::string TypeDivided::toString() {
 
 Type* TypeDivided::getElType() {return this;}
 
+TypeVoid* typeVoid;
+
 Type* getType(std::string id) {
     if(id == "bool") return basicTypes[BasicType::Bool];
     else if(id == "char") return basicTypes[BasicType::Char];
@@ -394,7 +396,7 @@ Type* getType(std::string id) {
     else if(id == "bhalf") return basicTypes[BasicType::Bhalf];
     else if(id == "float") return basicTypes[BasicType::Float];
     else if(id == "double") return basicTypes[BasicType::Double];
-    else if(id == "void") return new TypeVoid();
+    else if(id == "void") return typeVoid;
     else if(id == "alias") return new TypeAlias();
     else if(id == "int4") return new TypeVector(new TypeBasic(BasicType::Int), 4);
     else if(id == "int8") return new TypeVector(new TypeBasic(BasicType::Int), 8);

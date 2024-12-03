@@ -72,7 +72,7 @@ Type* NodeBuiltin::getType() {
     || this->name == "vSumAll") return args[0]->getType();
     if(this->name == "typeToString") return new TypePointer(basicTypes[BasicType::Char]);
     if(this->name == "minOf" || this->name == "maxOf") return basicTypes[BasicType::Ulong];
-    return new TypeVoid();
+    return typeVoid;
 }
 
 void NodeBuiltin::check() {this->isChecked = true;}
@@ -92,7 +92,7 @@ NodeType* NodeBuiltin::asType(int n, bool isCompTime) {
             while(generator->toReplace.find(ty->toString()) != generator->toReplace.end()) ty = generator->toReplace[ty->toString()];
             return new NodeType(ty, this->loc);
         }
-        if(name == "void") return new NodeType(new TypeVoid(), this->loc);
+        if(name == "void") return new NodeType(typeVoid, this->loc);
         if(name == "bool") return new NodeType(basicTypes[BasicType::Bool], this->loc);
         if(name == "char") return new NodeType(basicTypes[BasicType::Char], this->loc);
         if(name == "uchar") return new NodeType(basicTypes[BasicType::Uchar], this->loc);
@@ -471,7 +471,7 @@ RaveValue NodeBuiltin::generate() {
         LLVMValueRef store = LLVMBuildStore(generator->builder, LLVMConstNull(generator->genType(ptr.type->getElType(), loc)), ptr.value);
         LLVMSetOrdering(store, LLVMAtomicOrderingSequentiallyConsistent);
         LLVMSetVolatile(store, true);
-        return {store, new TypeVoid()};
+        return {store, typeVoid};
     }
     else if(this->name == "getLinkName") {
         if(instanceof<NodeIden>(this->args[0])) {

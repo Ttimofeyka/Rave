@@ -202,7 +202,7 @@ Type* NodeCall::getType() {
             TypeFunc* fn = (TypeFunc*)currScope->getVar(niden->name, this->loc)->type;
             return fn->main;
         }
-        return new TypePointer(new TypeVoid());
+        return new TypePointer(typeVoid);
     }
     return this->func->getType();
 }

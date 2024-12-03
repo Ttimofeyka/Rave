@@ -16,7 +16,7 @@ NodeCmpxchg::NodeCmpxchg(Node* ptr, Node* value1, Node* value2, int loc) {
 }
 
 Node* NodeCmpxchg::copy() {return new NodeCmpxchg(this->ptr->copy(), this->value1->copy(), this->value2->copy(), this->loc);}
-Type* NodeCmpxchg::getType() {return new TypeVoid();}
+Type* NodeCmpxchg::getType() {return typeVoid;}
 void NodeCmpxchg::check() {this->isChecked = true;}
 Node* NodeCmpxchg::comptime() {return this;}
 

@@ -17,7 +17,7 @@ NodeArray::NodeArray(int loc, std::vector<Node*> values) {
 
 Type* NodeArray::getType() {
     if(this->values.size() > 0) return new TypeArray(new NodeInt(this->values.size()), this->values[0]->getType());
-    return new TypeVoid();
+    return typeVoid;
 }
 
 std::vector<RaveValue> NodeArray::getValues() {
