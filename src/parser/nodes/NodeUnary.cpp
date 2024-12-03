@@ -59,6 +59,11 @@ void NodeUnary::check() {
 
 RaveValue NodeUnary::generateConst() {
     if(this->type == TokType::Minus) {
+        if(instanceof<NodeInt>(this->base)) {
+            ((NodeInt*)this->base)->value = -((NodeInt*)this->base)->value;
+            return this->base->generate();
+        }
+
         RaveValue bs = this->base->generate();
         if(instanceof<TypeBasic>(bs.type) && !((TypeBasic*)bs.type)->isFloat()) return {LLVMBuildNeg(generator->builder, bs.value, ""), bs.type};
         return {LLVMBuildFNeg(generator->builder, bs.value, ""), bs.type};
@@ -68,6 +73,11 @@ RaveValue NodeUnary::generateConst() {
 
 RaveValue NodeUnary::generate() {
     if(this->type == TokType::Minus) {
+        if(instanceof<NodeInt>(this->base)) {
+            ((NodeInt*)this->base)->value = -((NodeInt*)this->base)->value;
+            return this->base->generate();
+        }
+
         RaveValue bs = this->base->generate();
         if(instanceof<TypeBasic>(bs.type) && !((TypeBasic*)bs.type)->isFloat()) return {LLVMBuildNeg(generator->builder, bs.value, "NodeUnary_neg"), bs.type};
         return {LLVMBuildFNeg(generator->builder, bs.value, "NodeUnary_fneg"), bs.type};
