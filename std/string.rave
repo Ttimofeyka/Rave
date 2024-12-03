@@ -325,37 +325,19 @@ namespace std {
 
         @foreachArgs() {
             @if(@getCurrArgType() == double) {
-                nBuffer = [
-                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
-                ];
+                std::memset(&nBuffer, 0, 40);
                 std::cstring::dtos(@getCurrArg(double), 8, &nBuffer);
                 result.appendC(cast(char*)&nBuffer);
             };
 
             @if(@getCurrArgType() == float) {
-                nBuffer = [
-                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
-                ];
+                std::memset(&nBuffer, 0, 40);
                 std::cstring::dtos(@getCurrArg(double), 7, &nBuffer);
                 result.appendC(cast(char*)&nBuffer);
             };
 
             @if(@getCurrArgType() == half) {
-                nBuffer = [
-                   '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                   '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                   '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                   '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                   '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
-                ];
+                std::memset(&nBuffer, 0, 40);
                 std::cstring::dtos(@getCurrArg(double), 6, &nBuffer);
                 result.appendC(cast(char*)&nBuffer);
             };
@@ -369,25 +351,13 @@ namespace std {
             };
 
             @if((@getCurrArgType() == short) || (@getCurrArgType() == int) || (@getCurrArgType() == long)) {
-                nBuffer = [
-                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
-                ];
+                std::memset(&nBuffer, 0, 40);
                 std::cstring::ltos(@getCurrArg(long), cast(char*)&nBuffer);
                 result.appendC(cast(char*)&nBuffer);
             };
 
             @if(@getCurrArgType() == cent) {
-                nBuffer = [
-                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0',
-                    '\0', '\0', '\0', '\0', '\0', '\0', '\0', '\0'
-                ];
+                std::memset(&nBuffer, 0, 40);
                 std::cstring::ctos(@getCurrArg(cent), cast(char*)&nBuffer);
                 result.appendC(cast(char*)&nBuffer);
             };
@@ -462,6 +432,7 @@ namespace std {
                 else result.appendC("null");
             };
         };
+        
         resultPtr[0] = result;
     }
 

@@ -65,13 +65,13 @@ Type* NodeBuiltin::getType() {
     if(this->name == "isNumeric" || this->name == "isVector" || this->name == "isPointer"
     || this->name == "isArray" || this->name == "aliasExists" || this->name == "tEquals"
     || this->name == "tNequals" || this->name == "isStructure" || this->name == "hasMethod"
-    || this->name == "hasDestructor" || this->name == "contains") return new TypeBasic(BasicType::Bool);
-    if(this->name == "sizeOf" || this->name == "argsLength" || this->name == "getCurrArgNumber") return new TypeBasic(BasicType::Int);
+    || this->name == "hasDestructor" || this->name == "contains") return basicTypes[BasicType::Bool];
+    if(this->name == "sizeOf" || this->name == "argsLength" || this->name == "getCurrArgNumber") return basicTypes[BasicType::Int];
     if(this->name == "vAdd" || this->name == "vSub" || this->name == "vMul" || this->name == "vDiv"
     || this->name == "vShuffle" || this->name == "vHAdd32x4" || this->name == "vHAdd16x8"
     || this->name == "vSumAll") return args[0]->getType();
-    if(this->name == "typeToString") return new TypePointer(new TypeBasic(BasicType::Char));
-    if(this->name == "minOf" || this->name == "maxOf") return new TypeBasic(BasicType::Ulong);
+    if(this->name == "typeToString") return new TypePointer(basicTypes[BasicType::Char]);
+    if(this->name == "minOf" || this->name == "maxOf") return basicTypes[BasicType::Ulong];
     return new TypeVoid();
 }
 
@@ -93,24 +93,24 @@ NodeType* NodeBuiltin::asType(int n, bool isCompTime) {
             return new NodeType(ty, this->loc);
         }
         if(name == "void") return new NodeType(new TypeVoid(), this->loc);
-        if(name == "bool") return new NodeType(new TypeBasic(BasicType::Bool), this->loc);
-        if(name == "char") return new NodeType(new TypeBasic(BasicType::Char), this->loc);
-        if(name == "uchar") return new NodeType(new TypeBasic(BasicType::Uchar), this->loc);
-        if(name == "short") return new NodeType(new TypeBasic(BasicType::Short), this->loc);
-        if(name == "ushort") return new NodeType(new TypeBasic(BasicType::Ushort), this->loc);
-        if(name == "int") return new NodeType(new TypeBasic(BasicType::Int), this->loc);
-        if(name == "uint") return new NodeType(new TypeBasic(BasicType::Uint), this->loc);
-        if(name == "long") return new NodeType(new TypeBasic(BasicType::Long), this->loc);
-        if(name == "ulong") return new NodeType(new TypeBasic(BasicType::Ulong), this->loc);
-        if(name == "cent") return new NodeType(new TypeBasic(BasicType::Cent), this->loc);
-        if(name == "ucent") return new NodeType(new TypeBasic(BasicType::Ucent), this->loc);
-        if(name == "float") return new NodeType(new TypeBasic(BasicType::Float), this->loc);
-        if(name == "double") return new NodeType(new TypeBasic(BasicType::Double), this->loc);
-        if(name == "float4") return new NodeType(new TypeVector(new TypeBasic(BasicType::Float), 8), this->loc);
-        if(name == "float8") return new NodeType(new TypeVector(new TypeBasic(BasicType::Float), 8), this->loc);
-        if(name == "int4") return new NodeType(new TypeVector(new TypeBasic(BasicType::Int), 4), this->loc);
-        if(name == "int8") return new NodeType(new TypeVector(new TypeBasic(BasicType::Int), 8), this->loc);
-        if(name == "short8") return new NodeType(new TypeVector(new TypeBasic(BasicType::Short), 8), this->loc);
+        if(name == "bool") return new NodeType(basicTypes[BasicType::Bool], this->loc);
+        if(name == "char") return new NodeType(basicTypes[BasicType::Char], this->loc);
+        if(name == "uchar") return new NodeType(basicTypes[BasicType::Uchar], this->loc);
+        if(name == "short") return new NodeType(basicTypes[BasicType::Short], this->loc);
+        if(name == "ushort") return new NodeType(basicTypes[BasicType::Ushort], this->loc);
+        if(name == "int") return new NodeType(basicTypes[BasicType::Int], this->loc);
+        if(name == "uint") return new NodeType(basicTypes[BasicType::Uint], this->loc);
+        if(name == "long") return new NodeType(basicTypes[BasicType::Long], this->loc);
+        if(name == "ulong") return new NodeType(basicTypes[BasicType::Ulong], this->loc);
+        if(name == "cent") return new NodeType(basicTypes[BasicType::Cent], this->loc);
+        if(name == "ucent") return new NodeType(basicTypes[BasicType::Ucent], this->loc);
+        if(name == "float") return new NodeType(basicTypes[BasicType::Float], this->loc);
+        if(name == "double") return new NodeType(basicTypes[BasicType::Double], this->loc);
+        if(name == "float4") return new NodeType(new TypeVector(basicTypes[BasicType::Float], 8), this->loc);
+        if(name == "float8") return new NodeType(new TypeVector(basicTypes[BasicType::Float], 8), this->loc);
+        if(name == "int4") return new NodeType(new TypeVector(basicTypes[BasicType::Int], 4), this->loc);
+        if(name == "int8") return new NodeType(new TypeVector(basicTypes[BasicType::Int], 8), this->loc);
+        if(name == "short8") return new NodeType(new TypeVector(basicTypes[BasicType::Short], 8), this->loc);
         return new NodeType(new TypeStruct(name), this->loc);
     }
     if(instanceof<NodeBuiltin>(this->args[n])) {
@@ -309,8 +309,8 @@ RaveValue NodeBuiltin::generate() {
         return {};
     }
     if(this->name == "aliasExists") {
-        if(AST::aliasTable.find(this->getAliasName(0)) != AST::aliasTable.end()) return {LLVM::makeInt(1, 1, false), new TypeBasic(BasicType::Bool)};
-        return {LLVM::makeInt(1, 0, false), new TypeBasic(BasicType::Bool)};
+        if(AST::aliasTable.find(this->getAliasName(0)) != AST::aliasTable.end()) return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
+        return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
     }
     if(this->name == "foreachArgs") {
         for(int i=generator->currentBuiltinArg; i<AST::funcTable[currScope->funcName]->args.size(); i++) {
@@ -319,7 +319,7 @@ RaveValue NodeBuiltin::generate() {
         }
         return {};
     }
-    if(this->name == "sizeOf") return {LLVM::makeInt(32, (asType(0)->type)->getSize() / 8, false), new TypeBasic(BasicType::Bool)};
+    if(this->name == "sizeOf") return {LLVM::makeInt(32, (asType(0)->type)->getSize() / 8, false), basicTypes[BasicType::Bool]};
     if(this->name == "argsLength") return (new NodeInt(AST::funcTable[currScope->funcName]->args.size()))->generate();
     if(this->name == "getCurrArgNumber") return (new NodeInt(generator->currentBuiltinArg))->generate();
     if(this->name == "callWithArgs") {
@@ -339,28 +339,28 @@ RaveValue NodeBuiltin::generate() {
         return (new NodeCall(this->loc, args[0], nodes))->generate();
     }
     if(this->name == "tEquals") {
-        if(this->asType(0)->type->toString() == this->asType(1)->type->toString()) return {LLVM::makeInt(1, 1, false), new TypeBasic(BasicType::Bool)};
-        return {LLVM::makeInt(1, 1, false), new TypeBasic(BasicType::Bool)};
+        if(this->asType(0)->type->toString() == this->asType(1)->type->toString()) return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
+        return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
     }
     if(this->name == "tNequals") {
         // TODO: delete it (deprecated)
-        if(this->asType(0)->type->toString() != this->asType(1)->type->toString()) return {LLVM::makeInt(1, 1, false), new TypeBasic(BasicType::Bool)};
-        return {LLVM::makeInt(1, 0, false), new TypeBasic(BasicType::Bool)};
+        if(this->asType(0)->type->toString() != this->asType(1)->type->toString()) return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
+        return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
     }
     if(this->name == "isArray") {
         Type* ty = this->asType(0)->type;
         while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
-        return {LLVM::makeInt(1, instanceof<TypeArray>(ty), false), new TypeBasic(BasicType::Bool)};
+        return {LLVM::makeInt(1, instanceof<TypeArray>(ty), false), basicTypes[BasicType::Bool]};
     }
     if(this->name == "isVector") {
         Type* ty = this->asType(0)->type;
         while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
-        return {LLVM::makeInt(1, instanceof<TypeVector>(ty), false), new TypeBasic(BasicType::Bool)};
+        return {LLVM::makeInt(1, instanceof<TypeVector>(ty), false), basicTypes[BasicType::Bool]};
     }
     if(this->name == "isPointer") {
         Type* ty = this->asType(0)->type;
         while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
-        return {LLVM::makeInt(1, instanceof<TypePointer>(ty), false), new TypeBasic(BasicType::Bool)};
+        return {LLVM::makeInt(1, instanceof<TypePointer>(ty), false), basicTypes[BasicType::Bool]};
     }
     if(this->name == "getCurrArg") return (new NodeCast(asType(0)->type, new NodeIden("_RaveArg" + std::to_string(generator->currentBuiltinArg), this->loc), this->loc))->generate();
     if(this->name == "getArg") return (new NodeCast(asType(0)->type, new NodeIden("_RaveArg" + asNumber(1).to_string(), this->loc), this->loc))->generate();
@@ -383,12 +383,12 @@ RaveValue NodeBuiltin::generate() {
         return {};
     }
     if(this->name == "isStructure") {
-        if(instanceof<TypeStruct>(asType(0)->type)) return {LLVM::makeInt(1, 1, false), new TypeBasic(BasicType::Bool)};
-        return {LLVM::makeInt(1, 0, false), new TypeBasic(BasicType::Bool)};
+        if(instanceof<TypeStruct>(asType(0)->type)) return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
+        return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
     }
     if(this->name == "isNumeric") {
-        if(instanceof<TypeBasic>(asType(0)->type)) return {LLVM::makeInt(1, 1, false), new TypeBasic(BasicType::Bool)};
-        return {LLVM::makeInt(1, 0, false), new TypeBasic(BasicType::Bool)};
+        if(instanceof<TypeBasic>(asType(0)->type)) return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
+        return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
     }
     if(this->name == "echo") {
         std::string buffer = "";
@@ -427,7 +427,7 @@ RaveValue NodeBuiltin::generate() {
     }
     else if(this->name == "hasMethod") {
         Type* ty = asType(0)->type;
-        if(!instanceof<TypeStruct>(ty)) return {LLVM::makeInt(1, 0, false), new TypeBasic(BasicType::Bool)};
+        if(!instanceof<TypeStruct>(ty)) return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
         TypeStruct* tstruct = (TypeStruct*)ty;
         
         std::string methodName = asStringIden(1);
@@ -444,27 +444,27 @@ RaveValue NodeBuiltin::generate() {
 
         for(auto &&x : AST::methodTable) {
             if(x.first.first == tstruct->name && x.second->origName == methodName) {
-                if(fnType == nullptr) return {LLVM::makeInt(1, 1, false), new TypeBasic(BasicType::Bool)};
+                if(fnType == nullptr) return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
             }
         }
 
-        return {LLVM::makeInt(1, 0, false), new TypeBasic(BasicType::Bool)};
+        return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
     }
     else if(this->name == "hasDestructor") {
         Type* ty = asType(0)->type;
-        if(!instanceof<TypeStruct>(ty)) return {LLVM::makeInt(1, 0, false), new TypeBasic(BasicType::Bool)};
+        if(!instanceof<TypeStruct>(ty)) return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
         TypeStruct* tstruct = (TypeStruct*)ty;
 
-        if(AST::structTable.find(tstruct->name) == AST::structTable.end()) return {LLVM::makeInt(1, 0, false), new TypeBasic(BasicType::Bool)};
-        if(AST::structTable[tstruct->name]->destructor == nullptr) return {LLVM::makeInt(1, 0, false), new TypeBasic(BasicType::Bool)};
-        return {LLVM::makeInt(1, 1, false), new TypeBasic(BasicType::Bool)};
+        if(AST::structTable.find(tstruct->name) == AST::structTable.end()) return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
+        if(AST::structTable[tstruct->name]->destructor == nullptr) return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
+        return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
     }
     else if(this->name == "atomicTAS") {
         LLVMValueRef result = LLVMBuildAtomicRMW(generator->builder, LLVMAtomicRMWBinOpXchg, this->args[0]->generate().value,
             this->args[1]->generate().value, LLVMAtomicOrderingSequentiallyConsistent, false
         );
         LLVMSetVolatile(result, true);
-        return {result, new TypeBasic(BasicType::Int)};
+        return {result, basicTypes[BasicType::Int]};
     }
     else if(this->name == "atomicClear") {
         RaveValue ptr = this->args[0]->generate();
@@ -682,7 +682,7 @@ RaveValue NodeBuiltin::generate() {
 
         return (
             new NodeCast(
-                new TypePointer(new TypeBasic(BasicType::Char)),
+                new TypePointer(basicTypes[BasicType::Char]),
                 new NodeDone(LLVM::alloc(size, "NodeBuiltin_alloca")),
                 this->loc
             )
@@ -693,17 +693,17 @@ RaveValue NodeBuiltin::generate() {
         Type* type = asType(0)->type;
 
         if(!instanceof<TypeVoid>(type) && !instanceof<TypeBasic>(type)) generator->error("the type must be a basic!", this->loc);
-        if(instanceof<TypeVoid>(type)) return {LLVM::makeInt(64, 0, false), new TypeBasic(BasicType::Long)};
+        if(instanceof<TypeVoid>(type)) return {LLVM::makeInt(64, 0, false), basicTypes[BasicType::Long]};
         else {
             TypeBasic* btype = (TypeBasic*)type;
             switch(btype->type) {
-                case BasicType::Bool: return {LLVM::makeInt(64, 0, false), new TypeBasic(BasicType::Long)};
-                case BasicType::Char: return {LLVM::makeInt(64, -128, false), new TypeBasic(BasicType::Long)};
-                case BasicType::Short: return {LLVM::makeInt(64, -32768, false), new TypeBasic(BasicType::Long)};
-                case BasicType::Int: return {LLVM::makeInt(64, -2147483647, false), new TypeBasic(BasicType::Long)};
-                case BasicType::Long: return {LLVM::makeInt(64, -9223372036854775807, false), new TypeBasic(BasicType::Long)};
+                case BasicType::Bool: return {LLVM::makeInt(64, 0, false), basicTypes[BasicType::Long]};
+                case BasicType::Char: return {LLVM::makeInt(64, -128, false), basicTypes[BasicType::Long]};
+                case BasicType::Short: return {LLVM::makeInt(64, -32768, false), basicTypes[BasicType::Long]};
+                case BasicType::Int: return {LLVM::makeInt(64, -2147483647, false), basicTypes[BasicType::Long]};
+                case BasicType::Long: return {LLVM::makeInt(64, -9223372036854775807, false), basicTypes[BasicType::Long]};
                 // TODO: Add BasicType::Cent
-                default: return {LLVM::makeInt(64, 0, false), new TypeBasic(BasicType::Long)};
+                default: return {LLVM::makeInt(64, 0, false), basicTypes[BasicType::Long]};
             }
         }
     }
@@ -712,21 +712,21 @@ RaveValue NodeBuiltin::generate() {
         Type* type = asType(0)->type;
 
         if(!instanceof<TypeVoid>(type) && !instanceof<TypeBasic>(type)) generator->error("the type must be a basic!", this->loc);
-        if(instanceof<TypeVoid>(type)) return {LLVM::makeInt(64, 0, false), new TypeBasic(BasicType::Long)};
+        if(instanceof<TypeVoid>(type)) return {LLVM::makeInt(64, 0, false), basicTypes[BasicType::Long]};
         else {
             TypeBasic* btype = (TypeBasic*)type;
             switch(btype->type) {
-                case BasicType::Bool: return {LLVM::makeInt(64, 1, false), new TypeBasic(BasicType::Long)};
-                case BasicType::Char: return {LLVM::makeInt(64, 127, false), new TypeBasic(BasicType::Long)};
-                case BasicType::Uchar: return {LLVM::makeInt(64, 255, false), new TypeBasic(BasicType::Long)};
-                case BasicType::Short: return {LLVM::makeInt(64, 32767, false), new TypeBasic(BasicType::Long)};
-                case BasicType::Ushort: return {LLVM::makeInt(64, 65535, false), new TypeBasic(BasicType::Long)};
-                case BasicType::Int: return {LLVM::makeInt(64, 2147483647, false), new TypeBasic(BasicType::Long)};
-                case BasicType::Uint: return {LLVM::makeInt(64, 4294967295, false), new TypeBasic(BasicType::Long)};
-                case BasicType::Long: return {LLVM::makeInt(64, 9223372036854775807, false), new TypeBasic(BasicType::Long)};
+                case BasicType::Bool: return {LLVM::makeInt(64, 1, false), basicTypes[BasicType::Long]};
+                case BasicType::Char: return {LLVM::makeInt(64, 127, false), basicTypes[BasicType::Long]};
+                case BasicType::Uchar: return {LLVM::makeInt(64, 255, false), basicTypes[BasicType::Long]};
+                case BasicType::Short: return {LLVM::makeInt(64, 32767, false), basicTypes[BasicType::Long]};
+                case BasicType::Ushort: return {LLVM::makeInt(64, 65535, false), basicTypes[BasicType::Long]};
+                case BasicType::Int: return {LLVM::makeInt(64, 2147483647, false), basicTypes[BasicType::Long]};
+                case BasicType::Uint: return {LLVM::makeInt(64, 4294967295, false), basicTypes[BasicType::Long]};
+                case BasicType::Long: return {LLVM::makeInt(64, 9223372036854775807, false), basicTypes[BasicType::Long]};
                 case BasicType::Ulong: return {LLVM::makeInt(64, 18446744073709551615ull, false), new TypeBasic(BasicType::Ulong)};
                 // TODO: Add BasicType::Cent and BasicType::Ucent
-                default: return {LLVM::makeInt(64, 0, false), new TypeBasic(BasicType::Long)};
+                default: return {LLVM::makeInt(64, 0, false), basicTypes[BasicType::Long]};
             }
         }
     }

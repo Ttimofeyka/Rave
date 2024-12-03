@@ -46,11 +46,11 @@ std::vector<RaveValue> NodeCall::correctByLLVM(std::vector<RaveValue> values, st
         if(fas[i].type->toString() == "void*" || fas[i].type->toString() == "char*") {
             if(!instanceof<TypePointer>(params[i].type)) {
                 params[i].value = Binary::castValue(params[i].value, LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0), this->loc);
-                params[i].type = new TypePointer(new TypeBasic(BasicType::Char));
+                params[i].type = new TypePointer(basicTypes[BasicType::Char]);
             }
             else if(!instanceof<TypeBasic>(params[i].type->getElType())) {
                 params[i].value = Binary::castValue(params[i].value, LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0), this->loc);
-                params[i].type = new TypePointer(new TypeBasic(BasicType::Char));
+                params[i].type = new TypePointer(basicTypes[BasicType::Char]);
             }
         }
         else if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(((TypePointer*)fas[i].type)->instance)) {
@@ -101,11 +101,11 @@ std::vector<RaveValue> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg, s
         if(fas[i].type->toString() == "void*" || fas[i].type->toString() == "char*") {
             if(!instanceof<TypePointer>(params[i].type)) {
                 params[i].value = Binary::castValue(params[i].value, LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0), this->loc);
-                params[i].type = new TypePointer(new TypeBasic(BasicType::Char));
+                params[i].type = new TypePointer(basicTypes[BasicType::Char]);
             }
             else if(!instanceof<TypeBasic>(params[i].type->getElType())) {
                 params[i].value = Binary::castValue(params[i].value, LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0), this->loc);
-                params[i].type = new TypePointer(new TypeBasic(BasicType::Char));
+                params[i].type = new TypePointer(basicTypes[BasicType::Char]);
             }
         }
         else if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(((TypePointer*)fas[i].type)->instance)) {
@@ -157,7 +157,7 @@ std::vector<RaveValue> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg, s
                     // Casting void(...) to char(...)
                     params[i].value = LLVMBuildPointerCast(generator->builder, params[i].value, generator->genType(fas[i].type, this->loc), "castVFtoCF");
                     TypeFunc* tfunc = ((TypeFunc*)params[i].type->getElType());
-                    tfunc->main = new TypeBasic(BasicType::Char);
+                    tfunc->main = basicTypes[BasicType::Char];
                     ((TypePointer*)params[i].type)->instance = tfunc;
                 }
             }

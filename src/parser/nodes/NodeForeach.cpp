@@ -56,7 +56,7 @@ RaveValue NodeForeach::generate() {
         }
     }
 
-    NodeVar* nv = new NodeVar("__RAVE_FOREACH_N" + std::to_string(this->loc), new NodeInt(0), false, false, false, {}, this->loc, new TypeBasic(BasicType::Int), false);
+    NodeVar* nv = new NodeVar("__RAVE_FOREACH_N" + std::to_string(this->loc), new NodeInt(0), false, false, false, {}, this->loc, basicTypes[BasicType::Int], false);
     nv->check();
     nv->generate();
 

@@ -12,7 +12,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 NodePtoi::NodePtoi(Node* value, int loc) {this->value = value; this->loc = loc;}
 
-Type* NodePtoi::getType() {return new TypeBasic(BasicType::Int);}
+Type* NodePtoi::getType() {return basicTypes[BasicType::Long];}
 Node* NodePtoi::comptime() {return this;}
 Node* NodePtoi::copy() {return new NodePtoi(this->value->copy(), this->loc);}
 
@@ -23,5 +23,5 @@ void NodePtoi::check() {
 }
 
 RaveValue NodePtoi::generate() {
-    return {LLVMBuildPtrToInt(generator->builder, this->value->generate().value, LLVMInt64TypeInContext(generator->context), "ptoi"), new TypeBasic(BasicType::Long)};
+    return {LLVMBuildPtrToInt(generator->builder, this->value->generate().value, LLVMInt64TypeInContext(generator->context), "ptoi"), basicTypes[BasicType::Long]};
 }

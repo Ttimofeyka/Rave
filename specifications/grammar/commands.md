@@ -37,14 +37,20 @@ int i = 0;
 while(i<10) {i += 1;}
 ```
 
-**[if/else](cond) [body/{body}]** - A block of code executed if the conditions are true.
+**[if/else] [likely/unlikely] (cond) [body/{body}]** - A block of code executed if the conditions are true.
 
-Example:
+Examples:
+
 ```d
 if(A == B) A = C;
 else {
     A = B;
 }
+```
+
+```d
+if likely(A == B) A = C;
+else A = B;
 ```
 
 **for(var; cond; expr) [body/{body}]** - The for loop is like in C, creating a local variable and executing the expression after the block and the block itself if the condition is met.
