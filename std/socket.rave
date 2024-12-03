@@ -159,7 +159,6 @@ namespace std {
                     this.addr.sin_family = std::socket::AfInet;
                     this.addr.sin_port = std::socket::htons(cast(ushort)port);
                     this.addr.sin_addr.s_addr = std::socket::htonl(flag);
-
                     this.addr.sin_addr = std::socket::inetAddr(ip);
                 }
             }
