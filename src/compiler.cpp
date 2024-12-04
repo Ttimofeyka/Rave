@@ -324,7 +324,7 @@ void Compiler::compile(std::string file) {
     parser->parseAll();
     end = std::chrono::steady_clock::now();
     for(int i=0; i<parser->nodes.size(); i++) parser->nodes[i]->check();
-    Compiler::parseTime += std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
+    Compiler::parseTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
     start = end;
     generator = new LLVMGen(file, Compiler::settings, Compiler::options);
@@ -440,7 +440,7 @@ void Compiler::compile(std::string file) {
         std::exit(1);
     }
     end = std::chrono::steady_clock::now();
-    Compiler::genTime += std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
+    Compiler::genTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
     for(int i=0; i<AST::importedFiles.size(); i++) {
         if(std::find(Compiler::toImport.begin(), Compiler::toImport.end(), AST::importedFiles[i]) == Compiler::toImport.end()) Compiler::toImport.push_back(AST::importedFiles[i]);
