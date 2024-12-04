@@ -381,28 +381,33 @@ Type* TypeDivided::getElType() {return this;}
 TypeVoid* typeVoid;
 
 Type* getType(std::string id) {
-    if(id == "bool") return basicTypes[BasicType::Bool];
-    else if(id == "char") return basicTypes[BasicType::Char];
-    else if(id == "uchar") return basicTypes[BasicType::Uchar];
-    else if(id == "short") return basicTypes[BasicType::Short];
-    else if(id == "ushort") return basicTypes[BasicType::Ushort];
-    else if(id == "int") return basicTypes[BasicType::Int];
-    else if(id == "uint") return basicTypes[BasicType::Uint];
-    else if(id == "long") return basicTypes[BasicType::Long];
-    else if(id == "ulong") return basicTypes[BasicType::Ulong];
-    else if(id == "cent") return basicTypes[BasicType::Cent];
-    else if(id == "ucent") return basicTypes[BasicType::Ucent];
-    else if(id == "half") return basicTypes[BasicType::Half];
-    else if(id == "bhalf") return basicTypes[BasicType::Bhalf];
-    else if(id == "float") return basicTypes[BasicType::Float];
-    else if(id == "double") return basicTypes[BasicType::Double];
-    else if(id == "void") return typeVoid;
-    else if(id == "alias") return new TypeAlias();
-    else if(id == "int4") return new TypeVector(new TypeBasic(BasicType::Int), 4);
-    else if(id == "int8") return new TypeVector(new TypeBasic(BasicType::Int), 8);
-    else if(id == "float4") return new TypeVector(new TypeBasic(BasicType::Float), 4);
-    else if(id == "float2") return new TypeVector(new TypeBasic(BasicType::Float), 2);
-    else if(id == "float8") return new TypeVector(new TypeBasic(BasicType::Float), 8);
-    else if(id == "short8") return new TypeVector(new TypeBasic(BasicType::Short), 8);
+    static const std::map<std::string, Type*> types = {
+        {"bool", basicTypes[BasicType::Bool]},
+        {"char", basicTypes[BasicType::Char]},
+        {"uchar", basicTypes[BasicType::Uchar]},
+        {"short", basicTypes[BasicType::Short]},
+        {"ushort", basicTypes[BasicType::Ushort]},
+        {"int", basicTypes[BasicType::Int]},
+        {"uint", basicTypes[BasicType::Uint]},
+        {"long", basicTypes[BasicType::Long]},
+        {"ulong", basicTypes[BasicType::Ulong]},
+        {"cent", basicTypes[BasicType::Cent]},
+        {"ucent", basicTypes[BasicType::Ucent]},
+        {"half", basicTypes[BasicType::Half]},
+        {"bhalf", basicTypes[BasicType::Bhalf]},
+        {"float", basicTypes[BasicType::Float]},
+        {"double", basicTypes[BasicType::Double]},
+        {"void", typeVoid},
+        {"alias", new TypeAlias()},
+        {"int4", new TypeVector(new TypeBasic(BasicType::Int), 4)},
+        {"int8", new TypeVector(new TypeBasic(BasicType::Int), 8)},
+        {"float4", new TypeVector(new TypeBasic(BasicType::Float), 4)},
+        {"float2", new TypeVector(new TypeBasic(BasicType::Float), 2)},
+        {"float8", new TypeVector(new TypeBasic(BasicType::Float), 8)},
+        {"short8", new TypeVector(new TypeBasic(BasicType::Short), 8)},
+    };
+
+    auto it = types.find(id);
+    if (it != types.end()) return it->second;
     else return new TypeStruct(id);
 }
