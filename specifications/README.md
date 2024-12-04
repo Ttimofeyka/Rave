@@ -25,7 +25,7 @@ The characters are enclosed in single quotes (").
 ##### [Types](grammar/types.md)
 ##### [Operators](grammar/operators.md)
 
-## Standart library
+## Standard library
 
 ##### [std/io](std/io.md)
 ##### [std/vector](std/vector.md)
