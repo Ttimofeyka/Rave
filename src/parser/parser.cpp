@@ -457,83 +457,43 @@ Node* Parser::parseAtom(std::string f) {
     int size = this->peek()->value.size();
     if(t->type == TokType::Number) {
         if(size > 0 && this->peek()->type == TokType::Identifier) {
-            if(this->peek()->value[0] == 'u') {
-                // Unsigned-type
-                this->next();
+            std::string iden = this->peek()->value;
+            if(iden == "u" || iden == "l" || iden == "c" || iden == "s") {
                 NodeInt* _int = new NodeInt(BigInt(t->value));
-                _int->isUnsigned = true;
+                this->next();
+
+                if(iden == "u") _int->isUnsigned = true;
+                else if(iden == "l") _int->isMustBeLong = true;
+                else if(iden == "c") _int->isMustBeChar = true;
+                else if(iden == "s") _int->isMustBeShort = true;
                 return _int;
             }
-            else if(this->peek()->value[0] == 'l') {
-                // Long-type
+            else if(iden == "f" || iden == "d" || iden == "h" || iden == "b") {
+                NodeFloat* nfloat = new NodeFloat(std::stod(t->value));
                 this->next();
-                NodeInt* _int = new NodeInt(BigInt(t->value));
-                _int->isMustBeLong = true;
-                return _int;
-            }
-            else if(this->peek()->value[0] == 'c') {
-                // Char-type
-                this->next();
-                NodeInt* _int = new NodeInt(BigInt(t->value));
-                _int->isMustBeChar = true;
-                return _int;
-            }
-            else if(this->peek()->value[0] == 's') {
-                // Short-type
-                this->next();
-                NodeInt* _int = new NodeInt(BigInt(t->value));
-                _int->isMustBeShort = true;
-                return _int;
-            }
-            else if(this->peek()->value[0] == 'f') {
-                // Float-type
-                this->next();
-                NodeFloat* nfloat = new NodeFloat(std::stod(t->value), basicTypes[BasicType::Float]);
-                nfloat->isMustBeFloat = true;
+
+                if(iden == "f") nfloat->isMustBeFloat = true;
+                else if(iden == "d") nfloat->type = basicTypes[BasicType::Double];
+                else if(iden == "h") nfloat->type = basicTypes[BasicType::Half];
+                else if(iden == "b") nfloat->type = basicTypes[BasicType::Bhalf];
                 return nfloat;
-            }
-            else if(this->peek()->value[0] == 'd') {
-                // Double-type
-                this->next();
-                return new NodeFloat(std::stod(t->value), basicTypes[BasicType::Double]);
-            }
-            else if(this->peek()->value[0] == 'h') {
-                // Half-type
-                this->next();
-                return new NodeFloat(std::stod(t->value), basicTypes[BasicType::Half]);
-            }
-            else if(this->peek()->value[0] == 'b' && this->peek()->value[1] == 'h') {
-                // Bhalf-type
-                this->next();
-                return new NodeFloat(std::stod(t->value), basicTypes[BasicType::Bhalf]);
             }
         }
         return new NodeInt(BigInt(t->value));
     }
     if(t->type == TokType::FloatNumber) {
         if(size > 0 && this->peek()->type == TokType::Identifier) {
-            if(this->peek()->value == "d") {
-                // Double-type
-                this->next();
-                return new NodeFloat(std::stod(t->value), basicTypes[BasicType::Double]);
-            }
-            else if(this->peek()->value == "f") {
-                // Float-type
-                this->next();
+            std::string suffix = this->peek()->value;
+            this->next();
+
+            if(suffix == "d") return new NodeFloat(std::stod(t->value), basicTypes[BasicType::Double]);
+            else if(suffix == "f") {
                 NodeFloat* nfloat = new NodeFloat(std::stod(t->value), basicTypes[BasicType::Float]);
                 nfloat->isMustBeFloat = true;
                 return nfloat;
             }
-            if(this->peek()->value == "h") {
-                // Half-type
-                this->next();
-                return new NodeFloat(std::stod(t->value), basicTypes[BasicType::Half]);
-            }
-            else if(this->peek()->value == "bh") {
-                // Bhalf-type
-                this->next();
-                return new NodeFloat(std::stod(t->value), basicTypes[BasicType::Bhalf]);
-            }
+            else if(suffix == "h") return new NodeFloat(std::stod(t->value), basicTypes[BasicType::Half]);
+            else if(suffix == "bh") return new NodeFloat(std::stod(t->value), basicTypes[BasicType::Bhalf]);
         }
         return new NodeFloat(std::stod(t->value));
     }
@@ -1009,6 +969,7 @@ Node* Parser::parsePrefix(std::string f) {
         TokType::Minus,
         TokType::Ne,
     };
+
     if(std::find(operators.begin(), operators.end(), this->peek()->type) != operators.end()) {
         auto tok = this->peek();
         this->next();
