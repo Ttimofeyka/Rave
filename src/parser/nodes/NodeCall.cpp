@@ -44,11 +44,7 @@ std::vector<RaveValue> NodeCall::correctByLLVM(std::vector<RaveValue> values, st
 
     for(int i=0; i<params.size(); i++) {
         if(fas[i].type->toString() == "void*" || fas[i].type->toString() == "char*") {
-            if(!instanceof<TypePointer>(params[i].type)) {
-                params[i].value = Binary::castValue(params[i].value, LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0), this->loc);
-                params[i].type = new TypePointer(basicTypes[BasicType::Char]);
-            }
-            else if(!instanceof<TypeBasic>(params[i].type->getElType())) {
+            if(!instanceof<TypePointer>(params[i].type) || !instanceof<TypeBasic>(params[i].type->getElType())) {
                 params[i].value = Binary::castValue(params[i].value, LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0), this->loc);
                 params[i].type = new TypePointer(basicTypes[BasicType::Char]);
             }
@@ -99,11 +95,7 @@ std::vector<RaveValue> NodeCall::getParameters(NodeFunc* nfunc, bool isVararg, s
 
     for(int i=0; i<params.size(); i++) {
         if(fas[i].type->toString() == "void*" || fas[i].type->toString() == "char*") {
-            if(!instanceof<TypePointer>(params[i].type)) {
-                params[i].value = Binary::castValue(params[i].value, LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0), this->loc);
-                params[i].type = new TypePointer(basicTypes[BasicType::Char]);
-            }
-            else if(!instanceof<TypeBasic>(params[i].type->getElType())) {
+            if(!instanceof<TypePointer>(params[i].type) || !instanceof<TypeBasic>(params[i].type->getElType())) {
                 params[i].value = Binary::castValue(params[i].value, LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0), this->loc);
                 params[i].type = new TypePointer(basicTypes[BasicType::Char]);
             }
