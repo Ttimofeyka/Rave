@@ -451,13 +451,8 @@ RaveValue NodeBuiltin::generate() {
         return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
     }
     else if(this->name == "hasDestructor") {
-        Type* ty = asType(0)->type;
-        if(!instanceof<TypeStruct>(ty)) return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
-        TypeStruct* tstruct = (TypeStruct*)ty;
-
-        if(AST::structTable.find(tstruct->name) == AST::structTable.end()) return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
-        if(AST::structTable[tstruct->name]->destructor == nullptr) return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
-        return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
+        auto it = AST::structTable.find(asType(0)->type->toString());
+        return {LLVM::makeInt(1, it != AST::structTable.end() && it->second->destructor != nullptr, false), basicTypes[BasicType::Bool]};
     }
     else if(this->name == "atomicTAS") {
         LLVMValueRef result = LLVMBuildAtomicRMW(generator->builder, LLVMAtomicRMWBinOpXchg, this->args[0]->generate().value,
