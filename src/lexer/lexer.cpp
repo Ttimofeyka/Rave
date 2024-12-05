@@ -39,16 +39,20 @@ std::string Lexer::getIdentifier() {
 
 std::string Lexer::getString() {
     idx += 1;
-    std::string buffer, buffer2 = "";
+    std::string buffer;
     while(peek() != '"') {
-        if(peek() == '\\' && text[idx+1] == '"') {buffer += "\""; idx += 2;}
-        else if(peek() == '\\' && isdigit(text[idx + 1])) {
-            buffer2 += peek(); idx += 1;
-            while(isdigit(peek())) {buffer2 += peek(); idx += 1;}
-            buffer += replaceAllEscapes(buffer2);
-            buffer2 = "";
+        if(peek() == '\\') {
+            idx += 1;
+            if(peek() == '"') buffer += "\"";
+            else if(isdigit(peek())) {
+                std::string buffer2;
+                while(isdigit(peek())) {buffer2 += peek(); idx += 1;}
+                buffer += replaceAllEscapes(buffer2);
+            }
+            else buffer += peek();
         }
-        else {buffer += peek(); idx += 1;}
+        else buffer += peek();
+        idx += 1;
     }
     if(peek() == '"') this->idx += 1;
     return replaceAllEscapes(buffer, false);
@@ -224,6 +228,16 @@ std::string tokenToString(char type) {
         case TokType::Equ: return "'='";
         case TokType::Lpar: return "')'";
         case TokType::Rpar: return "'('";
+        case TokType::Rarr: return "'['";
+        case TokType::Larr: return "']'";
+        case TokType::Comma: return "','";
+        case TokType::Multiply: return "'*'";
+        case TokType::Divide: return "'/'";
+        case TokType::Plus: return "'+'";
+        case TokType::Minus: return "'-'";
+        case TokType::Number: return "number";
+        case TokType::HexNumber: return "hex number";
+        case TokType::FloatNumber: return "float number";
         case TokType::String: return "string";
         case TokType::Char: return "char";
         case TokType::Identifier: return "identifier";

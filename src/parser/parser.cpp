@@ -1039,16 +1039,19 @@ Node* Parser::parseSuffix(Node* base, std::string f) {
 
 std::vector<Node*> Parser::parseIndexes() {
     std::vector<Node*> buffer;
+
     while(this->peek()->type == TokType::Rarr) {
         this->next();
         buffer.push_back(this->parseExpr());
         this->next();
     }
+
     return buffer;
 }
 
 Node* Parser::parseCall(Node* func) {
     if(instanceof<NodeInt>(func)) this->error("a function name must be identifier!");
+
     return new NodeCall(this->peek()->line, func, this->parseFuncCallArgs());
 }
 
