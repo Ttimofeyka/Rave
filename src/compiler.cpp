@@ -136,7 +136,8 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
         Compiler::options = nlohmann::json::parse(rfOptions);
         if(rfOptions.is_open()) rfOptions.close();
     }
-    Compiler::linkString = Compiler::options["compiler"].template get<std::string>()+" ";
+
+    Compiler::linkString = Compiler::options["compiler"].template get<std::string>() + " ";
 
     if(Compiler::settings.isPIE) linkString += "-fPIE ";
     if(Compiler::settings.noStd) linkString += "-nostdlib ";
@@ -296,21 +297,11 @@ void Compiler::compile(std::string file) {
     }
     else Compiler::features = std::string(LLVMGetHostCPUFeatures());
 
-    content = "alias __RAVE_PLATFORM = \"" + ravePlatform + "\"; ";
-    content = "alias __RAVE_OS = \"" + raveOs + "\"; " + content;
-    content = "alias __RAVE_OPTIMIZATION_LEVEL = " + std::to_string(settings.optLevel) + "; " + content;
-
-    if(!settings.noChecks) content = "alias __RAVE_RUNTIME_CHECKS = true;" + content;
-    else content = "alias __RAVE_RUNTIME_CHECKS = false;" + content;
-    
-    content = "alias __RAVE_SSE = " + std::to_string(sse) + "; " + content;
-    content = "alias __RAVE_SSSE3 = " + (ssse3 ? std::string("true") : std::string("false")) + "; " + content;
-    content = "alias __RAVE_AVX = " + std::to_string(avx) + "; " + content;
-
-    if(!Compiler::settings.noPrelude && file.find("std/prelude.rave") == std::string::npos && file.find("std/memory.rave") == std::string::npos) {
-        content = content + " import <std/prelude> <std/memory>";
-    }
-    content = content + "\n" + oldContent;
+    content = "alias __RAVE_PLATFORM = \"" + ravePlatform + "\"; alias __RAVE_OS = \"" + raveOs + "\"; alias __RAVE_OPTIMIZATION_LEVEL = " + std::to_string(settings.optLevel) + "; " +
+              "alias __RAVE_RUNTIME_CHECKS = " + (settings.noChecks ? "false" : "true") + "; alias __RAVE_SSE = " + std::to_string(sse) + "; " +
+              "alias __RAVE_SSSE3 = " + (ssse3 ? "true" : "false") + "; alias __RAVE_AVX = " + std::to_string(avx) + "; " +
+              (Compiler::settings.noPrelude || file.find("std/prelude.rave") != std::string::npos || file.find("std/memory.rave") != std::string::npos ? "" : "import <std/prelude> <std/memory>") +
+              "\n" + oldContent;
 
     AST::mainFile = Compiler::files[0];
 
