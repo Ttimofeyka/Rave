@@ -253,7 +253,7 @@ RaveValue NodeIndex::generate() {
                     std::map<std::string, NodeFunc*> functions = operators['&'];
                     Node* value = nunary;
 
-                    for(auto &&i : functions) return (new NodeCall(loc, new NodeIden(i.second->name, loc), {nunary, indexes[0]}))->generate();
+                    return (new NodeCall(loc, new NodeIden(functions.begin()->second->name, loc), {nunary, indexes[0]}))->generate();
                 }
             }
         }
