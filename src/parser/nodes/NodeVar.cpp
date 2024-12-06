@@ -239,8 +239,8 @@ RaveValue NodeVar::generate() {
     }
     else {
         for(int i=0; i<this->mods.size(); i++) {
-            if(this->mods[i].name == "volatile") isVolatile = true;
-            else if(this->mods[i].name == "nozeroinit") noZeroInit = true;
+            if(mods[i].name == "volatile") isVolatile = true;
+            else if(mods[i].name == "nozeroinit") noZeroInit = true;
             else if(mods[i].name == "noOperators") isNoOperators = true;
         }
 
@@ -325,9 +325,9 @@ RaveValue NodeVar::generate() {
             if(LLVMGetTypeKind(gT) == LLVMArrayTypeKind) {
                 std::vector<LLVMValueRef> values;
                 for(int i=0; i<LLVMGetArrayLength(gT); i++) values.push_back(LLVMConstNull(LLVMGetElementType(gT)));
-                LLVMBuildStore(generator->builder,LLVMConstArray(LLVMGetElementType(gT), values.data(), values.size()), currScope->localScope[this->name].value);
+                LLVMBuildStore(generator->builder, LLVMConstArray(LLVMGetElementType(gT), values.data(), values.size()), currScope->localScope[this->name].value);
             }
-            else if(LLVMGetTypeKind(gT) != LLVMStructTypeKind) LLVMBuildStore(generator->builder,LLVMConstNull(gT), currScope->localScope[this->name].value);
+            else if(LLVMGetTypeKind(gT) != LLVMStructTypeKind) LLVMBuildStore(generator->builder, LLVMConstNull(gT), currScope->localScope[this->name].value);
         }
         return currScope->localScope[this->name];
     }
