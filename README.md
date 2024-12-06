@@ -65,7 +65,7 @@ You just need to set the compiler "i686-w64-mingw32-gcc-win32" in options.json, 
 
 ## Specifications
 
-The specifications is in `specifications` directory - [link](https://github.com/Ttimofeyka/Rave/blob/main/specifications/intro.md).
+The specifications is in `specifications` directory - [link](https://github.com/Ttimofeyka/Rave/blob/main/specifications/README.md).
 
 ## Troubleshooting errors
 
