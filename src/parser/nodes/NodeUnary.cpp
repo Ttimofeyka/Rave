@@ -101,12 +101,15 @@ RaveValue NodeUnary::generate() {
         else if(instanceof<NodeIden>(this->base)) {
             NodeIden* id = ((NodeIden*)this->base);
             if(currScope == nullptr) {
+                // if we are in global scope, just return ptr
                 id->isMustBePtr = true;
                 return id->generate();
             }
             else {
+                // if we are in local scope, make this variable marked as used
                 if(currScope->localVars.find(id->name) != currScope->localVars.end()) currScope->localVars[id->name]->isUsed = true;
 
+                // if it's array, generate gep to its first element
                 if(instanceof<TypeArray>(currScope->getVar(id->name, this->loc)->type)) {
                     val = LLVM::gep(currScope->getWithoutLoad(id->name),
                         std::vector<LLVMValueRef>({LLVMConstInt(LLVMInt32Type(), 0, false), LLVMConstInt(LLVMInt32Type(), 0, false)}).data(),
