@@ -28,7 +28,9 @@ namespace std {
 
             (inline) char* getCwd(char* cbuffer, int size) {
                 int bufferSize = std::system::__getCurrentDirectory(0, cast(ushort*)null);
+
                 ushort* buffer = cast(ushort*)std::malloc(bufferSize);
+                defer std::free(cast(void*)buffer);
 
                 std::system::__getCurrentDirectory(bufferSize, buffer);
                 if(cbuffer == null) return = std::utf8::fromUtf16(buffer);
@@ -39,7 +41,6 @@ namespace std {
                     return = cbuffer;
                     std::free(u8Buffer);
                 }
-                std::free(cast(void*)buffer);
             }
         }
     }
