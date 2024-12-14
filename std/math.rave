@@ -493,5 +493,25 @@ namespace std {
             if(x >= 0.0) return = 1.0h;
             else return = 0.0h;
         }
+
+        double gelu(double x) => 0.5d * x * (1d + (std::math::tanh(std::math::sqrt(2d / std::math::PI) * (x + (0.044715d * x * x * x)))));
+        float gelu(float x) => 0.5f * x * (1d + (std::math::tanh(std::math::sqrt(2f / std::math::PI_f) * (x + (0.044715f * x * x * x)))));
+        half gelu(half x) => 0.5h * x * (1h + (std::math::tanh(std::math::sqrt(2f / std::math::PI_f) * (x + (0.044715h * x * x * x)))));
+
+        void geglu(double* input, double* output, int size) {
+            for(int i=0; i<size; i+=2) {
+                double a = input[i];
+                double b = input[i + 1];
+                output[i / 2] = a * std::math::gelu(b);
+            }
+        }
+
+        void geglu(float* input, float* output, int size) {
+            for(int i=0; i<size; i+=2) {
+                float a = input[i];
+                float b = input[i + 1];
+                output[i / 2] = a * std::math::gelu(b);
+            }
+        }
     }
 }
