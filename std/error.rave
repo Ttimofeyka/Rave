@@ -12,29 +12,29 @@ namespace std {
     alias BeyondSize = 102;
     alias NullPointer = 103;
 
-    struct error<T> {
+    struct error<ERROR_T> {
         char* message;
-        T value;
+        ERROR_T value;
         int code;
 
-        std::error<T> this {std::error<T> this;} => this;
+        std::error<ERROR_T> this {std::error<ERROR_T> this;} => this;
         
-        std::error<T> this(T value) {
-            std::error<T> this;
+        std::error<ERROR_T> this(ERROR_T value) {
+            std::error<ERROR_T> this;
             this.value = value;
             this.message = null;
             this.code = 0;
         } => this;
 
-        std::error<T> this(T value, char* message) {
-            std::error<T> this;
+        std::error<ERROR_T> this(ERROR_T value, char* message) {
+            std::error<ERROR_T> this;
             this.value = value;
             this.message = message;
             this.code = 0;
         } => this;
 
-        std::error<T> this(T value, char* message, int code) {
-            std::error<T> this;
+        std::error<ERROR_T> this(ERROR_T value, char* message, int code) {
+            std::error<ERROR_T> this;
             this.value = value;
             this.message = message;
             this.code = code;
