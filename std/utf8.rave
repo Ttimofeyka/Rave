@@ -139,23 +139,16 @@ namespace std {
         }
 
         (inline) void set(int index, uchar ch) {
-            @if(__RAVE_RUNTIME_CHECKS) {
-                if((index >= 0) && (index < this.length)) this.data[index] = ch;
-            };
-
-            @if(!(__RAVE_RUNTIME_CHECKS)) {
-                this.data[index] = ch;
-            };
+            @if(__RAVE_RUNTIME_CHECKS) if((index >= 0) && (index < this.length)) this.data[index] = ch;
+            @else this.data[index] = ch;
         }
 
         (inline) char at(int index) {
             @if(__RAVE_RUNTIME_CHECKS) {
                 if((index >= 0) && (index < this.length)) return = this.data[index];
                 else return = '\0';
-            };
-            @if(!(__RAVE_RUNTIME_CHECKS)) {
-                return = this.data[index];
-            };
+            }
+            @else return = this.data[index];
         }
 
         (inline) bool isDeleted => (this.data == null);
@@ -279,8 +272,8 @@ namespace std {
                         i += 1;
                     }
                 }
-            };
-            @if(!(__RAVE_RUNTIME_CHECKS)) {
+            }
+            @else {
                 return = "";
                 int i = from;
 
@@ -288,7 +281,7 @@ namespace std {
                     return.add(this.data[i]);
                     i += 1;
                 }
-            };
+            }
         }
 
         std::vector<std::u8string> split(char ch) {
@@ -390,4 +383,4 @@ namespace std {
             } => buffer;
         }
     }
-};
+}

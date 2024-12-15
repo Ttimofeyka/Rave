@@ -8,25 +8,17 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <llvm-c/Core.h>
 #include "Node.hpp"
-#include "NodeBlock.hpp"
 #include "../Types.hpp"
 #include <vector>
 #include <string>
 
-class NodeIf : public Node {
+class NodeComptime : public Node {
 public:
-    Node* cond = nullptr;
-    Node* body = nullptr;
-    Node* _else = nullptr;
-    int loc;
-    bool isStatic = false;
-    bool isLikely = false;
-    bool isUnlikely = false;
+    Node* node;
     bool isImported = false;
-    bool hasRets[2];
 
-    NodeIf(Node* cond, Node* body, Node* _else, int loc, bool isStatic);
-    void optimize();
+    NodeComptime(Node* node);
+
     Type* getType() override;
     void check() override;
     RaveValue generate() override;

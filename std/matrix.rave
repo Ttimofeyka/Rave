@@ -42,7 +42,7 @@ import <std/math>
             }
         }
     }
-};
+}
 
 @if((__RAVE_AVX < 2) && (__RAVE_SSE >= 2)) {
     // Using SSE instructions (faster, but requires SSE2 and higher)
@@ -166,7 +166,7 @@ import <std/math>
             }
         }
     }
-};
+}
 
 @if(__RAVE_AVX >= 2) {
     // Using AVX instructions (fastest, but requires AVX2)
@@ -294,4 +294,4 @@ import <std/math>
             }
         }
     }
-};
+}

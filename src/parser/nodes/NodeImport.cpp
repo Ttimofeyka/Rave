@@ -11,6 +11,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeNamespace.hpp"
 #include "../../include/parser/nodes/NodeStruct.hpp"
 #include "../../include/parser/nodes/NodeBuiltin.hpp"
+#include "../../include/parser/nodes/NodeComptime.hpp"
 #include "../../include/utils.hpp"
 #include "../../include/parser/ast.hpp"
 #include "../../include/lexer/lexer.hpp"
@@ -138,6 +139,10 @@ RaveValue NodeImport::generate() {
         else if(instanceof<NodeBuiltin>(node)) {
             auto* nodeBuiltin = static_cast<NodeBuiltin*>(node);
             nodeBuiltin->isImport = true;
+        }
+        else if(instanceof<NodeComptime>(node)) {
+            auto* nodeComptime = static_cast<NodeComptime*>(node);
+            nodeComptime->isImported = true;
         }
         node->generate();
     }

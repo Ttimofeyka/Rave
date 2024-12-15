@@ -50,13 +50,8 @@ namespace std {
         }
 
         (inline) void set(int index, VECTOR_T value) {
-            @if(__RAVE_RUNTIME_CHECKS) {
-                if((index >= 0) && (index < this.length)) this.data[index] = value;
-            };
-
-            @if(!(__RAVE_RUNTIME_CHECKS)) {
-                this.data[index] = value;
-            };
+            @if(__RAVE_RUNTIME_CHECKS) if((index >= 0) && (index < this.length)) this.data[index] = value;
+            @else this.data[index] = value;
         }
 
         void zero {
@@ -82,33 +77,18 @@ namespace std {
         } => buffer;
 
         (inline) VECTOR_T operator[](std::vector<VECTOR_T>* v, int index) {
-            @if(__RAVE_RUNTIME_CHECKS) {
-                if((index >= 0) && (index < v.length)) return = v.data[index];
-            };
-
-            @if(!(__RAVE_RUNTIME_CHECKS)) {
-                return = v.data[index];
-            };
+            @if(__RAVE_RUNTIME_CHECKS) if((index >= 0) && (index < v.length)) return = v.data[index];
+            @else return = v.data[index];
         }
 
         (inline) void operator[]=(std::vector<VECTOR_T>* v, int index, VECTOR_T value) {
-            @if(__RAVE_RUNTIME_CHECKS) {
-                if((index >= 0) && (index < v.length)) v.data[index] = value;
-            };
-
-            @if(!(__RAVE_RUNTIME_CHECKS)) {
-                v.data[index] = value;
-            };
+            @if(__RAVE_RUNTIME_CHECKS) if((index >= 0) && (index < v.length)) v.data[index] = value;
+            @else v.data[index] = value;
         }
 
         (inline) VECTOR_T* operator[]&(std::vector<VECTOR_T>* v, int index) {
-            @if(__RAVE_RUNTIME_CHECKS) {
-                if((index >= 0) && (index < v.length)) return = v.&data[index];
-            };
-
-            @if(!(__RAVE_RUNTIME_CHECKS)) {
-                return = v.&data[index];
-            };
+            @if(__RAVE_RUNTIME_CHECKS) if((index >= 0) && (index < v.length)) return = v.&data[index];
+            @else return = v.&data[index];
         }
 
         (inline) void swap(int first, int second) {
@@ -118,13 +98,12 @@ namespace std {
                     this.data[first] = this.data[second];
                     this.data[second] = temp;
                 }
-            };
-
-            @if(!(__RAVE_RUNTIME_CHECKS)) {
+            }
+            @else {
                 (noOperators) VECTOR_T temp = this.data[first];
                 this.data[first] = this.data[second];
                 this.data[second] = temp;
-            };
+            }
         }
 
         std::vector<VECTOR_T> operator+(std::vector<VECTOR_T> one, std::vector<VECTOR_T> two) {
@@ -140,24 +119,18 @@ namespace std {
                     }
                     this.length = this.length - 1;
                 }
-            };
-
-            @if(!(__RAVE_RUNTIME_CHECKS)) {
+            }
+            @else {
                 for(int i=index; i<this.length; i+=1) {
                     if((i+1) < this.length) this.data[i] = this.data[i+1];
                 }
                 this.length = this.length - 1;
-            };
+            }
         }
 
         (inline) void removeLast {
-            @if(__RAVE_RUNTIME_CHECKS) {
-                if(this.length > 0) this.remove(this.length-1);
-            };
-
-            @if(!(__RAVE_RUNTIME_CHECKS)) {
-                this.remove(this.length-1);
-            };
+            @if(__RAVE_RUNTIME_CHECKS) if(this.length > 0) this.remove(this.length-1);
+            @else this.remove(this.length-1);
         }
 
         void ~this {

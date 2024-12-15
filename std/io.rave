@@ -60,7 +60,7 @@ namespace std {
             int __access(char* fname, int flag) => std::file::__faccessat(std::file::atFdCwd, fname, flag, 0);
         }
     }
-};
+}
 
 @if(__RAVE_OS == "WINDOWS") {
     namespace std {
@@ -69,7 +69,7 @@ namespace std {
             extern(linkname: "_access") int __access(char* fname, int flag);
         }
     }
-};
+}
 
 @if(__RAVE_OS != "LINUX") {
     namespace std {
@@ -78,7 +78,7 @@ namespace std {
             extern(linkname: "remove") int remove(char* pathname);
         }
     }
-};
+}
 
 @if((__RAVE_OS != "LINUX") && (__RAVE_OS != "WINDOWS")) {
     namespace std {
@@ -93,7 +93,7 @@ namespace std {
             }
         }
     }
-};
+}
 
 namespace std {
     namespace file {
@@ -265,9 +265,8 @@ namespace std {
             }
         }
     }
-};
-
-@if(__RAVE_OS != "LINUX") {
+}
+@else {
     namespace libc {
         extern(linkname: "fopen") libc::File* fopen(char* path, char* mode);
         extern(linkname: "fdopen") libc::File* fdopen(int fd, char* mode);
@@ -378,7 +377,7 @@ namespace std {
             int flush => libc::fflush(this._file);
         }
     }
-};
+}
 
 @if(__RAVE_OS == "WINDOWS") {
     namespace std {
@@ -657,31 +656,31 @@ namespace std {
                             @if(@tNequals(@getCurrArgType(), int*)) {
                                 @if(@tNequals(@getCurrArgType(), long*)) {
                                     
-                                };
+                                }
                                 @if(@tEquals(@getCurrArgType(), long*)) {
                                     std::scanf("%ld", @getCurrArg(long*));
-                                };
-                            };
+                                }
+                            }
                             @if(@tEquals(@getCurrArgType(), int*)) {
                                 std::scanf("%d", @getCurrArg(int*));
-                            };
-                        };
+                            }
+                        }
                         @if(@tEquals(@getCurrArgType(), short*)) {
                             std::scanf("%hd", @getCurrArg(short*));
-                        };
-                    };
+                        }
+                    }
                     @if(@tEquals(@getCurrArgType(), char*)) {
                         std::scanf("%c", @getCurrArg(char*));
-                    };
-                };
+                    }
+                }
                 @if(@tEquals(@getCurrArgType(), double*)) {
                     std::scanf("%lf", @getCurrArg(double*));
-                };
-            };
+                }
+            }
             @if(@tEquals(@getCurrArgType(), float*)) {
                 std::scanf("%f", @getCurrArg(float*));
-            };
-        };
+            }
+        }
     }
 
     (inline, ctargs) void finput {
@@ -695,31 +694,31 @@ namespace std {
                             @if(@tNequals(@getCurrArgType(), int*)) {
                                 @if(@tNequals(@getCurrArgType(), long*)) {
                                     
-                                };
+                                }
                                 @if(@tEquals(@getCurrArgType(), long*)) {
                                     libc::fscanf(f._file, "%ld", @getCurrArg(long*));
-                                };
-                            };
+                                }
+                            }
                             @if(@tEquals(@getCurrArgType(), int*)) {
                                 libc::fscanf(f._file, "%d", @getCurrArg(int*));
-                            };
-                        };
+                            }
+                        }
                         @if(@tEquals(@getCurrArgType(), short*)) {
                             libc::fscanf(f._file, "%hd", @getCurrArg(short*));
-                        };
-                    };
+                        }
+                    }
                     @if(@tEquals(@getCurrArgType(), char*)) {
                         libc::fscanf(f._file, "%c", @getCurrArg(char*));
-                    };
-                };
+                    }
+                }
                 @if(@tEquals(@getCurrArgType(), double*)) {
                     libc::fscanf(f._file, "%lf", @getCurrArg(double*));
-                };
-            };
+                }
+            }
             @if(@tEquals(@getCurrArgType(), float*)) {
                 libc::fscanf(f._file, "%f", @getCurrArg(float*));
-            };
-        };
+            }
+        }
     }
 
     std::string readLine {

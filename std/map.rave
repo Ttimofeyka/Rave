@@ -43,13 +43,8 @@ namespace std {
                 mapSize = mapSize * 2;
             }
 
-            @if(@hasMethod(K, hash)) {
-                uint index = key.hash() % mapSize;
-            };
-
-            @if(!@hasMethod(K, hash)) {
-                uint index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
-            };
+            @if(@hasMethod(K, hash)) uint index = key.hash() % mapSize;
+            @else uint index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
 
             if(index < 0) index = -index;
 
@@ -90,13 +85,9 @@ namespace std {
 
         V get(K key) {
             return = cast(V)null;
-            @if(@hasMethod(K, hash)) {
-                uint index = key.hash() % mapSize;
-            };
 
-            @if(!@hasMethod(K, hash)) {
-                uint index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
-            };
+            @if(@hasMethod(K, hash)) uint index = key.hash() % mapSize;
+            @else uint index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
 
             std::hashmap::Entry<K, V>* entry = table[index];
 
@@ -112,13 +103,8 @@ namespace std {
         bool remove(K key) {
             return = false;
 
-            @if(@hasMethod(K, hash)) {
-                uint index = key.hash() % mapSize;
-            };
-
-            @if(!@hasMethod(K, hash)) {
-                uint index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
-            };
+            @if(@hasMethod(K, hash)) uint index = key.hash() % mapSize;
+            @else uint index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
 
             if(index < 0) index = -index;
 

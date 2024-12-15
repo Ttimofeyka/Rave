@@ -51,14 +51,13 @@ namespace std {
                     }
                     this.length = this.length - 1;
                 }
-            };
-
-            @if(!(__RAVE_RUNTIME_CHECKS)) {
+            }
+            @else {
                 for(int i=(this.length - 1); i<this.length; i+=1) {
                     if((i + 1) < this.length) this.data[i] = this.data[i + 1];
                 }
                 this.length = this.length - 1;
-            };
+            }
         }
 
         (inline) void assign(std::stack<STACK_T> of) {

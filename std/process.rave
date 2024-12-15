@@ -79,18 +79,16 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
             }
         }
     }
-};
-
-@if(__RAVE_OS == "WINDOWS") {
+}
+@else @if(__RAVE_OS == "WINDOWS") {
     namespace std {
         namespace process {
             extern(linkname: "GetCurrentProcessId") int __GetCurrentProcessId();
             (inline) int getPID => std::process::__GetCurrentProcessId();
         }
     }
-};
-
-@if((__RAVE_OS != "LINUX") && (__RAVE_OS != "WINDOWS")) {
+}
+@else {
     namespace std {
         namespace process {
             extern(linkname: "getpid") int getPID();

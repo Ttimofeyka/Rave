@@ -62,7 +62,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias GetTimeOfDay = 96;
             }
         }
-    };
+    }
 
     @if(__RAVE_PLATFORM == "X86") {
         namespace std {
@@ -109,7 +109,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias GetTimeOfDay = 78;
             }
         }
-    };
+    }
 
     @if(__RAVE_PLATFORM == "AARCH64") {
         namespace std {
@@ -156,7 +156,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias GetTimeOfDay = 169;
             }
         }
-    };
+    }
 
     @if(__RAVE_PLATFORM == "ARM") {
         namespace std {
@@ -203,7 +203,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias GetTimeOfDay = 78;
             }
         }
-    };
+    }
 
     @if(__RAVE_PLATFORM == "POWERPC") {
         namespace std {
@@ -250,7 +250,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias GetTimeOfDay = 78;
             }
         }
-    };
+    }
 
     @if(__RAVE_PLATFORM == "POWERPC64") {
         namespace std {
@@ -297,7 +297,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias GetTimeOfDay = 78;
             }
         }
-    };
+    }
 
     @if(__RAVE_PLATFORM == "S390X") {
         namespace std {
@@ -344,7 +344,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias GetTimeOfDay = 78;
             }
         }
-    };
+    }
 
     @if(__RAVE_PLATFORM == "MIPS64") {
         namespace std {
@@ -391,5 +391,5 @@ the result of a call with the same parameters and the same number will be the sa
                 alias GetTimeOfDay = 5094;
             }
         }
-    };
-};
+    }
+}

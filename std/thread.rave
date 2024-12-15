@@ -27,9 +27,8 @@ import <std/process> <std/map>
             int hash => (9437 * cast(int)(this.id));
         }
     }
-};
-
-@if(__RAVE_OS == "WINDOWS") {
+}
+@else {
     namespace std {
         namespace thread {
             extern(linkname: "CreateThread") void* __CreateThread(void* attributes, uint stackSize, int(void*) fn, void* argument, uint flags, uint* threadId);
@@ -75,16 +74,14 @@ import <std/process> <std/map>
             (inline) int __waitpid(int pid, int* status, int options) => std::thread::__wait4(pid, status, options, null);
         }
     }
-};
+}
 
 namespace std {
     namespace thread {
         namespace spinlock {
             (inline) void lock(int* sl) {
                 while(@atomicTAS(sl, 1) == 1) {
-                    @if((__RAVE_PLATFORM == "X86") || (__RAVE_PLATFORM == "X86_64")) {
-                        asm("pause");
-                    };
+                    @if((__RAVE_PLATFORM == "X86") || (__RAVE_PLATFORM == "X86_64")) asm("pause");
                 }
             }
             (inline) void unlock(int* sl) {@atomicClear(sl);}

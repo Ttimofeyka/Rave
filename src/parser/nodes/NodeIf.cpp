@@ -12,6 +12,10 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeFor.hpp"
 #include "../../include/parser/nodes/NodeForeach.hpp"
 #include "../../include/parser/nodes/NodeVar.hpp"
+#include "../../include/parser/nodes/NodeNamespace.hpp"
+#include "../../include/parser/nodes/NodeBuiltin.hpp"
+#include "../../include/parser/nodes/NodeComptime.hpp"
+#include "../../include/parser/nodes/NodeStruct.hpp"
 #include "../../include/utils.hpp"
 
 NodeIf::NodeIf(Node* cond, Node* body, Node* _else, int loc, bool isStatic) {
@@ -30,7 +34,7 @@ void NodeIf::check() {
     bool oldCheck = this->isChecked;
     this->isChecked = true;
 
-    if(!oldCheck) {
+    if(!oldCheck && !isStatic) {
         this->cond->check();
         if(this->body != nullptr) this->body->check();
         if(this->_else != nullptr) this->_else->check();
@@ -148,14 +152,42 @@ void NodeIf::optimize() {
 
 Node* NodeIf::comptime() {
     NodeBool* val = (NodeBool*)cond->comptime();
-    if(val->value && this->body != nullptr) {
-        this->body->check();
-        this->body->generate();
+
+    if(this->body == nullptr) return this;
+
+    Node* node = body;
+
+    if(!val->value) {
+        if(this->_else != nullptr) node = this->_else;
+        else return this;
     }
-    else if(!val->value && this->_else != nullptr) {
-        this->_else->check();
-        this->_else->generate();
+
+    if(this->isImported) {
+        if(instanceof<NodeIf>(node)) ((NodeIf*)node)->isImported = true;
+        else if(instanceof<NodeFunc>(node)) ((NodeFunc*)node)->isExtern = true;
+        else if(instanceof<NodeComptime>(node)) ((NodeComptime*)node)->isImported = true;
+        else if(instanceof<NodeVar>(node)) ((NodeVar*)node)->isExtern = true;
+        else if(instanceof<NodeNamespace>(node)) ((NodeNamespace*)node)->isImported = true;
+        else if(instanceof<NodeBuiltin>(node)) ((NodeBuiltin*)node)->isImport = true;
+        else if(instanceof<NodeStruct>(node)) ((NodeStruct*)node)->isImported = true;
+        else if(instanceof<NodeBlock>(node)) {
+            NodeBlock* block = (NodeBlock*)node;
+
+            for(int i=0; i<block->nodes.size(); i++) {
+                if(instanceof<NodeIf>(block->nodes[i])) ((NodeIf*)block->nodes[i])->isImported = true;
+                else if(instanceof<NodeFunc>(block->nodes[i])) ((NodeFunc*)block->nodes[i])->isExtern = true;
+                else if(instanceof<NodeComptime>(block->nodes[i])) ((NodeComptime*)block->nodes[i])->isImported = true;
+                else if(instanceof<NodeVar>(block->nodes[i])) ((NodeVar*)block->nodes[i])->isExtern = true;
+                else if(instanceof<NodeNamespace>(block->nodes[i])) ((NodeNamespace*)block->nodes[i])->isImported = true;
+                else if(instanceof<NodeBuiltin>(block->nodes[i])) ((NodeBuiltin*)block->nodes[i])->isImport = true;
+                else if(instanceof<NodeStruct>(block->nodes[i])) ((NodeStruct*)block->nodes[i])->isImported = true;
+            }
+        }
     }
+
+    node->check();
+    node->generate();
+
     return nullptr;
 }
 

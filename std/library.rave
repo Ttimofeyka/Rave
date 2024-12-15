@@ -21,9 +21,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
             (inline) char* error => "";
         }
     }
-};
-
-@if(__RAVE_OS != "WINDOWS") {
+}
+@else {
     namespace std {
         namespace library {
             alias RtldLazy = 0x00001;
@@ -35,4 +34,4 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
             extern(linkname: "dlerror") char* error();
         }
     }
-};
+}

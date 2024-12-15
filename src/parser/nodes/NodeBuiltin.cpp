@@ -272,42 +272,6 @@ RaveValue NodeBuiltin::generate() {
 
         return result;
     }
-    if(this->name == "if") {
-        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
-
-        Node* cond = this->args[0];
-        if(instanceof<NodeBinary>(cond)) ((NodeBinary*)cond)->isStatic = true;
-        AST::condStack[CTId] = cond;
-        CTId += 1;
-
-        if(this->isImport) for(int i=0; i<this->block->nodes.size(); i++) {
-            if(instanceof<NodeBuiltin>(this->block->nodes[i])) ((NodeBuiltin*)this->block->nodes[i])->isImport = true;
-            else if(instanceof<NodeNamespace>(this->block->nodes[i])) ((NodeNamespace*)this->block->nodes[i])->isImported = true;
-            else if(instanceof<NodeFunc>(this->block->nodes[i])) ((NodeFunc*)this->block->nodes[i])->isExtern = true;
-            else if(instanceof<NodeVar>(this->block->nodes[i])) ((NodeVar*)this->block->nodes[i])->isExtern = true;
-            else if(instanceof<NodeStruct>(this->block->nodes[i])) ((NodeStruct*)this->block->nodes[i])->isImported = true;
-        }
-        NodeIf* _if = new NodeIf(cond, block, nullptr, this->loc, true);
-        _if->comptime();
-        CTId -= 1;
-
-        return {};
-    }
-    if(this->name == "else") {
-        if(AST::condStack.find(CTId) != AST::condStack.end()) {
-            if(this->isImport) for(int i=0; i<this->block->nodes.size(); i++) {
-                if(instanceof<NodeBuiltin>(this->block->nodes[i])) ((NodeBuiltin*)this->block->nodes[i])->isImport = true;
-                else if(instanceof<NodeNamespace>(this->block->nodes[i])) ((NodeNamespace*)this->block->nodes[i])->isImported = true;
-                else if(instanceof<NodeFunc>(this->block->nodes[i])) ((NodeFunc*)this->block->nodes[i])->isExtern = true;
-                else if(instanceof<NodeVar>(this->block->nodes[i])) ((NodeVar*)this->block->nodes[i])->isExtern = true;
-                else if(instanceof<NodeStruct>(this->block->nodes[i])) ((NodeStruct*)this->block->nodes[i])->isImported = true;
-            }
-            NodeIf* _else = new NodeIf(new NodeUnary(loc, TokType::Ne, AST::condStack[CTId]), block, nullptr, loc, true);
-            _else->comptime();
-        }
-        else generator->error("using '@else' statement without '@if'!", loc);
-        return {};
-    }
     if(this->name == "aliasExists") {
         if(AST::aliasTable.find(this->getAliasName(0)) != AST::aliasTable.end()) return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
         return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};

@@ -50,7 +50,7 @@ namespace std {
         short millitm;
         short timezone;
         short dstflag;
-    };
+    }
 }
 
 @if(__RAVE_OS == "WINDOWS") {
@@ -90,9 +90,8 @@ namespace std {
            tc.microseconds = (li / 10l) - 11644473600000000l;
         } => 0;
     }
-};
-
-@if(__RAVE_OS == "LINUX") {
+}
+@else @if(__RAVE_OS == "LINUX") {
     namespace std {
         (inline) int __gettimeofday(std::timeVal* tv) => cast(int)std::syscall(std::sysctable::GetTimeOfDay, tv, null);
         (inline) int __clock_gettime(int flag, std::__time* tc) => cast(int)std::syscall(std::sysctable::ClockGetTime, flag, tc);
@@ -105,9 +104,8 @@ namespace std {
             tc.milliseconds = tc.microseconds / 1000l;
         }
     }
-};
-
-@if(((__RAVE_OS != "LINUX") && (__RAVE_OS != "WINDOWS"))) {
+}
+@else {
     namespace libc {
         extern(linkname: "time") long getTime(void* v);
         extern(linkname: "ftime") void getFTime(std::timeb* tm);
@@ -120,4 +118,4 @@ namespace std {
             tc.microseconds = -1l;
         } => 0;
     }
-};
+}

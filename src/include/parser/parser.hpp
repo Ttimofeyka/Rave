@@ -71,6 +71,7 @@ public:
     Node* parseBreak();
     Node* parseContinue();
     Node* parseConstantStructure(std::string structName);
+    Node* parseAnyLevelBlock(std::string f);
     std::vector<FuncArgSet> parseFuncArgSets();
     std::vector<Node*> parseIndexes();
 

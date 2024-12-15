@@ -84,22 +84,16 @@ namespace std {
         }
 
         (inline) void set(int index, char ch) {
-            @if(__RAVE_RUNTIME_CHECKS) {
-                if((index >= 0) && (index < this.length)) this.data[index] = ch;
-            };
-            @if(!(__RAVE_RUNTIME_CHECKS)) {
-                this.data[index] = ch;
-            };
+            @if(__RAVE_RUNTIME_CHECKS) if((index >= 0) && (index < this.length)) this.data[index] = ch;
+            @else this.data[index] = ch;
         }
 
         (inline) char at(int index) {
             @if(__RAVE_RUNTIME_CHECKS) {
                 if((index >= 0) && (index < this.length)) return = this.data[index];
                 else return = '\0';
-            };
-            @if(!(__RAVE_RUNTIME_CHECKS)) {
-                return = this.data[index];
-            };
+            }
+            @else return = this.data[index];
         }
 
         (inline) bool isDeleted => (this.data == null);
@@ -190,8 +184,8 @@ namespace std {
                         i += 1;
                     }
                 }
-            };
-            @if(!(__RAVE_RUNTIME_CHECKS)) {
+            }
+            @else {
                 return = "";
                 int i = from;
 
@@ -199,7 +193,7 @@ namespace std {
                     return.add(this.data[i]);
                     i += 1;
                 }
-            };
+            }
         }
 
         std::string operator+(std::string one, std::string two) {
@@ -328,45 +322,45 @@ namespace std {
                 std::memset(&nBuffer, 0, 40);
                 std::cstring::dtos(@getCurrArg(double), 8, &nBuffer);
                 result.appendC(cast(char*)&nBuffer);
-            };
+            }
 
             @if(@getCurrArgType() == float) {
                 std::memset(&nBuffer, 0, 40);
                 std::cstring::dtos(@getCurrArg(double), 7, &nBuffer);
                 result.appendC(cast(char*)&nBuffer);
-            };
+            }
 
             @if(@getCurrArgType() == half) {
                 std::memset(&nBuffer, 0, 40);
                 std::cstring::dtos(@getCurrArg(double), 6, &nBuffer);
                 result.appendC(cast(char*)&nBuffer);
-            };
+            }
 
             @if(@getCurrArgType() == bool) {
                 result.appendC(std::cstring::fromBool(@getCurrArg(bool)));
-            };
+            }
 
             @if(@getCurrArgType() == char) {
                 result.add(@getCurrArg(char));
-            };
+            }
 
             @if((@getCurrArgType() == short) || (@getCurrArgType() == int) || (@getCurrArgType() == long)) {
                 std::memset(&nBuffer, 0, 40);
                 std::cstring::ltos(@getCurrArg(long), cast(char*)&nBuffer);
                 result.appendC(cast(char*)&nBuffer);
-            };
+            }
 
             @if(@getCurrArgType() == cent) {
                 std::memset(&nBuffer, 0, 40);
                 std::cstring::ctos(@getCurrArg(cent), cast(char*)&nBuffer);
                 result.appendC(cast(char*)&nBuffer);
-            };
+            }
 
             @if(@getCurrArgType() == char*) {
                 char* str = @getCurrArg(char*);
                 if(str != null) result.appendC(str);
                 else result.appendC("null");
-            };
+            }
 
             @if(@getCurrArgType() == int*) {
                 uint* utf8Text = @getCurrArg(uint*);
@@ -391,7 +385,7 @@ namespace std {
                         result.add(buf[3]);
                     }
                 }
-            };
+            }
 
             @if(@tEquals(@getCurrArgType(), std::u32string)) {
                 std::u32string us = @getCurrArg(std::u32string);
@@ -416,7 +410,7 @@ namespace std {
                         result.add(buf[3]);
                     }
                 }
-            };
+            }
 
             @if(@tEquals(@getCurrArgType(), std::u8string)) {
                 std::u8string u8s = @getCurrArg(std::u8string);
@@ -424,14 +418,14 @@ namespace std {
                     for(int i=0; i<u8s.bytes; i+=1) result.add(u8s.data[i]);
                 }
                 else result.appendC("null");
-            };
+            }
 
             @if(@tEquals(@getCurrArgType(), std::string)) {
                 std::string s = @getCurrArg(std::string);
                 if(s.data != null) result.append(s);
                 else result.appendC("null");
-            };
-        };
+            }
+        }
         
         resultPtr[0] = result;
     }

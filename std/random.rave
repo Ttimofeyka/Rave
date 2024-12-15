@@ -56,9 +56,8 @@ import <std/time> <std/sysc> <std/io>
             }
         }
     }
-};
-
-@if(__RAVE_OS != "LINUX") {
+}
+@else {
     namespace std {
         cent randNext = 0;
 
@@ -89,7 +88,7 @@ import <std/time> <std/sysc> <std/io>
             }
         }
     }
-};
+}
 
 namespace std {
     // TODO: Improve the algorithm

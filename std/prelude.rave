@@ -5,14 +5,9 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 @if(@aliasExists(__RAVE_IMPORTED_FROM)) {
-    @if(@contains(__RAVE_IMPORTED_FROM, "std/sysc.rave") == false) {
-        import <std/sysc>  
-    };
-};
-
-@if(!@aliasExists(__RAVE_IMPORTED_FROM)) {
-    import <std/sysc>
-};
+    @if(!(@contains(__RAVE_IMPORTED_FROM, "std/sysc.rave"))) import <std/sysc>
+}
+@else import <std/sysc>
 
 @compileAndLink("<std/thread>");
 @compileAndLink("<std/cstring>");
@@ -30,13 +25,12 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
             std::syscall(std::sysctable::Exit, code);
         }
     }
-};
-
-@if(__RAVE_OS != "LINUX") {
+}
+@else {
     namespace std {
         extern(linkname: "exit") void exit(int code);
     }
-};
+}
 
 namespace std {
     extern(private) void putswnl(char* msg);

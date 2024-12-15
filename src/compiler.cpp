@@ -443,6 +443,7 @@ void Compiler::compile(std::string file) {
 void Compiler::compileAll() {
     AST::debugMode = Compiler::debugMode;
     std::vector<std::string> toRemove;
+
     for(int i=0; i<Compiler::files.size(); i++) {
         if(access(Compiler::files[i].c_str(), 0) != 0) {
             Compiler::error("file '" + Compiler::files[i] + "' does not exists!");

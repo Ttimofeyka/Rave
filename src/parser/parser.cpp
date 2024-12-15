@@ -53,6 +53,7 @@ with this file, You can obtain one at htypep://mozilla.org/MPL/2.0/.
 #include "../include/parser/nodes/NodeDefer.hpp"
 #include "../include/parser/nodes/NodeConstStruct.hpp"
 #include "../include/parser/nodes/NodeSlice.hpp"
+#include "../include/parser/nodes/NodeComptime.hpp"
 #include <inttypes.h>
 #include <sstream>
 
@@ -126,6 +127,8 @@ Node* Parser::parseTopLevel(std::string s) {
     else if(this->peek()->value == "import") return this->parseImport();
     else if(this->peek()->value == "type") return this->parseAliasType();
     else if(this->peek()->type == TokType::Builtin) {
+        if(this->peek()->value == "@if") return this->parseIf(s, true);
+
         Token* tok = this->peek();
         this->next();
 
@@ -208,6 +211,8 @@ std::vector<FuncArgSet> Parser::parseFuncArgSets() {
 
 Node* Parser::parseBuiltin(std::string f) {
     std::string name = this->peek()->value;
+    if(name == "@if") return this->parseIf(f, true);
+
     std::vector<Node*> args;
     NodeBlock* block;
     bool isTopLevel = false;
@@ -1301,6 +1306,23 @@ Node* Parser::parseContinue() {
     return ncontinue;
 }
 
+Node* Parser::parseAnyLevelBlock(std::string f) {
+    if(f != "") {
+        if(this->peek()->type != TokType::Rbra) return this->parseStmt(f);
+        return this->parseBlock(f);
+    }
+
+    if(this->peek()->type != TokType::Rbra) return this->parseTopLevel(f);
+
+    NodeBlock* block = new NodeBlock({});
+    
+    this->next();
+    while(this->peek()->type != TokType::Lbra) block->nodes.push_back(this->parseTopLevel(f));
+    this->next();
+
+    return block;
+}
+
 Node* Parser::parseIf(std::string f, bool isStatic) {
     int line = this->peek()->line;
     this->next();
@@ -1320,19 +1342,22 @@ Node* Parser::parseIf(std::string f, bool isStatic) {
 
     NodeIf* _if = nullptr;
 
-    Node* body = this->parseStmt(f);
-    if(this->peek()->value == "else") {
+    Node* body = this->parseAnyLevelBlock(f);
+
+    if(this->peek()->value == "else" || (isStatic && this->peek()->value == "@else")) {
         this->next();
     
         if(this->peek()->value == "likely") {isUnlikely = true; this->next();}
         else if(this->peek()->value == "unlikely") {isLikely = true; this->next();}
     
-        _if = new NodeIf(cond, body, this->parseStmt(f), line, isStatic);
+        _if = new NodeIf(cond, body, this->parseAnyLevelBlock(f), line, isStatic);
     }
     else _if = new NodeIf(cond, body, nullptr, line, isStatic);
 
     _if->isLikely = isLikely;
     _if->isUnlikely = isUnlikely;
+
+    if(isStatic) return new NodeComptime(_if);
 
     return _if;
 }

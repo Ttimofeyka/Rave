@@ -19,9 +19,8 @@ namespace std {
             (inline) char* getCwd(char* buffer, int size) => std::syscall(std::sysctable::GetCwd, buffer, size);
         }
     }
-};
-
-@if(__RAVE_OS == "WINDOWS") {
+}
+@else @if(__RAVE_OS == "WINDOWS") {
     namespace std {
         namespace system {
             extern(linkname: "GetCurrentDirectoryW") int __getCurrentDirectory(int size, ushort* buffer);
@@ -44,13 +43,12 @@ namespace std {
             }
         }
     }
-};
-
-@if(((__RAVE_OS != "LINUX") && (__RAVE_OS != "WINDOWS"))) {
+}
+@else {
     namespace std {
         namespace system {
             extern(linkname: "reboot") int reboot(int cmd);
             extern(linkname: "getcwd") char* getCwd(char* buffer, int size);
         }
     }
-};
+}
