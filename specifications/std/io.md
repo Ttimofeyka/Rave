@@ -38,7 +38,7 @@ int foo;
 std::input(&foo);
 ```
 
-## finput
+## finput (TEMPORARILY EXCLUDED)
 
 A function for reading a certain simple type from the file.
 
