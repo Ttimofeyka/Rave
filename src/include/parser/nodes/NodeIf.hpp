@@ -23,7 +23,6 @@ public:
     bool isLikely = false;
     bool isUnlikely = false;
     bool isImported = false;
-    bool hasRets[2];
 
     NodeIf(Node* cond, Node* body, Node* _else, int loc, bool isStatic);
     void optimize();
