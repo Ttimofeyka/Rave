@@ -20,11 +20,12 @@ ifdef OS
 endif
 
 ifeq ($(WINBUILD),1)
-	LLVM_VERSION = 16
+	temp_llvmver = $(shell llvm-config --version)
+	LLVM_VERSION = $(firstword $(subst ., ,$(temp_llvmver)))
 	BIN = rave.exe
-	SRC = $(patsubst ".\\%",$ .\src\\%, $(shell getFiles))
+	SRC = $(patsubst ".\\%",$ .\src\\%, $(shell ./getFiles.sh))
 	LLVM_COMPILE_FLAGS = `llvm-config --cflags`
-	LLVM_LINK_FLAGS = ./LLVM/lib/LLVM-C.lib
+	LLVM_LINK_FLAGS = `llvm-config --libs`
 else
 	ifneq (, $(shell command -v llvm-config-16))
  		LLVM_VERSION = 16
