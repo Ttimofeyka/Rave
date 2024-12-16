@@ -1110,7 +1110,7 @@ Node* Parser::parseWhile(std::string f) {
         if(this->peek()->type == TokType::Lpar) this->next();
     }
 
-    return new NodeWhile(cond, parseStmt(f), line, f);
+    return new NodeWhile(cond, parseStmt(f), line);
 }
 
 Node* Parser::parseDefer(bool isFunctionScope, std::string f) {
@@ -1134,7 +1134,7 @@ Node* Parser::parseFor(std::string f) {
 
         Node* stmt = this->parseStmt(f);
         if(!instanceof<NodeBlock>(stmt)) stmt = new NodeBlock(std::vector<Node*>({stmt}));
-        return new NodeWhile(new NodeBool(true), (NodeBlock*)stmt, line, f);
+        return new NodeWhile(new NodeBool(true), (NodeBlock*)stmt, line);
     }
 
     while(this->peek()->type != TokType::Lpar) {

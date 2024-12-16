@@ -73,7 +73,7 @@ RaveValue NodeForeach::generate() {
 
     this->block->nodes.push_back(new NodeBinary(TokType::PluEqu, new NodeIden("__RAVE_FOREACH_N" + std::to_string(this->loc), this->loc), new NodeInt(1), this->loc));
 
-    NodeWhile* nwhile = new NodeWhile(new NodeBinary(TokType::Less, new NodeIden("__RAVE_FOREACH_N" + std::to_string(this->loc), this->loc), varLength, this->loc), this->block, this->loc, currScope->funcName);
+    NodeWhile* nwhile = new NodeWhile(new NodeBinary(TokType::Less, new NodeIden("__RAVE_FOREACH_N" + std::to_string(this->loc), this->loc), varLength, this->loc), this->block, this->loc);
     nwhile->check();
     RaveValue result = nwhile->generate();
 

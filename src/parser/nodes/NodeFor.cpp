@@ -45,7 +45,7 @@ RaveValue NodeFor::generate() {
 
     for(int i=0; i<this->afters.size(); i++) this->block->nodes.push_back(this->afters[i]);
 
-    NodeWhile* nwhile = new NodeWhile(this->cond, this->block, this->loc, currScope->funcName);
+    NodeWhile* nwhile = new NodeWhile(this->cond, this->block, this->loc);
     nwhile->check();
     RaveValue result = nwhile->generate();
 

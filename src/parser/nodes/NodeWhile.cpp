@@ -16,16 +16,15 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeIden.hpp"
 #include "../../include/utils.hpp"
 
-NodeWhile::NodeWhile(Node* cond, Node* body, int loc, std::string funcName) {
+NodeWhile::NodeWhile(Node* cond, Node* body, int loc) {
     this->cond = cond;
     this->body = body;
     this->loc = loc;
-    this->funcName = funcName;
 }
 
 Type* NodeWhile::getType() {return typeVoid;}
 Node* NodeWhile::comptime() {return this;}
-Node* NodeWhile::copy() {return new NodeWhile(this->cond->copy(), this->body->copy(), this->loc, this->funcName);}
+Node* NodeWhile::copy() {return new NodeWhile(this->cond->copy(), this->body->copy(), this->loc);}
 
 void NodeWhile::check() {
     this->isChecked = true;

@@ -16,10 +16,9 @@ class NodeWhile : public Node {
 public:
     Node* cond;
     Node* body;
-    std::string funcName;
     int loc;
 
-    NodeWhile(Node* cond, Node* body, int loc, std::string funcName);
+    NodeWhile(Node* cond, Node* body, int loc);
     void optimize();
     Type* getType() override;
     RaveValue generate() override;
