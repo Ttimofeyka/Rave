@@ -170,7 +170,7 @@ LLVMTypeRef* NodeFunc::getParameters(int callConv) {
             }
             else this->block->nodes.emplace(
                 this->block->nodes.begin(),
-                new NodeVar(oldName, new NodeIden(arg.name, this->loc), false, false, false, {}, this->loc, arg.type, false, false, false, true)
+                new NodeVar(oldName, new NodeIden(arg.name, this->loc), false, false, false, {}, this->loc, arg.type, false, false, false)
             );
         }
 
