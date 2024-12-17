@@ -336,13 +336,9 @@ namespace std {
                 result.appendC(cast(char*)&nBuffer);
             }
 
-            @if(@getCurrArgType() == bool) {
-                result.appendC(std::cstring::fromBool(@getCurrArg(bool)));
-            }
+            @if(@getCurrArgType() == bool) result.appendC(std::cstring::fromBool(@getCurrArg(bool)));
 
-            @if(@getCurrArgType() == char) {
-                result.add(@getCurrArg(char));
-            }
+            @if(@getCurrArgType() == char) result.add(@getCurrArg(char));
 
             @if((@getCurrArgType() == short) || (@getCurrArgType() == int) || (@getCurrArgType() == long)) {
                 std::memset(&nBuffer, 0, 40);
