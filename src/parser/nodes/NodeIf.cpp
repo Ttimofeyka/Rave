@@ -142,7 +142,7 @@ Node* NodeIf::comptime() {
         else if(instanceof<NodeBlock>(node)) {
             NodeBlock* block = (NodeBlock*)node;
 
-            for(Node *nd: block->nodes) {
+            for(Node* nd: block->nodes) {
                 if(instanceof<NodeIf>(nd)) ((NodeIf*)nd)->isImported = true;
                 else if(instanceof<NodeFunc>(nd)) ((NodeFunc*)nd)->isExtern = true;
                 else if(instanceof<NodeComptime>(nd)) ((NodeComptime*)nd)->isImported = true;

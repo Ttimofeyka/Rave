@@ -34,7 +34,7 @@ void NodeBlock::check() {
 }
 
 void NodeBlock::optimize() {
-    for(Node *nd: this->nodes) {
+    for(Node* nd: this->nodes) {
         NodeVar *ndvar = dynamic_cast<NodeVar *>(nd);
         if (ndvar == nullptr)
             nd->optimize();
@@ -47,6 +47,6 @@ Node* NodeBlock::comptime() {return this;}
 Type* NodeBlock::getType() {return typeVoid;}
 
 RaveValue NodeBlock::generate() {
-    for(Node *nd: this->nodes) if(nd != nullptr) nd->generate();
+    for(Node* nd: this->nodes) if(nd != nullptr) nd->generate();
     return {};
 }
