@@ -139,4 +139,4 @@ extern LLVMTargetDataRef dataLayout;
 
 extern TypeFunc* callToTFunc(NodeCall* call);
 extern Scope* copyScope(Scope* original);
-std::string typeToString(LLVMTypeRef type);
+extern std::string typeToString(LLVMTypeRef type);
