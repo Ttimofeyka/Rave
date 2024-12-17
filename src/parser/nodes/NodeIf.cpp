@@ -115,39 +115,8 @@ RaveValue NodeIf::generate() {
 }
 
 void NodeIf::optimize() {
-    if(body != nullptr) {
-        if(instanceof<NodeIf>(body)) ((NodeIf*)body)->optimize();
-        else if(instanceof<NodeFor>(body)) ((NodeFor*)body)->optimize();
-        else if(instanceof<NodeWhile>(body)) ((NodeWhile*)body)->optimize();
-        else if(instanceof<NodeForeach>(body)) ((NodeForeach*)body)->optimize();
-        else if(instanceof<NodeBlock>(body)) {
-            NodeBlock* nblock = (NodeBlock*)body;
-            for(int i=0; i<nblock->nodes.size(); i++) {
-                if(instanceof<NodeIf>(nblock->nodes[i])) ((NodeIf*)nblock->nodes[i])->optimize();
-                else if(instanceof<NodeFor>(nblock->nodes[i])) ((NodeFor*)nblock->nodes[i])->optimize();
-                else if(instanceof<NodeWhile>(nblock->nodes[i])) ((NodeWhile*)nblock->nodes[i])->optimize();
-                else if(instanceof<NodeForeach>(nblock->nodes[i])) ((NodeForeach*)nblock->nodes[i])->optimize();
-                else if(instanceof<NodeVar>(nblock->nodes[i]) && !((NodeVar*)nblock->nodes[i])->isGlobal && !((NodeVar*)nblock->nodes[i])->isUsed) generator->warning("unused variable '" + ((NodeVar*)nblock->nodes[i])->name + "'!", loc);
-            }
-        }
-    }
-
-    if(_else != nullptr) {
-        if(instanceof<NodeIf>(_else)) ((NodeIf*)_else)->optimize();
-        else if(instanceof<NodeFor>(_else)) ((NodeFor*)_else)->optimize();
-        else if(instanceof<NodeWhile>(_else)) ((NodeWhile*)_else)->optimize();
-        else if(instanceof<NodeForeach>(_else)) ((NodeForeach*)_else)->optimize();
-        else if(instanceof<NodeBlock>(_else)) {
-            NodeBlock* nblock = (NodeBlock*)_else;
-            for(int i=0; i<nblock->nodes.size(); i++) {
-                if(instanceof<NodeIf>(nblock->nodes[i])) ((NodeIf*)nblock->nodes[i])->optimize();
-                else if(instanceof<NodeFor>(nblock->nodes[i])) ((NodeFor*)nblock->nodes[i])->optimize();
-                else if(instanceof<NodeWhile>(nblock->nodes[i])) ((NodeWhile*)nblock->nodes[i])->optimize();
-                else if(instanceof<NodeForeach>(nblock->nodes[i])) ((NodeForeach*)nblock->nodes[i])->optimize();
-                else if(instanceof<NodeVar>(nblock->nodes[i]) && !((NodeVar*)nblock->nodes[i])->isGlobal && !((NodeVar*)nblock->nodes[i])->isUsed) generator->warning("unused variable '" + ((NodeVar*)nblock->nodes[i])->name + "'!", loc);
-            }
-        }
-    }
+    if(body != nullptr) body->optimize();
+    if(_else != nullptr) _else->optimize();
 }
 
 Node* NodeIf::comptime() {
@@ -173,14 +142,14 @@ Node* NodeIf::comptime() {
         else if(instanceof<NodeBlock>(node)) {
             NodeBlock* block = (NodeBlock*)node;
 
-            for(int i=0; i<block->nodes.size(); i++) {
-                if(instanceof<NodeIf>(block->nodes[i])) ((NodeIf*)block->nodes[i])->isImported = true;
-                else if(instanceof<NodeFunc>(block->nodes[i])) ((NodeFunc*)block->nodes[i])->isExtern = true;
-                else if(instanceof<NodeComptime>(block->nodes[i])) ((NodeComptime*)block->nodes[i])->isImported = true;
-                else if(instanceof<NodeVar>(block->nodes[i])) ((NodeVar*)block->nodes[i])->isExtern = true;
-                else if(instanceof<NodeNamespace>(block->nodes[i])) ((NodeNamespace*)block->nodes[i])->isImported = true;
-                else if(instanceof<NodeBuiltin>(block->nodes[i])) ((NodeBuiltin*)block->nodes[i])->isImport = true;
-                else if(instanceof<NodeStruct>(block->nodes[i])) ((NodeStruct*)block->nodes[i])->isImported = true;
+            for(Node *nd: block->nodes) {
+                if(instanceof<NodeIf>(nd)) ((NodeIf*)nd)->isImported = true;
+                else if(instanceof<NodeFunc>(nd)) ((NodeFunc*)nd)->isExtern = true;
+                else if(instanceof<NodeComptime>(nd)) ((NodeComptime*)nd)->isImported = true;
+                else if(instanceof<NodeVar>(nd)) ((NodeVar*)nd)->isExtern = true;
+                else if(instanceof<NodeNamespace>(nd)) ((NodeNamespace*)nd)->isImported = true;
+                else if(instanceof<NodeBuiltin>(nd)) ((NodeBuiltin*)nd)->isImport = true;
+                else if(instanceof<NodeStruct>(nd)) ((NodeStruct*)nd)->isImported = true;
             }
         }
     }

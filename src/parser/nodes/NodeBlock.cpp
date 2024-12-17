@@ -33,10 +33,20 @@ void NodeBlock::check() {
     }
 }
 
+void NodeBlock::optimize() {
+    for(Node *nd: this->nodes) {
+        NodeVar *ndvar = dynamic_cast<NodeVar *>(nd);
+        if (ndvar == nullptr)
+            nd->optimize();
+        else if(!ndvar->isGlobal && !ndvar->isUsed)
+            generator->warning("unused variable '" + ndvar->name + "'!", ndvar->loc);
+    }
+}
+
 Node* NodeBlock::comptime() {return this;}
 Type* NodeBlock::getType() {return typeVoid;}
 
 RaveValue NodeBlock::generate() {
-    for(int i=0; i<this->nodes.size(); i++) if(this->nodes[i] != nullptr) this->nodes[i]->generate();
+    for(Node *nd: this->nodes) if(nd != nullptr) nd->generate();
     return {};
 }

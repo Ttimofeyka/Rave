@@ -83,11 +83,8 @@ RaveValue NodeForeach::generate() {
 }
 
 void NodeForeach::optimize() {
-    for(int i=0; i<block->nodes.size(); i++) {
-        if(instanceof<NodeIf>(block->nodes[i])) ((NodeIf*)block->nodes[i])->optimize();
-        else if(instanceof<NodeFor>(block->nodes[i])) ((NodeFor*)block->nodes[i])->optimize();
-        else if(instanceof<NodeWhile>(block->nodes[i])) ((NodeWhile*)block->nodes[i])->optimize();
-        else if(instanceof<NodeForeach>(block->nodes[i])) ((NodeForeach*)block->nodes[i])->optimize();
-        else if(instanceof<NodeVar>(block->nodes[i]) && !((NodeVar*)block->nodes[i])->isGlobal && !((NodeVar*)block->nodes[i])->isUsed) generator->warning("unused variable '" + ((NodeVar*)block->nodes[i])->name + "'!", loc);
+    for(Node *nd: block->nodes) {
+        if(instanceof<NodeVar>(nd) && !((NodeVar*)nd)->isGlobal && !((NodeVar*)nd)->isUsed) generator->warning("unused variable '" + ((NodeVar*)nd)->name + "'!", loc);
+        else nd->optimize();
     }
 }

@@ -42,14 +42,14 @@ Node* NodeComptime::comptime() {
         else if(instanceof<NodeBlock>(this->node)) {
             NodeBlock* block = (NodeBlock*)this->node;
 
-            for(int i=0; i<block->nodes.size(); i++) {
-                if(instanceof<NodeIf>(block->nodes[i])) ((NodeIf*)block->nodes[i])->isImported = true;
-                else if(instanceof<NodeFunc>(block->nodes[i])) ((NodeFunc*)block->nodes[i])->isExtern = true;
-                else if(instanceof<NodeComptime>(block->nodes[i])) ((NodeComptime*)block->nodes[i])->isImported = true;
-                else if(instanceof<NodeVar>(block->nodes[i])) ((NodeVar*)block->nodes[i])->isExtern = true;
-                else if(instanceof<NodeNamespace>(block->nodes[i])) ((NodeNamespace*)block->nodes[i])->isImported = true;
-                else if(instanceof<NodeBuiltin>(block->nodes[i])) ((NodeBuiltin*)block->nodes[i])->isImport = true;
-                else if(instanceof<NodeStruct>(block->nodes[i])) ((NodeStruct*)block->nodes[i])->isImported = true;
+            for(Node *nd: block->nodes) {
+                if(instanceof<NodeIf>(nd)) ((NodeIf*)nd)->isImported = true;
+                else if(instanceof<NodeFunc>(nd)) ((NodeFunc*)nd)->isExtern = true;
+                else if(instanceof<NodeComptime>(nd)) ((NodeComptime*)nd)->isImported = true;
+                else if(instanceof<NodeVar>(nd)) ((NodeVar*)nd)->isExtern = true;
+                else if(instanceof<NodeNamespace>(nd)) ((NodeNamespace*)nd)->isImported = true;
+                else if(instanceof<NodeBuiltin>(nd)) ((NodeBuiltin*)nd)->isImport = true;
+                else if(instanceof<NodeStruct>(nd)) ((NodeStruct*)nd)->isImported = true;
             }
         }
     }

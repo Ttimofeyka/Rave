@@ -18,6 +18,7 @@ public:
     NodeBlock(std::vector<Node*> nodes);
     RaveValue generate() override;
     void check() override;
+    void optimize() override;
     Node* copy() override;
     Node* comptime() override;
     Type* getType() override;

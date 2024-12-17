@@ -25,7 +25,7 @@ public:
     bool isImported = false;
 
     NodeIf(Node* cond, Node* body, Node* _else, int loc, bool isStatic);
-    void optimize();
+    void optimize() override;
     Type* getType() override;
     void check() override;
     RaveValue generate() override;

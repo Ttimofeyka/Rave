@@ -19,7 +19,7 @@ public:
     int loc;
 
     NodeWhile(Node* cond, Node* body, int loc);
-    void optimize();
+    void optimize() override;
     Type* getType() override;
     RaveValue generate() override;
     Node* copy() override;

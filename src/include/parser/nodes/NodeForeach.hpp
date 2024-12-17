@@ -23,7 +23,7 @@ public:
     int loc;
 
     NodeForeach(NodeIden* elName, Node* varData, Node* varLength, NodeBlock* block, int loc);
-    void optimize();
+    void optimize() override;
     Type* getType() override;
     
     void check() override;

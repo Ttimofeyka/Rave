@@ -45,10 +45,10 @@ LLVMTargetDataRef dataLayout;
 
 TypeFunc* callToTFunc(NodeCall* call) {
     std::vector<TypeFuncArg*> argTypes;
-    for(int i=0; i<call->args.size(); i++) {
-        if(instanceof<NodeCall>(call->args[i])) argTypes.push_back(new TypeFuncArg(callToTFunc((NodeCall*)call->args[i]), ""));
-        else if(instanceof<NodeIden>(call->args[i])) argTypes.push_back(new TypeFuncArg(getType(((NodeIden*)call->args[i])->name), ""));
-        else if(instanceof<NodeType>(call->args[i])) argTypes.push_back(new TypeFuncArg(((NodeType*)call->args[i])->type, ""));
+    for(Node *nd: call->args) {
+        if(instanceof<NodeCall>(nd)) argTypes.push_back(new TypeFuncArg(callToTFunc((NodeCall*)nd), ""));
+        else if(instanceof<NodeIden>(nd)) argTypes.push_back(new TypeFuncArg(getType(((NodeIden*)nd)->name), ""));
+        else if(instanceof<NodeType>(nd)) argTypes.push_back(new TypeFuncArg(((NodeType*)nd)->type, ""));
     }
     return new TypeFunc(getType(((NodeIden*)call->func)->name), argTypes, false);
 }
