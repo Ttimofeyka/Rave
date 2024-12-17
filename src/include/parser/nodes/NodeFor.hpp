@@ -21,7 +21,7 @@ public:
     int loc;
 
     NodeFor(std::vector<Node*> presets, Node* cond, std::vector<Node*> afters, NodeBlock* block, int loc);
-    void optimize();
+    void optimize() override;
     Type* getType() override;
     
     void check() override;

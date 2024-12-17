@@ -363,13 +363,7 @@ RaveValue NodeFunc::generate() {
         }
         this->block->generate();
 
-        if(!this->isCtargs && !this->isCtargsPart && !Compiler::settings.disableWarnings) for(int i=0; i<block->nodes.size(); i++) {
-            if(instanceof<NodeIf>(block->nodes[i])) ((NodeIf*)block->nodes[i])->optimize();
-            else if(instanceof<NodeFor>(block->nodes[i])) ((NodeFor*)block->nodes[i])->optimize();
-            else if(instanceof<NodeWhile>(block->nodes[i])) ((NodeWhile*)block->nodes[i])->optimize();
-            else if(instanceof<NodeForeach>(block->nodes[i])) ((NodeForeach*)block->nodes[i])->optimize();
-            else if(instanceof<NodeVar>(block->nodes[i]) && !((NodeVar*)block->nodes[i])->isGlobal && !((NodeVar*)block->nodes[i])->isUsed) generator->warning("unused variable '" + ((NodeVar*)block->nodes[i])->name + "'!", loc);
-        }
+        if(!this->isCtargs && !this->isCtargsPart && !Compiler::settings.disableWarnings) block->optimize();
 
         currScope->fnEnd = this->exitBlock;
 

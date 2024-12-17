@@ -21,6 +21,7 @@ public:
 
     virtual RaveValue generate();
     virtual void check();
+    virtual void optimize();
     virtual Node* comptime();
     virtual Type* getType();
     virtual Node* copy();
