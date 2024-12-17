@@ -494,9 +494,9 @@ namespace std {
             else return = 0.0h;
         }
 
-        double gelu(double x) => 0.5d * x * (1d + (std::math::tanh(std::math::sqrt(2d / std::math::PI) * (x + (0.044715d * x * x * x)))));
-        float gelu(float x) => 0.5f * x * (1d + (std::math::tanh(std::math::sqrt(2f / std::math::PI_f) * (x + (0.044715f * x * x * x)))));
-        half gelu(half x) => 0.5h * x * (1h + (std::math::tanh(std::math::sqrt(2f / std::math::PI_f) * (x + (0.044715h * x * x * x)))));
+        double gelu(double x) => 0.5d * x * (1d + (std::math::tanh(0.7978845608d * (x + (0.044715d * x * x * x)))));
+        float gelu(float x) => 0.5f * x * (1d + (std::math::tanh(0.7978845608f * (x + (0.044715f * x * x * x)))));
+        half gelu(half x) => 0.5h * x * (1h + (std::math::tanh(0.7978845608f * (x + (0.044715h * x * x * x)))));
 
         void geglu(double* input, double* output, int size) {
             for(int i=0; i<size; i+=2) {
