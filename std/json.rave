@@ -162,7 +162,7 @@ namespace std {
 
             (inline) void setString(char* name, std::string str) => this.setCString(name, str.data, str.length);
 
-            (inline) void setU8String(char* name, std::u8string str) => this.setCString(name, str.data, str.bytes);
+            (inline) void setU8String(char* name, std::u8string str) => this.setCString(name, str.data, str.length);
 
             void setLong(char* name, long number) {
                 std::json::Value newInteger;
