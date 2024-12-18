@@ -12,6 +12,7 @@ namespace std {
 
     (data: "data", length: "length") struct string {
         char* data;
+        char* space;
         int length;
         int capacity;
 
@@ -22,7 +23,8 @@ namespace std {
                 this.length = std::cstring::strlen(str);
                 this.capacity = (this.length * 2) + 2;
                 if(this.capacity <= 0) this.capacity = 2;
-                this.data = std::malloc(this.capacity);
+                this.space = std::malloc(this.capacity);
+                this.data = this.space;
 
                 int i = 0;
                 while(i < this.length) {
@@ -34,7 +36,8 @@ namespace std {
             else {
                 this.length = 0;
                 this.capacity = 2;
-                this.data = std::malloc(this.capacity);
+                this.space = std::malloc(this.capacity);
+                this.data = this.space;
                 this.data[0] = '\0';
             }
         } => this;
@@ -44,16 +47,18 @@ namespace std {
             this.length = 0;
             this.capacity = n + 1;
             if(this.capacity <= 0) this.capacity = 2;
-            this.data = std::malloc(this.capacity);
+            this.space = std::malloc(this.capacity);
+            this.data = this.space;
             this.data[0] = '\0';
         } => this;
 
         (nochecks) void operator=(std::string* one, char* two) {one[0] = std::string(two);}
 
         void ~this {
-            if(this.data != null) {
-                std::free(this.data);
+            if((this.data != null) && (this.space != null)) {
+                std::free(this.space);
                 this.data = null;
+                this.space = null;
                 this.length = 0;
                 this.capacity = 0;
             }
@@ -64,8 +69,9 @@ namespace std {
                 this.length = std::cstring::strlen(a);
                 this.capacity = (this.length * 2) + 2;
                 if(this.capacity <= 0) this.capacity = 2;
-                if(this.data != null) std::free(this.data);
-                this.data = std::malloc(this.capacity);
+                if((this.data != null) && (this.space != null)) std::free(this.space);
+                this.space = std::malloc(this.capacity);
+                this.data = this.space;
 
                 int i = 0;
                 while(i<this.length) {
@@ -77,8 +83,9 @@ namespace std {
             else {
                 this.length = 0;
                 this.capacity = 2;
-                if(this.data != null) std::free(this.data);
-                this.data = std::malloc(this.capacity);
+                if((this.data != null) && (this.space != null)) std::free(this.space);
+                this.space = std::malloc(this.capacity);
+                this.data = this.space;
                 this.data[0] = '\0';
             }
         }
@@ -96,7 +103,7 @@ namespace std {
             @else return = this.data[index];
         }
 
-        (inline) bool isDeleted => (this.data == null);
+        (inline) bool isDeleted => (this.data == null) && (this.space == null);
 
         (inline) char* c => this.data;
 
@@ -120,23 +127,29 @@ namespace std {
             if(this.data != null) {
                 this.length += 1;
                 if(this.length == this.capacity) {
-                    this.data = std::realloc(this.data, this.capacity, this.capacity * 2);
+                    int offset = ptoi(this.data) - ptoi(this.space);
+                    this.space = std::realloc(this.space, this.capacity, this.capacity * 2);
+                    this.data = itop(char*, ptoi(this.space) + offset);
                     this.capacity = this.capacity * 2;
                 }
-                this.data[this.length-1] = c;
+                this.data[this.length - 1] = c;
             }
         }
 
         void append(std::string str) {
             if(this.data != null) {
                 int i = 0;
+
+                if((this.capacity + str.length) >= this.capacity) {
+                    int offset = ptoi(this.data) - ptoi(this.space);
+                    this.space = std::realloc(this.space, this.capacity, this.capacity + str.length + 1);
+                    this.data = itop(char*, ptoi(this.space) + offset);
+                    this.capacity = this.capacity + str.length + 1;
+                }
+
                 while(i < str.length) {
                     this.length += 1;
-                    if(this.length == this.capacity) {
-                        this.data = std::realloc(this.data, this.capacity, this.capacity * 2);
-                        this.capacity = this.capacity * 2;
-                    }
-                    this.data[this.length-1] = str.data[i];
+                    this.data[this.length - 1] = str.data[i];
                     i += 1;
                 }
             }
@@ -146,13 +159,17 @@ namespace std {
             if(this.data != null) {
                 int len = std::cstring::strlen(cstr);
                 int i = 0;
+
+                if((this.capacity + len) >= this.capacity) {
+                    int offset = ptoi(this.data) - ptoi(this.space);
+                    this.space = std::realloc(this.space, this.capacity, this.capacity + len + 1);
+                    this.data = itop(char*, ptoi(this.space) + offset);
+                    this.capacity = this.capacity + len + 1;
+                }
+
                 while(i < len) {
                     this.length += 1;
-                    if(this.length == this.capacity) {
-                        this.data = std::realloc(this.data, this.capacity, this.capacity * 2);
-                        this.capacity = this.capacity * 2;
-                    }
-                    this.data[this.length-1] = cstr[i];
+                    this.data[this.length - 1] = cstr[i];
                     i += 1;
                 }
             }
@@ -245,22 +262,23 @@ namespace std {
             ~buffer;
         }
 
-        std::string ltrim {
+        void ltrim {
             int idx = 0;
             while((idx < this.length) && (std::ascii::isSpace(this.data[idx]))) idx += 1;
-        } => this.substring(idx, this.length);
+            this.data = itop(char*, ptoi(this.data) + idx);
+            this.length = this.length - idx;
+        }
 
-        std::string rtrim {
-            int idx = this.length - 1;
-            while(std::ascii::isSpace(this.data[idx])) idx -= 1;
-        } => this.substring(0, idx + 1);
+        void rtrim {
+            int idx = this.length;
+            while(std::ascii::isSpace(this.data[idx - 1])) idx -= 1;
+            this.length = idx;
+        }
 
-        (inline) std::string trim {
-            int idxL = 0;
-            int idxR = this.length - 1;
-            while((idxL < this.length) && (std::ascii::isSpace(this.data[idxL]))) idxL += 1;
-            while(std::ascii::isSpace(this.data[idxR])) idxR -= 1;
-        } => this.substring(idxL, idxR + 1);
+        (inline) void trim {
+            this.ltrim();
+            this.rtrim();
+        }
 
         std::string insert(int pos, char* str) {
             std::string buffer = "";
