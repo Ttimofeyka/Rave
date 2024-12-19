@@ -115,22 +115,22 @@ namespace std {
             @if(__RAVE_RUNTIME_CHECKS) {
                 if((index >= 0) && (index < this.length)) {
                     for(int i=index; i<this.length; i+=1) {
-                        if((i+1) < this.length) this.data[i] = this.data[i+1];
+                        if((i + 1) < this.length) this.data[i] = this.data[i + 1];
                     }
                     this.length = this.length - 1;
                 }
             }
             @else {
                 for(int i=index; i<this.length; i+=1) {
-                    if((i+1) < this.length) this.data[i] = this.data[i+1];
+                    if((i + 1) < this.length) this.data[i] = this.data[i + 1];
                 }
                 this.length = this.length - 1;
             }
         }
 
         (inline) void removeLast {
-            @if(__RAVE_RUNTIME_CHECKS) if(this.length > 0) this.remove(this.length-1);
-            @else this.remove(this.length-1);
+            @if(__RAVE_RUNTIME_CHECKS) if(this.length > 0) this.remove(this.length - 1);
+            @else this.remove(this.length - 1);
         }
 
         void ~this {
