@@ -463,6 +463,7 @@ Node* Parser::parseAtom(std::string f) {
     if(t->type == TokType::Number) {
         if(size > 0 && this->peek()->type == TokType::Identifier) {
             std::string iden = this->peek()->value;
+
             if(iden == "u" || iden == "l" || iden == "c" || iden == "s") {
                 NodeInt* _int = new NodeInt(BigInt(t->value));
                 this->next();

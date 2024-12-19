@@ -183,6 +183,22 @@ LLVMValueRef Binary::compare(LLVMValueRef one, LLVMValueRef two, char op, int lo
     } return nullptr;
 }
 
+void Binary::store(RaveValue pointer, RaveValue value, int loc) {
+    Type* memType = pointer.type->getElType();
+
+    if(instanceof<TypeBasic>(memType) && instanceof<TypeBasic>(value.type)) {
+        TypeBasic* memBasic = (TypeBasic*)memType;
+        TypeBasic* valBasic = (TypeBasic*)value.type;
+
+        if(memBasic->type != valBasic->type) {
+            value.type = memBasic;
+            value.value = Binary::castValue(value.value, generator->genType(memBasic, loc), loc);
+        }
+    }
+
+    LLVMBuildStore(generator->builder, value.value, pointer.value);
+}
+
 NodeBinary::NodeBinary(char op, Node* first, Node* second, int loc, bool isStatic) {
     this->op = op;
     this->first = first;
@@ -350,24 +366,12 @@ RaveValue NodeBinary::generate() {
 
             if(vSecond.type && vSecond.type->toString() == value.type->toString()) vSecond = LLVM::load(vSecond, "NodeBinary_NodeIden_load", loc);
 
-            if(instanceof<TypePointer>(value.type) && instanceof<TypeBasic>(value.type->getElType()) && instanceof<TypeBasic>(vSecond.type)) {
-                TypeBasic* tFirst = (TypeBasic*)value.type->getElType();
-                TypeBasic* tSecond = (TypeBasic*)vSecond.type->getElType();
-
-                if(tFirst->type != tSecond->type) {
-                    if(!tFirst->isFloat() && !tSecond->isFloat()) {
-                        vSecond.type = tFirst;
-                        vSecond.value = LLVMBuildIntCast2(generator->builder, vSecond.value, generator->genType(tFirst, this->loc), true, "NodeBinary_NodeIden_itoi");
-                    }
-                }
-            }
-
             if(instanceof<NodeNull>(this->second)) {
                 ((NodeNull*)(this->second))->type = value.type->getElType();
                 vSecond = second->generate();
             }
 
-            LLVMBuildStore(generator->builder, vSecond.value, value.value);
+            Binary::store(value, vSecond, loc);
             return {};
         }
         else if(instanceof<NodeGet>(this->first)) {
@@ -388,7 +392,7 @@ RaveValue NodeBinary::generate() {
                 return {};
             }
  
-            LLVMBuildStore(generator->builder, sValue.value, fValue.value);
+            Binary::store(fValue, sValue, loc);
             return {};
         }
         else if(instanceof<NodeIndex>(this->first)) {
@@ -409,11 +413,11 @@ RaveValue NodeBinary::generate() {
 
             RaveValue value = this->second->generate();
             
-            LLVMBuildStore(generator->builder, value.value, ptr.value);
+            Binary::store(ptr, value, loc);
             return {};
         }
         else if(instanceof<NodeDone>(this->first)) {
-            LLVMBuildStore(generator->builder, this->second->generate().value, this->first->generate().value);
+            Binary::store(this->first->generate(), this->second->generate(), loc);
             return {};
         }
     }
