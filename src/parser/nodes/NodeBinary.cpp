@@ -350,6 +350,18 @@ RaveValue NodeBinary::generate() {
 
             if(vSecond.type && vSecond.type->toString() == value.type->toString()) vSecond = LLVM::load(vSecond, "NodeBinary_NodeIden_load", loc);
 
+            if(instanceof<TypePointer>(value.type) && instanceof<TypeBasic>(value.type->getElType()) && instanceof<TypeBasic>(vSecond.type)) {
+                TypeBasic* tFirst = (TypeBasic*)value.type->getElType();
+                TypeBasic* tSecond = (TypeBasic*)vSecond.type->getElType();
+
+                if(tFirst->type != tSecond->type) {
+                    if(!tFirst->isFloat() && !tSecond->isFloat()) {
+                        vSecond.type = tFirst;
+                        vSecond.value = LLVMBuildIntCast2(generator->builder, vSecond.value, generator->genType(tFirst, this->loc), true, "NodeBinary_NodeIden_itoi");
+                    }
+                }
+            }
+
             if(instanceof<NodeNull>(this->second)) {
                 ((NodeNull*)(this->second))->type = value.type->getElType();
                 vSecond = second->generate();
