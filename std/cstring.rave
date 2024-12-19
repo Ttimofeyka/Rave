@@ -183,6 +183,7 @@ namespace std {
                 return += (cast(long)(data[i] - '0') * coeff);
                 coeff *= 10;
             }
+
             if(isNegative) return = -return;
         }
 
