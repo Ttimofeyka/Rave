@@ -89,6 +89,8 @@ namespace std {
             @if(@hasMethod(K, hash)) uint index = key.hash() % mapSize;
             @else uint index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
 
+            if(index < 0) index = -index;
+
             std::hashmap::Entry<K, V>* entry = table[index];
 
             while(entry != null) {
