@@ -391,6 +391,8 @@ RaveValue NodeBuiltin::generate() {
     }
     else if(this->name == "hasMethod") {
         Type* ty = asType(0)->type;
+        if(generator->toReplace.find(ty->toString()) != generator->toReplace.end()) ty = generator->toReplace[ty->toString()];
+
         if(!instanceof<TypeStruct>(ty)) return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
         TypeStruct* tstruct = (TypeStruct*)ty;
         
@@ -748,6 +750,8 @@ Node* NodeBuiltin::comptime() {
     if(this->name == "contains") return new NodeBool(asStringIden(0).find(asStringIden(1)) != std::string::npos);
     if(this->name == "hasMethod") {
         Type* ty = asType(0)->type;
+        if(generator->toReplace.find(ty->toString()) != generator->toReplace.end()) ty = generator->toReplace[ty->toString()];
+
         if(!instanceof<TypeStruct>(ty)) return new NodeBool(false);
         TypeStruct* tstruct = (TypeStruct*)ty;
         
@@ -763,11 +767,9 @@ Node* NodeBuiltin::comptime() {
             }
         }
 
-        for(auto &&x : AST::methodTable) {
-            if(x.first.first == tstruct->name && x.second->origName == methodName) {
-                if(fnType == nullptr) return new NodeBool(true);
-            }
-        }
+        auto it = AST::methodTable.find({tstruct->name, methodName});
+        if(it != AST::methodTable.end() && (fnType == nullptr)) return new NodeBool(true);
+
         return new NodeBool(false);
     }
     if(this->name == "hasDestructor") {
