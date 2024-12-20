@@ -352,12 +352,14 @@ RaveValue NodeBinary::generate() {
 
             NodeVar* nvar = currScope->getVar(id->name, this->loc);
 
-            RaveValue vFirst = first->generate();
-            RaveValue vSecond = second->generate();
+            RaveValue vSecond = {nullptr, nullptr};
             
             if(instanceof<TypeStruct>(nvar->type) || (instanceof<TypePointer>(nvar->type) && instanceof<TypeStruct>(((TypePointer*)nvar->type)->instance))
                &&!instanceof<TypeStruct>(this->second->getType()) || (instanceof<TypePointer>(this->second->getType()) && instanceof<TypeStruct>(((TypePointer*)this->second->getType())->instance))
             ) {
+                RaveValue vFirst = first->generate();
+                vSecond = second->generate();
+
                 std::pair<std::string, std::string> opOverload = isOperatorOverload(vFirst, vSecond, this->op);
 
                 if(opOverload.first != "") {
@@ -373,6 +375,7 @@ RaveValue NodeBinary::generate() {
                     return {};
                 }
             }
+            else vSecond = second->generate();
 
             RaveValue value = currScope->getWithoutLoad(id->name, this->loc);
 
