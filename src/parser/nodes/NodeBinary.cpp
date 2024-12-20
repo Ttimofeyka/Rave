@@ -184,6 +184,8 @@ LLVMValueRef Binary::compare(LLVMValueRef one, LLVMValueRef two, char op, int lo
 }
 
 void Binary::store(RaveValue pointer, RaveValue value, int loc) {
+    if(pointer.type == nullptr || pointer.value == nullptr || value.type == nullptr || value.value == nullptr) return;
+
     Type* memType = pointer.type->getElType();
 
     if(instanceof<TypeBasic>(memType)) {
