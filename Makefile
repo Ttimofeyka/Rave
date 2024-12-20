@@ -43,7 +43,7 @@ else
 	endif
 	endif
 	ifeq ($(LLVM_STATIC), 1)
-		LLVM_FLAGS = `$(LLVM_CONFIG) --ldflags --link-static --libs --system-libs --cxxflags -static`
+		LLVM_FLAGS = `$(LLVM_CONFIG) --ldflags --link-static --libs --system-libs --cxxflags --link-static`
 	else
 		LLVM_FLAGS = `$(LLVM_CONFIG) --libs --cxxflags`
 	endif
