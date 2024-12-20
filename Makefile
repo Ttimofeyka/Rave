@@ -12,6 +12,8 @@ LLVM_STATIC ?= 0
 
 COMPILER ?= $(CXX)
 
+LLVM_WIN_LIB ?= ./LLVM/lib/LLVM-C.lib
+
 WINBUILD = 0
 ifdef OS
 	ifeq ($(OS),Windows_NT)
@@ -66,7 +68,7 @@ obj/linux/%.o: %.cpp
 	$(COMPILER) -c $< -o $@ -DLLVM_VERSION=$(LLVM_VERSION) -std=c++17 -Wno-deprecated $(FLAGS) $(LLVM_FLAGS) -fexceptions
 else
 $(BIN): $(OBJ)
-	$(COMPILER) $(OBJ) -o $@ $(LLVM_LINK_FLAGS) -DLLVM_VERSION=$(LLVM_VERSION) -lstdc++
+	$(COMPILER) $(OBJ) -o $@ $(LLVM_WIN_LIB) $(LLVM_LINK_FLAGS) -DLLVM_VERSION=$(LLVM_VERSION) -lstdc++
 obj/win/%.o: %.cpp
 	$(shell mkdir -p obj/win/src/parser/nodes obj/win/src/lexer)
 	$(COMPILER) -c $< -o $@ -DLLVM_VERSION=$(LLVM_VERSION) -std=c++17 -Wno-deprecated $(FLAGS) $(LLVM_COMPILE_FLAGS) -fexceptions
