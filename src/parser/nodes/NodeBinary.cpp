@@ -186,13 +186,25 @@ LLVMValueRef Binary::compare(LLVMValueRef one, LLVMValueRef two, char op, int lo
 void Binary::store(RaveValue pointer, RaveValue value, int loc) {
     Type* memType = pointer.type->getElType();
 
-    if(instanceof<TypeBasic>(memType) && instanceof<TypeBasic>(value.type)) {
-        TypeBasic* memBasic = (TypeBasic*)memType;
-        TypeBasic* valBasic = (TypeBasic*)value.type;
+    if(instanceof<TypeBasic>(memType)) {
+        if(instanceof<TypeBasic>(value.type)) {
+            TypeBasic* memBasic = (TypeBasic*)memType;
+            TypeBasic* valBasic = (TypeBasic*)value.type;
 
-        if(memBasic->type != valBasic->type) {
-            value.type = memBasic;
-            value.value = Binary::castValue(value.value, generator->genType(memBasic, loc), loc);
+            if(memBasic->type != valBasic->type) {
+                value.type = memBasic;
+                value.value = Binary::castValue(value.value, generator->genType(memBasic, loc), loc);
+            }
+        }
+        else {
+            generator->error("cannot store a value of type " + value.type->toString() + " into a value of type " + memType->toString() + "!", loc);
+            return;
+        }
+    }
+    else if(instanceof<TypePointer>(memType)) {
+        if(instanceof<TypeBasic>(value.type)) {
+            generator->error("cannot store a value of type " + value.type->toString() + " into a value of type " + memType->toString() + "!", loc);
+            return;
         }
     }
 
