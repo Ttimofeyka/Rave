@@ -6,8 +6,8 @@ You can change them at compile-time.
 
 ```cpp
 alias None = 0;
-alias Three = 3;
-alias Four = 4;
+alias Three = 2;
+alias Four = 3;
 
 // Works as an enum in C/C++
 namespace A {
