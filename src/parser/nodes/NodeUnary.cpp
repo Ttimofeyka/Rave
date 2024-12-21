@@ -151,8 +151,7 @@ RaveValue NodeUnary::generate() {
     if(this->type == TokType::Destructor) {
         RaveValue val2 = this->generatePtr();
 
-        if(!instanceof<TypePointer>(val2.type)
-        && !instanceof<TypeStruct>(val2.type)) generator->error("the attempt to call the destructor without structure!", this->loc);
+        if(!instanceof<TypePointer>(val2.type) && !instanceof<TypeStruct>(val2.type)) generator->error("the attempt to call the destructor without structure!", this->loc);
 
         if(instanceof<TypePointer>(val2.type)) {
             if(instanceof<TypePointer>(val2.type->getElType()) && instanceof<TypePointer>(val2.type->getElType()->getElType())) {

@@ -465,38 +465,36 @@ RaveValue NodeBinary::generate() {
     if(generator->toReplace.find(vFirst.type->toString()) != generator->toReplace.end()) vFirst.type = generator->toReplace[vFirst.type->toString()];
 
     if(instanceof<TypeBasic>(vFirst.type) && instanceof<TypeBasic>(vSecond.type) && vFirst.type->toString() != vSecond.type->toString()) {
-        // Casting numbers types
-        if(((TypeBasic*)vFirst.type)->isFloat()) {
-            if(((TypeBasic*)vSecond.type)->isFloat()) {
-                if(vFirst.type->getSize() > vSecond.type->getSize()) {
-                    vSecond.value = LLVMBuildFPCast(generator->builder, vSecond.value, generator->genType(vFirst.type, loc), "NodeBinary_ftof");
-                    vSecond.type = vFirst.type;
+        TypeBasic* t1 = (TypeBasic*)vFirst.type;
+        TypeBasic* t2 = (TypeBasic*)vSecond.type;
+
+        if(t1->isFloat()) {
+            if(t2->isFloat()) {
+                if(t1->getSize() > t2->getSize()) {
+                    vSecond.value = LLVMBuildFPCast(generator->builder, vSecond.value, generator->genType(t1, loc), "NodeBinary_ftof");
+                    vSecond.type = t1;
                 }
                 else {
-                    vFirst.value = LLVMBuildFPCast(generator->builder, vFirst.value, generator->genType(vSecond.type, loc), "NodeBinary_ftof");
-                    vFirst.type = vSecond.type;
+                    vFirst.value = LLVMBuildFPCast(generator->builder, vFirst.value, generator->genType(t2, loc), "NodeBinary_ftof");
+                    vFirst.type = t2;
                 }
             }
             else {
-                vSecond.value = LLVMBuildSIToFP(generator->builder, vSecond.value, generator->genType(vFirst.type, loc), "NodeBinary_itof");
-                vSecond.type = vFirst.type;
+                vSecond.value = LLVMBuildSIToFP(generator->builder, vSecond.value, generator->genType(t1, loc), "NodeBinary_itof");
+                vSecond.type = t1;
             }
         }
+        else if(t2->isFloat()) {
+            vFirst.value = LLVMBuildSIToFP(generator->builder, vFirst.value, generator->genType(t2, loc), "NodeBinary_itof");
+            vFirst.type = t2;
+        }
+        else if(t1->getSize() > t2->getSize()) {
+            vSecond.value = LLVMBuildIntCast2(generator->builder, vSecond.value, generator->genType(t1, loc), false, "NodeBinary_itoi");
+            vSecond.type = t1;
+        }
         else {
-            if(((TypeBasic*)vSecond.type)->isFloat()) {
-                vFirst.value = LLVMBuildSIToFP(generator->builder, vFirst.value, generator->genType(vSecond.type, loc), "NodeBinary_itof");
-                vFirst.type = vSecond.type;
-            }
-            else {
-                if(vFirst.type->getSize() > vSecond.type->getSize()) {
-                    vSecond.value = LLVMBuildIntCast2(generator->builder, vSecond.value, generator->genType(vFirst.type, loc), false, "NodeBinary_itoi");
-                    vSecond.type = vFirst.type;
-                }
-                else {
-                    vFirst.value = LLVMBuildIntCast2(generator->builder, vFirst.value, generator->genType(vSecond.type, loc), false, "NodeBinary_itoi");
-                    vFirst.type = vSecond.type;
-                }
-            }
+            vFirst.value = LLVMBuildIntCast2(generator->builder, vFirst.value, generator->genType(t2, loc), false, "NodeBinary_itoi");
+            vFirst.type = t2;
         }
     }
 
