@@ -794,7 +794,7 @@ Node* NodeBuiltin::comptime() {
                 case BasicType::Short: return new NodeInt(-32768);
                 case BasicType::Int: return new NodeInt(-2147483647);
                 case BasicType::Long: return new NodeInt(BigInt("-9223372036854775807"));
-                case BasicType::Cent: return new NodeInt(BigInt("170141183460469231731687303715884105728"));
+                case BasicType::Cent: return new NodeInt(BigInt("-170141183460469231731687303715884105728"));
                 default: return new NodeInt(0);
             }
         }
