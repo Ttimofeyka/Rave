@@ -17,14 +17,16 @@ Node* NodeContinue::comptime() {return this;}
 Node* NodeContinue::copy() {return new NodeContinue(this->loc);}
 
 int NodeContinue::getWhileLoop() {
-    int i = generator->activeLoops.size()-1;
-    while((i>=0) && generator->activeLoops[i].isIf) i -= 1;
+    int i = generator->activeLoops.size() - 1;
+    while((i >= 0) && generator->activeLoops[i].isIf) i -= 1;
+    if(generator->activeLoops[i].isIf) i = -1;
     return i;
 }
 
 RaveValue NodeContinue::generate() {
     if(generator->activeLoops.empty()) generator->error("attempt to call 'continue' out of the loop!", this->loc);
     int id = this->getWhileLoop();
+    if(id == -1) generator->error("attempt to call 'continue' out of the loop!", this->loc);
 
     LLVMBuildBr(generator->builder, generator->activeLoops[id].start);
 
