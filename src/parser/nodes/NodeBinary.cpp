@@ -307,24 +307,16 @@ Type* NodeBinary::getType() {
 
 RaveValue NodeBinary::generate() {
     bool isAliasIden = (this->first != nullptr && instanceof<NodeIden>(this->first) && AST::aliasTable.find(((NodeIden*)this->first)->name) != AST::aliasTable.end());
+
     if(this->op == TokType::PluEqu || this->op == TokType::MinEqu || this->op == TokType::MulEqu || this->op == TokType::DivEqu) {
         RaveValue value;
-        NodeBinary* bin;
-        switch(this->op) {
-            case TokType::PluEqu:
-                bin = new NodeBinary(TokType::Equ, this->first->copy(), new NodeBinary(TokType::Plus, this->first->copy(), this->second->copy(), loc), loc);
-                bin->check(); value = bin->generate(); delete bin; return value;
-            case TokType::MinEqu:
-                bin = new NodeBinary(TokType::Equ, this->first->copy(), new NodeBinary(TokType::Minus, this->first->copy(), this->second->copy(), loc), loc);
-                bin->check(); value = bin->generate(); delete bin; return value;
-            case TokType::MulEqu:
-                bin = new NodeBinary(TokType::Equ, this->first->copy(), new NodeBinary(TokType::Multiply, this->first->copy(), this->second->copy(), loc), loc);
-                bin->check(); value = bin->generate(); delete bin; return value;
-            case TokType::DivEqu:
-                bin = new NodeBinary(TokType::Equ, this->first->copy(), new NodeBinary(TokType::Divide, this->first->copy(), this->second->copy(), loc), loc);
-                bin->check(); value = bin->generate(); delete bin; return value;
-            default: return {};
-        }
+        NodeBinary* bin = new NodeBinary(TokType::Equ, this->first->copy(), new NodeBinary((
+            (this->op == TokType::PluEqu ? TokType::Plus : (this->op == TokType::MinEqu ? TokType::Minus : (this->op == TokType::MulEqu ? TokType::Multiply : TokType::Divide)))
+        ), this->first->copy(), this->second->copy(), loc), loc);
+        bin->check();
+        value = bin->generate();
+        delete bin;
+        return value;
     }
 
     if(this->op == TokType::Equ) {
