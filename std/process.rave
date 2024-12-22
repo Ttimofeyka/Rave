@@ -66,13 +66,13 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
                 @skipArg();
 
-                uint count = @argsLength() - 1;
+                uint count = @argsLength();
 
                 char** argv = cast(char**)std::malloc(count * sizeof(char*));
                 if(count > 0) defer std::free(argv);
 
                 @foreachArgs() {
-                    argv[@getCurrArgNumber() - 1] = @getCurrArg(char*);
+                    argv[@getCurrArgNumber()] = @getCurrArg(char*);
                 };
 
                 return = std::process::execve(path, argv, std::process::environment);
