@@ -24,10 +24,12 @@ void main {
             break;
         }
 
-        if(op == '+') first += second;
-        else if(op == '-') first -= second;
-        else if(op == '*') first = first * second;
-        else if(op == '/') first = first / second;
+        switch(op) {
+            case('+') first += second;
+            case('-') first -= second;
+            case('*') first *= second;
+            case('/') first /= second;
+        }
 
         std::println("Result: ", first);
     }
