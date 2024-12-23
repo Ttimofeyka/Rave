@@ -258,20 +258,32 @@ Node* NodeBinary::comptime() {
     while(!instanceof<NodeType>(first) && !instanceof<NodeBool>(first) && !instanceof<NodeString>(first) && !instanceof<NodeIden>(first) && !instanceof<NodeInt>(first) && !instanceof<NodeFloat>(first)) first = first->comptime();
     while(!instanceof<NodeType>(second) && !instanceof<NodeBool>(second) && !instanceof<NodeString>(second) && !instanceof<NodeIden>(second) && !instanceof<NodeInt>(second) && !instanceof<NodeFloat>(second)) second = second->comptime();
 
+    NodeBool* eqNeqResult = nullptr;
+
     switch(this->op) {
-        case TokType::Equal:
-            if(instanceof<NodeString>(first) && instanceof<NodeString>(second)) return new NodeBool(((NodeString*)first)->value == ((NodeString*)second)->value);
-            if(instanceof<NodeBool>(first) && instanceof<NodeBool>(second)) return new NodeBool(((NodeBool*)first)->value == ((NodeBool*)second)->value);
-            if(instanceof<NodeType>(first) && instanceof<NodeType>(second)) {
-                
-                return new NodeBool(((NodeType*)first)->type->toString() == ((NodeType*)second)->type->toString());
+        case TokType::Equal: case TokType::Nequal:
+            eqNeqResult = new NodeBool(false);
+
+            if(instanceof<NodeString>(first) && instanceof<NodeString>(second)) {
+                eqNeqResult->value = ((NodeString*)first)->value == ((NodeString*)second)->value;
+                if(this->op == TokType::Nequal) eqNeqResult->value = !eqNeqResult->value;
             }
-            return new NodeBool(false);
-        case TokType::Nequal:
-            if(instanceof<NodeString>(first) && instanceof<NodeString>(second)) return new NodeBool(((NodeString*)first)->value != ((NodeString*)second)->value);
-            if(instanceof<NodeBool>(first) && instanceof<NodeBool>(second)) return new NodeBool(((NodeBool*)first)->value != ((NodeBool*)second)->value);
-             if(instanceof<NodeType>(first) && instanceof<NodeType>(second)) return new NodeBool(((NodeType*)first)->type->toString() != ((NodeType*)second)->type->toString());
-            return new NodeBool(false);
+            else if(instanceof<NodeBool>(first) && instanceof<NodeBool>(second)) {
+                eqNeqResult->value = ((NodeBool*)first)->value == ((NodeBool*)second)->value;
+                if(this->op == TokType::Nequal) eqNeqResult->value = !eqNeqResult->value;
+            }
+            else if(instanceof<NodeType>(first)) {
+                if(instanceof<NodeType>(second)) eqNeqResult->value = ((NodeType*)first)->type->toString() == ((NodeType*)second)->type->toString();
+                else if(instanceof<NodeIden>(second)) eqNeqResult->value = ((NodeType*)first)->type->toString() == ((NodeIden*)second)->name;
+
+                if(this->op == TokType::Nequal) eqNeqResult->value = !eqNeqResult->value;
+            }
+            else if(instanceof<NodeType>(second)) {
+                if(instanceof<NodeIden>(first)) eqNeqResult->value = ((NodeIden*)first)->name == ((NodeType*)second)->type->toString();
+                if(this->op == TokType::Nequal) eqNeqResult->value = !eqNeqResult->value;
+            }
+            
+            return eqNeqResult;
         case TokType::And: return new NodeBool(((NodeBool*)first->comptime())->value && ((NodeBool*)second->comptime())->value);
         case TokType::Or: return new NodeBool(((NodeBool*)first->comptime())->value || ((NodeBool*)second->comptime())->value);
         case TokType::More:
