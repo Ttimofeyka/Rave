@@ -470,16 +470,6 @@ RaveValue NodeCall::generate() {
             NodeCall* ncall2 = new NodeCall(this->loc, new NodeGet(new NodeIden("__RAVE_NG_NGC", this->loc), getFunc->field, getFunc->isMustBePtr, this->loc), this->args);
             RaveValue answer = ncall2->generate();
 
-            /*if(instanceof<TypeStruct>(result.type)) {
-                std::string structName = result.type->toString();
-                if(AST::structTable.find(structName) != AST::structTable.end()) {
-                    if(AST::structTable[structName]->destructor != nullptr) {
-                        std::vector<LLVMValueRef> cArgs = std::vector<LLVMValueRef>({LLVMGetArgOperand(answer, 0)});
-                        LLVM::call(generator->functions[AST::structTable[structName]->destructor->name], cArgs.data(), 1, ((instanceof<TypeVoid>(AST::structTable[structName]->destructor->type) ? "" : "NodeCall_destructor")));
-                    }
-                }
-            }*/
-
             return answer;
         }
         else if(instanceof<NodeGet>(getFunc->base)) {

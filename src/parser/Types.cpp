@@ -408,6 +408,6 @@ Type* getType(std::string id) {
     };
 
     auto it = types.find(id);
-    if (it != types.end()) return it->second;
+    if(it != types.end()) return it->second;
     else return new TypeStruct(id);
 }

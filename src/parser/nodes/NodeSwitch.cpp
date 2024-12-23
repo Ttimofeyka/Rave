@@ -32,12 +32,7 @@ RaveValue NodeSwitch::generate() {
     std::vector<NodeIf*> ifVector;
     ifVector.reserve(statements.size());
 
-    for(const auto& statement : statements) {
-        ifVector.push_back(new NodeIf(
-            new NodeBinary(TokType::Equal, expr, statement.first, loc),
-            statement.second, nullptr, loc, false
-        ));
-    }
+    for(const auto& statement : statements) ifVector.push_back(new NodeIf(new NodeBinary(TokType::Equal, expr, statement.first, loc), statement.second, nullptr, loc, false));
 
     for(int i=0; i<ifVector.size() - 1; i++) ifVector[i]->_else = ifVector[i + 1];
 
