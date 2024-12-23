@@ -21,18 +21,5 @@ namespace std {
             return = c;
             if(std::ascii::isLower(c)) return = (return - 32); 
         }
-
-        (inline) char* charInChars(char* chars, char c) {
-            int i = 0;
-            return = null;
-            bool active = true;
-            while((chars[i] != '\0') && active) {
-                if(chars[i] == c) {
-                    return = &chars[i];
-                    active = false;
-                }
-                i += 1;
-            }
-        }
     }
 }

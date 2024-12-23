@@ -39,6 +39,18 @@ namespace std {
             else return = std::cstring::strncmp(s1, s2, length1);
         }
 
+        (inline, nochecks) char* strchr(char* chars, char c) {
+            int i = 0;
+            return = null;
+            while(chars[i] != '\0') {
+                if(chars[i] == c) {
+                    return = &chars[i];
+                    break;
+                }
+                i += 1;
+            }
+        }
+
         (nochecks) char* strstr(const(char)* str, const(char)* substr) {
             int i = 0;
             char* ptr = str;
