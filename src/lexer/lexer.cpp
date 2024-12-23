@@ -44,6 +44,9 @@ std::string Lexer::getString() {
         if(peek() == '\\') {
             idx += 1;
             if(peek() == '"') buffer += "\"";
+            else if(peek() == 'n') buffer += "\n";
+            else if(peek() == 'r') buffer += "\r";
+            else if(peek() == 't') buffer += "\t";
             else if(isdigit(peek())) {
                 std::string buffer2;
                 while(isdigit(peek())) {buffer2 += peek(); idx += 1;}
