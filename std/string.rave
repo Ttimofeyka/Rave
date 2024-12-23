@@ -5,7 +5,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 import <std/vector> <std/cstring> <std/ascii> <std/utf8> <std/utf32>
-import <std/thread> <std/strutil> <std/map> <std/hash>
+import <std/thread> <std/strutil> <std/map> <std/hash> <std/math>
 
 namespace std {
     extern(private, linkname: "sscanf") int format(char* buff, char* fmt);
@@ -335,21 +335,30 @@ namespace std {
 
         @foreachArgs() {
             @if(@getCurrArgType() == double) {
-                std::memset(&nBuffer, 0, 40);
-                std::cstring::dtos(@getCurrArg(double), 8, &nBuffer);
-                result.appendC(cast(char*)&nBuffer);
+                if(std::math::isNAN(@getCurrArg(double))) result.appendC("NAN");
+                else {
+                    std::memset(&nBuffer, 0, 40);
+                    std::cstring::dtos(@getCurrArg(double), 8, &nBuffer);
+                    result.appendC(cast(char*)&nBuffer);
+                }
             }
 
             @if(@getCurrArgType() == float) {
-                std::memset(&nBuffer, 0, 40);
-                std::cstring::dtos(@getCurrArg(double), 7, &nBuffer);
-                result.appendC(cast(char*)&nBuffer);
+                if(std::math::isNAN(@getCurrArg(float))) result.appendC("NAN");
+                else {
+                    std::memset(&nBuffer, 0, 40);
+                    std::cstring::dtos(@getCurrArg(double), 7, &nBuffer);
+                    result.appendC(cast(char*)&nBuffer);
+                }
             }
 
             @if(@getCurrArgType() == half) {
-                std::memset(&nBuffer, 0, 40);
-                std::cstring::dtos(@getCurrArg(double), 6, &nBuffer);
-                result.appendC(cast(char*)&nBuffer);
+                if(std::math::isNAN(@getCurrArg(half))) result.appendC("NAN");
+                else {
+                    std::memset(&nBuffer, 0, 40);
+                    std::cstring::dtos(@getCurrArg(double), 6, &nBuffer);
+                    result.appendC(cast(char*)&nBuffer);
+                }
             }
 
             @if(@getCurrArgType() == bool) result.appendC(std::cstring::fromBool(@getCurrArg(bool)));
