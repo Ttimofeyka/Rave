@@ -326,8 +326,8 @@ namespace std {
 
             void remove {std::file::remove(this.name);}
 
-            int read(void* buffer, int size, int n) => libc::fread(buffer, size, n, this._file);
-            int write(void* buffer, int size, int n) => libc::fwrite(buffer, size, n, this._file);
+            int read(void* buffer, int size) => libc::fread(buffer, 1, size, this._file);
+            int write(void* buffer, int size) => libc::fwrite(buffer, 1, size, this._file);
 
             char getc => libc::fgetc(this._file);
 
