@@ -6,7 +6,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import <std/math>
 
-@if(__RAVE_SSE < 2) {
+@if((!__RAVE_SSE2) && (!__RAVE_AVX2)) {
     // Using naive methods (slowly, but works)
 
     namespace std {
@@ -44,7 +44,7 @@ import <std/math>
     }
 }
 
-@if((__RAVE_AVX < 2) && (__RAVE_SSE >= 2)) {
+@if((__RAVE_SSE2) && (!__RAVE_AVX2)) {
     // Using SSE instructions (faster, but requires SSE2 and higher)
 
     namespace std {
@@ -168,7 +168,7 @@ import <std/math>
     }
 }
 
-@if(__RAVE_AVX >= 2) {
+@if(__RAVE_AVX2) {
     // Using AVX instructions (fastest, but requires AVX2)
 
     namespace std {

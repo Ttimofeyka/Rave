@@ -44,20 +44,16 @@ genSettings analyzeArguments(std::vector<std::string>& arguments) {
         else if(arguments[i] == "-t" || arguments[i] == "--target") {outType = arguments[i + 1]; i += 1;} // Sets the target platform type
         else if(arguments[i] == "-h" || arguments[i] == "--help") helpCalled = true; // Outputs all possible arguments
         else if(arguments[i] == "-native") settings.isNative = true; // Enables native mode (for better optimizations)
-        else if(arguments[i] == "-SSE") {
-            // Sets the level of supportable SSE
-            settings.sseLevel = std::stoi(arguments[i + 1]);
-            if(settings.sseLevel < 0) settings.sseLevel = 0;
-            else if(settings.sseLevel > 3) settings.sseLevel = 3;
-            i += 1;
-        }
-        else if(arguments[i] == "-AVX") {
-            // Sets the level of supportable AVX
-            settings.avxLevel = std::stoi(arguments[i + 1]);
-            if(settings.avxLevel < 0) settings.avxLevel = 0;
-            else if(settings.avxLevel > 2) settings.avxLevel = 2;
-            i += 1;
-        }
+        else if(arguments[i] == "-noSSE") settings.sse = false;
+        else if(arguments[i] == "-noSSE2") settings.sse2 = false;
+        else if(arguments[i] == "-noSSE3") settings.sse3 = false;
+        else if(arguments[i] == "-noSSSE3") settings.ssse3 = false;
+        else if(arguments[i] == "-noSSE4A") settings.sse4a = false;
+        else if(arguments[i] == "-noSSE4_1") settings.sse4_1 = false;
+        else if(arguments[i] == "-noSSE4_2") settings.sse4_2 = false;
+        else if(arguments[i] == "-noAVX") settings.avx = false;
+        else if(arguments[i] == "-noAVX2") settings.avx2 = false;
+        else if(arguments[i] == "-noAVX512") settings.avx512 = false;
         else if(arguments[i] == "-nfm" || arguments[i] == "--noFastMath") settings.noFastMath = true; // Disables fast math
         else if(arguments[i] == "-nio" || arguments[i] == "--noIoInit") settings.noIoInit = true; // Disables io initialize (temporarily does nothing)
         else if(arguments[i][0] == '-') settings.linkParams += arguments[i] + " "; // Adds unknown argument to the linker
@@ -92,8 +88,8 @@ int main(int argc, char** argv) {
         + "\n\t--disableWarnings (-dw) - Disables warnings."
         + "\n\t--shared (-s) - Creates a shared output files."
         + "\n\t-native - Use optimizations from the current platform."
-        + "\n\t-SSE <number> - Set the maximum supportable SSE version (0, 1, 2, 3)."
-        + "\n\t-AVX <number> - Set the maximum supportable AVX version (0, 1, 2)."
+        + "\n\t-noSSE, -noSSE, -noSSE2, -noSSE3, -noSSSE3, -noSSE4A, -noSSE4_1, -noSSE4_2 - Disable different SSE versions for compiler (if they are available)."
+        + "\n\t-noAVX, -noAVX2, -noAVX512 - Disable different AVX versions for compiler (if it is available)."
         + "\n\t--noFastMath (-nfm) - Disable fast math."
         + "\n\t--noIoInit (-nio) - Disable the automatic std::io:initialize call at the beginning of 'main'."
         + "\nFor bug reporting, you can use Issues at https://github.com/Ttimofeyka/Rave.";
