@@ -50,6 +50,8 @@ Type* NodeIndex::getType() {
         auto it = operators.find(TokType::Rbra);
         if(it != operators.end() && !it->second.empty()) return it->second.begin()->second->type;
     }
+
+    if(instanceof<TypeVector>(type)) return static_cast<TypeVector*>(type)->getElType();
     
     generator->error("Invalid type in NodeIndex::getType: " + type->toString(), this->loc);
     return nullptr;
@@ -87,6 +89,11 @@ RaveValue NodeIndex::generate() {
         if(currScope->localVars.find(id->name) != currScope->localVars.end()) currScope->localVars[id->name]->isUsed = true;
         Type* _t = currScope->getVar(id->name, this->loc)->type;
 
+        if(instanceof<TypeVector>(_t)) {
+            if(isMustBePtr) return currScope->getWithoutLoad(id->name, this->loc);
+            return {LLVMBuildExtractElement(generator->builder, this->element->generate().value, this->indexes[0]->generate().value, "NodeIndex_vector"), this->getType()};
+        }
+
         if(instanceof<TypeStruct>(_t) || ((instanceof<TypePointer>(_t) && instanceof<TypeStruct>(((TypePointer*)_t)->instance)))) {
             Type* tstruct = nullptr;
             if(instanceof<TypeStruct>(_t)) tstruct = _t;
@@ -105,12 +112,15 @@ RaveValue NodeIndex::generate() {
                 }
             }
         }
+
         if(instanceof<TypePointer>(_t)) {
             if(instanceof<TypeConst>(((TypePointer*)_t)->instance)) this->elementIsConst = true;
         }
+
         else if(instanceof<TypeArray>(_t)) {
             if(instanceof<TypeConst>(((TypeArray*)_t)->element)) this->elementIsConst = true;
         }
+
         else if(instanceof<TypeConst>(_t)) this->elementIsConst = this->isElementConst(((TypeConst*)_t)->instance);
         RaveValue ptr = currScope->get(id->name, this->loc);
 
@@ -136,7 +146,11 @@ RaveValue NodeIndex::generate() {
         RaveValue index = generator->byIndex(ptr, this->generateIndexes());
 
         if(isMustBePtr) return index;
-        return LLVM::load(index, ("NodeIndex_NodeIden_load_" + std::to_string(this->loc) + "_").c_str(), loc);
+
+        RaveValue loaded = LLVM::load(index, ("NodeIndex_NodeIden_load_" + std::to_string(this->loc) + "_").c_str(), loc);
+        if(instanceof<TypeVector>(loaded.type)) return {LLVMBuildExtractElement(generator->builder, loaded.value, indexes[indexes.size() - 1]->generate().value, "NodeIndex_vector"), loaded.type->getElType()};
+        
+        return loaded;
     }
 
     if(instanceof<NodeGet>(this->element)) {
@@ -214,6 +228,13 @@ RaveValue NodeIndex::generate() {
     }
 
     if(instanceof<NodeDone>(element)) {
+        NodeDone* done = ((NodeDone*)element);
+
+        if(instanceof<TypeVector>(done->value.type)) {
+            if(isMustBePtr) return done->value;
+            return {LLVMBuildExtractElement(generator->builder, done->value.value, this->indexes[0]->generate().value, "NodeDone_TypeVector"), done->value.type->getElType()};
+        }
+
         RaveValue index = generator->byIndex(element->generate(), this->generateIndexes());
         if(isMustBePtr) return index;
         return LLVM::load(index, "NodeDone_load", loc);

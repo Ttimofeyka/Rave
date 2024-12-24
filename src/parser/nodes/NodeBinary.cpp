@@ -425,14 +425,34 @@ RaveValue NodeBinary::generate() {
                 return this->generate();
             }
 
+            RaveValue value = {nullptr, nullptr};
+
             RaveValue ptr = ind->generate();
             if(ind->elementIsConst) generator->error("An attempt to change the constant element!", loc);
+
+            // Check for TypeVector
+            if(instanceof<TypeVector>(ind->element->getType())) {
+                Type* elType = ((TypeVector*)ind->element->getType())->getElType();
+                RaveValue number = this->second->generate();
+
+                if(instanceof<TypeBasic>(number.type) && ((TypeBasic*)number.type)->type != ((TypeBasic*)elType)->type) {
+                    number.value = Binary::castValue(number.value, generator->genType(elType, loc), loc);
+                    number.type = elType;
+                }
+
+                if(number.type->toString() != elType->toString()) generator->error("cannot store a value of type " + number.type->toString() + " into a value of type " + elType->toString() + "!", loc);
+
+                if(instanceof<TypePointer>(ptr.type)) {
+                    value = LLVM::load(ptr, "NodeBinary_TypeVector_load", loc);
+                    value.value = LLVMBuildInsertElement(generator->builder, value.value, number.value, ind->indexes[0]->generate().value, "NodeBinary_TypeVector_insert");
+                }
+                else value = {LLVMBuildInsertElement(generator->builder, value.value, number.value, ind->indexes[0]->generate().value, "NodeBinary_TypeVector_insert"), ptr.type};
+            }
+            else value = this->second->generate();
 
             if(instanceof<NodeNull>(this->second)) {
                 ((NodeNull*)this->second)->type = ptr.type->getElType();
             }
-
-            RaveValue value = this->second->generate();
             
             Binary::store(ptr, value, loc);
             return {};

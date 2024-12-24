@@ -522,29 +522,6 @@ RaveValue NodeBuiltin::generate() {
 
         return tempVector;
     }
-    else if(this->name == "vGet") {
-        if(this->args.size() < 2) generator->error("at least two arguments are required!", this->loc);
-        RaveValue vector = this->args[0]->generate();
-
-        if(instanceof<TypePointer>(vector.type)) vector = LLVM::load(vector, "vGet_load", loc);
-        if(!instanceof<TypeVector>(vector.type)) generator->error("the value must be a vector!", this->loc);
-
-        return {LLVMBuildExtractElement(generator->builder, vector.value, this->args[1]->generate().value, "vGet_ee"), vector.type->getElType()};
-    }
-    else if(this->name == "vSet") {
-        if(this->args.size() < 3) generator->error("at least three arguments are required!", this->loc);
-        RaveValue vector = this->args[0]->generate();
-        if(!instanceof<TypePointer>(vector.type)) generator->error("the value must be a pointer to the vector!", this->loc);
-
-        RaveValue index = this->args[1]->generate();
-        RaveValue value = this->args[2]->generate();
-        RaveValue buffer = LLVM::load(vector, "vSet_buffer", loc);
-
-        buffer.value = LLVMBuildInsertElement(generator->builder, buffer.value, value.value, index.value, "vSet_ie");
-        LLVMBuildStore(generator->builder, buffer.value, vector.value);
-
-        return {};
-    }
     else if(this->name == "vShuffle") {
         if(this->args.size() < 3) generator->error("at least three arguments are required!", this->loc);
 
