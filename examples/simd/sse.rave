@@ -6,27 +6,27 @@ void main {
 
     a = @vLoad(float4, &b);
 
-    float c = @vGet(a, 2);
+    float c = a[2];
     std::println(c);
     // Output: 8
 
-    @vSet(&a, 2, 16f);
+    a[2] = 16f;
 
-    c = @vGet(a, 2);
+    c = a[2];
     std::println(c);
     // Output: 16
 
     // Multiply
     a = a * a;
 
-    c = @vGet(a, 2);
+    c = a[2];
     std::println(c);
     // Output: 256
 
     // Divide
     a = a / a;
 
-    c = @vGet(a, 2);
+    c = a[2];
     std::println(c);
     // Output: 1
 }
