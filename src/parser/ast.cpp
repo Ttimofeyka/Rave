@@ -178,7 +178,7 @@ LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options)
         2, false
     )), new TypeFunc(new TypeBasic(BasicType::Bool), {new TypeFuncArg(new TypeBasic(BasicType::Bool), "v1"), new TypeFuncArg(new TypeBasic(BasicType::Bool), "v2")}, false)};
 
-    if(settings.sseLevel > 2 && options["ssse3"].template get<bool>()) {
+    if(settings.sse2 && settings.ssse3 && options["sse2"].template get<bool>() && options["ssse3"].template get<bool>()) {
         functions["llvm.x86.ssse3.phadd.d.128"] = {LLVMAddFunction(lModule, "llvm.x86.ssse3.phadd.d.128", LLVMFunctionType(
             LLVMVectorType(LLVMInt32TypeInContext(context), 4),
             std::vector<LLVMTypeRef>({LLVMVectorType(LLVMInt32TypeInContext(context), 4), LLVMVectorType(LLVMInt32TypeInContext(context), 4)}).data(),
@@ -200,7 +200,7 @@ LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options)
         )};
     }
 
-    if(settings.sseLevel > 2 && options["sse"].template get<int>() > 2) {
+    if(settings.sse2 && options["sse2"].template get<bool>()) {
         functions["llvm.x86.sse3.hadd.ps"] = {LLVMAddFunction(lModule, "llvm.x86.sse3.hadd.ps", LLVMFunctionType(
             LLVMVectorType(LLVMFloatTypeInContext(context), 4),
             std::vector<LLVMTypeRef>({LLVMVectorType(LLVMFloatTypeInContext(context), 4), LLVMVectorType(LLVMFloatTypeInContext(context), 4)}).data(),
