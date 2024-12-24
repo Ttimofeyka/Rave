@@ -215,12 +215,10 @@ namespace std {
             cp.append(this);
         } => cp;
 
-        std::u8string replace(char c, char to) {
-            return = this.copy();
-
+        void replace(char c, char to) {
             int i = 0;
             while(i < this.length) {
-                if(this.data[i] == c) return.data[i] = to;
+                if(this.data[i] == c) this.data[i] = to;
                 i += 1;
             }
         }
