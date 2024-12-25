@@ -256,24 +256,15 @@ namespace std {
 
         std::u8string substring(int from, int to) {
             @if(__RAVE_RUNTIME_CHECKS) {
-                if(((from >= 0) && (from < this.length)) && ((to >= 0) && (to < this.length))) {
-                    return = "";
-                    int i = from;
-
-                    while(i < to) {
-                        return.add(this.data[i]);
-                        i += 1;
-                    }
-                }
+                if(((from >= 0) && (from < this.length)) && ((to >= 0) && (to < this.length))) @return(null);
             }
-            @else {
-                return = "";
-                int i = from;
+            
+            return = "";
+            int i = from;
 
-                while(i < to) {
-                    return.add(this.data[i]);
-                    i += 1;
-                }
+            while(i < to) {
+                return.add(this.data[i]);
+                i += 1;
             }
         }
 
