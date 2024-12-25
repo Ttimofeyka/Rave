@@ -177,24 +177,15 @@ namespace std {
 
         std::string substring(int from, int to) {
             @if(__RAVE_RUNTIME_CHECKS) {
-                if(((from >= 0) && (from < this.length)) && ((to >= 0) && (to < this.length))) {
-                    return = "";
-                    int i = from;
-
-                    while(i < to) {
-                        return.add(this.data[i]);
-                        i += 1;
-                    }
-                }
+                if(((from >= 0) && (from < this.length)) && ((to >= 0) && (to < this.length))) @return(null);
             }
-            @else {
-                return = "";
-                int i = from;
 
-                while(i < to) {
-                    return.add(this.data[i]);
-                    i += 1;
-                }
+            return = "";
+            int i = from;
+
+            while(i < to) {
+                return.add(this.data[i]);
+                i += 1;
             }
         }
 
@@ -428,7 +419,7 @@ namespace std {
         std::thread::spinlock::unlock(&std::__sprintBufferSL);
     } => std::__sprintBuffer;
 
-    (ctargs) std::string sprint {
+    (inline, ctargs) std::string sprint {
         std::string result = "";
         @callWithBeforeArgs(std::sprintBuffer, &result);
     } => result;
