@@ -42,22 +42,14 @@ namespace std {
         STACK_T top => this.data[this.length - 1];
 
         STACK_T pop {
+            @if(__RAVE_RUNTIME_CHECKS) if(this.length <= 0) @return(null);
             return = this.top();
 
-            @if(__RAVE_RUNTIME_CHECKS) {
-                if(this.length > 0) {
-                    for(int i=(this.length - 1); i<this.length; i+=1) {
-                        if((i + 1) < this.length) this.data[i] = this.data[i + 1];
-                    }
-                    this.length = this.length - 1;
-                }
+            for(int i=(this.length - 1); i<this.length; i+=1) {
+                if((i + 1) < this.length) this.data[i] = this.data[i + 1];
             }
-            @else {
-                for(int i=(this.length - 1); i<this.length; i+=1) {
-                    if((i + 1) < this.length) this.data[i] = this.data[i + 1];
-                }
-                this.length = this.length - 1;
-            }
+
+            this.length -= 1;
         }
 
         (inline) void assign(std::stack<STACK_T> of) {
