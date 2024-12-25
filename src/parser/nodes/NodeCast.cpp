@@ -36,26 +36,20 @@ RaveValue NodeCast::generate() {
 
     if(instanceof<TypeBasic>(this->type)) {
         TypeBasic* tbasic = (TypeBasic*)this->type;
-        if(tbasic->type == BasicType::Bool && tbasic->toString() != "bool") {
-            return (new NodeCast(new TypeStruct(tbasic->toString()), this->value, this->loc))->generate();
-        }
+
+        if(tbasic->type == BasicType::Bool && tbasic->toString() != "bool") return (new NodeCast(new TypeStruct(tbasic->toString()), this->value, this->loc))->generate();
 
         result = this->value->generate();
+
         if(instanceof<TypeBasic>(result.type)) {
             TypeBasic* tbasic2 = (TypeBasic*)result.type;
 
-            if(tbasic->isFloat() && !tbasic2->isFloat()) return {
-                LLVMBuildSIToFP(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_itof"),
-                this->type
-            };
-            else if(tbasic->isFloat() && tbasic2->isFloat()) return {
-                LLVMBuildFPCast(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_ftof"),
-                this->type
-            };
-            else if(!tbasic->isFloat() && tbasic2->isFloat()) return {
-                LLVMBuildFPToSI(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_ftoi"),
-                this->type
-            };
+            if(tbasic->isFloat()) {
+                if(tbasic2->isFloat()) return {LLVMBuildFPCast(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_ftof"), this->type};
+                return {LLVMBuildSIToFP(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_itof"), this->type};
+            }
+
+            if(tbasic2->isFloat()) return {LLVMBuildFPToSI(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_ftoi"), this->type};
             return {LLVMBuildIntCast(generator->builder, result.value, generator->genType(type, loc), "NodeCast_itoi"), this->type};
         }
 
@@ -78,21 +72,27 @@ RaveValue NodeCast::generate() {
     }
 
     result = this->value->generate();
+
     if(instanceof<TypePointer>(this->type)) {
         TypePointer* tpointer = (TypePointer*)this->type;
+
         if(instanceof<TypeBasic>(result.type)) return {LLVMBuildIntToPtr(generator->builder, result.value, generator->genType(tpointer, this->loc), "NodeCast_itop"), this->type};
+
         if(instanceof<TypeStruct>(result.type)) {
             if(instanceof<NodeIden>(this->value)) {((NodeIden*)this->value)->isMustBePtr = true; result = this->value->generate();}
             else if(instanceof<NodeGet>(this->value)) {((NodeGet*)this->value)->isMustBePtr = true; result = this->value->generate();}
             else if(instanceof<NodeIndex>(this->value)) {((NodeIndex*)this->value)->isMustBePtr = true; result = this->value->generate();}
         }
+
         return {LLVMBuildPointerCast(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_ptop"), this->type};
     }
+
     if(instanceof<TypeFunc>(this->type)) {
         TypeFunc* tfunc = (TypeFunc*)this->type;
         if(instanceof<TypeBasic>(result.type)) return {LLVMBuildIntToPtr(generator->builder, result.value, generator->genType(tfunc, this->loc), "NodeCast_itofn"), this->type};
         return {LLVMBuildPointerCast(generator->builder, result.value, generator->genType(tfunc, this->loc), "NodeCast_ptop"), this->type};
     }
+
     if(instanceof<TypeStruct>(this->type)) {
         TypeStruct* tstruct = (TypeStruct*)this->type;
         if(generator->toReplace.find(tstruct->name) != generator->toReplace.end()) return (new NodeCast(generator->toReplace[tstruct->name], this->value, this->loc))->generate();
@@ -103,6 +103,7 @@ RaveValue NodeCast::generate() {
             new TypePointer(tstruct)
         }, "NodeCast_fnload", loc);
     }
+
     if(instanceof<TypeBuiltin>(this->type)) {
         TypeBuiltin* tbuiltin = (TypeBuiltin*)this->type;
         NodeBuiltin* nb = new NodeBuiltin(tbuiltin->name, tbuiltin->args, this->loc, tbuiltin->block);
