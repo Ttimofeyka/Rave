@@ -69,6 +69,9 @@ enum TokType : char {
 
     None,
 };
+
+extern bool isCompoundAssigment(char type);
+extern bool isParent(char type);
 }
 
 class Token {

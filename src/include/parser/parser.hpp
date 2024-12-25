@@ -49,6 +49,7 @@ public:
     Node* parseAliasType();
     Node* parseExpr(std::string f = "");
     NodeBlock* parseBlock(std::string s = "");
+    Node* parseAnyLevelBlock(std::string f);
     Node* parseAtom(std::string f = "");
     Node* parsePrefix(std::string f = "");
     Node* parseBasic(std::string f = "");
@@ -71,13 +72,13 @@ public:
     Node* parseBreak();
     Node* parseContinue();
     Node* parseConstantStructure(std::string structName);
-    Node* parseAnyLevelBlock(std::string f);
     std::vector<FuncArgSet> parseFuncArgSets();
     std::vector<Node*> parseIndexes();
 
     bool isDefinedLambda(bool updateIdx = true);
     bool isSlice();
     bool isTemplate();
+    bool isTemplateVariable();
 
     Type* parseTypeAtom();
     Type* parseType(bool cannotBeTemplate = false);

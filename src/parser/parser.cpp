@@ -474,14 +474,14 @@ Node* Parser::parseAtom(std::string f) {
                 else if(iden == "s") _int->isMustBeShort = true;
                 return _int;
             }
-            else if(iden == "f" || iden == "d" || iden == "h" || iden == "b") {
+            else if(iden == "f" || iden == "d" || iden == "h" || iden == "bh") {
                 NodeFloat* nfloat = new NodeFloat(std::stod(t->value));
                 this->next();
 
                 if(iden == "f") nfloat->isMustBeFloat = true;
                 else if(iden == "d") nfloat->type = basicTypes[BasicType::Double];
                 else if(iden == "h") nfloat->type = basicTypes[BasicType::Half];
-                else if(iden == "b") nfloat->type = basicTypes[BasicType::Bhalf];
+                else if(iden == "bh") nfloat->type = basicTypes[BasicType::Bhalf];
                 return nfloat;
             }
         }
@@ -1205,18 +1205,60 @@ Node* Parser::parseForeach(std::string f) {
     return new NodeForeach(elName, dataVar, lengthVar, (NodeBlock*)stmt, line);
 }
 
-Node* Parser::parseStmt(std::string f) {
-    bool isStatic = false;
+bool Parser::isTemplateVariable() {
+    int oldIdx = this->idx;
+    int count = 1;
 
-    if(this->peek()->value == "static") {isStatic = true; this->next();}
+    while(this->peek()->type != TokType::Less) this->next();
+    this->next();
+
+    while(count > 0) {
+        if(this->peek()->type == TokType::Less) count += 1;
+        else if(this->peek()->type == TokType::More) count -= 1;
+        
+        this->next();
+    }
+
+    if(this->peek()->type == TokType::Rpar) {
+        // Check for possible lambda
+
+        this->next();
+
+        count = 1;
+
+        while(count > 0) {
+            if(this->peek()->type == TokType::Rpar) count += 1;
+            else if(this->peek()->type == TokType::Lpar) count -= 1;
+
+            this->next();
+        }
+
+        bool result = this->peek()->type == TokType::Identifier || this->peek()->type == TokType::Rarr || this->peek()->type == TokType::Multiply;
+
+        this->idx = oldIdx;
+        return result;
+    }
+
+    bool result = this->peek()->type == TokType::Identifier || this->peek()->type == TokType::Rarr || this->peek()->type == TokType::Multiply;
+
+    this->idx = oldIdx;
+    return result;
+}
+
+Node* Parser::parseStmt(std::string f) {
     if(this->peek()->type == TokType::Rbra) return this->parseBlock(f);
     if(this->peek()->type == TokType::Semicolon) {this->next(); return this->parseStmt(f);}
     if(this->peek()->type == TokType::Eof) return nullptr;
-    if(this->peek()->type == TokType::Identifier && (this->tokens[this->idx + 1]->type == TokType::Less)) return this->parseDecl(f);
     if(this->peek()->type == TokType::Identifier) {
         std::string id = this->peek()->value;
 
-        if(id == "if") return this->parseIf(f, isStatic);
+        if(this->tokens[this->idx + 1]->type == TokType::Less) {
+            if(isTemplateVariable()) return this->parseDecl(f);
+            return this->parseExpr(f);
+        }
+
+        if(id == "extern" || id == "volatile" || id == "const") return this->parseDecl(f);
+        if(id == "if") return this->parseIf(f, false);
         if(id == "while") return this->parseWhile(f);
         if(id == "for") return this->parseFor(f);
         if(id == "foreach") return this->parseForeach(f);
@@ -1225,14 +1267,15 @@ Node* Parser::parseStmt(std::string f) {
         if(id == "switch") return this->parseSwitch(f);
         if(id == "fdefer") return this->parseDefer(true, f);
         if(id == "defer") return this->parseDefer(false, f);
-        if(id == "extern" || id == "volatile" || id == "const") return this->parseDecl(f);
+
         if(this->tokens[this->idx+1]->type == TokType::Rarr && this->tokens[this->idx+4]->type != TokType::Equ
-           && this->tokens[this->idx+4]->type != TokType::Lpar && this->tokens[this->idx+4]->type != TokType::Rpar
-           && this->tokens[this->idx+4]->type != TokType::PluEqu && this->tokens[this->idx+4]->type != TokType::MinEqu
-           && this->tokens[this->idx+4]->type != TokType::MulEqu && this->tokens[this->idx+4]->type != TokType::DivEqu
+           && !TokType::isParent(this->tokens[this->idx+4]->type) && !TokType::isCompoundAssigment(this->tokens[this->idx+4]->type)
            && this->tokens[this->idx+4]->type != TokType::Rarr && this->tokens[this->idx+4]->type != TokType::Dot) {
             if(this->tokens[this->idx+2]->type == TokType::Number && this->tokens[this->idx+3]->type == TokType::Larr) return this->parseDecl(f);
-        } this->next();
+        }
+        
+        this->next();
+
         if(this->peek()->type != TokType::Identifier) {
             if(this->peek()->type == TokType::Multiply) {this->idx -= 1; return this->parseDecl(f);}
             else if(this->peek()->type == TokType::Rarr || this->peek()->type == TokType::Rpar) {
@@ -1290,6 +1333,7 @@ Node* Parser::parseStmt(std::string f) {
         if(this->peek()->type != TokType::Semicolon) this->error("expected token ';'!");
         this->next();
     }
+
     return expr;
 }
 
