@@ -107,7 +107,7 @@ namespace std {
 
             (inline) bool contains(char* name) => this.indexOf(name) != -1;
 
-            (inline) bool contains(std::string name) => this.indexOf(name) != -1;
+            (inline) bool contains(std::string name) => this.indexOf(name.data) != -1;
             
             std::json::Value get(char* name) {
                 return.value = null;
