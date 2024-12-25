@@ -28,13 +28,15 @@ Type* NodeGet::getType() {
     TypeStruct* ts = nullptr;
 
     if(instanceof<TypeStruct>(baseType)) ts = static_cast<TypeStruct*>(baseType);
-    else if(instanceof<TypePointer>(baseType)) ts = static_cast<TypeStruct*>(static_cast<TypePointer*>(baseType)->instance);
+    else if(instanceof<TypePointer>(baseType) && instanceof<TypeStruct>(baseType->getElType())) ts = static_cast<TypeStruct*>(static_cast<TypePointer*>(baseType)->instance);
     else return baseType;
 
     if(!ts) {
         generator->error("type '" + baseType->toString() + "' is not a structure!", loc);
         return nullptr;
     }
+
+    TypeStruct* old = ts;
 
     // Replace ts if needed
     auto it = generator->toReplace.find(ts->name);
@@ -45,7 +47,9 @@ Type* NodeGet::getType() {
 
     // Check method table
     auto methodIt = AST::methodTable.find({ts->name, this->field});
-    if(methodIt != AST::methodTable.end()) return methodIt->second->getType();
+    if(methodIt != AST::methodTable.end()) {
+        return methodIt->second->getType();
+    }
 
     // Check struct numbers
     auto structIt = AST::structsNumbers.find({ts->name, this->field});
@@ -110,6 +114,12 @@ RaveValue NodeGet::generate() {
         if(currScope->localVars.find(niden->name) != currScope->localVars.end()) currScope->localVars[niden->name]->isUsed = true;
         ptr = checkStructure(currScope->getWithoutLoad(niden->name, loc));
         ty = ptr.type;
+
+        Type* t = ty;
+
+        while(instanceof<TypePointer>(t)) t = t->getElType();
+
+        if(!instanceof<TypeStruct>(t)) generator->error("type '" + ty->toString() + "' is not a structure!", loc);
     }
     else if(instanceof<NodeIndex>(this->base) || instanceof<NodeGet>(this->base)) {
         if(instanceof<NodeIndex>(this->base)) static_cast<NodeIndex*>(this->base)->isMustBePtr = true;

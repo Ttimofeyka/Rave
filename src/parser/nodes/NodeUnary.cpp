@@ -31,7 +31,7 @@ NodeUnary::NodeUnary(int loc, char type, Node* base) {
 Type* NodeUnary::getType() {
     switch(this->type) {
         case TokType::GetPtr:
-            if(instanceof<TypeArray>(this->base->getType())) return new TypePointer(((TypeArray*)this->base->getType())->element);
+            if(instanceof<TypeArray>(this->base->getType())) return new TypePointer(this->base->getType()->getElType());
             return new TypePointer(this->base->getType());
         case TokType::Minus: case TokType::Ne: return this->base->getType();
         case TokType::Destructor: return typeVoid;

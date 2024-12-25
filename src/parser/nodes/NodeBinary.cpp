@@ -83,7 +83,7 @@ LLVMValueRef Binary::castValue(LLVMValueRef from, LLVMTypeRef to, int loc) {
         case LLVMArrayTypeKind:
             if(std::string(LLVMPrintValueToString(from)).find("null") != std::string::npos) return LLVMConstNull(to);
             generator->error("it is forbidden to casting arrays!", loc); return nullptr;
-        case LLVMStructTypeKind: generator->error("it is forbidden to cast structures!",loc); return nullptr;
+        case LLVMStructTypeKind: generator->error("it is forbidden to cast structures!", loc); return nullptr;
         default: return from;
     } return from;
 }
@@ -332,7 +332,7 @@ RaveValue NodeBinary::generate() {
     }
 
     if(this->op == TokType::Equ) {
-        if((instanceof<NodeCall>(second) || instanceof<NodeCast>(second)) && instanceof<TypeVoid>(second->getType())) {
+        if((instanceof<NodeCast>(second)) && instanceof<TypeVoid>(second->getType())) {
             generator->error("an attempt to store a void to the variable!", this->loc);
             return {};
         }

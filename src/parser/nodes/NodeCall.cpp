@@ -44,7 +44,7 @@ std::vector<RaveValue> NodeCall::correctByLLVM(std::vector<RaveValue> values, st
 
     for(int i=0; i<params.size(); i++) {
         if(fas[i].type->toString() == "void*" || fas[i].type->toString() == "char*") {
-            if(!instanceof<TypePointer>(params[i].type) || !instanceof<TypeBasic>(params[i].type->getElType())) {
+            if((!instanceof<TypePointer>(params[i].type) || !instanceof<TypeBasic>(params[i].type->getElType()))) {
                 params[i].value = Binary::castValue(params[i].value, LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0), this->loc);
                 params[i].type = new TypePointer(basicTypes[BasicType::Char]);
             }
@@ -434,6 +434,7 @@ RaveValue NodeCall::generate() {
                 }
                 
                 method.second += typesToString(types);
+
                 if(AST::methodTable.find(method) != AST::methodTable.end()) {
                     if(generator->functions[AST::methodTable[method]->name].value == nullptr) generator->error("using '" + AST::methodTable[method]->origName + "' method before declaring it!", this->loc);
 

@@ -94,7 +94,9 @@ std::string typeToString(Type* arg) {
                 if(instanceof<TypeConst>(element)) {element = ((TypeConst*)element)->instance; continue;}
 
                 if(instanceof<TypeArray>(element)) {
-                    buffer += "a";
+                    TypeArray* tarray = (TypeArray*)element;
+                    if(!instanceof<TypeBasic>(tarray->element) && !instanceof<TypeVoid>(tarray->element) &&
+                       !instanceof<TypeFunc>(tarray->element) && !instanceof<TypeStruct>(tarray->element)) buffer += "a";
                     element = ((TypeArray*)element)->element;
                 }
                 else if(instanceof<TypePointer>(element)) {

@@ -153,20 +153,26 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
             }
             else {
                 Type* outType = nullptr;
-                func->isTemplatePart = this->isLinkOnce;
                 if(!this->constructors.empty()) {
                     outType = this->constructors[0]->type;
                     if(instanceof<TypeStruct>(outType)) outType = new TypePointer(outType);
                 }
                 else outType = new TypePointer(new TypeStruct(this->name));
                 if((func->args.size() > 0 && func->args[0].name != "this") || func->args.size() == 0) func->args.insert(func->args.begin(), FuncArgSet{.name = "this", .type = outType, .internalTypes = {outType}});
+                
+                func->isTemplatePart = this->isLinkOnce;
                 func->name = this->name + "." + func->origName;
                 func->isMethod = true;
                 func->isExtern = (func->isExtern || this->isImported);
                 func->isComdat = this->isComdat;
+
                 if(AST::methodTable.find(std::pair<std::string, std::string>(this->name, func->origName)) != AST::methodTable.end()) {
                     std::string sTypes = typesToString(AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)]->args);
-                    if(sTypes != typesToString(func->args)) AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName + typesToString(func->args))] = func;
+                    std::string types = typesToString(func->args);
+                    if(sTypes != types) {
+                        func->origName += types;
+                        AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)] = func;
+                    }
                     else generator->error("method '" + func->origName + "' has already been declared on " + std::to_string(AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)]->loc) + " line!", this->loc);
                 }
                 else AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)] = func;
