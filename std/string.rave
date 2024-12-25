@@ -144,9 +144,9 @@ namespace std {
             }
         }
 
-        void appendC(char* cstr) {
+        void appendC(char* cstr, int cstrlen) {
             if(this.data != null) {
-                int len = std::cstring::strlen(cstr);
+                int len = cstrlen;
                 int i = 0;
 
                 if((this.length + len) >= this.capacity) {
@@ -162,6 +162,8 @@ namespace std {
             }
         }
 
+        (inline) void appendC(char* cstr) => this.appendC(cstr, std::cstring::strlen(cstr));
+
         (inline) std::string copy {
             std::string cp = std::string("");
             cp.append(this);
@@ -174,6 +176,31 @@ namespace std {
                 i += 1;
             }
         }
+
+        std::string replace(char* from, int fromLen, char* to, int toLen) {
+            return = "";
+
+            int i = 0;
+            while(i < this.length) {
+                if((this.length - fromLen) <= i) {
+                    for(int j=i; j<this.length; j++) return.add(this.data[j]);
+                    break;
+                }
+
+                if(std::cstring::strncmp(itop(char*, ptoi(this.data) + i), from, fromLen)) {
+                    return.appendC(to, toLen);
+                    i += fromLen;
+                    continue;
+                }
+
+                return.add(this.data[i]);
+                i += 1;
+            }
+        }
+
+        (inline) std::string replace(char* from, char* to) => this.replace(from, std::cstring::strlen(from), to, std::cstring::strlen(to));
+
+        (inline) std::string replace(std::string from, std::string to) => this.replace(from.data, from.length, to.data, to.length);
 
         std::string substring(int from, int to) {
             @if(__RAVE_RUNTIME_CHECKS) {
