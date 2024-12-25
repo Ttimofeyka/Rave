@@ -198,7 +198,7 @@ void Binary::store(RaveValue pointer, RaveValue value, int loc) {
                 value.value = Binary::castValue(value.value, generator->genType(memBasic, loc), loc);
             }
         }
-        else {
+        else if(!instanceof<TypeStruct>(value.type)) {
             generator->error("cannot store a value of type " + value.type->toString() + " into a value of type " + memType->toString() + "!", loc);
             return;
         }
