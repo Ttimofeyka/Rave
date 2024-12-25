@@ -192,9 +192,9 @@ namespace std {
             }
         }
 
-        void appendC(char* cstr) {
+        void appendC(char* cstr, int cstrlen) {
             if(this.data != null) {
-                int len = std::cstring::strlen(cstr);
+                int len = cstrlen;
                 int i = 0;
 
                 if((this.length + len) >= this.capacity) {
@@ -210,6 +210,8 @@ namespace std {
             }
         }
 
+        (inline) void appendC(char* cstr) => this.appendC(cstr, std::cstring::strlen(cstr));
+
         std::u8string copy {
             std::u8string cp = std::u8string("");
             cp.append(this);
@@ -224,6 +226,31 @@ namespace std {
         }
 
         void operator=(std::u8string* one, char* two) {one[0] = std::u8string(two);}
+
+        std::u8string replace(char* from, int fromLen, char* to, int toLen) {
+            return = "";
+
+            int i = 0;
+            while(i < this.length) {
+                if((this.length - fromLen) <= i) {
+                    for(int j=i; j<this.length; j++) return.add(this.data[j]);
+                    break;
+                }
+
+                if(std::cstring::strncmp(itop(char*, ptoi(this.data) + i), from, fromLen)) {
+                    return.appendC(to, toLen);
+                    i += fromLen;
+                    continue;
+                }
+
+                return.add(this.data[i]);
+                i += 1;
+            }
+        }
+
+        (inline) std::u8string replace(char* from, char* to) => this.replace(from, std::cstring::strlen(from), to, std::cstring::strlen(to));
+
+        (inline) std::u8string replace(std::u8string from, std::u8string to) => this.replace(from.data, from.length, to.data, to.length);
 
         std::u8string operator+(std::u8string one, std::u8string two) {
             std::u8string third = "";
