@@ -12,46 +12,6 @@ namespace std {
     alias BeyondSize = 102;
     alias NullPointer = 103;
 
-    struct error<ERROR_T> {
-        char* message;
-        ERROR_T value;
-        int code;
-
-        std::error<ERROR_T> this {std::error<ERROR_T> this;} => this;
-        
-        std::error<ERROR_T> this(ERROR_T value) {
-            std::error<ERROR_T> this;
-            this.value = value;
-            this.message = null;
-            this.code = 0;
-        } => this;
-
-        std::error<ERROR_T> this(ERROR_T value, char* message) {
-            std::error<ERROR_T> this;
-            this.value = value;
-            this.message = message;
-            this.code = 0;
-        } => this;
-
-        std::error<ERROR_T> this(ERROR_T value, char* message, int code) {
-            std::error<ERROR_T> this;
-            this.value = value;
-            this.message = message;
-            this.code = code;
-        } => this;
-
-        void catch {
-            if((this.message != null) && (this.message != "")) {
-                std::puts(this.message);
-                std::exit(1);
-            }
-        }
-
-        void catch(void(char*, int) catcher) {
-            if(this.message != null) catcher(this.message, this.code);
-        }
-    }
-
     extern(linkname: "signal") void __signal(int flag, void(int) catcher);
 
     namespace error {
