@@ -43,25 +43,6 @@ Example:
 int4 vector = @vFrom(int4, 50);
 ```
 
-**@vGet(vector, index)** - Get an element from a vector by index.
-
-Example:
-
-```d
-int4 vector = @vFrom(int4, 100);
-int value = @vGet(vector, 0); // 100
-```
-
-**@vSet(vector, index, value)** - Set a value of the element from a vector by index.
-
-Example:
-
-```d
-int4 vector;
-@vSet(vector, 0, 2);
-int value = @vGet(vector, 0); // 2
-```
-
 **@vShuffle(vector1, vector2, array)** - Returns a shuffled vector with the specified mask.
 
 Example:
