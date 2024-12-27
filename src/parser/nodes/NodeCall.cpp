@@ -181,27 +181,57 @@ std::vector<FuncArgSet> tfaToFas(std::vector<TypeFuncArg*> tfa) {
     return fas;
 }
 
-Type* NodeCall::getType() {
-    if(instanceof<NodeIden>(this->func)) {
-        NodeIden* niden = (NodeIden*)this->func;
-        if(AST::funcTable.find((niden->name + typesToString(this->getTypes()))) != AST::funcTable.end()) return AST::funcTable[(((NodeIden*)this->func)->name + typesToString(this->getTypes()))]->getType();
-        if(AST::funcTable.find(niden->name) != AST::funcTable.end()) return AST::funcTable[((NodeIden*)this->func)->name]->type;
+Type* NodeCall::__getType(Node* _fn) {
+    if(instanceof<NodeIden>(_fn)) {
+        NodeIden* niden = (NodeIden*)_fn;
+
+        if(AST::funcTable.find((niden->name + typesToString(this->getTypes()))) != AST::funcTable.end()) return AST::funcTable[(((NodeIden*)_fn)->name + typesToString(this->getTypes()))]->getType();
+        if(AST::funcTable.find(niden->name) != AST::funcTable.end()) return AST::funcTable[((NodeIden*)_fn)->name]->type;
         if(currScope->has(niden->name)) {
             if(!instanceof<TypeFunc>(currScope->getVar(niden->name, this->loc)->type)) {
                 generator->error("undefined function '" + niden->name + "'!", this->loc);
                 return nullptr;
             }
+
             TypeFunc* fn = (TypeFunc*)currScope->getVar(niden->name, this->loc)->type;
             return fn->main;
         }
         return new TypePointer(typeVoid);
     }
-    return this->func->getType();
+
+    return _fn->getType();
+}
+
+Type* NodeCall::getType() {
+    if(instanceof<NodeIden>(this->func)) {
+        NodeIden* niden = (NodeIden*)this->func;
+
+        if(AST::aliasTable.find(niden->name) != AST::aliasTable.end()) {
+            // TODO: Add support of recursive aliases
+            return __getType(AST::aliasTable[niden->name]);
+        }
+        else if(currScope != nullptr && currScope->aliasTable.find(niden->name) != currScope->aliasTable.end()) {
+            // TODO: Add support of recursive aliases
+            return __getType(currScope->aliasTable[niden->name]);
+        }
+
+        return __getType(this->func);
+    }
+
+    return __getType(this->func);
 }
 
 RaveValue NodeCall::generate() {
     if(instanceof<NodeIden>(this->func)) {
         NodeIden* idenFunc = (NodeIden*)this->func;
+
+        if(AST::aliasTable.find(idenFunc->name) != AST::aliasTable.end()) {
+            return (new NodeCall(loc, AST::aliasTable[idenFunc->name], this->args))->generate();
+        }
+        else if(currScope != nullptr && currScope->aliasTable.find(idenFunc->name) != currScope->aliasTable.end()) {
+            return (new NodeCall(loc, currScope->aliasTable[idenFunc->name], this->args))->generate();
+        }
+
         if(AST::funcTable.find(idenFunc->name) != AST::funcTable.end()) {
             std::vector<Type*> __types = this->getTypes();
             std::string sTypes = typesToString(__types);

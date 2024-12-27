@@ -24,6 +24,7 @@ public:
 
     NodeCall(int loc, Node* func, std::vector<Node*> args);
     RaveValue generate() override;
+    Type* __getType(Node* fn);
     Type* getType() override;
     
     std::vector<Type*> getTypes();
