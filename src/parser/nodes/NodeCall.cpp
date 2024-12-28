@@ -185,6 +185,9 @@ Type* NodeCall::__getType(Node* _fn) {
     if(instanceof<NodeIden>(_fn)) {
         NodeIden* niden = (NodeIden*)_fn;
 
+        if(AST::aliasTable.find(niden->name) != AST::aliasTable.end()) return __getType(AST::aliasTable[niden->name]);
+        else if(currScope != nullptr && currScope->aliasTable.find(niden->name) != currScope->aliasTable.end()) return __getType(currScope->aliasTable[niden->name]);
+
         if(AST::funcTable.find((niden->name + typesToString(this->getTypes()))) != AST::funcTable.end()) return AST::funcTable[(((NodeIden*)_fn)->name + typesToString(this->getTypes()))]->getType();
         if(AST::funcTable.find(niden->name) != AST::funcTable.end()) return AST::funcTable[((NodeIden*)_fn)->name]->type;
         if(currScope->has(niden->name)) {
@@ -203,21 +206,6 @@ Type* NodeCall::__getType(Node* _fn) {
 }
 
 Type* NodeCall::getType() {
-    if(instanceof<NodeIden>(this->func)) {
-        NodeIden* niden = (NodeIden*)this->func;
-
-        if(AST::aliasTable.find(niden->name) != AST::aliasTable.end()) {
-            // TODO: Add support of recursive aliases
-            return __getType(AST::aliasTable[niden->name]);
-        }
-        else if(currScope != nullptr && currScope->aliasTable.find(niden->name) != currScope->aliasTable.end()) {
-            // TODO: Add support of recursive aliases
-            return __getType(currScope->aliasTable[niden->name]);
-        }
-
-        return __getType(this->func);
-    }
-
     return __getType(this->func);
 }
 
