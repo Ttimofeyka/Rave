@@ -106,7 +106,7 @@ NodeType* NodeBuiltin::asType(int n, bool isCompTime) {
         if(name == "ucent") return new NodeType(basicTypes[BasicType::Ucent], this->loc);
         if(name == "float") return new NodeType(basicTypes[BasicType::Float], this->loc);
         if(name == "double") return new NodeType(basicTypes[BasicType::Double], this->loc);
-        if(name == "float4") return new NodeType(new TypeVector(basicTypes[BasicType::Float], 8), this->loc);
+        if(name == "float4") return new NodeType(new TypeVector(basicTypes[BasicType::Float], 4), this->loc);
         if(name == "float8") return new NodeType(new TypeVector(basicTypes[BasicType::Float], 8), this->loc);
         if(name == "int4") return new NodeType(new TypeVector(basicTypes[BasicType::Int], 4), this->loc);
         if(name == "int8") return new NodeType(new TypeVector(basicTypes[BasicType::Int], 8), this->loc);
