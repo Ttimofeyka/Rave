@@ -10,6 +10,10 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <map>
 #include <llvm-c/Core.h>
 
+#ifndef LLVM_VERSION
+#error LLVM_VERSION is required
+#endif
+
 #if LLVM_VERSION < 17
 #include <llvm-c/Initialization.h>
 #endif
