@@ -48,3 +48,7 @@ RaveValue NodeBlock::generate() {
     for(Node* nd: this->nodes) if(nd != nullptr) nd->generate();
     return {};
 }
+
+NodeBlock::~NodeBlock() {
+    for(Node* nd: this->nodes) if(nd != nullptr) delete nd;
+}

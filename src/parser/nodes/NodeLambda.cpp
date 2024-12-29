@@ -15,6 +15,11 @@ NodeLambda::NodeLambda(int loc, TypeFunc* tf, NodeBlock* block, std::string name
     this->name = name;
 }
 
+NodeLambda::~NodeLambda() {
+    if(tf != nullptr) delete tf;
+    if(block != nullptr) delete block;
+}
+
 Type* NodeLambda::getType() {return (Type*)this->tf;}
 Node* NodeLambda::copy() {return new NodeLambda(loc, (TypeFunc*)this->tf->copy(), (NodeBlock*)this->block->copy(), this->name);}
 Node* NodeLambda::comptime() {return this;}

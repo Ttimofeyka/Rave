@@ -24,8 +24,8 @@ public:
     RaveValue checkIn(std::string structure);
     RaveValue generate() override;
     Type* getType() override;
-    
     Node* comptime() override;
     Node* copy() override;
     void check() override;
+    ~NodeGet() override;
 };

@@ -19,6 +19,16 @@ NodeSwitch::NodeSwitch(Node* expr, Node* _default, std::vector<std::pair<Node*, 
     this->_default = _default;
 }
 
+NodeSwitch::~NodeSwitch() {
+    if(expr != nullptr) delete expr;
+    if(_default != nullptr) delete _default;
+    
+    for(int i=0; i<statements.size(); i++) {
+        if(statements[i].first != nullptr) delete statements[i].first;
+        if(statements[i].second != nullptr) delete statements[i].second;
+    }
+}
+
 Type* NodeSwitch::getType() {return typeVoid;}
 
 void NodeSwitch::check() {}

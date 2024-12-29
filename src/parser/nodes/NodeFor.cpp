@@ -25,6 +25,13 @@ NodeFor::NodeFor(std::vector<Node*> presets, Node* cond, std::vector<Node*> afte
     this->loc = loc;
 }
 
+NodeFor::~NodeFor() {
+    for(int i=0; i<presets.size(); i++) if(presets[i] != nullptr) delete presets[i];
+    if(cond != nullptr) delete cond;
+    if(block != nullptr) delete block;
+    for(int i=0; i<afters.size(); i++) if(afters[i] != nullptr) delete afters[i];
+}
+
 Node* NodeFor::copy() {
     std::vector<Node*> presets;
     std::vector<Node*> afters;

@@ -16,13 +16,15 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 // Type
 
+Type::~Type() {}
+
 // TypeBasic
 TypeBasic::TypeBasic(char ty) {
     this->type = ty;
 }
 
 Type* TypeBasic::copy() {
-    return new TypeBasic(this->type);
+    return this;
 }
 
 int TypeBasic::getSize() {
@@ -80,6 +82,10 @@ Type* TypePointer::getElType() {
     return instanceof<TypeVoid>(instance) ? new TypeBasic(BasicType::Char) : instance;
 }
 
+TypePointer::~TypePointer() {
+    if(this->instance != nullptr && !instanceof<TypeBasic>(this->instance) && !instanceof<TypeVoid>(this->instance)) delete this->instance;
+}
+
 // TypeArray
 TypeArray::TypeArray(Node* count, Type* element) {
     this->count = count;
@@ -99,6 +105,10 @@ int TypeArray::getSize() {return ((NodeInt*)this->count->comptime())->value.to_i
 std::string TypeArray::toString() {return this->element->toString() + "[" + std::to_string(((NodeInt*)this->count->comptime())->value.to_int()) + "]";}
 Type* TypeArray::getElType() {return element;}
 
+TypeArray::~TypeArray() {
+    if(this->element != nullptr && !instanceof<TypeBasic>(this->element) && !instanceof<TypeVoid>(this->element)) delete this->element;
+}
+
 // TypeAlias
 TypeAlias::TypeAlias() {}
 Type* TypeAlias::copy() {return new TypeAlias();}
@@ -110,7 +120,7 @@ Type* TypeAlias::getElType() {return this;}
 // TypeVoid
 TypeVoid::TypeVoid() {}
 Type* TypeVoid::check(Type* parent) {return nullptr;}
-Type* TypeVoid::copy() {return new TypeVoid();}
+Type* TypeVoid::copy() {return this;}
 int TypeVoid::getSize() {return 0;}
 std::string TypeVoid::toString() {return "void";}
 Type* TypeVoid::getElType() {return this;}
@@ -122,6 +132,9 @@ Type* TypeConst::check(Type* parent) {this->instance->check(nullptr); return nul
 int TypeConst::getSize() {return this->instance->getSize();}
 std::string TypeConst::toString() {return this->instance->toString();}
 Type* TypeConst::getElType() {return this->instance->getElType();}
+TypeConst::~TypeConst() {
+    if(this->instance != nullptr && !instanceof<TypeBasic>(this->instance) && !instanceof<TypeVoid>(this->instance)) delete this->instance;
+}
 
 // TypeStruct
 TypeStruct::TypeStruct(std::string name) {
@@ -258,14 +271,20 @@ TypeTemplateMember::TypeTemplateMember(Type* type, Node* value) {
 
 Type* TypeTemplateMember::copy() {return new TypeTemplateMember(this->type->copy(), this->value);}
 Type* TypeTemplateMember::check(Type* parent) {return nullptr;}
+
 std::string TypeTemplateMember::toString() {
     if(instanceof<NodeInt>(value)) return "@" + type->toString() + ((NodeInt*)value)->value.to_string();
     else if(instanceof<NodeFloat>(value)) return "@" + type->toString() + std::to_string(((NodeFloat*)value)->value);
     else if(instanceof<NodeString>(value)) return "@" + type->toString() + "\"" + ((NodeString*)value)->value + "\"";
     return "@" + type->toString();
 }
+
 int TypeTemplateMember::getSize() {return this->type->getSize();}
 Type* TypeTemplateMember::getElType() {return this->type->getElType();}
+
+TypeTemplateMember::~TypeTemplateMember() {
+    if(this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
+}
 
 // TypeTemplateMemberDefinition
 TypeTemplateMemberDefinition::TypeTemplateMemberDefinition(Type* type, std::string name) {
@@ -279,6 +298,10 @@ std::string TypeTemplateMemberDefinition::toString() {return this->name;}
 int TypeTemplateMemberDefinition::getSize() {return this->type->getSize();}
 Type* TypeTemplateMemberDefinition::getElType() {return this->type->getElType();}
 
+TypeTemplateMemberDefinition::~TypeTemplateMemberDefinition() {
+    if(this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
+}
+
 // TypeFuncArg
 TypeFuncArg::TypeFuncArg(Type* type, std::string name) {
     this->type = type;
@@ -290,6 +313,10 @@ Type* TypeFuncArg::check(Type* parent) {return nullptr;}
 std::string TypeFuncArg::toString() {return this->name;}
 int TypeFuncArg::getSize() {return this->type->getSize();}
 Type* TypeFuncArg::getElType() {return this->type->getElType();}
+
+TypeFuncArg::~TypeFuncArg() {
+    if(this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
+}
 
 // TypeFunc
 TypeFunc::TypeFunc(Type* main, std::vector<TypeFuncArg*> args, bool isVarArg) {
@@ -310,6 +337,12 @@ Type* TypeFunc::copy() {
 std::string TypeFunc::toString() {return "NotImplemented";}
 Type* TypeFunc::check(Type* parent) {return nullptr;}
 Type* TypeFunc::getElType() {return this;}
+
+TypeFunc::~TypeFunc() {
+    if(this->main != nullptr && !instanceof<TypeBasic>(this->main) && !instanceof<TypeVoid>(this->main)) delete this->main;
+
+    for(int i=0; i<this->args.size(); i++) if(this->args[i] != nullptr) delete this->args[i];
+}
 
 // TypeBuiltin
 TypeBuiltin::TypeBuiltin(std::string name, std::vector<Node*> args, NodeBlock* block) {

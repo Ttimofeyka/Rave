@@ -25,3 +25,7 @@ void NodePtoi::check() {
 RaveValue NodePtoi::generate() {
     return {LLVMBuildPtrToInt(generator->builder, this->value->generate().value, LLVMInt64TypeInContext(generator->context), "ptoi"), basicTypes[BasicType::Long]};
 }
+
+NodePtoi::~NodePtoi() {
+    if(this->value != nullptr) delete this->value;
+}

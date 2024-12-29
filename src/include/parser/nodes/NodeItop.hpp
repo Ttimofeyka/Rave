@@ -17,10 +17,10 @@ public:
     int loc;
 
     NodeItop(Node* value, Type* type, int loc);
-    ~NodeItop() {delete this->value; delete this->type;}
     Type* getType() override;
     RaveValue generate() override;
     Node* copy() override;
     Node* comptime() override;
     void check() override;
+    ~NodeItop() override;
 };

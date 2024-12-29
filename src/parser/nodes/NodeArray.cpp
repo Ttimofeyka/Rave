@@ -20,6 +20,10 @@ Type* NodeArray::getType() {
     return typeVoid;
 }
 
+NodeArray::~NodeArray() {
+    for(int i=0; i<values.size(); i++) if(this->values[i] != nullptr) delete this->values[i];
+}
+
 std::vector<RaveValue> NodeArray::getValues() {
     std::vector<RaveValue> buffer;
     RaveValue v0 = values[0]->generate();

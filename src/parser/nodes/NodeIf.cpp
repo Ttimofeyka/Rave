@@ -166,3 +166,9 @@ Node* NodeIf::copy() {
     _if->isUnlikely = this->isUnlikely;
     return _if;
 }
+
+NodeIf::~NodeIf() {
+    if(this->cond != nullptr) delete this->cond;
+    if(this->body != nullptr) delete this->body;
+    if(this->_else != nullptr) delete this->_else;
+}

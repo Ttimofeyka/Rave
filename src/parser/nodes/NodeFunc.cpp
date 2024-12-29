@@ -79,6 +79,12 @@ NodeFunc::NodeFunc(std::string name, std::vector<FuncArgSet> args, NodeBlock* bl
     }
 }
 
+NodeFunc::~NodeFunc() {
+    if(block != nullptr) delete block;
+    if(type != nullptr) delete type;
+    for(int i=0; i<args.size(); i++) if(args[i].type != nullptr) delete args[i].type;
+}
+
 void NodeFunc::check() {
     bool oldCheck = this->isChecked;
     this->isChecked = true;

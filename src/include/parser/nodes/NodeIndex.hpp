@@ -25,6 +25,7 @@ public:
     Node* copy() override;
     Node* comptime() override;
     void check() override;
+    ~NodeIndex() override;
     std::vector<LLVMValueRef> generateIndexes();
     bool isElementConst(Type* type);
 };

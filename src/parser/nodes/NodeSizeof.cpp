@@ -39,3 +39,7 @@ RaveValue NodeSizeof::generate() {
     }
     return {LLVMSizeOf(LLVMTypeOf(this->value->generate().value)), basicTypes[BasicType::Long]};
 }
+
+NodeSizeof::~NodeSizeof() {
+    if(this->value != nullptr) delete this->value;
+}

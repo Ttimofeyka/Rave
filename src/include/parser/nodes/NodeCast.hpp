@@ -17,7 +17,7 @@ public:
     int loc;
 
     NodeCast(Type* type, Node* value, int loc);
-    ~NodeCast() {if(this->value != nullptr) delete this->value;}
+    ~NodeCast() override;
     RaveValue generate() override;
     Type* getType() override;
     

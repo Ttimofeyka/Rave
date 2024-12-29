@@ -29,6 +29,13 @@ NodeForeach::NodeForeach(NodeIden* elName, Node* varData, Node* varLength, NodeB
     this->loc = loc;
 }
 
+NodeForeach::~NodeForeach() {
+    if(elName != nullptr) delete elName;
+    if(varData != nullptr) delete varData;
+    if(varLength != nullptr) delete varLength;
+    if(block != nullptr) delete block;
+}
+
 Node* NodeForeach::copy() {
     return new NodeForeach((NodeIden*)this->elName->copy(), this->varData->copy(), (varLength != nullptr ? this->varLength->copy() : nullptr), (NodeBlock*)this->block->copy(), this->loc);
 }

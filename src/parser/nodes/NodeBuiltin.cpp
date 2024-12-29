@@ -50,6 +50,12 @@ NodeBuiltin::NodeBuiltin(std::string name, std::vector<Node*> args, int loc, Nod
     this->CTId = CTId;
 }
 
+NodeBuiltin::~NodeBuiltin() {
+    for(int i=0; i<args.size(); i++) if(args[i] != nullptr) delete args[i];
+    if(block != nullptr) delete block;
+    if(type != nullptr) delete type;
+}
+
 Node* NodeBuiltin::copy() {
     return new NodeBuiltin(
         this->name, this->args, this->loc,

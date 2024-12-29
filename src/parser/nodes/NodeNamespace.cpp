@@ -26,6 +26,10 @@ NodeNamespace::NodeNamespace(std::vector<std::string> names, std::vector<Node*> 
     for(int i=0; i<names.size(); i++) this->names.push_back(names[i]);
 }
 
+NodeNamespace::~NodeNamespace() {
+    for(int i=0; i<nodes.size(); i++) if(nodes[i] != nullptr) delete nodes[i];
+}
+
 Node* NodeNamespace::copy() {
     std::vector<Node*> cNodes;
     for(int i=0; i<this->nodes.size(); i++) cNodes.push_back(this->nodes[i]);

@@ -23,6 +23,10 @@ NodeGet::NodeGet(Node* base, std::string field, bool isMustBePtr, int loc) {
     this->loc = loc;
 }
 
+NodeGet::~NodeGet() {
+    if(base != nullptr) delete base;
+}
+
 Type* NodeGet::getType() {
     Type* baseType = this->base->getType();
     TypeStruct* ts = nullptr;

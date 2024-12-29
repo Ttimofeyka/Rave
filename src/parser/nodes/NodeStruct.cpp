@@ -41,6 +41,12 @@ NodeStruct::NodeStruct(std::string name, std::vector<Node*> elements, int loc, s
     this->lengthVar = "";
 }
 
+NodeStruct::~NodeStruct() {
+    for(int i=0; i<elements.size(); i++) if(elements[i] != nullptr) delete elements[i];
+    for(int i=0; i<oldElements.size(); i++) if(oldElements[i] != nullptr) delete oldElements[i];
+    if(destructor != nullptr) delete destructor;
+}
+
 Node* NodeStruct::comptime() {return this;}
 
 Node* NodeStruct::copy() {

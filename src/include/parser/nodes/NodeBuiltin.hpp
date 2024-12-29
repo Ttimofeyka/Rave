@@ -30,6 +30,7 @@ public:
 
     NodeBuiltin(std::string name, std::vector<Node*> args, int loc, NodeBlock* block);
     NodeBuiltin(std::string name, std::vector<Node*> args, int loc, NodeBlock* block, Type* type, bool isImport, bool isTopLevel, int CTId);
+    ~NodeBuiltin() override;
 
     NodeType* asType(int n, bool isCompTime = false);
     BigInt asNumber(int n);

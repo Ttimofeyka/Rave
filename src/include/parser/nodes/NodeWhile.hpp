@@ -25,4 +25,5 @@ public:
     Node* copy() override;
     Node* comptime() override;
     void check() override;
+    ~NodeWhile() override;
 };

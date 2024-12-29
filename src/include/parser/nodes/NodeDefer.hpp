@@ -31,4 +31,5 @@ public:
     RaveValue generate() override;
     Node* comptime() override;
     Node* copy() override;
+    ~NodeDefer() override;
 };

@@ -50,6 +50,7 @@ public:
     bool isImported = false;
 
     NodeStruct(std::string name, std::vector<Node*> elements, int loc, std::string extends, std::vector<std::string> templateNames, std::vector<DeclarMod> mods);
+    ~NodeStruct() override;
     
     LLVMTypeRef asConstType();
     std::vector<LLVMTypeRef> getParameters(bool isLinkOnce);

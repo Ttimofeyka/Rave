@@ -27,6 +27,10 @@ void NodeCast::check() {
     if(!oldCheck) this->value->check();
 }
 
+NodeCast::~NodeCast() {
+    if(this->value != nullptr) delete this->value;
+}
+
 Type* NodeCast::getType() {return this->type->copy();}
 Node* NodeCast::copy() {return new NodeCast(this->type->copy(), this->value->copy(), this->loc);}
 Node* NodeCast::comptime() {return nullptr;}

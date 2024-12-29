@@ -30,6 +30,11 @@ NodeCall::NodeCall(int loc, Node* func, std::vector<Node*> args) {
     this->args = std::vector<Node*>(args);
 }
 
+NodeCall::~NodeCall() {
+    if(func != nullptr) delete func;
+    for(int i=0; i<args.size(); i++) if(args[i] != nullptr) delete args[i];
+}
+
 // Get a vector of arguments types
 std::vector<Type*> NodeCall::getTypes() {
     std::vector<Type*> arr;

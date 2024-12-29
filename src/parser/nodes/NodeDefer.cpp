@@ -22,6 +22,10 @@ Node* NodeDefer::comptime() {return this;}
 
 Node* NodeDefer::copy() {return new NodeDefer(this->instruction->copy(), this->loc, this->isFunctionScope);}
 
+NodeDefer::~NodeDefer() {
+    if(this->instruction != nullptr) delete this->instruction;
+}
+
 RaveValue NodeDefer::generate() {
     if(!isFunctionScope) {
         if(generator->activeLoops.size() > 0) {

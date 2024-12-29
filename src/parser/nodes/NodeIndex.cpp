@@ -31,6 +31,11 @@ NodeIndex::NodeIndex(Node* element, std::vector<Node*> indexes, int loc) {
     this->loc = loc;
 }
 
+NodeIndex::~NodeIndex() {
+    if(element != nullptr) delete element;
+    for(int i=0; i<indexes.size(); i++) if(indexes[i] != nullptr) delete indexes[i];
+}
+
 Type* NodeIndex::getType() {
     Type* type = this->element->getType();
     

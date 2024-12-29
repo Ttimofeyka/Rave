@@ -32,3 +32,7 @@ void NodeAliasType::check() {
         AST::aliasTypes[this->name] = this->value;
     }
 }
+
+NodeAliasType::~NodeAliasType() {
+    if(this->value != nullptr && !instanceof<TypeBasic>(this->value) && !instanceof<TypeVoid>(this->value)) delete this->value;
+}

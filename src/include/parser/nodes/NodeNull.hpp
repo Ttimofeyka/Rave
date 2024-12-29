@@ -23,4 +23,5 @@ public:
     void check() override;
     Node* comptime() override;
     Node* copy() override;
+    ~NodeNull() override;
 };

@@ -39,4 +39,5 @@ public:
     Node* copy() override;
     void check() override;
     std::pair<std::string, std::string> isOperatorOverload(RaveValue first, RaveValue second, char op);
+    ~NodeBinary() override;
 };

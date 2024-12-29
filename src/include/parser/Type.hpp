@@ -15,4 +15,5 @@ public:
     virtual std::string toString() = 0;
     virtual Type* copy() = 0;
     virtual Type* getElType() = 0;
+    virtual ~Type();
 };

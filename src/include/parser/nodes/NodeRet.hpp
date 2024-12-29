@@ -24,6 +24,7 @@ public:
     Node* copy() override;
     Node* comptime() override;
     void check() override;
+    ~NodeRet() override;
     Loop getParentBlock(int n = -1);
     void setParentBlock(Loop value, int n = -1);
 };

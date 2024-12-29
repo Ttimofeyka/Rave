@@ -30,3 +30,8 @@ RaveValue NodeItop::generate() {
     RaveValue _int = this->value->generate();
     return {LLVMBuildIntToPtr(generator->builder, _int.value, generator->genType(this->type, this->loc), "itop"), this->type};
 }
+
+NodeItop::~NodeItop() {
+    if(this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
+    if(this->value != nullptr) delete this->value;
+}

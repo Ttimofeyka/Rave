@@ -18,3 +18,4 @@ void Node::optimize() {}
 Node* Node::comptime() {return this;}
 Type* Node::getType() {return nullptr;}
 Node* Node::copy() {return nullptr;}
+Node::~Node() {}

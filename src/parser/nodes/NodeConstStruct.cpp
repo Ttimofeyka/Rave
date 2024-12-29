@@ -20,6 +20,10 @@ NodeConstStruct::NodeConstStruct(std::string name, std::vector<Node*> values, in
     this->loc = loc;
 }
 
+NodeConstStruct::~NodeConstStruct() {
+    for(int i=0; i<values.size(); i++) if(values[i] != nullptr) delete values[i];
+}
+
 Type* NodeConstStruct::getType() {return new TypeStruct(this->structName);}
 Node* NodeConstStruct::comptime() {return this;}
 Node* NodeConstStruct::copy() {return new NodeConstStruct(this->structName, this->values, this->loc);}

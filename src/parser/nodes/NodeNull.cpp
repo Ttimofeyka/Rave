@@ -21,3 +21,7 @@ RaveValue NodeNull::generate() {
 void NodeNull::check() {this->isChecked = true;}
 Node* NodeNull::comptime() {return this;}
 Node* NodeNull::copy() {return new NodeNull(this->type, this->loc);}
+
+NodeNull::~NodeNull() {
+    if(this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
+}

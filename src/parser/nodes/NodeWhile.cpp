@@ -22,6 +22,11 @@ NodeWhile::NodeWhile(Node* cond, Node* body, int loc) {
     this->loc = loc;
 }
 
+NodeWhile::~NodeWhile() {
+    if(cond != nullptr) delete cond;
+    if(body != nullptr) delete body;
+}
+
 Type* NodeWhile::getType() {return typeVoid;}
 Node* NodeWhile::comptime() {return this;}
 Node* NodeWhile::copy() {return new NodeWhile(this->cond->copy(), this->body->copy(), this->loc);}

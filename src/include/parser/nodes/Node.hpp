@@ -25,4 +25,5 @@ public:
     virtual Node* comptime();
     virtual Type* getType();
     virtual Node* copy();
+    virtual ~Node();
 };

@@ -60,6 +60,7 @@ public:
     int getSize() override;
     std::string toString() override;
     Type* getElType() override;
+    ~TypePointer() override;
 };
 
 class TypeArray : public Type {
@@ -73,6 +74,7 @@ public:
     int getSize() override;
     std::string toString() override;
     Type* getElType() override;
+    ~TypeArray() override;
 };
 
 class TypeAlias : public Type {
@@ -105,6 +107,7 @@ public:
     int getSize() override;
     std::string toString() override;
     Type* getElType() override;
+    ~TypeConst() override;
 };
 
 class TypeStruct : public Type {
@@ -135,6 +138,7 @@ public:
     int getSize() override;
     std::string toString() override;
     Type* getElType() override;
+    ~TypeTemplateMember() override;
 };
 
 class TypeTemplateMemberDefinition : public Type {
@@ -148,6 +152,7 @@ public:
     int getSize() override;
     std::string toString() override;
     Type* getElType() override;
+    ~TypeTemplateMemberDefinition() override;
 };
 
 class TypeFuncArg : public Type {
@@ -161,6 +166,7 @@ public:
     int getSize() override;
     std::string toString() override;
     Type* getElType() override;
+    ~TypeFuncArg() override;
 };
 
 class TypeFunc : public Type {
@@ -175,6 +181,7 @@ public:
     std::string toString() override;
     Type* check(Type* parent) override;
     Type* getElType() override;
+    ~TypeFunc() override;
 };
 
 class TypeBuiltin : public Type {

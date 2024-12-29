@@ -67,6 +67,11 @@ NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, boo
     }
 }
 
+NodeVar::~NodeVar() {
+    if(value != nullptr) delete value;
+    if(type != nullptr && !instanceof<TypeBasic>(type) && !instanceof<TypeVoid>(type)) delete type;
+}
+
 Type* NodeVar::getType() {return this->type->copy();}
 Node* NodeVar::comptime() {return this;}
 

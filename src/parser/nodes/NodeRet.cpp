@@ -28,6 +28,10 @@ Node* NodeRet::copy() {return new NodeRet(this->value->copy(), this->loc);}
 Type* NodeRet::getType() {return this->value->getType();}
 Node* NodeRet::comptime() {return this;}
 
+NodeRet::~NodeRet() {
+    if(this->value != nullptr) delete this->value;
+}
+
 void NodeRet::check() {
     this->isChecked = true;
 }

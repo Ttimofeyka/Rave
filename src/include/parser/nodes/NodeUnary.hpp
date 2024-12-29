@@ -29,4 +29,5 @@ public:
     Node* comptime() override;
     RaveValue generate() override;
     Node* copy() override;
+    ~NodeUnary() override;
 };

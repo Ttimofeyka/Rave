@@ -61,3 +61,7 @@ RaveValue NodeComptime::generate() {
     this->comptime();
     return {};
 }
+
+NodeComptime::~NodeComptime() {
+    if(this->node != nullptr) delete this->node;
+}

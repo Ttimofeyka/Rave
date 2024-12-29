@@ -63,7 +63,7 @@ public:
     LLVMTypeRef* getParameters(int callConv);
     RaveValue generate() override;
     Type* getType() override;
-    
+    ~NodeFunc() override;
     Node* comptime() override;
     Node* copy() override;
     void check() override;

@@ -28,6 +28,10 @@ NodeUnary::NodeUnary(int loc, char type, Node* base) {
     this->base = base;
 }
 
+NodeUnary::~NodeUnary() {
+    if(this->base != nullptr) delete this->base;
+}
+
 Type* NodeUnary::getType() {
     switch(this->type) {
         case TokType::GetPtr:

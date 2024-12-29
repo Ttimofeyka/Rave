@@ -16,10 +16,10 @@ public:
     int loc;
 
     NodePtoi(Node* value, int loc);
-    ~NodePtoi() {delete this->value;}
     Type* getType() override;
     RaveValue generate() override;
     Node* copy() override;
     Node* comptime() override;
     void check() override;
+    ~NodePtoi() override;
 };

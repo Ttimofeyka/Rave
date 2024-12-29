@@ -24,4 +24,5 @@ public:
     RaveValue generate() override;
     Node* comptime() override;
     Node* copy() override;
+    ~NodeComptime() override;
 };

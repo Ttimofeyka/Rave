@@ -36,6 +36,12 @@ Node* NodeSlice::comptime() {return this;}
 Node* NodeSlice::copy() {return new NodeSlice(this->base, this->start, this->end, this->loc);}
 void NodeSlice::check() {this->isChecked = true;}
 
+NodeSlice::~NodeSlice() {
+    if(this->base != nullptr) delete this->base;
+    if(this->start != nullptr) delete this->start;
+    if(this->end != nullptr) delete this->end;
+}
+
 RaveValue NodeSlice::generate() {
     if(!instanceof<NodeInt>(start) || !instanceof<NodeInt>(end)) generator->error("NodeSlice temporarily supports only constant numbers!", loc); // TODO: Rework it
     int one = ((NodeInt*)start)->value.to_int();

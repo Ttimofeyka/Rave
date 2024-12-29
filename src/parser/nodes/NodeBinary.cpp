@@ -327,7 +327,6 @@ RaveValue NodeBinary::generate() {
         ), this->first->copy(), this->second->copy(), loc), loc);
         bin->check();
         value = bin->generate();
-        delete bin;
         return value;
     }
 
@@ -547,4 +546,9 @@ RaveValue NodeBinary::generate() {
         case TokType::BitRight: return {LLVMBuildLShr(generator->builder, vFirst.value, vSecond.value, "NodeBinary_and"), vFirst.type};
         default: generator->error("undefined operator " + std::to_string(this->op) + "!", this->loc); return {};
     }
+}
+
+NodeBinary::~NodeBinary() {
+    if(this->first != nullptr) delete this->first;
+    if(this->second != nullptr) delete this->second;
 }
