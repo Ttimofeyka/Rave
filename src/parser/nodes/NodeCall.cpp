@@ -528,11 +528,12 @@ RaveValue NodeCall::generate() {
         }
         generator->error("a call of this kind (NodeGet + " + std::string(typeid(this->func[0]).name()) + ") is temporarily unavailable!", this->loc);
     }
+
     if(instanceof<NodeUnary>(this->func)) {
         NodeCall* nc = new NodeCall(this->loc, ((NodeUnary*)this->func)->base, this->args);
-        if(((NodeUnary*)this->func)->type == TokType::Ne) nc->isInverted = true;
-        return nc->generate();
+        return (new NodeUnary(loc, ((NodeUnary*)this->func)->type, nc))->generate();
     }
+
     generator->error("a call of this kind is temporarily unavailable!", this->loc);
     return {};
 }

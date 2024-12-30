@@ -988,6 +988,7 @@ Node* Parser::parsePrefix(std::string f) {
         else this->idx -= 1;
         return new NodeUnary(tok->line, tok->type, this->parsePrefix(f));
     }
+
     return this->parseAtom(f);
 }
 
