@@ -74,10 +74,6 @@ The specifications is in `specifications` directory - [link](https://github.com/
 Often caused by incorrect syntax or misuse of builtin instructions.
 We are continuously working to minimize these occurrences.
 
-### SSE/AVX as not a recognized features
-
-If you encounter warnings about unrecognized features, disable them in options.json (set `sse` and `avx` to `0`) or use command-line options: `-SSE 0`, `-AVX 0`.
-
 ## Useful links
 
 <a href="https://github.com/Ttimofeyka/Rave/blob/main/bindings.md">Bindings</a>
