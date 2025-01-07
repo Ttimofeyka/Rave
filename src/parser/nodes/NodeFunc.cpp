@@ -93,7 +93,7 @@ void NodeFunc::check() {
         for(int i=0; i<this->mods.size(); i++) {
             if(this->mods[i].name == "method") {
                 Type* structure = this->args[0].type;
-                this->name = "{"+structure->toString()+"}"+this->name;
+                this->name = "{" + structure->toString() + "}" + this->name;
             }
             else if(mods[i].name == "noNamespaces") this->isNoNamespaces = true;
         }

@@ -312,6 +312,7 @@ RaveValue NodeStruct::generate() {
             this->constructors[i]->generate();
         }
     }
+
     if(this->destructor == nullptr) {
         // Creating default destructor
         this->destructor = new NodeFunc(
@@ -347,10 +348,12 @@ RaveValue NodeStruct::generate() {
         }
         this->destructor->generate();
     }
+
     for(int i=0; i<this->methods.size(); i++) {
         this->methods[i]->check();
         this->methods[i]->generate();
     }
+
     return {};
 }
 

@@ -26,6 +26,7 @@ std::string Lexer::getIdentifier() {
     };
 
     std::string buffer = "";
+
     while(specialChars.find(peek()) == specialChars.end()) {
         buffer += peek();
         idx += 1;
@@ -34,6 +35,7 @@ std::string Lexer::getIdentifier() {
             idx += 2;
         }
     }
+
     return buffer;
 }
 
