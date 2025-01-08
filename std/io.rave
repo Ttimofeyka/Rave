@@ -603,27 +603,22 @@ namespace std {
     extern(linkname: "getchar") char getchar();
     extern(linkname: "putchar") int putchar(char c);
 
-    (volatile) int __putsSL = 0;
+    std::spinlock __putsSL;
     void puts(char* s) {
-        std::thread::spinlock::lock(&std::__putsSL);
+        std::__putsSL.lock();
             for(int i=0; s[i] != '\0'; i+=1) std::putchar(s[i]);
             std::putchar('\n');
-        std::thread::spinlock::unlock(&std::__putsSL);
+        std::__putsSL.unlock();
     }
 
-    (volatile) int __putswnlSL = 0;
+    std::spinlock __putswnlSL;
     void putswnl(char* s) {
-        std::thread::spinlock::lock(&std::__putswnlSL);
+        std::__putswnlSL.lock();
             for(int i=0; s[i] != '\0'; i+=1) std::putchar(s[i]);
-        std::thread::spinlock::unlock(&std::__putswnlSL);
+        std::__putswnlSL.unlock();
     }
 
-    (volatile) int __putswnlSL2 = 0;
-    void putswnlS(std::string s) {
-        std::thread::spinlock::lock(&std::__putswnlSL2);
-            for(int i=0; i<s.length; i+=1) std::putchar(s.data[i]);
-        std::thread::spinlock::unlock(&std::__putswnlSL2);
-    }
+    (inline) void putswnlS(std::string s) => std::putswnl(s.data);
 
     (ctargs, inline) void print {
         std::string s = @callWithArgs(std::gsprint);

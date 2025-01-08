@@ -26,6 +26,11 @@ import <std/process> <std/map>
 
             int hash => (9437 * cast(int)(this.id));
         }
+
+        namespace thread {
+            (inline) void exit(int value) => pthread::exit(cast(void*)value);
+            (inline) void exit => std::thread::exit(0);
+        }
     }
 }
 @else {
@@ -33,6 +38,9 @@ import <std/process> <std/map>
         namespace thread {
             extern(linkname: "CreateThread") void* __CreateThread(void* attributes, uint stackSize, int(void*) fn, void* argument, uint flags, uint* threadId);
             extern(linkname: "WaitForSingleObject") int __WaitForSingleObject(void* thread, uint ms);
+
+            extern(linkname: "ExitThread") void exit(int value);
+            (inline) void exit => std::thread::exit(0);
         }
 
         struct thread {
@@ -84,7 +92,16 @@ namespace std {
                     @if((__RAVE_PLATFORM == "X86") || (__RAVE_PLATFORM == "X86_64")) asm("pause");
                 }
             }
+
             (inline) void unlock(int* sl) {@atomicClear(sl);}
         }
+    }
+
+    struct spinlock {
+        int value;
+
+        (inline) void lock => std::thread::spinlock::lock(this.&value);
+
+        (inline) void unlock => std::thread::spinlock::unlock(this.&value);
     }
 }

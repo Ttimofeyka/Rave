@@ -428,12 +428,12 @@ namespace std {
         resultPtr[0] = result;
     }
 
-    (volatile) int __sprintBufferSL = 0;
+    std::spinlock __sprintBufferSL = 0;
     std::string __sprintBuffer;
     bool sbInitialized = false;
 
     (ctargs) std::string gsprint {
-        std::thread::spinlock::lock(&std::__sprintBufferSL);
+        std::__sprintBufferSL.lock();
 
         if(!std::sbInitialized) {
             std::__sprintBuffer = std::string(128);
@@ -443,7 +443,7 @@ namespace std {
 
         @callWithBeforeArgs(std::sprintBuffer, &std::__sprintBuffer);
 
-        std::thread::spinlock::unlock(&std::__sprintBufferSL);
+        std::__sprintBufferSL.unlock();
     } => std::__sprintBuffer;
 
     (inline, ctargs) std::string sprint {
