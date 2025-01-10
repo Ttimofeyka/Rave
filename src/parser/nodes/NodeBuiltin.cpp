@@ -70,7 +70,7 @@ Type* NodeBuiltin::getType() {
     if(this->name == "getCurrArg") return asType(0)->type;
     if(this->name == "isNumeric" || this->name == "isVector" || this->name == "isPointer"
     || this->name == "isArray" || this->name == "aliasExists" || this->name == "tEquals"
-    || this->name == "tNequals" || this->name == "isStructure" || this->name == "hasMethod"
+    || this->name == "isStructure" || this->name == "hasMethod"
     || this->name == "hasDestructor" || this->name == "contains") return basicTypes[BasicType::Bool];
     if(this->name == "sizeOf" || this->name == "argsLength" || this->name == "getCurrArgNumber") return basicTypes[BasicType::Int];
     if(this->name == "vAdd" || this->name == "vSub" || this->name == "vMul" || this->name == "vDiv"
@@ -311,11 +311,6 @@ RaveValue NodeBuiltin::generate() {
     if(this->name == "tEquals") {
         if(this->asType(0)->type->toString() == this->asType(1)->type->toString()) return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
         return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
-    }
-    if(this->name == "tNequals") {
-        // TODO: delete it (deprecated)
-        if(this->asType(0)->type->toString() != this->asType(1)->type->toString()) return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
-        return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
     }
     if(this->name == "isArray") {
         Type* ty = this->asType(0)->type;
@@ -695,7 +690,6 @@ Node* NodeBuiltin::comptime() {
     }
     if(this->name == "sizeOf") return new NodeInt((asType(0)->type->getSize()) / 8);
     if(this->name == "tEquals") return new NodeBool(asType(0)->type->toString() == asType(1)->type->toString());
-    if(this->name == "tNequals") return new NodeBool(asType(0)->type->toString() != asType(1)->type->toString());
     if(this->name == "isStructure") return new NodeBool(instanceof<TypeStruct>(asType(0)->type));
     if(this->name == "isNumeric") return new NodeBool(instanceof<TypeBasic>(asType(0)->type));
     if(this->name == "argsLength") return new NodeInt(AST::funcTable[currScope->funcName]->args.size());
