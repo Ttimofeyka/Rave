@@ -188,16 +188,13 @@ void main {
 }
 ```
 
-**@tEquals(type1, type2), @tNequals(type1, type2)** - Compare the two types with each other.
+**@tEquals(type1, type2)** - Compare the two types with each other.
 
 Example:
 
 ```d
-@if(@tEquals(int,char)) {
+@if(@tEquals(int, char)) {
     int a = 0;
-};
-@if(@tNequals(int,char)) {
-    int a = 5;
 };
 ```
 
