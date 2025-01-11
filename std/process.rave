@@ -94,4 +94,4 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
             extern(linkname: "getpid") int getPID();
         }
     }
-};
+}
