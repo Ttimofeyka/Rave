@@ -7,7 +7,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import <std/memory> <std/map>
 
 namespace std {
-    (data: "data", length: "length", @tNequals(VECTOR_T, void)) struct vector<VECTOR_T> {
+    (data: "data", length: "length") struct vector<VECTOR_T> {
         (noOperators) VECTOR_T* data;
         int capacity;
         int length;

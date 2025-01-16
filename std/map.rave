@@ -15,7 +15,7 @@ namespace std {
         }
     }
 
-    (@tNequals(K, void), @tNequals(V, void)) struct hashmap<K, V> {
+    struct hashmap<K, V> {
         std::hashmap::Entry<K, V>** table;
         int length;
         int mapSize;

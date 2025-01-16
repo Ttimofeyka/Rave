@@ -55,17 +55,17 @@ namespace std {
             }
         }
 
-        (inline, @tNequals(ABS_T, void)) ABS_T abs<ABS_T>(ABS_T value) {
+        ABS_T abs<ABS_T>(ABS_T value) {
             return = value;
             if(value < cast(ABS_T)null) value = -value;
         }
 
-        (inline, @tNequals(GETSIGN_T, void)) char getSign<GETSIGN_T>(GETSIGN_T value) {
+        char getSign<GETSIGN_T>(GETSIGN_T value) {
             return = 1;
             if(value < cast(GETSIGN_T)null) return = -1;
         }
 
-        (inline, @tNequals(COPYSIGN_T, void)) COPYSIGN_T copySign<COPYSIGN_T>(COPYSIGN_T v1, COPYSIGN_T v2) => std::math::abs(v1) * std::math::getSign(v2);
+        COPYSIGN_T copySign<COPYSIGN_T>(COPYSIGN_T v1, COPYSIGN_T v2) => std::math::abs(v1) * std::math::getSign(v2);
 
         double floor(double f) {
             return = (cast(double)(cast(long)f));
@@ -331,18 +331,18 @@ namespace std {
             }
         } => cos;
 
-        (@tNequals(SIGN_T, void)) char sign<SIGN_T>(SIGN_T x) {
+        char sign<SIGN_T>(SIGN_T x) {
             if(x < cast(SIGN_T)null) return = -1;
             else if(x == cast(SIGN_T)null) return = 0;
             else return = 1;
         }
 
-        (@tNequals(MIN_T, void)) MIN_T min<MIN_T>(MIN_T one, MIN_T two) {
+        MIN_T min<MIN_T>(MIN_T one, MIN_T two) {
             return = one;
             if(two < one) return = two;
         }
 
-        (@tNequals(MAX_T, void)) MAX_T max<MAX_T>(MAX_T one, MAX_T two) {
+        MAX_T max<MAX_T>(MAX_T one, MAX_T two) {
             return = one;
             if(two > one) return = two;
         }
