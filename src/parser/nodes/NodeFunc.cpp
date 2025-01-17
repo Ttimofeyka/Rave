@@ -201,7 +201,7 @@ RaveValue NodeFunc::generate() {
 
     linkName = generator->mangle(this->name, true, this->isMethod);
     int callConv = LLVMCCallConv;
-    std::map<std::string, NodeBuiltin*> builtins;
+    NodeArray* conditions = nullptr;
 
     if(this->name == "main") {
         linkName = "main";
@@ -213,10 +213,11 @@ RaveValue NodeFunc::generate() {
             if(instanceof<NodeArray>(AST::aliasTable[this->mods[i].name])) {
                 NodeArray* array = (NodeArray*)AST::aliasTable[this->mods[i].name];
                 this->mods[i].name = ((NodeString*)array->values[0])->value;
-                this->mods[i].value = ((NodeString*)array->values[1])->value;
+                this->mods[i].value = array->values[1];
             }
             else this->mods[i].name = ((NodeString*)AST::aliasTable[this->mods[i].name])->value;
         }
+
         if(this->mods[i].name == "C") linkName = this->name;
         else if(this->mods[i].name == "vararg") this->isVararg = true;
         else if(this->mods[i].name == "fastcc") callConv = LLVMFastCallConv;
@@ -226,13 +227,17 @@ RaveValue NodeFunc::generate() {
         else if(this->mods[i].name == "armaapcs") callConv = LLVMARMAAPCSCallConv;
         else if(this->mods[i].name == "cdecl64") {callConv = LLVMCCallConv; this->isCdecl64 = true;}
         else if(this->mods[i].name == "inline") this->isInline = true;
-        else if(this->mods[i].name == "linkname") linkName = this->mods[i].value;
+        else if(this->mods[i].name == "linkname") {
+            Node* newLinkName = this->mods[i].value->comptime();
+            if(!instanceof<NodeString>(newLinkName)) generator->error("value type of 'linkname' must be a string!", loc);
+            linkName = ((NodeString*)newLinkName)->value;
+        }
         else if(this->mods[i].name == "ctargs") this->isCtargs = true;
         else if(this->mods[i].name == "comdat") this->isComdat = true;
         else if(this->mods[i].name == "nochecks") this->isNoChecks = true;
         else if(this->mods[i].name == "noOptimize") this->isNoOpt = true;
         else if(this->mods[i].name == "arrayable") this->isArrayable = true;
-        else if(this->mods[i].name.size() > 0 && this->mods[i].name[0] == '@') builtins[this->mods[i].name.substr(1)] = ((NodeBuiltin*)this->mods[i].genValue);
+        else if(this->mods[i].name == "conditions") conditions = (NodeArray*)this->mods[i].value;
     }
 
     if(!this->isTemplate && this->isCtargs) return {};
@@ -243,10 +248,10 @@ RaveValue NodeFunc::generate() {
         for(int i=0; i<this->templateNames.size(); i++) generator->toReplace[this->templateNames[i]] = this->templateTypes[i];
     }
 
-    for(const auto &data : builtins) {
-        Node* result = data.second->comptime();
-        if(result == nullptr || (instanceof<NodeBool>(result) && !((NodeBool*)result)->value)) {
-            generator->error("The '" + data.first+  "' builtin failed when generating the function '" + this->name + "'!", this->loc);
+    if(conditions != nullptr) for(Node* node : conditions->values) {
+        Node* result = node->comptime();
+        if(instanceof<NodeBool>(result) && !((NodeBool*)result)->value) {
+            generator->error("The conditions were failed when generating the function '" + this->name + "'!", this->loc);
             return {};
         }
     }

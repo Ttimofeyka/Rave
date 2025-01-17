@@ -256,26 +256,26 @@ std::vector<Node*> NodeStruct::copyElements() {
 RaveValue NodeStruct::generate() {
     if(this->templateNames.size() > 0 || this->noCompile) return {};
 
-    std::map<std::string, NodeBuiltin*> builtins;
+    NodeArray* conditions = nullptr;
 
     for(int i=0; i<this->mods.size(); i++) {
         while(AST::aliasTable.find(this->mods[i].name) != AST::aliasTable.end()) {
             if(instanceof<NodeArray>(AST::aliasTable[this->mods[i].name])) {
                 this->mods[i].name = ((NodeString*)(((NodeArray*)AST::aliasTable[this->mods[i].name])->values[0]))->value;
-                this->mods[i].value = ((NodeString*)(((NodeArray*)AST::aliasTable[this->mods[i].name])->values[1]))->value;
+                this->mods[i].value = ((NodeString*)(((NodeArray*)AST::aliasTable[this->mods[i].name])->values[1]));
             }
             else this->mods[i].name = ((NodeString*)((NodeArray*)AST::aliasTable[this->mods[i].name]))->value;
         }
         if(this->mods[i].name == "packed") this->isPacked = true;
-        else if(this->mods[i].name == "data") this->dataVar = this->mods[i].value;
-        else if(this->mods[i].name == "length") this->lengthVar = this->mods[i].value;
-        else if(this->mods[i].name.size() > 0 && this->mods[i].name[0] == '@') builtins[this->mods[i].name.substr(1)] = ((NodeBuiltin*)this->mods[i].genValue);
+        else if(this->mods[i].name == "data") this->dataVar = ((NodeString*)this->mods[i].value->comptime())->value;
+        else if(this->mods[i].name == "length") this->lengthVar = ((NodeString*)this->mods[i].value->comptime())->value;
+        else if(this->mods[i].name == "conditions") conditions = (NodeArray*)this->mods[i].value;
     }
 
-    for(const auto &data : builtins) {
-        Node* result = data.second->comptime();
-        if(result == nullptr || (instanceof<NodeBool>(result) && !((NodeBool*)result)->value)) {
-            generator->error("The '" + data.first+  "' builtin failed when generating the structure '" + this->name + "'!", this->loc);
+    if(conditions != nullptr) for(Node* n : conditions->values) {
+        Node* result = n->comptime();
+        if(instanceof<NodeBool>(result) && !((NodeBool*)result)->value) {
+            generator->error("The conditions were failed when generating the structure '" + this->name + "'!", this->loc);
             return {};
         }
     }

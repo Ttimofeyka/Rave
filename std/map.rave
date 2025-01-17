@@ -15,7 +15,7 @@ namespace std {
         }
     }
 
-    struct hashmap<K, V> {
+    (conditions: [K != void, V != void]) struct hashmap<K, V> {
         std::hashmap::Entry<K, V>** table;
         int length;
         int mapSize;

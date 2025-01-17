@@ -20,8 +20,7 @@ extern std::map<char, int> operators;
 
 struct DeclarMod {
     std::string name;
-    std::string value;
-    Node* genValue;
+    Node* value;
 };
 
 class Parser {

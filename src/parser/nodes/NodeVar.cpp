@@ -146,15 +146,23 @@ RaveValue NodeVar::generate() {
             while(AST::aliasTable.find(this->mods[i].name) != AST::aliasTable.end()) {
                 if(instanceof<NodeArray>(AST::aliasTable[this->mods[i].name])) {
                     mods[i].name = ((NodeString*)((NodeArray*)AST::aliasTable[this->mods[i].name])->values[0])->value;
-                    mods[i].value = ((NodeString*)((NodeArray*)AST::aliasTable[this->mods[i].name])->values[1])->value;
+                    mods[i].value = ((NodeArray*)AST::aliasTable[this->mods[i].name])->values[1];
                 }
                 else mods[i].name = ((NodeString*)AST::aliasTable[this->mods[i].name])->value;
             }
             if(mods[i].name == "C") noMangling = true;
             else if(mods[i].name == "volatile") isVolatile = true;
-            else if(mods[i].name == "linkname") linkName = mods[i].value;
+            else if(mods[i].name == "linkname") {
+                Node* newLinkName = mods[i].value->comptime();
+                if(!instanceof<NodeString>(newLinkName)) generator->error("value type of 'linkname' must be a string!", loc);
+                linkName = ((NodeString*)newLinkName)->value;
+            }
             else if(mods[i].name == "noOperators") isNoOperators = true;
-            else if(mods[i].name == "align") alignment = std::stoi(mods[i].value);
+            else if(mods[i].name == "align") {
+                Node* newAlignment = mods[i].value->comptime();
+                if(!instanceof<NodeInt>(newAlignment)) generator->error("value type of 'align' must be an integer!", loc);
+                alignment = ((NodeInt*)(mods[i].value))->value.to_int();
+            }
         }
 
         if(!instanceof<TypeAuto>(this->type)) {

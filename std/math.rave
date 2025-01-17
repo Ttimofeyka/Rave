@@ -331,18 +331,18 @@ namespace std {
             }
         } => cos;
 
-        char sign<SIGN_T>(SIGN_T x) {
+        (conditions: [SIGN_T != void]) char sign<SIGN_T>(SIGN_T x) {
             if(x < cast(SIGN_T)null) return = -1;
             else if(x == cast(SIGN_T)null) return = 0;
             else return = 1;
         }
 
-        MIN_T min<MIN_T>(MIN_T one, MIN_T two) {
+        (conditions: [MIN_T != void]) MIN_T min<MIN_T>(MIN_T one, MIN_T two) {
             return = one;
             if(two < one) return = two;
         }
 
-        MAX_T max<MAX_T>(MAX_T one, MAX_T two) {
+        (conditions: [MAX_T != void]) MAX_T max<MAX_T>(MAX_T one, MAX_T two) {
             return = one;
             if(two > one) return = two;
         }

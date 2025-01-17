@@ -155,18 +155,12 @@ Node* Parser::parseTopLevel(std::string s) {
         std::vector<DeclarMod> mods;
         this->next();
         while(this->peek()->type != TokType::Lpar) {
-            if(this->peek()->type == TokType::Builtin) {
-                NodeBuiltin* nb = (NodeBuiltin*)this->parseBuiltin(s);
-                mods.push_back(DeclarMod{.name = ("@" + nb->name), .value = "", .genValue = nb});
-                if(this->peek()->type == TokType::Comma) this->next();
-                continue;
-            }
-            std::string name = this->peek()->value; this->next();
-            std::string value = "";
+            std::string name = this->peek()->value;
+            this->next();
+            Node* value = nullptr;
             if(this->peek()->type == TokType::ValSel) {
                 this->next();
-                value = this->peek()->value;
-                this->next();
+                value = this->parseExpr(s);
             }
             mods.push_back(DeclarMod{.name = name, .value = value});
             if(this->peek()->type == TokType::Comma) this->next();
@@ -302,17 +296,12 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
     if(this->peek()->type == TokType::Rpar) {
         this->next();
         while(this->peek()->type != TokType::Lpar) {
-            if(this->peek()->type == TokType::Builtin) {
-                NodeBuiltin* nb = (NodeBuiltin*)this->parseBuiltin();
-                mods.push_back(DeclarMod{.name = "@" + nb->name, .value = "", .genValue = nb});
-                if(this->peek()->type == TokType::Comma) this->next();
-                continue;
-            }
-            std::string name = this->peek()->value; this->next();
-            std::string value = "";
+            std::string name = this->peek()->value;
+            this->next();
+            Node* value = nullptr;
             if(this->peek()->type == TokType::ValSel) {
-               value = this->tokens[this->idx + 1]->value;
-               this->idx += 2;
+                this->next();
+                value = this->parseExpr();
             }
             mods.push_back(DeclarMod{.name = name, .value = value});
             if(this->peek()->type == TokType::Comma) this->next();
@@ -1299,22 +1288,14 @@ Node* Parser::parseStmt(std::string f) {
         std::vector<DeclarMod> mods;
         this->next();
         while(this->peek()->type != TokType::Lpar) {
-            if(this->peek()->type == TokType::Builtin) {
-                NodeBuiltin* nb = (NodeBuiltin*)this->parseBuiltin(f);
-                mods.push_back(DeclarMod{.name = "@" + nb->name, .value = "", .genValue = nb});
-                if(this->peek()->type == TokType::Comma) this->next();
-                continue;
-            }
-
             if(this->peek()->type != TokType::Identifier) this->error("expected identifier!");
             this->next();
 
             std::string name = this->peek()->value;
-            std::string value = "";
+            Node* value = nullptr;
             if(this->peek()->type == TokType::ValSel) {
                 this->next();
-                value = this->peek()->value;
-                this->next();
+                value = this->parseExpr();
             }
 
             mods.push_back(DeclarMod{.name = name, .value = value});

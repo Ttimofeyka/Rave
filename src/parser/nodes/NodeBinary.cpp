@@ -258,6 +258,22 @@ Node* NodeBinary::comptime() {
     while(!instanceof<NodeType>(first) && !instanceof<NodeBool>(first) && !instanceof<NodeString>(first) && !instanceof<NodeIden>(first) && !instanceof<NodeInt>(first) && !instanceof<NodeFloat>(first)) first = first->comptime();
     while(!instanceof<NodeType>(second) && !instanceof<NodeBool>(second) && !instanceof<NodeString>(second) && !instanceof<NodeIden>(second) && !instanceof<NodeInt>(second) && !instanceof<NodeFloat>(second)) second = second->comptime();
 
+    if(instanceof<NodeIden>(first) || instanceof<NodeIden>(second) || instanceof<NodeType>(first) || instanceof<NodeType>(second)) {        
+        Type* firstType = (instanceof<NodeIden>(first) ? new TypeStruct(((NodeIden*)first)->name) : ((NodeType*)first)->type);
+        Type* secondType = (instanceof<NodeIden>(second) ? new TypeStruct(((NodeIden*)second)->name) : ((NodeType*)second)->type);
+
+        if(generator != nullptr) {
+            while(generator->toReplace.find(firstType->toString()) != generator->toReplace.end()) firstType = generator->toReplace[firstType->toString()];
+            while(generator->toReplace.find(secondType->toString()) != generator->toReplace.end()) secondType = generator->toReplace[secondType->toString()];
+        }
+
+        switch(this->op) {
+            case TokType::Equal: return new NodeBool(firstType->toString() != secondType->toString());
+            case TokType::Nequal: return new NodeBool(firstType->toString() != secondType->toString());
+            default: return new NodeBool(false);
+        }
+    }
+
     NodeBool* eqNeqResult = nullptr;
 
     switch(this->op) {
