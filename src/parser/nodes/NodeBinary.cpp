@@ -281,7 +281,21 @@ Node* NodeBinary::comptime() {
             eqNeqResult = new NodeBool(true);
 
             if(instanceof<NodeString>(first) && instanceof<NodeString>(second)) eqNeqResult->value = ((NodeString*)first)->value == ((NodeString*)second)->value;
-            else if(instanceof<NodeBool>(first) && instanceof<NodeBool>(second)) eqNeqResult->value = ((NodeBool*)first)->value == ((NodeBool*)second)->value;
+            else if(instanceof<NodeBool>(first)) {
+                if(instanceof<NodeBool>(second)) eqNeqResult->value = ((NodeBool*)first)->value == ((NodeBool*)second)->value;
+                else if(instanceof<NodeInt>(second)) eqNeqResult->value = ((NodeInt*)second)->value == (((NodeBool*)first)->value ? "1" : "0");
+                else if(instanceof<NodeFloat>(second)) {
+                    std::string _float = ((NodeFloat*)second)->value;
+                    int dot = _float.find('.');
+
+                    if(dot != std::string::npos) {
+                        while(_float.back() == '0') _float.pop_back();
+                        if(_float.back() == '.') _float.pop_back();
+                    }
+
+                    eqNeqResult->value = _float == (((NodeBool*)first)->value ? "1" : "0");
+                }
+            }
             else if(instanceof<NodeInt>(first)) {
                 if(instanceof<NodeInt>(second)) eqNeqResult->value = ((NodeInt*)first)->value == ((NodeInt*)second)->value;
                 else if(instanceof<NodeBool>(second)) eqNeqResult->value = ((NodeInt*)first)->value == (((NodeBool*)second)->value ? "1" : "0");
@@ -323,18 +337,48 @@ Node* NodeBinary::comptime() {
             return eqNeqResult;
         case TokType::And: return new NodeBool(((NodeBool*)first->comptime())->value && ((NodeBool*)second->comptime())->value);
         case TokType::Or: return new NodeBool(((NodeBool*)first->comptime())->value || ((NodeBool*)second->comptime())->value);
-        case TokType::More:
-            if(instanceof<NodeInt>(first)) return new NodeBool(((NodeInt*)first)->value > ((NodeInt*)second)->value);
-            else return new NodeBool(((NodeFloat*)first)->value > ((NodeFloat*)second)->value);
-        case TokType::Less:
-            if(instanceof<NodeInt>(first)) return new NodeBool(((NodeInt*)first)->value < ((NodeInt*)second)->value);
-            else return new NodeBool(((NodeFloat*)first)->value < ((NodeFloat*)second)->value);
-        case TokType::MoreEqual:
-            if(instanceof<NodeInt>(first)) return new NodeBool(((NodeInt*)first)->value >= ((NodeInt*)second)->value);
-            else return new NodeBool(((NodeFloat*)first)->value >= ((NodeFloat*)second)->value);
-        case TokType::LessEqual:
-            if(instanceof<NodeInt>(first)) return new NodeBool(((NodeInt*)first)->value <= ((NodeInt*)second)->value);
-            else return new NodeBool(((NodeFloat*)first)->value <= ((NodeFloat*)second)->value);
+        case TokType::More: case TokType::Less: case TokType::MoreEqual: case TokType::LessEqual:
+            if(instanceof<NodeInt>(first)) {
+                if(instanceof<NodeInt>(second)) {
+                    if(this->op == TokType::More) return new NodeBool(((NodeInt*)first)->value > ((NodeInt*)second)->value);
+                    else if(this->op == TokType::Less) return new NodeBool(((NodeInt*)first)->value < ((NodeInt*)second)->value);
+                    else if(this->op == TokType::MoreEqual) return new NodeBool(((NodeInt*)first)->value >= ((NodeInt*)second)->value);
+                    else return new NodeBool(((NodeInt*)first)->value <= ((NodeInt*)second)->value);
+                }
+                else if(instanceof<NodeFloat>(second)) {
+                    if(((NodeInt*)first)->type == BasicType::Cent || ((NodeInt*)first)->type == BasicType::Ucent) return new NodeBool(false); // TODO: is this a error?
+                    R128 r128;
+                    r128FromString(&r128, ((NodeFloat*)second)->value.c_str(), nullptr);
+                    if(this->op == TokType::More) return new NodeBool(r128 > R128(((NodeInt*)first)->value.to_long_long()));
+                    else if(this->op == TokType::Less) return new NodeBool(r128 < R128(((NodeInt*)first)->value.to_long_long()));
+                    else if(this->op == TokType::MoreEqual) return new NodeBool(r128 >= R128(((NodeInt*)first)->value.to_long_long()));
+                    else return new NodeBool(r128 <= R128(((NodeInt*)first)->value.to_long_long()));
+                }
+                else if(instanceof<NodeBool>(second)) return new NodeBool(((NodeInt*)first)->value > (((NodeBool*)second)->value ? 1 : 0));
+                else return new NodeBool(false);
+            }
+            else if(instanceof<NodeFloat>(first)) {
+                if(instanceof<NodeFloat>(second)) {
+                    R128 r128_1, r128_2;
+                    r128FromString(&r128_1, ((NodeFloat*)first)->value.c_str(), nullptr);
+                    r128FromString(&r128_2, ((NodeFloat*)first)->value.c_str(), nullptr);
+                    if(this->op == TokType::More) return new NodeBool(r128_1 > r128_2);
+                    else if(this->op == TokType::Less) return new NodeBool(r128_1 < r128_2);
+                    else if(this->op == TokType::MoreEqual) return new NodeBool(r128_1 >= r128_2);
+                    else return new NodeBool(r128_1 <= r128_2);
+                }
+                else if(instanceof<NodeInt>(second)) {
+                    if(((NodeInt*)second)->type == BasicType::Cent || ((NodeInt*)second)->type == BasicType::Ucent) return new NodeBool(false); // TODO: is this a error?
+                    R128 r128;
+                    r128FromString(&r128, ((NodeFloat*)first)->value.c_str(), nullptr);
+                    if(this->op == TokType::More) return new NodeBool(r128 > R128(((NodeInt*)second)->value.to_long_long()));
+                    else if(this->op == TokType::Less) return new NodeBool(r128 < R128(((NodeInt*)second)->value.to_long_long()));
+                    else if(this->op == TokType::MoreEqual) return new NodeBool(r128 >= R128(((NodeInt*)second)->value.to_long_long()));
+                    else return new NodeBool(r128 <= R128(((NodeInt*)second)->value.to_long_long()));
+                }
+                // TODO: add bool
+            }
+            return new NodeBool(false);
         default: return new NodeBool(false);
     }
 }
