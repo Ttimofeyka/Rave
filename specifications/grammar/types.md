@@ -2,12 +2,17 @@
 
 ## Basic types
 
-- bool
-- char
-- short
-- int
-- long
-- cent
+- bool (boolean type)
+- char (8-bit)
+- short (16-bit)
+- int (32-bit)
+- long (64-bit)
+- cent (128-bit)
+- half (16-bit float)
+- bhalf (16-bit float, it is known as **bfloat16**)
+- float (32-bit float)
+- double (64-bit float)
+- real (128-bit float)
 - alias (only for variables)
 
 ## Pointers
@@ -16,6 +21,7 @@ Examples:
 
 - char*
 - bool**
+- half*
 
 ## Arrays
 
@@ -23,6 +29,7 @@ Examples:
 
 - char*[512]
 - bool[10]
+- real[8]
 
 ## Structures
 
