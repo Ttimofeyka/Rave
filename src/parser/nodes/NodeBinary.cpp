@@ -37,7 +37,7 @@ LLVMValueRef Binary::castValue(LLVMValueRef from, LLVMTypeRef to, int loc) {
     if(kindFrom == kindTo) {
         switch(kindFrom) {
             case LLVMIntegerTypeKind: return LLVMBuildIntCast(generator->builder, from, to, "castValueItoI");
-            case LLVMFloatTypeKind: case LLVMDoubleTypeKind: case LLVMHalfTypeKind: case LLVMBFloatTypeKind: return LLVMBuildFPCast(generator->builder, from, to, "castValueFtoF");
+            case LLVMFloatTypeKind: case LLVMDoubleTypeKind: case LLVMHalfTypeKind: case LLVMBFloatTypeKind: case LLVMFP128TypeKind: return LLVMBuildFPCast(generator->builder, from, to, "castValueFtoF");
             case LLVMPointerTypeKind: return LLVMBuildPointerCast(generator->builder, from, to, "castValuePtoP");
             case LLVMArrayTypeKind: generator->error("the ability to use cast to arrays is temporarily impossible!", loc); return nullptr;
             default: return from;
@@ -46,7 +46,7 @@ LLVMValueRef Binary::castValue(LLVMValueRef from, LLVMTypeRef to, int loc) {
     switch(kindFrom) {
         case LLVMIntegerTypeKind:
             switch(kindTo) {
-                case LLVMFloatTypeKind: case LLVMDoubleTypeKind: case LLVMHalfTypeKind: case LLVMBFloatTypeKind: return LLVMBuildSIToFP(generator->builder, from, to, "castValueItoF");
+                case LLVMFloatTypeKind: case LLVMDoubleTypeKind: case LLVMHalfTypeKind: case LLVMBFloatTypeKind: case LLVMFP128TypeKind: return LLVMBuildSIToFP(generator->builder, from, to, "castValueItoF");
                 case LLVMPointerTypeKind: return LLVMBuildIntToPtr(generator->builder, from, to, "castValueItoP");
                 case LLVMArrayTypeKind: generator->error("it is forbidden to cast numbers into arrays!", loc); return nullptr;
                 case LLVMStructTypeKind: generator->error("it is forbidden to cast numbers into structures!", loc); return nullptr;
@@ -55,7 +55,7 @@ LLVMValueRef Binary::castValue(LLVMValueRef from, LLVMTypeRef to, int loc) {
         case LLVMFloatTypeKind: case LLVMDoubleTypeKind:
             switch(kindTo) {
                 case LLVMIntegerTypeKind: return LLVMBuildFPToSI(generator->builder, from, to, "castValueFtoI");
-                case LLVMHalfTypeKind: case LLVMBFloatTypeKind: case LLVMDoubleTypeKind: case LLVMFloatTypeKind: return LLVMBuildFPCast(generator->builder, from, to, "castValueFtoH");
+                case LLVMHalfTypeKind: case LLVMBFloatTypeKind: case LLVMDoubleTypeKind: case LLVMFloatTypeKind: case LLVMFP128TypeKind: return LLVMBuildFPCast(generator->builder, from, to, "castValueFtoH");
                 case LLVMPointerTypeKind: generator->error("it is forbidden to cast floating-point numbers into pointers!", loc); return nullptr;
                 case LLVMArrayTypeKind: generator->error("it is forbidden to cast numbers into arrays!", loc); return nullptr;
                 case LLVMStructTypeKind: generator->error("it is forbidden to cast numbers into structures!", loc); return nullptr;
@@ -64,7 +64,7 @@ LLVMValueRef Binary::castValue(LLVMValueRef from, LLVMTypeRef to, int loc) {
         case LLVMPointerTypeKind:
             switch(kindTo) {
                 case LLVMIntegerTypeKind: return LLVMBuildPtrToInt(generator->builder, from, to, "castValuePtoI");
-                case LLVMFloatTypeKind: case LLVMDoubleTypeKind: case LLVMHalfTypeKind: case LLVMBFloatTypeKind:
+                case LLVMFloatTypeKind: case LLVMDoubleTypeKind: case LLVMHalfTypeKind: case LLVMBFloatTypeKind: case LLVMFP128TypeKind:
                     if(std::string(LLVMPrintValueToString(from)).find("null") != std::string::npos) return LLVMConstReal(to, 0.0);
                     generator->error("it is forbidden to cast pointers into floating-point numbers!", loc); return nullptr;
                 case LLVMArrayTypeKind:
@@ -278,27 +278,48 @@ Node* NodeBinary::comptime() {
 
     switch(this->op) {
         case TokType::Equal: case TokType::Nequal:
-            eqNeqResult = new NodeBool(false);
+            eqNeqResult = new NodeBool(true);
 
-            if(instanceof<NodeString>(first) && instanceof<NodeString>(second)) {
-                eqNeqResult->value = ((NodeString*)first)->value == ((NodeString*)second)->value;
-                if(this->op == TokType::Nequal) eqNeqResult->value = !eqNeqResult->value;
-            }
-            else if(instanceof<NodeBool>(first) && instanceof<NodeBool>(second)) {
-                eqNeqResult->value = ((NodeBool*)first)->value == ((NodeBool*)second)->value;
-                if(this->op == TokType::Nequal) eqNeqResult->value = !eqNeqResult->value;
-            }
-            else if(instanceof<NodeType>(first)) {
-                if(instanceof<NodeType>(second)) eqNeqResult->value = ((NodeType*)first)->type->toString() == ((NodeType*)second)->type->toString();
-                else if(instanceof<NodeIden>(second)) eqNeqResult->value = ((NodeType*)first)->type->toString() == ((NodeIden*)second)->name;
+            if(instanceof<NodeString>(first) && instanceof<NodeString>(second)) eqNeqResult->value = ((NodeString*)first)->value == ((NodeString*)second)->value;
+            else if(instanceof<NodeBool>(first) && instanceof<NodeBool>(second)) eqNeqResult->value = ((NodeBool*)first)->value == ((NodeBool*)second)->value;
+            else if(instanceof<NodeInt>(first)) {
+                if(instanceof<NodeInt>(second)) eqNeqResult->value = ((NodeInt*)first)->value == ((NodeInt*)second)->value;
+                else if(instanceof<NodeBool>(second)) eqNeqResult->value = ((NodeInt*)first)->value == (((NodeBool*)second)->value ? "1" : "0");
+                else if(instanceof<NodeFloat>(second)) {
+                    std::string _float = ((NodeFloat*)second)->value;
+                    int dot = _float.find('.');
 
-                if(this->op == TokType::Nequal) eqNeqResult->value = !eqNeqResult->value;
+                    if(dot != std::string::npos) {
+                        while(_float.back() == '0') _float.pop_back();
+                        if(_float.back() == '.') _float.pop_back();
+                    }
+
+                    eqNeqResult->value = _float == ((NodeInt*)first)->value.to_string();
+                }
             }
-            else if(instanceof<NodeType>(second)) {
-                if(instanceof<NodeIden>(first)) eqNeqResult->value = ((NodeIden*)first)->name == ((NodeType*)second)->type->toString();
-                if(this->op == TokType::Nequal) eqNeqResult->value = !eqNeqResult->value;
+            else if(instanceof<NodeFloat>(first)) {
+                std::string _float = ((NodeFloat*)first)->value;
+                int dot = _float.find('.');
+                if(dot != std::string::npos) {
+                    while(_float.back() == '0') _float.pop_back();
+                    if(_float.back() == '.') _float.pop_back();
+                }
+                
+                if(instanceof<NodeFloat>(second)) {
+                    std::string _float2 = ((NodeFloat*)second)->value;
+                    int dot2 = _float2.find('.');
+                    if(dot2 != std::string::npos) {
+                        while(_float2.back() == '0') _float2.pop_back();
+                        if(_float2.back() == '.') _float2.pop_back();
+                    }
+                    eqNeqResult->value = _float == _float2;
+                }
+                else if(instanceof<NodeInt>(second)) eqNeqResult->value = _float == ((NodeInt*)second)->value.to_string();
+                else if(instanceof<NodeBool>(second)) eqNeqResult->value = _float == (((NodeBool*)second)->value ? "1" : "0");
             }
             
+            if(this->op == TokType::Nequal) eqNeqResult->value = !eqNeqResult->value;
+
             return eqNeqResult;
         case TokType::And: return new NodeBool(((NodeBool*)first->comptime())->value && ((NodeBool*)second->comptime())->value);
         case TokType::Or: return new NodeBool(((NodeBool*)first->comptime())->value || ((NodeBool*)second->comptime())->value);

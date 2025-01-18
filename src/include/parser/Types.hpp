@@ -26,6 +26,7 @@ namespace BasicType {
         Bhalf,
         Float,
         Double,
+        Real,
     
         Uchar,
         Ushort,

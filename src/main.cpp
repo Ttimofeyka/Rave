@@ -11,6 +11,9 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "./include/parser/parser.hpp"
 #include "./include/compiler.hpp"
 
+#define R128_IMPLEMENTATION
+#include "./include/r128.h"
+
 std::string outFile = "";
 std::string outType = "";
 std::vector<std::string> files;

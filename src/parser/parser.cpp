@@ -463,7 +463,7 @@ Node* Parser::parseAtom(std::string f) {
                 else if(iden == "s") _int->isMustBeShort = true;
                 return _int;
             }
-            else if(iden == "f" || iden == "d" || iden == "h" || iden == "bh") {
+            else if(iden == "f" || iden == "d" || iden == "h" || iden == "bh" || iden == "r") {
                 NodeFloat* nfloat = new NodeFloat(std::stod(t->value));
                 this->next();
 
@@ -471,6 +471,7 @@ Node* Parser::parseAtom(std::string f) {
                 else if(iden == "d") nfloat->type = basicTypes[BasicType::Double];
                 else if(iden == "h") nfloat->type = basicTypes[BasicType::Half];
                 else if(iden == "bh") nfloat->type = basicTypes[BasicType::Bhalf];
+                else if(iden == "r") nfloat->type = basicTypes[BasicType::Real];
                 return nfloat;
             }
         }
@@ -481,14 +482,15 @@ Node* Parser::parseAtom(std::string f) {
             std::string suffix = this->peek()->value;
             this->next();
 
-            if(suffix == "d") return new NodeFloat(std::stod(t->value), basicTypes[BasicType::Double]);
+            if(suffix == "d") return new NodeFloat(t->value, basicTypes[BasicType::Double]);
             else if(suffix == "f") {
-                NodeFloat* nfloat = new NodeFloat(std::stod(t->value), basicTypes[BasicType::Float]);
+                NodeFloat* nfloat = new NodeFloat(t->value, basicTypes[BasicType::Float]);
                 nfloat->isMustBeFloat = true;
                 return nfloat;
             }
-            else if(suffix == "h") return new NodeFloat(std::stod(t->value), basicTypes[BasicType::Half]);
-            else if(suffix == "bh") return new NodeFloat(std::stod(t->value), basicTypes[BasicType::Bhalf]);
+            else if(suffix == "h") return new NodeFloat(t->value, basicTypes[BasicType::Half]);
+            else if(suffix == "bh") return new NodeFloat(t->value, basicTypes[BasicType::Bhalf]);
+            else if(suffix == "r") return new NodeFloat(t->value, basicTypes[BasicType::Real]);
         }
         return new NodeFloat(std::stod(t->value));
     }

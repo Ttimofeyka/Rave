@@ -210,6 +210,7 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
     basicTypes[BasicType::Bhalf] = new TypeBasic(BasicType::Bhalf);
     basicTypes[BasicType::Float] = new TypeBasic(BasicType::Float);
     basicTypes[BasicType::Double] = new TypeBasic(BasicType::Double);
+    basicTypes[BasicType::Real] = new TypeBasic(BasicType::Real);
     typeVoid = new TypeVoid();
 }
 

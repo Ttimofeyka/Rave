@@ -73,6 +73,7 @@ std::string typeToString(Type* arg) {
             case BasicType::Char: case BasicType::Uchar: return "c";
             case BasicType::Long: case BasicType::Ulong: return "l";
             case BasicType::Short: case BasicType::Ushort: "h";
+            case BasicType::Real: return "r";
             default: return "b";
         }
     }
@@ -279,6 +280,7 @@ LLVMTypeRef LLVMGen::genType(Type* type, int loc) {
         case BasicType::Cent: case BasicType::Ucent: return LLVMInt128TypeInContext(this->context);
         case BasicType::Float: return LLVMFloatTypeInContext(this->context);
         case BasicType::Double: return LLVMDoubleTypeInContext(this->context);
+        case BasicType::Real: return LLVMFP128TypeInContext(this->context);
         default: return nullptr;
     }
     if(instanceof<TypePointer>(type)) {
@@ -373,7 +375,7 @@ int LLVMGen::getAlignment(Type* type) {
             case BasicType::Short: case BasicType::Ushort: case BasicType::Half: case BasicType::Bhalf: return 2;
             case BasicType::Int: case BasicType::Uint: case BasicType::Float: return 4;
             case BasicType::Long: case BasicType::Ulong: case BasicType::Double: return 8;
-            case BasicType::Cent: case BasicType::Ucent: return 16;
+            case BasicType::Cent: case BasicType::Ucent: case BasicType::Real: return 16;
             default: return 0;
         }
     }

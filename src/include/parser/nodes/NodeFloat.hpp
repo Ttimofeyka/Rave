@@ -11,16 +11,19 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../Types.hpp"
 #include <vector>
 #include <string>
+#include "../../r128.h"
 
 class NodeFloat : public Node {
 public:
-    double value;
+    std::string value;
     TypeBasic* type = nullptr;
     bool isMustBeFloat = false;
 
     NodeFloat(double value);
+    NodeFloat(std::string value);
     NodeFloat(double value, bool isDouble);
     NodeFloat(double value, TypeBasic* type);
+    NodeFloat(std::string value, TypeBasic* type);
     ~NodeFloat() {if(this->type != nullptr) delete this->type;}
     Type* getType() override;
     

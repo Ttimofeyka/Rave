@@ -34,12 +34,12 @@ int TypeBasic::getSize() {
         case BasicType::Short: case BasicType::Ushort: case BasicType::Half:case BasicType::Bhalf: return 16;
         case BasicType::Int: case BasicType::Uint: case BasicType::Float: return 32;
         case BasicType::Long: case BasicType::Ulong: case BasicType::Double: return 64;
-        case BasicType::Cent: case BasicType::Ucent: return 128;
+        case BasicType::Cent: case BasicType::Ucent: case BasicType::Real: return 128;
         default: return 0;
     }
 }
 
-bool TypeBasic::isFloat() {return (this->type == BasicType::Float) || (this->type == BasicType::Double || this->type == BasicType::Half || this->type == BasicType::Bhalf);}
+bool TypeBasic::isFloat() {return (this->type == BasicType::Float) || (this->type == BasicType::Double || this->type == BasicType::Half || this->type == BasicType::Bhalf || this->type == BasicType::Real);}
 
 std::string TypeBasic::toString() {
     switch(this->type) {
@@ -52,6 +52,7 @@ std::string TypeBasic::toString() {
         case BasicType::Double: return "double";
         case BasicType::Cent: return "cent"; case BasicType::Ucent: return "cent";
         case BasicType::Half: return "half"; case BasicType::Bhalf: return "bhalf";
+        case BasicType::Real: return "real";
         default: return "BasicUnknown";
     }
 }
@@ -274,7 +275,7 @@ Type* TypeTemplateMember::check(Type* parent) {return nullptr;}
 
 std::string TypeTemplateMember::toString() {
     if(instanceof<NodeInt>(value)) return "@" + type->toString() + ((NodeInt*)value)->value.to_string();
-    else if(instanceof<NodeFloat>(value)) return "@" + type->toString() + std::to_string(((NodeFloat*)value)->value);
+    else if(instanceof<NodeFloat>(value)) return "@" + type->toString() + ((NodeFloat*)value)->value;
     else if(instanceof<NodeString>(value)) return "@" + type->toString() + "\"" + ((NodeString*)value)->value + "\"";
     return "@" + type->toString();
 }
@@ -430,6 +431,7 @@ Type* getType(std::string id) {
         {"bhalf", basicTypes[BasicType::Bhalf]},
         {"float", basicTypes[BasicType::Float]},
         {"double", basicTypes[BasicType::Double]},
+        {"real", basicTypes[BasicType::Real]},
         {"void", typeVoid},
         {"alias", new TypeAlias()},
         {"int4", new TypeVector(new TypeBasic(BasicType::Int), 4)},

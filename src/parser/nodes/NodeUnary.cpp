@@ -193,7 +193,11 @@ Node* NodeUnary::comptime() {
     switch(this->type) {
         case TokType::Minus:
             if(instanceof<NodeInt>(comptimed)) return new NodeInt(-((NodeInt*)comptimed)->value);
-            else if(instanceof<NodeFloat>(comptimed)) return new NodeFloat(-((NodeFloat*)comptimed)->value);
+            else if(instanceof<NodeFloat>(comptimed)) {
+                std::string value = ((NodeFloat*)comptimed)->value;
+                if(value[0] == '-') return new NodeFloat(value.substr(1));
+                return new NodeFloat("-" + value);
+            }
             generator->error("NodeUnary::comptime() cannot work with this value!", this->loc);
             return nullptr;
         case TokType::Ne:
