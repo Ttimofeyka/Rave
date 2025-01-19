@@ -119,8 +119,7 @@ namespace std {
         }
 
         (inline) void removeLast {
-            @if(__RAVE_RUNTIME_CHECKS) if(this.length > 0) this.remove(this.length - 1);
-            @else this.remove(this.length - 1);
+            if(this.length > 0) this.remove(this.length - 1);
         }
 
         void ~this {
