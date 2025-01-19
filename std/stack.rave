@@ -42,7 +42,7 @@ namespace std {
         STACK_T top => this.data[this.length - 1];
 
         STACK_T pop {
-            @if(__RAVE_RUNTIME_CHECKS) if(this.length <= 0) @return(null);
+            if(this.length <= 0) @return(null);
             return = this.top();
 
             for(int i=(this.length - 1); i<this.length; i+=1) {
