@@ -119,11 +119,14 @@ namespace std {
         void add(char c) {
             if(this.data != null) {
                 this.length += 1;
+
                 if(this.length == this.capacity) {
                     this.data = std::realloc(this.data, this.capacity, this.capacity * 2);
                     this.capacity = this.capacity * 2;
                 }
-                this.data[this.length-1] = c;
+
+                this.data[this.length - 1] = c;
+                this.data[this.length] = '\0';
             }
         }
 
@@ -138,9 +141,11 @@ namespace std {
 
                 while(i < str.length) {
                     this.length += 1;
-                    this.data[this.length-1] = str.data[i];
+                    this.data[this.length - 1] = str.data[i];
                     i += 1;
                 }
+
+                this.data[this.length] = '\0';
             }
         }
 
@@ -156,9 +161,11 @@ namespace std {
 
                 while(i < len) {
                     this.length += 1;
-                    this.data[this.length-1] = cstr[i];
+                    this.data[this.length - 1] = cstr[i];
                     i += 1;
                 }
+
+                this.data[this.length] = '\0';
             }
         }
 
@@ -428,7 +435,7 @@ namespace std {
         resultPtr[0] = result;
     }
 
-    std::spinlock __sprintBufferSL = 0;
+    std::spinlock __sprintBufferSL;
     std::string __sprintBuffer;
     bool sbInitialized = false;
 
