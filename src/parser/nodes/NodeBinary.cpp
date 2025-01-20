@@ -268,7 +268,7 @@ Node* NodeBinary::comptime() {
         }
 
         switch(this->op) {
-            case TokType::Equal: return new NodeBool(firstType->toString() != secondType->toString());
+            case TokType::Equal: return new NodeBool(firstType->toString() == secondType->toString());
             case TokType::Nequal: return new NodeBool(firstType->toString() != secondType->toString());
             default: return new NodeBool(false);
         }
