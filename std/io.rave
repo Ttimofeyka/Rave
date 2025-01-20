@@ -65,7 +65,7 @@ namespace std {
 @if(__RAVE_OS == "WINDOWS") {
     namespace std {
         namespace file {
-            extern(C, linkname: "MoveFileW") char __rename(ushort* oldpath, ushort* newpath);
+            extern(linkname: "MoveFileW") char __rename(ushort* oldpath, ushort* newpath);
             extern(linkname: "_access") int __access(char* fname, int flag);
         }
     }
