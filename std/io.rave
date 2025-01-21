@@ -32,9 +32,11 @@ namespace std {
 
 namespace std {
     namespace file {
-        alias seekSet = 0;
-        alias seekCur = 1;
-        alias seekEnd = 2;
+        namespace position {
+            alias start = 0;
+            alias current = 1;
+            alias end = 2;
+        }
     }
 }
 
@@ -399,6 +401,7 @@ namespace std {
                 extern(linkname: "WriteFile") char WriteFile(void* file, void* buffer, int length, int* out, void* overlapped);
                 extern(linkname: "ReadFile") char ReadFile(void* file, void* buffer, int length, int* out, void* overlapped);
                 extern(linkname: "CloseHandle") char CloseHandle(void* file);
+                extern(linkname: "SetFilePointerEx") int SetFilePointerEx(void* file, long* distToMove, long* newFilePtr, uint moveMethod);
             }
 
             struct file {
@@ -485,7 +488,7 @@ namespace std {
                     else return = true;
                 }
 
-                //int seek(int flag, long offset) => cast(int)std::syscall(std::sysctable::LSeek, fd, flag, offset);
+                int seek(int flag, long offset) => std::experimental::file::SetFilePointerEx(fd, offset, cast(long*)null, flag);
 
                 void flush {
                     if((fd != null) && (bufferPos > 0) && (buffer != null)) {

@@ -122,3 +122,23 @@ std::string buffer = f.readAll();
 f.close();
 ```
 
+### seek
+
+The method for moving the current file position.
+
+A first argument must be a flag: `std::file::position::start` (start of the file), `std::file::position::current` (current position) or `std::file::position::end` (end of the file).
+
+Example:
+
+```d
+std::file f = std::file("foo.x");
+f.open("r");
+
+std::string buffer = f.readAll(); // Reading all file content
+
+f.seek(std::file::position::start, 0); // Now we again in the start of the file
+
+std::string buffer2 = f.readAll();
+
+f.close();
+```
