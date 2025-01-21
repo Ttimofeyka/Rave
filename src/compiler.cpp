@@ -129,7 +129,7 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
         if(__features.find("+avx512") != std::string::npos) avx512 = "\"avx512\": true";
 
         #if defined(_WIN32)
-            fOptions << "{\n\t\"compiler\": \"gcc"\",\n\t"
+            fOptions << "{\n\t\"compiler\": \"gcc\",\n\t"
             + sse + ",\n\t" + sse2 + ",\n\t" + sse3 + ",\n\t" + ssse3 + ",\n\t" + sse4_1 + ",\n\t" + sse4_2 + ",\n\t" + sse4a +
             ",\n\t" + avx + ",\n\t" + avx2 + ",\n\t" + avx512 +
             "\n}" << std::endl;
