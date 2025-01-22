@@ -642,14 +642,79 @@ namespace std {
 }
 
 namespace std {
+    bool __inputBufferInitialized = false;
+
+    // Is not a thread safe function due to the getchar(), so it does not need a spinlock
     (inline, ctargs) void input {
+        char[42] buffer;
+        int idx;
+        char sign;
+
         @foreachArgs() {
-            @if(@getCurrArgType() == char*) std::scanf("%c", @getCurrArg(char*));
-            @if(@getCurrArgType() == short*) std::scanf("%hd", @getCurrArg(short*));
-            @if(@getCurrArgType() == int*) std::scanf("%d", @getCurrArg(int*));
-            @if(@getCurrArgType() == long*) std::scanf("%ld", @getCurrArg(long*));
-            @if(@getCurrArgType() == float*) std::scanf("%f", @getCurrArg(float*));
-            @if(@getCurrArgType() == double*) std::scanf("%lf", @getCurrArg(double*));
+            @if(@getCurrArgType() == char*) {
+                char* pointer = @getCurrArg(char*);
+                char c = std::getchar();
+                while(std::ascii::isSpace(c)) c = std::getchar();
+                pointer[0] = c;
+            }
+            @else @if((@getCurrArgType() == short*) || (@getCurrArgType() == int*) || (@getCurrArgType() == long*) || (@getCurrArgType() == cent*)) {
+                auto pointer = @getCurrArg(@getCurrArgType());
+                idx = 0;
+                char c = std::getchar();
+
+                while(std::ascii::isSpace(c)) c = std::getchar();
+
+                if(!std::ascii::isDigit(c)) {
+                    if(c == '-') {buffer[0] = '-'; idx += 1;}
+                    c = std::getchar();
+                }
+
+                while(std::ascii::isDigit(c)) {
+                    if(idx >= 41) break;
+                    buffer[idx] = c;
+                    idx += 1;
+                    c = std::getchar();
+                }
+
+                @if(@getCurrArgType() != cent*) pointer[0] = std::cstring::stol(&buffer, idx);
+                @else pointer[0] = std::cstring::stoc(&buffer, idx);
+            }
+            @else @if((@getCurrArgType() == float*) || (@getCurrArgType() == double*) || (@getCurrArgType() == real*)) {
+                auto pointer = @getCurrArg(@getCurrArgType());
+                idx = 0;
+                char c = std::getchar();
+
+                while(std::ascii::isSpace(c)) c = std::getchar();
+
+                if(!std::ascii::isDigit(c)) {
+                    if(c == '-') {buffer[0] = '-'; idx += 1;}
+                    c = std::getchar();
+                }
+
+                // First part
+                while(std::ascii::isDigit(c)) {
+                    if(idx >= 41) break;
+                    buffer[idx] = c;
+                    idx += 1;
+                    c = std::getchar();
+                }
+
+                if((idx < 41) && (c == '.')) {
+                    buffer[idx] = '.';
+                    idx += 1;
+
+                    // Second part
+                    while(std::ascii::isDigit(c)) {
+                        if(idx >= 41) break;
+                        buffer[idx] = c;
+                        idx += 1;
+                        c = std::getchar();
+                    }
+                }
+                
+                @if(@getCurrArgType() != real*) pointer[0] = std::cstring::stod(&buffer, idx);
+                @else pointer[0] = std::cstring::stor(&buffer, idx);
+            }
         }
     }
 
