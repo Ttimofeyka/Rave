@@ -186,7 +186,7 @@ namespace std {
 
         long stol(const(char)* data, int length) {
             bool isNegative = false;
-            int coeff = 1;
+            long coeff = 1;
 
             for(int i=length - 1; i>=0; i--) {
                 if(data[i] == '-') {
@@ -205,7 +205,7 @@ namespace std {
 
         cent stoc(const(char)* data, int length) {
             bool isNegative = false;
-            int coeff = 1;
+            cent coeff = 1;
 
             for(int i=length - 1; i>=0; i--) {
                 if(data[i] == '-') {
@@ -216,6 +216,7 @@ namespace std {
                 return += (cast(cent)(data[i] - '0') * coeff);
                 coeff *= 10;
             }
+
             if(isNegative) return = -return;
         }
 
