@@ -74,7 +74,7 @@ namespace std {
         }
 
         char* ltos(long number, char* endBuffer) {
-            char[20] ltosBuffer;
+            char[22] ltosBuffer;
 
             if(number == 0) {
                 endBuffer[0] = '0';
@@ -110,7 +110,7 @@ namespace std {
         } => endBuffer;
 
         char* ctos(cent number, char* endBuffer) {
-            char[20] ctosBuffer;
+            char[42] ctosBuffer;
 
             if(number == 0) {
                 endBuffer[0] = '0';
@@ -150,7 +150,7 @@ namespace std {
             int i;
             int tI;
             int len;
-            char[24] temp;
+            char[32] temp;
             int decimals;
 
             bool isNegative = false;
@@ -164,15 +164,18 @@ namespace std {
             lPart = cast(long)number;
             std::cstring::ltos(lPart, &temp);
             len = std::cstring::strlen(&temp);
+
             while(tI < len) {
                 buffer[i] = temp[tI];
                 i += 1;
                 tI += 1;
             }
+            
             number = number - cast(double)lPart;
             buffer[i] = '.';
             i += 1;
             decimals = 0;
+
             while(decimals < precision) {
                 number = number * 10;
                 lPart = cast(long)number;
@@ -181,6 +184,9 @@ namespace std {
                 decimals += 1;
                 number = number - cast(double)lPart;
             }
+
+            while(buffer[i - 1] == '0') i -= 1;
+
             buffer[i] = '\0';
         } => buffer;
 
@@ -255,6 +261,47 @@ namespace std {
             while((i < length) && (std::ascii::isDigit(data[i]))) {
                 fraction = fraction * 10 + (data[i] - '0');
                 fractionScale *= 10;
+                i += 1;
+            }
+
+            // Combine the integer and fractional parts
+            if(decimalPoint != -1) return += fraction / fractionScale;
+            if(isNegative) return = -return;
+        }
+
+        real stor(const(char)* data, int length) {
+            return = 0.0d;
+            bool isNegative = false;
+            int i = 0;
+            int decimalPoint = -1;
+
+            // Handle optional leading whitespace
+            while((i < length) && (std::ascii::isSpace(data[i]))) i += 1;
+
+            // Handle optional sign
+            if((i < length) && ((data[i] == '-') || (data[i] == '+'))) {
+                if(data[i] == '-') isNegative = true;
+                i += 1;
+            }
+
+            // Process digits before the decimal point
+            while((i < length) && (std::ascii::isDigit(data[i]))) {
+                return = return * 10 + (data[i] - '0');
+                i += 1;
+            }
+
+            // Process the decimal point
+            if((i < length) && (data[i] == '.')) {
+                decimalPoint = i;
+                i += 1;
+            }
+
+            // Process digits after the decimal point
+            real fraction = 0.0r;
+            real fractionScale = 1.0r;
+            while((i < length) && (std::ascii::isDigit(data[i]))) {
+                fraction = fraction * 10r + (data[i] - '0');
+                fractionScale *= 10r;
                 i += 1;
             }
 
