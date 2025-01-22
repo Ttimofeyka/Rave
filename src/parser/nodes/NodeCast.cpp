@@ -29,6 +29,7 @@ void NodeCast::check() {
 
 NodeCast::~NodeCast() {
     if(this->value != nullptr) delete this->value;
+    if(this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
 }
 
 Type* NodeCast::getType() {return this->type->copy();}
