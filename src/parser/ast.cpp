@@ -325,7 +325,7 @@ LLVMTypeRef LLVMGen::genType(Type* type, int loc) {
     if(instanceof<TypeVoid>(type)) return LLVMVoidTypeInContext(this->context);
     if(instanceof<TypeFunc>(type)) {
         TypeFunc* tf = (TypeFunc*)type;
-        if(instanceof<TypeVoid>(tf->main)) {delete tf->main; tf->main = new TypeBasic(BasicType::Char);}
+        if(instanceof<TypeVoid>(tf->main)) tf->main = new TypeBasic(BasicType::Char);
         std::vector<LLVMTypeRef> types;
         for(int i=0; i<tf->args.size(); i++) types.push_back(this->genType(tf->args[i]->type, loc));
         return LLVMPointerType(LLVMFunctionType(this->genType(tf->main, loc), types.data(), types.size(), false), 0);
