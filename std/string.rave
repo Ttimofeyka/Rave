@@ -349,7 +349,7 @@ namespace std {
                 if(std::math::isNAN(@getCurrArg(double))) result.appendC("NAN");
                 else {
                     std::memset(&nBuffer, 0, 40);
-                    std::cstring::dtos(@getCurrArg(double), 8, &nBuffer);
+                    std::cstring::dtos(@getCurrArg(double), 16, &nBuffer);
                     result.appendC(cast(char*)&nBuffer);
                 }
             }
