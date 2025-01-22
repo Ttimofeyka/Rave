@@ -78,6 +78,7 @@ namespace std {
 
             if(number == 0) {
                 endBuffer[0] = '0';
+                endBuffer[1] = '\0';
                 @return(endBuffer);
             }
 
@@ -113,6 +114,7 @@ namespace std {
 
             if(number == 0) {
                 endBuffer[0] = '0';
+                endBuffer[1] = '\0';
                 @return(endBuffer);
             }
 
