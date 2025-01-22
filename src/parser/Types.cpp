@@ -342,7 +342,7 @@ Type* TypeFunc::getElType() {return this;}
 TypeFunc::~TypeFunc() {
     if(this->main != nullptr && !instanceof<TypeBasic>(this->main) && !instanceof<TypeVoid>(this->main)) delete this->main;
 
-    for(int i=0; i<this->args.size(); i++) if(this->args[i] != nullptr) delete this->args[i];
+    for(int i=0; i<this->args.size(); i++) if(this->args[i] != nullptr && !instanceof<TypeBasic>(this->args[i]) && !instanceof<TypeVoid>(this->args[i])) delete this->args[i];
 }
 
 // TypeBuiltin
