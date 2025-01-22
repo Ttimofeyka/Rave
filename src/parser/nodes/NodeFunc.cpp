@@ -43,22 +43,6 @@ Type* getTypeBySize(int size) {
     else return basicTypes[BasicType::Cent];
 }
 
-int getCountOfInternalArgs(NodeFunc* nfunc) {
-    int size = 0;
-
-    for(int i=0; i<nfunc->args.size(); i++) {
-        for(int j=0; j<nfunc->args[i].internalTypes.size(); j++) {
-            if(instanceof<TypeDivided>(nfunc->args[i].internalTypes[0])) {
-                TypeDivided* tdivided = (TypeDivided*)nfunc->args[i].internalTypes[0];
-                size += tdivided->divided.size();
-            }
-            else size += 1;
-        }
-    }
-
-    return size;
-}
-
 NodeFunc::NodeFunc(std::string name, std::vector<FuncArgSet> args, NodeBlock* block, bool isExtern, std::vector<DeclarMod> mods, int loc, Type* type, std::vector<std::string> templateNames) {
     this->name = name;
     this->origName = name;
@@ -81,8 +65,8 @@ NodeFunc::NodeFunc(std::string name, std::vector<FuncArgSet> args, NodeBlock* bl
 
 NodeFunc::~NodeFunc() {
     if(block != nullptr) delete block;
-    if(type != nullptr) delete type;
-    for(int i=0; i<args.size(); i++) if(args[i].type != nullptr) delete args[i].type;
+    if(type != nullptr && !instanceof<TypeVoid>(type) && !instanceof<TypeBasic>(type)) {delete type; type = nullptr;}
+    for(int i=0; i<args.size(); i++) if(args[i].type != nullptr && !instanceof<TypeVoid>(args[i].type) && !instanceof<TypeBasic>(args[i].type)) delete args[i].type;
 }
 
 void NodeFunc::check() {
@@ -153,7 +137,6 @@ void NodeFunc::check() {
 
 LLVMTypeRef* NodeFunc::getParameters(int callConv) {
     std::vector<LLVMTypeRef> buffer;
-    buffer.reserve(getCountOfInternalArgs(this));
 
     for(int i=0; i<args.size(); i++) {
         FuncArgSet arg = args[i];
@@ -180,10 +163,11 @@ LLVMTypeRef* NodeFunc::getParameters(int callConv) {
             );
         }
 
-        for(int j=0; j<arg.internalTypes.size(); j++) {
+        if(isCdecl64) for(int j=0; j<arg.internalTypes.size(); j++) {
             if(instanceof<TypeDivided>(arg.internalTypes[j])) buffer.push_back(generator->genType(((TypeDivided*)arg.internalTypes[j])->mainType, loc));
             else buffer.push_back(generator->genType(arg.internalTypes[j], loc));
         }
+        else buffer.push_back(generator->genType(arg.type, loc));
 
         args[i] = arg;
     }
@@ -255,7 +239,7 @@ RaveValue NodeFunc::generate() {
             return {};
         }
     }
-
+    
     this->getParameters(callConv);
 
     TypeFunc* tfunc = new TypeFunc(this->type, {}, this->isVararg);
@@ -409,6 +393,7 @@ RaveValue NodeFunc::generate() {
         if(content.length() > 12000) content = content.substr(0, 12000) + "...";
         generator->error("LLVM errors into the function '" + this->name + "'! Content:\n" + content, this->loc);
     }
+
     return generator->functions[this->name];
 }
 
