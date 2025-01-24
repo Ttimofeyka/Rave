@@ -677,7 +677,7 @@ namespace std {
                 @if(@getCurrArgType() != cent*) pointer[0] = std::cstring::stol(&buffer, idx);
                 @else pointer[0] = std::cstring::stoc(&buffer, idx);
             }
-            @else @if((@getCurrArgType() == float*) || (@getCurrArgType() == double*) || (@getCurrArgType() == real*)) {
+            @else @if((@getCurrArgType() == half*) || (@getCurrArgType() == bhalf*) || (@getCurrArgType() == float*) || (@getCurrArgType() == double*) || (@getCurrArgType() == real*)) {
                 auto pointer = @getCurrArg(@getCurrArgType());
                 idx = 0;
                 char c = std::getchar();
