@@ -313,7 +313,7 @@ RaveValue NodeVar::generate() {
                 for(int i=0; i<LLVMGetArrayLength(gT); i++) values.push_back(LLVMConstNull(LLVMGetElementType(gT)));
                 LLVMBuildStore(generator->builder, LLVMConstArray(LLVMGetElementType(gT), values.data(), values.size()), currScope->localScope[this->name].value);
             }
-            else if(LLVMGetTypeKind(gT) != LLVMStructTypeKind) LLVMBuildStore(generator->builder, LLVMConstNull(gT), currScope->localScope[this->name].value);
+            else LLVMBuildStore(generator->builder, LLVMConstNull(gT), currScope->localScope[this->name].value);
         }
         return currScope->localScope[this->name];
     }
