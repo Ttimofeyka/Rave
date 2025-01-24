@@ -108,11 +108,15 @@ namespace std {
 
         int indexOf(char c) => std::cstring::indexOf(this.data, c);
 
-        int indexOf(char* s) {
-            char* ptr = std::cstring::strstr(this.data, s);
+        int indexOf(char* s, uint begin) {
+            char* ptr = std::cstring::strstr(itop(char*, ptoi(this.data) + begin), s);
             if(ptr != null) return = ptoi(ptr) - ptoi(this.data);
             else return = -1;
         }
+
+        (inline) int indexOf(char *s) => this.indexOf(s, 0);
+
+        (inline) int indexOf(std::string s, uint begin) => this.indexOf(s.data, 0);
 
         (inline) int indexOf(std::string s) => this.indexOf(s.data);
 
