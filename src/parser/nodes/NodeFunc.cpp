@@ -333,7 +333,9 @@ RaveValue NodeFunc::generate() {
     }
 
     if(!this->isExtern) {
+        int oldCurrentBuiltinArg = generator->currentBuiltinArg;
         if(this->isCtargsPart || this->isCtargs) generator->currentBuiltinArg = 0;
+
         LLVMBasicBlockRef entry = LLVM::makeBlock("entry", name);
         this->exitBlock = LLVM::makeBlock("exit", name);
         this->builder = LLVMCreateBuilderInContext(generator->context);
@@ -384,6 +386,8 @@ RaveValue NodeFunc::generate() {
 
         generator->builder = nullptr;
         currScope = nullptr;
+
+        generator->currentBuiltinArg = oldCurrentBuiltinArg;
     }
 
     if(this->isTemplate) generator->toReplace = std::map<std::string, Type*>(oldReplace);
