@@ -448,7 +448,9 @@ Node* Parser::parseConstantStructure(std::string structName) {
 Node* Parser::parseAtom(std::string f) {
     Token* t = this->peek();
     this->next();
+
     int size = this->peek()->value.size();
+
     if(t->type == TokType::Number) {
         if(size > 0 && this->peek()->type == TokType::Identifier) {
             std::string iden = this->peek()->value;
@@ -477,6 +479,7 @@ Node* Parser::parseAtom(std::string f) {
         }
         return new NodeInt(BigInt(t->value));
     }
+
     if(t->type == TokType::FloatNumber) {
         if(size > 0 && this->peek()->type == TokType::Identifier) {
             std::string suffix = this->peek()->value;
@@ -494,6 +497,7 @@ Node* Parser::parseAtom(std::string f) {
         }
         return new NodeFloat(std::stod(t->value));
     }
+
     if(t->type == TokType::HexNumber) {
         long long number;
         std::stringstream ss;
@@ -501,8 +505,11 @@ Node* Parser::parseAtom(std::string f) {
         ss >> number;
         return new NodeInt(BigInt(number));
     }
+
     if(t->type == TokType::True) return new NodeBool(true);
+
     if(t->type == TokType::False) return new NodeBool(false);
+
     if(t->type == TokType::String) {
         if(this->peek()->type == TokType::Identifier && this->peek()->value == "w") {
             this->next();
@@ -510,6 +517,7 @@ Node* Parser::parseAtom(std::string f) {
         }
         return new NodeString(t->value,false);
     }
+
     if(t->type == TokType::Char) {
         if(this->peek()->type == TokType::Identifier && this->peek()->value == "w") {
             this->next();
@@ -517,7 +525,9 @@ Node* Parser::parseAtom(std::string f) {
         }
         return new NodeChar(t->value, false);
     }
+
     if(this->peek()->type == TokType::Rbra) return parseConstantStructure(t->value);
+
     if(t->type == TokType::Identifier) {
         if(t->value == "null") return new NodeNull(nullptr, t->line);
         else if(t->value == "cast") {
@@ -613,15 +623,27 @@ Node* Parser::parseAtom(std::string f) {
             this->idx -= 1;
             return new NodeType(parseType(), t->line);
         }
+        else {
+            // Maybe this is a pointer?
+            // TODO: Add support of arrays and structures
+            if(peek()->type == TokType::Multiply) {
+                if(tokens[idx + 1]->type == TokType::Lpar || tokens[idx + 1]->type == TokType::Rarr) {
+                    this->idx -= 1;
+                    return new NodeType(parseType(), t->line);
+                }
+            }
+        }
 
         return new NodeIden(t->value, this->peek()->line);
     }
+
     if(t->type == TokType::Rpar) {
         auto e = this->parseExpr();
         if(this->peek()->type != TokType::Lpar) this->error("expected token ')'!");
         this->next();
         return e;
     }
+
     if(t->type == TokType::Rarr) {
         std::vector<Node*> values;
         while(this->peek()->type != TokType::Larr) {
@@ -632,6 +654,7 @@ Node* Parser::parseAtom(std::string f) {
         this->next();
         return new NodeArray(t->line, values);
     }
+
     if(t->type == TokType::Builtin) {
         std::string name = t->value;
         std::vector<Node*> args;
