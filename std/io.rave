@@ -713,6 +713,22 @@ namespace std {
                 @if(@getCurrArgType() != real*) pointer[0] = std::cstring::stod(&buffer, idx);
                 @else pointer[0] = std::cstring::stor(&buffer, idx);
             }
+            @else @if((@getCurrArgType() == std::string*) || (@getCurrArgType() == std::u8string*)) {
+                auto buffer = @getCurrArg(@getCurrArgType());
+                char c = std::getchar();
+
+                if(buffer.data == null) buffer = "";
+                else {
+                    buffer.length = 0;
+                    buffer.data[0] = '\0';
+                }
+
+                while(std::ascii::isSpace(c)) c = std::getchar();
+                while(!std::ascii::isSpace(c)) {
+                    buffer.add(c);
+                    c = std::getchar();
+                }
+            }
         }
     }
 
