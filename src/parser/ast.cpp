@@ -106,7 +106,7 @@ std::string typeToString(Type* arg) {
                 }
             }
 
-            buffer += typeToString(element);
+            buffer += (instanceof<TypeVoid>(element) ? "c" : typeToString(element));
             return buffer;
         }
     }
