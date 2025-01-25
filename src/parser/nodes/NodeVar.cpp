@@ -240,6 +240,7 @@ RaveValue NodeVar::generate() {
         for(int i=0; i<this->mods.size(); i++) {
             if(mods[i].name == "volatile") isVolatile = true;
             else if(mods[i].name == "noOperators") isNoOperators = true;
+            else if(mods[i].name == "nozeroinit") noZeroInit = true;
         }
 
         currScope->localVars[this->name] = this;
@@ -304,6 +305,7 @@ RaveValue NodeVar::generate() {
                 return currScope->localScope[this->name];
             }
         }
+
         if(instanceof<NodeInt>(this->value)) ((NodeInt*)this->value)->isVarVal = this->type;
 
         LLVMTypeRef gT = generator->genType(this->type, this->loc);
@@ -320,6 +322,7 @@ RaveValue NodeVar::generate() {
         }
 
         if(this->value != nullptr) (new NodeBinary(TokType::Equ, new NodeIden(this->name, this->loc), this->value, this->loc))->generate();
+        else if((instanceof<TypeBasic>(type) || instanceof<TypePointer>(type)) && !noZeroInit) LLVMBuildStore(generator->builder, LLVMConstNull(gT), currScope->localScope[this->name].value);
 
         return currScope->localScope[this->name];
     }
