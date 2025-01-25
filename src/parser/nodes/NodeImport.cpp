@@ -55,6 +55,11 @@ Node* NodeImport::copy() {return new NodeImport(this->file, this->functions, thi
 void NodeImport::check() {this->isChecked = true;}
 
 RaveValue NodeImport::generate() {
+    if(!file.isGlobal) {
+        file.isGlobal = true;
+        file.file = generator->file.substr(0, generator->file.find_last_of("/\\")) + "/" + file.file;
+    }
+
     if(std::find(AST::importedFiles.begin(), AST::importedFiles.end(), file.file) != AST::importedFiles.end() || file.file == generator->file) return {};
 
     if(file.file.find("/.rave") != std::string::npos) {
@@ -68,11 +73,6 @@ RaveValue NodeImport::generate() {
             }
         }
         return {};
-    }
-
-    if(!file.isGlobal) {
-        file.isGlobal = true;
-        file.file = generator->file.substr(0, generator->file.find_last_of("/\\")) + "/" + file.file;
     }
 
     if(AST::parsed.find(file.file) == AST::parsed.end()) {
