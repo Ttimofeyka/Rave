@@ -163,20 +163,25 @@ RaveValue NodeVar::generate() {
                 if(!instanceof<NodeInt>(newAlignment)) generator->error("value type of 'align' must be an integer!", loc);
                 alignment = ((NodeInt*)(mods[i].value))->value.to_int();
             }
+            else if(mods[i].name == "nozeroinit") noZeroInit = true;
         }
 
         if(!instanceof<TypeAuto>(this->type)) {
             if(instanceof<NodeInt>(this->value)) ((NodeInt*)this->value)->isVarVal = this->type;
             linkName = ((linkName == this->name && !noMangling) ? generator->mangle(name, false, false) : linkName);
 
+            LLVMTypeRef globalType = generator->genType(this->type, loc);
+
             generator->globals[this->name] = {LLVMAddGlobal(
                 generator->lModule,
-                generator->genType(this->type, loc),
+                globalType,
                 linkName.c_str()
             ), new TypePointer(this->type)};
 
-            if(!this->isExtern && this->value != nullptr) {
-                LLVMSetInitializer(generator->globals[this->name].value, this->value->generate().value);
+            if(!isExtern) {
+                if(value != nullptr) LLVMSetInitializer(generator->globals[name].value, this->value->generate().value);
+                else if(!noZeroInit) LLVMSetInitializer(generator->globals[name].value, LLVMConstNull(globalType));
+
                 LLVMSetGlobalConstant(generator->globals[this->name].value, this->isConst);
                 if(alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
             }
@@ -194,11 +199,15 @@ RaveValue NodeVar::generate() {
             ), new TypePointer(val.type)};
 
             this->type = value->getType();
+
             LLVMSetInitializer(generator->globals[this->name].value, val.value);
             LLVMSetGlobalConstant(generator->globals[this->name].value, this->isConst);
+
             if(alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
             else if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(generator->globals[this->name].value, generator->getAlignment(this->type));
+
             if(isVolatile) LLVMSetVolatile(generator->globals[name].value, true);
+
             return {};
         }
 
@@ -209,24 +218,27 @@ RaveValue NodeVar::generate() {
             LLVMSetLinkage(generator->globals[this->name].value, LLVMLinkOnceODRLinkage);
         }
         else if(isExtern) LLVMSetLinkage(generator->globals[this->name].value, LLVMExternalLinkage);
+
         if(isVolatile) LLVMSetVolatile(generator->globals[this->name].value, true);
 
         if(alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
         else if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(generator->globals[this->name].value, generator->getAlignment(this->type));
 
-        if(value != nullptr && !isExtern) {
-            RaveValue val;
-            if(instanceof<NodeUnary>(this->value)) val = ((NodeUnary*)this->value)->generateConst();
-            else val = this->value->generate();
-            LLVMSetInitializer(generator->globals[this->name].value, val.value);
+        if(!isExtern) {
+            if(value == nullptr) LLVMSetInitializer(generator->globals[this->name].value, LLVMConstNull(generator->genType(this->type, this->loc)));
+            else {
+                RaveValue val;
+                if(instanceof<NodeUnary>(this->value)) val = ((NodeUnary*)this->value)->generateConst();
+                else val = this->value->generate();
+                LLVMSetInitializer(generator->globals[this->name].value, val.value);
+            }
         }
-        else if(!isExtern) LLVMSetInitializer(generator->globals[this->name].value, LLVMConstNull(generator->genType(this->type, this->loc)));
+
         return {};
     }
     else {
         for(int i=0; i<this->mods.size(); i++) {
             if(mods[i].name == "volatile") isVolatile = true;
-            else if(mods[i].name == "nozeroinit") noZeroInit = true;
             else if(mods[i].name == "noOperators") isNoOperators = true;
         }
 
@@ -306,15 +318,9 @@ RaveValue NodeVar::generate() {
                 (new NodeCall(this->loc, new NodeIden(((TypeStruct*)this->type)->name, this->loc), std::vector<Node*>({new NodeIden(this->name, this->loc)})))->generate();
             }
         }
+
         if(this->value != nullptr) (new NodeBinary(TokType::Equ, new NodeIden(this->name, this->loc), this->value, this->loc))->generate();
-        else if(!noZeroInit) {
-            if(LLVMGetTypeKind(gT) == LLVMArrayTypeKind) {
-                std::vector<LLVMValueRef> values;
-                for(int i=0; i<LLVMGetArrayLength(gT); i++) values.push_back(LLVMConstNull(LLVMGetElementType(gT)));
-                LLVMBuildStore(generator->builder, LLVMConstArray(LLVMGetElementType(gT), values.data(), values.size()), currScope->localScope[this->name].value);
-            }
-            else LLVMBuildStore(generator->builder, LLVMConstNull(gT), currScope->localScope[this->name].value);
-        }
+
         return currScope->localScope[this->name];
     }
     return {};
