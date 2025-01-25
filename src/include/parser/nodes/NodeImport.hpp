@@ -12,15 +12,20 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <vector>
 #include <string>
 
+typedef struct {
+    std::string file;
+    bool isGlobal;
+} ImportFile;
+
 // Class of importing another files.
 
 class NodeImport : public Node {
 public:
-    std::string file;
+    ImportFile file;
     std::vector<std::string> functions;
     int loc;
 
-    NodeImport(std::string file, std::vector<std::string> functions, int loc);
+    NodeImport(ImportFile file, std::vector<std::string> functions, int loc);
     Type* getType() override;
     void check() override;
     RaveValue generate() override;

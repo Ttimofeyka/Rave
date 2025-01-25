@@ -43,7 +43,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #  endif
 #endif
 
-NodeImport::NodeImport(std::string file, std::vector<std::string> functions, int loc) {
+NodeImport::NodeImport(ImportFile file, std::vector<std::string> functions, int loc) {
     this->file = file;
     this->functions = functions;
     this->loc = loc;
@@ -55,14 +55,14 @@ Node* NodeImport::copy() {return new NodeImport(this->file, this->functions, thi
 void NodeImport::check() {this->isChecked = true;}
 
 RaveValue NodeImport::generate() {
-    if(std::find(AST::importedFiles.begin(), AST::importedFiles.end(), this->file) != AST::importedFiles.end() || this->file == generator->file) return {};
+    if(std::find(AST::importedFiles.begin(), AST::importedFiles.end(), file.file) != AST::importedFiles.end() || file.file == generator->file) return {};
 
-    if(this->file.find("/.rave") != std::string::npos) {
-        std::string dirPath = this->file.substr(0, this->file.size() - 5);
+    if(file.file.find("/.rave") != std::string::npos) {
+        std::string dirPath = file.file.substr(0, file.file.size() - 5);
         for(const auto& entry : fs::directory_iterator(dirPath)) {
             if(entry.path().extension() == ".rave") {
                 NodeImport* imp = new NodeImport({}, functions, loc);
-                imp->file = entry.path().string();
+                imp->file.file = entry.path().string();
                 imp->generate();
                 delete imp;
             }
@@ -70,13 +70,18 @@ RaveValue NodeImport::generate() {
         return {};
     }
 
-    if(AST::parsed.find(this->file) == AST::parsed.end()) {
-        if(!fs::exists(this->file)) {
-            generator->error("file '" + this->file + "' does not exist!", this->loc);
+    if(!file.isGlobal) {
+        file.isGlobal = true;
+        file.file = generator->file.substr(0, generator->file.find_last_of("/\\")) + "/" + file.file;
+    }
+
+    if(AST::parsed.find(file.file) == AST::parsed.end()) {
+        if(!fs::exists(file.file)) {
+            generator->error("file '" + file.file + "' does not exist!", this->loc);
             return {};
         }
 
-        std::ifstream fContent(this->file);
+        std::ifstream fContent(file.file);
         std::string content((std::istreambuf_iterator<char>(fContent)), std::istreambuf_iterator<char>());
 
         content = "alias __RAVE_IMPORTED_FROM = \"" + generator->file + "\"; " + content;
@@ -87,16 +92,16 @@ RaveValue NodeImport::generate() {
         Compiler::lexTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
         start = end;
-        Parser parser = Parser(lexer.tokens, this->file);
+        Parser parser = Parser(lexer.tokens, file.file);
         parser.parseAll();
         end = std::chrono::steady_clock::now();
         Compiler::parseTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-        AST::parsed[this->file] = parser.nodes;
+        AST::parsed[file.file] = parser.nodes;
     }
 
     std::vector<Node*> buffer;
-    for(const auto& node : AST::parsed[this->file]) buffer.push_back(node->copy());
+    for(const auto& node : AST::parsed[file.file]) buffer.push_back(node->copy());
 
     if(instanceof<NodeVar>(buffer[0])) {
         auto* nodeVar = static_cast<NodeVar*>(buffer[0]);
@@ -118,7 +123,7 @@ RaveValue NodeImport::generate() {
     }
 
     std::string oldFile = generator->file;
-    generator->file = this->file;
+    generator->file = file.file;
     auto start = std::chrono::steady_clock::now();
 
     for(auto* node : buffer) {
@@ -150,7 +155,7 @@ RaveValue NodeImport::generate() {
     auto end = std::chrono::steady_clock::now();
     Compiler::genTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     generator->file = oldFile;
-    AST::importedFiles.push_back(this->file);
+    AST::importedFiles.push_back(file.file);
     return {};
 }
 

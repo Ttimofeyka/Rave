@@ -763,15 +763,16 @@ std::string getGlobalFile(Parser* parser) {
 Node* Parser::parseImport() {
     int loc = this->peek()->line;
     this->next();
-    std::vector<std::string> files;
+    std::vector<ImportFile> files;
 
     if(this->peek()->type != TokType::Less && this->peek()->type != TokType::String) this->error("expected token '<' or string!");
 
     while(this->peek()->type == TokType::Less || this->peek()->type == TokType::String) {
-        if(this->peek()->type == TokType::Less) files.push_back(getGlobalFile(this) + ".rave");
-        else files.push_back(getDirectory2(AST::mainFile) + "/" + this->peek()->value + ".rave");
+        if(this->peek()->type == TokType::Less) files.push_back(ImportFile{getGlobalFile(this) + ".rave", true});
+        else files.push_back(ImportFile{this->peek()->value + ".rave", false});
         this->next();
     }
+
     if(this->peek()->type == TokType::Semicolon) this->next();
 
     if(files.size() > 0) {
@@ -779,7 +780,8 @@ Node* Parser::parseImport() {
         for(int i=0; i<files.size(); i++) imports.push_back(new NodeImport(files[i], std::vector<std::string>(), loc));
         return new NodeImports(imports, loc);
     }
-    return new NodeImport(file, std::vector<std::string>(), this->peek()->line);
+
+    return new NodeImport(files[0], std::vector<std::string>(), this->peek()->line);
 }
 
 Node* Parser::parseAliasType() {
