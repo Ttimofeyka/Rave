@@ -104,6 +104,7 @@ public:
     LLVMTypeRef genType(Type* type, int loc);
     RaveValue byIndex(RaveValue value, std::vector<LLVMValueRef> indexes);
     void addAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, int loc, unsigned long value = 0);
+    void addTypeAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, int loc, LLVMTypeRef type);
     void addStrAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, int loc, std::string value = "");
     Type* setByTypeList(std::vector<Type*> list);
 

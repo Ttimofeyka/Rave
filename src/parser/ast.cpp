@@ -362,8 +362,14 @@ void LLVMGen::addAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef p
     LLVMAddAttributeAtIndex(ptr, index, LLVMCreateEnumAttribute(generator->context, id, value));
 }
 
+void LLVMGen::addTypeAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, int loc, LLVMTypeRef value) {
+    LLVMAttributeRef attr = LLVMCreateTypeAttribute(generator->context, LLVMGetTypeKind(value), value);
+    if(attr == nullptr) this->error("unknown attribute '" + name + "!", loc);
+    LLVMAddAttributeAtIndex(ptr, index, attr);
+}
+
 void LLVMGen::addStrAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, int loc, std::string value) {
-    LLVMAttributeRef attr = LLVMCreateStringAttribute(generator->context,name.c_str(),name.size(),value.c_str(),value.size());
+    LLVMAttributeRef attr = LLVMCreateStringAttribute(generator->context, name.c_str(), name.size(), value.c_str(), value.size());
     if(attr == nullptr) this->error("unknown attribute '" + name + "'!", loc);
     LLVMAddAttributeAtIndex(ptr, index, attr);
 }
