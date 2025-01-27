@@ -36,6 +36,23 @@ namespace std {
             for(int i=0; i<mapSize; i++) this.table[i] = null;
         } => this;
 
+        bool has(K key) {
+            return = false;
+            
+            @if(@hasMethod(K, hash)) int index = key.hash() % mapSize;
+            @else int index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
+
+            if(index < 0) index = -index;
+
+            std::hashmap::Entry<K, V>* entry = table[index];
+            while(entry != null) {
+                if(key == entry.key) {
+                    return = true;
+                    break;
+                }
+            }
+        }
+
         void set(K key, V value) {
             if((length * 2) > mapSize) {
                 table = cast(std::hashmap::Entry<K, V>**)std::realloc(table, sizeof(std::hashmap::Entry<K, V>*) * mapSize, sizeof(std::hashmap::Entry<K, V>*) * (mapSize * 2));
@@ -43,8 +60,8 @@ namespace std {
                 mapSize = mapSize * 2;
             }
 
-            @if(@hasMethod(K, hash)) uint index = key.hash() % mapSize;
-            @else uint index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
+            @if(@hasMethod(K, hash)) int index = key.hash() % mapSize;
+            @else int index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
 
             if(index < 0) index = -index;
 
@@ -86,8 +103,8 @@ namespace std {
         V get(K key) {
             return = cast(V)null;
 
-            @if(@hasMethod(K, hash)) uint index = key.hash() % mapSize;
-            @else uint index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
+            @if(@hasMethod(K, hash)) int index = key.hash() % mapSize;
+            @else int index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
 
             if(index < 0) index = -index;
 
@@ -105,8 +122,8 @@ namespace std {
         bool remove(K key) {
             return = false;
 
-            @if(@hasMethod(K, hash)) uint index = key.hash() % mapSize;
-            @else uint index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
+            @if(@hasMethod(K, hash)) int index = key.hash() % mapSize;
+            @else int index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
 
             if(index < 0) index = -index;
 
