@@ -128,6 +128,17 @@ public:
     Type* getElType() override;
 };
 
+class TypeByval : public Type {
+public:
+    Type* type;
+    TypeByval(Type* type);
+    Type* copy() override;
+    Type* check(Type* parent) override;
+    int getSize() override;
+    std::string toString() override;
+    Type* getElType() override;
+};
+
 class TypeTemplateMember : public Type {
 public:
     Type* type;

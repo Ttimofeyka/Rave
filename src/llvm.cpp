@@ -25,36 +25,62 @@ RaveValue LLVM::load(RaveValue value, const char* name, int loc) {
     return {LLVMBuildLoad2(generator->builder, generator->genType(value.type->getElType(), loc), value.value, name), value.type->getElType()};
 }
 
+// Checking for LLVM::load operation
+bool LLVM::isLoad(LLVMValueRef operation) {
+    return LLVMIsALoadInst(operation);
+}
+
+void LLVM::undoLoad(RaveValue& value) {
+    LLVMValueRef origArg = LLVMGetArgOperand(value.value, 0);
+    value.value = origArg;
+    value.type = new TypePointer(value.type);
+}
+
 // Wrapper for the LLVMBuildCall2 function using RaveValue.
-RaveValue LLVM::call(RaveValue fn, LLVMValueRef* args, unsigned int argsCount, const char* name) {
+RaveValue LLVM::call(RaveValue fn, LLVMValueRef* args, unsigned int argsCount, const char* name, std::vector<int> byVals) {
     TypeFunc* tfunc = instanceof<TypePointer>(fn.type) ? (TypeFunc*)fn.type->getElType() : (TypeFunc*)fn.type;
 
     std::vector<LLVMTypeRef> types;
     for(int i=0; i<tfunc->args.size(); i++) types.push_back(generator->genType(tfunc->args[i]->type, -1));
 
-    return {LLVMBuildCall2(generator->builder, LLVMFunctionType(generator->genType(tfunc->main, -1), types.data(), types.size(), tfunc->isVarArg), fn.value, args, argsCount, name), tfunc->main};
+    RaveValue result = {LLVMBuildCall2(generator->builder, LLVMFunctionType(generator->genType(tfunc->main, -1), types.data(), types.size(), tfunc->isVarArg), fn.value, args, argsCount, name), tfunc->main};
+
+    for(int i=0; i<byVals.size(); i++) LLVMAddCallSiteAttribute(result.value, byVals[i] + 1, LLVMCreateTypeAttribute(generator->context, LLVMGetEnumAttributeKindForName("byval", 5), types[byVals[i]]));
+
+    return result;
 }
 
 // Wrapper for the LLVMBuildCall2 function using RaveValue; accepts a vector of RaveValue instead of pointer to LLVMValueRef.
-RaveValue LLVM::call(RaveValue fn, std::vector<RaveValue> args, const char* name) {
+RaveValue LLVM::call(RaveValue fn, std::vector<RaveValue> args, const char* name, std::vector<int> byVals) {
     TypeFunc* tfunc = instanceof<TypePointer>(fn.type) ? (TypeFunc*)fn.type->getElType() : (TypeFunc*)fn.type;
-    std::vector<LLVMValueRef> lArgs;
-    
-    for(int i=0; i<args.size(); i++) lArgs.push_back(args[i].value);
+    std::vector<LLVMValueRef> lArgs(args.size());
+    std::transform(args.begin(), args.end(), lArgs.begin(), [](RaveValue& arg) { return arg.value; });
 
-    std::vector<LLVMTypeRef> types;
+    std::vector<LLVMTypeRef> types(tfunc->args.size());
+    std::map<int, LLVMTypeRef> byValStructures;
+
     for(int i=0; i<tfunc->args.size(); i++) {
-        if(instanceof<TypeStruct>(tfunc->args[i]->type)) {
-            TypeStruct* tstruct = (TypeStruct*)tfunc->args[i]->type;
-            if(AST::structTable.find(tstruct->name) == AST::structTable.end() && generator->toReplace.find(tstruct->name) == generator->toReplace.end()) {
-                types.push_back(generator->genType(args[i].type->getElType(), -2));
-            }
-            else types.push_back(generator->genType(tfunc->args[i]->type, -2));
+        Type* argType = tfunc->args[i]->type;
+
+        if(instanceof<TypeStruct>(argType)) {
+            TypeStruct* tstruct = static_cast<TypeStruct*>(argType);
+            if(AST::structTable.find(tstruct->name) == AST::structTable.end() && generator->toReplace.find(tstruct->name) == generator->toReplace.end())
+                types[i] = generator->genType(args[i].type->getElType(), -2);
+            else types[i] = generator->genType(argType, -2);
         }
-        else types.push_back(generator->genType(tfunc->args[i]->type, -2));
+        else types[i] = generator->genType(argType, -2);
+
+        if(std::find(byVals.begin(), byVals.end(), i) != byVals.end()) {
+            byValStructures[i] = types[i];
+            types[i] = LLVMPointerType(types[i], 0);
+        }
     }
 
-    return {LLVMBuildCall2(generator->builder, LLVMFunctionType(generator->genType(tfunc->main, -2), types.data(), types.size(), tfunc->isVarArg), fn.value, lArgs.data(), lArgs.size(), name), tfunc->main};
+    RaveValue result = {LLVMBuildCall2(generator->builder, LLVMFunctionType(generator->genType(tfunc->main, -2), types.data(), types.size(), tfunc->isVarArg), fn.value, lArgs.data(), lArgs.size(), name), tfunc->main};
+
+    for(int i : byVals) LLVMAddCallSiteAttribute(result.value, i + 1, LLVMCreateTypeAttribute(generator->context, LLVMGetEnumAttributeKindForName("byval", 5), byValStructures[i]));
+
+    return result;
 }
 
 // Wrapper for the LLVMConstInBoundsGEP2 function using RaveValue.

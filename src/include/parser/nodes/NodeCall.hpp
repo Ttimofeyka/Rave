@@ -27,7 +27,7 @@ public:
     Type* getType() override;
     
     std::vector<Type*> getTypes();
-    std::vector<RaveValue> getParameters(NodeFunc* nfunc, bool isVararg, std::vector<FuncArgSet> fas = std::vector<FuncArgSet>());
+    std::vector<RaveValue> getParameters(std::vector<int>& byVals, NodeFunc* nfunc, bool isVararg, std::vector<FuncArgSet> fas = std::vector<FuncArgSet>());
     std::vector<RaveValue> correctByLLVM(std::vector<RaveValue> values, std::vector<FuncArgSet> fas);
     Node* comptime() override;
     Node* copy() override;

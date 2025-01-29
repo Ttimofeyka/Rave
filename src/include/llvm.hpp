@@ -25,8 +25,8 @@ namespace LLVM {
     extern RaveValue load(RaveValue value, const char* name, int loc);
     extern RaveValue alloc(Type* type, const char* name);
     extern RaveValue alloc(RaveValue size, const char* name);
-    extern RaveValue call(RaveValue fn, LLVMValueRef* args, unsigned int argsCount, const char* name);
-    extern RaveValue call(RaveValue fn, std::vector<RaveValue> args, const char* name);
+    extern RaveValue call(RaveValue fn, LLVMValueRef* args, unsigned int argsCount, const char* name, std::vector<int> byVals);
+    extern RaveValue call(RaveValue fn, std::vector<RaveValue> args, const char* name, std::vector<int> byVals);
     extern RaveValue gep(RaveValue ptr, LLVMValueRef* indices, unsigned int indicesCount, const char* name);
     extern RaveValue cInboundsGep(RaveValue ptr, LLVMValueRef* indices, unsigned int indicesCount);
     extern RaveValue structGep(RaveValue ptr, unsigned int idx, const char* name);
@@ -39,4 +39,7 @@ namespace LLVM {
 
     extern LLVMBasicBlockRef makeBlock(std::string name, LLVMValueRef function);
     extern LLVMBasicBlockRef makeBlock(std::string name, std::string fName);
+
+    extern bool isLoad(LLVMValueRef operation);
+    extern void undoLoad(RaveValue& value);
 }

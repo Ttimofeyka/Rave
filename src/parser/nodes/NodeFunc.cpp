@@ -148,13 +148,24 @@ LLVMTypeRef* NodeFunc::getParameters(int callConv) {
             arg.name = "_RaveArgument" + arg.name;
 
             if(isCdecl64) {
-                if(instanceof<TypeStruct>(arg.type) && ((TypeStruct*)arg.type)->isSimple()) {
+                if(instanceof<TypeStruct>(arg.type)) {
                     int tSize = arg.type->getSize();
-                    int tElCount = ((TypeStruct*)arg.type)->getElCount();
 
-                    if(tElCount == 2) arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize), {getTypeBySize(tSize / 2), getTypeBySize(tSize / 2)});
-                    else if(tElCount == 3) arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize), {getTypeBySize(tSize / 3), getTypeBySize(tSize / 3), getTypeBySize(tSize / 3)});
-                    else if(tElCount == 4) arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize), {getTypeBySize(tSize / 4), getTypeBySize(tSize / 4), getTypeBySize(tSize / 4), getTypeBySize(tSize / 4)});
+                    if(((TypeStruct*)arg.type)->isSimple()) {
+                        TypeBasic* tArgType = (TypeBasic*)AST::structTable[arg.type->toString()]->getVariables()[0]->type;
+                        int tElCount = ((TypeStruct*)arg.type)->getElCount();
+
+                        if(tElCount == 2) {
+                            if(tArgType->isFloat()) arg.internalTypes[0] = new TypeVector(basicTypes[BasicType::Float], 2);
+                            else arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize), {getTypeBySize(tSize / 2), getTypeBySize(tSize / 2)});
+                        }
+                        else if(tElCount == 3) arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize), {getTypeBySize(tSize / 3), getTypeBySize(tSize / 3), getTypeBySize(tSize / 3)});
+                        else if(tElCount == 4) arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize), {getTypeBySize(tSize / 4), getTypeBySize(tSize / 4), getTypeBySize(tSize / 4), getTypeBySize(tSize / 4)});
+                    }
+                    else if(tSize >= 192) {
+                        // 'byval' pointer
+                        arg.internalTypes[0] = new TypeByval(arg.type);
+                    }
                 }
             }
             else this->block->nodes.emplace(
@@ -318,6 +329,18 @@ RaveValue NodeFunc::generate() {
     ), tfunc};
 
     LLVMSetFunctionCallConv(generator->functions[this->name].value, callConv);
+
+    int inTCount = 0;
+
+    for(int i=0; i<args.size(); i++) {
+        if(!(args[i].internalTypes.empty())) for(int j=0; j<args[i].internalTypes.size(); j++) {
+            inTCount += 1;
+            if(!(args[i].internalTypes.empty()) && instanceof<TypeByval>(args[i].internalTypes[0])) {
+                generator->addTypeAttr("byval", inTCount, generator->functions[this->name].value, this->loc, generator->genType(args[i].type, loc));
+            }
+        }
+        else inTCount += 1;
+    }
 
     if(this->isInline) generator->addAttr("alwaysinline", LLVMAttributeFunctionIndex, generator->functions[this->name].value, this->loc);
     else if(this->isNoOpt) {

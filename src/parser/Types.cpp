@@ -76,7 +76,7 @@ Type* TypePointer::check(Type* parent) {
     return nullptr; 
 }
 
-int TypePointer::getSize() {return 8;}
+int TypePointer::getSize() {return 64;}
 std::string TypePointer::toString() {return instance->toString() + "*";}
 Type* TypePointer::getElType() {
     while(instanceof<TypeConst>(instance)) instance = instance->getElType();
@@ -264,6 +264,22 @@ Type* TypeStruct::check(Type* parent) {
 std::string TypeStruct::toString() {return this->name;}
 Type* TypeStruct::getElType() {return this;}
 
+// TypeByval
+
+TypeByval::TypeByval(Type* type) {
+    this->type = type;
+}
+
+Type* TypeByval::copy() {return new TypeByval(this->type);}
+
+Type* TypeByval::getElType() {return this->type;}
+
+int TypeByval::getSize() {return 64;}
+
+Type* TypeByval::check(Type* parent) {return nullptr;}
+
+std::string TypeByval::toString() {return this->type->toString() + "*";}
+
 // TypeTemplateMember
 TypeTemplateMember::TypeTemplateMember(Type* type, Node* value) {
     this->type = type;
@@ -326,7 +342,7 @@ TypeFunc::TypeFunc(Type* main, std::vector<TypeFuncArg*> args, bool isVarArg) {
     this->isVarArg = isVarArg;
 }
 
-int TypeFunc::getSize() {return 8;}
+int TypeFunc::getSize() {return 64;}
 
 Type* TypeFunc::copy() {
     std::vector<TypeFuncArg*> _copied;

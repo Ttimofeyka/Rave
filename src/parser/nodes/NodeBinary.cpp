@@ -96,6 +96,7 @@ LLVMValueRef Binary::sum(LLVMValueRef one, LLVMValueRef two, int loc) {
         if(LLVMTypeOf(one) != LLVMTypeOf(two)) oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;
     }
     else {oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;}
+
     if(
         LLVMGetTypeKind(LLVMTypeOf(oneCasted)) == LLVMIntegerTypeKind ||
         (

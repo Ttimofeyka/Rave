@@ -268,6 +268,7 @@ Type* LLVMGen::setByTypeList(std::vector<Type*> list) {
 
 LLVMTypeRef LLVMGen::genType(Type* type, int loc) {
     if(type == nullptr) return LLVMPointerType(LLVMInt8TypeInContext(this->context), 0);
+    if(instanceof<TypeByval>(type)) return LLVMPointerType(generator->genType(type->getElType(), loc), 0);
     if(instanceof<TypeAlias>(type)) return nullptr;
     if(instanceof<TypeBasic>(type)) switch(((TypeBasic*)type)->type) {
         case BasicType::Bool: return LLVMInt1TypeInContext(this->context);
@@ -363,7 +364,7 @@ void LLVMGen::addAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef p
 }
 
 void LLVMGen::addTypeAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, int loc, LLVMTypeRef value) {
-    LLVMAttributeRef attr = LLVMCreateTypeAttribute(generator->context, LLVMGetTypeKind(value), value);
+    LLVMAttributeRef attr = LLVMCreateTypeAttribute(generator->context, LLVMGetEnumAttributeKindForName(name.c_str(), name.size()), value);
     if(attr == nullptr) this->error("unknown attribute '" + name + "!", loc);
     LLVMAddAttributeAtIndex(ptr, index, attr);
 }
