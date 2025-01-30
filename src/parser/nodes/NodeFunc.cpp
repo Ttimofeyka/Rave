@@ -156,7 +156,7 @@ LLVMTypeRef* NodeFunc::getParameters(int callConv) {
                         int tElCount = ((TypeStruct*)arg.type)->getElCount();
 
                         if(tElCount == 2) {
-                            if(tArgType->isFloat()) arg.internalTypes[0] = new TypeVector(basicTypes[BasicType::Float], 2);
+                            if(tArgType->isFloat()) arg.internalTypes[0] = new TypeDivided(new TypeVector(basicTypes[BasicType::Float], 2), {basicTypes[BasicType::Float], basicTypes[BasicType::Float]});
                             else arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize), {getTypeBySize(tSize / 2), getTypeBySize(tSize / 2)});
                         }
                         else if(tElCount == 3) arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize), {getTypeBySize(tSize / 3), getTypeBySize(tSize / 3), getTypeBySize(tSize / 3)});
@@ -337,6 +337,7 @@ RaveValue NodeFunc::generate() {
             inTCount += 1;
             if(!(args[i].internalTypes.empty()) && instanceof<TypeByval>(args[i].internalTypes[0])) {
                 generator->addTypeAttr("byval", inTCount, generator->functions[this->name].value, this->loc, generator->genType(args[i].type, loc));
+                generator->addAttr("align", inTCount, generator->functions[this->name].value, this->loc, 8);
             }
         }
         else inTCount += 1;

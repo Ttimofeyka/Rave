@@ -78,7 +78,10 @@ RaveValue LLVM::call(RaveValue fn, std::vector<RaveValue> args, const char* name
 
     RaveValue result = {LLVMBuildCall2(generator->builder, LLVMFunctionType(generator->genType(tfunc->main, -2), types.data(), types.size(), tfunc->isVarArg), fn.value, lArgs.data(), lArgs.size(), name), tfunc->main};
 
-    for(int i : byVals) LLVMAddCallSiteAttribute(result.value, i + 1, LLVMCreateTypeAttribute(generator->context, LLVMGetEnumAttributeKindForName("byval", 5), byValStructures[i]));
+    for(int i : byVals) {
+        LLVMAddCallSiteAttribute(result.value, i + 1, LLVMCreateTypeAttribute(generator->context, LLVMGetEnumAttributeKindForName("byval", 5), byValStructures[i]));
+        LLVMAddCallSiteAttribute(result.value, i + 1, LLVMCreateEnumAttribute(generator->context, LLVMGetEnumAttributeKindForName("align", 5), 8));
+    }
 
     return result;
 }

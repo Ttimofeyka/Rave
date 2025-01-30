@@ -150,9 +150,12 @@ std::vector<RaveValue> NodeCall::getParameters(std::vector<int>& byVals, NodeFun
             }
             else if(instanceof<TypeByval>(fas[i].internalTypes[0])) {
                 if(!instanceof<TypePointer>(params[i].type)) {
-                    RaveValue temp = LLVM::alloc(((TypeByval*)fas[i].internalTypes[0])->type, "getParameters_byval_temp");
-                    LLVMBuildStore(generator->builder, params[i].value, temp.value);
-                    params[i] = temp;
+                    if(LLVM::isLoad(params[i].value)) LLVM::undoLoad(params[i]);
+                    else {
+                        RaveValue temp = LLVM::alloc(((TypeByval*)fas[i].internalTypes[0])->type, "getParameters_byval_temp");
+                        LLVMBuildStore(generator->builder, params[i].value, temp.value);
+                        params[i] = temp;
+                    }
                 }
                 
                 byVals.push_back(i);
