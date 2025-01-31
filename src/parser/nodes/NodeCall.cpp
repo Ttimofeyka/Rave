@@ -55,11 +55,7 @@ std::vector<RaveValue> NodeCall::correctByLLVM(std::vector<RaveValue> values, st
             }
         }
         else if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(((TypePointer*)fas[i].type)->instance)) {
-            if(!instanceof<TypePointer>(params[i].type)) {
-                RaveValue temp = LLVM::alloc(params[i].type, "NodeCall_getParameters_tempForStore");
-                LLVMBuildStore(generator->builder, params[i].value, temp.value);
-                params[i] = temp;
-            }
+            if(!instanceof<TypePointer>(params[i].type)) LLVM::makeAsPointer(params[i]);
         }
         else if(!instanceof<TypePointer>(fas[i].type) && instanceof<TypePointer>(params[i].type)) {
             if(LLVMIsAFunction(params[i].value) == nullptr) {
@@ -87,6 +83,7 @@ std::vector<RaveValue> NodeCall::getParameters(std::vector<int>& byVals, NodeFun
             else if(instanceof<NodeGet>(args[i])) ((NodeGet*)args[i])->isMustBePtr = false;
             params.push_back(this->args[i]->generate());
         }
+
         return params;
     }
 
@@ -96,6 +93,7 @@ std::vector<RaveValue> NodeCall::getParameters(std::vector<int>& byVals, NodeFun
             else if(instanceof<NodeGet>(this->args[i])) ((NodeGet*)this->args[i])->isMustBePtr = true;
             else if(instanceof<NodeIndex>(this->args[i])) ((NodeIndex*)this->args[i])->isMustBePtr = true;
         }
+
         params.push_back(this->args[i]->generate());
     }
 
@@ -107,17 +105,7 @@ std::vector<RaveValue> NodeCall::getParameters(std::vector<int>& byVals, NodeFun
             }
         }
         else if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(((TypePointer*)fas[i].type)->instance)) {
-            if(!instanceof<TypePointer>(params[i].type)) {
-                if(LLVMIsALoadInst(params[i].value)) {
-                    params[i].value = LLVMGetOperand(params[i].value, 0);
-                    params[i].type = new TypePointer(params[i].type);
-                }
-                else {
-                    RaveValue temp = LLVM::alloc(params[i].type, "getParameters_temp");
-                    LLVMBuildStore(generator->builder, params[i].value, temp.value);
-                    params[i] = temp;
-                }
-            }
+            if(!instanceof<TypePointer>(params[i].type)) LLVM::makeAsPointer(params[i]);
         }
         else if(!instanceof<TypePointer>(fas[i].type) && instanceof<TypePointer>(params[i].type)) {
             if(instanceof<TypeStruct>(fas[i].type)) {
@@ -128,14 +116,14 @@ std::vector<RaveValue> NodeCall::getParameters(std::vector<int>& byVals, NodeFun
         else if(instanceof<TypeBasic>(fas[i].type) && instanceof<TypeBasic>(params[i].type) && !((TypeBasic*)params[i].type)->isFloat()) {
             TypeBasic* tbasic = (TypeBasic*)(fas[i].type);
             if(!tbasic->isFloat() && tbasic->type != ((TypeBasic*)params[i].type)->type) {
-                params[i].value = LLVMBuildIntCast(generator->builder, params[i].value, generator->genType(tbasic, this->loc), "Itoi_getParameters");
+                params[i].value = Binary::castValue(params[i].value, generator->genType(tbasic, this->loc), this->loc);
                 params[i].type = tbasic;
             }
         }
         else if(instanceof<TypeBasic>(fas[i].type) && instanceof<TypeBasic>(params[i].type) &&  ((TypeBasic*)params[i].type)->type == BasicType::Double) {
             if(((TypeBasic*)fas[i].type)->type == BasicType::Float) {
                 // Cast caller double argument to float argument of called
-                params[i].value = LLVMBuildFPCast(generator->builder, params[i].value, LLVMFloatTypeInContext(generator->context), "getParameters_dtof");
+                params[i].value = Binary::castValue(params[i].value, LLVMFloatTypeInContext(generator->context), this->loc);
                 params[i].type = fas[i].type;
             }
         }
@@ -149,15 +137,8 @@ std::vector<RaveValue> NodeCall::getParameters(std::vector<int>& byVals, NodeFun
                 params[i].value = LLVMBuildLoad2(generator->builder, generator->genType(((TypeDivided*)fas[i].internalTypes[0])->mainType, loc), params[i].value, "getParameters_stotd");
             }
             else if(instanceof<TypeByval>(fas[i].internalTypes[0])) {
-                if(!instanceof<TypePointer>(params[i].type)) {
-                    if(LLVM::isLoad(params[i].value)) LLVM::undoLoad(params[i]);
-                    else {
-                        RaveValue temp = LLVM::alloc(((TypeByval*)fas[i].internalTypes[0])->type, "getParameters_byval_temp");
-                        LLVMBuildStore(generator->builder, params[i].value, temp.value);
-                        params[i] = temp;
-                    }
-                }
-                
+                if(!instanceof<TypePointer>(params[i].type)) LLVM::makeAsPointer(params[i]);
+
                 byVals.push_back(i);
             }
         }
@@ -283,7 +264,7 @@ RaveValue NodeCall::generate() {
     
                     if(types.size() == tnSize) {
                         for(int i=0; i<types.size(); i++) all += types[i]->toString() + ",";
-                        all = all.substr(0, all.length() - 1) + ">";
+                        all.back() = '>';
                         RaveValue fn = AST::funcTable[idenFunc->name]->generateWithTemplate(types, idenFunc->name + all);
                         if(AST::funcTable.find(idenFunc->name + all) != AST::funcTable.end()) {
                             return LLVM::call(fn, params, instanceof<TypeVoid>(AST::funcTable[idenFunc->name + all]) ? "" : "callFunc", byVals);

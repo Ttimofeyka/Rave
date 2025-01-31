@@ -122,9 +122,7 @@ RaveValue NodeUnary::generate() {
         }
         else if(instanceof<NodeArray>(this->base)) {
             val = this->base->generate();
-            RaveValue temp = LLVM::alloc(val.type, "NodeUnary_NA_temp");
-            LLVMBuildStore(generator->builder, val.value, temp.value);
-            val = temp;
+            LLVM::makeAsPointer(val);
         }
 
         return val;
@@ -157,11 +155,7 @@ RaveValue NodeUnary::generate() {
             }
         }
         
-        if(!instanceof<TypePointer>(val2.type)) {
-            RaveValue temp = LLVM::alloc(val2.type, "NodeUnary_temp");
-            LLVMBuildStore(generator->builder, val2.value, temp.value);
-            val2 = temp;
-        }
+        if(!instanceof<TypePointer>(val2.type)) LLVM::makeAsPointer(val2);
 
         if(!instanceof<TypeStruct>(val2.type->getElType())) generator->error("the attempt to call the destructor is not in the structure!", this->loc);
 

@@ -156,3 +156,17 @@ LLVMBasicBlockRef LLVM::makeBlock(std::string name, LLVMValueRef function) {
 LLVMBasicBlockRef LLVM::makeBlock(std::string name, std::string fName) {
     return LLVM::makeBlock(name, generator->functions[fName].value);
 }
+
+void LLVM::makeAsPointer(RaveValue& value) {
+    if(LLVM::isLoad(value.value)) LLVM::undoLoad(value);
+    else {
+        // Make a temp variable
+        RaveValue temp = LLVM::alloc(value.type, "temp");
+
+        // Copy value to temp
+        LLVMBuildStore(generator->builder, value.value, temp.value);
+
+        // Replace value with temp
+        value = temp;
+    }
+}

@@ -129,11 +129,7 @@ RaveValue NodeIndex::generate() {
         else if(instanceof<TypeConst>(_t)) this->elementIsConst = this->isElementConst(((TypeConst*)_t)->instance);
         RaveValue ptr = currScope->get(id->name, this->loc);
 
-        if(instanceof<TypeArray>(ptr.type) && instanceof<TypeArray>(currScope->getWithoutLoad(id->name, this->loc).type)) {
-            RaveValue copyVal = LLVM::alloc(ptr.type, ("NodeIndex_copyVal_" + std::to_string(this->loc) + "_").c_str());
-            LLVMBuildStore(generator->builder, ptr.value, copyVal.value);
-            ptr = copyVal;
-        }
+        if(instanceof<TypeArray>(ptr.type) && instanceof<TypeArray>(currScope->getWithoutLoad(id->name, this->loc).type)) LLVM::makeAsPointer(ptr);
         else if(!instanceof<TypePointer>(ptr.type)) ptr = currScope->getWithoutLoad(id->name, this->loc);
 
         if(!generator->settings.noChecks && generator->settings.optLevel <= 2 && !LLVMIsAConstant(ptr.value) &&

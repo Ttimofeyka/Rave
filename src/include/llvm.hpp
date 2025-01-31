@@ -42,4 +42,6 @@ namespace LLVM {
 
     extern bool isLoad(LLVMValueRef operation);
     extern void undoLoad(RaveValue& value);
+
+    extern void makeAsPointer(RaveValue& value);
 }
