@@ -270,6 +270,7 @@ public:
     Type* getElType() override;
 };
 
-Type* getType(std::string id);
+extern Type* getType(std::string id);
+extern bool isFloatType(Type* type);
 
 extern TypeVoid* typeVoid;

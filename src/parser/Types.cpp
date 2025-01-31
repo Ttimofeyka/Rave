@@ -462,3 +462,7 @@ Type* getType(std::string id) {
     if(it != types.end()) return it->second;
     else return new TypeStruct(id);
 }
+
+bool isFloatType(Type* type) {
+    return (instanceof<TypeBasic>(type) && ((TypeBasic*)type)->isFloat()) || (instanceof<TypeVector>(type) && ((TypeBasic*)(((TypeVector*)type)->mainType))->isFloat());
+}

@@ -30,160 +30,6 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/compiler.hpp"
 #include <iostream>
 
-LLVMValueRef Binary::castValue(LLVMValueRef from, LLVMTypeRef to, int loc) {
-    if(LLVMTypeOf(from) == to) return from;
-    LLVMTypeKind kindFrom = LLVMGetTypeKind(LLVMTypeOf(from));
-    LLVMTypeKind kindTo = LLVMGetTypeKind(to);
-    if(kindFrom == kindTo) {
-        switch(kindFrom) {
-            case LLVMIntegerTypeKind: return LLVMBuildIntCast(generator->builder, from, to, "castValueItoI");
-            case LLVMFloatTypeKind: case LLVMDoubleTypeKind: case LLVMHalfTypeKind: case LLVMBFloatTypeKind: case LLVMFP128TypeKind: return LLVMBuildFPCast(generator->builder, from, to, "castValueFtoF");
-            case LLVMPointerTypeKind: return LLVMBuildPointerCast(generator->builder, from, to, "castValuePtoP");
-            case LLVMArrayTypeKind: generator->error("the ability to use cast to arrays is temporarily impossible!", loc); return nullptr;
-            default: return from;
-        }
-    }
-    switch(kindFrom) {
-        case LLVMIntegerTypeKind:
-            switch(kindTo) {
-                case LLVMFloatTypeKind: case LLVMDoubleTypeKind: case LLVMHalfTypeKind: case LLVMBFloatTypeKind: case LLVMFP128TypeKind: return LLVMBuildSIToFP(generator->builder, from, to, "castValueItoF");
-                case LLVMPointerTypeKind: return LLVMBuildIntToPtr(generator->builder, from, to, "castValueItoP");
-                case LLVMArrayTypeKind: generator->error("it is forbidden to cast numbers into arrays!", loc); return nullptr;
-                case LLVMStructTypeKind: generator->error("it is forbidden to cast numbers into structures!", loc); return nullptr;
-                default: return from;
-            } break;
-        case LLVMFloatTypeKind: case LLVMDoubleTypeKind:
-            switch(kindTo) {
-                case LLVMIntegerTypeKind: return LLVMBuildFPToSI(generator->builder, from, to, "castValueFtoI");
-                case LLVMHalfTypeKind: case LLVMBFloatTypeKind: case LLVMDoubleTypeKind: case LLVMFloatTypeKind: case LLVMFP128TypeKind: return LLVMBuildFPCast(generator->builder, from, to, "castValueFtoH");
-                case LLVMPointerTypeKind: generator->error("it is forbidden to cast floating-point numbers into pointers!", loc); return nullptr;
-                case LLVMArrayTypeKind: generator->error("it is forbidden to cast numbers into arrays!", loc); return nullptr;
-                case LLVMStructTypeKind: generator->error("it is forbidden to cast numbers into structures!", loc); return nullptr;
-                default: return from;
-            }
-        case LLVMPointerTypeKind:
-            switch(kindTo) {
-                case LLVMIntegerTypeKind: return LLVMBuildPtrToInt(generator->builder, from, to, "castValuePtoI");
-                case LLVMFloatTypeKind: case LLVMDoubleTypeKind: case LLVMHalfTypeKind: case LLVMBFloatTypeKind: case LLVMFP128TypeKind:
-                    if(std::string(LLVMPrintValueToString(from)).find("null") != std::string::npos) return LLVMConstReal(to, 0.0);
-                    generator->error("it is forbidden to cast pointers into floating-point numbers!", loc); return nullptr;
-                case LLVMArrayTypeKind:
-                    if(std::string(LLVMPrintValueToString(from)).find("null") != std::string::npos) return LLVMConstNull(to);
-                    generator->error("it is forbidden to cast pointers into arrays!", loc); return nullptr;
-                case LLVMStructTypeKind:
-                    if(std::string(LLVMPrintValueToString(from)).find("null") != std::string::npos) return LLVMConstNull(to);
-                    #if RAVE_OPAQUE_POINTERS
-                    return LLVMBuildLoad2(generator->builder, to, from, "castValueStoP");
-                    #else
-                    generator->error("it is forbidden to cast pointers into structures!", loc);
-                    return nullptr;
-                    #endif
-                default: return from;
-            }
-        case LLVMArrayTypeKind:
-            if(std::string(LLVMPrintValueToString(from)).find("null") != std::string::npos) return LLVMConstNull(to);
-            generator->error("it is forbidden to casting arrays!", loc); return nullptr;
-        case LLVMStructTypeKind: generator->error("it is forbidden to cast structures!", loc); return nullptr;
-        default: return from;
-    } return from;
-}
-
-LLVMValueRef Binary::sum(LLVMValueRef one, LLVMValueRef two, int loc) {
-    LLVMValueRef oneCasted = one;
-    LLVMValueRef twoCasted = two;
-
-    if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMGetTypeKind(LLVMTypeOf(two))) {
-        if(LLVMTypeOf(one) != LLVMTypeOf(two)) oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;
-    }
-    else {oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;}
-
-    if(
-        LLVMGetTypeKind(LLVMTypeOf(oneCasted)) == LLVMIntegerTypeKind ||
-        (
-            LLVMGetTypeKind(LLVMTypeOf(oneCasted)) == LLVMVectorTypeKind &&
-            LLVMGetTypeKind(LLVMGetElementType(LLVMTypeOf(oneCasted))) == LLVMIntegerTypeKind
-        )
-    ) return LLVMBuildAdd(generator->builder, one, two, "sum");
-    return LLVMBuildFAdd(generator->builder, one, two, "fsum");
-}
-
-LLVMValueRef Binary::sub(LLVMValueRef one, LLVMValueRef two, int loc) {
-    LLVMValueRef oneCasted = one;
-    LLVMValueRef twoCasted = two;
-
-    if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMGetTypeKind(LLVMTypeOf(two))) {
-        if(LLVMTypeOf(one) != LLVMTypeOf(two)) oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;
-    }
-    else {oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;}
-
-    if(LLVMGetTypeKind(LLVMTypeOf(oneCasted)) == LLVMIntegerTypeKind) return LLVMBuildSub(generator->builder, one, two, "sub");
-    return LLVMBuildFSub(generator->builder, one, two, "fsub");
-}
-
-LLVMValueRef Binary::mul(LLVMValueRef one, LLVMValueRef two, int loc) {
-    LLVMValueRef oneCasted = one;
-    LLVMValueRef twoCasted = two;
-
-    if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMGetTypeKind(LLVMTypeOf(two))) {
-        if(LLVMTypeOf(one) != LLVMTypeOf(two)) oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;
-    }
-    else {oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;}
-
-    if(LLVMGetTypeKind(LLVMTypeOf(oneCasted)) == LLVMIntegerTypeKind) return LLVMBuildMul(generator->builder, one, two, "sum");
-    return LLVMBuildFMul(generator->builder, one, two, "fmul");
-}
-
-LLVMValueRef Binary::div(LLVMValueRef one, LLVMValueRef two, int loc) {
-    LLVMValueRef oneCasted = one;
-    LLVMValueRef twoCasted = two;
-
-    if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMGetTypeKind(LLVMTypeOf(two))) {
-        if(LLVMTypeOf(one) != LLVMTypeOf(two)) {
-            oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc);
-            twoCasted = two;
-        }
-    }
-    else {oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;}
-
-    if(LLVMGetTypeKind(LLVMTypeOf(oneCasted)) == LLVMIntegerTypeKind) return LLVMBuildSDiv(generator->builder, one, two, "div");
-    return LLVMBuildFDiv(generator->builder, one, two, "fdiv");
-}
-
-LLVMValueRef Binary::compare(LLVMValueRef one, LLVMValueRef two, char op, int loc) {
-    LLVMValueRef oneCasted = one;
-    LLVMValueRef twoCasted = two;
-
-    if(LLVMGetTypeKind(LLVMTypeOf(one)) == LLVMGetTypeKind(LLVMTypeOf(two))) {
-        if(LLVMTypeOf(one) != LLVMTypeOf(two)) {
-            oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;
-        }
-    }
-    else {oneCasted = Binary::castValue(one, LLVMTypeOf(two), loc); twoCasted = two;}
-
-    if(LLVMGetTypeKind(LLVMTypeOf(oneCasted)) == LLVMPointerTypeKind) {
-        oneCasted = LLVMBuildPtrToInt(generator->builder, oneCasted, LLVMInt64TypeInContext(generator->context), "comparePtoIOne");
-        twoCasted = LLVMBuildPtrToInt(generator->builder, twoCasted, LLVMInt64TypeInContext(generator->context), "comparePtoITwo");
-    }
-    if(LLVMGetTypeKind(LLVMTypeOf(oneCasted)) == LLVMIntegerTypeKind) switch(op) {
-        case TokType::Equal: return LLVMBuildICmp(generator->builder, LLVMIntEQ, one, two, "compareIEQ");
-        case TokType::Nequal: return LLVMBuildICmp(generator->builder, LLVMIntNE, one, two, "compareINEQ");
-        case TokType::More: return LLVMBuildICmp(generator->builder, LLVMIntSGT, one, two, "compareIMR");
-        case TokType::Less: return LLVMBuildICmp(generator->builder, LLVMIntSLT, one, two, "compareILS");
-        case TokType::MoreEqual: return LLVMBuildICmp(generator->builder, LLVMIntSGE, one, two, "compareIME");
-        case TokType::LessEqual: return LLVMBuildICmp(generator->builder, LLVMIntSLE, one, two, "compareILE");
-        default: return nullptr;
-    }
-    switch(op) {
-        case TokType::Equal: return LLVMBuildFCmp(generator->builder, LLVMRealOEQ, one, two, "compareIEQ");
-        case TokType::Nequal: return LLVMBuildFCmp(generator->builder, LLVMRealONE, one, two, "compareINEQ");
-        case TokType::More: return LLVMBuildFCmp(generator->builder, LLVMRealOGT, one, two, "compareIMR");
-        case TokType::Less: return LLVMBuildFCmp(generator->builder, LLVMRealOLT, one, two, "compareILS");
-        case TokType::MoreEqual: return LLVMBuildFCmp(generator->builder, LLVMRealOGE, one, two, "IcompareME");
-        case TokType::LessEqual: return LLVMBuildFCmp(generator->builder, LLVMRealOLE, one, two, "IcompareLE");
-        default: return nullptr;
-    } return nullptr;
-}
-
 void Binary::store(RaveValue pointer, RaveValue value, int loc) {
     if(pointer.type == nullptr || pointer.value == nullptr || value.type == nullptr || value.value == nullptr) return;
 
@@ -194,10 +40,7 @@ void Binary::store(RaveValue pointer, RaveValue value, int loc) {
             TypeBasic* memBasic = (TypeBasic*)memType;
             TypeBasic* valBasic = (TypeBasic*)value.type;
 
-            if(memBasic->type != valBasic->type) {
-                value.type = memBasic;
-                value.value = Binary::castValue(value.value, generator->genType(memBasic, loc), loc);
-            }
+            if(memBasic->type != valBasic->type) LLVM::cast(value, memType, loc);
         }
         else if(!instanceof<TypeStruct>(value.type)) {
             generator->error("cannot store a value of type " + value.type->toString() + " into a value of type " + memType->toString() + "!", loc);
@@ -516,10 +359,7 @@ RaveValue NodeBinary::generate() {
                 Type* elType = ((TypeVector*)ind->element->getType())->getElType();
                 RaveValue number = this->second->generate();
 
-                if(instanceof<TypeBasic>(number.type) && ((TypeBasic*)number.type)->type != ((TypeBasic*)elType)->type) {
-                    number.value = Binary::castValue(number.value, generator->genType(elType, loc), loc);
-                    number.type = elType;
-                }
+                if(instanceof<TypeBasic>(number.type) && ((TypeBasic*)number.type)->type != ((TypeBasic*)elType)->type) LLVM::cast(number, elType, loc);
 
                 if(number.type->toString() != elType->toString()) generator->error("cannot store a value of type " + number.type->toString() + " into a value of type " + elType->toString() + "!", loc);
 
@@ -576,51 +416,20 @@ RaveValue NodeBinary::generate() {
     else if(instanceof<TypePointer>(vSecond.type) && !instanceof<TypePointer>(vFirst.type)) vSecond = LLVM::load(vSecond, "NodeBinary_loadS", loc);
 
     if(generator->toReplace.find(vFirst.type->toString()) != generator->toReplace.end()) vFirst.type = generator->toReplace[vFirst.type->toString()];
+    if(generator->toReplace.find(vSecond.type->toString()) != generator->toReplace.end()) vSecond.type = generator->toReplace[vSecond.type->toString()];
 
-    if(instanceof<TypeBasic>(vFirst.type) && instanceof<TypeBasic>(vSecond.type) && vFirst.type->toString() != vSecond.type->toString()) {
-        TypeBasic* t1 = (TypeBasic*)vFirst.type;
-        TypeBasic* t2 = (TypeBasic*)vSecond.type;
-
-        if(t1->isFloat()) {
-            if(t2->isFloat()) {
-                if(t1->getSize() > t2->getSize()) {
-                    vSecond.value = LLVMBuildFPCast(generator->builder, vSecond.value, generator->genType(t1, loc), "NodeBinary_ftof");
-                    vSecond.type = t1;
-                }
-                else {
-                    vFirst.value = LLVMBuildFPCast(generator->builder, vFirst.value, generator->genType(t2, loc), "NodeBinary_ftof");
-                    vFirst.type = t2;
-                }
-            }
-            else {
-                vSecond.value = LLVMBuildSIToFP(generator->builder, vSecond.value, generator->genType(t1, loc), "NodeBinary_itof");
-                vSecond.type = t1;
-            }
-        }
-        else if(t2->isFloat()) {
-            vFirst.value = LLVMBuildSIToFP(generator->builder, vFirst.value, generator->genType(t2, loc), "NodeBinary_itof");
-            vFirst.type = t2;
-        }
-        else if(t1->getSize() > t2->getSize()) {
-            vSecond.value = LLVMBuildIntCast2(generator->builder, vSecond.value, generator->genType(t1, loc), false, "NodeBinary_itoi");
-            vSecond.type = t1;
-        }
-        else {
-            vFirst.value = LLVMBuildIntCast2(generator->builder, vFirst.value, generator->genType(t2, loc), false, "NodeBinary_itoi");
-            vFirst.type = t2;
-        }
-    }
+    if(instanceof<TypeBasic>(vFirst.type) && instanceof<TypeBasic>(vSecond.type)) LLVM::castForExpression(vFirst, vSecond);
 
     if(vFirst.type->toString() != vSecond.type->toString()) generator->error("value types '" + vFirst.type->toString() + "' and '" + vSecond.type->toString() + "' are incompatible!", loc);
-    
+
     switch(this->op) {
-        case TokType::Plus: return {Binary::sum(vFirst.value, vSecond.value, this->loc), vFirst.type};
-        case TokType::Minus: return {Binary::sub(vFirst.value, vSecond.value, this->loc), vFirst.type};
-        case TokType::Multiply: return {Binary::mul(vFirst.value, vSecond.value, this->loc), vFirst.type};
-        case TokType::Divide: return {Binary::div(vFirst.value, vSecond.value, this->loc), vFirst.type};
+        case TokType::Plus: return LLVM::sum(vFirst, vSecond);
+        case TokType::Minus: return LLVM::sub(vFirst, vSecond);
+        case TokType::Multiply: return LLVM::mul(vFirst, vSecond);
+        case TokType::Divide: return LLVM::div(vFirst, vSecond);
         case TokType::Equal: case TokType::Nequal:
         case TokType::Less: case TokType::More:
-        case TokType::LessEqual: case TokType::MoreEqual: return {Binary::compare(vFirst.value, vSecond.value, this->op, this->loc), basicTypes[BasicType::Bool]};
+        case TokType::LessEqual: case TokType::MoreEqual: return LLVM::compare(vFirst, vSecond, this->op);
         case TokType::And: return {LLVMBuildAnd(generator->builder, vFirst.value, vSecond.value, "NodeBinary_and"), vFirst.type};
         case TokType::Or: return {LLVMBuildOr(generator->builder, vFirst.value, vSecond.value, "NodeBinary_or"), vFirst.type};
         case TokType::BitXor: return {LLVMBuildXor(generator->builder, vFirst.value, vSecond.value, "NodeBinary_xor"), vFirst.type};

@@ -49,10 +49,7 @@ std::vector<RaveValue> NodeCall::correctByLLVM(std::vector<RaveValue> values, st
 
     for(int i=0; i<params.size(); i++) {
         if(fas[i].type->toString() == "void*" || fas[i].type->toString() == "char*") {
-            if((!instanceof<TypePointer>(params[i].type) || !instanceof<TypeBasic>(params[i].type->getElType()))) {
-                params[i].value = Binary::castValue(params[i].value, LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0), this->loc);
-                params[i].type = new TypePointer(basicTypes[BasicType::Char]);
-            }
+            if((!instanceof<TypePointer>(params[i].type) || !instanceof<TypeBasic>(params[i].type->getElType()))) LLVM::cast(params[i], new TypePointer(basicTypes[BasicType::Char]));
         }
         else if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(((TypePointer*)fas[i].type)->instance)) {
             if(!instanceof<TypePointer>(params[i].type)) LLVM::makeAsPointer(params[i]);
@@ -99,10 +96,7 @@ std::vector<RaveValue> NodeCall::getParameters(std::vector<int>& byVals, NodeFun
 
     for(int i=0; i<params.size(); i++) {
         if(fas[i].type->toString() == "void*" || fas[i].type->toString() == "char*") {
-            if(!instanceof<TypePointer>(params[i].type) || !instanceof<TypeBasic>(params[i].type->getElType())) {
-                params[i].value = Binary::castValue(params[i].value, LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0), this->loc);
-                params[i].type = new TypePointer(basicTypes[BasicType::Char]);
-            }
+            if(!instanceof<TypePointer>(params[i].type) || !instanceof<TypeBasic>(params[i].type->getElType())) LLVM::cast(params[i], new TypePointer(basicTypes[BasicType::Char]));
         }
         else if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(((TypePointer*)fas[i].type)->instance)) {
             if(!instanceof<TypePointer>(params[i].type)) LLVM::makeAsPointer(params[i]);
@@ -115,17 +109,10 @@ std::vector<RaveValue> NodeCall::getParameters(std::vector<int>& byVals, NodeFun
         }
         else if(instanceof<TypeBasic>(fas[i].type) && instanceof<TypeBasic>(params[i].type) && !((TypeBasic*)params[i].type)->isFloat()) {
             TypeBasic* tbasic = (TypeBasic*)(fas[i].type);
-            if(!tbasic->isFloat() && tbasic->type != ((TypeBasic*)params[i].type)->type) {
-                params[i].value = Binary::castValue(params[i].value, generator->genType(tbasic, this->loc), this->loc);
-                params[i].type = tbasic;
-            }
+            if(!tbasic->isFloat() && tbasic->type != ((TypeBasic*)params[i].type)->type) LLVM::cast(params[i], tbasic);
         }
         else if(instanceof<TypeBasic>(fas[i].type) && instanceof<TypeBasic>(params[i].type) &&  ((TypeBasic*)params[i].type)->type == BasicType::Double) {
-            if(((TypeBasic*)fas[i].type)->type == BasicType::Float) {
-                // Cast caller double argument to float argument of called
-                params[i].value = Binary::castValue(params[i].value, LLVMFloatTypeInContext(generator->context), this->loc);
-                params[i].type = fas[i].type;
-            }
+            if(((TypeBasic*)fas[i].type)->type == BasicType::Float) LLVM::cast(params[i], fas[i].type);
         }
         else if(this->isCdecl64) {
             if(instanceof<TypeDivided>(fas[i].internalTypes[0])) {

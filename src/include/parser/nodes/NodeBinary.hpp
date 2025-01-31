@@ -13,12 +13,6 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <string>
 
 namespace Binary {
-    extern LLVMValueRef castValue(LLVMValueRef from, LLVMTypeRef to, int loc = -1);
-    extern LLVMValueRef sum(LLVMValueRef one, LLVMValueRef two, int loc = -1);
-    extern LLVMValueRef sub(LLVMValueRef one, LLVMValueRef two, int loc = -1);
-    extern LLVMValueRef mul(LLVMValueRef one, LLVMValueRef two, int loc = -1);
-    extern LLVMValueRef div(LLVMValueRef one, LLVMValueRef two, int loc = -1);
-    extern LLVMValueRef compare(LLVMValueRef one, LLVMValueRef two, char, int loc = -1);
     extern void store(RaveValue pointer, RaveValue value, int loc = -1);
 }
 

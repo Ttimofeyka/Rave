@@ -170,3 +170,114 @@ void LLVM::makeAsPointer(RaveValue& value) {
         value = temp;
     }
 }
+
+void LLVM::cast(RaveValue& value, Type* type, int loc) {
+    if(instanceof<TypePointer>(value.type) || instanceof<TypeByval>(value.type)) {
+        if(instanceof<TypePointer>(type)) value = {LLVMBuildPointerCast(generator->builder, value.value, generator->genType(type, loc), "LLVM_ptopcast"), type};
+        else if(instanceof<TypeArray>(type)) {
+            if(LLVMIsNull(value.value)) value = {LLVMConstNull(generator->genType(type, loc)), type};
+            else generator->error("cannot cast a pointer to an array!", loc);
+        }
+        else if(instanceof<TypeBasic>(type)) {
+            if(((TypeBasic*)type)->isFloat()) {
+                if(LLVMIsNull(value.value)) value = {LLVMConstNull(generator->genType(type, loc)), type};
+                generator->error("cannot cast a pointer to a float!", loc);
+            }
+
+            value = {LLVMBuildPtrToInt(generator->builder, value.value, generator->genType(type, loc), "LLVM_ptoi"), type};
+        }
+        else if(instanceof<TypeStruct>(type)) {
+            if(LLVMIsNull(value.value)) value = {LLVMConstNull(generator->genType(type, loc)), type};
+            generator->error("cannot cast a pointer to a struct!", loc);
+        }
+    }
+    else if(instanceof<TypeArray>(value.type)) generator->error("cannot cast an array to any type!", loc);
+    else if(instanceof<TypeStruct>(value.type)) generator->error("cannot cast a struct to any type!", loc);
+    else if(instanceof<TypeBasic>(value.type)) {
+        if(instanceof<TypePointer>(type) || instanceof<TypeByval>(type)) {
+            if(((TypeBasic*)value.type)->isFloat()) generator->error("cannot cast a float to a pointer!", loc);
+            else value = {LLVMBuildIntToPtr(generator->builder, value.value, generator->genType(type, loc), "LLVM_itop"), type};
+        }
+        else if(instanceof<TypeArray>(type)) generator->error("cannot cast a basic type to an array!", loc);
+        else if(instanceof<TypeBasic>(type)) {
+            if(((TypeBasic*)value.type)->isFloat()) {
+                if(((TypeBasic*)type)->isFloat()) value = {LLVMBuildFPCast(generator->builder, value.value, generator->genType(type, loc), "LLVM_ftofcast"), type};
+                else value = {LLVMBuildFPToSI(generator->builder, value.value, generator->genType(type, loc), "LLVM_ftoicast"), type};
+            }
+            else if(((TypeBasic*)type)->isFloat()) value = {LLVMBuildSIToFP(generator->builder, value.value, generator->genType(type, loc), "LLVM_itofcast"), type};
+            else value = {LLVMBuildIntCast2(generator->builder, value.value, generator->genType(type, loc), false, "LLVM_itoicast"), type};
+        }
+        else if(instanceof<TypeStruct>(type)) generator->error("cannot cast a basic type to a struct!", loc);
+    }
+}
+
+void LLVM::castForExpression(RaveValue& first, RaveValue& second) {
+    while(instanceof<TypeConst>(first.type)) first.type = first.type->getElType();
+    while(instanceof<TypeConst>(second.type)) second.type = second.type->getElType();
+
+    TypeBasic* fType = (TypeBasic*)first.type;
+    TypeBasic* sType = (TypeBasic*)second.type;
+
+    if(fType->type != sType->type) {
+        if(fType->isFloat()) {
+            if(sType->isFloat()) {
+                if(fType->getSize() > sType->getSize()) LLVM::cast(second, fType);
+                else LLVM::cast(first, sType);
+            }
+            else LLVM::cast(second, fType);
+        }
+        else if(sType->isFloat()) LLVM::cast(first, sType);
+        else {
+            if(fType->getSize() > sType->getSize()) LLVM::cast(second, fType);
+            else LLVM::cast(first, sType);
+        }
+    }
+}
+
+// TODO: Add unsigned support?
+
+RaveValue LLVM::sum(RaveValue first, RaveValue second) {
+    if(isFloatType(first.type)) return {LLVMBuildFAdd(generator->builder, first.value, second.value, "LLVM_fsum"), first.type};
+    return {LLVMBuildAdd(generator->builder, first.value, second.value, "LLVM_sum"), first.type};
+}
+
+RaveValue LLVM::sub(RaveValue first, RaveValue second) {
+    if(isFloatType(first.type)) return {LLVMBuildFSub(generator->builder, first.value, second.value, "LLVM_fsub"), first.type};
+    return {LLVMBuildSub(generator->builder, first.value, second.value, "LLVM_sub"), first.type};
+}
+
+RaveValue LLVM::mul(RaveValue first, RaveValue second) {
+    if(isFloatType(first.type)) return {LLVMBuildFMul(generator->builder, first.value, second.value, "LLVM_fmul"), first.type};
+    return {LLVMBuildMul(generator->builder, first.value, second.value, "LLVM_mul"), first.type};
+}
+
+RaveValue LLVM::div(RaveValue first, RaveValue second) {
+    if(isFloatType(first.type)) return {LLVMBuildFDiv(generator->builder, first.value, second.value, "LLVM_fdiv"), first.type};
+    return {LLVMBuildSDiv(generator->builder, first.value, second.value, "LLVM_div"), first.type};
+}
+
+RaveValue LLVM::compare(RaveValue first, RaveValue second, char op) {
+    if(instanceof<TypePointer>(first.type) && instanceof<TypePointer>(second.type)) {
+        LLVM::cast(first, basicTypes[BasicType::Long]);
+        LLVM::cast(second, basicTypes[BasicType::Long]);
+    }
+
+    if(isFloatType(first.type)) switch(op) {
+        case TokType::Equal: return {LLVMBuildFCmp(generator->builder, LLVMRealOEQ, first.value, second.value, "compareIEQ"), basicTypes[BasicType::Bool]};
+        case TokType::Nequal: return {LLVMBuildFCmp(generator->builder, LLVMRealONE, first.value, second.value, "compareINEQ"), basicTypes[BasicType::Bool]};
+        case TokType::More: return {LLVMBuildFCmp(generator->builder, LLVMRealOGT, first.value, second.value, "compareIMR"), basicTypes[BasicType::Bool]};
+        case TokType::Less: return {LLVMBuildFCmp(generator->builder, LLVMRealOLT, first.value, second.value, "compareILS"), basicTypes[BasicType::Bool]};
+        case TokType::MoreEqual: return {LLVMBuildFCmp(generator->builder, LLVMRealOGE, first.value, second.value, "compareIME"), basicTypes[BasicType::Bool]};
+        case TokType::LessEqual: return {LLVMBuildFCmp(generator->builder, LLVMRealOLE, first.value, second.value, "compareILE"), basicTypes[BasicType::Bool]};
+    }
+    else switch(op) {
+        case TokType::Equal: return {LLVMBuildICmp(generator->builder, LLVMIntEQ, first.value, second.value, "compareIEQ"), basicTypes[BasicType::Bool]};
+        case TokType::Nequal: return {LLVMBuildICmp(generator->builder, LLVMIntNE, first.value, second.value, "compareINEQ"), basicTypes[BasicType::Bool]};
+        case TokType::More: return {LLVMBuildICmp(generator->builder, LLVMIntSGT, first.value, second.value, "compareIMR"), basicTypes[BasicType::Bool]};
+        case TokType::Less: return {LLVMBuildICmp(generator->builder, LLVMIntSLT, first.value, second.value, "compareILS"), basicTypes[BasicType::Bool]};
+        case TokType::MoreEqual: return {LLVMBuildICmp(generator->builder, LLVMIntSGE, first.value, second.value, "compareIME"), basicTypes[BasicType::Bool]};
+        case TokType::LessEqual: return {LLVMBuildICmp(generator->builder, LLVMIntSLE, first.value, second.value, "compareILE"), basicTypes[BasicType::Bool]};
+    }
+
+    return {};
+}

@@ -44,4 +44,13 @@ namespace LLVM {
     extern void undoLoad(RaveValue& value);
 
     extern void makeAsPointer(RaveValue& value);
+
+    extern void cast(RaveValue& value, Type* type, int loc = -1);
+    extern void castForExpression(RaveValue& one, RaveValue& two);
+
+    extern RaveValue sum(RaveValue first, RaveValue second);
+    extern RaveValue sub(RaveValue first, RaveValue second);
+    extern RaveValue mul(RaveValue first, RaveValue second);
+    extern RaveValue div(RaveValue first, RaveValue second);
+    extern RaveValue compare(RaveValue first, RaveValue second, char op);
 }
