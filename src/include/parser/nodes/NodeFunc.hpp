@@ -56,6 +56,7 @@ public:
     bool noCompile = false;
     bool isExtern = false;
     bool isCdecl64 = false;
+    bool isWin64 = false;
     bool isArrayable = false;
     bool isNoCopy = false;
 

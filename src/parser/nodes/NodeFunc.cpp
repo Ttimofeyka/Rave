@@ -147,7 +147,7 @@ LLVMTypeRef* NodeFunc::getParameters(int callConv) {
             std::string oldName = arg.name;
             arg.name = "_RaveArgument" + arg.name;
 
-            if(isCdecl64) {
+            if(isCdecl64 || isWin64) {
                 if(instanceof<TypeStruct>(arg.type)) {
                     int tSize = arg.type->getSize();
 
@@ -156,7 +156,12 @@ LLVMTypeRef* NodeFunc::getParameters(int callConv) {
                         int tElCount = ((TypeStruct*)arg.type)->getElCount();
 
                         if(tElCount == 2) {
-                            if(tArgType->isFloat()) arg.internalTypes[0] = new TypeDivided(new TypeVector(basicTypes[BasicType::Float], 2), {basicTypes[BasicType::Float], basicTypes[BasicType::Float]});
+                            if(tArgType->isFloat()) {
+                                if(isCdecl64)
+                                    arg.internalTypes[0] = new TypeDivided(new TypeVector(basicTypes[BasicType::Float], 2), {basicTypes[BasicType::Float], basicTypes[BasicType::Float]});
+                                else
+                                    arg.internalTypes[0] = new TypeDivided(basicTypes[BasicType::Long], {basicTypes[BasicType::Float], basicTypes[BasicType::Float]});
+                            }
                             else arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize), {getTypeBySize(tSize / 2), getTypeBySize(tSize / 2)});
                         }
                         else if(tElCount == 3) arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize), {getTypeBySize(tSize / 3), getTypeBySize(tSize / 3), getTypeBySize(tSize / 3)});
@@ -165,7 +170,8 @@ LLVMTypeRef* NodeFunc::getParameters(int callConv) {
                     }
                     else if(tSize >= 128) {
                         // 'byval' pointer
-                        arg.internalTypes[0] = new TypeByval(arg.type);
+                        if(isCdecl64) arg.internalTypes[0] = new TypeByval(arg.type);
+                        else arg.type = new TypePointer(arg.type);
                     }
                 }
             }
@@ -222,6 +228,7 @@ RaveValue NodeFunc::generate() {
         else if(this->mods[i].name == "armapcs") callConv = LLVMARMAPCSCallConv;
         else if(this->mods[i].name == "armaapcs") callConv = LLVMARMAAPCSCallConv;
         else if(this->mods[i].name == "cdecl64") {callConv = LLVMCCallConv; this->isCdecl64 = true;}
+        else if(this->mods[i].name == "win64") {callConv = LLVMCCallConv; this->isWin64 = true;}
         else if(this->mods[i].name == "inline") this->isInline = true;
         else if(this->mods[i].name == "linkname") {
             Node* newLinkName = this->mods[i].value->comptime();

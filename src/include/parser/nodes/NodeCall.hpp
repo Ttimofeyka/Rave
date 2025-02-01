@@ -17,7 +17,7 @@ public:
     int loc;
     Node* func;
     std::vector<Node*> args;
-    bool isCdecl64 = false;
+    bool isCW64 = false;
     NodeFunc* calledFunc = nullptr;
     int _offset = 0;
 

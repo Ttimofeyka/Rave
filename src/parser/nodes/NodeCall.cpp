@@ -114,7 +114,7 @@ std::vector<RaveValue> NodeCall::getParameters(std::vector<int>& byVals, NodeFun
         else if(instanceof<TypeBasic>(fas[i].type) && instanceof<TypeBasic>(params[i].type) &&  ((TypeBasic*)params[i].type)->type == BasicType::Double) {
             if(((TypeBasic*)fas[i].type)->type == BasicType::Float) LLVM::cast(params[i], fas[i].type);
         }
-        else if(this->isCdecl64) {
+        else if(isCW64) {
             if(instanceof<TypeDivided>(fas[i].internalTypes[0])) {
                 if(!instanceof<TypePointer>(params[i].type)) {
                     RaveValue temp = LLVM::alloc(params[i].type, "getParameters_stotd_temp");
@@ -268,7 +268,7 @@ RaveValue NodeCall::generate() {
             }
 
             if(AST::funcTable.find(idenFunc->name + sTypes) != AST::funcTable.end()) {
-                this->isCdecl64 = AST::funcTable[idenFunc->name + sTypes]->isCdecl64;
+                isCW64 = AST::funcTable[idenFunc->name + sTypes]->isCdecl64 || AST::funcTable[idenFunc->name + sTypes]->isWin64;
                 std::vector<RaveValue> params = this->getParameters(byVals, AST::funcTable[idenFunc->name + sTypes], false, AST::funcTable[idenFunc->name + sTypes]->args);
                 return LLVM::call(generator->functions[idenFunc->name + sTypes], params, (instanceof<TypeVoid>(AST::funcTable[idenFunc->name + sTypes]->type) ? "" : "callFunc"), byVals);
             }
@@ -291,14 +291,14 @@ RaveValue NodeCall::generate() {
                     std::string newSTypes = typesToString(newTypes);
                     if(AST::funcTable.find(idenFunc->name + newSTypes) != AST::funcTable.end()) {
                         this->args = newArgs;
-                        this->isCdecl64 = AST::funcTable[idenFunc->name + newSTypes]->isCdecl64;
+                        isCW64 = AST::funcTable[idenFunc->name + newSTypes]->isCdecl64 || AST::funcTable[idenFunc->name + newSTypes]->isWin64;
                         std::vector<RaveValue> params = this->getParameters(byVals, AST::funcTable[idenFunc->name + newSTypes], false, AST::funcTable[idenFunc->name + newSTypes]->args);
                         return LLVM::call(generator->functions[idenFunc->name + newSTypes], params, (instanceof<TypeVoid>(AST::funcTable[idenFunc->name + newSTypes]->type) ? "" : "callFunc"), byVals);
                     }
                 }
             }
 
-            this->isCdecl64 = AST::funcTable[idenFunc->name]->isCdecl64;
+            isCW64 = AST::funcTable[idenFunc->name]->isCdecl64 || AST::funcTable[idenFunc->name]->isWin64;
             std::vector<RaveValue> params = this->getParameters(byVals, AST::funcTable[idenFunc->name], false, AST::funcTable[idenFunc->name]->args);
             return LLVM::call(generator->functions[idenFunc->name], params, (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"), byVals);
         }
@@ -318,7 +318,7 @@ RaveValue NodeCall::generate() {
             if(AST::funcTable.find(mainName + callTypes) != AST::funcTable.end()) {
                 if(generator->functions.find(idenFunc->name + callTypes) != generator->functions.end()) {
                     // This function is already exists - just call it
-                    this->isCdecl64 = AST::funcTable[idenFunc->name + callTypes]->isCdecl64;
+                    isCW64 = AST::funcTable[idenFunc->name + callTypes]->isCdecl64 || AST::funcTable[idenFunc->name + callTypes]->isWin64;
                     std::vector<RaveValue> values = this->getParameters(byVals, AST::funcTable[idenFunc->name + callTypes], false);
                     return LLVM::call(generator->functions[idenFunc->name + callTypes], values, instanceof<TypeVoid>(AST::funcTable[idenFunc->name + callTypes]->type) ? "" : "callFunc", byVals);
                 }
