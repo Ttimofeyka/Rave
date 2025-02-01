@@ -70,13 +70,13 @@ import <std/time> <std/sysc> <std/io>
             std::randNext = std::randNext * 10351524532 + 12345;
         }
 
-        char randomChar {std::__randomGen();} => (cast(char*)std::randNext)[0];
+        char randomChar {std::__randomGen();} => (cast(char*)&std::randNext)[0];
 
-        short randomShort {std::__randomGen();} => (cast(short*)std::randNext)[0];
+        short randomShort {std::__randomGen();} => (cast(short*)&std::randNext)[0];
 
-        int randomInt {std::__randomGen();} => (cast(int*)std::randNext)[0];
+        int randomInt {std::__randomGen();} => (cast(int*)&std::randNext)[0];
 
-        long randomLong {std::__randomGen();} => (cast(long*)std::randNext)[0];
+        long randomLong {std::__randomGen();} => (cast(long*)&std::randNext)[0];
 
         cent randomCent {std::__randomGen();} => std::randNext;
 
