@@ -26,21 +26,14 @@ NodeArray::~NodeArray() {
 
 std::vector<RaveValue> NodeArray::getValues() {
     std::vector<RaveValue> buffer;
-    RaveValue v0 = values[0]->generate();
 
-    buffer.push_back(v0);
-    this->type = v0.type;
+    this->type = values[0]->getType();
 
-    if(!LLVMIsConstant(v0.value)) isConst = false;
-
-    for(int i=1; i<this->values.size(); i++) {
+    for(int i=0; i<this->values.size(); i++) {
         buffer.push_back(values[i]->generate());
-
-        if(!LLVMIsConstant(buffer[buffer.size() - 1].value)) {
-            isConst = false;
-            break;
-        }
+        if(!LLVMIsConstant(buffer[buffer.size() - 1].value)) isConst = false;
     }
+
     return buffer;
 }
 
