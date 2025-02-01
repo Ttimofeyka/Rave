@@ -172,6 +172,10 @@ RaveValue NodeVar::generate() {
 
             LLVMTypeRef globalType = generator->genType(this->type, loc);
 
+            if(generator->globals.find(this->name) != generator->globals.end() && LLVMGetLinkage(generator->globals[this->name].value) == LLVMExternalLinkage) {
+                return {};
+            }
+
             generator->globals[this->name] = {LLVMAddGlobal(
                 generator->lModule,
                 globalType,
@@ -185,6 +189,7 @@ RaveValue NodeVar::generate() {
                 LLVMSetGlobalConstant(generator->globals[this->name].value, this->isConst);
                 if(alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
             }
+            else LLVMSetLinkage(generator->globals[this->name].value, LLVMExternalLinkage);
         }
         else {
             RaveValue val;
