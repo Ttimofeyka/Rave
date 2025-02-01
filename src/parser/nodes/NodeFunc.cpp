@@ -166,7 +166,10 @@ LLVMTypeRef* NodeFunc::getParameters(int callConv) {
                         }
                         else if(tElCount == 3) arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize), {getTypeBySize(tSize / 3), getTypeBySize(tSize / 3), getTypeBySize(tSize / 3)});
                         else if(tElCount == 4) arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize), {getTypeBySize(tSize / 4), getTypeBySize(tSize / 4), getTypeBySize(tSize / 4), getTypeBySize(tSize / 4)});
-                        else if(tSize >= 128) arg.internalTypes[0] = new TypeByval(arg.type);
+                        else if(tSize >= 128) {
+                            if(isCdecl64) arg.internalTypes[0] = new TypeByval(arg.type);
+                            else arg.type = new TypePointer(arg.type);
+                        }
                     }
                     else if(tSize >= 128) {
                         // 'byval' pointer
