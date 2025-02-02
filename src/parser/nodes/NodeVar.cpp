@@ -273,6 +273,7 @@ RaveValue NodeVar::generate() {
                                 else if(parser->peek()->type == TokType::Eof) break;
                                 types.push_back(parser->parseType());
                             }
+
                             AST::structTable[niden->name.substr(0, niden->name.find('<'))]->genWithTemplate("<"+sTypes+">", types);
                             this->type = new TypeStruct(niden->name);
                         }
@@ -281,10 +282,14 @@ RaveValue NodeVar::generate() {
                         RaveValue val = this->value->generate();
                         currScope->localScope[this->name] = LLVM::alloc(val.type, name.c_str());
                         this->type = value->getType();
+
                         if(isVolatile) LLVMSetVolatile(currScope->localScope[this->name].value, true);
+
                         if(alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
                         else if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->localScope[this->name].value, generator->getAlignment(this->type));
+                        
                         LLVMBuildStore(generator->builder, val.value, currScope->localScope[this->name].value);
+
                         return currScope->localScope[this->name];
                     }
                 }
@@ -292,10 +297,14 @@ RaveValue NodeVar::generate() {
                     RaveValue val = this->value->generate();
                     currScope->localScope[this->name] = LLVM::alloc(val.type, name.c_str());
                     this->type = value->getType();
+
                     if(isVolatile) LLVMSetVolatile(currScope->localScope[this->name].value, true);
+
                     if(alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
                     else if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->localScope[this->name].value, generator->getAlignment(this->type));
+
                     LLVMBuildStore(generator->builder, val.value, currScope->localScope[this->name].value);
+
                     return currScope->localScope[this->name];
                 }
             }
@@ -311,7 +320,7 @@ RaveValue NodeVar::generate() {
             }
         }
 
-        if(instanceof<NodeInt>(this->value)) ((NodeInt*)this->value)->isVarVal = this->type;
+        if(instanceof<NodeInt>(this->value) && !isFloatType(this->type)) ((NodeInt*)this->value)->isVarVal = this->type;
 
         LLVMTypeRef gT = generator->genType(this->type, this->loc);
         currScope->localScope[this->name] = LLVM::alloc(this->type, name.c_str());
