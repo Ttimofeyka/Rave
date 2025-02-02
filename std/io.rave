@@ -268,7 +268,7 @@ namespace std {
         }
     }
 }
-@else @if(__RAVE_OS == "WINDOWS") {
+/*@else @if(__RAVE_OS == "WINDOWS") {
     namespace std {
         namespace file {
             alias stdOutputHandle = -11;
@@ -484,7 +484,7 @@ namespace std {
             }
         }
     }
-}
+}*/
 @else {
     namespace libc {
         extern(linkname: "fopen") libc::File* fopen(char* path, char* mode);
