@@ -135,6 +135,8 @@ RaveValue NodeUnary::generate() {
     
         RaveValue toRet = base->generate();
         if(instanceof<TypePointer>(toRet.type)) toRet = LLVM::load(toRet, "NodeUnary_Ne_load", loc);
+
+        if(instanceof<TypeStruct>(toRet.type)) generator->error("cannot use a struct as boolean type for '!' operator!", this->loc);
     
         return {LLVMBuildNot(generator->builder, toRet.value, "NodeUnary_not"), toRet.type};
     }
