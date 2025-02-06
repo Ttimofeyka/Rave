@@ -411,6 +411,30 @@ RaveValue NodeCall::generate() {
             return this->generate();
         }
 
+        if(currScope->has("this")) {
+            NodeVar* _this = currScope->getVar("this", loc);
+            if(instanceof<TypeStruct>(_this->type->getElType())) {
+                TypeStruct* _struct = (TypeStruct*)_this->type->getElType();
+                auto method = std::pair<std::string, std::string>(_struct->name, idenFunc->name);
+
+                std::vector<RaveValue> params = this->getParameters(byVals, nullptr, false);
+                std::vector<Type*> types;
+
+                params.insert(params.begin(), currScope->getWithoutLoad("this"));
+                if(instanceof<TypePointer>(params[0].type->getElType())) params[0] = LLVM::load(params[0], "NodeCall_load", loc);
+                for(int i=0; i<params.size(); i++) types.push_back(params[i].type);
+
+                auto methodf = AST::methodTable.find(method);
+
+                if(methodf == AST::methodTable.end() || !hasIdenticallyArgs(types, AST::methodTable[method]->args)) {method.second += typesToString(types); methodf = AST::methodTable.find(method);}
+                if(methodf == AST::methodTable.end()) {method.second = method.second.substr(0, method.second.find('[')); methodf = AST::methodTable.find(method);}
+                if(methodf != AST::methodTable.end()) {
+                    params = this->correctByLLVM(params, methodf->second->args);
+                    return LLVM::call(generator->functions[methodf->second->name], params, (instanceof<TypeVoid>(methodf->second->type) ? "" : "callFunc"), byVals);
+                }
+            }
+        }
+
         if(AST::debugMode) {
             for(auto const& x : AST::funcTable) std::cout << "\t" << x.first << std::endl;
             std::cout << "DEBUG_MODE 2: undefined function!" << std::endl;

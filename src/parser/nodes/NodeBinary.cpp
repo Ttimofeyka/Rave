@@ -371,9 +371,7 @@ RaveValue NodeBinary::generate() {
             }
             else value = this->second->generate();
 
-            if(instanceof<NodeNull>(this->second)) {
-                ((NodeNull*)this->second)->type = ptr.type->getElType();
-            }
+            if(instanceof<NodeNull>(this->second)) ((NodeNull*)this->second)->type = ptr.type->getElType();
             
             Binary::store(ptr, value, loc);
             return {};
