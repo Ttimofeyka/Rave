@@ -36,23 +36,6 @@ namespace std {
             for(int i=0; i<mapSize; i++) this.table[i] = null;
         } => this;
 
-        bool has(K key) {
-            return = false;
-            
-            @if(@hasMethod(K, hash)) int index = key.hash() % mapSize;
-            @else int index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
-
-            if(index < 0) index = -index;
-
-            std::hashmap::Entry<K, V>* entry = table[index];
-            while(entry != null) {
-                if(key == entry.key) {
-                    return = true;
-                    break;
-                }
-            }
-        }
-
         void set(K key, V value) {
             // if(length > (mapSize * 0.75))
             if(length > (mapSize >. 1) + (mapSize >. 2)) {
@@ -101,8 +84,8 @@ namespace std {
             }
         }
 
-        V get(K key) {
-            return = cast(V)null;
+        std::hashmap::Entry<K, V>* find(K key) {
+            return = cast(std::hashmap::Entry<K, V>*)null;
 
             @if(@hasMethod(K, hash)) int index = key.hash() % mapSize;
             @else int index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
@@ -110,14 +93,22 @@ namespace std {
             if(index < 0) index = -index;
 
             std::hashmap::Entry<K, V>* entry = table[index];
-
             while(entry != null) {
                 if(key == entry.key) {
-                    return = entry.value;
+                    return = entry;
                     break;
                 }
                 else entry = entry.next;
             }
+        }
+
+        (inline) bool contains(K key) => find(key) != cast(std::hashmap::Entry<K, V>*)null;
+
+        (inline) V get(K key) {
+            std::hashmap::Entry<K, V>* kv = find(key);
+
+            if(kv == cast(std::hashmap::Entry<K, V>*)null) return = cast(V)null;
+            else return = kv.value;
         }
 
         bool remove(K key) {
@@ -156,6 +147,7 @@ namespace std {
                     entry = entry.next;
                     std::free(cast(void*)old);
                 }
+
                 table[i] = null;
             }
             length = 0;
