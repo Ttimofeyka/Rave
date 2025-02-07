@@ -64,6 +64,14 @@ Type* NodeGet::getType() {
         if(x.first.find('<') != std::string::npos) return x.second;
     }
 
+    if(ts->name.find('<') != std::string::npos) {
+        for(int i=0; i<ts->types.size(); i++) {
+            while(generator->toReplace.find(ts->types[i]->toString()) != generator->toReplace.end()) ts->types[i] = generator->toReplace[ts->types[i]->toString()];
+        }
+
+        ts->updateByTypes();
+    }
+
     generator->error("structure '" + ts->name + "' does not contain element '" + field + "'!", loc);
     return nullptr;
 }

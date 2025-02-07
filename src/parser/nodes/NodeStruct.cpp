@@ -62,6 +62,41 @@ LLVMTypeRef NodeStruct::asConstType() {
     return LLVMStructTypeInContext(generator->context, types.data(), types.size(), this->isPacked);
 }
 
+Type* checkForTemplated(Type* type) {
+    Type* loaded = type;
+    Type* parent = nullptr;
+
+    while(instanceof<TypeConst>(loaded) || instanceof<TypePointer>(loaded) || instanceof<TypeArray>(loaded)) {
+        parent = loaded;
+        loaded = loaded->getElType();
+    }
+
+    if(instanceof<TypeStruct>(loaded)) {
+        if(generator->toReplace.find(loaded->toString()) != generator->toReplace.end()) loaded = generator->toReplace[loaded->toString()];
+
+        if(instanceof<TypeStruct>(loaded)) {
+            TypeStruct* ts = (TypeStruct*)loaded;
+
+            if(ts->types.size() > 0) {
+                for(int i=0; i<ts->types.size(); i++) ts->types[i] = checkForTemplated(ts->types[i]);
+                ts->updateByTypes();
+            }
+        }
+
+        if(parent != nullptr) {
+            if(instanceof<TypePointer>(parent)) ((TypePointer*)parent)->instance = loaded;
+            else if(instanceof<TypeArray>(parent)) ((TypeArray*)parent)->element = loaded;
+            else if(instanceof<TypeConst>(parent)) ((TypeConst*)parent)->instance = loaded;
+
+            return type;
+        }
+        
+        return loaded;
+    }
+
+    return type;
+}
+
 std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
     std::vector<LLVMTypeRef> values;
     for(int i=0; i<this->elements.size(); i++) {
@@ -171,6 +206,9 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 func->isMethod = true;
                 func->isExtern = (func->isExtern || this->isImported);
                 func->isComdat = this->isComdat;
+
+                // Check for template structure as return type
+                checkForTemplated(func->type);
 
                 if(AST::methodTable.find(std::pair<std::string, std::string>(this->name, func->origName)) != AST::methodTable.end()) {
                     std::string sTypes = typesToString(AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)]->args);

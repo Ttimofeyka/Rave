@@ -359,6 +359,7 @@ RaveValue NodeFunc::generate() {
         generator->addAttr("noinline", LLVMAttributeFunctionIndex, generator->functions[this->name].value, this->loc);
         generator->addAttr("optnone", LLVMAttributeFunctionIndex, generator->functions[this->name].value, this->loc);
     }
+
     if(this->isTemplatePart || this->isTemplate || this->isCtargsPart || this->isComdat) {
         LLVMComdatRef comdat = LLVMGetOrInsertComdat(generator->lModule, linkName.c_str());
         LLVMSetComdatSelectionKind(comdat, LLVMAnyComdatSelectionKind);
@@ -393,6 +394,7 @@ RaveValue NodeFunc::generate() {
             this->block->nodes.insert(this->block->nodes.begin(), new NodeVar("return", new NodeNull(this->type, this->loc), false, false, false, {}, this->loc, this->type, false));
             ((NodeVar*)this->block->nodes[0])->isUsed = true;
         }
+
         this->block->generate();
 
         if(!this->isCtargs && !this->isCtargsPart && !Compiler::settings.disableWarnings) block->optimize();
@@ -404,7 +406,7 @@ RaveValue NodeFunc::generate() {
         LLVMMoveBasicBlockAfter(this->exitBlock, LLVMGetLastBasicBlock(generator->functions[this->name].value));
 
         uint32_t bbLength = LLVMCountBasicBlocks(generator->functions[currScope->funcName].value);
-        LLVMBasicBlockRef* basicBlocks = (LLVMBasicBlockRef*)malloc(sizeof(LLVMBasicBlockRef)*bbLength);
+        LLVMBasicBlockRef* basicBlocks = (LLVMBasicBlockRef*)malloc(sizeof(LLVMBasicBlockRef) * bbLength);
         LLVMGetBasicBlocks(generator->functions[currScope->funcName].value, basicBlocks);
             for(int i=0; i<bbLength; i++) {
                 if(basicBlocks[i] != nullptr && std::string(LLVMGetBasicBlockName(basicBlocks[i])) != "exit" && LLVMGetBasicBlockTerminator(basicBlocks[i]) == nullptr) {
