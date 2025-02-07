@@ -133,6 +133,8 @@ RaveValue NodeVar::generate() {
         ) this->type = generator->toReplace[((TypeStruct*)this->type)->name];
     }
 
+    if(this->type != nullptr) checkForTemplated(this->type);
+
     linkName = this->name;
 
     int alignment = -1;

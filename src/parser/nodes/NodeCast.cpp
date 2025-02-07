@@ -11,6 +11,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeIden.hpp"
 #include "../../include/parser/nodes/NodeGet.hpp"
 #include "../../include/parser/nodes/NodeIndex.hpp"
+#include "../../include/parser/nodes/NodeStruct.hpp"
 #include "../../include/parser/nodes/NodeBuiltin.hpp"
 #include "../../include/llvm.hpp"
 #include <iostream>
@@ -38,6 +39,8 @@ Node* NodeCast::comptime() {return nullptr;}
 
 RaveValue NodeCast::generate() {
     RaveValue result = {nullptr, nullptr};
+
+    checkForTemplated(this->type);
 
     if(instanceof<TypeBasic>(this->type)) {
         TypeBasic* tbasic = (TypeBasic*)this->type;

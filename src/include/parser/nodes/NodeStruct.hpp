@@ -14,6 +14,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <map>
 #include "../parser.hpp"
 
+extern Type* checkForTemplated(Type* type);
+
 struct StructPredefined {
     int element;
     Node* value;
