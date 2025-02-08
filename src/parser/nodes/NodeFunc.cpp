@@ -164,9 +164,15 @@ LLVMTypeRef* NodeFunc::getParameters(int callConv) {
                             }
                             else arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize), {getTypeBySize(tSize / 2), getTypeBySize(tSize / 2)});
                         }
-                        else if(tElCount == 3) arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize), {getTypeBySize(tSize / 3), getTypeBySize(tSize / 3), getTypeBySize(tSize / 3)});
-                        else if(tElCount == 4) arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize), {getTypeBySize(tSize / 4), getTypeBySize(tSize / 4), getTypeBySize(tSize / 4), getTypeBySize(tSize / 4)});
-                        else if(tSize >= 128) {
+                        else if(tElCount == 3) {
+                            if(isWin64 && tSize >= 96) arg.type = new TypePointer(arg.type);
+                            else arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize), {getTypeBySize(tSize / 3), getTypeBySize(tSize / 3), getTypeBySize(tSize / 3)});
+                        }
+                        else if(tElCount == 4) {
+                            if(isWin64 && tSize >= 96) arg.type = new TypePointer(arg.type);
+                            else arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize), {getTypeBySize(tSize / 4), getTypeBySize(tSize / 4), getTypeBySize(tSize / 4), getTypeBySize(tSize / 4)});
+                        }
+                        else if((tSize >= 128) || (tSize >= 96 && isWin64)) {
                             if(isCdecl64) arg.internalTypes[0] = new TypeByval(arg.type);
                             else arg.type = new TypePointer(arg.type);
                         }
