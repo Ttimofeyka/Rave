@@ -186,6 +186,10 @@ Lexer::Lexer(std::string text, int offset) {
             case '!':
                 if(next() == '=') {tokens.push_back(new Token(TokType::Nequal, "!=", line)); idx += 1;}
                 else if(peek() == '!') {tokens.push_back(new Token(TokType::BitXor, "!!", line)); idx += 1;}
+                else if(peek() == 'i' && text[idx + 1] == 'n' && (text[idx + 2] == ' ' || text[idx + 2] == '\n' || text[idx + 2] == '\t')) {
+                    idx += 3;
+                    tokens.push_back(new Token(TokType::NeIn, "!in", line));
+                }
                 else tokens.push_back(new Token(TokType::Ne, "!", line));
                 break;
             default:
@@ -213,6 +217,7 @@ Lexer::Lexer(std::string text, int offset) {
                     std::string identifier = getIdentifier();
                     if(identifier == "true") tokens.push_back(new Token(TokType::True, "true", line));
                     else if(identifier == "false") tokens.push_back(new Token(TokType::False, "false", line));
+                    else if(identifier == "in") tokens.push_back(new Token(TokType::In, "in", line));
                     else tokens.push_back(new Token(TokType::Identifier, identifier, line));
                 }
                 break;

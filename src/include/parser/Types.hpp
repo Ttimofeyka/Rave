@@ -45,6 +45,7 @@ public:
     int getSize() override;
     Type* check(Type* parent) override;
     bool isFloat();
+    bool isUnsigned();
     std::string toString() override;
     Type* getElType() override;
 };

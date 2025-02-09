@@ -76,6 +76,8 @@ Parser::Parser(std::vector<Token*> tokens, std::string file) {
     operators.insert({TokType::DivEqu, -97});
     operators.insert({TokType::Equal, -80});
     operators.insert({TokType::Nequal, -80});
+    operators.insert({TokType::In, -80});
+    operators.insert({TokType::NeIn, -80});
     operators.insert({TokType::Less, -70});
     operators.insert({TokType::More, -70});
     operators.insert({TokType::LessEqual, -70});
@@ -477,6 +479,7 @@ Node* Parser::parseAtom(std::string f) {
                 return nfloat;
             }
         }
+
         return new NodeInt(BigInt(t->value));
     }
 

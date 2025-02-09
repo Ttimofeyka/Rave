@@ -67,6 +67,9 @@ enum TokType : char {
     BitOr,
     BitAnd,
 
+    In,
+    NeIn,
+
     None,
 };
 

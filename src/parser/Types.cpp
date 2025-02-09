@@ -41,6 +41,8 @@ int TypeBasic::getSize() {
 
 bool TypeBasic::isFloat() {return (this->type == BasicType::Float) || (this->type == BasicType::Double || this->type == BasicType::Half || this->type == BasicType::Bhalf || this->type == BasicType::Real);}
 
+bool TypeBasic::isUnsigned() {return (this->type == BasicType::Uchar) || (this->type == BasicType::Ushort) || (this->type == BasicType::Uint) || (this->type == BasicType::Ulong) || (this->type == BasicType::Ucent);}
+
 std::string TypeBasic::toString() {
     switch(this->type) {
         case BasicType::Bool: return "bool";

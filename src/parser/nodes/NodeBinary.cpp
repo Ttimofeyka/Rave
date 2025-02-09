@@ -13,6 +13,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeInt.hpp"
 #include "../../include/parser/nodes/NodeFloat.hpp"
 #include "../../include/parser/nodes/NodeString.hpp"
+#include "../../include/parser/nodes/NodeArray.hpp"
 #include "../../include/parser/nodes/NodeVar.hpp"
 #include "../../include/parser/nodes/NodeNull.hpp"
 #include "../../include/parser/nodes/NodeGet.hpp"
@@ -231,7 +232,7 @@ Type* NodeBinary::getType() {
     switch(this->op) {
         case TokType::Equ: case TokType::PluEqu: case TokType::MinEqu: case TokType::DivEqu: case TokType::MulEqu: return typeVoid;
         case TokType::Equal: case TokType::Nequal: case TokType::More: case TokType::Less: case TokType::MoreEqual: case TokType::LessEqual:
-        case TokType::And: case TokType::Or: return basicTypes[BasicType::Bool];
+        case TokType::And: case TokType::Or: case TokType::In: case TokType::NeIn: return basicTypes[BasicType::Bool];
         default:
             Type* firstType = this->first->getType();
             Type* secondType = this->second->getType();
@@ -417,6 +418,31 @@ RaveValue NodeBinary::generate() {
     if(generator->toReplace.find(vSecond.type->toString()) != generator->toReplace.end()) vSecond.type = generator->toReplace[vSecond.type->toString()];
 
     if(instanceof<TypeBasic>(vFirst.type) && instanceof<TypeBasic>(vSecond.type)) LLVM::castForExpression(vFirst, vSecond);
+
+    if(op == TokType::In || op == TokType::NeIn) {
+        char connect = (op == TokType::In ? TokType::Or : TokType::And);
+        char exprOp = (op == TokType::In ? TokType::Equal : TokType::Nequal);
+
+        if(instanceof<TypePointer>(vSecond.type) && instanceof<TypeArray>(vSecond.type->getElType())) vSecond = LLVM::load(vSecond, "NodeBinary_loadS", loc);
+        else if(!instanceof<TypeArray>(vSecond.type)) generator->error("array expected!", loc);
+
+        uint32_t length = LLVMGetArrayLength(LLVMTypeOf(vSecond.value));
+        Type* arrayType = second->getType()->getElType();
+
+        if(length == 0) generator->error("array is empty!", loc);
+
+        NodeBinary* out = nullptr;
+        NodeBinary* binary = new NodeBinary(exprOp, first, new NodeDone({LLVMBuildExtractValue(generator->builder, vSecond.value, 0, "NodeBinary_extract"), arrayType}), loc);
+
+        for(int i=1; i<length; i++) {
+            if(out == nullptr)
+                out = new NodeBinary(connect, binary, new NodeBinary(exprOp, first, new NodeDone({LLVMBuildExtractValue(generator->builder, vSecond.value, i, "NodeBinary_extract"), arrayType}), loc), loc);
+            else
+                out = new NodeBinary(connect, out, new NodeBinary(exprOp, first, new NodeDone({LLVMBuildExtractValue(generator->builder, vSecond.value, i, "NodeBinary_extract"), arrayType}), loc), loc);
+        }
+
+        return (out == nullptr ? binary->generate() : out->generate());
+    }
 
     if(vFirst.type->toString() != vSecond.type->toString()) generator->error("value types '" + vFirst.type->toString() + "' and '" + vSecond.type->toString() + "' are incompatible!", loc);
 

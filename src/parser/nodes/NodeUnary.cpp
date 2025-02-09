@@ -45,6 +45,7 @@ Type* NodeUnary::getType() {
             if(instanceof<TypeArray>(ty)) return ((TypeArray*)ty)->element;
             return nullptr;
     }
+
     return nullptr;
 }
 
@@ -63,7 +64,13 @@ void NodeUnary::check() {
 
 RaveValue NodeUnary::generateConst() {
     if(this->type == TokType::Minus) {
-        if(instanceof<NodeInt>(this->base)) return (new NodeInt(-((NodeInt*)this->base)->value))->generate();
+        if(instanceof<NodeInt>(this->base)) {
+            NodeInt* newValue = (new NodeInt(-((NodeInt*)this->base)->value));
+            newValue->isMustBeChar = ((NodeInt*)this->base)->isMustBeChar;
+            newValue->isMustBeShort = ((NodeInt*)this->base)->isMustBeShort;
+            newValue->isMustBeLong = ((NodeInt*)this->base)->isMustBeLong;
+            return newValue->generate();
+        }
 
         RaveValue bs = this->base->generate();
         if(instanceof<TypeBasic>(bs.type) && !((TypeBasic*)bs.type)->isFloat()) return {LLVMBuildNeg(generator->builder, bs.value, ""), bs.type};
@@ -74,7 +81,13 @@ RaveValue NodeUnary::generateConst() {
 
 RaveValue NodeUnary::generate() {
     if(this->type == TokType::Minus) {
-        if(instanceof<NodeInt>(this->base)) return (new NodeInt(-((NodeInt*)this->base)->value))->generate();
+        if(instanceof<NodeInt>(this->base)) {
+            NodeInt* newValue = (new NodeInt(-((NodeInt*)this->base)->value));
+            newValue->isMustBeChar = ((NodeInt*)this->base)->isMustBeChar;
+            newValue->isMustBeShort = ((NodeInt*)this->base)->isMustBeShort;
+            newValue->isMustBeLong = ((NodeInt*)this->base)->isMustBeLong;
+            return newValue->generate();
+        }
 
         RaveValue bs = this->base->generate();
         if(instanceof<TypeBasic>(bs.type) && !((TypeBasic*)bs.type)->isFloat()) return {LLVMBuildNeg(generator->builder, bs.value, "NodeUnary_neg"), bs.type};
