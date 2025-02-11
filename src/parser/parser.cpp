@@ -251,7 +251,7 @@ Node* Parser::parseOperatorOverload(Type* type, std::string s) {
         name = s + "(" + _t->value+_t2->value + ")";
         this->next();
         if(this->peek()->type != TokType::Rpar) {
-            name = s + "("+_t->value+_t2->value + this->peek()->value + ")";
+            name = s + "(" + _t->value + _t2->value + this->peek()->value + ")";
             this->next();
         }
     }
@@ -278,10 +278,12 @@ Node* Parser::parseOperatorOverload(Type* type, std::string s) {
 
     this->next();
     NodeBlock* nb = this->parseBlock("operator");
+
     if(this->peek()->type == TokType::ShortRet) {
         this->next();
         nb->nodes.push_back(new NodeRet(this->parseExpr("operator"), _t->line));
     }
+
     return new NodeFunc(name, args, nb, false, {}, _t->line, type, {});
 }
 

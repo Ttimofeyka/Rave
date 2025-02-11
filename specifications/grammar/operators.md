@@ -62,3 +62,37 @@ int main {
     int c = 10 !! 5; // XOR
 } => 0;
 ```
+
+## 'in', '!in' operators
+
+The `in` and `In` operators have identical functions, as in many new programming languages.
+They let you know if it is present (or absent) whether the element is in the specified array (or an overloaded structure).
+
+Examples:
+
+```d
+import <std/io>
+
+struct Jam {
+    int[2] m;
+
+    Jam this {
+        Jam this;
+        this.m[0] = 10;
+        this.m[1] = 200;
+    } => this;
+
+    bool operator in(Jam j, int value) => value in j.m;
+}
+
+void main {
+    Jam foo = Jam();
+
+    if(10 in [10, 20, 30]) std::println("TRUE"); // TRUE
+
+    if(20 in foo) std::println("TRUE2"); // Nothing
+    else if(200 in foo) std::println("TRUE3"); // TRUE3
+
+    if(20 !in foo) std::println("FALSE"); // FALSE
+}
+```

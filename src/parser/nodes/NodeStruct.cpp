@@ -173,7 +173,8 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 else if(func->origName.find("([])") != std::string::npos) {oper = TokType::Rbra; func->name = this->name + "([])";}
                 else if((func->origName.find("([]=)") != std::string::npos) || (func->origName.find("(=[])") != std::string::npos)) {oper = TokType::Lbra; func->name = this->name + "([]=)";}
                 else if((func->origName.find("([]&)") != std::string::npos) || (func->origName.find("(&[])") != std::string::npos)) {oper = TokType::GetPtr; func->name = this->name + "([]&)";}
-                
+                else if(func->origName.find("(in)") != std::string::npos) {oper = TokType::In; func->name = this->name + "(in)";}
+
                 if(oper != TokType::Rbra) func->name = func->name + typesToString(func->args);
                 this->operators[oper][(oper != TokType::Rbra ? typesToString(func->args) : "")] = func;
                 this->methods.push_back(func);
@@ -182,7 +183,7 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
             else if(func->origName == "~with") {
                 func->isMethod = true;
                 func->isTemplatePart = isLinkOnce;
-                func->name = "~with."+this->name;
+                func->name = "~with." + this->name;
                 Type* outType = this->constructors[0]->type;
                 if(instanceof<TypeStruct>(outType)) outType = new TypePointer(outType);
                 func->args = {FuncArgSet{.name = "this", .type = outType, .internalTypes = {outType}}};

@@ -71,14 +71,16 @@ std::pair<std::string, std::string> NodeBinary::isOperatorOverload(RaveValue fir
 
     Type* type = first.type;
 
-    if(instanceof<TypeStruct>(type) || (instanceof<TypePointer>(type) && instanceof<TypeStruct>(((TypePointer*)type)->instance))) {
+    if(instanceof<TypeStruct>(type) || (instanceof<TypePointer>(type) && instanceof<TypeStruct>(type->getElType()))) {
         std::string structName = (instanceof<TypeStruct>(type) ? ((TypeStruct*)type)->name : ((TypeStruct*)(((TypePointer*)type)->instance))->name);
         if(AST::structTable.find(structName) != AST::structTable.end()) {
             auto& operators = AST::structTable[structName]->operators;
             if(operators.find(op) != operators.end()) {
                 std::vector<Type*> types = {this->first->getType(), this->second->getType()};
                 std::string sTypes = typesToString(types);
+
                 if(operators[op].find(sTypes) != operators[op].end()) return {structName, sTypes};
+                else if(op == TokType::In) return {structName, operators[op].begin()->second->name.substr(operators[op].begin()->second->name.find('['))};
             }
             else if(op == TokType::Nequal && operators.find(TokType::Equal) != operators.end()) {
                 std::vector<Type*> types = {this->first->getType(), this->second->getType()};
@@ -423,6 +425,22 @@ RaveValue NodeBinary::generate() {
         char connect = (op == TokType::In ? TokType::Or : TokType::And);
         char exprOp = (op == TokType::In ? TokType::Equal : TokType::Nequal);
 
+        if(instanceof<TypeStruct>(vSecond.type->getElType())) {
+            auto overload = isOperatorOverload(vSecond, vFirst, TokType::In);
+
+            if(overload.first != "" && overload.second != "") {
+                NodeStruct* _struct = AST::structTable[overload.first];
+                NodeFunc* _operator = _struct->operators[this->op][overload.second];
+
+                if(_operator == nullptr) generator->error("operator not found!", loc);
+                else {
+                    NodeCall* _call = new NodeCall(this->loc, new NodeIden(_operator->name, this->loc), std::vector<Node*>({new NodeDone(vSecond), new NodeDone(vFirst)}));
+
+                    return (op == TokType::NeIn ? (new NodeUnary(loc, TokType::Ne, _call))->generate() : _call->generate());
+                }
+            }
+        }
+        
         if(instanceof<TypePointer>(vSecond.type) && instanceof<TypeArray>(vSecond.type->getElType())) vSecond = LLVM::load(vSecond, "NodeBinary_loadS", loc);
         else if(!instanceof<TypeArray>(vSecond.type)) generator->error("array expected!", loc);
 

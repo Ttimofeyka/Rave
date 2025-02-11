@@ -50,6 +50,8 @@ struct A {
         pointer.a = values[0];
         pointer.b = values[1];
     }
+
+    bool operator in(A* pointer, int rnd) => rnd in [pointer.a, pointer.b];
 }
 
 (packed, data: "one", length: "two") struct B {
