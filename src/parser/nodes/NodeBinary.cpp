@@ -430,7 +430,7 @@ RaveValue NodeBinary::generate() {
 
             if(overload.first != "" && overload.second != "") {
                 NodeStruct* _struct = AST::structTable[overload.first];
-                NodeFunc* _operator = _struct->operators[this->op][overload.second];
+                NodeFunc* _operator = _struct->operators[TokType::In][overload.second];
 
                 if(_operator == nullptr) generator->error("operator not found!", loc);
                 else {
