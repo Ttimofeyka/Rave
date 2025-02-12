@@ -324,10 +324,20 @@ namespace std {
             std::string sNumber = std::string(&tempBuffer);
         } => sNumber;
 
+        (inline) std::string fromNumber(ulong n) {
+            char[21] tempBuffer;
+            std::cstring::utos(n, &tempBuffer);
+            std::string sNumber = std::string(&tempBuffer);
+        } => sNumber;
+
         (inline) std::string fromNumber(int n) => std::string::fromNumber(cast(long)n);
         (inline) std::string fromNumber(short n) => std::string::fromNumber(cast(long)n);
         (inline) std::string fromNumber(char n) => std::string::fromNumber(cast(long)n);
         (inline) std::string fromNumber(bool n) => std::string::fromNumber(cast(long)n);
+
+        (inline) std::string fromNumber(uint n) => std::string::fromNumber(cast(ulong)n);
+        (inline) std::string fromNumber(ushort n) => std::string::fromNumber(cast(ulong)n);
+        (inline) std::string fromNumber(uchar n) => std::string::fromNumber(cast(ulong)n);
 
         (inline) std::string fromDoubleN(double n, int precision) {
             char[24] tempBuffer;
@@ -384,6 +394,12 @@ namespace std {
             @if((@getCurrArgType() == short) || (@getCurrArgType() == int) || (@getCurrArgType() == long)) {
                 std::memset(&nBuffer, 0, 40);
                 std::cstring::ltos(@getCurrArg(long), cast(char*)&nBuffer);
+                result.appendC(cast(char*)&nBuffer);
+            }
+
+            @if((@getCurrArgType() == ushort) || (@getCurrArgType() == uint) || (@getCurrArgType() == ulong)) {
+                std::memset(&nBuffer, 0, 40);
+                std::cstring::ultos(cast(ulong)(@getCurrArg(long)), cast(char*)&nBuffer);
                 result.appendC(cast(char*)&nBuffer);
             }
 

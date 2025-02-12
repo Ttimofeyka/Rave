@@ -109,6 +109,24 @@ namespace std {
             }
         } => endBuffer;
 
+        char* ultos(ulong number, char* endBuffer) {
+            char[20] ultBuffer;
+            uint pos;
+            for(pos = 0; number != 0u; pos += 1) {
+                ultBuffer[pos] = (number % 10) + '0';
+                number /= 10;
+            }
+
+            uint outpos;
+            for(outpos = 0; true; outpos += 1) {
+                pos -= 1;
+                endBuffer[outpos] = ultBuffer[pos];
+                if(pos == 0)
+                    break;
+            }
+            endBuffer[outpos + 1] = '\0';
+        } => endBuffer;
+
         char* ctos(cent number, char* endBuffer) {
             char[42] ctosBuffer;
 
