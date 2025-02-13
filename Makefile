@@ -1,6 +1,6 @@
 BIN = rave
 
-FLAGS ?= -O3
+FLAGS ?= -g
 
 COMPILER ?= $(CXX)
 
@@ -49,17 +49,13 @@ else
 	ifneq (, $(shell command -v llvm-config-16))
  		LLVM_VERSION = 16
 		LLVM_CONFIG = llvm-config-16
-	else
-	ifneq (, $(shell command -v llvm-config-15))
+	else ifneq (, $(shell command -v llvm-config-15))
 		LLVM_VERSION = 15
 		LLVM_CONFIG = llvm-config-15
-	else
-	ifneq (, $(shell command -v llvm-config))
+	else ifneq (, $(shell command -v llvm-config))
 		LLVM_FULL_VERSION = $(shell llvm-config --version)
 		LLVM_VERSION = $(firstword $(subst ., ,$(LLVM_FULL_VERSION)))
 		LLVM_CONFIG = llvm-config
-	endif
-	endif
 	endif
 	ifeq ($(LLVM_STATIC), 1)
 		LLVM_FLAGS = `$(LLVM_CONFIG) --ldflags --link-static --libs --system-libs --cxxflags`
