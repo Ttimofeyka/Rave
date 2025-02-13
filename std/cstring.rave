@@ -109,6 +109,24 @@ namespace std {
             }
         } => endBuffer;
 
+        char* ultos(ulong number, char* endBuffer) {
+            char[20] ultBuffer;
+            uint pos;
+            for(pos = 0; number != 0u; pos += 1) {
+                ultBuffer[pos] = (number % 10) + '0';
+                number /= 10;
+            }
+
+            uint outpos;
+            for(outpos = 0; true; outpos += 1) {
+                pos -= 1;
+                endBuffer[outpos] = ultBuffer[pos];
+                if(pos == 0)
+                    break;
+            }
+            endBuffer[outpos + 1] = '\0';
+        } => endBuffer;
+
         char* ctos(cent number, char* endBuffer) {
             char[42] ctosBuffer;
 
@@ -143,6 +161,24 @@ namespace std {
                 endBuffer[endI] = ctosBuffer[i];
                 endI += 1;
             }
+        } => endBuffer;
+
+        char* uctos(ucent number, char* endBuffer) {
+            char[40] uctBuffer;
+            uint pos;
+            for(pos = 0; number != 0u; pos += 1) {
+                uctBuffer[pos] = (number % 10) + '0';
+                number /= 10;
+            }
+
+            uint outpos;
+            for(outpos = 0; true; outpos += 1) {
+                pos -= 1;
+                endBuffer[outpos] = uctBuffer[pos];
+                if(pos == 0)
+                    break;
+            }
+            endBuffer[outpos + 1] = '\0';
         } => endBuffer;
         
         char* dtos(double number, int precision, char* buffer) {
@@ -193,6 +229,7 @@ namespace std {
         } => buffer;
 
         long stol(const(char)* data, int length) {
+            return = 0;
             bool isNegative = false;
             long coeff = 1;
 
@@ -211,7 +248,21 @@ namespace std {
 
         (inline) long stol(const(char)* data) => std::cstring::stol(data, std::cstring::strlen(data));
 
+        ulong stoul(const(char)* data, int length) {
+            return = 0;
+            ulong coeff = 1;
+
+            for(int i=length - 1; i>=0; i--) {
+                if((data[i] < '0') || (data[i] > '9')) break;
+                return += (cast(ulong)(data[i] - '0') * coeff);
+                coeff *= 10;
+            }
+        }
+
+        (inline) ulong stoul(const(char)* data) => std::cstring::stoul(data, std::cstring::strlen(data));
+
         cent stoc(const(char)* data, int length) {
+            return = 0;
             bool isNegative = false;
             cent coeff = 1;
 
@@ -229,6 +280,19 @@ namespace std {
         }
 
         (inline) cent stoc(const(char)* data) => std::cstring::stoc(data, std::cstring::strlen(data));
+
+        ucent stouc(const(char)* data, int length) {
+            return = 0;
+            ucent coeff = 1;
+
+            for(int i=length - 1; i>=0; i--) {
+                if((data[i] < '0') || (data[i] > '9')) break;
+                return += (cast(ucent)(data[i] - '0') * coeff);
+                coeff *= 10;
+            }
+        }
+
+        (inline) ucent stouc(const(char)* data) => std::cstring::stouc(data, std::cstring::strlen(data));
 
         double stod(const(char)* data, int length) {
             return = 0.0d;
