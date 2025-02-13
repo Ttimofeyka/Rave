@@ -52,7 +52,7 @@ std::string TypeBasic::toString() {
         case BasicType::Float: return "float";
         case BasicType::Long: return "long"; case BasicType::Ulong: return "ulong";
         case BasicType::Double: return "double";
-        case BasicType::Cent: return "cent"; case BasicType::Ucent: return "cent";
+        case BasicType::Cent: return "cent"; case BasicType::Ucent: return "ucent";
         case BasicType::Half: return "half"; case BasicType::Bhalf: return "bhalf";
         case BasicType::Real: return "real";
         default: return "BasicUnknown";

@@ -313,8 +313,14 @@ namespace std {
 
     namespace string {
         (inline) std::string fromNumber(cent n) {
-            char[40] tempBuffer;
+            char[41] tempBuffer;
             std::cstring::ctos(n, &tempBuffer);
+            std::string sNumber = std::string(&tempBuffer);
+        } => sNumber;
+
+        (inline) std::string fromUNumber(ucent n) {
+            char[40] tempBuffer;
+            std::cstring::uctos(n, &tempBuffer);
             std::string sNumber = std::string(&tempBuffer);
         } => sNumber;
 
@@ -324,9 +330,9 @@ namespace std {
             std::string sNumber = std::string(&tempBuffer);
         } => sNumber;
 
-        (inline) std::string fromNumber(ulong n) {
+        (inline) std::string fromUNumber(ulong n) {
             char[21] tempBuffer;
-            std::cstring::utos(n, &tempBuffer);
+            std::cstring::ultos(n, &tempBuffer);
             std::string sNumber = std::string(&tempBuffer);
         } => sNumber;
 
@@ -335,9 +341,9 @@ namespace std {
         (inline) std::string fromNumber(char n) => std::string::fromNumber(cast(long)n);
         (inline) std::string fromNumber(bool n) => std::string::fromNumber(cast(long)n);
 
-        (inline) std::string fromNumber(uint n) => std::string::fromNumber(cast(ulong)n);
-        (inline) std::string fromNumber(ushort n) => std::string::fromNumber(cast(ulong)n);
-        (inline) std::string fromNumber(uchar n) => std::string::fromNumber(cast(ulong)n);
+        (inline) std::string fromUNumber(uint n) => std::string::fromUNumber(cast(ulong)n);
+        (inline) std::string fromUNumber(ushort n) => std::string::fromUNumber(cast(ulong)n);
+        (inline) std::string fromUNumber(uchar n) => std::string::fromUNumber(cast(ulong)n);
 
         (inline) std::string fromDoubleN(double n, int precision) {
             char[24] tempBuffer;
@@ -357,13 +363,13 @@ namespace std {
 
         @skipArg();
 
-        char[40] nBuffer;
+        char[41] nBuffer;
 
         @foreachArgs() {
             @if(@getCurrArgType() == double) {
                 if(std::math::isNAN(@getCurrArg(double))) result.appendC("NAN");
                 else {
-                    std::memset(&nBuffer, 0, 40);
+                    std::memset(&nBuffer, 0, 41);
                     std::cstring::dtos(@getCurrArg(double), 16, &nBuffer);
                     result.appendC(cast(char*)&nBuffer);
                 }
@@ -372,7 +378,7 @@ namespace std {
             @if(@getCurrArgType() == float) {
                 if(std::math::isNAN(@getCurrArg(float))) result.appendC("NAN");
                 else {
-                    std::memset(&nBuffer, 0, 40);
+                    std::memset(&nBuffer, 0, 41);
                     std::cstring::dtos(@getCurrArg(double), 7, &nBuffer);
                     result.appendC(cast(char*)&nBuffer);
                 }
@@ -381,7 +387,7 @@ namespace std {
             @if(@getCurrArgType() == half) {
                 if(std::math::isNAN(@getCurrArg(half))) result.appendC("NAN");
                 else {
-                    std::memset(&nBuffer, 0, 40);
+                    std::memset(&nBuffer, 0, 41);
                     std::cstring::dtos(@getCurrArg(double), 6, &nBuffer);
                     result.appendC(cast(char*)&nBuffer);
                 }
@@ -392,20 +398,26 @@ namespace std {
             @if(@getCurrArgType() == char) result.add(@getCurrArg(char));
 
             @if((@getCurrArgType() == short) || (@getCurrArgType() == int) || (@getCurrArgType() == long)) {
-                std::memset(&nBuffer, 0, 40);
+                std::memset(&nBuffer, 0, 41);
                 std::cstring::ltos(@getCurrArg(long), cast(char*)&nBuffer);
                 result.appendC(cast(char*)&nBuffer);
             }
 
             @if((@getCurrArgType() == ushort) || (@getCurrArgType() == uint) || (@getCurrArgType() == ulong)) {
-                std::memset(&nBuffer, 0, 40);
+                std::memset(&nBuffer, 0, 41);
                 std::cstring::ultos(cast(ulong)(@getCurrArg(long)), cast(char*)&nBuffer);
                 result.appendC(cast(char*)&nBuffer);
             }
 
             @if(@getCurrArgType() == cent) {
-                std::memset(&nBuffer, 0, 40);
+                std::memset(&nBuffer, 0, 41);
                 std::cstring::ctos(@getCurrArg(cent), cast(char*)&nBuffer);
+                result.appendC(cast(char*)&nBuffer);
+            }
+
+            @if(@getCurrArgType() == ucent) {
+                std::memset(&nBuffer, 0, 41);
+                std::cstring::uctos(@getCurrArg(ucent), cast(char*)&nBuffer);
                 result.appendC(cast(char*)&nBuffer);
             }
 

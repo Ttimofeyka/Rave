@@ -162,6 +162,24 @@ namespace std {
                 endI += 1;
             }
         } => endBuffer;
+
+        char* uctos(ucent number, char* endBuffer) {
+            char[40] uctBuffer;
+            uint pos;
+            for(pos = 0; number != 0u; pos += 1) {
+                uctBuffer[pos] = (number % 10) + '0';
+                number /= 10;
+            }
+
+            uint outpos;
+            for(outpos = 0; true; outpos += 1) {
+                pos -= 1;
+                endBuffer[outpos] = uctBuffer[pos];
+                if(pos == 0)
+                    break;
+            }
+            endBuffer[outpos + 1] = '\0';
+        } => endBuffer;
         
         char* dtos(double number, int precision, char* buffer) {
             long lPart;
