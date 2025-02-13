@@ -1,6 +1,6 @@
 BIN = rave
 
-FLAGS ?= -g
+FLAGS ?= -O3
 
 COMPILER ?= $(CXX)
 

@@ -229,6 +229,7 @@ namespace std {
         } => buffer;
 
         long stol(const(char)* data, int length) {
+            return = 0;
             bool isNegative = false;
             long coeff = 1;
 
@@ -247,7 +248,21 @@ namespace std {
 
         (inline) long stol(const(char)* data) => std::cstring::stol(data, std::cstring::strlen(data));
 
+        ulong stoul(const(char)* data, int length) {
+            return = 0;
+            ulong coeff = 1;
+
+            for(int i=length - 1; i>=0; i--) {
+                if((data[i] < '0') || (data[i] > '9')) break;
+                return += (cast(ulong)(data[i] - '0') * coeff);
+                coeff *= 10;
+            }
+        }
+
+        (inline) ulong stoul(const(char)* data) => std::cstring::stoul(data, std::cstring::strlen(data));
+
         cent stoc(const(char)* data, int length) {
+            return = 0;
             bool isNegative = false;
             cent coeff = 1;
 
@@ -265,6 +280,19 @@ namespace std {
         }
 
         (inline) cent stoc(const(char)* data) => std::cstring::stoc(data, std::cstring::strlen(data));
+
+        ucent stouc(const(char)* data, int length) {
+            return = 0;
+            ucent coeff = 1;
+
+            for(int i=length - 1; i>=0; i--) {
+                if((data[i] < '0') || (data[i] > '9')) break;
+                return += (cast(ucent)(data[i] - '0') * coeff);
+                coeff *= 10;
+            }
+        }
+
+        (inline) ucent stouc(const(char)* data) => std::cstring::stouc(data, std::cstring::strlen(data));
 
         double stod(const(char)* data, int length) {
             return = 0.0d;
