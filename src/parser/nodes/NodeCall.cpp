@@ -229,7 +229,7 @@ RaveValue NodeCall::generate() {
                     // Template function
                     std::string __typesAll = "<";
                     for(int i=0; i<__types.size(); i++) __typesAll += __types[i]->toString() + ",";
-                    __typesAll = __typesAll.substr(0, __typesAll.length() - 1) + ">";
+                    __typesAll.back() = '>';
 
                     if(AST::funcTable.find(idenFunc->name + __typesAll) != AST::funcTable.end()) {
                         // If it was already generated - call it
