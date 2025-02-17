@@ -56,6 +56,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias Clone = 56;
                 alias Execve = 59;
                 alias Wait4 = 61;
+                alias Kill = 62;
 
                 alias ClockGetTime = 228;
                 alias GetRandom = 318;
@@ -105,6 +106,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias Clone = 120;
                 alias Execve = 11;
                 alias Wait4 = 114;
+                alias Kill = 37;
 
                 alias ClockGetTime = 265;
                 alias GetRandom = 355;
@@ -154,6 +156,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias Clone = 220;
                 alias Execve = 221;
                 alias Wait4 = 260;
+                alias Kill = 129;
                 
                 alias ClockGetTime = 113;
                 alias GetRandom = 278;
@@ -203,6 +206,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias Clone = 120;
                 alias Execve = 11;
                 alias Wait4 = 114;
+                alias Kill = 37;
 
                 alias ClockGetTime = 263;
                 alias GetRandom = 384;
@@ -252,6 +256,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias Clone = 120;
                 alias Execve = 11;
                 alias Wait4 = 114;
+                alias Kill = 37;
 
                 alias ClockGetTime = 246;
                 alias GetRandom = 359;
@@ -301,6 +306,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias Clone = 120;
                 alias Execve = 11;
                 alias Wait4 = 114;
+                alias Kill = 37;
 
                 alias ClockGetTime = 246;
                 alias GetRandom = 359;
@@ -344,6 +350,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias SetSockOpt = 366;
                 alias GetSockOpt = 365;
                 alias Wait4 = 114;
+                alias Kill = 37;
 
                 alias GetPID = 20;
                 alias GetTID = 236;
@@ -399,6 +406,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias Clone = 5055;
                 alias Execve = 5057;
                 alias Wait4 = 5059;
+                alias Kill = 37;
 
                 alias ClockGetTime = 5222;
                 alias GetRandom = 5313;

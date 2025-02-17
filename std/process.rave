@@ -4,6 +4,8 @@ Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+import <std/error>
+
 @if(__RAVE_OS == "LINUX") {
     import <std/sysc> <std/time>
 
@@ -61,6 +63,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
             (inline) int getPID => cast(int)std::syscall(std::sysctable::GetPID);
             (inline) int getPPID => cast(int)std::syscall(std::sysctable::GetPPID);
 
+            (inline) int kill(int pid, int sig) => cast(int)std::syscall(std::sysctable::Kill, pid, sig);
+
             (ctargs) int execl {
                 char* path = @getCurrArg(char*);
 
@@ -83,7 +87,27 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @else @if(__RAVE_OS == "WINDOWS") {
     namespace std {
         namespace process {
+            alias Terminate = 1;
+            alias SuspendAndResume = 2048;
+
+            extern(linkname: "OpenProcess") void* __OpenProcess(int access, char inheritHandle, int pid);
             extern(linkname: "GetCurrentProcessId") int __GetCurrentProcessId();
+            extern(linkname: "CloseHandle") char __CloseHandle(void* handle);
+            extern(linkname: "TerminateProcess") char __TerminateProcess(void* handle, uint exitCode);
+
+            int kill(int pid, int sig) {
+                void* handle = std::process::__OpenProcess(std::process::Terminate || std::process::SuspendAndResume, cast(char)false, pid);
+                if(handle != null) {   
+                    switch(sig) {
+                        case(std::SigTerm) return = (std::process::__TerminateProcess(handle, 1) != 0c);
+                        case(std::SigKill) return = (std::process::__TerminateProcess(handle, 1) != 0c);
+                        default return = (std::process::__TerminateProcess(handle, 0) != 0c);
+                    }
+
+                    std::process::__CloseHandle(handle);
+                }
+            }
+
             (inline) int getPID => std::process::__GetCurrentProcessId();
         }
     }
@@ -92,6 +116,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
     namespace std {
         namespace process {
             extern(linkname: "getpid") int getPID();
+            extern(linkname: "kill") int kill(int pid, int sig);
         }
     }
 }

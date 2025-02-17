@@ -4,7 +4,7 @@ Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-import <std/arg> <std/string> <std/utf8> <std/thread>
+import <std/arg> <std/string> <std/utf8> <std/thread> <std/process>
 
 namespace libc {
     struct File {
@@ -286,7 +286,6 @@ namespace std {
             extern(linkname: "CreateFileW") void* CreateFileW(ushort* fName, int dAccess, int sMod, void* sAttributes, int cDisposition, int fAndAttributes, void* templateFile);
             extern(linkname: "WriteFile") char WriteFile(void* file, void* buffer, int length, int* out, void* overlapped);
             extern(linkname: "ReadFile") char ReadFile(void* file, void* buffer, int length, int* out, void* overlapped);
-            extern(linkname: "CloseHandle") char CloseHandle(void* file);
             extern(linkname: "SetFilePointerEx") int SetFilePointerEx(void* file, long distToMove, long* newFilePtr, uint moveMethod);
         }
 

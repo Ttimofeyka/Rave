@@ -4,17 +4,21 @@ Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-import <std/io>
-
 namespace std {
     alias NotEnoughMemory = 100;
     alias NotFound = 101;
     alias BeyondSize = 102;
     alias NullPointer = 103;
 
+    alias SigInt = 2;
+    alias SigKill = 9;
+    alias SigSegv = 11;
+    alias SigTerm = 15;
+    alias SigStop = 19;
+
     extern(linkname: "signal") void __signal(int flag, void(int) catcher);
 
     namespace error {
-        void sigsegv(void() catcher) {std::__signal(11, cast(void(int))catcher);}
+        void sigsegv(void() catcher) {std::__signal(std::SigSegv, cast(void(int))catcher);}
     }
 }
