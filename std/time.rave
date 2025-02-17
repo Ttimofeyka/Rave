@@ -75,6 +75,7 @@ namespace std {
         extern(linkname: "GetTickCount64") ulong __GetTickCount();
         extern(linkname: "GetSystemTimeAsFileTime") void __GetSystemTimeAsFileTime(std::__fileTime* tm);
         extern(linkname: "ProcessPrng") int __ProcessPrng(char* data, int size);
+        extern(linkname: "Sleep") void __Sleep(int milliseconds);
 
         int getCurrentTime(std::time* tc) {
            std::__fileTime ftm;
@@ -89,6 +90,8 @@ namespace std {
            tc.milliseconds = (li / 10000l) - 11644473600000l;
            tc.microseconds = (li / 10l) - 11644473600000000l;
         } => 0;
+
+        (inline) void sleep(int milliseconds) => std::__Sleep(milliseconds);
     }
 }
 @else @if(__RAVE_OS == "LINUX") {
@@ -103,12 +106,23 @@ namespace std {
             tc.microseconds = ts.nseconds / 1000l;
             tc.milliseconds = tc.microseconds / 1000l;
         }
+
+        (inline) int __sleep(std::__time* req, std::__time* rem) => cast(int)std::syscall(std::sysctable::NanoSleep, req, rem);
+
+        void sleep(int milliseconds) {
+            std::__time time;
+            time.seconds = milliseconds / 1000;
+            time.nseconds = (milliseconds % 1000) * 1000000;
+
+            std::__sleep(&time, &time);
+        }
     }
 }
 @else {
     namespace libc {
         extern(linkname: "time") long getTime(void* v);
         extern(linkname: "ftime") void getFTime(std::timeb* tm);
+        extern(linkname: "nanosleep") int nanosleep(std::__time* req, std::__time* rem);
     }
 
     namespace std {
@@ -117,5 +131,13 @@ namespace std {
             tc.milliseconds = -1l;
             tc.microseconds = -1l;
         } => 0;
+
+        void sleep(int milliseconds) {
+            std::__time time;
+            time.seconds = milliseconds / 1000;
+            time.nseconds = (milliseconds % 1000) * 1000000;
+
+            libc::nanosleep(&time, &time);
+        }
     }
 }

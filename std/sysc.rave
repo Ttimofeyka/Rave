@@ -60,6 +60,8 @@ the result of a call with the same parameters and the same number will be the sa
                 alias ClockGetTime = 228;
                 alias GetRandom = 318;
                 alias GetTimeOfDay = 96;
+
+                alias NanoSleep = 35;
             }
         }
     }
@@ -107,6 +109,8 @@ the result of a call with the same parameters and the same number will be the sa
                 alias ClockGetTime = 265;
                 alias GetRandom = 355;
                 alias GetTimeOfDay = 78;
+
+                alias NanoSleep = 162;
             }
         }
     }
@@ -154,6 +158,8 @@ the result of a call with the same parameters and the same number will be the sa
                 alias ClockGetTime = 113;
                 alias GetRandom = 278;
                 alias GetTimeOfDay = 169;
+
+                alias NanoSleep = 101;
             }
         }
     }
@@ -201,6 +207,8 @@ the result of a call with the same parameters and the same number will be the sa
                 alias ClockGetTime = 263;
                 alias GetRandom = 384;
                 alias GetTimeOfDay = 78;
+
+                alias NanoSleep = 162;
             }
         }
     }
@@ -248,6 +256,8 @@ the result of a call with the same parameters and the same number will be the sa
                 alias ClockGetTime = 246;
                 alias GetRandom = 359;
                 alias GetTimeOfDay = 78;
+
+                alias NanoSleep = 162;
             }
         }
     }
@@ -295,6 +305,8 @@ the result of a call with the same parameters and the same number will be the sa
                 alias ClockGetTime = 246;
                 alias GetRandom = 359;
                 alias GetTimeOfDay = 78;
+
+                alias NanoSleep = 162;
             }
         }
     }
@@ -342,6 +354,8 @@ the result of a call with the same parameters and the same number will be the sa
                 alias ClockGetTime = 260;
                 alias GetRandom = 349;
                 alias GetTimeOfDay = 78;
+
+                alias NanoSleep = 162;
             }
         }
     }
@@ -389,6 +403,8 @@ the result of a call with the same parameters and the same number will be the sa
                 alias ClockGetTime = 5222;
                 alias GetRandom = 5313;
                 alias GetTimeOfDay = 5094;
+
+                alias NanoSleep = 5034;
             }
         }
     }
