@@ -30,5 +30,7 @@ RaveValue NodeContinue::generate() {
 
     LLVMBuildBr(generator->builder, generator->activeLoops[id].start);
 
+    generator->activeLoops[id].hasEnd = true;
+
     return {};
 }

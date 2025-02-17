@@ -78,7 +78,7 @@ RaveValue NodeIf::generate() {
     currScope = copyScope(origScope);
 
     if(this->body != nullptr) this->body->generate();
-    if(!generator->activeLoops[selfNum].hasEnd) LLVMBuildBr(generator->builder, endBlock);
+    if(!generator->activeLoops[selfNum].hasEnd && LLVMGetBasicBlockTerminator(thenBlock) == nullptr) LLVMBuildBr(generator->builder, endBlock);
 
     bool hasEnd1 = generator->activeLoops[selfNum].hasEnd;
 
@@ -91,7 +91,7 @@ RaveValue NodeIf::generate() {
 	generator->currBB = elseBlock;
     if(this->_else != nullptr) this->_else->generate();
 
-    if(!generator->activeLoops[selfNum].hasEnd) LLVMBuildBr(generator->builder, endBlock);
+    if(!generator->activeLoops[selfNum].hasEnd && LLVMGetBasicBlockTerminator(elseBlock) == nullptr) LLVMBuildBr(generator->builder, endBlock);
 
     bool hasEnd2 = generator->activeLoops[selfNum].hasEnd;
 
