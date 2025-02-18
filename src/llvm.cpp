@@ -116,7 +116,7 @@ RaveValue LLVM::alloc(Type* type, const char* name) {
 
 // Wrapper for the LLVMBuildArrayAlloca function using RaveValue.
 RaveValue LLVM::alloc(RaveValue size, const char* name) {
-    return {LLVMBuildArrayAlloca(generator->builder, LLVMInt8TypeInContext(generator->context), size.value, name), new TypePointer(new TypeBasic(BasicType::Char))};
+    return {LLVMBuildArrayAlloca(generator->builder, LLVMInt8TypeInContext(generator->context), size.value, name), new TypePointer(basicTypes[BasicType::Char])};
 }
 
 // Enables/disables fast math.
