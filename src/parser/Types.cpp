@@ -184,6 +184,7 @@ int TypeStruct::getSize() {
         }
         return size;
     }
+
     return t->getSize();
 }
 

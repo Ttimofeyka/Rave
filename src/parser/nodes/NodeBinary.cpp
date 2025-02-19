@@ -319,6 +319,8 @@ RaveValue NodeBinary::generate() {
                 vSecond = second->generate();
             }
 
+            if(instanceof<TypeArray>(value.type->getElType()) && instanceof<TypePointer>(vSecond.type)) generator->error("cannot store a value of type " + vSecond.type->toString() + " into a variable of type " + value.type->getElType()->toString() + "!", loc);
+
             Binary::store(value, vSecond, loc);
             return {};
         }
