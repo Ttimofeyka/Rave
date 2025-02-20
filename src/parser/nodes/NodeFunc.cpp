@@ -476,7 +476,7 @@ std::string NodeFunc::generateWithCtargs(std::vector<Type*> args) {
     return _n;
 }
 
-RaveValue NodeFunc::generateWithTemplate(std::vector<Type*>&& types, const std::string& all) {
+RaveValue NodeFunc::generateWithTemplate(std::vector<Type*>& types, const std::string& all) {
     auto activeLoops = std::map<int32_t, Loop>(generator->activeLoops);
     auto builder = generator->builder;
     auto currBB = generator->currBB;

@@ -252,7 +252,7 @@ RaveValue NodeCall::generate() {
                         for(int i=0; i<types.size(); i++) all += types[i]->toString() + ",";
                         all.back() = '>';
 
-                        RaveValue fn = AST::funcTable[ifName]->generateWithTemplate(std::move(types), ifName + all);
+                        RaveValue fn = AST::funcTable[ifName]->generateWithTemplate(types, ifName + all);
                         if(AST::funcTable.find(ifName + all) != AST::funcTable.end()) {
                             return LLVM::call(fn, params, instanceof<TypeVoid>(AST::funcTable[ifName + all]) ? "" : "callFunc", byVals);
                         }
@@ -377,7 +377,7 @@ RaveValue NodeCall::generate() {
                 sTypes = sTypes.substr(0, sTypes.length() - 1);
 
                 if(AST::funcTable.find(mainName + sTypes) != AST::funcTable.end()) return (new NodeCall(loc, new NodeIden(mainName + sTypes, loc), args))->generate();
-                AST::funcTable[mainName]->generateWithTemplate(std::move(types), mainName + sTypes + (mainName.find('[') != std::string::npos ? callTypes : ""));
+                AST::funcTable[mainName]->generateWithTemplate(types, mainName + sTypes + (mainName.find('[') != std::string::npos ? callTypes : ""));
             }
             else {
                 for(int i=0; i<types.size(); i++) {
