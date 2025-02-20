@@ -43,7 +43,7 @@ Type* getTypeBySize(int size) {
     else return basicTypes[BasicType::Cent];
 }
 
-NodeFunc::NodeFunc(std::string name, std::vector<FuncArgSet> args, NodeBlock* block, bool isExtern, std::vector<DeclarMod> mods, int loc, Type* type, std::vector<std::string> templateNames) {
+NodeFunc::NodeFunc(const std::string& name, std::vector<FuncArgSet> args, NodeBlock* block, bool isExtern, std::vector<DeclarMod> mods, int loc, Type* type, std::vector<std::string> templateNames) {
     this->name = name;
     this->origName = name;
     this->args = std::vector<FuncArgSet>(args);
@@ -476,7 +476,7 @@ std::string NodeFunc::generateWithCtargs(std::vector<Type*> args) {
     return _n;
 }
 
-RaveValue NodeFunc::generateWithTemplate(std::vector<Type*> types, std::string all) {
+RaveValue NodeFunc::generateWithTemplate(std::vector<Type*>&& types, const std::string& all) {
     auto activeLoops = std::map<int32_t, Loop>(generator->activeLoops);
     auto builder = generator->builder;
     auto currBB = generator->currBB;
@@ -485,7 +485,7 @@ RaveValue NodeFunc::generateWithTemplate(std::vector<Type*> types, std::string a
     NodeFunc* _f = new NodeFunc(all, this->args, (NodeBlock*)this->block->copy(), false, this->mods, this->loc, this->type->copy(), this->templateNames);
     _f->isTemplate = true;
     _f->check();
-    _f->templateTypes = std::vector<Type*>(types);
+    _f->templateTypes = std::move(types);
     RaveValue v = _f->generate();
 
     generator->activeLoops = activeLoops;

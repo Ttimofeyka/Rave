@@ -202,43 +202,44 @@ RaveValue NodeCall::generate() {
 
     if(instanceof<NodeIden>(this->func)) {
         NodeIden* idenFunc = (NodeIden*)this->func;
+        std::string& ifName = idenFunc->name;
 
-        if(AST::aliasTable.find(idenFunc->name) != AST::aliasTable.end()) return (new NodeCall(loc, AST::aliasTable[idenFunc->name], this->args))->generate();
-        else if(currScope != nullptr && currScope->aliasTable.find(idenFunc->name) != currScope->aliasTable.end())
-            return (new NodeCall(loc, currScope->aliasTable[idenFunc->name], this->args))->generate();
+        if(AST::aliasTable.find(ifName) != AST::aliasTable.end()) return (new NodeCall(loc, AST::aliasTable[ifName], this->args))->generate();
+        else if(currScope != nullptr && currScope->aliasTable.find(ifName) != currScope->aliasTable.end())
+            return (new NodeCall(loc, currScope->aliasTable[ifName], this->args))->generate();
 
-        if(AST::funcTable.find(idenFunc->name) != AST::funcTable.end()) {
+        if(AST::funcTable.find(ifName) != AST::funcTable.end()) {
             std::vector<Type*> __types = this->getTypes();
             std::string sTypes = typesToString(__types);
 
-            if(generator->functions.find(idenFunc->name) == generator->functions.end()) {
+            if(generator->functions.find(ifName) == generator->functions.end()) {
                 // Function with compile-time args (ctargs)
-                if(AST::funcTable[idenFunc->name]->isCtargs) {
+                if(AST::funcTable[ifName]->isCtargs) {
                     std::vector<RaveValue> params = this->getParameters(byVals, nullptr, false);
 
-                    if(generator->functions.find(idenFunc->name + sTypes) != generator->functions.end()) {
-                        return LLVM::call(generator->functions[idenFunc->name + sTypes], params, (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"), byVals);
+                    if(generator->functions.find(ifName + sTypes) != generator->functions.end()) {
+                        return LLVM::call(generator->functions[ifName + sTypes], params, (instanceof<TypeVoid>(AST::funcTable[ifName]->type) ? "" : "callFunc"), byVals);
                     }
 
                     std::vector<Type*> types;
                     for(int i=0; i<params.size(); i++) types.push_back(params[i].type);
-                    return LLVM::call(generator->functions[AST::funcTable[idenFunc->name]->generateWithCtargs(types)], params, (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"));
+                    return LLVM::call(generator->functions[AST::funcTable[ifName]->generateWithCtargs(types)], params, (instanceof<TypeVoid>(AST::funcTable[ifName]->type) ? "" : "callFunc"));
                 }
 
-                if(AST::funcTable[idenFunc->name]->templateNames.size() > 0) {
+                if(AST::funcTable[ifName]->templateNames.size() > 0) {
                     // Template function
                     std::string __typesAll = "<";
                     for(int i=0; i<__types.size(); i++) __typesAll += __types[i]->toString() + ",";
                     __typesAll.back() = '>';
 
-                    if(AST::funcTable.find(idenFunc->name + __typesAll) != AST::funcTable.end()) {
+                    if(AST::funcTable.find(ifName + __typesAll) != AST::funcTable.end()) {
                         // If it was already generated - call it
-                        std::vector<RaveValue> params = this->getParameters(byVals, AST::funcTable[idenFunc->name + __typesAll], false, AST::funcTable[idenFunc->name + __typesAll]->args);
-                        return LLVM::call(generator->functions[idenFunc->name + __typesAll], params, instanceof<TypeVoid>(AST::funcTable[idenFunc->name + __typesAll]->type) ? "" : "callFunc", byVals);
+                        std::vector<RaveValue> params = this->getParameters(byVals, AST::funcTable[ifName + __typesAll], false, AST::funcTable[ifName + __typesAll]->args);
+                        return LLVM::call(generator->functions[ifName + __typesAll], params, instanceof<TypeVoid>(AST::funcTable[ifName + __typesAll]->type) ? "" : "callFunc", byVals);
                     }
 
-                    size_t tnSize = AST::funcTable[idenFunc->name]->templateNames.size();
-                    NodeFunc* nfunc = AST::funcTable[idenFunc->name];
+                    size_t tnSize = AST::funcTable[ifName]->templateNames.size();
+                    NodeFunc* nfunc = AST::funcTable[ifName];
 
                     std::vector<RaveValue> params = this->getParameters(byVals, nfunc, false);
                     std::vector<Type*> types;
@@ -246,14 +247,14 @@ RaveValue NodeCall::generate() {
 
                     for(int i=0; i<params.size(); i++) types.push_back(params[i].type);
                     while(types.size() > tnSize) types.pop_back();
-    
+
                     if(types.size() == tnSize) {
                         for(int i=0; i<types.size(); i++) all += types[i]->toString() + ",";
                         all.back() = '>';
 
-                        RaveValue fn = AST::funcTable[idenFunc->name]->generateWithTemplate(types, idenFunc->name + all);
-                        if(AST::funcTable.find(idenFunc->name + all) != AST::funcTable.end()) {
-                            return LLVM::call(fn, params, instanceof<TypeVoid>(AST::funcTable[idenFunc->name + all]) ? "" : "callFunc", byVals);
+                        RaveValue fn = AST::funcTable[ifName]->generateWithTemplate(std::move(types), ifName + all);
+                        if(AST::funcTable.find(ifName + all) != AST::funcTable.end()) {
+                            return LLVM::call(fn, params, instanceof<TypeVoid>(AST::funcTable[ifName + all]) ? "" : "callFunc", byVals);
                         }
                     }
                 }
@@ -263,16 +264,16 @@ RaveValue NodeCall::generate() {
                     std::cout << "DEBUG_MODE: undefined function (generator->functions)!" << std::endl;
                 }
 
-                generator->error("undefined function '" + idenFunc->name + "'!", this->loc);
+                generator->error("undefined function '" + ifName + "'!", this->loc);
                 return {};
             }
 
-            if(AST::funcTable.find(idenFunc->name + sTypes) != AST::funcTable.end()) {
-                isCW64 = AST::funcTable[idenFunc->name + sTypes]->isCdecl64 || AST::funcTable[idenFunc->name + sTypes]->isWin64;
-                std::vector<RaveValue> params = this->getParameters(byVals, AST::funcTable[idenFunc->name + sTypes], false, AST::funcTable[idenFunc->name + sTypes]->args);
-                return LLVM::call(generator->functions[idenFunc->name + sTypes], params, (instanceof<TypeVoid>(AST::funcTable[idenFunc->name + sTypes]->type) ? "" : "callFunc"), byVals);
+            if(AST::funcTable.find(ifName + sTypes) != AST::funcTable.end()) {
+                isCW64 = AST::funcTable[ifName + sTypes]->isCdecl64 || AST::funcTable[ifName + sTypes]->isWin64;
+                std::vector<RaveValue> params = this->getParameters(byVals, AST::funcTable[ifName + sTypes], false, AST::funcTable[ifName + sTypes]->args);
+                return LLVM::call(generator->functions[ifName + sTypes], params, (instanceof<TypeVoid>(AST::funcTable[ifName + sTypes]->type) ? "" : "callFunc"), byVals);
             }
-            else if(AST::funcTable[idenFunc->name]->isArrayable && this->args.size() > 0) {
+            else if(AST::funcTable[ifName]->isArrayable && this->args.size() > 0) {
                 // Arrayable - accepts pointer and length instead of array
                 std::vector<Node*> newArgs;
                 bool isChanged = false;
@@ -289,125 +290,112 @@ RaveValue NodeCall::generate() {
                     std::vector<Type*> newTypes;
                     for(int i=0; i<newArgs.size(); i++) newTypes.push_back(newArgs[i]->getType());
                     std::string newSTypes = typesToString(newTypes);
-                    if(AST::funcTable.find(idenFunc->name + newSTypes) != AST::funcTable.end()) {
-                        this->args = newArgs;
-                        isCW64 = AST::funcTable[idenFunc->name + newSTypes]->isCdecl64 || AST::funcTable[idenFunc->name + newSTypes]->isWin64;
-                        std::vector<RaveValue> params = this->getParameters(byVals, AST::funcTable[idenFunc->name + newSTypes], false, AST::funcTable[idenFunc->name + newSTypes]->args);
-                        return LLVM::call(generator->functions[idenFunc->name + newSTypes], params, (instanceof<TypeVoid>(AST::funcTable[idenFunc->name + newSTypes]->type) ? "" : "callFunc"), byVals);
+                    if(AST::funcTable.find(ifName + newSTypes) != AST::funcTable.end()) {
+                        this->args = std::move(newArgs);
+                        isCW64 = AST::funcTable[ifName + newSTypes]->isCdecl64 || AST::funcTable[ifName + newSTypes]->isWin64;
+                        std::vector<RaveValue> params = this->getParameters(byVals, AST::funcTable[ifName + newSTypes], false, AST::funcTable[ifName + newSTypes]->args);
+                        return LLVM::call(generator->functions[ifName + newSTypes], params, (instanceof<TypeVoid>(AST::funcTable[ifName + newSTypes]->type) ? "" : "callFunc"), byVals);
                     }
                 }
             }
 
-            isCW64 = AST::funcTable[idenFunc->name]->isCdecl64 || AST::funcTable[idenFunc->name]->isWin64;
-            std::vector<RaveValue> params = this->getParameters(byVals, AST::funcTable[idenFunc->name], false, AST::funcTable[idenFunc->name]->args);
-            return LLVM::call(generator->functions[idenFunc->name], params, (instanceof<TypeVoid>(AST::funcTable[idenFunc->name]->type) ? "" : "callFunc"), byVals);
+            isCW64 = AST::funcTable[ifName]->isCdecl64 || AST::funcTable[ifName]->isWin64;
+            std::vector<RaveValue> params = this->getParameters(byVals, AST::funcTable[ifName], false, AST::funcTable[ifName]->args);
+            return LLVM::call(generator->functions[ifName], params, (instanceof<TypeVoid>(AST::funcTable[ifName]->type) ? "" : "callFunc"), byVals);
         }
 
-        if(currScope->has(idenFunc->name)) {
-            if(!instanceof<TypeFunc>(currScope->getVar(idenFunc->name, this->loc)->type)) generator->error("undefined function '" + idenFunc->name + "'!", this->loc);
+        if(currScope->has(ifName)) {
+            if(!instanceof<TypeFunc>(currScope->getVar(ifName, this->loc)->type)) generator->error("undefined function '" + ifName + "'!", this->loc);
 
-            TypeFunc* fn = (TypeFunc*)currScope->getVar(idenFunc->name, this->loc)->type;
+            TypeFunc* fn = (TypeFunc*)currScope->getVar(ifName, this->loc)->type;
             std::vector<RaveValue> params = this->getParameters(byVals, nullptr, false, tfaToFas(fn->args));
-            return LLVM::call(currScope->get(idenFunc->name), params, (instanceof<TypeVoid>(fn->main) ? "" : "callFunc"), byVals);
+            return LLVM::call(currScope->get(ifName), params, (instanceof<TypeVoid>(fn->main) ? "" : "callFunc"), byVals);
         }
 
-        if(idenFunc->name.find('<') != std::string::npos && AST::funcTable.find(idenFunc->name.substr(0, idenFunc->name.find('<'))) != AST::funcTable.end()) {
-            std::string mainName = idenFunc->name.substr(0, idenFunc->name.find('<'));
+        if(ifName.find('<') != std::string::npos) {
+            std::string mainName = ifName.substr(0, ifName.find('<'));
+            bool presenceInFt = AST::funcTable.find(mainName) != AST::funcTable.end();
             std::string callTypes = typesToString(this->getTypes());
+            std::string sTypes;
 
-            if(AST::funcTable.find(mainName + callTypes) != AST::funcTable.end()) {
-                if(generator->functions.find(idenFunc->name + callTypes) != generator->functions.end()) {
-                    // This function is already exists - just call it
-                    isCW64 = AST::funcTable[idenFunc->name + callTypes]->isCdecl64 || AST::funcTable[idenFunc->name + callTypes]->isWin64;
-                    std::vector<RaveValue> values = this->getParameters(byVals, AST::funcTable[idenFunc->name + callTypes], false);
-                    return LLVM::call(generator->functions[idenFunc->name + callTypes], values, instanceof<TypeVoid>(AST::funcTable[idenFunc->name + callTypes]->type) ? "" : "callFunc", byVals);
+            if (presenceInFt) {
+                if(AST::funcTable.find(mainName + callTypes) != AST::funcTable.end()) {
+                    if(generator->functions.find(ifName + callTypes) != generator->functions.end()) {
+                        // This function is already exists - just call it
+                        isCW64 = AST::funcTable[ifName + callTypes]->isCdecl64 || AST::funcTable[ifName + callTypes]->isWin64;
+                        std::vector<RaveValue> values = this->getParameters(byVals, AST::funcTable[ifName + callTypes], false);
+                        return LLVM::call(generator->functions[ifName + callTypes], values, instanceof<TypeVoid>(AST::funcTable[ifName + callTypes]->type) ? "" : "callFunc", byVals);
+                    }
+                    mainName += callTypes;
                 }
-                mainName += callTypes;
             }
 
-            std::string sTypes = idenFunc->name.substr(idenFunc->name.find('<') + 1);
+            sTypes = ifName.substr(ifName.find('<') + 1);
             sTypes = sTypes.substr(0, sTypes.length() - 1);
 
-            Lexer* tLexer = new Lexer(sTypes, 1);
-            Parser* tParser = new Parser(tLexer->tokens, "(builtin)");
-
+            Lexer tLexer(sTypes, 1);
+            Parser tParser(tLexer.tokens, "(builtin)");
             std::vector<Type*> types;
-            while(tParser->peek()->type != TokType::Eof) {
-                if(tParser->peek()->type == TokType::Number || tParser->peek()->type == TokType::HexNumber || tParser->peek()->type == TokType::FloatNumber) {
-                    Node* value = tParser->parseExpr();
-                    types.push_back(new TypeTemplateMember(value->getType(), value));
-                }
-                else types.push_back(tParser->parseType(true));
-                if(tParser->peek()->type == TokType::Comma) tParser->next();
-            }
+            sTypes = "";
 
-            for(int i=0; i<types.size(); i++) {
-                Type* current = types[i];
-                Type* previous = nullptr;
-                
-                while(instanceof<TypeConst>(current) || instanceof<TypeArray>(current) || instanceof<TypePointer>(current) || instanceof<TypeStruct>(current)) {
-                    if(instanceof<TypeConst>(current)) {previous = current; current = ((TypeConst*)previous)->instance;}
-                    else if(instanceof<TypeArray>(current)) {previous = current; current = ((TypeArray*)previous)->element;}
-                    else if(instanceof<TypePointer>(current)) {previous = current; current = ((TypePointer*)previous)->instance;}
-                    else {
-                        while(generator->toReplace.find(current->toString()) != generator->toReplace.end()) current = generator->toReplace[current->toString()];
-
-                        if(previous == nullptr) types[i] = current->copy();
-                        else if(instanceof<TypeConst>(previous)) ((TypeConst*)previous)->instance = current->copy();
-                        else if(instanceof<TypeArray>(previous)) ((TypeArray*)previous)->element = current->copy();
-                        else ((TypePointer*)previous)->instance = current->copy();
+            while(tParser.peek()->type != TokType::Eof) {
+                switch(tParser.peek()->type) {
+                    case TokType::Number: case TokType::HexNumber: case TokType::FloatNumber: {
+                        Node* value = tParser.parseExpr();
+                        types.push_back(new TypeTemplateMember(value->getType(), value));
                         break;
                     }
+                    default:
+                        types.push_back(tParser.parseType(true));
+                        break;
+                }
+                if(tParser.peek()->type == TokType::Comma) tParser.next();
+            }
+
+            if (presenceInFt) {
+                for(int i=0; i<types.size(); i++) {
+                    Type* current = types[i];
+                    Type* previous = nullptr;
+
+                    while(instanceof<TypeConst>(current) || instanceof<TypeArray>(current) || instanceof<TypePointer>(current) || instanceof<TypeStruct>(current)) {
+                        if(instanceof<TypeConst>(current)) {previous = current; current = ((TypeConst*)previous)->instance;}
+                        else if(instanceof<TypeArray>(current)) {previous = current; current = ((TypeArray*)previous)->element;}
+                        else if(instanceof<TypePointer>(current)) {previous = current; current = ((TypePointer*)previous)->instance;}
+                        else {
+                            while(generator->toReplace.find(current->toString()) != generator->toReplace.end()) current = generator->toReplace[current->toString()];
+
+                            if(previous == nullptr) types[i] = current->copy();
+                            else if(instanceof<TypeConst>(previous)) ((TypeConst*)previous)->instance = current->copy();
+                            else if(instanceof<TypeArray>(previous)) ((TypeArray*)previous)->element = current->copy();
+                            else ((TypePointer*)previous)->instance = current->copy();
+                            break;
+                        }
+                    }
+                }
+
+                for(int i=0; i<types.size(); i++) sTypes += types[i]->toString() + ",";
+                sTypes = sTypes.substr(0, sTypes.length() - 1);
+
+                if(AST::funcTable.find(mainName + sTypes) != AST::funcTable.end()) return (new NodeCall(loc, new NodeIden(mainName + sTypes, loc), args))->generate();
+                AST::funcTable[mainName]->generateWithTemplate(std::move(types), mainName + sTypes + (mainName.find('[') != std::string::npos ? callTypes : ""));
+            }
+            else {
+                for(int i=0; i<types.size(); i++) {
+                    while(generator->toReplace.find(types[i]->toString()) != generator->toReplace.end()) types[i] = generator->toReplace[types[i]->toString()];
+                    sTypes += types[i]->toString() + ",";
+                }
+                sTypes = "<" + sTypes.substr(0, sTypes.length() - 1) + ">";
+
+                ifName = mainName + sTypes;
+                mainName = ifName.substr(0, ifName.find('<'));
+                if(AST::funcTable.find(mainName) == AST::funcTable.end()) {
+                    // Not working... maybe generate structure?
+                    if(AST::structTable.find(mainName) != AST::structTable.end()) {
+                        AST::structTable[mainName]->genWithTemplate(sTypes, types);
+                    }
+                    else generator->error("undefined structure '" + ifName + "'!", this->loc);
                 }
             }
-
-            sTypes = "";
-            for(int i=0; i<types.size(); i++) sTypes += types[i]->toString() + ",";
-            sTypes = sTypes.substr(0, sTypes.length() - 1);
-
-            if(AST::funcTable.find(mainName + sTypes) != AST::funcTable.end()) return (new NodeCall(loc, new NodeIden(mainName + sTypes, loc), args))->generate();
-            AST::funcTable[mainName]->generateWithTemplate(types, mainName + sTypes + (mainName.find('[') != std::string::npos ? callTypes : ""));
-
-            delete tLexer;
-            delete tParser;
-            return this->generate();
-        }
-
-        if(idenFunc->name.find('<') != std::string::npos) {
-            std::string mainName = idenFunc->name.substr(0, idenFunc->name.find('<'));
-            std::string sTypes = idenFunc->name.substr(idenFunc->name.find('<') + 1);
-            Lexer* tLexer = new Lexer(sTypes.substr(0, sTypes.size() - 1), 1);
-            Parser* tParser = new Parser(tLexer->tokens, "(builtin)");
-
-            std::vector<Type*> types;
-            sTypes = "";
-
-            while(tParser->peek()->type != TokType::Eof) {
-                if(tParser->peek()->type == TokType::Number || tParser->peek()->type == TokType::HexNumber || tParser->peek()->type == TokType::FloatNumber) {
-                    Node* value = tParser->parseExpr();
-                    types.push_back(new TypeTemplateMember(value->getType(), value));
-                }
-                else types.push_back(tParser->parseType(true));
-                if(tParser->peek()->type == TokType::Comma) tParser->next();
-            }
-
-            for(int i=0; i<types.size(); i++) {
-                while(generator->toReplace.find(types[i]->toString()) != generator->toReplace.end()) types[i] = generator->toReplace[types[i]->toString()];
-                sTypes += types[i]->toString() + ",";
-            }
-
-            idenFunc->name = mainName + "<" + sTypes.substr(0, sTypes.size() - 1) + ">";
-
-            if(AST::funcTable.find(idenFunc->name.substr(0, idenFunc->name.find('<'))) == AST::funcTable.end()) {
-                // Not working... maybe generate structure?
-                if(AST::structTable.find(idenFunc->name.substr(0, idenFunc->name.find('<'))) != AST::structTable.end()) {
-                    AST::structTable[idenFunc->name.substr(0, idenFunc->name.find('<'))]->genWithTemplate("<" + sTypes.substr(0, sTypes.size() - 1) + ">", types);
-                }
-                else generator->error("undefined structure '" + idenFunc->name + "'!", this->loc);
-            }
-            
-            delete tLexer;
-            delete tParser;
             return this->generate();
         }
 
@@ -415,7 +403,7 @@ RaveValue NodeCall::generate() {
             NodeVar* _this = currScope->getVar("this", loc);
             if(instanceof<TypeStruct>(_this->type->getElType())) {
                 TypeStruct* _struct = (TypeStruct*)_this->type->getElType();
-                auto method = std::pair<std::string, std::string>(_struct->name, idenFunc->name);
+                auto method = std::pair<std::string, std::string>(_struct->name, ifName);
 
                 std::vector<RaveValue> params = this->getParameters(byVals, nullptr, false);
                 std::vector<Type*> types;
@@ -440,27 +428,28 @@ RaveValue NodeCall::generate() {
             std::cout << "DEBUG_MODE 2: undefined function!" << std::endl;
         }
 
-        generator->error("undefined function '" + idenFunc->name + "'!", this->loc);
+        generator->error("undefined function '" + ifName + "'!", this->loc);
     }
 
     if(instanceof<NodeGet>(this->func)) {
         NodeGet* getFunc = (NodeGet*)this->func;
         if(instanceof<NodeIden>(getFunc->base)) {
             NodeIden* idenFunc = (NodeIden*)getFunc->base;
-            if(!currScope->has(idenFunc->name) && !currScope->hasAtThis(idenFunc->name)) generator->error("undefined variable '" + idenFunc->name + "'!", this->loc);
+            std::string const &ifName = idenFunc->name;
+            if(!currScope->has(ifName) && !currScope->hasAtThis(ifName)) generator->error("undefined variable '" + ifName + "'!", this->loc);
 
-            NodeVar* var = currScope->getVar(idenFunc->name, this->loc);
+            NodeVar* var = currScope->getVar(ifName, this->loc);
             TypeStruct* structure = nullptr;
 
             if(instanceof<TypeStruct>(var->type)) structure = (TypeStruct*)var->type;
             else if(instanceof<TypePointer>(var->type) && instanceof<TypeStruct>(((TypePointer*)var->type)->instance)) structure = (TypeStruct*)((TypePointer*)var->type)->instance;
-            else generator->error("variable '" + idenFunc->name + "' does not have structure as type!", this->loc);
+            else generator->error("variable '" + ifName + "' does not have structure as type!", this->loc);
 
             if(AST::structTable.find(structure->name) != AST::structTable.end()) {
                 std::vector<RaveValue> params = this->getParameters(byVals, nullptr, false);
                 std::vector<Type*> types;
 
-                params.insert(params.begin(), currScope->getWithoutLoad(idenFunc->name));
+                params.insert(params.begin(), currScope->getWithoutLoad(ifName));
                 if(instanceof<TypePointer>(params[0].type->getElType())) params[0] = LLVM::load(params[0], "NodeCall_load", loc);
                 for(int i=0; i<params.size(); i++) types.push_back(params[i].type);
 

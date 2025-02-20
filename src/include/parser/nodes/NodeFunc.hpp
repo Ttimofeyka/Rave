@@ -60,7 +60,7 @@ public:
     bool isArrayable = false;
     bool isNoCopy = false;
 
-    NodeFunc(std::string name, std::vector<FuncArgSet> args, NodeBlock* block, bool isExtern, std::vector<DeclarMod> mods, int loc, Type* type, std::vector<std::string> templateNames);
+    NodeFunc(const std::string& name, std::vector<FuncArgSet> args, NodeBlock* block, bool isExtern, std::vector<DeclarMod> mods, int loc, Type* type, std::vector<std::string> templateNames);
     LLVMTypeRef* getParameters(int callConv);
     RaveValue generate() override;
     Type* getType() override;
@@ -72,5 +72,5 @@ public:
     Type* getArgType(std::string name);
     Type* getInternalArgType(LLVMValueRef value);
     std::string generateWithCtargs(std::vector<Type*> args);
-    RaveValue generateWithTemplate(std::vector<Type*> types, std::string all);
+    RaveValue generateWithTemplate(std::vector<Type*>&& types, const std::string& all);
 };
