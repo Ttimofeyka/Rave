@@ -65,7 +65,7 @@ int main {
 
 ## 'in', '!in' operators
 
-The `in` and `In` operators have identical functions, as in many new programming languages.
+The `in` and `!in` operators have identical functions, as in many new programming languages.
 They let you know if it is present (or absent) whether the element is in the specified array (or an overloaded structure).
 
 Examples:
