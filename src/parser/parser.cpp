@@ -1421,17 +1421,23 @@ Node* Parser::parseIf(std::string f, bool isStatic) {
     return _if;
 }
 
-std::pair<Node*, Node*> Parser::parseCase(std::string f) {
-    this->next();
-    if(this->peek()->type != TokType::Rpar) this->error("expected token '('!");
-    this->next();
+std::pair<std::vector<Node*>, Node*> Parser::parseCase(std::string f) {
+    std::vector<Node*> cases;
 
-    Node* cond = this->parseExpr(f);
-    if(this->peek()->type != TokType::Lpar) this->error("expected token ')'!");
-    this->next();
+    while(peek()->value == "case") {
+        this->next();
+        if(this->peek()->type != TokType::Rpar) this->error("expected token '('!");
+        this->next();
+
+        Node* cond = this->parseExpr(f);
+        if(this->peek()->type != TokType::Lpar) this->error("expected token ')'!");
+        this->next();
+
+        cases.push_back(cond);
+    }
 
     Node* block = this->parseStmt(f);
-    return std::pair<Node*, Node*>(cond, block);
+    return std::pair<std::vector<Node*>, Node*>(cases, block);
 }
 
 Node* Parser::parseSwitch(std::string f) {
@@ -1440,10 +1446,11 @@ Node* Parser::parseSwitch(std::string f) {
     Node* expr = this->parseExpr();
     this->next();
 
-    std::vector<std::pair<Node*, Node*>> statements;
+    std::vector<std::pair<std::vector<Node*>, Node*>> statements;
     Node* _default = nullptr;
 
     this->next();
+
     while(this->peek()->type != TokType::Lbra && this->peek()->type != TokType::Eof) {
         if(this->peek()->value == "case") statements.push_back(this->parseCase(f));
         else if(this->peek()->value == "default") {
@@ -1452,6 +1459,7 @@ Node* Parser::parseSwitch(std::string f) {
         }
         while(this->peek()->type == TokType::Semicolon) this->next();
     }
+
     if(this->peek()->type != TokType::Eof) this->next();
 
     return new NodeSwitch(expr, _default, statements, line);

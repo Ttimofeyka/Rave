@@ -17,10 +17,10 @@ class NodeSwitch : public Node {
 public:
     Node* expr = nullptr;
     Node* _default = nullptr;
-    std::vector<std::pair<Node*, Node*>> statements;
+    std::vector<std::pair<std::vector<Node*>, Node*>> statements;
     int loc;
 
-    NodeSwitch(Node* expr, Node* _default, std::vector<std::pair<Node*, Node*>> statements, int loc);
+    NodeSwitch(Node* expr, Node* _default, std::vector<std::pair<std::vector<Node*>, Node*>> statements, int loc);
     Type* getType() override;
     void check() override;
     RaveValue generate() override;

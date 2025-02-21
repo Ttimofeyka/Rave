@@ -63,7 +63,7 @@ public:
     Node* parseDefer(bool isFunctionScope, std::string f = "");
     Node* parseIf(std::string f, bool isStatic);
     Node* parseSwitch(std::string f);
-    std::pair<Node*, Node*> parseCase(std::string f);
+    std::pair<std::vector<Node*>, Node*> parseCase(std::string f);
     Node* parseWhile(std::string f);
     Node* parseFor(std::string f);
     Node* parseForeach(std::string f);
