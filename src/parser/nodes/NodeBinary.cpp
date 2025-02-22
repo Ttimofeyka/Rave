@@ -27,6 +27,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeFunc.hpp"
 #include "../../include/parser/nodes/NodeUnary.hpp"
 #include "../../include/parser/nodes/NodeType.hpp"
+#include "../../include/parser/nodes/NodeIf.hpp"
+#include "../../include/parser/nodes/NodeWhile.hpp"
 #include "../../include/llvm.hpp"
 #include "../../include/compiler.hpp"
 #include <iostream>
@@ -391,9 +393,20 @@ RaveValue NodeBinary::generate() {
     else if(instanceof<NodeNull>(this->second)) ((NodeNull*)this->second)->type = this->first->getType();   
 
     if(this->op == TokType::Rem) {
-        Type* type = this->first->getType();
-        if(instanceof<TypeBasic>(type) && (((TypeBasic*)type)->type == BasicType::Float || ((TypeBasic*)type)->type == BasicType::Double)) return (new NodeBuiltin("fmodf", {this->first, this->second}, this->loc, nullptr))->generate();
-        return (new NodeCast(instanceof<TypeVoid>(type) ? basicTypes[BasicType::Double] : type, new NodeBuiltin("fmodf", {this->first, this->second}, this->loc, nullptr), this->loc))->generate();
+        RaveValue _first = this->first->generate();
+        if(instanceof<TypePointer>(_first.type)) _first = LLVM::load(_first, "NodeBinary_Rem_load", loc);
+
+        RaveValue _second = this->second->generate();
+        if(instanceof<TypePointer>(_second.type)) _second = LLVM::load(_second, "NodeBinary_Rem_load2", loc);
+
+        LLVM::cast(_second, _first.type, loc);
+
+        if(isFloatType(_first.type)) return (new NodeBuiltin(
+            "fmodf", {new NodeDone(_first), new NodeDone(_second)}, loc, nullptr
+        ))->generate();
+
+        if(((TypeBasic*)_first.type)->isUnsigned()) return {LLVMBuildURem(generator->builder, _first.value, _second.value, "LLVM_urem"), _first.type};
+        return {LLVMBuildSRem(generator->builder, _first.value, _second.value, "LLVM_srem"), _first.type};
     }
 
     RaveValue vFirst = this->first->generate();
