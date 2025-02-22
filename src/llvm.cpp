@@ -205,7 +205,7 @@ void LLVM::cast(RaveValue& value, Type* type, int loc) {
                 else value = {LLVMBuildFPToSI(generator->builder, value.value, generator->genType(type, loc), "LLVM_ftoicast"), type};
             }
             else if(((TypeBasic*)type)->isFloat()) value = {LLVMBuildSIToFP(generator->builder, value.value, generator->genType(type, loc), "LLVM_itofcast"), type};
-            else value = {LLVMBuildIntCast2(generator->builder, value.value, generator->genType(type, loc), ((TypeBasic*)type)->isUnsigned(), "LLVM_itoicast"), type};
+            else value = {LLVMBuildIntCast2(generator->builder, value.value, generator->genType(type, loc), !(((TypeBasic*)type)->isUnsigned()), "LLVM_itoicast"), type};
         }
         else if(instanceof<TypeStruct>(type)) generator->error("cannot cast a basic type to a struct!", loc);
     }
