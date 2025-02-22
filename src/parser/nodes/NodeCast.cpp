@@ -92,6 +92,8 @@ RaveValue NodeCast::generate() {
             else if(instanceof<NodeIndex>(this->value)) {((NodeIndex*)this->value)->isMustBePtr = true; result = this->value->generate();}
         }
 
+        if(instanceof<TypeArray>(result.type)) generator->error("cannot cast an array to a pointer!", this->loc);
+
         return {LLVMBuildPointerCast(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_ptop"), this->type};
     }
 
