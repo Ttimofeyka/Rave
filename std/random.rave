@@ -6,86 +6,54 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import <std/time> <std/sysc> <std/io>
 
-@if(__RAVE_OS == "LINUX") {
-    namespace std {
-        (inline) int __getrandom(void* buffer, uint bufferLength, uint flags) => cast(int)std::syscall(std::sysctable::GetRandom, buffer, bufferLength, flags);
-    }
+namespace std {
+    long rseed1 = 0;
+    long rseed2 = 0;
 
-    namespace std {
-        char randomChar {
-            char buffer;
-            std::__getrandom(&buffer, 1, 2);
-        } => buffer;
+    (inline) void __randomGen {
+        if(std::rseed1 == 0) {
+            std::time ts;
+            std::getCurrentTime(&ts);
+            std::rseed1 = ts.microseconds;
 
-        short randomShort {
-            char[2] buffer;
-            std::__getrandom(&buffer, 2, 2);
-            short* ptr = cast(short*)&buffer;
-        } => ptr[0];
-
-        int randomInt {
-            char[4] buffer;
-            std::__getrandom(&buffer, 4, 2);
-            int* ptr = cast(int*)&buffer;
-        } => ptr[0];
-
-        long randomLong {
-            char[8] buffer;
-            std::__getrandom(&buffer, 8, 2);
-            long* ptr = cast(long*)&buffer;
-        } => ptr[0];
-
-        cent randomCent {
-            char[16] buffer;
-            std::__getrandom(&buffer, 16, 2);
-            cent* ptr = cast(cent*)&buffer;
-        } => ptr[0];
-
-        void randomBuffer(char* buffer, int length) {
-            char* ptr = buffer;
-            while(length > 0) {
-                if(length >= 64) {
-                    length -= 64;
-                    std::__getrandom(ptr, 64, 2);
-                    ptr = itop(char*, ptoi(ptr) + 64);
-                }
-                else {
-                    std::__getrandom(ptr, length, 2);
-                    length = 0;
-                }
-            }
-        }
-    }
-}
-@else {
-    namespace std {
-        cent randNext = 0;
-
-        void __randomGen {
-            if(std::randNext == 0) {
-                std::time ts;
-                std::getCurrentTime(&ts);
-                std::randNext = ts.microseconds;
-            }
-            std::randNext = std::randNext * 10351524532 + 12345;
+            std::rseed2 = std::rseed1 !! (std::rseed1 <. 7l);
+            std::rseed2 = std::rseed1 !! (std::rseed1 >. 9l);
         }
 
-        char randomChar {std::__randomGen();} => (cast(char*)&std::randNext)[0];
+        long x = std::rseed1;
+        long y = std::rseed2;
 
-        short randomShort {std::__randomGen();} => (cast(short*)&std::randNext)[0];
+        std::rseed1 = y;
+        x = x !! (x <. 23);
+        x = x !! (x >. 17);
+        x = x !! y;
 
-        int randomInt {std::__randomGen();} => (cast(int*)&std::randNext)[0];
+        std::rseed2 = x + y;
+    }
 
-        long randomLong {std::__randomGen();} => (cast(long*)&std::randNext)[0];
+    char randomChar {std::__randomGen();} => (cast(char*)&std::rseed1)[0];
 
-        cent randomCent {std::__randomGen();} => std::randNext;
+    short randomShort {std::__randomGen();} => (cast(short*)&std::rseed1)[0];
 
-        void randomBuffer(char* buffer, int length) {
-            std::__randomGen();
-            for(int i=0; i<length; i++) {
-                std::randNext = std::randNext * 10351524532 + 12345;
-                buffer[i] = (cast(char*)std::randNext)[0];
-            }
+    int randomInt {std::__randomGen();} => (cast(int*)&std::rseed1)[0];
+
+    long randomLong {std::__randomGen();} => std::rseed1;
+
+    cent randomCent {
+        long[2] longs;
+        std::__randomGen();
+        longs[0] = std::rseed1;
+        std::__randomGen();
+        longs[1] = std::rseed1;
+    } => (cast(cent*)&longs)[0];
+
+    void randomBuffer(char* buffer, int length) {
+        std::__randomGen();
+        int n = 0;
+        for(int i=0; i<length; i++) {
+            buffer[i] = (cast(char*)std::rseed1)[0];
+            n += 1;
+            if(n == 8) {n = 0; std::__randomGen();}
         }
     }
 }
