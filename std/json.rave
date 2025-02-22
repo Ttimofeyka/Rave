@@ -140,7 +140,7 @@ namespace std {
                 }
                 else {
                     // Just expand the object
-                    this.value = std::realloc(this.value, sizeof(std::json::Value) * this.length, sizeof(std::json::Value) * (this.length + 1));
+                    this.value = std::realloc(this.value, sizeof(std::json::Value) * (this.length + 1));
                     std::json::Value* values = cast(std::json::Value*)this.value;
                     this.length += 1;
                     values[this.length - 1] = value;

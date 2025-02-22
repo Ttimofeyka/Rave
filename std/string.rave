@@ -126,7 +126,7 @@ namespace std {
                 this.length += 1;
 
                 if(this.length == this.capacity) {
-                    this.data = std::realloc(this.data, this.capacity, this.capacity * 2);
+                    this.data = std::realloc(this.data, this.capacity * 2);
                     this.capacity = this.capacity * 2;
                 }
 
@@ -140,7 +140,7 @@ namespace std {
                 int i = 0;
 
                 if((this.length + str.length) >= this.capacity) {
-                    this.data = std::realloc(this.data, this.capacity, this.capacity + str.length + 2);
+                    this.data = std::realloc(this.data, this.capacity + str.length + 2);
                     this.capacity = this.capacity + str.length + 2;
                 }
 
@@ -160,7 +160,7 @@ namespace std {
                 int i = 0;
 
                 if((this.length + len) >= this.capacity) {
-                    this.data = std::realloc(this.data, this.capacity, this.capacity + len + 2);
+                    this.data = std::realloc(this.data, this.capacity + len + 2);
                     this.capacity = this.capacity + len + 2;
                 }
 
