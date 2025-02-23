@@ -209,6 +209,9 @@ void LLVM::cast(RaveValue& value, Type* type, int loc) {
         }
         else if(instanceof<TypeStruct>(type)) generator->error("cannot cast a basic type to a struct!", loc);
     }
+    else if(instanceof<TypeVector>(value.type)) {
+        if(instanceof<TypeVector>(type)) value = {LLVMBuildBitCast(generator->builder, value.value, generator->genType(type, loc), "LLVM_bitcast"), type};
+    }
 }
 
 void LLVM::castForExpression(RaveValue& first, RaveValue& second) {
