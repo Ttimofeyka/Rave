@@ -288,12 +288,12 @@ void Compiler::compile(std::string file) {
     }
 
     bool sse = settings.sse && Compiler::options["sse"].template get<bool>();
-    bool sse2 = settings.sse && Compiler::options["sse2"].template get<bool>();
-    bool sse3 = settings.sse && Compiler::options["sse3"].template get<bool>();
-    bool ssse3 = settings.sse && Compiler::options["ssse3"].template get<bool>();
-    bool sse4a = settings.sse && Compiler::options["sse4a"].template get<bool>();
-    bool sse4_1 = settings.sse && Compiler::options["sse4_1"].template get<bool>();
-    bool sse4_2 = settings.sse && Compiler::options["sse4_2"].template get<bool>();
+    bool sse2 = settings.sse2 && Compiler::options["sse2"].template get<bool>();
+    bool sse3 = settings.sse3 && Compiler::options["sse3"].template get<bool>();
+    bool ssse3 = settings.ssse3 && Compiler::options["ssse3"].template get<bool>();
+    bool sse4a = settings.sse4a && Compiler::options["sse4a"].template get<bool>();
+    bool sse4_1 = settings.sse4_1 && Compiler::options["sse4_1"].template get<bool>();
+    bool sse4_2 = settings.sse4_2 && Compiler::options["sse4_2"].template get<bool>();
     bool avx = settings.avx && Compiler::options["avx"].template get<bool>();
     bool avx2 = settings.avx2 && Compiler::options["avx2"].template get<bool>();
     bool avx512 = settings.avx512 && Compiler::options["avx512"].template get<bool>();
@@ -301,15 +301,15 @@ void Compiler::compile(std::string file) {
     if(!settings.isNative) {
         Compiler::features = "";
         if(sse) Compiler::features += "+sse,";
-        if(sse2) Compiler::features += "sse2,";
-        if(sse3) Compiler::features += "sse3,";
-        if(ssse3) Compiler::features += "ssse3,";
-        if(sse4a) Compiler::features += "sse4a,";
-        if(sse4_1) Compiler::features += "sse4.1,";
-        if(sse4_2) Compiler::features += "sse4.2,";
-        if(avx) Compiler::features += "avx,";
-        if(avx2) Compiler::features += "avx2,";
-        if(avx512) Compiler::features += "avx512,";
+        if(sse2) Compiler::features += "+sse2,";
+        if(sse3) Compiler::features += "+sse3,";
+        if(ssse3) Compiler::features += "+ssse3,";
+        if(sse4a) Compiler::features += "+sse4a,";
+        if(sse4_1) Compiler::features += "+sse4.1,";
+        if(sse4_2) Compiler::features += "+sse4.2,";
+        if(avx) Compiler::features += "+avx,";
+        if(avx2) Compiler::features += "+avx2,";
+        if(avx512) Compiler::features += "+avx512,";
         
         if(ravePlatform == "X86_64") Compiler::features += "+64bit,+fma,+f16c,";
         else if(ravePlatform == "X86") Compiler::features += "+fma,";
