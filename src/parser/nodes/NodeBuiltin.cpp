@@ -72,9 +72,9 @@ Type* NodeBuiltin::getType() {
     || this->name == "isArray" || this->name == "aliasExists" || this->name == "tEquals"
     || this->name == "isStructure" || this->name == "hasMethod"
     || this->name == "hasDestructor" || this->name == "contains") return basicTypes[BasicType::Bool];
-    if(this->name == "sizeOf" || this->name == "argsLength" || this->name == "getCurrArgNumber") return basicTypes[BasicType::Int];
-    if(this->name == "vAdd" || this->name == "vSub" || this->name == "vMul" || this->name == "vDiv"
-    || this->name == "vShuffle" || this->name == "vHAdd32x4" || this->name == "vHAdd16x8"
+    if(this->name == "sizeOf" || this->name == "argsLength" || this->name == "getCurrArgNumber"
+    || this->name == "vMoveMask128" || this->name == "cttz32") return basicTypes[BasicType::Int];
+    if(this->name == "vShuffle" || this->name == "vHAdd32x4" || this->name == "vHAdd16x8"
     || this->name == "vSumAll") return args[0]->getType();
     if(this->name == "typeToString") return new TypePointer(basicTypes[BasicType::Char]);
     if(this->name == "minOf" || this->name == "maxOf") return basicTypes[BasicType::Ulong];
@@ -614,6 +614,47 @@ RaveValue NodeBuiltin::generate() {
 
         generator->error("unsupported vector!", this->loc);
         return {};
+    }
+    else if(this->name == "vMoveMask128") {
+        if(Compiler::features.find("+sse2") == std::string::npos) {
+            generator->error("your target does not supports SSE2!", this->loc);
+            return {};
+        }
+
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+
+        RaveValue value = this->args[0]->generate();
+
+        if(instanceof<TypePointer>(value.type)) value = LLVM::load(value, "NodeBuiltin_vMoveMask_load_", this->loc);
+        if(!instanceof<TypeVector>(value.type)) generator->error("the value must have the vector type!", this->loc);
+
+        if(generator->functions.find("llvm.x86.sse2.pmovmskb.128") == generator->functions.end()) {
+            generator->functions["llvm.x86.sse2.pmovmskb.128"] = {LLVMAddFunction(generator->lModule, "llvm.x86.sse2.pmovmskb.128", LLVMFunctionType(
+                LLVMInt32TypeInContext(generator->context),
+                std::vector<LLVMTypeRef>({LLVMVectorType(LLVMInt8TypeInContext(generator->context), 16)}).data(),
+                1, false
+            )), new TypeFunc(new TypeBasic(BasicType::Int), {new TypeFuncArg(new TypeVector(basicTypes[BasicType::Char], 16), "v")}, false)};
+        }
+
+        if(((TypeVector*)value.type)->count != 16) LLVM::cast(value, new TypeVector(basicTypes[BasicType::Char], 16), this->loc);
+
+        return LLVM::call(generator->functions["llvm.x86.sse2.pmovmskb.128"], std::vector<LLVMValueRef>({value.value}).data(), 1, "vMoveMask128");
+    }
+    else if(this->name == "cttz32") {
+        if(this->args.size() < 2) generator->error("at least two arguments are required!", this->loc);
+
+        RaveValue value = this->args[0]->generate();
+        RaveValue isZeroPoison = this->args[1]->generate();
+
+        if(generator->functions.find("llvm.cttz.i32") == generator->functions.end()) {
+            generator->functions["llvm.cttz.i32"] = {LLVMAddFunction(generator->lModule, "llvm.cttz.i32", LLVMFunctionType(
+                LLVMInt32TypeInContext(generator->context),
+                std::vector<LLVMTypeRef>({LLVMInt32TypeInContext(generator->context), LLVMInt1TypeInContext(generator->context)}).data(),
+                2, false
+            )), new TypeFunc(new TypeBasic(BasicType::Int), {new TypeFuncArg(new TypeBasic(BasicType::Int), "value"), new TypeFuncArg(new TypeBasic(BasicType::Bool), "isZeroPoison")}, false)};
+        }
+
+        return LLVM::call(generator->functions["llvm.cttz.i32"], std::vector<LLVMValueRef>({value.value, isZeroPoison.value}).data(), 2, "cttz32");
     }
     else if(this->name == "alloca") {
         if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
