@@ -299,6 +299,17 @@ RaveValue NodeCall::generate() {
                 }
             }
 
+            if(AST::funcTable[ifName]->args.size() != this->args.size()) {
+                // Choose the most right overload
+                for(auto const& x : AST::funcTable) {
+                    if(x.first.find(ifName) == 0 && x.second->args.size() == this->args.size()) {
+                        isCW64 = x.second->isCdecl64 || x.second->isWin64;
+                        std::vector<RaveValue> params = this->getParameters(byVals, x.second, false, x.second->args);
+                        return LLVM::call(generator->functions[x.first], params, (instanceof<TypeVoid>(x.second->type) ? "" : "callFunc"), byVals);
+                    }
+                }
+            }
+
             isCW64 = AST::funcTable[ifName]->isCdecl64 || AST::funcTable[ifName]->isWin64;
             std::vector<RaveValue> params = this->getParameters(byVals, AST::funcTable[ifName], false, AST::funcTable[ifName]->args);
             return LLVM::call(generator->functions[ifName], params, (instanceof<TypeVoid>(AST::funcTable[ifName]->type) ? "" : "callFunc"), byVals);
