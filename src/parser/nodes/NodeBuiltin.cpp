@@ -385,6 +385,7 @@ RaveValue NodeBuiltin::generate() {
                 if(args.size() == 1) (new NodeBinary(TokType::Equ, new NodeIden("return", this->loc), args[0], this->loc))->generate();
                 if(currScope->fnEnd != nullptr) LLVMBuildBr(generator->builder, currScope->fnEnd);
                 else LLVMBuildBr(generator->builder, AST::funcTable[currScope->funcName]->exitBlock);
+                if(generator->activeLoops.size() > 0) generator->activeLoops[generator->activeLoops.size()-1].hasEnd = true;
                 currScope->funcHasRet = true;
             }
         }
