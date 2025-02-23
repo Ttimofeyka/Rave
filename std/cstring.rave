@@ -64,6 +64,8 @@ import <std/thread> <std/ascii>
 
 namespace std {
     namespace cstring {
+        alias unspecified = -1;
+
         (inline) const(char)* fromBool(bool b) {
             return = "false";
             if(b) return = "true";
@@ -125,13 +127,11 @@ namespace std {
             if(str[return] == '\0') return = -1;
         }
 
-        char* ltos(long number, char* endBuffer) {
+        char* ltos(long number, char* endBuffer, int minWidth) {
             char[22] ltosBuffer;
-
-            if(number == 0) {
-                endBuffer[0] = '0';
-                endBuffer[1] = '\0';
-                @return(endBuffer);
+            @if(__RAVE_RUNTIME_CHECKS) {
+                if(minWidth > 21) @return(null);
+                if(minWidth < 0 && minWidth != std::cstring::unspecified) @return(null);
             }
 
             bool isNegative = false;
@@ -144,6 +144,10 @@ namespace std {
             while(number > 0) {
                 ltosBuffer[index] = ((number % 10l) + '0');
                 number = number / 10;
+                index += 1;
+            }
+            while(index < minWidth) {
+                ltosBuffer[index] = '0';
                 index += 1;
             }
 
@@ -161,12 +165,23 @@ namespace std {
             }
         } => endBuffer;
 
-        char* ultos(ulong number, char* endBuffer) {
+        char* ltos(long number, char* endBuffer) => std::cstring::ltos(number, endBuffer, std::cstring::unspecified);
+
+        char* ultos(ulong number, char* endBuffer, int minWidth) {
             char[20] ultBuffer;
+            @if(__RAVE_RUNTIME_CHECKS) {
+                if(minWidth > 19) @return(null);
+                if(minWidth < 0 && minWidth != std::cstring::unspecified) @return(null);
+            }
+
             uint pos;
             for(pos = 0; number != 0u; pos += 1) {
                 ultBuffer[pos] = (number % 10) + '0';
                 number /= 10;
+            }
+            while(pos < minWidth) {
+                ultBuffer[pos] = '0';
+                pos += 1;
             }
 
             uint outpos;
@@ -179,13 +194,13 @@ namespace std {
             endBuffer[outpos + 1] = '\0';
         } => endBuffer;
 
-        char* ctos(cent number, char* endBuffer) {
-            char[42] ctosBuffer;
+        char* ultos(ulong number, char* endBuffer) => std::cstring::ultos(number, endBuffer, std::cstring::unspecified);
 
-            if(number == 0) {
-                endBuffer[0] = '0';
-                endBuffer[1] = '\0';
-                @return(endBuffer);
+        char* ctos(cent number, char* endBuffer, int minWidth) {
+            char[42] ctosBuffer;
+            @if(__RAVE_RUNTIME_CHECKS) {
+                if(minWidth > 41) @return(null);
+                if(minWidth < 0 && minWidth != std::cstring::unspecified) @return(null);
             }
 
             bool isNegative = false;
@@ -198,6 +213,10 @@ namespace std {
             while(number > 0) {
                 ctosBuffer[index] = ((number % cast(cent)10) + '0');
                 number = number / 10;
+                index += 1;
+            }
+            while(index < minWidth) {
+                ctosBuffer[index] = '0';
                 index += 1;
             }
 
@@ -215,12 +234,23 @@ namespace std {
             }
         } => endBuffer;
 
-        char* uctos(ucent number, char* endBuffer) {
+        char* ctos(cent number, char* endBuffer) => std::cstring::ctos(number, endBuffer, std::cstring::unspecified);
+
+        char* uctos(ucent number, char* endBuffer, int minWidth) {
             char[40] uctBuffer;
+            @if(__RAVE_RUNTIME_CHECKS) {
+                if(minWidth > 39) @return(null);
+                if(minWidth < 0 && minWidth != std::cstring::unspecified) @return(null);
+            }
+
             uint pos;
             for(pos = 0; number != 0u; pos += 1) {
                 uctBuffer[pos] = (number % 10) + '0';
                 number /= 10;
+            }
+            while(pos < minWidth) {
+                uctBuffer[pos] = '0';
+                pos += 1;
             }
 
             uint outpos;
@@ -232,7 +262,9 @@ namespace std {
             }
             endBuffer[outpos + 1] = '\0';
         } => endBuffer;
-        
+
+        char* uctos(ucent number, char* endBuffer) => std::cstring::uctos(number, endBuffer, std::cstring::unspecified);
+
         char* dtos(double number, int precision, char* buffer) {
             long lPart;
             int i;
@@ -258,7 +290,7 @@ namespace std {
                 i += 1;
                 tI += 1;
             }
-            
+
             number = number - cast(double)lPart;
             buffer[i] = '.';
             i += 1;

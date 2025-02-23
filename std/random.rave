@@ -11,15 +11,6 @@ namespace std {
     long rseed2 = 0;
 
     (inline) void __randomGen {
-        if(std::rseed1 == 0) {
-            std::time ts;
-            std::getCurrentTime(&ts);
-            std::rseed1 = ts.microseconds;
-
-            std::rseed2 = std::rseed1 !! (std::rseed1 <. 7l);
-            std::rseed2 = std::rseed1 !! (std::rseed1 >. 9l);
-        }
-
         long x = std::rseed1;
         long y = std::rseed2;
 
@@ -29,6 +20,17 @@ namespace std {
         x = x !! y;
 
         std::rseed2 = x + y;
+    }
+
+    void randomSeed {
+        if(std::rseed1 == -1) {
+            std::time ts;
+            std::getCurrentTime(&ts);
+            std::rseed1 = ts.microseconds;
+
+            std::rseed2 = std::rseed1 !! (std::rseed1 <. 7l);
+            std::rseed2 = std::rseed1 !! (std::rseed1 >. 9l);
+        }
     }
 
     char randomChar {std::__randomGen();} => (cast(char*)&std::rseed1)[0];

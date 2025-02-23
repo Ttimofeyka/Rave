@@ -163,7 +163,10 @@ namespace std {
             int i = 0;
 
             if((this.length + len) >= this.capacity) {
-                this.data = std::realloc(this.data, this.capacity + len + 2);
+                int minTargetCap = this.capacity + len + 2;
+                int shift = (31 - @ctlz32(minTargetCap, true));
+                int targetCap = (minTargetCap >. shift) <. (shift + 1);
+                this.data = std::realloc(this.data, targetCap);
                 this.capacity = this.capacity + len + 2;
             }
 
@@ -470,8 +473,17 @@ namespace std {
                 if(s.data != null) result.append(s);
                 else result.appendC("null");
             }
+
+            @if(@tEquals(@getCurrArgType(), std::time)) {
+                std::time tp = @getCurrArg(std::time);
+                std::cstring::ltos(tp.seconds, cast(char*)&nBuffer);
+                result.appendC(cast(char*)&nBuffer);
+                result.appendC(".");
+                std::cstring::ltos(tp.microseconds, cast(char*)&nBuffer);
+                result.appendC(cast(char*)&nBuffer);
+            }
         }
-        
+
         resultPtr[0] = result;
     }
 
