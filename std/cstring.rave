@@ -6,12 +6,64 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import <std/thread> <std/ascii>
 
+// TODO: Add more supported platforms
+
+@if((__RAVE_PLATFORM == "X86_64") || (__RAVE_PLATFORM == "AARCH64")) {
+    namespace std {
+        namespace cstring {
+            int strlen(char* str) {
+                while((ptoi(&str[return]) % 8) != 0) {
+                    return += 1;
+                    if(str[return] == '\0') @return(return);
+                }
+
+                while(true) {
+                    ulong chunk = ((cast(ulong*)&str[return])[0]);
+
+                    if(((chunk - 0x0101010101010101) && (!chunk) && 0x8080808080808080) != 0) break;
+
+                    return += 8;
+                }
+
+                while(str[return] != '\0') return += 1;
+            }
+        }
+    }
+}
+@else @if((__RAVE_PLATFORM == "X86") || (__RAVE_PLATFORM == "ARM")) {
+    namespace std {
+        namespace cstring {
+            int strlen(char* str) {
+                while((ptoi(&str[return]) % 4) != 0) {
+                    return += 1;
+                    if(str[return] == '\0') @return(return);
+                }
+
+                while(true) {
+                    uint chunk = ((cast(uint*)&str[return])[0]);
+
+                    if(((chunk - 0x01010101) && (!chunk) && 0x80808080) != 0) break;
+
+                    return += 4;
+                }
+
+                while(str[return] != '\0') return += 1;
+            }
+        }
+    }
+}
+@else {
+    namespace std {
+        namespace cstring {
+            int strlen(char* str) {
+                while(str[return] != '\0') return += 1;
+            }
+        }
+    }
+}
+
 namespace std {
     namespace cstring {
-        int strlen(const(char)* s) {
-            while(s[return] != '\0') return += 1;
-        }
-
         (inline) const(char)* fromBool(bool b) {
             return = "false";
             if(b) return = "true";
