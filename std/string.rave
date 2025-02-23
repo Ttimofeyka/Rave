@@ -6,6 +6,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import <std/vector> <std/cstring> <std/ascii> <std/utf8> <std/utf32>
 import <std/thread> <std/strutil> <std/map> <std/hash> <std/math>
+import <std/time>
 
 namespace std {
     extern(private, linkname: "sscanf") int format(char* buff, char* fmt);
@@ -135,44 +136,50 @@ namespace std {
             }
         }
 
-        void append(std::string str) {
-            if(this.data != null) {
-                int i = 0;
+        void append_NC(std::string str) {
+            int i = 0;
 
-                if((this.length + str.length) >= this.capacity) {
-                    this.data = std::realloc(this.data, this.capacity + str.length + 2);
-                    this.capacity = this.capacity + str.length + 2;
-                }
-
-                while(i < str.length) {
-                    this.length += 1;
-                    this.data[this.length - 1] = str.data[i];
-                    i += 1;
-                }
-
-                this.data[this.length] = '\0';
+            if((this.length + str.length) >= this.capacity) {
+                this.data = std::realloc(this.data, this.capacity + str.length + 2);
+                this.capacity = this.capacity + str.length + 2;
             }
+
+            while(i < str.length) {
+                this.length += 1;
+                this.data[this.length - 1] = str.data[i];
+                i += 1;
+            }
+
+            this.data[this.length] = '\0';
         }
 
-        void appendC(char* cstr, int cstrlen) {
-            if(this.data != null) {
-                int len = cstrlen;
-                int i = 0;
+        (inline) void append(std::string str) {
+            if(this.data == null)
+                @return();
+        } => this.append_NC(str);
 
-                if((this.length + len) >= this.capacity) {
-                    this.data = std::realloc(this.data, this.capacity + len + 2);
-                    this.capacity = this.capacity + len + 2;
-                }
+        void appendC_NC(char* cstr, int cstrlen) {
+            int len = cstrlen;
+            int i = 0;
 
-                while(i < len) {
-                    this.length += 1;
-                    this.data[this.length - 1] = cstr[i];
-                    i += 1;
-                }
-
-                this.data[this.length] = '\0';
+            if((this.length + len) >= this.capacity) {
+                this.data = std::realloc(this.data, this.capacity + len + 2);
+                this.capacity = this.capacity + len + 2;
             }
+
+            while(i < len) {
+                this.length += 1;
+                this.data[this.length - 1] = cstr[i];
+                i += 1;
+            }
+
+            this.data[this.length] = '\0';
         }
+
+        (inline) void appendC(char* cstr, int cstrlen) {
+            if(this.data == null)
+                @return();
+        } => this.appendC_NC(cstr, cstrlen);
 
         (inline) void appendC(char* cstr) => this.appendC(cstr, std::cstring::strlen(cstr));
 
