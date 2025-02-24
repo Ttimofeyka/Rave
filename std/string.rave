@@ -115,7 +115,7 @@ namespace std {
             else return = -1;
         }
 
-        (inline) int indexOf(char *s) => this.indexOf(s, 0);
+        (inline) int indexOf(char* s) => this.indexOf(s, 0);
 
         (inline) int indexOf(std::string s, uint begin) => this.indexOf(s.data, begin);
 
@@ -401,7 +401,7 @@ namespace std {
 
             @if((@getCurrArgType() == ushort) || (@getCurrArgType() == uint) || (@getCurrArgType() == ulong)) {
                 std::memset(&nBuffer, 0, 41);
-                std::cstring::ultos(cast(ulong)(@getCurrArg(long)), cast(char*)&nBuffer);
+                std::cstring::ultos(@getCurrArg(ulong), cast(char*)&nBuffer);
                 result.appendC(cast(char*)&nBuffer);
             }
 

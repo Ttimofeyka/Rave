@@ -600,7 +600,10 @@ namespace std {
                 while(std::ascii::isSpace(c)) c = std::getchar();
                 pointer[0] = c;
             }
-            @else @if((@getCurrArgType() == short*) || (@getCurrArgType() == int*) || (@getCurrArgType() == long*) || (@getCurrArgType() == cent*)) {
+            @else @if(
+                (@getCurrArgType() == short*) || (@getCurrArgType() == int*) || (@getCurrArgType() == long*) || (@getCurrArgType() == cent*) ||
+                (@getCurrArgType() == ushort*) || (@getCurrArgType() == uint*) || (@getCurrArgType() == ulong*) || (@getCurrArgType() == ucent*)
+            ) {
                 auto pointer = @getCurrArg(@getCurrArgType());
                 idx = 0;
                 char c = std::getchar();
@@ -619,8 +622,14 @@ namespace std {
                     c = std::getchar();
                 }
 
-                @if(@getCurrArgType() != cent*) pointer[0] = std::cstring::stol(&buffer, idx);
-                @else pointer[0] = std::cstring::stoc(&buffer, idx);
+                @if((@getCurrArgType() != cent*) && (@getCurrArgType() != ucent*)) {
+                    @if(@isUnsigned(@baseType(@getCurrArgType()))) pointer[0] = std::cstring::stoul(&buffer, idx);
+                    @else pointer[0] = std::cstring::stol(&buffer, idx);
+                }
+                @else {
+                    @if(@isUnsigned(@baseType(@getCurrArgType()))) pointer[0] = std::cstring::stouc(&buffer, idx);
+                    @else pointer[0] = std::cstring::stoc(&buffer, idx);
+                }
             }
             @else @if((@getCurrArgType() == half*) || (@getCurrArgType() == bhalf*) || (@getCurrArgType() == float*) || (@getCurrArgType() == double*) || (@getCurrArgType() == real*)) {
                 auto pointer = @getCurrArg(@getCurrArgType());

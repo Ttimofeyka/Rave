@@ -150,6 +150,16 @@ std::vector<RaveValue> NodeCall::getParameters(std::vector<int>& byVals, NodeFun
 bool hasIdenticallyArgs(std::vector<Type*> one, std::vector<Type*> two) {
     if(one.size() != two.size()) return false;
     for(int i=0; i<one.size(); i++) {
+        if(instanceof<TypeBasic>(one[i]) && instanceof<TypeBasic>(two[i])) {
+            if(one[i]->toString() != two[i]->toString()) {
+                if(!isFloatType(one[i]) && !isFloatType(two[i])) {
+                    if(
+                        (((TypeBasic*)one[i])->type + 10 != ((TypeBasic*)two[i])->type) &&
+                        (((TypeBasic*)two[i])->type + 10 != ((TypeBasic*)one[i])->type)
+                    ) return false;
+                }
+            }
+        }
         if(one[i]->toString() != two[i]->toString()) return false;
     }
     return true;
@@ -158,7 +168,18 @@ bool hasIdenticallyArgs(std::vector<Type*> one, std::vector<Type*> two) {
 bool hasIdenticallyArgs(std::vector<Type*> one, std::vector<FuncArgSet> two) {
     if(one.size() != two.size()) return false;
     for(int i=0; i<one.size(); i++) {
-        if(one[i] == nullptr || two[i].type == nullptr || one[i]->toString() != two[i].type->toString()) return false;
+        if(instanceof<TypeBasic>(one[i]) && instanceof<TypeBasic>(two[i].type)) {
+            if(one[i]->toString() != two[i].type->toString()) {
+                if(!isFloatType(one[i]) && !isFloatType(two[i].type)) {
+                    if(
+                        (((TypeBasic*)one[i])->type + 10 != ((TypeBasic*)two[i].type)->type) &&
+                        (((TypeBasic*)two[i].type)->type + 10 != ((TypeBasic*)one[i])->type)
+                    ) return false;
+                }
+                else return false;
+            }
+        }
+        else if(one[i] == nullptr || two[i].type == nullptr || one[i]->toString() != two[i].type->toString()) return false;
     }
     return true;
 }
@@ -299,13 +320,24 @@ RaveValue NodeCall::generate() {
                 }
             }
 
-            if(AST::funcTable[ifName]->args.size() != this->args.size()) {
-                // Choose the most right overload
+            if(!hasIdenticallyArgs(__types, AST::funcTable[ifName]->args)) {
+                // Maybe because of unsigned?
                 for(auto const& x : AST::funcTable) {
-                    if(x.first.find(ifName) == 0 && x.second->args.size() == this->args.size()) {
+                    if(x.first.find(ifName) == 0 && hasIdenticallyArgs(__types, x.second->args)) {
                         isCW64 = x.second->isCdecl64 || x.second->isWin64;
                         std::vector<RaveValue> params = this->getParameters(byVals, x.second, false, x.second->args);
                         return LLVM::call(generator->functions[x.first], params, (instanceof<TypeVoid>(x.second->type) ? "" : "callFunc"), byVals);
+                    }
+                }
+
+                if(AST::funcTable[ifName]->args.size() != this->args.size()) {
+                    // Choose the most right overload
+                    for(auto const& x : AST::funcTable) {
+                        if(x.first.find(ifName) == 0 && x.second->args.size() == this->args.size()) {
+                            isCW64 = x.second->isCdecl64 || x.second->isWin64;
+                            std::vector<RaveValue> params = this->getParameters(byVals, x.second, false, x.second->args);
+                            return LLVM::call(generator->functions[x.first], params, (instanceof<TypeVoid>(x.second->type) ? "" : "callFunc"), byVals);
+                        }
                     }
                 }
             }
@@ -469,7 +501,23 @@ RaveValue NodeCall::generate() {
                 auto methodf = AST::methodTable.find(method);
 
                 if(methodf == AST::methodTable.end() || !hasIdenticallyArgs(types, AST::methodTable[method]->args)) {method.second += typesToString(types); methodf = AST::methodTable.find(method);}
-                if(methodf == AST::methodTable.end()) {method.second = method.second.substr(0, method.second.find('[')); methodf = AST::methodTable.find(method);}
+                if(methodf == AST::methodTable.end()) {
+                    bool founded = false;
+
+                    for(auto const& x : AST::methodTable){
+                        if(x.first.first == method.first && x.first.second.find(getFunc->field) == 0) {
+                            if(hasIdenticallyArgs(types, x.second->args)) {
+                                founded = true;
+                                method.second = x.first.second;
+                                break;
+                            }
+                        }
+                    }
+
+                    if(!founded) method.second = method.second.substr(0, method.second.find('['));
+                    methodf = AST::methodTable.find(method);
+                }
+                
                 if(methodf == AST::methodTable.end()) generator->error("undefined method '" + method.second.substr(0, method.second.find('[')) + "' of structure '" + structure->name + "'!", this->loc);
 
                 if(generator->functions[methodf->second->name].value == nullptr) generator->error("using '" + methodf->second->origName + "' method before declaring it!", this->loc);

@@ -68,11 +68,16 @@ std::string typeToString(Type* arg) {
             case BasicType::Bhalf: return "bf";
             case BasicType::Float: return "f";
             case BasicType::Double: return "d";
-            case BasicType::Int: case BasicType::Uint: return "i";
-            case BasicType::Cent: case BasicType::Ucent: return "t";
-            case BasicType::Char: case BasicType::Uchar: return "c";
-            case BasicType::Long: case BasicType::Ulong: return "l";
-            case BasicType::Short: case BasicType::Ushort: return "h";
+            case BasicType::Int: return "i";
+            case BasicType::Uint: return "ui";
+            case BasicType::Cent: return "t";
+            case BasicType::Ucent: return "ut";
+            case BasicType::Char: return "c";
+            case BasicType::Uchar: return "uc";
+            case BasicType::Long: return "l";
+            case BasicType::Ulong: return "ul";
+            case BasicType::Short: return "h";
+            case BasicType::Ushort: return "uh";
             case BasicType::Real: return "r";
             default: return "b";
         }
