@@ -128,8 +128,8 @@ namespace std {
     namespace std {
         (inline) int getCurrentTime(std::time* tc) {
             tc.seconds = libc::getTime(null);
-            tc.milliseconds = -1l;
-            tc.microseconds = -1l;
+            tc.milliseconds = 0l;
+            tc.microseconds = 0l;
         } => 0;
 
         void sleep(int milliseconds) {
