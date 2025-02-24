@@ -221,15 +221,6 @@ namespace std {
                 }
             } => buffer;
 
-            std::u8string u8ReadLine {
-                std::u8string buffer = "";
-                char ch = this.getc();
-                while((ch != '\n') && (ch != 0)) {
-                    buffer.add(ch);
-                    ch = this.getc();
-                }
-            } => buffer;
-
             std::string readAll {
                 std::string buffer = "";
                 char ch = this.getc();
@@ -238,15 +229,6 @@ namespace std {
                     ch = this.getc();
                 }
             } => buffer;
-
-            std::u8string u8ReadAll {
-                std::u8string buffer = "";
-                char ch = this.getc();
-                while(ch != 0) {
-                    buffer.add(ch);
-                    ch = this.getc();
-                }
-            }
 
             void ~this {
                 if(this.fd != -1) {
@@ -432,15 +414,6 @@ namespace std {
                 }
             } => buffer;
 
-            std::u8string u8ReadLine {
-                std::u8string buffer = "";
-                char ch = this.getc();
-                while((ch != '\n') && (ch != -1)) {
-                    buffer.add(ch);
-                    ch = this.getc();
-                }
-            } => buffer;
-
             std::string readAll {
                 std::string buffer = "";
                 char ch = this.getc();
@@ -449,15 +422,6 @@ namespace std {
                     ch = this.getc();
                 }
             } => buffer;
-
-            std::u8string u8ReadAll {
-                std::u8string buffer = "";
-                char ch = this.getc();
-                while(ch != -1) {
-                    buffer.add(ch);
-                    ch = this.getc();
-                }
-            }
 
             void ~this {
                 if(this.__name != null) {
@@ -560,15 +524,6 @@ namespace std {
                 }
             } => buffer;
 
-            std::u8string u8ReadLine {
-                std::u8string buffer = "";
-                char ch = this.getc();
-                while((ch != '\n') && (cast(int)ch) != -1) {
-                    buffer.add(ch);
-                    ch = this.getc();
-                }
-            } => buffer;
-
             std::string readAll {
                 std::string buffer = "";
                 char ch = this.getc();
@@ -577,15 +532,6 @@ namespace std {
                     ch = this.getc();
                 }
             } => buffer;
-
-            std::u8string u8ReadAll {
-                std::u8string buffer = "";
-                char ch = this.getc();
-                while((cast(int)ch) != -1) {
-                    buffer.add(ch);
-                    ch = this.getc();
-                }
-            }
 
             bool exists {
                 if(this.isOpen == false) return = std::file::exists(this.name);
@@ -712,7 +658,7 @@ namespace std {
                 @if(@getCurrArgType() != real*) pointer[0] = std::cstring::stod(&buffer, idx);
                 @else pointer[0] = std::cstring::stor(&buffer, idx);
             }
-            @else @if((@getCurrArgType() == std::string*) || (@getCurrArgType() == std::u8string*)) {
+            @else @if(@getCurrArgType() == std::string*) {
                 auto buffer = @getCurrArg(@getCurrArgType());
                 char c = std::getchar();
 
@@ -733,15 +679,6 @@ namespace std {
 
     std::string readLine {
         std::string buffer = "";
-        char ch = std::getchar();
-        while((ch != '\n') && (ch != -1)) {
-            buffer.add(ch);
-            ch = std::getchar();
-        }
-    } => buffer;
-
-    std::u8string u8ReadLine {
-        std::u8string buffer = "";
         char ch = std::getchar();
         while((ch != '\n') && (ch != -1)) {
             buffer.add(ch);
