@@ -72,7 +72,7 @@ std::string typeToString(Type* arg) {
             case BasicType::Cent: case BasicType::Ucent: return "t";
             case BasicType::Char: case BasicType::Uchar: return "c";
             case BasicType::Long: case BasicType::Ulong: return "l";
-            case BasicType::Short: case BasicType::Ushort: "h";
+            case BasicType::Short: case BasicType::Ushort: return "h";
             case BasicType::Real: return "r";
             default: return "b";
         }
