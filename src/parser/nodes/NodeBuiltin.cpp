@@ -71,7 +71,7 @@ Type* NodeBuiltin::getType() {
     if(this->name == "isNumeric" || this->name == "isVector" || this->name == "isPointer"
     || this->name == "isArray" || this->name == "aliasExists" || this->name == "tEquals"
     || this->name == "isStructure" || this->name == "hasMethod"
-    || this->name == "hasDestructor" || this->name == "contains") return basicTypes[BasicType::Bool];
+    || this->name == "hasDestructor" || this->name == "contains" || this->name == "isUnsigned") return basicTypes[BasicType::Bool];
     if(this->name == "sizeOf" || this->name == "argsLength" || this->name == "getCurrArgNumber"
     || this->name == "vMoveMask128" || this->name == "cttz32" || this->name == "ctlz32") return basicTypes[BasicType::Int];
     if(this->name == "vShuffle" || this->name == "vHAdd32x4" || this->name == "vHAdd16x8"
@@ -353,6 +353,10 @@ RaveValue NodeBuiltin::generate() {
     }
     if(this->name == "isNumeric") {
         if(instanceof<TypeBasic>(asType(0)->type)) return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
+        return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
+    }
+    if(this->name == "isUnsigned") {
+        if(instanceof<TypeBasic>(asType(0)->type)) return {LLVM::makeInt(1, ((TypeBasic*)asType(0)->type)->isUnsigned(), false), basicTypes[BasicType::Bool]};
         return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
     }
     if(this->name == "echo") {
@@ -750,6 +754,11 @@ Node* NodeBuiltin::comptime() {
     if(this->name == "tEquals") return new NodeBool(asType(0)->type->toString() == asType(1)->type->toString());
     if(this->name == "isStructure") return new NodeBool(instanceof<TypeStruct>(asType(0)->type));
     if(this->name == "isNumeric") return new NodeBool(instanceof<TypeBasic>(asType(0)->type));
+    if(this->name == "isUnsigned") {
+        Type* _type = asType(0)->type;
+        if(!instanceof<TypeBasic>(_type)) return new NodeBool(false);
+        return new NodeBool(((TypeBasic*)_type)->isUnsigned());
+    }
     if(this->name == "argsLength") return new NodeInt(AST::funcTable[currScope->funcName]->args.size());
     if(this->name == "typeToString") return new NodeString(this->asType(0)->type->toString(), false);
     if(this->name == "baseType") {
