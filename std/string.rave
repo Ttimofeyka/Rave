@@ -121,60 +121,56 @@ namespace std {
 
         (inline) int indexOf(std::string s) => this.indexOf(s.data);
 
-        void add(char c) {
-            if(this.data != null) {
+        void __add(char c) {
+            this.length += 1;
+
+            if(this.length == this.capacity) {
+                int minTargetCap = this.capacity * 2;
+                int shift = (31 - @ctlz32(minTargetCap, true));
+                int targetCap = (minTargetCap >. shift) <. (shift + 1);
+
+                this.data = std::realloc(this.data, targetCap);
+                this.capacity = targetCap;
+            }
+
+            this.data[this.length - 1] = c;
+            this.data[this.length] = '\0';
+        }
+
+        (inline) void add(char c) {
+            @if(__RAVE_RUNTIME_CHECKS) if(this.data == null) @return();
+            this.__add(c);
+        }
+
+        void __appendC(char* cstr, int cstrlen) {
+            int i = 0;
+
+            if((this.length + cstrlen) >= this.capacity) {
+                int minTargetCap = this.capacity + cstrlen + 2;
+                int shift = (31 - @ctlz32(minTargetCap, true));
+                int targetCap = (minTargetCap >. shift) <. (shift + 1);
+
+                this.data = std::realloc(this.data, targetCap);
+                this.capacity = targetCap;
+            }
+
+            while(i < cstrlen) {
                 this.length += 1;
-
-                if(this.length == this.capacity) {
-                    this.data = std::realloc(this.data, this.capacity * 2);
-                    this.capacity = this.capacity * 2;
-                }
-
-                this.data[this.length - 1] = c;
-                this.data[this.length] = '\0';
+                this.data[this.length - 1] = cstr[i];
+                i += 1;
             }
+
+            this.data[this.length] = '\0';
         }
 
-        void append(std::string str) {
-            if(this.data != null) {
-                int i = 0;
-
-                if((this.length + str.length) >= this.capacity) {
-                    this.data = std::realloc(this.data, this.capacity + str.length + 2);
-                    this.capacity = this.capacity + str.length + 2;
-                }
-
-                while(i < str.length) {
-                    this.length += 1;
-                    this.data[this.length - 1] = str.data[i];
-                    i += 1;
-                }
-
-                this.data[this.length] = '\0';
-            }
-        }
-
-        void appendC(char* cstr, int cstrlen) {
-            if(this.data != null) {
-                int len = cstrlen;
-                int i = 0;
-
-                if((this.length + len) >= this.capacity) {
-                    this.data = std::realloc(this.data, this.capacity + len + 2);
-                    this.capacity = this.capacity + len + 2;
-                }
-
-                while(i < len) {
-                    this.length += 1;
-                    this.data[this.length - 1] = cstr[i];
-                    i += 1;
-                }
-
-                this.data[this.length] = '\0';
-            }
+        (inline) void appendC(char* cstr, int cstrlen) {
+            @if(__RAVE_RUNTIME_CHECKS) if(this.data == null) @return();
+            this.__appendC(cstr, cstrlen);
         }
 
         (inline) void appendC(char* cstr) => this.appendC(cstr, std::cstring::strlen(cstr));
+
+        (inline) void append(std::string str) => this.appendC(str.data, str.length);
 
         (inline) std::string copy {
             std::string cp = std::string("");
@@ -452,16 +448,22 @@ namespace std {
                 }
             }
 
-            @if(@tEquals(@getCurrArgType(), std::u8string)) {
-                std::u8string u8s = @getCurrArg(std::u8string);
-                if(u8s.data != null) result.appendC(u8s.data);
-                else result.appendC("null");
-            }
-
-            @if(@tEquals(@getCurrArgType(), std::string)) {
+            @if(@getCurrArgType() == std::string) {
                 std::string s = @getCurrArg(std::string);
                 if(s.data != null) result.append(s);
                 else result.appendC("null");
+            }
+
+            @if(@getCurrArgType() == std::time) {
+                std::time tp = @getCurrArg(std::time);
+
+                std::cstring::ltos(tp.seconds, cast(char*)&nBuffer);
+                result.appendC(cast(char*)&nBuffer);
+
+                result.add('.');
+
+                std::cstring::ltos(tp.milliseconds, cast(char*)&nBuffer);
+                result.appendC(cast(char*)&nBuffer);
             }
         }
         
