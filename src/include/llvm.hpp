@@ -51,6 +51,6 @@ namespace LLVM {
     extern RaveValue sum(RaveValue first, RaveValue second);
     extern RaveValue sub(RaveValue first, RaveValue second);
     extern RaveValue mul(RaveValue first, RaveValue second);
-    extern RaveValue div(RaveValue first, RaveValue second);
+    extern RaveValue div(RaveValue first, RaveValue second, bool isUnsigned = false);
     extern RaveValue compare(RaveValue first, RaveValue second, char op);
 }

@@ -58,7 +58,7 @@ RaveValue NodeCast::generate() {
             }
 
             if(tbasic2->isFloat()) return {LLVMBuildFPToSI(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_ftoi"), this->type};
-            return {LLVMBuildIntCast(generator->builder, result.value, generator->genType(type, loc), "NodeCast_itoi"), this->type};
+            return {LLVMBuildIntCast2(generator->builder, result.value, generator->genType(type, loc), !tbasic->isUnsigned(), "NodeCast_itoi"), this->type};
         }
 
         if(instanceof<TypePointer>(result.type)) {

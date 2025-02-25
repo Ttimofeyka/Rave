@@ -162,21 +162,28 @@ namespace std {
         } => endBuffer;
 
         char* ultos(ulong number, char* endBuffer) {
-            char[20] ultBuffer;
-            uint pos;
-            for(pos = 0; number != 0u; pos += 1) {
-                ultBuffer[pos] = (number % 10) + '0';
-                number /= 10;
+            char[21] ltosBuffer;
+
+            if(number == 0) {
+                endBuffer[0] = '0';
+                endBuffer[1] = '\0';
+                @return(endBuffer);
             }
 
-            uint outpos;
-            for(outpos = 0; true; outpos += 1) {
-                pos -= 1;
-                endBuffer[outpos] = ultBuffer[pos];
-                if(pos == 0)
-                    break;
+            int index = 0;
+            while(number > 0) {
+                ltosBuffer[index] = ((number % 10) + '0');
+                number = number / 10;
+                index += 1;
             }
-            endBuffer[outpos + 1] = '\0';
+
+            endBuffer[index] = '\0';
+
+            int endI = 0;
+            for(int i=index-1; i>=0; i--) {
+                endBuffer[endI] = ltosBuffer[i];
+                endI += 1;
+            }
         } => endBuffer;
 
         char* ctos(cent number, char* endBuffer) {

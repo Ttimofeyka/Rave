@@ -231,8 +231,14 @@ void LLVM::castForExpression(RaveValue& first, RaveValue& second) {
         }
         else if(sType->isFloat()) LLVM::cast(first, sType);
         else {
-            if(fType->getSize() > sType->getSize()) LLVM::cast(second, fType);
-            else LLVM::cast(first, sType);
+            if(fType->getSize() > sType->getSize()) {
+                if(!fType->isUnsigned() && sType->isUnsigned()) fType = basicTypes[fType->type + 10];
+                LLVM::cast(second, fType);
+            }
+            else {
+                if(fType->isUnsigned() && !sType->isUnsigned()) sType = basicTypes[sType->type + 10];
+                LLVM::cast(first, sType);
+            }
         }
     }
 }
@@ -254,8 +260,9 @@ RaveValue LLVM::mul(RaveValue first, RaveValue second) {
     return {LLVMBuildMul(generator->builder, first.value, second.value, "LLVM_mul"), first.type};
 }
 
-RaveValue LLVM::div(RaveValue first, RaveValue second) {
+RaveValue LLVM::div(RaveValue first, RaveValue second, bool isUnsigned) {
     if(isFloatType(first.type)) return {LLVMBuildFDiv(generator->builder, first.value, second.value, "LLVM_fdiv"), first.type};
+    if(isUnsigned) return {LLVMBuildUDiv(generator->builder, first.value, second.value, "LLVM_div"), first.type};
     return {LLVMBuildSDiv(generator->builder, first.value, second.value, "LLVM_div"), first.type};
 }
 

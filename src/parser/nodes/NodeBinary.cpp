@@ -477,13 +477,15 @@ RaveValue NodeBinary::generate() {
         return (out == nullptr ? binary->generate() : out->generate());
     }
 
-    if(vFirst.type->toString() != vSecond.type->toString()) generator->error("value types '" + vFirst.type->toString() + "' and '" + vSecond.type->toString() + "' are incompatible!", loc);
+    if(vFirst.type->toString() != vSecond.type->toString()) {
+        if(!instanceof<TypeBasic>(vFirst.type) || !instanceof<TypeBasic>(vSecond.type)) generator->error("value types '" + vFirst.type->toString() + "' and '" + vSecond.type->toString() + "' are incompatible!", loc);
+    }
 
     switch(this->op) {
         case TokType::Plus: return LLVM::sum(vFirst, vSecond);
         case TokType::Minus: return LLVM::sub(vFirst, vSecond);
         case TokType::Multiply: return LLVM::mul(vFirst, vSecond);
-        case TokType::Divide: return LLVM::div(vFirst, vSecond);
+        case TokType::Divide: return LLVM::div(vFirst, vSecond, (instanceof<TypeBasic>(first->getType()) && ((TypeBasic*)first->getType())->isUnsigned()));
         case TokType::Equal: case TokType::Nequal:
         case TokType::Less: case TokType::More:
         case TokType::LessEqual: case TokType::MoreEqual: return LLVM::compare(vFirst, vSecond, this->op);
