@@ -48,8 +48,4 @@ namespace std {
             std::exit(1);
         }
     }
-
-    namespace dontuse {
-        (inline) void _void(bool* b) {} // Just... ignore it?
-    }
 }
