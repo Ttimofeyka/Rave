@@ -1,14 +1,17 @@
 import <std/io> <std/json>
 
 void main {
-    // Reading the file
     std::file f = std::file("options.json");
+
+    // Reading the file
     f.open("r");
     std::string buffer = f.readAll();
+    defer ~buffer;
     f.close();
 
     // Parsing as json
     std::json::Value jvalue = std::json::parse(buffer);
+    defer ~jvalue;
 
     // Checking
     std::json::Value* jobject = jvalue.asPointer(); // Pointer with access to all elements by index
@@ -18,6 +21,4 @@ void main {
     // Let's print a value of "compiler" variable!
     std::json::Value compiler = jvalue.get("compiler");
     std::println("'compiler' is ", compiler.asCString(), "!"); // You can use .asString() or .asU8String() methods too
-
-    ~jvalue;
 }
