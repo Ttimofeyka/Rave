@@ -51,7 +51,7 @@ std::finput(&f, &foo);
 f.close();
 ```
 
-## readLine/u8ReadLine
+## readLine
 
 A function for reading a line from the console.
 
@@ -59,7 +59,7 @@ Example:
 
 ```d
 std::string str = std::readLine();
-std::u8string str2 = std::u8ReadLine();
+defer ~str;
 ```
 
 ## std::file
@@ -109,9 +109,9 @@ std::string line = f.readLine();
 f.close();
 ```
 
-### readAll/u8ReadAll
+### readAll
 
-The method for reading all content from the file. u8ReadAll uses `std::u8string`.
+The method for reading all content from the file.
 
 Example:
 
@@ -119,6 +119,7 @@ Example:
 std::file f = std::file("test.txt");
 f.open("r");
 std::string buffer = f.readAll();
+defer ~buffer;
 f.close();
 ```
 
@@ -135,10 +136,12 @@ std::file f = std::file("foo.x");
 f.open("r");
 
 std::string buffer = f.readAll(); // Reading all file content
+defer ~buffer;
 
 f.seek(std::file::position::start, 0); // Now we again in the start of the file
 
 std::string buffer2 = f.readAll();
+defer ~buffer2;
 
 f.close();
 ```

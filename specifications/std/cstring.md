@@ -59,11 +59,11 @@ Example:
 int index = std::cstring::indexOf("String", 'r');
 ```
 
-## std::cstring::ltos, std::cstring::ctos
+## std::cstring::ltos / std::cstring::ultos, std::cstring::ctos / std::cstring::uctos
 
 Convert an integer to a string by writing the result to a pointer to the buffer.
 
-`ltos` - 64-bit number, `ctos` - 128-bit number.
+`ltos` - 64-bit number (`ultos` - unsigned), `ctos` - 128-bit number (`uctos` - unsigned).
 
 Example:
 
@@ -87,9 +87,9 @@ std::cstring::dtos(1.155d, 1, &buffer);
 std::println(&buffer); // 1.1
 ```
 
-## std::cstring::stol, std::string::stoc
+## std::cstring::stol / std::cstring::stoul, std::cstring::stoc / std::cstring::stouc
 
-Convert a string to an integer with long (`std::string::stol`) or cent (`std::string::stoc`) sizes.
+Convert a string to an integer with long/ulong (`std::cstring::stol`, `std::cstring::stoul`) or cent/ucent (`std::cstring::stoc`, `std::cstring::stouc`) sizes.
 
 Example:
 ```d
@@ -102,9 +102,9 @@ cent c1 = std::cstring::stoc("100");
 cent c2 = std::cstring::stoc("2000", 4); // Number of symbols
 ```
 
-## std::cstring::stod
+## std::cstring::stod, std::cstring::stor
 
-Convert a string to a double.
+Convert a string to a double (`std::cstring::stod`) or a real (`std::cstring::stor`).
 
 Example:
 ```d
