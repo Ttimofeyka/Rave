@@ -131,6 +131,24 @@ namespace std {
                 this.flushBufferSymbol = cast(char)-1;
             } => this;
 
+            std::file this(std::string name) {
+                std::file this;
+                this.buffer = null;
+                this.bufferSize = 1024;
+                this.name = name.data;
+                this.fd = -1;
+                this.flushBufferSymbol = cast(char)-1;
+            } => this;
+
+            std::file this(std::string name, int bufferSize) {
+                std::file this;
+                this.buffer = null;
+                this.bufferSize = bufferSize;
+                this.name = name.data;
+                this.fd = -1;
+                this.flushBufferSymbol = cast(char)-1;
+            } => this;
+
             void open(char* mode) {
                 if(std::cstring::strcmp(mode, "r")) fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, name, std::file::rdOnly || std::file::oCreate, 448);
                 else if(std::cstring::strcmp(mode, "w")) {
@@ -468,12 +486,18 @@ namespace std {
     namespace std {
         struct file {
             libc::File* _file;
-            const(char)* name;
+            char* name;
             bool isOpen;
 
-            std::file this(const(char)* name) {
+            std::file this(char* name) {
                 std::file this;
                 this.name = name;
+                this.isOpen = false;
+            } => this;
+
+            std::file this(std::string name) {
+                std::file this;
+                this.name = name.data;
                 this.isOpen = false;
             } => this;
 
