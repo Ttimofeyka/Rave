@@ -6,7 +6,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import <std/error>
 
-@if(__RAVE_OS == "LINUX") {
+@if((__RAVE_OS == "LINUX") || (__RAVE_OS == "FREEBSD")) {
     import <std/sysc> <std/time>
 
     namespace std {
@@ -33,21 +33,6 @@ import <std/error>
 	            long[16] __reserved;
             }
 
-            alias cloneVM = 0x00000100;
-            alias cloneFS = 0x00000200;
-            alias cloneFiles = 0x00000400;
-            alias cloneSighand = 0x00000800;
-            alias clonePigFD = 0x00001000;
-            alias clonePtrace = 0x00002000;
-            alias cloneVfork = 0x00004000;
-            alias cloneParent = 0x00008000;
-            alias cloneThread = 0x00010000;
-            alias cloneNewNS = 0x00020000;
-            alias cloneSysvsem = 0x00040000;
-            alias cloneSetTLS = 0x00080000;
-            alias cloneParentSetTID = 0x00100000;
-            alias cloneChildClearTID = 0x00200000;
-
             extern(linkname: "environ") char** environment;
 
             (inline) int isTermSignal(int s) => s && 0x7F;
@@ -55,14 +40,10 @@ import <std/error>
             (inline) int getExitStatus(int s) => ((s) && 0xFF00) >. 8;
 
             (inline) int execve(char* fName, char** argv, char** envp) => cast(int)std::syscall(std::sysctable::Execve);
-            (inline) int clone(int(void*) fn, void* stack, int flags, void* arg, int* pTID, void* tls, int* cTID) => cast(int)std::syscall(std::sysctable::Clone, fn, stack, flags, arg, pTID, tls, cTID);
-            (inline) int fork => cast(int)std::process::clone(cast(int(void*))null, null, 0, null, null, null, null);
             (inline) uint wait4(uint pid, int* status, int options, std::process::rusage* rusage) => cast(int)std::syscall(std::sysctable::Wait4, pid, status, options, rusage);
             (inline) int waitpid(uint pid, int* status, int options) {std::process::rusage ru;} => std::process::wait4(pid, status, options, &ru);
-
             (inline) int getPID => cast(int)std::syscall(std::sysctable::GetPID);
             (inline) int getPPID => cast(int)std::syscall(std::sysctable::GetPPID);
-
             (inline) int kill(int pid, int sig) => cast(int)std::syscall(std::sysctable::Kill, pid, sig);
 
             (ctargs) int execl {
@@ -80,6 +61,30 @@ import <std/error>
                 };
 
                 return = std::process::execve(path, argv, std::process::environment);
+            }
+        }
+    }
+
+    @if(__RAVE_OS == "LINUX") {
+        namespace std {
+            namespace process {
+                alias cloneVM = 0x00000100;
+                alias cloneFS = 0x00000200;
+                alias cloneFiles = 0x00000400;
+                alias cloneSighand = 0x00000800;
+                alias clonePigFD = 0x00001000;
+                alias clonePtrace = 0x00002000;
+                alias cloneVfork = 0x00004000;
+                alias cloneParent = 0x00008000;
+                alias cloneThread = 0x00010000;
+                alias cloneNewNS = 0x00020000;
+                alias cloneSysvsem = 0x00040000;
+                alias cloneSetTLS = 0x00080000;
+                alias cloneParentSetTID = 0x00100000;
+                alias cloneChildClearTID = 0x00200000;
+    
+                (inline) int clone(int(void*) fn, void* stack, int flags, void* arg, int* pTID, void* tls, int* cTID) => cast(int)std::syscall(std::sysctable::Clone, fn, stack, flags, arg, pTID, tls, cTID);
+                (inline) int fork => cast(int)std::process::clone(cast(int(void*))null, null, 0, null, null, null, null);
             }
         }
     }

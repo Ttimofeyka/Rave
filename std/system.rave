@@ -10,7 +10,7 @@ namespace std {
     extern(linkname: "system") int system(char* cmd);
 }
 
-@if(__RAVE_OS == "LINUX") {
+@if((__RAVE_OS == "LINUX") || (__RAVE_OS == "FREEBSD")) {
     import <std/sysc>
 
     namespace std {

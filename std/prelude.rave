@@ -19,7 +19,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @compileAndLink("<std/io>");
 @compileAndLink("<std/hash>");
 
-@if(__RAVE_OS == "LINUX") {
+@if((__RAVE_OS == "LINUX") || (__RAVE_OS == "FREEBSD")) {
     namespace std {
         (inline) void exit(int code) {
             std::syscall(std::sysctable::Exit, code);

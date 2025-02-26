@@ -95,6 +95,8 @@ static bool instanceof(const T* ptr) {
     #define RAVE_OS "LINUX"
 #elif __APPLE__
     #define RAVE_OS "MACOS"
+#elif __FreeBSD__
+    #define RAVE_OS "FREEBSD"
 #else
     #define RAVE_OS "UNKNOWN"
 #endif
@@ -186,7 +188,7 @@ static std::string getExePath() {
     std::wstring ws(wc);
     std::transform(ws.begin(), ws.end(), std::back_inserter(path), [](wchar_t c) {return (char)c;});
     path = replaceAll(path, "\\", "/");
-#elif defined(__linux__)
+#elif defined(__linux__) || defined(__FreeBSD__)
     char c[260];
     int length = (int)readlink("/proc/self/exe", c, 260);
     path = std::string(c, length > 0 ? length : 0);

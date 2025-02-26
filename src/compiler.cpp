@@ -43,6 +43,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
    #define WEXITSTATUS(w) (((w) >> 8) & 0377)
 #else
    #include <unistd.h>
+   #include <sys/wait.h>
 #endif
 
 std::string Compiler::linkString;
@@ -278,6 +279,7 @@ void Compiler::compile(std::string file) {
             raveOs = "WINDOWS";
         }
         else if(outType.find("linux") != std::string::npos) raveOs = "LINUX";
+        else if(outType.find("freebsd") != std::string::npos) raveOs = "FREEBSD";
         else if(outType.find("darwin") != std::string::npos || outType.find("macos") != std::string::npos) raveOs = "DARWIN";
         else if(outType.find("android") != std::string::npos) raveOs = "ANDROID";
         else if(outType.find("ios") != std::string::npos) raveOs = "IOS";
@@ -351,6 +353,13 @@ void Compiler::compile(std::string file) {
         else if(ravePlatform == "AARCH64") Compiler::outType = "linux-gnu-aarch64";
         else if(ravePlatform == "ARM") Compiler::outType = "linux-gnu-armv7";
         else Compiler::outType = "linux-unknown";
+    }
+    else if(raveOs == "FREEBSD") {
+        if(ravePlatform == "X86_64") Compiler::outType = "freebsd-gnu-pc-x86_64";
+        else if(ravePlatform == "X86") Compiler::outType = "freebsd-gnu-pc-i686";
+        else if(ravePlatform == "AARCH64") Compiler::outType = "freebsd-gnu-aarch64";
+        else if(ravePlatform == "ARM") Compiler::outType = "freebsd-gnu-armv7";
+        else Compiler::outType = "freebsd-unknown";
     }
     else if(raveOs == "WINDOWS") {
         if(ravePlatform == "X86_64") Compiler::outType = "x86_64-pc-windows-gnu";
@@ -503,7 +512,7 @@ void Compiler::compileAll() {
         if(Compiler::toImport[i].size() > 2 && (endsWith(Compiler::toImport[i], ".a") || endsWith(Compiler::toImport[i], ".o") || endsWith(Compiler::toImport[i], ".lib")))
             Compiler::linkString += Compiler::toImport[i] + " ";
         else {
-            #if defined(__linux__)
+            #if defined(__linux__) || defined(__FreeBSD__)
             if(
                 Compiler::toImport[i].find("Rave/std/") != std::string::npos && !Compiler::settings.recompileStd &&
                 access(std::regex_replace(Compiler::toImport[i], std::regex("\\.rave"), std::string(".") + Compiler::outType+".o").c_str(), 0) != -1
@@ -517,7 +526,7 @@ void Compiler::compileAll() {
                 }
                 std::string compiledFile = std::regex_replace(Compiler::toImport[i], std::regex("\\.rave"), ".o");
                 linkString += compiledFile + " ";
-                #if defined(__linux__)
+                #if defined(__linux__) || defined(__FreeBSD__)
                 if(Compiler::toImport[i].find("Rave/std/") == std::string::npos) toRemove.push_back(compiledFile);
                 else {
                     std::ifstream src(compiledFile, std::ios::binary);
@@ -528,7 +537,7 @@ void Compiler::compileAll() {
                 #else
                 toRemove.push_back(compiledFile);
                 #endif
-            #if defined(__linux__)
+            #if defined(__linux__) || defined(__FreeBSD__)
             }
             #endif
         }

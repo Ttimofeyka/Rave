@@ -96,7 +96,7 @@ namespace std {
     }
 }
 
-@if((__RAVE_OS == "LINUX")) {
+@if((__RAVE_OS == "LINUX") || (__RAVE_OS == "FREEBSD")) {
     namespace std {
         namespace socket {
             extern(linkname: "accept") int accept(int sock std::socket::sockaddr* addr, int* length_ptr);

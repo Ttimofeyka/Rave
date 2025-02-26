@@ -102,16 +102,16 @@ int main(int argc, char** argv) {
 
     if(files.size() == 0) {
         if(options.recompileStd) {
-            #if defined(__linux__)
+            #if defined(__linux__) || defined(__FreeBSD__)
             Compiler::initialize(outFile, outType, options, {""});
-            auto stdFiles = filesInDirectory("std");
+            auto stdFiles = filesInDirectory(exePath + "std");
             for(int i=0; i<stdFiles.size(); i++) {
                 if(stdFiles[i].find(".ll") == std::string::npos && stdFiles[i].find(".rave") != std::string::npos) {
-                    std::string compiledFile = std::regex_replace("std/"+stdFiles[i], std::regex("\\.rave"), ".o");
-                    Compiler::compile("std/" + stdFiles[i]);
+                    std::string compiledFile = std::regex_replace(exePath + "std/" + stdFiles[i], std::regex("\\.rave"), ".o");
+                    Compiler::compile(exePath + "std/" + stdFiles[i]);
                     if(options.emitLLVM) {
                         char* err;
-                        LLVMPrintModuleToFile(generator->lModule, ("std/" + stdFiles[i] + ".ll").c_str(), &err);
+                        LLVMPrintModuleToFile(generator->lModule, (exePath + "std/" + stdFiles[i] + ".ll").c_str(), &err);
                     }
                     std::ifstream src(compiledFile, std::ios::binary);
                     std::ofstream dst(std::regex_replace(compiledFile, std::regex("\\.o"), std::string(".") + Compiler::outType + ".o"));

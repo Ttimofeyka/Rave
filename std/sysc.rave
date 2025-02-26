@@ -9,16 +9,12 @@ Rave guarantees that on all supported platforms,
 the result of a call with the same parameters and the same number will be the same.
 */
 
-@if(__RAVE_OS == "LINUX") {
-    namespace std {
-        long __syscResult;
-    }
+// NOTE: syscall implementation was deleted because of unstability with LLVM 17+.
+// It will be implemented again when we will get know how to fix it.
 
+@if(__RAVE_OS == "LINUX") {
     @if(__RAVE_PLATFORM == "X86_64") {
         namespace std {
-            // NOTE: syscall implementation was deleted because of unstability with LLVM 17+.
-            // It will be implemented again when we will get know how to fix it.
-
             extern(linkname: "syscall", vararg) void* syscall(int number);
         }
 
@@ -406,7 +402,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias Clone = 5055;
                 alias Execve = 5057;
                 alias Wait4 = 5059;
-                alias Kill = 37;
+                alias Kill = 5060;
 
                 alias ClockGetTime = 5222;
                 alias GetRandom = 5313;
@@ -414,6 +410,51 @@ the result of a call with the same parameters and the same number will be the sa
 
                 alias NanoSleep = 5034;
             }
+        }
+    }
+}
+@else @if(__RAVE_OS == "FREEBSD") {
+    namespace std {
+        namespace sysctable {
+            alias Read = 3;
+            alias Write = 4;
+            alias OpenAt = 499;
+            alias Close = 6;
+            alias RenameTo = 128;
+            alias UnlinkAt = 503;
+            alias FStat = 551;
+            alias LSeek = 478;
+            alias FAccessAt = 489;
+
+            alias Exit = 1;
+            alias Reboot = 55;
+            alias GetCwd = 326;
+
+            alias Socket = 97;
+            alias Bind = 104;
+            alias Shutdown = 134;
+            alias Listen = 106;
+            alias Connect = 98;
+            alias GetSockName = 32;
+            alias Accept4 = 5293;
+            alias RecvFrom = 29;
+            alias SendTo = 133;
+            alias SetSockOpt = 105;
+            alias GetSockOpt = 118;
+
+            alias GetPID = 20;
+            alias GetTID = 432; // Note: thr_self
+            alias GetPPID = 39;
+            alias Clone = -1; // Note: TODO
+            alias Execve = 59;
+            alias Wait4 = 7;
+            alias Kill = 37;
+
+            alias ClockGetTime = 232;
+            alias GetRandom = 563;
+            alias GetTimeOfDay = 116;
+
+            alias NanoSleep = 240;
         }
     }
 }
