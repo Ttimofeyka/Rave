@@ -8,7 +8,7 @@ import <std/thread> <std/ascii>
 
 // TODO: Add more supported platforms
 
-@if((__RAVE_PLATFORM == "X86_64") || (__RAVE_PLATFORM == "AARCH64")) {
+@if((__RAVE_PLATFORM == "X86_64") || (__RAVE_PLATFORM == "AARCH64") || (__RAVE_PLATFORM == "POWERPC64")) {
     namespace std {
         namespace cstring {
             int strlen(char* str) {
@@ -30,7 +30,7 @@ import <std/thread> <std/ascii>
         }
     }
 }
-@else @if((__RAVE_PLATFORM == "X86") || (__RAVE_PLATFORM == "ARM")) {
+@else @if((__RAVE_PLATFORM == "X86") || (__RAVE_PLATFORM == "ARM") || (__RAVE_PLATFORM == "POWERPC")) {
     namespace std {
         namespace cstring {
             int strlen(char* str) {
