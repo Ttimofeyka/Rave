@@ -27,11 +27,14 @@ The characters are enclosed in single quotes (").
 
 ## Standard library
 
-##### [std/io](std/io.md)
-##### [std/vector](std/vector.md)
+##### [std/ascii](std/ascii.md)
+##### [std/crypto](std/crypto.md)
 ##### [std/cstring](std/cstring.md)
+##### [std/hash](std/hash.md)
+##### [std/io](std/io.md)
 ##### [std/library](std/library.md)
 ##### [std/random](std/random.md)
+##### [std/vector](std/vector.md)
 
 ## Other
 
