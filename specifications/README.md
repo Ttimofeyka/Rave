@@ -2,6 +2,8 @@
 
 It contains specifications of Rave.
 
+Since the language is currently under active development, we decided to combine the documentation and specification into one section "specifications" for convenience.
+
 ## Lexical
 
 Lexical analysis splits the source code of the program into tokens for subsequent parsing.
@@ -27,11 +29,15 @@ The characters are enclosed in single quotes (").
 
 ## Standard library
 
-##### [std/io](std/io.md)
-##### [std/vector](std/vector.md)
+##### [std/ascii](std/ascii.md)
+##### [std/crypto](std/crypto.md)
 ##### [std/cstring](std/cstring.md)
+##### [std/hash](std/hash.md)
+##### [std/io](std/io.md)
 ##### [std/library](std/library.md)
+##### [std/memory](std/memory.md)
 ##### [std/random](std/random.md)
+##### [std/vector](std/vector.md)
 
 ## Other
 
