@@ -33,6 +33,7 @@ The characters are enclosed in single quotes (").
 ##### [std/hash](std/hash.md)
 ##### [std/io](std/io.md)
 ##### [std/library](std/library.md)
+##### [std/memory](std/memory.md)
 ##### [std/random](std/random.md)
 ##### [std/vector](std/vector.md)
 
