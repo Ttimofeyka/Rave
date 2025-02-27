@@ -108,7 +108,7 @@ RaveValue NodeNamespace::generate() {
                 this->nodes[i]->check();
             }
             nfunc->isExtern = (nfunc->isExtern || this->isImported);
-            nfunc->generate();
+            if(!isImported) nfunc->generate();
         }
         else if(instanceof<NodeNamespace>(this->nodes[i])) {
             NodeNamespace* nnamespace = (NodeNamespace*)this->nodes[i];
@@ -136,7 +136,7 @@ RaveValue NodeNamespace::generate() {
                 this->nodes[i]->check();
             }
             nstruct->isImported = (nstruct->isImported || this->isImported);
-            nstruct->generate();
+            if(!nstruct->isImported) nstruct->generate();
         }
         else if(instanceof<NodeAliasType>(this->nodes[i])) {
             if(!this->nodes[i]->isChecked) {

@@ -35,6 +35,10 @@ NodeCall::~NodeCall() {
     for(int i=0; i<args.size(); i++) if(args[i] != nullptr) delete args[i];
 }
 
+__always_inline void checkAndGenerate(std::string name) {
+    if(generator->functions.find(name) == generator->functions.end()) AST::funcTable[name]->generate();
+}
+
 // Get a vector of arguments types
 std::vector<Type*> NodeCall::getTypes() {
     std::vector<Type*> arr;
@@ -230,6 +234,8 @@ RaveValue NodeCall::generate() {
             return (new NodeCall(loc, currScope->aliasTable[ifName], this->args))->generate();
 
         if(AST::funcTable.find(ifName) != AST::funcTable.end()) {
+            checkAndGenerate(ifName);
+
             std::vector<Type*> __types = this->getTypes();
             std::string sTypes = typesToString(__types);
 
@@ -290,6 +296,8 @@ RaveValue NodeCall::generate() {
             }
 
             if(AST::funcTable.find(ifName + sTypes) != AST::funcTable.end()) {
+                checkAndGenerate(ifName + sTypes);
+
                 isCW64 = AST::funcTable[ifName + sTypes]->isCdecl64 || AST::funcTable[ifName + sTypes]->isWin64;
                 std::vector<RaveValue> params = this->getParameters(byVals, AST::funcTable[ifName + sTypes], false, AST::funcTable[ifName + sTypes]->args);
                 return LLVM::call(generator->functions[ifName + sTypes], params, (instanceof<TypeVoid>(AST::funcTable[ifName + sTypes]->type) ? "" : "callFunc"), byVals);
@@ -324,6 +332,7 @@ RaveValue NodeCall::generate() {
                 // Maybe because of unsigned?
                 for(auto const& x : AST::funcTable) {
                     if(x.first.find(ifName) == 0 && hasIdenticallyArgs(__types, x.second->args)) {
+                        checkAndGenerate(x.first);
                         isCW64 = x.second->isCdecl64 || x.second->isWin64;
                         std::vector<RaveValue> params = this->getParameters(byVals, x.second, false, x.second->args);
                         return LLVM::call(generator->functions[x.first], params, (instanceof<TypeVoid>(x.second->type) ? "" : "callFunc"), byVals);
@@ -334,6 +343,7 @@ RaveValue NodeCall::generate() {
                     // Choose the most right overload
                     for(auto const& x : AST::funcTable) {
                         if(x.first.find(ifName) == 0 && x.second->args.size() == this->args.size()) {
+                            checkAndGenerate(x.first);
                             isCW64 = x.second->isCdecl64 || x.second->isWin64;
                             std::vector<RaveValue> params = this->getParameters(byVals, x.second, false, x.second->args);
                             return LLVM::call(generator->functions[x.first], params, (instanceof<TypeVoid>(x.second->type) ? "" : "callFunc"), byVals);
@@ -395,7 +405,7 @@ RaveValue NodeCall::generate() {
                 if(tParser.peek()->type == TokType::Comma) tParser.next();
             }
 
-            if (presenceInFt) {
+            if(presenceInFt) {
                 for(int i=0; i<types.size(); i++) {
                     Type* current = types[i];
                     Type* previous = nullptr;
@@ -519,6 +529,8 @@ RaveValue NodeCall::generate() {
                 }
                 
                 if(methodf == AST::methodTable.end()) generator->error("undefined method '" + method.second.substr(0, method.second.find('[')) + "' of structure '" + structure->name + "'!", this->loc);
+
+                if(generator->functions.find(methodf->second->name) == generator->functions.end()) methodf->second->generate();
 
                 if(generator->functions[methodf->second->name].value == nullptr) generator->error("using '" + methodf->second->origName + "' method before declaring it!", this->loc);
 

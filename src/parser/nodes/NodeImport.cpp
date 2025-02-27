@@ -131,6 +131,7 @@ RaveValue NodeImport::generate() {
             auto* nodeFunc = static_cast<NodeFunc*>(node);
             if(nodeFunc->isPrivate) continue;
             nodeFunc->isExtern = true;
+            continue;
         }
         else if(instanceof<NodeVar>(node)) {
             auto* nodeVar = static_cast<NodeVar*>(node);
@@ -140,6 +141,7 @@ RaveValue NodeImport::generate() {
         else if(instanceof<NodeStruct>(node)) {
             auto* nodeStruct = static_cast<NodeStruct*>(node);
             nodeStruct->isImported = true;
+            continue;
         }
         else if(instanceof<NodeBuiltin>(node)) {
             auto* nodeBuiltin = static_cast<NodeBuiltin*>(node);
@@ -149,6 +151,7 @@ RaveValue NodeImport::generate() {
             auto* nodeComptime = static_cast<NodeComptime*>(node);
             nodeComptime->isImported = true;
         }
+
         node->generate();
     }
 
