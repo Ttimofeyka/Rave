@@ -2,6 +2,8 @@
 
 It contains specifications of Rave.
 
+Since the language is currently under active development, we decided to combine the documentation and specification into one section "specifications" for convenience.
+
 ## Lexical
 
 Lexical analysis splits the source code of the program into tokens for subsequent parsing.
