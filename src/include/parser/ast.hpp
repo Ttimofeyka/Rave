@@ -59,7 +59,6 @@ namespace AST {
     extern std::vector<std::string> importedFiles;
     extern std::vector<std::string> addToImport;
     extern std::map<std::string, std::vector<Node*>> parsed;
-    extern std::map<int, Node*> condStack;
     extern std::string mainFile;
     extern bool debugMode;
 

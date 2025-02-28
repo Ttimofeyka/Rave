@@ -34,7 +34,6 @@ std::map<std::pair<std::string, std::string>, NodeFunc*> AST::methodTable;
 std::map<std::pair<std::string, std::string>, StructMember> AST::structsNumbers;
 std::vector<std::string> AST::importedFiles;
 std::map<std::string, std::vector<Node*>> AST::parsed;
-std::map<int, Node*> AST::condStack;
 std::string AST::mainFile;
 std::vector<std::string> AST::addToImport;
 bool AST::debugMode;

@@ -224,7 +224,6 @@ void Compiler::clearAll() {
     AST::structsNumbers.clear();
     AST::methodTable.clear();
     AST::importedFiles.clear();
-    AST::condStack.clear();
     AST::aliasTypes.clear();
     generator->structures.clear();
     generator->globals.clear();
