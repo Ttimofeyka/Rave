@@ -13,9 +13,9 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 class NodeSizeof : public Node {
 public:
     Node* value;
-    long loc;
+    int loc;
 
-    NodeSizeof(Node* value, long loc);
+    NodeSizeof(Node* value, int loc);
     RaveValue generate() override;
     Type* getType() override;
     Node* comptime() override;

@@ -9,7 +9,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeString.hpp"
 #include "../../include/parser/nodes/NodeType.hpp"
 
-NodeSizeof::NodeSizeof(Node* value, long loc) {
+NodeSizeof::NodeSizeof(Node* value, int loc) {
     this->value = value;
     this->loc = loc;
 }
