@@ -9,34 +9,34 @@ import <std/string> <std/ascii>
 namespace std {
     namespace base16 {
         char* table = "0123456789ABCDEF";
-        
-        std::string encode(char* src, uint length) {
-            if(length < 1) @return("");
+
+        // Encode
+
+        void encodeBuffer(std::string* buffer, char* src, uint length) {
+            @if(__RAVE_RUNTIME_CHECKS) if(length < 1) @return();
 
             uint outlength = (length * 2) + 1;
 
-            return = std::string(outlength);
-            return.length = outlength;
-
             for(uint i=0; i<length; i++) {
-                return.set(2 * i, std::base16::table[(src[i] >. 4) && 0xF]);
-                return.set((2 * i) + 1, std::base16::table[src[i] && 0xF]);
+                buffer.add(std::base16::table[(src[i] >. 4) && 0xF]);
+                buffer.add(std::base16::table[src[i] && 0xF]);
             }
-
-            return.set(2 * length, '\0');
         }
 
-        (inline) std::string encode(char* src) => std::base16::encode(src, std::cstring::strlen(src));
+        (inline) void encodeBuffer(std::string* buffer, char* src) => std::base16::encodeBuffer(buffer, src, std::cstring::strlen(src));
 
-        (inline) std::string encode(std::string str) => std::base16::encode(str.data, str.length);
+        (inline) void encodeBuffer(std::string* buffer, std::string src) => std::base16::encodeBuffer(buffer, src.data, src.length);
+        
+        (inline) std::string encode(char* src, uint length) {std::string buffer = ""; std::base16::encodeBuffer(&buffer, src, length);} => buffer;
 
-        std::string decode(char* src, uint length) {
-            if((length < 2) || ((length % 2) != 0)) @return("");
+        (inline) std::string encode(char* src) {std::string buffer = ""; std::base16::encodeBuffer(&buffer, src, std::cstring::strlen(src));} => buffer;
 
-            uint outlength = length / 2;
+        (inline) std::string encode(std::string src) {std::string buffer = ""; std::base16::encodeBuffer(&buffer, src.data, src.length);} => buffer;
 
-            return = std::string(outlength + 1);
-            return.length = outlength;
+        // Decode
+
+        void decodeBuffer(std::string* buffer, char* src, uint length) {
+            @if(__RAVE_RUNTIME_CHECKS) if((length < 2) || ((length % 2) != 0)) @return();
 
             for(uint i=0; i<length; i+=2) {
                 uchar high;
@@ -48,15 +48,19 @@ namespace std {
                 if(std::ascii::isDigit(src[i + 1])) low = src[i + 1] - '0';
                 else low = (std::ascii::toUpper(src[i + 1]) - 'A') + 10c;
 
-                return.set(i / 2, cast(char)((high <. 4) || low));
+                buffer.add(cast(char)((high <. 4) || low));
             }
-
-            return.set(outlength, '\0');
         }
 
-        (inline) std::string decode(char* src) => std::base16::decode(src, std::cstring::strlen(src));
+        (inline) void decodeBuffer(std::string* buffer, char* src) => std::base16::decodeBuffer(buffer, src, std::cstring::strlen(src));
 
-        (inline) std::string decode(std::string str) => std::base16::decode(str.data, str.length);
+        (inline) void decodeBuffer(std::string* buffer, std::string src) => std::base16::decodeBuffer(buffer, src.data, src.length);
+
+        (inline) std::string decode(char* src, uint length) {std::string buffer = ""; std::base16::decodeBuffer(&buffer, src, length);} => buffer;
+
+        (inline) std::string decode(char* src) {std::string buffer = ""; std::base16::decodeBuffer(&buffer, src, std::cstring::strlen(src));} => buffer;
+
+        (inline) std::string decode(std::string src) {std::string buffer = ""; std::base16::decodeBuffer(&buffer, src.data, src.length);} => buffer;
     }
 
     namespace base32 {

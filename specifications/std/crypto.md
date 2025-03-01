@@ -2,6 +2,10 @@
 
 ## std::base16
 
+### std::base16::encodeBuffer
+
+This function is similar to the one listed below, except that it does not return a buffer, but accepts it as `std::string*` in the first argument.
+
 ### std::base16::encode
 
 Translates the specified set of bytes (or std::string) to std::string encoded in base16 format.
@@ -13,6 +17,10 @@ std::string buffer = std::base16::encode("Test", 4);
 std::string buffer2 = std::base16::encode("Test");
 std::string buffer3 = std::base16::encode(std::string("Test"));
 ```
+
+### std::base16::decodeBuffer
+
+This function is similar to the one listed below, except that it does not return a buffer, but accepts it as `std::string*` in the first argument.
 
 ### std::base16::decode
 

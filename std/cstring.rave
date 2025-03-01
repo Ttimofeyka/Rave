@@ -13,8 +13,8 @@ import <std/thread> <std/ascii>
         namespace cstring {
             int strlen(char* str) {
                 while((ptoi(&str[return]) % 8) != 0) {
-                    return += 1;
                     if(str[return] == '\0') @return(return);
+                    return += 1;
                 }
 
                 while(true) {
@@ -35,8 +35,8 @@ import <std/thread> <std/ascii>
         namespace cstring {
             int strlen(char* str) {
                 while((ptoi(&str[return]) % 4) != 0) {
-                    return += 1;
                     if(str[return] == '\0') @return(return);
+                    return += 1;
                 }
 
                 while(true) {
