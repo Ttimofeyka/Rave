@@ -3,11 +3,11 @@
 ## Basic types
 
 - bool (boolean type)
-- char (8-bit)
-- short (16-bit)
-- int (32-bit)
-- long (64-bit)
-- cent (128-bit)
+- char / uchar (8-bit)
+- short / ushort (16-bit)
+- int / uint (32-bit)
+- long / ulong (64-bit)
+- cent / ucent (128-bit)
 - half (16-bit float)
 - bhalf (16-bit float, it is known as **bfloat16**)
 - float (32-bit float)
@@ -22,6 +22,7 @@ Examples:
 - char*
 - bool**
 - half*
+- uint*
 
 ## Arrays
 
@@ -30,6 +31,7 @@ Examples:
 - char*[512]
 - bool[10]
 - real[8]
+- uint*[2]
 
 ## Structures
 
@@ -38,6 +40,7 @@ Examples:
 - A
 - B
 - std::string
+- std::vector<int>
 
 ## Function pointers
 
