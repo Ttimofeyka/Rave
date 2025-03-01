@@ -100,7 +100,9 @@ namespace std {
     namespace std {
         namespace socket {
             extern(linkname: "accept") int accept(int sock std::socket::sockaddr* addr, int* length_ptr);
-            extern(linkname: "socket") int socket(int domain, int type, int protocol);
+
+            (inline) int socket(int domain, int type, int protocol) => cast(int)std::syscall(std::sysctable::Socket, domain, type, protocol);
+
             extern(linkname: "bind") int bind(int sock, std::socket::sockaddr* address, int address_len);
             extern(linkname: "connect") int connect(int sock, std::socket::sockaddr* address, int address_len);
             extern(linkname: "getpeername") int getPeerName(int sock, std::socket::sockaddr* address, int* address_len);
@@ -114,9 +116,12 @@ namespace std {
             extern(linkname: "sendmsg") int sendmsg(int sock, std::socket::msghdr* message, int flags);
             extern(linkname: "sendto") int sendto(int sock, void* message, int length, int flags, std::socket::sockaddr* dest_addr, int dest_len);
             extern(linkname: "setsockopt") int setSockOpt(int sock, int level, int option_name, void* option_value, int option_len);
-            extern(linkname: "shutdown") int shutdown(int sock, int how);
+
+            (inline) int shutdown(int sock, int how) => cast(int)std::syscall(std::sysctable::Shutdown, sock, how);
+
             extern(linkname: "socketpair") int socketpair(int domain, int type, int protocol, int* socket_vector);
-            extern(linkname: "close") int close(int sock);
+
+            (inline) int close(int sock) => cast(int)std::syscall(std::sysctable::Close, sock);
 
             extern(linkname: "getaddrinfo") int getAddrInfo(char* node, char* service, std::socket::addrinfo* hints, std::socket::addrinfo** res);
             extern(linkname: "freeaddrinfo") void freeAddrInfo(std::socket::addrinfo* res);
