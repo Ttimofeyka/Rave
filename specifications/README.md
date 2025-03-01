@@ -37,6 +37,7 @@ The characters are enclosed in single quotes (").
 ##### [std/library](std/library.md)
 ##### [std/memory](std/memory.md)
 ##### [std/random](std/random.md)
+##### [std/thread](std/thread.md)
 ##### [std/vector](std/vector.md)
 
 ## Other
