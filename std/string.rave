@@ -29,6 +29,7 @@ namespace std {
                     this.data[i] = str[i];
                     i += 1;
                 }
+
                 this.data[i] = '\0';
             }
             else {
@@ -121,25 +122,17 @@ namespace std {
 
         (inline) int indexOf(std::string s) => this.indexOf(s.data);
 
-        void __add(char c) {
+        void add(char c) {
+            @if(__RAVE_RUNTIME_CHECKS) if(this.data == null) @return();
             this.length += 1;
 
             if(this.length == this.capacity) {
-                int minTargetCap = this.capacity * 2;
-                int shift = (31 - @ctlz32(minTargetCap, true));
-                int targetCap = (minTargetCap >. shift) <. (shift + 1);
-
-                this.data = std::realloc(this.data, targetCap);
-                this.capacity = targetCap;
+                this.capacity = this.capacity * 2;
+                this.data = std::realloc(this.data, this.capacity);
             }
 
             this.data[this.length - 1] = c;
             this.data[this.length] = '\0';
-        }
-
-        (inline) void add(char c) {
-            @if(__RAVE_RUNTIME_CHECKS) if(this.data == null) @return();
-            this.__add(c);
         }
 
         void __appendC(char* cstr, int cstrlen) {
