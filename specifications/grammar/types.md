@@ -37,10 +37,10 @@ Examples:
 
 Examples:
 
-- A
-- B
-- std::string
-- std::vector<int>
+- `A`
+- `B`
+- `std::string`
+- `std::vector<int>`
 
 ## Function pointers
 
