@@ -35,7 +35,7 @@ NodeCall::~NodeCall() {
     for(int i=0; i<args.size(); i++) if(args[i] != nullptr) delete args[i];
 }
 
-__always_inline void checkAndGenerate(std::string name) {
+inline void checkAndGenerate(std::string name) {
     if(generator->functions.find(name) == generator->functions.end()) AST::funcTable[name]->generate();
 }
 
