@@ -397,6 +397,8 @@ RaveValue NodeStruct::generate() {
 }
 
 LLVMTypeRef NodeStruct::genWithTemplate(std::string sTypes, std::vector<Type*> types) {
+    if(templateNames.size() == 0) return nullptr;
+
     std::map<int32_t, Loop> activeLoops = std::map<int32_t, Loop>(generator->activeLoops);
     LLVMBuilderRef builder = generator->builder;
     LLVMBasicBlockRef currBB = generator->currBB;
