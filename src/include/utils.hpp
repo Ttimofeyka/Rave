@@ -143,11 +143,7 @@ typedef struct genSettings {
     bool noFastMath = false;
     bool noIoInit = false;
 
-    #if defined(__linux__)
-        std::string linker = "lld-11";
-    #else
-        std::string linker = "lld";
-    #endif
+    std::string linker = "lld";
 } genSettings;
 
 // trim from start (in place)
