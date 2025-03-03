@@ -57,6 +57,7 @@ namespace std {
             alias wrOnly = 1;
             alias rdWrOnly = 2;
             alias oCreate = 64;
+            alias oDirectory = 65536;
 
             (inline) int rename(char* oldpath, char* newpath) => cast(int)std::syscall(std::sysctable::RenameTo, -100, oldpath, -100, newpath);
 
@@ -725,5 +726,120 @@ namespace std {
         alias cyan = "\033[36m";
         alias white = "\033[37m";
         alias reset = "\033[0m";
+    }
+}
+
+// Experimental!
+
+@if(__RAVE_OS == "LINUX") {
+    namespace std {
+        struct __dirent64 {
+            ulong inode;
+            long off;
+            ushort reclen;
+            uchar type;
+        }
+
+        namespace directory {
+            alias dtUnknown = 0;
+            alias dtFifo = 1;
+            alias dtChr = 2;
+            alias dtDir = 4;
+            alias dtBlk = 6;
+            alias dtReg = 8;
+            alias dtLnk = 10;
+            alias dtSock = 12;
+            alias dtWht = 14;
+
+            struct Entry {
+                bool isDirectory;
+                std::string name;
+            }
+
+            (inline) bool exists(char* dname) {
+                int fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, dname, std::file::rdOnly || std::file::oDirectory, 448);
+
+                if(fd != -1) {return = true; std::syscall(std::sysctable::Close, fd);}
+                else return = false;
+            }
+        }
+
+        struct directory {
+            char* path;
+            int fd;
+
+            std::directory this(char* path) {
+                std::directory this;
+
+                this.path = path;
+                this.fd = -1;
+            } => this;
+
+            (inline) void open {
+                fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, path, std::file::rdOnly || std::file::oDirectory, 448);
+            }
+
+            void readEntriesBuffer(std::vector<std::directory::Entry>* list) {
+                char[256] buffer;
+                char* bufferPtr = &buffer;
+
+                while(true) {
+                    int n = cast(int)std::syscall(std::sysctable::GetDents64, fd, &buffer, 256);
+
+                    if(n <= 0) break;
+
+                    // Processing
+
+                    std::__dirent64* value;
+
+                    int i = 0;
+                    while(i < n) {
+                        value = itop(std::__dirent64*, ptoi(bufferPtr) + i);
+
+                        list.add(std::directory::Entry{value.type == 4c, std::string(itop(char*, ptoi(value.&type) + 1))});
+                        
+                        i += value.reclen;
+                    }
+                }
+            }
+
+            (inline) std::vector<std::directory::Entry> readEntries {return = std::vector<std::directory::Entry>(); readEntriesBuffer(&return);}
+
+            void readEntriesNamesBuffer(std::vector<std::string>* list) {
+                char[256] buffer;
+                char* bufferPtr = &buffer;
+
+                while(true) {
+                    int n = cast(int)std::syscall(std::sysctable::GetDents64, fd, &buffer, 256);
+
+                    if(n <= 0) break;
+
+                    // Processing
+
+                    std::__dirent64* value;
+
+                    int i = 0;
+                    while(i < n) {
+                        value = itop(std::__dirent64*, ptoi(bufferPtr) + i);
+
+                        list.add(std::string(itop(char*, ptoi(value.&type) + 1)));
+                        
+                        i += value.reclen;
+                    }
+                }
+            }
+
+            (inline) std::vector<std::string> readEntriesNames {return = std::vector<std::string>(); readEntriesNamesBuffer(&return);}
+
+            (inline) void close {
+                std::syscall(std::sysctable::Close, fd);
+                fd = -1;
+            }
+
+            (inline) bool exists {
+                if(fd != -1) return = true;
+                else return = std::directory::exists(path);
+            }
+        }
     }
 }
