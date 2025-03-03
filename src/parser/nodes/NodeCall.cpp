@@ -58,6 +58,9 @@ std::vector<RaveValue> NodeCall::correctByLLVM(std::vector<RaveValue> values, st
         else if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(((TypePointer*)fas[i].type)->instance)) {
             if(!instanceof<TypePointer>(params[i].type)) LLVM::makeAsPointer(params[i]);
         }
+        else if(instanceof<TypeBasic>(fas[i].type) && instanceof<TypeBasic>(values[i].type)) {
+            if(((TypeBasic*)fas[i].type)->type != ((TypeBasic*)params[i].type)->type && !isFloatType(fas[i].type) && !isFloatType(params[i].type)) LLVM::cast(params[i], fas[i].type);
+        }
         else if(!instanceof<TypePointer>(fas[i].type) && instanceof<TypePointer>(params[i].type)) {
             if(LLVMIsAFunction(params[i].value) == nullptr) {
                 if(instanceof<TypeStruct>(fas[i].type)) {
@@ -492,6 +495,7 @@ RaveValue NodeCall::generate() {
             if(!currScope->has(ifName) && !currScope->hasAtThis(ifName)) generator->error("undefined variable '" + ifName + "'!", this->loc);
 
             NodeVar* var = currScope->getVar(ifName, this->loc);
+            var->isUsed = true;
             TypeStruct* structure = nullptr;
 
             if(instanceof<TypeStruct>(var->type)) structure = (TypeStruct*)var->type;
