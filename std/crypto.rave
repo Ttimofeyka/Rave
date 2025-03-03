@@ -99,7 +99,7 @@ namespace std {
         // Decode
 
         void decodeBuffer(std::string* buffer, char* src, uint length) {
-            @if(__RAVE_RUNTIME_CHECKS) if(length < 2) @return("");
+            @if(__RAVE_RUNTIME_CHECKS) if(length < 2) @return();
 
             for(uint i=0; i<length; i+=8) {
                 ulong buf = 0;
