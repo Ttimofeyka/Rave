@@ -29,6 +29,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias FStat = 5;
                 alias LSeek = 8;
                 alias FAccessAt = 269;
+                alias GetDents64 = 217;
 
                 alias Exit = 60;
                 alias Reboot = 169;
@@ -79,6 +80,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias FStat = 108;
                 alias LSeek = 19;
                 alias FAccessAt = 307;
+                alias GetDents64 = 220;
 
                 alias Exit = 1;
                 alias Reboot = 88;
@@ -129,6 +131,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias FStat = 80;
                 alias LSeek = 62;
                 alias FAccessAt = 48;
+                alias GetDents64 = 61;
 
                 alias Exit = 93;
                 alias Reboot = 142;
@@ -179,6 +182,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias FStat = 108;
                 alias LSeek = 19;
                 alias FAccessAt = 334;
+                alias GetDents64 = 217;
 
                 alias Exit = 1;
                 alias Reboot = 88;
@@ -229,6 +233,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias FStat = 108;
                 alias LSeek = 19;
                 alias FAccessAt = 298;
+                alias GetDents64 = 202;
 
                 alias Exit = 1;
                 alias Reboot = 88;
@@ -279,6 +284,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias FStat = 108;
                 alias LSeek = 19;
                 alias FAccessAt = 298;
+                alias GetDents64 = 202;
 
                 alias Exit = 1;
                 alias Reboot = 88;
@@ -329,6 +335,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias FStat = 108;
                 alias LSeek = 19;
                 alias FAccessAt = 300;
+                alias GetDents64 = 220;
 
                 alias Exit = 1;
                 alias Reboot = 88;
@@ -379,6 +386,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias FStat = 5433;
                 alias LSeek = 5008;
                 alias FAccessAt = 5259;
+                alias GetDents64 = 5308;
 
                 alias Exit = 5057;
                 alias Reboot = 5164;
@@ -425,6 +433,7 @@ the result of a call with the same parameters and the same number will be the sa
             alias FStat = 551;
             alias LSeek = 478;
             alias FAccessAt = 489;
+            alias GetDents64 = 272; // Unique structure
 
             alias Exit = 1;
             alias Reboot = 55;
