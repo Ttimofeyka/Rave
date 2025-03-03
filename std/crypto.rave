@@ -27,11 +27,11 @@ namespace std {
 
         (inline) void encodeBuffer(std::string* buffer, std::string src) => std::base16::encodeBuffer(buffer, src.data, src.length);
         
-        (inline) std::string encode(char* src, uint length) {std::string buffer = ""; std::base16::encodeBuffer(&buffer, src, length);} => buffer;
+        (inline) std::string encode(char* src, uint length) {return = ""; std::base16::encodeBuffer(&return, src, length);}
 
-        (inline) std::string encode(char* src) {std::string buffer = ""; std::base16::encodeBuffer(&buffer, src, std::cstring::strlen(src));} => buffer;
+        (inline) std::string encode(char* src) {return = ""; std::base16::encodeBuffer(&return, src, std::cstring::strlen(src));}
 
-        (inline) std::string encode(std::string src) {std::string buffer = ""; std::base16::encodeBuffer(&buffer, src.data, src.length);} => buffer;
+        (inline) std::string encode(std::string src) {return = ""; std::base16::encodeBuffer(&return, src.data, src.length);}
 
         // Decode
 
@@ -56,11 +56,11 @@ namespace std {
 
         (inline) void decodeBuffer(std::string* buffer, std::string src) => std::base16::decodeBuffer(buffer, src.data, src.length);
 
-        (inline) std::string decode(char* src, uint length) {std::string buffer = ""; std::base16::decodeBuffer(&buffer, src, length);} => buffer;
+        (inline) std::string decode(char* src, uint length) {return = ""; std::base16::decodeBuffer(&return, src, length);}
 
-        (inline) std::string decode(char* src) {std::string buffer = ""; std::base16::decodeBuffer(&buffer, src, std::cstring::strlen(src));} => buffer;
+        (inline) std::string decode(char* src) {return = ""; std::base16::decodeBuffer(&return, src, std::cstring::strlen(src));}
 
-        (inline) std::string decode(std::string src) {std::string buffer = ""; std::base16::decodeBuffer(&buffer, src.data, src.length);} => buffer;
+        (inline) std::string decode(std::string src) {return = ""; std::base16::decodeBuffer(&return, src.data, src.length);}
     }
 
     namespace base32 {
@@ -90,11 +90,11 @@ namespace std {
             while((buffer.length % 8) != 0) buffer.add('=');
         }
 
-        (inline) std::string encode(char* src, uint length) {std::string buffer = ""; std::base32::encodeBuffer(&buffer, src, length);} => buffer;
+        (inline) std::string encode(char* src, uint length) {return = ""; std::base32::encodeBuffer(&return, src, length);}
 
-        (inline) std::string encode(char* src) {std::string buffer = ""; std::base32::encodeBuffer(&buffer, src, std::cstring::strlen(src));} => buffer;
+        (inline) std::string encode(char* src) {return = ""; std::base32::encodeBuffer(&return, src, std::cstring::strlen(src));}
 
-        (inline) std::string encode(std::string src) {std::string buffer = ""; std::base32::encodeBuffer(&buffer, src.data, src.length);} => buffer;
+        (inline) std::string encode(std::string src) {return = ""; std::base32::encodeBuffer(&return, src.data, src.length);}
 
         // Decode
 
@@ -110,10 +110,10 @@ namespace std {
             }
         }
 
-        (inline) std::string decode(char* src, uint length) {std::string buffer = ""; std::base32::decodeBuffer(&buffer, src, length);} => buffer;
+        (inline) std::string decode(char* src, uint length) {return = ""; std::base32::decodeBuffer(&return, src, length);}
 
-        (inline) std::string decode(char* src) {std::string buffer = ""; std::base32::decodeBuffer(&buffer, src, std::cstring::strlen(src));} => buffer;
+        (inline) std::string decode(char* src) {return = ""; std::base32::decodeBuffer(&return, src, std::cstring::strlen(src));}
 
-        (inline) std::string decode(std::string src) {std::string buffer = ""; std::base32::decodeBuffer(&buffer, src.data, src.length);} => buffer;
+        (inline) std::string decode(std::string src) {return = ""; std::base32::decodeBuffer(&return, src.data, src.length);}
     }
 }
