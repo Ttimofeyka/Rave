@@ -1,3 +1,5 @@
+// -Ofast
+
 import <std/io>
 
 alias NQ_MAX = 31;

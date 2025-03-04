@@ -13,15 +13,10 @@
 *.exe
 ./examples/simple-calc
 
-# DUB
-.dub
-docs.json
-__dummy.html
-
 # Code coverage
 *.lst
 
-rave
+/rave
 example
 llvm.bc
 source/old.ast.d
@@ -47,6 +42,10 @@ examples/memory/defer
 examples/memory/null_access
 examples/math/div_by_zero
 examples/simd/sse
+
+# Benchmarks
+benchmarks/c/nqueen
+benchmarks/rave/nqueen
 
 std/*.o
 src/*.o
