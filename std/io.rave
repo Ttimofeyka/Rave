@@ -779,6 +779,11 @@ namespace std {
                 fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, path, std::file::rdOnly || std::file::oDirectory, 448);
             }
 
+            (inline) void close {
+                std::syscall(std::sysctable::Close, fd);
+                fd = -1;
+            }
+
             void readEntriesBuffer(std::vector<std::directory::Entry>* list) {
                 char[256] buffer;
                 char* bufferPtr = &buffer;
@@ -831,15 +836,49 @@ namespace std {
 
             (inline) std::vector<std::string> readEntriesNames {return = std::vector<std::string>(); readEntriesNamesBuffer(&return);}
 
-            (inline) void close {
-                std::syscall(std::sysctable::Close, fd);
-                fd = -1;
-            }
-
             (inline) bool exists {
                 if(fd != -1) return = true;
                 else return = std::directory::exists(path);
             }
+        }
+    }
+}
+@else @if(__RAVE_OS == "WINDOWS") {
+    namespace std {
+        alias invalidFileAttributes = -1;
+        alias fileAttributeDirectory = 16;
+
+        extern(linkname: "GetFileAttributesW") int __GetFileAttributesW(ushort* name);
+
+        namespace directory {
+            bool __exists(ushort* dname) {
+                int type = std::__GetFileAttributesW(dname);
+                return = ((type && std::fileAttributeDirectory) > 0);
+            }
+
+            (inline) bool exists(char* dname) {
+                ushort* u16Str = std::utf8::toUtf16(dname);
+                return = std::directory::__exists(u16Str);
+                std::free(u16Str);
+            }
+        }
+
+        struct directory {
+            char* path;
+            ushort* __path;
+            ushort* __pathSearch;
+            
+            std::directory this(char* path) {
+                std::directory this;
+
+                this.path = path;
+                this.__path = null;
+                this.__pathSearch = null;
+            } => this;
+
+            void open {}
+            
+            void close {}
         }
     }
 }

@@ -78,11 +78,17 @@ namespace std {
             extern(linkname: "MultiByteToWideChar") int __MultiByteToWideChar(uint cp, int flags, uchar* str, int cbMB, ushort* u16Str, int cbWC);
             extern(linkname: "WideCharToMultiByte") int __WideCharToMultiByte(uint cp, int flags, ushort* u16Str, int cbWC, uchar* str, int cbMB, uchar* nStr, int* defC);
 
+            (inline) int toUtf16Size(uchar* str) => std::utf8::__MultiByteToWideChar(65001, 0, str, -1, cast(ushort*)null, 0);
+
+            (inline) void toUtf16BufferWithLength(uchar* str, ushort* buffer, int bufferSize) {std::utf8::__MultiByteToWideChar(65001, 0, str, -1, buffer, bufferSize);}
+
+            (inline) void toUtf16Buffer(uchar* str, ushort* buffer) => std::utf8::toUtf16BufferWithLength(str, buffer, std::utf8::toUtf16Size(str));
+
             ushort* toUtf16(uchar* str) {
-                int bufferSize = std::utf8::__MultiByteToWideChar(65001, 0, str, -1, cast(ushort*)null, 0);
-                ushort* buffer = cast(ushort*)std::malloc(bufferSize);
-                std::utf8::__MultiByteToWideChar(65001, 0, str, -1, buffer, bufferSize);
-            } => buffer;
+                int size = std::utf8::toUtf16Size(str);
+                return = std::malloc(size);
+                std::utf8::toUtf16BufferWithLength(str, return, size);
+            }
 
             uchar* fromUtf16(ushort* wstr) {
                 int bufferSize = std::utf8::__WideCharToMultiByte(65001, 0, wstr, -1, null, -1, null, cast(int*)null);
