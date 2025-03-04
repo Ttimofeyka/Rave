@@ -10,8 +10,8 @@ All tests were performed on Windows 10 (**WSL**), i5-12400f, 32GB DDR4 3200 Mhz.
 
 ### nqueen
 
-| Time | Rave | C |
+| Time | Rave | C (gcc) |
 | ---- | ---- | - |
-| First Run | 2.948s | 3.065s |
-| Second Run | 2.947s | 3.074s |
-| Average | **2.948s** | **3.07s** |
+| First Run | 2.948s | 3.023s |
+| Second Run | 2.947s | 3.008s |
+| Average | **2.948s** | **3.016s** |
