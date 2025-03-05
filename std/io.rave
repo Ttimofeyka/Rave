@@ -4,7 +4,7 @@ Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-import <std/arg> <std/string> <std/utf8> <std/thread> <std/process>
+import <std/arg> <std/string> <std/utf> <std/thread> <std/process>
 
 namespace libc {
     struct File {
@@ -857,7 +857,7 @@ namespace std {
             }
 
             (inline) bool exists(char* dname) {
-                ushort* u16Str = std::utf8::toUtf16(dname);
+                ushort* u16Str = std::utf8::toUTF16(dname);
                 return = std::directory::__exists(u16Str);
                 std::free(u16Str);
             }

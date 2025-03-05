@@ -4,7 +4,7 @@ Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-import <std/string> <std/utf8> <std/map> <std/vector> <std/cstring> <std/ascii>
+import <std/string> <std/utf> <std/map> <std/vector> <std/cstring> <std/ascii>
 
 namespace std {
     namespace json {

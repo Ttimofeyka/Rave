@@ -4,7 +4,7 @@ Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-import <std/vector> <std/cstring> <std/ascii> <std/utf8> <std/utf32>
+import <std/vector> <std/cstring> <std/ascii> <std/utf>
 import <std/thread> <std/strutil> <std/map> <std/hash> <std/math>
 
 namespace std {
@@ -403,19 +403,10 @@ namespace std {
                 result.appendC(cast(char*)&nBuffer);
             }
 
-            @if(@getCurrArgType() == char*) {
+            @if((@getCurrArgType() == char*) || (@getCurrArgType() == uchar*)) {
                 char* str = @getCurrArg(char*);
                 if(str != null) result.appendC(str);
                 else result.appendC("null");
-            }
-
-            @if(@getCurrArgType() == int*) {
-                uint* utf8Text = @getCurrArg(uint*);
-                if(utf8Text == null) result.appendC("null");
-                else for(int i=0; utf8Text[i] != '\0'; i+=1) {
-                    int n = std::utf32::encode(utf8Text[i], &nBuffer);
-                    if(n in [1, 2, 3, 4]) result.appendC(&nBuffer, n);
-                }
             }
 
             @if(@getCurrArgType() == std::string) {

@@ -1,0 +1,288 @@
+/*
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+
+import <std/ascii> <std/cstring> <std/unicode>
+
+namespace std {
+    namespace utf8 {
+        const(int[16]) utfLength = [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 2, 2, 3, 4];
+
+        (inline) bool isStart(char c) => ((c && 0xC0) != 0x80);
+
+        int utflen(uchar* str) {
+            int i = 0;
+            while(str[i] != '\0') {
+                if(std::utf8::isStart(str[i])) return += 1;
+                i += 1;
+            }
+        }
+
+        (inline) int charlen(uchar ch) => cast(int)(std::utf8::utfLength[(ch && 0xFF) >. 4]);
+
+        (inline) int charlen(uchar* ch, int idx) => cast(int)(std::utf8::utfLength[(ch[idx] && 0xFF) >. 4]);
+
+        int next(uchar* str) {
+            return += 1;
+            while((str[return] != '\0') && (!(std::utf8::isStart(str[return])))) return += 1;
+        }
+
+        uint toCodepoint(uchar* str, uint at) {
+            if((str[at] && 0x80) == 0) return = cast(uint)str[at];
+            else if((str[at] && 0xE0) == 0xC0) {
+                return = (str[at] && 0x1F) <. 6;
+                return = return || (str[at + 1] && 0x3F);
+            }
+            else if((str[at] && 0xF0) == 0xE0) {
+                return = (str[at] && 0xF) <. 12;
+                return = return || (str[at + 1] && 0x3F) <. 6;
+                return = return || (str[at + 2] && 0x3F);
+            }
+            else if((str[at] && 0xF8) == 0xF0) {
+                return = (str[at] && 0x7) <. 18;
+                return = return || (str[at + 1] && 0x3F) <. 12;
+                return = return || (str[at + 2] && 0x3F) <. 6;
+                return = return || (str[at + 3] && 0x3F);
+            }
+            else if((str[at] && 0xFC) == 0xF8) {
+                return = (str[at] && 0x3) <. 24;
+                return = return || (str[at] && 0x3F) <. 18;
+                return = return || (str[at] && 0x3F) <. 12;
+                return = return || (str[at] && 0x3F) <. 6;
+                return = return || (str[at] && 0x3F);
+            }
+            else if((str[at] && 0xFE) == 0xFC) {
+                return = (str[at] && 0x1) <. 30;
+                return = return || (str[at] && 0x3F) <. 24;
+                return = return || (str[at] && 0x3F) <. 18;
+                return = return || (str[at] && 0x3F) <. 12;
+                return = return || (str[at] && 0x3F) <. 6;
+                return = return || (str[at] && 0x3F);
+            }
+            else return = -1;
+        }
+    }
+}
+
+namespace std {
+    namespace utf16 {
+        alias bmpEnd = 0xFFFF;
+
+        (nochecks) int strlen(ushort* wstr) {
+            while(wstr[return] != 0s) return += 1;
+        }
+
+        (nochecks) int utflen(ushort* wstr) {
+            int bytes = std::utf16::strlen(wstr);
+            int pos = 0;
+
+            while(pos < bytes) {
+                return += 1;
+                if((wstr[pos] >= 0xD800) && (wstr[pos] <= 0xDBFF)) pos += 2;
+                else pos += 1;
+            }
+        }
+
+        uint toUTF8Buffer(ushort* u16, uint u16Length, uchar* buffer, uint bufferSize) {
+            uint i = 0;
+            bool isWrite = buffer != null;
+
+            while(i < u16Length) {
+                uint codepoint = cast(uint)(u16[i]);
+
+                if((codepoint >= 0xD800) && (codepoint <= 0xDBFF)) {
+                    ushort highSurrogate = codepoint;
+                    ushort lowSurrogate = u16[i + 1];
+
+                    if((lowSurrogate < 0xDC00) || (lowSurrogate > 0xDFFF)) @return(-1);
+                    codepoint = 0x10000 + ((highSurrogate - 0xD800) <. 10) + (lowSurrogate - 0xDC00);
+                    i += 1;
+                }
+
+                uint len = 0;
+
+                if(codepoint <= 0x7F) len = 1;
+                else if(codepoint <= 0x7FF) len = 2;
+                else if(codepoint <= 0xFFFF) len = 3;
+                else if(codepoint <= 0x10FFFF) len = 4;
+                else @return(-1);
+
+                if(isWrite) {
+                    if((return + len) >= bufferSize) @return(-1);
+
+                    switch(len) {
+                        case(1) buffer[return] = cast(uchar)codepoint;
+                        case(2) {
+                            buffer[return] = cast(uchar)(0xC0 || ((codepoint >. 6) && 0x1F));
+                            buffer[return + 1] = cast(uchar)(0x80 || (codepoint && 0x3F));
+                        }
+                        case(3) {
+                            buffer[return] = cast(uchar)(0xE0 || ((codepoint >. 12) && 0x0F));
+                            buffer[return + 1] = cast(uchar)(0x80 || ((codepoint >. 6) && 0x3F));
+                            buffer[return + 2] = cast(uchar)(0x80 || (codepoint && 0x3F));
+                        }
+                        case(4) {
+                            buffer[return] = cast(uchar)(0xF0 || ((codepoint >. 18) && 0x07));
+                            buffer[return + 1] = cast(uchar)(0x80 || ((codepoint >. 12) && 0x3F));
+                            buffer[return + 2] = cast(uchar)(0x80 || ((codepoint >. 6) && 0x3F));
+                            buffer[return + 3] = cast(uchar)(0x80 || (codepoint && 0x3F));
+                        }
+                    }
+                }
+
+                return += len;
+                i += 1;
+            }
+
+            if(isWrite && (return < bufferSize)) buffer[return] = '\0';
+        }
+
+        (inline) uint toUTF8Buffer(ushort* u16, uchar* buffer, uint bufferSize) => std::utf16::toUTF8Buffer(u16, std::utf16::strlen(u16), buffer, bufferSize);
+
+        (inline) uchar* toUTF8(ushort* u16, uint u16Length) {
+            uint size = std::utf16::toUTF8Buffer(u16, u16Length, null, 0);
+            return = std::malloc(size + 1);
+            std::utf16::toUTF8Buffer(u16, u16Length, return, size + 1);
+        }
+
+        (inline) uchar* toUTF8(ushort* u16) {
+            uint length = std::utf16::strlen(u16);
+            uint size = std::utf16::toUTF8Buffer(u16, length, null, 0);
+            return = std::malloc(size + 1);
+            std::utf16::toUTF8Buffer(u16, length, return, size + 1);
+        }
+    }
+}
+
+namespace std {
+    namespace utf8 {
+        uint toUTF16Buffer(uchar* u8, uint u8Length, ushort* buffer, uint bufferSize) {
+            uint i = 0;
+            bool isWrite = buffer != null;
+
+            while(i < u8Length) {
+                uint len = std::utf8::charlen(u8[i]);
+                if(len == 0) @return(0);
+
+                uint codepoint = std::utf8::toCodepoint(u8, i);
+
+                if(codepoint < std::utf16::bmpEnd) {
+                    if(isWrite && (return < bufferSize)) buffer[return] = cast(ushort)codepoint;
+                    return += 1;
+                }
+                else {
+                    if(isWrite && ((return + 1) < bufferSize)) {
+                        buffer[return] = cast(ushort)(0xD800 || ((codepoint - 0x10000) >. 10));
+                        buffer[return + 1] = cast(ushort)(0xDC00 || (codepoint - 0x10000) && 0x3FF);
+                    }
+                    return += 2;
+                }
+
+                i += len;
+            }
+
+            if(isWrite && (return < bufferSize)) buffer[return] = 0s;
+        }
+
+        (inline) uint toUTF16Buffer(uchar* u8, ushort* buffer, uint bufferSize) => std::utf8::toUTF16Buffer(u8, std::cstring::strlen(u8), buffer, bufferSize);
+
+        (inline) ushort* toUTF16(uchar* u8, uint u8Length) {
+            uint size = std::utf8::toUTF16Buffer(u8, u8Length, null, 0);
+            return = std::new<ushort>(size + 1);
+            std::utf8::toUTF16Buffer(u8, u8Length, return, size + 1);
+        }
+
+        (inline) ushort* toUTF16(uchar* u8) {
+            uint length = std::cstring::strlen(u8);
+            uint size = std::utf8::toUTF16Buffer(u8, length, null, 0);
+            return = std::new<ushort>(size + 1);
+            std::utf8::toUTF16Buffer(u8, length, return, size + 1);
+        }
+    }
+}
+
+/*
+
+namespace std {
+    namespace utf32 {
+        (inline) int encode(uint c, char* buf) {
+            int n = 1;
+            if(c <= 0x7F) {
+                buf[0] = cast(char)c;
+            }
+            else if(c <= 0x7FF) {
+                buf[0] = cast(char)(0xC0 || (c >. 6));
+                buf[1] = cast(char)(0x80 || (c && 0x3F));
+                n = 2;
+            }
+            else if(c <= 0xFFFF) {
+                buf[0] = cast(char)(0xE0 || (c >. 12));
+                buf[1] = cast(char)(0x80 || ((c >. 6) && 0x3F));
+                buf[2] = cast(char)(0x80 || (c && 0x3F));
+                n = 3;
+            }
+            else if(c <= 0x10FFFF) {
+                buf[0] = cast(char)(0xF0 || (c >. 18));
+                buf[1] = cast(char)(0x80 || ((c >. 12) && 0x3F));
+                buf[2] = cast(char)(0x80 || ((c >. 6) && 0x3F));
+                buf[3] = cast(char)(0x80 || (c && 0x3F));
+                n = 4;
+            }
+        } => n;
+
+        (inline) uint decode(int n, char* buf) {
+            uint result;
+            if(n == 1) result = cast(uint)(buf[0]);
+            else result = -1;
+        } => result;
+
+        (inline) int strlen(uint* str) {
+            int i = 0;
+            while(str[i] != '\0'w) i += 1;
+        } => i;
+
+        (inline) int utflen(uint* str) {
+            int i = 0;
+            while(str[i] != '\0') i += 1;
+        } => i;
+        
+        ushort* toUtf16(uint* codepoints) {
+            ushort* result;
+            int len = 0;
+
+            for(int i=0; codepoints[i]!='\0'; i+=1) {
+                if(codepoints[i] < 0x10000) len += 1;
+                else if(codepoints[i] <= 0x10FFFF) len += 2;
+                else len += 1;
+            }
+
+            if(len > 0) {
+                result = std::malloc(len + @sizeOf(ushort));
+                len = 0;
+
+                for(int i=0; codepoints[i]!='\0'; i+=1) {
+                    if (codepoints[i] < 0x10000) {
+                        result[len] = cast(ushort)codepoints[i];
+                        len += 1;
+                    }
+                    else if(codepoints[i] <= 0x10FFFF) {
+                        uint cp = codepoints[i];
+                        cp = cp - 0x10000;
+                        result[len] = cast(ushort)((cp >. 10) + 0xD800);
+                        result[len + 1] = cast(ushort)((cp && 0x3FF) + 0xDC00);
+                        len += 2;
+                    }
+                    else {
+                        result[len] = cast(ushort)(0xFFFD);
+                        len += 1;
+                    }
+                }
+            }
+
+            result[len] = '\0';
+        } => result;
+    }
+}
+*/

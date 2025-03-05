@@ -4,7 +4,7 @@ Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-import <std/utf8> <std/process>
+import <std/utf> <std/process>
 
 namespace std {
     extern(linkname: "system") int system(char* cmd);
@@ -32,10 +32,10 @@ namespace std {
                 defer std::free(cast(void*)buffer);
 
                 std::system::__getCurrentDirectory(bufferSize, buffer);
-                if(cbuffer == null) return = std::utf8::fromUtf16(buffer);
+                if(cbuffer == null) return = std::utf16::toUTF8(buffer);
                 else {
                     // For compability with libc
-                    char* u8Buffer = std::utf8::fromUtf16(buffer);
+                    char* u8Buffer = std::utf16::toUTF8(buffer);
                     for(int i=0; i<size; i++) cbuffer[i] = u8Buffer[i];
                     return = cbuffer;
                     std::free(u8Buffer);
