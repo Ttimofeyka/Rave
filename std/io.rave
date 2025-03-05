@@ -4,7 +4,7 @@ Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-import <std/arg> <std/string> <std/utf> <std/thread> <std/process>
+import <std/arg> <std/string> <std/utf> <std/thread> <std/process> <std/time>
 
 namespace libc {
     struct File {
@@ -751,11 +751,6 @@ namespace std {
             alias dtSock = 12;
             alias dtWht = 14;
 
-            struct Entry {
-                bool isDirectory;
-                std::string name;
-            }
-
             (inline) bool exists(char* dname) {
                 int fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, dname, std::file::rdOnly || std::file::oDirectory, 448);
 
@@ -784,33 +779,7 @@ namespace std {
                 fd = -1;
             }
 
-            void readEntriesBuffer(std::vector<std::directory::Entry>* list) {
-                char[256] buffer;
-                char* bufferPtr = &buffer;
-
-                while(true) {
-                    int n = cast(int)std::syscall(std::sysctable::GetDents64, fd, &buffer, 256);
-
-                    if(n <= 0) break;
-
-                    // Processing
-
-                    std::__dirent64* value;
-
-                    int i = 0;
-                    while(i < n) {
-                        value = itop(std::__dirent64*, ptoi(bufferPtr) + i);
-
-                        list.add(std::directory::Entry{value.type == 4c, std::string(itop(char*, ptoi(value.&type) + 1))});
-                        
-                        i += value.reclen;
-                    }
-                }
-            }
-
-            (inline) std::vector<std::directory::Entry> readEntries {return = std::vector<std::directory::Entry>(); readEntriesBuffer(&return);}
-
-            void readEntriesNamesBuffer(std::vector<std::string>* list) {
+            void readEntriesBuffer(std::vector<std::string>* list) {
                 char[256] buffer;
                 char* bufferPtr = &buffer;
 
@@ -834,7 +803,7 @@ namespace std {
                 }
             }
 
-            (inline) std::vector<std::string> readEntriesNames {return = std::vector<std::string>(); readEntriesNamesBuffer(&return);}
+            (inline) std::vector<std::string> readEntries {return = std::vector<std::string>(); readEntriesBuffer(&return);}
 
             (inline) bool exists {
                 if(fd != -1) return = true;
@@ -863,6 +832,26 @@ namespace std {
             }
         }
 
+        struct __findDataW {
+            int dwFileAttributes;
+            std::__fileTime ftCreationTime;
+            std::__fileTime ftLastAccessTime;
+            std::__fileTime ftLastWriteTime;
+            int nFileSizeHigh;
+            int nFileSizeLow;
+            int dwReserved0;
+            int dwReserved1;
+            ushort[257] cFileName;
+            ushort[14] cAlternateFileName;
+            int dwFileType;
+            int dwCreatorType;
+            short wFinderFlags;
+        }
+        
+        extern(linkname: "FindFirstFileW") void* FindFirstFileW(ushort* fname, std::__findDataW* data);
+        extern(linkname: "FindNextFileW") char FindNextFileW(void* file, std::__findDataW* data);
+        extern(linkname: "FindClose") char FindClose(void* file);
+
         struct directory {
             char* path;
             ushort* __path;
@@ -876,9 +865,53 @@ namespace std {
                 this.__pathSearch = null;
             } => this;
 
-            void open {}
+            void open {
+                uint pathLen = std::cstring::strlen(path);
+                int length = std::utf8::toUTF16Buffer(path, pathLen, null, 0);
+
+                __path = std::new<ushort>(length + 1);
+                __pathSearch = std::new<ushort>(length + 3);
+
+                std::utf8::toUTF16Buffer(path, pathLen, __path, length);
+
+                int i = 0;
+                for(; i<length; i++) __pathSearch[i] = __path[i];
+                __pathSearch[i] = cast(ushort)('\\');
+                __pathSearch[i + 1] = cast(ushort)('*');
+                __pathSearch[i + 2] = 0s;
+            }
+
+            void readEntriesBuffer(std::vector<std::string>* list) {
+                std::__findDataW* data = cast(std::__findDataW*)std::malloc(sizeof(std::__findDataW));
+                void* handle = std::FindFirstFileW(__pathSearch, data);
+
+                if(handle != null) {
+                    while(true) {
+                        uint length = std::utf16::strlen(data.&cFileName);
+                        uint u8Length = std::utf16::toUTF8Buffer(data.&cFileName, length, null, 0);
+                        std::string str = std::string(u8Length);
+                        str.length = u8Length;
+                        std::utf16::toUTF8Buffer(data.&cFileName, length, str.data, u8Length + 1);
+                        list.add(str);
+
+                        if(std::FindNextFileW(handle, data) == 0c) break;
+                    }
+                }
+            }
+
+            (inline) std::vector<std::string> readEntries {return = std::vector<std::string>(); readEntriesBuffer(&return);}
             
-            void close {}
+            void close {
+                if(__path != null) {
+                    std::free(__path);
+                    __path = null;
+                }
+
+                if(__pathSearch != null) {
+                    std::free(__pathSearch);
+                    __pathSearch = null;
+                }
+            }
         }
     }
 }
