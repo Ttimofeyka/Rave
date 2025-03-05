@@ -1,4 +1,3 @@
-// Compiler: gcc
 // -O3 -fwrapv -flto
 
 #include <stdio.h>
