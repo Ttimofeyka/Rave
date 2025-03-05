@@ -345,8 +345,7 @@ RaveValue NodeFunc::generate() {
         LLVMFunctionType(generator->genType(this->type, loc), this->genTypes.data(), this->genTypes.size(), this->isVararg)
     ), tfunc};
 
-    if(!isVararg && !isCtargs && !isCtargsPart && isPrivate && !isExtern && !isComdat)
-        LLVMSetLinkage(generator->functions[this->name].value, LLVMInternalLinkage);
+    if(isPrivate && !isExtern) LLVMSetLinkage(generator->functions[this->name].value, LLVMInternalLinkage);
 
     LLVMSetFunctionCallConv(generator->functions[this->name].value, callConv);
 
