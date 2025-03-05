@@ -8,7 +8,7 @@ import <std/string> <std/ascii>
 
 namespace std {
     namespace base16 {
-        char* table = "0123456789ABCDEF";
+        const(char*) table = "0123456789ABCDEF";
 
         // Encode
 
@@ -64,7 +64,7 @@ namespace std {
     }
 
     namespace base32 {
-        char* table = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+        const(char*) table = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 
         // Encode
 
