@@ -1,4 +1,4 @@
-// -Ofast
+// -Ofast -flto
 
 import <std/io>
 
