@@ -4,7 +4,7 @@ import <std/io>
 
 alias NQ_MAX = 31;
 
-int nq_solve(int n) {
+(private) int nq_solve(int n) {
     int k;
     int[NQ_MAX] a;
 
