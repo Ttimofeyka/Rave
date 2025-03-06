@@ -101,6 +101,8 @@ import <std/io>
                         // TODO: IPv6
                     }
 
+                    std::socket::freeAddrInfo(res);
+
                     if(!found) return = host;
                 }
             }
