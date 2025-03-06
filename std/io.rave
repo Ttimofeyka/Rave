@@ -265,7 +265,7 @@ namespace std {
         }
     }
 }
-/*@else @if(__RAVE_OS == "WINDOWS") {
+@else @if(__RAVE_OS == "WINDOWS") {
     namespace std {
         namespace file {
             alias stdOutputHandle = -11;
@@ -301,7 +301,7 @@ namespace std {
                 this.buffer = null;
                 this.bufferSize = 1024;
                 this.name = name;
-                this.__name = std::utf8::toUtf16(name);
+                this.__name = null;
                 this.fd = null;
                 this.flushBufferSymbol = cast(char)-1;
                 this.__isStdHandle = false;
@@ -312,13 +312,15 @@ namespace std {
                 this.buffer = null;
                 this.bufferSize = bufferSize;
                 this.name = name;
-                this.__name = std::utf8::toUtf16(name);
+                this.__name = null;
                 this.fd = null;
                 this.flushBufferSymbol = cast(char)-1;
                 this.__isStdHandle = false;
             } => this;
 
             void open(char* mode) {
+                if(__name == null) __name = std::utf8::toUTF16(name);
+
                 if(std::cstring::strcmp(mode, "r")) {
                     fd = std::file::CreateFileW(
                         __name, std::file::genericRead,
@@ -358,11 +360,15 @@ namespace std {
             (inline) bool isOpen => (fd != null);
 
             void rename(char* to) {
-                ushort* __to = std::utf8::toUtf16(to);
-                std::file::__rename(this.__name, __to);
-                this.name = to;
-                std::free(cast(void*)(this.__name));
-                this.__name = __to;
+                ushort* __to = std::utf8::toUTF16(to);
+
+                if(__name == null) __name = std::utf8::toUTF16(name);
+
+                std::file::__rename(__name, __to);
+                name = to;
+
+                std::free(__name);
+                __name = __to;
             }
 
             bool exists {
@@ -409,9 +415,14 @@ namespace std {
             (inline) int putc(char c) => this.write(&c, 1);
 
             void close {
+                if(__name != null) {
+                    __name = null;
+                    std::free(__name);
+                }
+
                 if(fd != null) {
                     this.flush();
-                    if(!__isStdHandle) std::file::CloseHandle(fd);
+                    if(!__isStdHandle) std::process::__CloseHandle(fd);
                     if(buffer != null) {
                         std::free(buffer);
                         buffer = null;
@@ -449,7 +460,7 @@ namespace std {
                         std::file::WriteFile(this.fd, this.buffer, this.bufferPos, cast(int*)null, null);
                         this.bufferPos = 0;
                     }
-                    std::file::CloseHandle(this.fd);
+                    std::process::__CloseHandle(this.fd);
                     this.fd = null;
                 }
 
@@ -462,7 +473,7 @@ namespace std {
             }
         }
     }
-}*/
+}
 @else {
     namespace libc {
         extern(linkname: "fopen") libc::File* fopen(char* path, char* mode);
