@@ -5,20 +5,60 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 namespace std {
-    alias NotEnoughMemory = 100;
-    alias NotFound = 101;
-    alias BeyondSize = 102;
-    alias NullPointer = 103;
+    alias NotFound = -1;
+    alias NotEnoughMemory = -2;
+    alias BeyondSize = -3;
 
     alias SigInt = 2;
+    alias SigIll = 4;
+    alias SigFpe = 8;
     alias SigKill = 9;
     alias SigSegv = 11;
+    alias SigAlarm = 14; // SigAlrm
     alias SigTerm = 15;
     alias SigStop = 19;
+    alias SigBreak = 21;
+    alias SigAbort = 22; // SigAbrt
+}
 
-    extern(linkname: "signal") void __signal(int flag, void(int) catcher);
+@if(__RAVE_OS == "LINUX") {
+    namespace std {
+        struct sigaction {
+            void(int) handler;
+            void* saction;
+            void* mask;
+            int flags;
+            void() restorer;
+        }
 
-    namespace error {
-        void sigsegv(void() catcher) {std::__signal(std::SigSegv, cast(void(int))catcher);}
+        void signal(int flag, void(int) catcher) {
+            std::sigaction act;
+            std::sigaction oldAct;
+
+            act.handler = catcher;
+            std::memset(act.&handler, sizeof(void*), 0);
+            act.flags = 0;
+
+            act.flags = act.flags || 268435456;
+
+            std::syscall(std::sysctable::SigAction, flag, &act, &oldAct);
+        }
+    }
+}
+@else @if(__RAVE_OS == "WINDOWS") {
+    namespace std {
+        extern(linkname: "SetConsoleCtrlHandler") char SetConsoleCtrlHandler(char(int) handler, char add);
+
+        void signal(int flag, void(int) catcher) {
+            // Windows doesn't have a direct equivalent to the POSIX signal function,
+            // but we can use the SetConsoleCtrlHandler function to handle some signals.
+
+            if((flag == std::SigInt) || (flag == std::SigTerm)) std::SetConsoleCtrlHandler(cast(char(int))handler, 1c);
+        }
+    }
+}
+@else {
+    namespace std {
+        extern(linkname: "signal") void signal(int flag, void(int) catcher);
     }
 }
