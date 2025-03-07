@@ -89,3 +89,6 @@ endif
 
 clean:
 	rm -rf obj
+
+cleanStd:
+	rm -rf std/*.o std/*.ll
