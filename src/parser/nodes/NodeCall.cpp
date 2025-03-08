@@ -375,6 +375,12 @@ RaveValue NodeCall::generate() {
             std::string callTypes = typesToString(this->getTypes());
             std::string sTypes;
 
+            if(AST::funcTable.find(ifName + callTypes) != AST::funcTable.end()) {
+                isCW64 = AST::funcTable[ifName + callTypes]->isCdecl64 || AST::funcTable[ifName + callTypes]->isWin64;
+                std::vector<RaveValue> params = this->getParameters(byVals, AST::funcTable[ifName + callTypes], false, AST::funcTable[ifName + callTypes]->args);
+                return LLVM::call(generator->functions[ifName + callTypes], params, (instanceof<TypeVoid>(AST::funcTable[ifName + callTypes]->type) ? "" : "callFunc"), byVals);
+            }
+
             if(presenceInFt) {
                 if(AST::funcTable.find(mainName + callTypes) != AST::funcTable.end()) {
                     if(generator->functions.find(ifName + callTypes) != generator->functions.end()) {
@@ -406,25 +412,37 @@ RaveValue NodeCall::generate() {
                         types.push_back(tParser.parseType(true));
                         break;
                 }
+
                 if(tParser.peek()->type == TokType::Comma) tParser.next();
             }
 
             if(presenceInFt) {
-                for(Type* &type : types) {
-                    while(instanceof<TypeConst>(type) || instanceof<TypeArray>(type) || instanceof<TypePointer>(type) || instanceof<TypeStruct>(type)) {
-                        if(instanceof<TypeConst>(type)) type = ((TypeConst*)type)->instance;
-                        else if(instanceof<TypeArray>(type)) type = ((TypeArray*)type)->element;
-                        else if(instanceof<TypePointer>(type)) type = ((TypePointer*)type)->instance;
-                        else type = generator->toReplace[type->toString()];
+                for(int i=0; i<types.size(); i++) {
+                    Type* current = types[i];
+                    Type* previous = nullptr;
+
+                    while(instanceof<TypeConst>(current) || instanceof<TypeArray>(current) || instanceof<TypePointer>(current) || instanceof<TypeStruct>(current)) {
+                        if(instanceof<TypeConst>(current)) {previous = current; current = ((TypeConst*)previous)->instance;}
+                        else if(instanceof<TypeArray>(current)) {previous = current; current = ((TypeArray*)previous)->element;}
+                        else if(instanceof<TypePointer>(current)) {previous = current; current = ((TypePointer*)previous)->instance;}
+                        else {
+                            while(generator->toReplace.find(current->toString()) != generator->toReplace.end()) current = generator->toReplace[current->toString()];
+
+                            if(previous == nullptr) types[i] = current->copy();
+                            else if(instanceof<TypeConst>(previous)) ((TypeConst*)previous)->instance = current->copy();
+                            else if(instanceof<TypeArray>(previous)) ((TypeArray*)previous)->element = current->copy();
+                            else ((TypePointer*)previous)->instance = current->copy();
+                            break;
+                        }
                     }
 
-                    sTypes += type->toString() + ",";
+                    sTypes += types[i]->toString() + ",";
                 }
 
-                sTypes = sTypes.substr(0, sTypes.length() - 1);
+                sTypes = "<" + sTypes.substr(0, sTypes.length() - 1) + ">";
 
                 if(AST::funcTable.find(mainName + sTypes) != AST::funcTable.end()) return (new NodeCall(loc, new NodeIden(mainName + sTypes, loc), args))->generate();
-                AST::funcTable[mainName]->generateWithTemplate(types, mainName + sTypes + (mainName.find('[') != std::string::npos ? callTypes : ""));
+                AST::funcTable[mainName]->generateWithTemplate(types, mainName + sTypes + (mainName.find('[') == std::string::npos ? callTypes : ""));
             }
             else {
                 for(int i=0; i<types.size(); i++) {
