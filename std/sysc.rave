@@ -46,6 +46,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias SendTo = 44;
                 alias SetSockOpt = 54;
                 alias GetSockOpt = 55;
+                alias RecvMsg = 47;
 
                 alias GetPID = 0x27;
                 alias GetTID = 186;
@@ -99,6 +100,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias SendTo = 369;
                 alias SetSockOpt = 366;
                 alias GetSockOpt = 365;
+                alias RecvMsg = 372;
 
                 alias GetPID = 0x14;
                 alias GetTID = 224;
@@ -152,6 +154,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias SendTo = 206;
                 alias SetSockOpt = 208;
                 alias GetSockOpt = 209;
+                alias RecvMsg = 212;
 
                 alias GetPID = 0xAC;
                 alias GetTID = 178;
@@ -205,6 +208,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias SendTo = 290;
                 alias SetSockOpt = 294;
                 alias GetSockOpt = 295;
+                alias RecvMsg = 297;
 
                 alias GetPID = 0x14;
                 alias GetTID = 224;
@@ -258,6 +262,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias SendTo = 335;
                 alias SetSockOpt = 339;
                 alias GetSockOpt = 340;
+                alias RecvMsg = 342;
 
                 alias GetPID = 20;
                 alias GetTID = 207;
@@ -311,6 +316,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias SendTo = 335;
                 alias SetSockOpt = 339;
                 alias GetSockOpt = 340;
+                alias RecvMsg = 342;
 
                 alias GetPID = 20;
                 alias GetTID = 207;
@@ -324,59 +330,6 @@ the result of a call with the same parameters and the same number will be the sa
 
                 alias ClockGetTime = 246;
                 alias GetRandom = 359;
-                alias GetTimeOfDay = 78;
-
-                alias NanoSleep = 162;
-            }
-        }
-    }
-
-    @if(__RAVE_PLATFORM == "S390X") {
-        namespace std {
-            extern(linkname: "syscall", vararg) void* syscall(int number);
-        }
-
-        namespace std {
-            namespace sysctable {
-                alias Read = 0x03;
-                alias Write = 0x04;
-                alias OpenAt = 288;
-                alias Close = 6;
-                alias RenameTo = 295;
-                alias UnlinkAt = 294;
-                alias FStat = 108;
-                alias LSeek = 19;
-                alias FAccessAt = 300;
-                alias GetDents64 = 220;
-
-                alias Exit = 1;
-                alias Reboot = 88;
-                alias GetCwd = 183;
-
-                alias Socket = 359;
-                alias Bind = 361;
-                alias Shutdown = 373;
-                alias Listen = 363;
-                alias Connect = 362;
-                alias GetSockName = 367;
-                alias Accept4 = 364;
-                alias RecvFrom = 371;
-                alias SendTo = 369;
-                alias SetSockOpt = 366;
-                alias GetSockOpt = 365;
-                alias Wait4 = 114;
-                alias Kill = 37;
-                alias SigAction = 174;
-                alias SigReturn = 173;
-
-                alias GetPID = 20;
-                alias GetTID = 236;
-                alias GetPPID = 64;
-                alias Clone = 120;
-                alias Execve = 11;
-
-                alias ClockGetTime = 260;
-                alias GetRandom = 349;
                 alias GetTimeOfDay = 78;
 
                 alias NanoSleep = 162;
@@ -417,6 +370,7 @@ the result of a call with the same parameters and the same number will be the sa
                 alias SendTo = 5043;
                 alias SetSockOpt = 5053;
                 alias GetSockOpt = 5054;
+                alias RecvMsg = 5046;
 
                 alias GetPID = 5109;
                 alias GetTID = 5178;
@@ -466,6 +420,7 @@ the result of a call with the same parameters and the same number will be the sa
             alias SendTo = 133;
             alias SetSockOpt = 105;
             alias GetSockOpt = 118;
+            alias RecvMsg = 27;
 
             alias GetPID = 20;
             alias GetTID = 432; // Note: thr_self

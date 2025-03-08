@@ -102,16 +102,18 @@ namespace std {
             extern(linkname: "accept") int accept(int sock std::socket::sockaddr* addr, int* length_ptr);
 
             (inline) int socket(int domain, int type, int protocol) => cast(int)std::syscall(std::sysctable::Socket, domain, type, protocol);
+            (inline) int bind(int sock, std::socket::sockaddr* address, int addressLen) => cast(int)std::syscall(std::sysctable::Bind, sock, address, addressLen);
+            (inline) int connect(int sock, std::socket::sockaddr* address, int addressLen) => cast(int)std::syscall(std::sysctable::Connect, sock, address, addressLen);
 
-            extern(linkname: "bind") int bind(int sock, std::socket::sockaddr* address, int address_len);
-            extern(linkname: "connect") int connect(int sock, std::socket::sockaddr* address, int address_len);
             extern(linkname: "getpeername") int getPeerName(int sock, std::socket::sockaddr* address, int* address_len);
             extern(linkname: "getsockname") int getSockName(int sock, std::socket::sockaddr* address, int* address_len);
             extern(linkname: "getsockopt") int getSockOpt(int sock, int level, int option_name, void* option_value, int* option_len);
-            extern(linkname: "listen") int listen(int sock, int backlog);
-            extern(linkname: "recv") int recv(int sock, void* buffer, int length, int flags);
-            extern(linkname: "recvfrom") int recvfrom(int sock, void* buffer, int length, int flags, std::socket::sockaddr* address, int* address_len);
-            extern(linkname: "recvmsg") int recvmsg(int sock, std::socket::msghdr* message, int flags);
+
+            (inline) int listen(int sock, int backlog) => cast(int)std::syscall(std::sysctable::Listen, sock, backlog);
+            (inline) int recvfrom(int sock, void* buffer, int length, int flags, std::socket::sockaddr* address, int* address_len) => cast(int)std::syscall(std::sysctable::RecvFrom, sock, buffer, length, flags, address, address_len);
+            (inline) int recv(int sock, char* buffer, int length, int flags) => cast(int)std::socket::recvfrom(sock, buffer, length, flags, null, null);
+            (inline) int recvmsg(int sock, std::socket::msghdr* message, int flags) => cast(int)std::syscall(std::sysctable::RecvFrom, sock, message, flags);
+
             extern(linkname: "send") int send(int sock, void* message, int length, int flags);
             extern(linkname: "sendmsg") int sendmsg(int sock, std::socket::msghdr* message, int flags);
             extern(linkname: "sendto") int sendto(int sock, void* message, int length, int flags, std::socket::sockaddr* dest_addr, int dest_len);
