@@ -47,6 +47,9 @@ the result of a call with the same parameters and the same number will be the sa
                 alias SetSockOpt = 54;
                 alias GetSockOpt = 55;
                 alias RecvMsg = 47;
+                alias SendMsg = 46;
+                alias GetPeerName = 52;
+                alias SocketPair = 53;
 
                 alias GetPID = 0x27;
                 alias GetTID = 186;
@@ -101,6 +104,9 @@ the result of a call with the same parameters and the same number will be the sa
                 alias SetSockOpt = 366;
                 alias GetSockOpt = 365;
                 alias RecvMsg = 372;
+                alias SendMsg = 370;
+                alias GetPeerName = 368;
+                alias SocketPair = 360;
 
                 alias GetPID = 0x14;
                 alias GetTID = 224;
@@ -155,6 +161,9 @@ the result of a call with the same parameters and the same number will be the sa
                 alias SetSockOpt = 208;
                 alias GetSockOpt = 209;
                 alias RecvMsg = 212;
+                alias SendMsg = 211;
+                alias GetPeerName = 205;
+                alias SocketPair = 199;
 
                 alias GetPID = 0xAC;
                 alias GetTID = 178;
@@ -209,6 +218,9 @@ the result of a call with the same parameters and the same number will be the sa
                 alias SetSockOpt = 294;
                 alias GetSockOpt = 295;
                 alias RecvMsg = 297;
+                alias SendMsg = 296;
+                alias GetPeerName = 287;
+                alias SocketPair = 288;
 
                 alias GetPID = 0x14;
                 alias GetTID = 224;
@@ -263,6 +275,9 @@ the result of a call with the same parameters and the same number will be the sa
                 alias SetSockOpt = 339;
                 alias GetSockOpt = 340;
                 alias RecvMsg = 342;
+                alias SendMsg = 341;
+                alias GetPeerName = 332;
+                alias SocketPair = 333;
 
                 alias GetPID = 20;
                 alias GetTID = 207;
@@ -317,6 +332,9 @@ the result of a call with the same parameters and the same number will be the sa
                 alias SetSockOpt = 339;
                 alias GetSockOpt = 340;
                 alias RecvMsg = 342;
+                alias SendMsg = 341;
+                alias GetPeerName = 332;
+                alias SocketPair = 333;
 
                 alias GetPID = 20;
                 alias GetTID = 207;
@@ -371,6 +389,9 @@ the result of a call with the same parameters and the same number will be the sa
                 alias SetSockOpt = 5053;
                 alias GetSockOpt = 5054;
                 alias RecvMsg = 5046;
+                alias SendMsg = 5045;
+                alias GetPeerName = 5051;
+                alias SocketPair = 5052;
 
                 alias GetPID = 5109;
                 alias GetTID = 5178;
@@ -421,6 +442,9 @@ the result of a call with the same parameters and the same number will be the sa
             alias SetSockOpt = 105;
             alias GetSockOpt = 118;
             alias RecvMsg = 27;
+            alias SendMsg = 28;
+            alias GetPeerName = 31;
+            alias SocketPair = 135;
 
             alias GetPID = 20;
             alias GetTID = 432; // Note: thr_self

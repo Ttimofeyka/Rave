@@ -6,7 +6,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 // Original created via GeckoNerd - https://geckonerd.pw
 
-// NOTE: This code may be outdated and unstable. To be redone.
+// NOTE: This code IS outdated and unstable.
+// TODO: Rework it.
 
 import <std/string>
 import <std/vector>
@@ -123,18 +124,8 @@ import <std/io>
             }
 
             std::network::Response _do_http(std::network::URL url, char* method, std::string headers, std::string data, std::string port) {
-                std::string reqline = "";
-                reqline.appendC(method);
-                reqline.appendC(" ");
-                reqline.append(url.path);
-                reqline.appendC(" HTTP/1.0\r\n");
-                reqline.appendC("Host: ");
-                reqline.append(url.host);
-                reqline.appendC("\r\n");
-                reqline.appendC("Connection: close\r\n");
-                reqline.append(headers);
-                reqline.appendC("\r\n");
-                reqline.append(data);
+                std::string reqline = std::sprint(method, " ", url.path, " HTTP/1.0\r\nHost: ", url.host, "\r\nConnection: close\r\n", headers, "\r\n", data);
+                defer ~reqline;
 
                 // init
                 std::socket sock = std::socket();
@@ -201,18 +192,8 @@ import <std/io>
             }
 
             std::network::Response _do_http_secure(std::network::URL url, char* method, std::string headers, std::string data, std::string port) {
-                std::string reqline = "";
-                reqline.appendC(method);
-                reqline.appendC(" ");
-                reqline.append(url.path);
-                reqline.appendC(" HTTP/1.0\r\n");
-                reqline.appendC("Host: ");
-                reqline.append(url.host);
-                reqline.appendC("\r\n");
-                reqline.appendC("Connection: close\r\n");
-                reqline.append(headers);
-                reqline.appendC("\r\n");
-                reqline.append(data);
+                std::string reqline = std::sprint(method, " ", url.path, " HTTP/1.0\r\nHost: ", url.host, "\r\nConnection: close\r\n", headers, "\r\n", data);
+                defer ~reqline;
 
                 void* ssl_ctx = ssl::ctxNew(ssl::methodTLS1_2());
                 defer ssl::ctxFree(ssl_ctx);

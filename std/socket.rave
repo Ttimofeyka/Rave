@@ -99,29 +99,29 @@ namespace std {
 @if((__RAVE_OS == "LINUX") || (__RAVE_OS == "FREEBSD")) {
     namespace std {
         namespace socket {
-            extern(linkname: "accept") int accept(int sock std::socket::sockaddr* addr, int* length_ptr);
-
+            (inline) int accept(int sock, std::socket::sockaddr* addr, int* lengthPtr) => cast(int)std::syscall(std::sysctable::Accept4, sock, addr, lengthPtr, 0);
             (inline) int socket(int domain, int type, int protocol) => cast(int)std::syscall(std::sysctable::Socket, domain, type, protocol);
             (inline) int bind(int sock, std::socket::sockaddr* address, int addressLen) => cast(int)std::syscall(std::sysctable::Bind, sock, address, addressLen);
             (inline) int connect(int sock, std::socket::sockaddr* address, int addressLen) => cast(int)std::syscall(std::sysctable::Connect, sock, address, addressLen);
 
-            extern(linkname: "getpeername") int getPeerName(int sock, std::socket::sockaddr* address, int* address_len);
-            extern(linkname: "getsockname") int getSockName(int sock, std::socket::sockaddr* address, int* address_len);
-            extern(linkname: "getsockopt") int getSockOpt(int sock, int level, int option_name, void* option_value, int* option_len);
+            (inline) int getPeerName(int sock, std::socket::sockaddr* address, int* addressLen) => cast(int)std::syscall(std::sysctable::GetPeerName, sock, address, addressLen);
+            (inline) int getSockName(int sock, std::socket::sockaddr* address, int* addressLen) => cast(int)std::syscall(std::sysctable::GetSockName, sock, address, addressLen);
+
+            (inline) int getSockOpt(int sock, int level, int optionName, char* optionValue, int* optionLen) => cast(int)std::syscall(std::sysctable::GetSockOpt, sock, level, optionName, optionValue, optionLen);
+            (inline) int setSockOpt(int sock, int level, int optionName, char* optionValue, int optionLen) => cast(int)std::syscall(std::sysctable::SetSockOpt, sock, level, optionName, optionValue, optionLen);
 
             (inline) int listen(int sock, int backlog) => cast(int)std::syscall(std::sysctable::Listen, sock, backlog);
-            (inline) int recvfrom(int sock, void* buffer, int length, int flags, std::socket::sockaddr* address, int* address_len) => cast(int)std::syscall(std::sysctable::RecvFrom, sock, buffer, length, flags, address, address_len);
-            (inline) int recv(int sock, char* buffer, int length, int flags) => cast(int)std::socket::recvfrom(sock, buffer, length, flags, null, null);
-            (inline) int recvmsg(int sock, std::socket::msghdr* message, int flags) => cast(int)std::syscall(std::sysctable::RecvFrom, sock, message, flags);
+            (inline) int recvFrom(int sock, void* buffer, int length, int flags, std::socket::sockaddr* address, int* address_len) => cast(int)std::syscall(std::sysctable::RecvFrom, sock, buffer, length, flags, address, address_len);
+            (inline) int recv(int sock, char* buffer, int length, int flags) => cast(int)std::socket::recvFrom(sock, buffer, length, flags, null, null);
+            (inline) int recvMsg(int sock, std::socket::msghdr* message, int flags) => cast(int)std::syscall(std::sysctable::RecvFrom, sock, message, flags);
 
-            extern(linkname: "send") int send(int sock, void* message, int length, int flags);
-            extern(linkname: "sendmsg") int sendmsg(int sock, std::socket::msghdr* message, int flags);
-            extern(linkname: "sendto") int sendto(int sock, void* message, int length, int flags, std::socket::sockaddr* dest_addr, int dest_len);
-            extern(linkname: "setsockopt") int setSockOpt(int sock, int level, int option_name, void* option_value, int option_len);
+            (inline) int sendTo(int sock, char* message, int length, int flags, std::socket::sockaddr* destAddr, int destLen) => cast(int)std::syscall(std::sysctable::SendTo, sock, message, length, flags, destAddr, destLen);
+            (inline) int send(int sock, char* message, int length, int flags) => std::socket::sendTo(sock, message, length, flags, null, 0);
+            (inline) int sendMsg(int sock, std::socket::msghdr* message, int flags) => cast(int)std::syscall(std::sysctable::SendMsg, sock, message, flags);
 
             (inline) int shutdown(int sock, int how) => cast(int)std::syscall(std::sysctable::Shutdown, sock, how);
 
-            extern(linkname: "socketpair") int socketpair(int domain, int type, int protocol, int* socket_vector);
+            (inline) int socketpair(int domain, int type, int protocol, int* socketVector) => cast(int)std::syscall(std::sysctable::SocketPair, domain, type, protocol, socketVector);
 
             (inline) int close(int sock) => cast(int)std::syscall(std::sysctable::Close, sock);
 
@@ -131,8 +131,9 @@ namespace std {
 
             extern(linkname: "htonl") uint htonl(uint hostlong);
             extern(linkname: "htons") ushort htons(ushort hostshort);
-            extern(linkname: "htohl") uint ntohl(uint netlong);
-            extern(linkname: "htohs") ushort ntohs(ushort netshort);
+
+            extern(linkname: "ntohl") uint ntohl(uint netlong);
+            extern(linkname: "ntohs") ushort ntohs(ushort netshort);
 
             extern(linkname: "gethostbyname") std::socket::hostent* getHostByName(char* name);
             extern(linkname: "gethostbyaddr") std::socket::hostent* getHostByAddr(char* addr, int len, int type);
@@ -153,16 +154,16 @@ namespace std {
 
             std::socket this {
                 std::socket this;
-                this.fd = 0;
+                this.fd = -1;
                 this.addr = null;
                 this.addrlen = 0;
             } => this;
 
-            int open(const(char)* ip, int port, long flag) {
+            int open(char* ip, int port, long flag) {
                 this.fd = std::socket::socket(std::socket::AfInet, std::socket::SockStream, 0);
                 if(this.fd < 0) return = this.fd;
                 else {
-                    this.addr = cast(std::socket::sockaddr_in*)std::malloc(sizeof(std::socket::sockaddr_in));
+                    this.addr = std::new<std::socket::sockaddr_in>();
                     this.addr.sin_family = std::socket::AfInet;
                     this.addr.sin_port = std::socket::htons(cast(ushort)port);
                     this.addr.sin_addr.s_addr = std::socket::htonl(flag);
@@ -174,34 +175,43 @@ namespace std {
                 this.fd = std::socket::socket(std::socket::AfInet, std::socket::SockStream, 0);
                 if(this.fd < 0) return = this.fd;
                 else {
-                    this.addr = cast(std::socket::sockaddr_in*)std::malloc(sizeof(std::socket::sockaddr_in));
+                    this.addr = std::new<std::socket::sockaddr_in>();
                     this.addr.sin_family = std::socket::AfInet;
                     this.addr.sin_port = std::socket::htons(cast(ushort)port);
                     this.addr.sin_addr.s_addr = std::socket::htonl(cast(int)0);
                 }
-            } => 0;
+            }
 
-            int bind => std::socket::bind(this.fd, cast(std::socket::sockaddr*)this.addr, sizeof(std::socket::sockaddr_in));
-            int listen => std::socket::listen(this.fd, std::socket::SomAxConn);
-            int connect => std::socket::connect(this.fd, cast(std::socket::sockaddr*)this.addr, sizeof(std::socket::sockaddr_in));
+            (inline) int bind => std::socket::bind(this.fd, cast(std::socket::sockaddr*)this.addr, sizeof(std::socket::sockaddr_in));
+            (inline) int listen => std::socket::listen(this.fd, std::socket::SomAxConn);
+            (inline) int connect => std::socket::connect(this.fd, cast(std::socket::sockaddr*)this.addr, sizeof(std::socket::sockaddr_in));
 
             std::socket accept {
-                std::socket accepted = std::socket();
-                accepted.addrlen = sizeof(std::socket::sockaddr_in);
-                accepted.fd = std::socket::accept(this.fd, cast(std::socket::sockaddr*)this.addr, accepted.&addrlen);
-            } => accepted;
+                return = std::socket();
+                return.addrlen = sizeof(std::socket::sockaddr_in);
+                return.fd = std::socket::accept(this.fd, cast(std::socket::sockaddr*)this.addr, return.&addrlen);
+            }
 
-            int read(char* data, int length) => std::socket::recv(this.fd, data, length, std::socket::MsgNoSig);
-            int write(char* data) => std::socket::send(this.fd, data, std::cstring::strlen(data), std::socket::MsgNoSig);
-            int write(std::string str) => std::socket::send(this.fd, str.c(), str.length, std::socket::MsgNoSig);
+            (inline) int read(char* data, int length) => std::socket::recv(this.fd, data, length, std::socket::MsgNoSig);
+            (inline) int write(char* data, int length) => std::socket::send(this.fd, data, length, std::socket::MsgNoSig);
+            (inline) int write(char* data) => std::socket::send(this.fd, data, std::cstring::strlen(data), std::socket::MsgNoSig);
+            (inline) int write(std::string str) => std::socket::send(this.fd, str.data, str.length, std::socket::MsgNoSig);
 
             void close {
                 std::socket::close(this.fd);
-                if(this.addr != null) std::free(this.addr);
+                this.fd = -1;
+
+                if(this.addr != null) {
+                    std::free(this.addr);
+                    this.addr = null;
+                }
             }
 
             void ~this {
-                if(this.addr != null) std::free(this.addr);
+                if(this.addr != null) {
+                    std::free(this.addr);
+                    this.addr = null;
+                }
             }
         }
     }
