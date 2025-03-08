@@ -133,13 +133,13 @@ RaveValue NodeIndex::generate() {
         else if(!instanceof<TypePointer>(ptr.type)) ptr = currScope->getWithoutLoad(id->name, this->loc);
 
         if(!generator->settings.noChecks && generator->settings.optLevel <= 2 && !LLVMIsAConstant(ptr.value) &&
-            ((AST::funcTable.find(currScope->funcName) != AST::funcTable.end() && AST::funcTable[currScope->funcName]->isNoChecks == false)
-            || AST::funcTable.find(currScope->funcName) == AST::funcTable.end())
+            (AST::funcTable.find(currScope->funcName) == AST::funcTable.end() || !AST::funcTable[currScope->funcName]->isNoChecks)
         ) {
-            if(AST::funcTable.find("std::assert[_b_pc]") != AST::funcTable.end()) {
-                (new NodeCall(this->loc, new NodeIden("std::assert[_b_pc]", this->loc), {
-                    new NodeBinary(TokType::Nequal, new NodeDone(ptr), new NodeNull(nullptr, this->loc), this->loc),
-                    new NodeString("Assert in '" + generator->file + "' file in function '" + currScope->funcName + "' at " + std::to_string(this->loc) + " line: trying to get a value from a null pointer!\n", false)
+            auto assertFunc = AST::funcTable.find("std::assert[_b_pc]");
+            if(assertFunc != AST::funcTable.end()) {
+                (new NodeCall(loc, new NodeIden(assertFunc->second->name, this->loc), {
+                    new NodeBinary(TokType::Nequal, new NodeDone(ptr), new NodeNull(nullptr, loc), loc),
+                    new NodeString("Assert in '" + generator->file + "' file in function '" + currScope->funcName + "' at " + std::to_string(loc) + " line: trying to get a value from a null pointer!\n", false)
                 }))->generate();
             }
         }

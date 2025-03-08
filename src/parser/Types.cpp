@@ -469,3 +469,8 @@ Type* getType(std::string id) {
 bool isFloatType(Type* type) {
     return (instanceof<TypeBasic>(type) && ((TypeBasic*)type)->isFloat()) || (instanceof<TypeVector>(type) && ((TypeBasic*)(((TypeVector*)type)->mainType))->isFloat());
 }
+
+bool isBytePointer(Type* type) {
+    std::string str = type->toString();
+    return str == "void*" || str == "char*" || str == "uchar*";
+}

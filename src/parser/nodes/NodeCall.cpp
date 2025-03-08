@@ -52,7 +52,7 @@ std::vector<RaveValue> NodeCall::correctByLLVM(std::vector<RaveValue> values, st
     if(fas.empty() || params.size() != fas.size()) return params;
 
     for(int i=0; i<params.size(); i++) {
-        if(fas[i].type->toString() == "void*" || fas[i].type->toString() == "char*") {
+        if(isBytePointer(fas[i].type)) {
             if((!instanceof<TypePointer>(params[i].type) || !instanceof<TypeBasic>(params[i].type->getElType()))) LLVM::cast(params[i], new TypePointer(basicTypes[BasicType::Char]));
         }
         else if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(((TypePointer*)fas[i].type)->instance)) {
@@ -92,7 +92,7 @@ std::vector<RaveValue> NodeCall::getParameters(std::vector<int>& byVals, NodeFun
     }
 
     for(int i=0; i<this->args.size(); i++) {
-        if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(((TypePointer*)fas[i].type)->instance) && !instanceof<TypePointer>(this->args[i]->getType())) {
+        if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(fas[i].type->getElType()) && !instanceof<TypePointer>(this->args[i]->getType())) {
             if(instanceof<NodeIden>(this->args[i])) ((NodeIden*)this->args[i])->isMustBePtr = true;
             else if(instanceof<NodeGet>(this->args[i])) ((NodeGet*)this->args[i])->isMustBePtr = true;
             else if(instanceof<NodeIndex>(this->args[i])) ((NodeIndex*)this->args[i])->isMustBePtr = true;
@@ -102,10 +102,10 @@ std::vector<RaveValue> NodeCall::getParameters(std::vector<int>& byVals, NodeFun
     }
 
     for(int i=0; i<params.size(); i++) {
-        if(fas[i].type->toString() == "void*" || fas[i].type->toString() == "char*") {
+        if(isBytePointer(fas[i].type)) {
             if(!instanceof<TypePointer>(params[i].type) || !instanceof<TypeBasic>(params[i].type->getElType())) LLVM::cast(params[i], new TypePointer(basicTypes[BasicType::Char]));
         }
-        else if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(((TypePointer*)fas[i].type)->instance)) {
+        else if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(fas[i].type->getElType())) {
             if(!instanceof<TypePointer>(params[i].type)) LLVM::makeAsPointer(params[i]);
         }
         else if(!instanceof<TypePointer>(fas[i].type) && instanceof<TypePointer>(params[i].type)) {
@@ -167,6 +167,7 @@ bool hasIdenticallyArgs(std::vector<Type*> one, std::vector<Type*> two) {
                 }
             }
         }
+
         if(one[i]->toString() != two[i]->toString()) return false;
     }
     return true;
@@ -374,7 +375,7 @@ RaveValue NodeCall::generate() {
             std::string callTypes = typesToString(this->getTypes());
             std::string sTypes;
 
-            if (presenceInFt) {
+            if(presenceInFt) {
                 if(AST::funcTable.find(mainName + callTypes) != AST::funcTable.end()) {
                     if(generator->functions.find(ifName + callTypes) != generator->functions.end()) {
                         // This function is already exists - just call it
@@ -409,27 +410,17 @@ RaveValue NodeCall::generate() {
             }
 
             if(presenceInFt) {
-                for(int i=0; i<types.size(); i++) {
-                    Type* current = types[i];
-                    Type* previous = nullptr;
-
-                    while(instanceof<TypeConst>(current) || instanceof<TypeArray>(current) || instanceof<TypePointer>(current) || instanceof<TypeStruct>(current)) {
-                        if(instanceof<TypeConst>(current)) {previous = current; current = ((TypeConst*)previous)->instance;}
-                        else if(instanceof<TypeArray>(current)) {previous = current; current = ((TypeArray*)previous)->element;}
-                        else if(instanceof<TypePointer>(current)) {previous = current; current = ((TypePointer*)previous)->instance;}
-                        else {
-                            while(generator->toReplace.find(current->toString()) != generator->toReplace.end()) current = generator->toReplace[current->toString()];
-
-                            if(previous == nullptr) types[i] = current->copy();
-                            else if(instanceof<TypeConst>(previous)) ((TypeConst*)previous)->instance = current->copy();
-                            else if(instanceof<TypeArray>(previous)) ((TypeArray*)previous)->element = current->copy();
-                            else ((TypePointer*)previous)->instance = current->copy();
-                            break;
-                        }
+                for(Type* &type : types) {
+                    while(instanceof<TypeConst>(type) || instanceof<TypeArray>(type) || instanceof<TypePointer>(type) || instanceof<TypeStruct>(type)) {
+                        if(instanceof<TypeConst>(type)) type = ((TypeConst*)type)->instance;
+                        else if(instanceof<TypeArray>(type)) type = ((TypeArray*)type)->element;
+                        else if(instanceof<TypePointer>(type)) type = ((TypePointer*)type)->instance;
+                        else type = generator->toReplace[type->toString()];
                     }
+
+                    sTypes += type->toString() + ",";
                 }
 
-                for(int i=0; i<types.size(); i++) sTypes += types[i]->toString() + ",";
                 sTypes = sTypes.substr(0, sTypes.length() - 1);
 
                 if(AST::funcTable.find(mainName + sTypes) != AST::funcTable.end()) return (new NodeCall(loc, new NodeIden(mainName + sTypes, loc), args))->generate();
@@ -440,15 +431,13 @@ RaveValue NodeCall::generate() {
                     while(generator->toReplace.find(types[i]->toString()) != generator->toReplace.end()) types[i] = generator->toReplace[types[i]->toString()];
                     sTypes += types[i]->toString() + ",";
                 }
-                sTypes = "<" + sTypes.substr(0, sTypes.length() - 1) + ">";
+                sTypes.back() = '>';
 
                 ifName = mainName + sTypes;
                 mainName = ifName.substr(0, ifName.find('<'));
                 if(AST::funcTable.find(mainName) == AST::funcTable.end()) {
                     // Not working... maybe generate structure?
-                    if(AST::structTable.find(mainName) != AST::structTable.end()) {
-                        AST::structTable[mainName]->genWithTemplate(sTypes, types);
-                    }
+                    if(AST::structTable.find(mainName) != AST::structTable.end()) AST::structTable[mainName]->genWithTemplate(sTypes, types);
                     else generator->error("undefined structure '" + ifName + "'!", this->loc);
                 }
             }

@@ -175,16 +175,8 @@ RaveValue NodeUnary::generate() {
         if(!instanceof<TypeStruct>(val2.type->getElType())) generator->error("the attempt to call the destructor is not in the structure!", this->loc);
 
         std::string struc = ((TypeStruct*)val2.type->getElType())->toString();
-        if(AST::structTable[struc]->destructor == nullptr) {
-            if(instanceof<NodeIden>(this->base)) {
-                NodeIden* id = (NodeIden*)this->base;
-                if(currScope->localVars.find(id->name) == currScope->localVars.end() && !instanceof<TypeStruct>(currScope->localVars[id->name]->type)) {
-                    return (new NodeCall(this->loc, new NodeIden("std::free", this->loc), {this->base}))->generate();
-                }
-                return {nullptr, nullptr};
-            }
-            return (new NodeCall(this->loc, new NodeIden("std::free", this->loc), {base}))->generate();
-        }
+        if(AST::structTable[struc]->destructor == nullptr) return {nullptr, nullptr};
+
         if(instanceof<NodeIden>(this->base)) {
             if(currScope->has(((NodeIden*)this->base)->name)) {
                 currScope->getVar(((NodeIden*)this->base)->name, this->loc)->isAllocated = false;
