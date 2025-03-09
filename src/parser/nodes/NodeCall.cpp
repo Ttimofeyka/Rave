@@ -263,6 +263,9 @@ RaveValue NodeCall::generate() {
                     for(int i=0; i<__types.size(); i++) __typesAll += __types[i]->toString() + ",";
                     __typesAll.back() = '>';
 
+                    if((AST::funcTable[ifName]->args.size() != this->args.size()) && !isCW64 && (!AST::funcTable[ifName]->isVararg))
+                        generator->error("wrong number of arguments for calling function '" + ifName + __typesAll + "' (" + std::to_string(AST::funcTable[ifName]->args.size()) + " expected, " + std::to_string(this->args.size()) + " provided)!", this->loc);
+
                     if(AST::funcTable.find(ifName + __typesAll) != AST::funcTable.end()) {
                         // If it was already generated - call it
                         std::vector<RaveValue> params = this->getParameters(byVals, AST::funcTable[ifName + __typesAll], false, AST::funcTable[ifName + __typesAll]->args);
@@ -353,6 +356,9 @@ RaveValue NodeCall::generate() {
                             return LLVM::call(generator->functions[x.first], params, (instanceof<TypeVoid>(x.second->type) ? "" : "callFunc"), byVals);
                         }
                     }
+
+                    if(!isCW64 && (!AST::funcTable[ifName]->isVararg))
+                        generator->error("wrong number of arguments for calling function '" + ifName + "' (" + std::to_string(AST::funcTable[ifName]->args.size()) + " expected, " + std::to_string(this->args.size()) + " provided)!", this->loc);
                 }
             }
 
@@ -391,6 +397,8 @@ RaveValue NodeCall::generate() {
                     }
                     mainName += callTypes;
                 }
+                else if((AST::funcTable[mainName]->args.size() != this->args.size()) && !isCW64 && (!AST::funcTable[mainName]->isVararg))
+                    generator->error("wrong number of arguments for calling function '" + ifName + "' (" + std::to_string(AST::funcTable[mainName]->args.size()) + " expected, " + std::to_string(this->args.size()) + " provided)!", this->loc);
             }
 
             sTypes = ifName.substr(ifName.find('<') + 1);
@@ -445,10 +453,13 @@ RaveValue NodeCall::generate() {
                 AST::funcTable[mainName]->generateWithTemplate(types, mainName + sTypes + (mainName.find('[') == std::string::npos ? callTypes : ""));
             }
             else {
+                sTypes = "<";
+
                 for(int i=0; i<types.size(); i++) {
                     while(generator->toReplace.find(types[i]->toString()) != generator->toReplace.end()) types[i] = generator->toReplace[types[i]->toString()];
                     sTypes += types[i]->toString() + ",";
                 }
+
                 sTypes.back() = '>';
 
                 ifName = mainName + sTypes;
