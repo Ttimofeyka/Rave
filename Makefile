@@ -18,7 +18,7 @@ endif
 
 ifeq ($(WINBUILD),1)
 	BIN = rave.exe
-	ifeq (, $(shell command -v $(LLVM_CONFIG)))
+	ifeq ("$(wildcard ~/LLVM)", "")
 		LLVM_CONFIG = ./LLVM/bin/llvm-config.exe
 	endif
 	LLVM_FULL_VERSION = $(shell $(LLVM_CONFIG) --version)
@@ -36,13 +36,8 @@ ifeq ($(WINBUILD),1)
 		LLVM_STATIC_FLAG1 = --link-static
 		LLVM_STATIC_FLAG2 = --system-libs
 	endif
-	LLVM_LINK_FLAGS = `$(LLVM_CONFIG) $(LLVM_STATIC_FLAG1) $(LLVM_STATIC_FLAG2) --libs`
+	LLVM_LINK_FLAGS = `$(LLVM_CONFIG) $(LLVM_STATIC_FLAG1) $(LLVM_STATIC_FLAG2) --libs --ldflags`
 	LLVM_LIBDIR = $(shell $(LLVM_CONFIG) $(LLVM_STATIC_FLAG1) --libdir)
-	ifeq ($(LLVM_NO_SHARED), 1)
-		# I've tried many LLVMs for Windows and concluded that
-		# if it supports only static linkage, it won't include this library into `llvm-config --libs`
-		LLVM_LINK_FLAGS = "$(LLVM_LIBDIR)/LLVM-C.lib"
-	endif
 	SRC = $(patsubst ".\\%",$ .\src\\%, $(shell ./getFiles.sh))
 	LLVM_COMPILE_FLAGS = `$(LLVM_CONFIG) --cflags`
 else
