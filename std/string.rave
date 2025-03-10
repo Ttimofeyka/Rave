@@ -135,7 +135,9 @@ namespace std {
             this.data[this.length] = '\0';
         }
 
-        void __appendC(char* cstr, int cstrlen) {
+        void appendC(char* cstr, int cstrlen) {
+            @if(__RAVE_RUNTIME_CHECKS) if(this.data == null) @return();
+
             int i = 0;
 
             if((this.length + cstrlen) >= this.capacity) {
@@ -154,11 +156,6 @@ namespace std {
             }
 
             this.data[this.length] = '\0';
-        }
-
-        (inline) void appendC(char* cstr, int cstrlen) {
-            @if(__RAVE_RUNTIME_CHECKS) if(this.data == null) @return();
-            this.__appendC(cstr, cstrlen);
         }
 
         (inline) void appendC(char* cstr) => this.appendC(cstr, std::cstring::strlen(cstr));
