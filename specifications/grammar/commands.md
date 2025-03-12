@@ -207,23 +207,23 @@ struct A {}
 
 @if(@isNumeric(int)) {
     // ...
-};
+}
 
 @if(@isPointer(int*)) {
     // ...
-};
+}
 
 @if(@isArray(int[1])) {
     // ...
-};
+}
 
 @if(@isVector(float4)) {
     // ...
-};
+}
 
 @if(@isStructure(A)) {
     // ...
-};
+}
 ```
 
 **@contains(str1, str2)** - Check if str2 is in str1.
@@ -231,15 +231,12 @@ struct A {}
 Example:
 
 ```d
-// From std/prelude.rave
+// Similar to std/prelude.rave
 @if(@aliasExists(__RAVE_IMPORTED_FROM)) {
-    @if(@contains(__RAVE_IMPORTED_FROM, "std/sysc.rave") == false) {
-        import <std/sysc>  
-    };
-};
-@if(!@aliasExists(__RAVE_IMPORTED_FROM)) {
-    import <std/sysc>
-};
+    @if(!(@contains(__RAVE_IMPORTED_FROM, "std/sysc.rave"))) import <std/sysc>  
+}
+
+@if(!@aliasExists(__RAVE_IMPORTED_FROM)) import <std/sysc>
 ```
 
 **@compileAndLink(strings)** - Compile and add files to the linker without importing them.
@@ -256,9 +253,7 @@ Example:
 Example:
 
 ```d
-@if(@typeToString(int) == "int") {
-
-};
+@if(@typeToString(int) == "int") {}
 ```
 
 **@aliasExists(name)** - Check if there is an alias with this name.
@@ -312,12 +307,13 @@ void main {
             // Has foo and bow
             if(@hasDestructor(Example)) {
                 // Has destructor
-            };
+            }
+
             if(!@hasDestructor(Example)) {
                 // Do not has destructor
-            };
-        };
-    };
+            }
+        }
+    }
 }
 ```
 
@@ -365,9 +361,7 @@ Example:
 
 ```d
 (ctargs) int bow {
-    @if(@tEquals(@getCurrArgType(), int)) {
-        @echo("Integer");
-    };
+    @if(@tEquals(@getCurrArgType(), int)) @echo("Integer");
 }
 ```
 
@@ -381,7 +375,7 @@ Example:
 
     @foreachArgs() {
         result += @getCurrArg(int);
-    };
+    }
 } => result;
 ```
 
@@ -391,9 +385,7 @@ Example:
 
 ```d
 (ctargs) int sum2 {
-    @if(@tNequals(@getArgType(0), @getArgType(1))) {
-        @error("Different types!");
-    };
+    @if(@tNequals(@getArgType(0), @getArgType(1))) @error("Different types!");
 } => @getArg(0, int) + @getArg(1, int);
 ```
 
@@ -403,15 +395,9 @@ Example:
 
 ```d
 (ctargs) int sum0to2 {
-    @if(@argsLength() == 0) {
-        return = 0;
-    };
-    @if(@argsLength() == 1) {
-        return = @getArg(int, 0);
-    };
-    @if(@argsLength() == 2) {
-        return = @getArg(int, 0) + @getArg(int, 1);
-    };
+    @if(@argsLength() == 0) return = 0;
+    @else @if(@argsLength() == 1) return = @getArg(int, 0);
+    @else @if(@argsLength() == 2) return = @getArg(int, 0) + @getArg(int, 1);
 }
 ```
 
