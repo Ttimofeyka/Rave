@@ -47,7 +47,7 @@ void NodeNamespace::check() {
         if(this->nodes[i] == nullptr) continue;
         if(instanceof<NodeFunc>(this->nodes[i])) {
             NodeFunc* nfunc = (NodeFunc*)this->nodes[i];
-            if(hidePrivated && nfunc->isPrivate) continue;
+            if(hidePrivated && nfunc->isPrivate && !nfunc->isCtargs) continue;
             if(this->isImported && nfunc->isChecked) {
                 nfunc->isChecked = false;
                 if(nfunc->namespacesNames.size() > 0 ) {
@@ -102,7 +102,7 @@ RaveValue NodeNamespace::generate() {
         if(this->nodes[i] == nullptr) continue;
         if(instanceof<NodeFunc>(this->nodes[i])) {
             NodeFunc* nfunc = (NodeFunc*)this->nodes[i];
-            if(hidePrivated && (nfunc->isPrivate)) continue;
+            if(hidePrivated && nfunc->isPrivate && !nfunc->isCtargs) continue;
             if(!this->nodes[i]->isChecked) {
                 for(int i=0; i<this->names.size(); i++) nfunc->namespacesNames.insert(nfunc->namespacesNames.begin(), this->names[i]);
                 this->nodes[i]->check();

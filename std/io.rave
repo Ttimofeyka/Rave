@@ -597,23 +597,23 @@ namespace std {
 
     (inline) void putswnlS(std::string s) => std::putswnl(s.data);
 
-    (ctargs, inline) void print {
+    (private, ctargs, inline) void print {
         std::string s = @callWithArgs(std::gsprint);
         std::putswnlS(s);
     }
 
-    (inline, ctargs) void println {
+    (private, ctargs, inline) void println {
         @callWithArgs(std::print, '\n');
     }
 
-    (ctargs, inline) void fprint {
+    (private, ctargs, inline) void fprint {
         std::file* f = @getArg(std::file*, 0);
         @skipArg();
         std::string str = @callWithArgs(std::gsprint);
         f.write(str.c(), str.length);
     }
 
-    (ctargs, inline) void fprintln {
+    (private, ctargs, inline) void fprintln {
         @callWithArgs(std::fprint, '\n');
     }
 }

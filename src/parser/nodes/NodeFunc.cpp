@@ -60,6 +60,7 @@ NodeFunc::NodeFunc(const std::string& name, std::vector<FuncArgSet> args, NodeBl
     for(int i=0; i<mods.size(); i++) {
         if(mods[i].name == "private") this->isPrivate = true;
         else if(mods[i].name == "noCopy") this->isNoCopy = true;
+        else if(this->mods[i].name == "ctargs") this->isCtargs = true;
     }
 }
 
@@ -244,7 +245,6 @@ RaveValue NodeFunc::generate() {
             if(!instanceof<NodeString>(newLinkName)) generator->error("value type of 'linkname' must be a string!", loc);
             linkName = ((NodeString*)newLinkName)->value;
         }
-        else if(this->mods[i].name == "ctargs") this->isCtargs = true;
         else if(this->mods[i].name == "comdat") this->isComdat = true;
         else if(this->mods[i].name == "nochecks") this->isNoChecks = true;
         else if(this->mods[i].name == "noOptimize") this->isNoOpt = true;

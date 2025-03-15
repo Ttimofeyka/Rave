@@ -343,7 +343,7 @@ namespace std {
         (inline) std::string fromFloat(float n) => std::string::fromFloatN(n, 7);
     }
 
-    (ctargs) void sprintBuffer {
+    (private, ctargs) void sprintBuffer {
         std::string* resultPtr = @getCurrArg(std::string*);
         std::string result = resultPtr[0];
 
@@ -432,7 +432,7 @@ namespace std {
     std::string __sprintBuffer;
     bool sbInitialized = false;
 
-    (ctargs) std::string gsprint {
+    (private, ctargs) std::string gsprint {
         std::__sprintBufferSL.lock();
 
         if(!std::sbInitialized) {
@@ -446,7 +446,7 @@ namespace std {
         std::__sprintBufferSL.unlock();
     } => std::__sprintBuffer;
 
-    (inline, ctargs) std::string sprint {
+    (private, inline, ctargs) std::string sprint {
         std::string result = "";
         @callWithBeforeArgs(std::sprintBuffer, &result);
     } => result;
