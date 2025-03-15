@@ -768,6 +768,8 @@ namespace std {
                 if(fd != -1) {return = true; std::syscall(std::sysctable::Close, fd);}
                 else return = false;
             }
+
+            (inline) int create(char* dname) => cast(int)std::syscall(std::sysctable::MakeDirAt, std::file::atFdCwd, dname, 448 || 56 || 4 || 1);
         }
 
         struct directory {
@@ -829,6 +831,7 @@ namespace std {
         alias fileAttributeDirectory = 16;
 
         extern(linkname: "GetFileAttributesW") int __GetFileAttributesW(ushort* name);
+        extern(linkname: "CreateDirectoryW") char __CreateDirectoryW(ushort* pathName, void* securityAttributes);
 
         namespace directory {
             bool __exists(ushort* dname) {
@@ -837,6 +840,14 @@ namespace std {
             }
 
             (inline) bool exists(char* dname) {
+                ushort* u16Str = std::utf8::toUTF16(dname);
+                return = std::directory::__exists(u16Str);
+                std::free(u16Str);
+            }
+
+            int __create(ushort* dname) => cast(int)std::__CreateDirectoryW(dname, null);
+
+            (inline) int create(char* dname) {
                 ushort* u16Str = std::utf8::toUTF16(dname);
                 return = std::directory::__exists(u16Str);
                 std::free(u16Str);
