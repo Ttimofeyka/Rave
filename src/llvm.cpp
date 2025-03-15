@@ -243,8 +243,6 @@ void LLVM::castForExpression(RaveValue& first, RaveValue& second) {
     }
 }
 
-// TODO: Add unsigned support?
-
 RaveValue LLVM::sum(RaveValue first, RaveValue second) {
     if(isFloatType(first.type)) return {LLVMBuildFAdd(generator->builder, first.value, second.value, "LLVM_fsum"), first.type};
     return {LLVMBuildAdd(generator->builder, first.value, second.value, "LLVM_sum"), first.type};
