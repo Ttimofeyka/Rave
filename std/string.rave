@@ -353,7 +353,7 @@ namespace std {
 
         @foreachArgs() {
             @if(@getCurrArgType() == double) {
-                if(std::math::isNAN(@getCurrArg(double))) result.appendC("NAN");
+                if(std::math::isNAN(@getCurrArg(double))) result.appendC("NAN", 3);
                 else {
                     std::cstring::dtos(@getCurrArg(double), 16, &nBuffer);
                     result.appendC(cast(char*)&nBuffer);
@@ -361,7 +361,7 @@ namespace std {
             }
 
             @if(@getCurrArgType() == float) {
-                if(std::math::isNAN(@getCurrArg(float))) result.appendC("NAN");
+                if(std::math::isNAN(@getCurrArg(float))) result.appendC("NAN", 3);
                 else {
                     std::cstring::dtos(@getCurrArg(double), 7, &nBuffer);
                     result.appendC(cast(char*)&nBuffer);
@@ -369,7 +369,7 @@ namespace std {
             }
 
             @if(@getCurrArgType() == half) {
-                if(std::math::isNAN(@getCurrArg(half))) result.appendC("NAN");
+                if(std::math::isNAN(@getCurrArg(half))) result.appendC("NAN", 3);
                 else {
                     std::cstring::dtos(@getCurrArg(double), 6, &nBuffer);
                     result.appendC(cast(char*)&nBuffer);
@@ -400,16 +400,16 @@ namespace std {
                 result.appendC(cast(char*)&nBuffer);
             }
 
-            @if((@getCurrArgType() == char*) || (@getCurrArgType() == uchar*)) {
+            @if((@getCurrArgType() == char*) || (@getCurrArgType() == uchar*) || (@getCurrArgType() == void*)) {
                 char* str = @getCurrArg(char*);
                 if(str != null) result.appendC(str);
-                else result.appendC("null");
+                else result.appendC("null", 4);
             }
 
             @if(@getCurrArgType() == std::string) {
                 std::string s = @getCurrArg(std::string);
                 if(s.data != null) result.append(s);
-                else result.appendC("null");
+                else result.appendC("null", 4);
             }
 
             @if(@getCurrArgType() == std::time) {
