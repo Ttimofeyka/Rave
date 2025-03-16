@@ -436,5 +436,7 @@ namespace std {
         }
 
         (inline) double stod(const(char)* data) => std::cstring::stod(data, std::cstring::strlen(data));
+
+        (inline) real stor(const(char)* data) => std::cstring::stor(data, std::cstring::strlen(data));
     }
 }
