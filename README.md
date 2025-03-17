@@ -42,7 +42,7 @@ For maximum performance, use the `-Ofast` or `-O3 --noChecks`. Also, don't forge
 ## Dependencies
 
 * `llvm-16`
-**You can also use LLVM from 14 to 18.**
+**You can also use LLVM from 14 to 19.**
 * `clang` or `gcc`
 * C++ compiler (with support of C++17 and higher)
 * Make
