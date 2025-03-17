@@ -127,11 +127,12 @@ import <std/io>
                 std::string reqline = std::sprint(method, " ", url.path, " HTTP/1.0\r\nHost: ", url.host, "\r\nConnection: close\r\n", headers, "\r\n", data);
                 defer ~reqline;
 
-                // init
                 std::socket sock = std::socket();
 
                 if(port == "") port = "80";
+
                 std::string trueip = std::network::_determine_true_ip(url.host, port.data);
+                defer ~trueip;
 
                 if(sock.open(trueip.data, port.toInt(), std::socket::InAddrBroadcast) < 0) {
                     std::network::Response resp_fail_ssl = std::network::Response();
@@ -201,7 +202,10 @@ import <std/io>
                 std::socket sock = std::socket();
 
                 if(port == "") port = "443";
+
                 std::string trueip = std::network::_determine_true_ip(url.host, port.data);
+                defer ~trueip;
+
                 if(sock.open(trueip.data, port.toInt(), std::socket::InAddrBroadcast) < 0) {
                     std::network::Response resp_fail_ssl = std::network::Response();
                     resp_fail_ssl.success = -5; // open failure
