@@ -770,6 +770,8 @@ namespace std {
             }
 
             (inline) int create(char* dname) => cast(int)std::syscall(std::sysctable::MakeDirAt, std::file::atFdCwd, dname, 448 || 56 || 4 || 1);
+
+            (inline) int create(std::string dname) => std::directory::create(dname.data);
         }
 
         struct directory {
@@ -780,6 +782,13 @@ namespace std {
                 std::directory this;
 
                 this.path = path;
+                this.fd = -1;
+            } => this;
+
+            std::directory this(std::string path) {
+                std::directory this;
+
+                this.path = path.data;
                 this.fd = -1;
             } => this;
 
@@ -852,6 +861,8 @@ namespace std {
                 return = std::directory::__exists(u16Str);
                 std::free(u16Str);
             }
+
+            (inline) int create(std::string dname) => std::directory::create(dname.data);
         }
 
         struct __findDataW {
@@ -883,6 +894,14 @@ namespace std {
                 std::directory this;
 
                 this.path = path;
+                this.__path = null;
+                this.__pathSearch = null;
+            } => this;
+
+            std::directory this(std::string path) {
+                std::directory this;
+
+                this.path = path.data;
                 this.__path = null;
                 this.__pathSearch = null;
             } => this;
