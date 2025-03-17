@@ -288,6 +288,14 @@ void Compiler::compile(std::string file) {
         raveOs = RAVE_OS;
     }
 
+    std::string littleEndian = "false";
+    std::string bigEndian = "false";
+
+    // Note: PowerPC must be rechecked for endianness
+
+    if(ravePlatform == "MIPS64" || ravePlatform == "MIPS") bigEndian = "true";
+    else littleEndian = "true";
+
     bool sse = settings.sse && Compiler::options["sse"].template get<bool>();
     bool sse2 = settings.sse2 && Compiler::options["sse2"].template get<bool>();
     bool sse3 = settings.sse3 && Compiler::options["sse3"].template get<bool>();
@@ -326,6 +334,7 @@ void Compiler::compile(std::string file) {
               + "alias __RAVE_SSE4A = " + (sse4a ? "true" : "false") + "; "
               + "alias __RAVE_SSE4_1 = " + (sse4_1 ? "true" : "false") + "; " + "alias __RAVE_SSE4_2 = " + (sse4_2 ? "true" : "false") + "; "
               + "; alias __RAVE_AVX = " + (avx ? "true" : "false") + "; " + "alias __RAVE_AVX2 = " + (avx2 ? "true" : "false") + "; " + "alias __RAVE_AVX512 = " + (avx512 ? "true" : "false") + "; "
+              + "alias __RAVE_LITTLE_ENDIAN = \"" + littleEndian + "\"; alias __RAVE_BIG_ENDIAN = \"" + bigEndian + "\"; " 
               + (Compiler::settings.noPrelude || file.find("std/prelude.rave") != std::string::npos || file.find("std/memory.rave") != std::string::npos ? "" : "import <std/prelude> <std/memory>") +
               "\n" + oldContent;
 

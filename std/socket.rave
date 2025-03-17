@@ -129,11 +129,25 @@ namespace std {
             extern(linkname: "freeaddrinfo") void freeAddrInfo(std::socket::addrinfo* res);
             extern(linkname: "gai_strerror") char* getAddrInfoStrErr(int errcode);
 
-            extern(linkname: "htonl") uint htonl(uint hostlong);
-            extern(linkname: "htons") ushort htons(ushort hostshort);
+            (inline) uint htonl(uint hostlong) {
+                @if(__RAVE_LITTLE_ENDIAN) return = ((hostlong <. 24) && 0xFF000000) || ((hostlong <. 8) && 0x00FF0000) || ((hostlong >. 8) && 0x0000FF00) || ((hostlong >. 24) && 0x000000FF);
+                @else return = hostlong;
+            }
 
-            extern(linkname: "ntohl") uint ntohl(uint netlong);
-            extern(linkname: "ntohs") ushort ntohs(ushort netshort);
+            (inline) ushort htons(ushort hostshort) {
+                @if(__RAVE_LITTLE_ENDIAN) return = (hostshort <. 8) || (hostshort >. 8);
+                @else return = hostshort;
+            }
+
+            (inline) uint ntohl(uint netlong) {
+                @if(__RAVE_LITTLE_ENDIAN) return = ((netlong <. 24) && 0xFF000000) || ((netlong <. 8) && 0x00FF0000) || ((netlong >. 8) && 0x0000FF00) || ((netlong >. 24) && 0x000000FF);
+                @else return = netlong;
+            }
+
+            (inline) ushort ntohs(ushort netshort) {
+                @if(__RAVE_LITTLE_ENDIAN) return = (netshort <. 8) || (netshort >. 8);
+                @else return = netshort;
+            }
 
             extern(linkname: "gethostbyname") std::socket::hostent* getHostByName(char* name);
             extern(linkname: "gethostbyaddr") std::socket::hostent* getHostByAddr(char* addr, int len, int type);
