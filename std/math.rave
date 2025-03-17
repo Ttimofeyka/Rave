@@ -404,15 +404,16 @@ namespace std {
         } => x;
 
         bool isPrime(int number) {
-            bool result = true;
-            if(number == 1) result = false;
-            else for(int i=2; (i*i) <= number; i+=1) {
-                if(number % i == 0) {
-                    result = false;
+            return = true;
+
+            if(number == 1) return = false;
+            else for(int i=2; (i * i) <= number; i+=1) {
+                if((number % i) == 0) {
+                    return = false;
                     break;
                 }
             }
-        } => result;
+        }
         
         double sigmoid(double x) => 1d / (1d + std::math::exp(-x));
         float sigmoid(float x) => 1f / (1f + std::math::exp(-x));
