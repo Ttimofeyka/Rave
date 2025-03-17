@@ -218,6 +218,8 @@ RaveValue NodeBuiltin::generate() {
     this->name = trim(this->name);
     if(this->name[0] == '@') this->name = this->name.substr(1);
     if(this->name == "baseType") {
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+
         Type* ty = this->asType(0)->type;
         if(instanceof<TypeArray>(ty)) this->type = ((TypeArray*)ty)->element;
         else if(instanceof<TypePointer>(ty)) this->type = ((TypePointer*)ty)->instance;
@@ -279,6 +281,8 @@ RaveValue NodeBuiltin::generate() {
         return result;
     }
     if(this->name == "aliasExists") {
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+
         if(AST::aliasTable.find(this->getAliasName(0)) != AST::aliasTable.end()) return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
         return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
     }
@@ -289,7 +293,11 @@ RaveValue NodeBuiltin::generate() {
         }
         return {};
     }
-    if(this->name == "sizeOf") return {LLVM::makeInt(32, (asType(0)->type)->getSize() / 8, false), basicTypes[BasicType::Bool]};
+    if(this->name == "sizeOf") {
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+
+        return {LLVM::makeInt(32, (asType(0)->type)->getSize() / 8, false), basicTypes[BasicType::Bool]};
+    }
     if(this->name == "argsLength") return (new NodeInt(AST::funcTable[currScope->funcName]->args.size()))->generate();
     if(this->name == "getCurrArgNumber") return (new NodeInt(generator->currentBuiltinArg))->generate();
     if(this->name == "callWithArgs") {
@@ -309,28 +317,46 @@ RaveValue NodeBuiltin::generate() {
         return (new NodeCall(this->loc, args[0], nodes))->generate();
     }
     if(this->name == "tEquals") {
+        if(this->args.size() < 2) generator->error("at least two arguments are required!", this->loc);
+
         if(this->asType(0)->type->toString() == this->asType(1)->type->toString()) return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
         return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
     }
     if(this->name == "isArray") {
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+
         Type* ty = this->asType(0)->type;
         while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
         return {LLVM::makeInt(1, instanceof<TypeArray>(ty), false), basicTypes[BasicType::Bool]};
     }
     if(this->name == "isVector") {
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+
         Type* ty = this->asType(0)->type;
         while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
         return {LLVM::makeInt(1, instanceof<TypeVector>(ty), false), basicTypes[BasicType::Bool]};
     }
     if(this->name == "isPointer") {
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+
         Type* ty = this->asType(0)->type;
         while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
         return {LLVM::makeInt(1, instanceof<TypePointer>(ty), false), basicTypes[BasicType::Bool]};
     }
-    if(this->name == "getCurrArg") return (new NodeCast(asType(0)->type, new NodeIden("_RaveArg" + std::to_string(generator->currentBuiltinArg), this->loc), this->loc))->generate();
-    if(this->name == "getArg") return (new NodeCast(asType(0)->type, new NodeIden("_RaveArg" + asNumber(1).to_string(), this->loc), this->loc))->generate();
+    if(this->name == "getCurrArg") {
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+
+        return (new NodeCast(asType(0)->type, new NodeIden("_RaveArg" + std::to_string(generator->currentBuiltinArg), this->loc), this->loc))->generate();
+    }
+    if(this->name == "getArg") {
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+
+        return (new NodeCast(asType(0)->type, new NodeIden("_RaveArg" + asNumber(1).to_string(), this->loc), this->loc))->generate();
+    }
     if(this->name == "getArgType") {
-        this->type = currScope->getVar("_RaveArg"+asNumber(1).to_string())->type;
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+
+        this->type = currScope->getVar("_RaveArg" + asNumber(1).to_string())->type;
         return {};
     }
     if(this->name == "skipArg") {
@@ -342,20 +368,28 @@ RaveValue NodeBuiltin::generate() {
         return {};
     }
     if(this->name == "compileAndLink") {
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+
         std::string iden = this->asStringIden(0);
         if(iden[0] == '<') AST::addToImport.push_back(exePath + iden.substr(1, iden.size()-1) + ".rave");
         else AST::addToImport.push_back(getDirectory3(AST::mainFile) + "/" + iden.substr(1, iden.size()-1) + ".rave");
         return {};
     }
     if(this->name == "isStructure") {
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+
         if(instanceof<TypeStruct>(asType(0)->type)) return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
         return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
     }
     if(this->name == "isNumeric") {
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+
         if(instanceof<TypeBasic>(asType(0)->type)) return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
         return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
     }
     if(this->name == "isUnsigned") {
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+
         if(instanceof<TypeBasic>(asType(0)->type)) return {LLVM::makeInt(1, ((TypeBasic*)asType(0)->type)->isUnsigned(), false), basicTypes[BasicType::Bool]};
         return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
     }
@@ -380,7 +414,9 @@ RaveValue NodeBuiltin::generate() {
         return {};
     }
     if(this->name == "addLibrary") {
-        Compiler::linkString += " -l"+asStringIden(0)+" ";
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+
+        Compiler::linkString += " -l" + asStringIden(0) + " ";
         return {};
     }
     else if(this->name == "return") {
@@ -396,6 +432,8 @@ RaveValue NodeBuiltin::generate() {
         return {};
     }
     else if(this->name == "hasMethod") {
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+
         Type* ty = asType(0)->type;
         if(generator->toReplace.find(ty->toString()) != generator->toReplace.end()) ty = generator->toReplace[ty->toString()];
 
@@ -423,17 +461,24 @@ RaveValue NodeBuiltin::generate() {
         return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
     }
     else if(this->name == "hasDestructor") {
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+
         auto it = AST::structTable.find(asType(0)->type->toString());
         return {LLVM::makeInt(1, it != AST::structTable.end() && it->second->destructor != nullptr, false), basicTypes[BasicType::Bool]};
     }
     else if(this->name == "atomicTAS") {
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+
         LLVMValueRef result = LLVMBuildAtomicRMW(generator->builder, LLVMAtomicRMWBinOpXchg, this->args[0]->generate().value,
             this->args[1]->generate().value, LLVMAtomicOrderingSequentiallyConsistent, false
         );
+
         LLVMSetVolatile(result, true);
         return {result, basicTypes[BasicType::Int]};
     }
     else if(this->name == "atomicClear") {
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+
         RaveValue ptr = this->args[0]->generate();
         LLVMValueRef store = LLVMBuildStore(generator->builder, LLVMConstNull(generator->genType(ptr.type->getElType(), loc)), ptr.value);
         LLVMSetOrdering(store, LLVMAtomicOrderingSequentiallyConsistent);
