@@ -718,14 +718,15 @@ namespace std {
         }
     }
 
-    std::string readLine {
-        std::string buffer = "";
+    void readLineBuffer(std::string* buffer) {
         char ch = std::getchar();
         while((ch != '\n') && (ch != -1)) {
             buffer.add(ch);
             ch = std::getchar();
         }
-    } => buffer;
+    }
+
+    (inline) std::string readLine {return = ""; std::readLineBuffer(&return);}
 
     namespace ansi {
         alias black = "\033[30m";
