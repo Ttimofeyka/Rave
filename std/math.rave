@@ -454,6 +454,18 @@ namespace std {
             for(int i=0; i<size; i++) x[i] /= sum;
         }
 
+        double softplus(double x) {
+            if(x > 37d) return = x;
+            else if(x < -37d) return = std::math::exp(x);
+            else return = std::math::log(1d + std::math::exp(x));
+        }
+
+        float softplus(float x) {
+            if(x > 37f) return = x;
+            else if(x < -37f) return = std::math::exp(x);
+            else return = std::math::log(1f + std::math::exp(x));
+        }
+
         void rmsnorm(double* out, double* x, double* weight, int size) {
             double ss;
 
