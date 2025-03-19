@@ -78,7 +78,7 @@ import <std/math>
                         }
                         else {
                             // Handle the remaining elements that are not a multiple of 4
-                            for(int z=j; z<columns; z++) target[i * columns + j] = left[i * columns + j] + right[i * columns + j];
+                            for(int z=j; z<columns; z++) target[i * columns + z] = left[i * columns + z] + right[i * columns + z];
                             break; // Exit the loop since we've handled all columns
                         }
                     }
@@ -94,7 +94,7 @@ import <std/math>
                         }
                         else {
                             // Handle the remaining elements that are not a multiple of 4
-                            for(int z=j; z<columns; z++) target[i * columns + j] = left[i * columns + j] - right[i * columns + j];
+                            for(int z=j; z<columns; z++) target[i * columns + z] = left[i * columns + jz] - right[i * columns + z];
                             break; // Exit the loop since we've handled all columns
                         }
                     }
@@ -202,7 +202,7 @@ import <std/math>
                         }
                         else {
                             // Handle the remaining elements that are not a multiple of 8
-                            for(int z=j; z<columns; z++) target[i * columns + j] = left[i * columns + j] + right[i * columns + j];
+                            for(int z=j; z<columns; z++) target[i * columns + z] = left[i * columns + z] + right[i * columns + z];
                             break; // Exit the loop since we've handled all columns
                         }
                     }
@@ -218,7 +218,7 @@ import <std/math>
                         }
                         else {
                             // Handle the remaining elements that are not a multiple of 8
-                            for(int z=j; z<columns; z++) target[i * columns + j] = left[i * columns + j] - right[i * columns + j];
+                            for(int z=j; z<columns; z++) target[i * columns + z] = left[i * columns + z] - right[i * columns + z];
                             break; // Exit the loop since we've handled all columns
                         }
                     }
@@ -228,8 +228,8 @@ import <std/math>
             void scale(float* matrix, float* target, int rows, int columns, float scalar) {
                 float8 scalarVec = @vFrom(float8, scalar);
                 const(int) rc = (rows * columns);
-                for(int i=0; i<rc; i+=4) {
-                    if((i + 3) < rc) {
+                for(int i=0; i<rc; i+=8) {
+                    if((i + 7) < rc) {
                         float8 buffer = @vLoad(float8, &matrix[i], false) * scalarVec;
                         @vStore(buffer, itop(float*, ptoi(target) + (sizeof(float) * i)), false);
                     }
