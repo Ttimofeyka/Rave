@@ -54,7 +54,7 @@ jam = @vShuffle(jam, jam, [0, 0, 0, 0]); // 10f, 10f, 10f, 10f
 
 **@vHAdd32x4, @vHAdd16x8 (vector1, vector2)** - Add the horizontal elements of two vectors side by side, returning the output vector as a result.
 
-**@vHAdd32x4** works for `int4` and `float8`, **@vHAdd16x8** works for `short8`.
+**@vHAdd32x4** works for `int4` and `float4`, **@vHAdd16x8** works for `short8`.
 
 Example:
 
