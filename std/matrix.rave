@@ -4,7 +4,7 @@ Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-import <std/math>
+import <std/math> <std/io>
 
 @if((!__RAVE_SSE2) && (!__RAVE_AVX2)) {
     // Using naive methods (slowly, but works)
@@ -19,20 +19,15 @@ import <std/math>
                 }
             }
 
-            void add(float* left, float* right, float* target, int rows, int columns) {
-                for(int i=0; i<rows; i++) {
-                    for(int j=0; j<columns; j++) target[i * columns + j] = left[i * columns + j] + right[i * columns + j];
-                }
-            }
-
-            void sub(float* left, float* right, float* target, int rows, int columns) {
-                for(int i=0; i<rows; i++) {
-                    for(int j=0; j<columns; j++) target[i * columns + j] = left[i * columns + j] - right[i * columns + j];
-                }
-            }
-
             void scale(float* matrix, float* target, int rows, int columns, float scalar) {
                 for(int i=0; i<rows * columns; i++) target[i] = matrix[i] * scalar;
+            }
+
+            void vscale(float* matrix, int rows, int columns, float* vector, float* result) {
+                for(int column=0; column<columns; column++) {
+                    result[column] = 0f;
+                    for(int row=0; row<rows; row++) result[column] += vector[row] * matrix[row * columns + column];
+                }
             }
 
             void transpose(float* matrix, float* target, int rows, int columns) {
@@ -69,38 +64,6 @@ import <std/math>
                 }
             }
 
-            void add(float* left, float* right, float* target, int rows, int columns) {
-                for(int i=0; i<rows; i++) {
-                    for(int j=0; j<columns; j++) {
-                        if((j + 3) < columns) {
-                            float4 buffer = @vLoad(float4, &left[i * columns + j], false) + @vLoad(float4, &right[i * columns + j], false);
-                            @vStore(buffer, &target[i * columns + j], false);
-                        }
-                        else {
-                            // Handle the remaining elements that are not a multiple of 4
-                            for(int z=j; z<columns; z++) target[i * columns + z] = left[i * columns + z] + right[i * columns + z];
-                            break; // Exit the loop since we've handled all columns
-                        }
-                    }
-                }
-            }
-
-            void sub(float* left, float* right, float* target, int rows, int columns) {
-                for(int i=0; i<rows; i++) {
-                    for(int j=0; j<columns; j++) {
-                        if((j + 3) < columns) {
-                            float4 buffer = @vLoad(float4, &left[i * columns + j], false) - @vLoad(float4, &right[i * columns + j], false);
-                            @vStore(buffer, &target[i * columns + j], false);
-                        }
-                        else {
-                            // Handle the remaining elements that are not a multiple of 4
-                            for(int z=j; z<columns; z++) target[i * columns + z] = left[i * columns + jz] - right[i * columns + z];
-                            break; // Exit the loop since we've handled all columns
-                        }
-                    }
-                }
-            }
-
             void scale(float* matrix, float* target, int rows, int columns, float scalar) {
                 float4 scalarVec = @vFrom(float4, scalar);
                 const(int) rc = (rows * columns);
@@ -114,6 +77,35 @@ import <std/math>
                         for(int j=i; j<rc; j++) target[j] = matrix[j] * scalar;
                         break; // Exit the loop since we've handled all elements
                     }
+                }
+            }
+
+            void vscale(float* matrix, int rows, int columns, float* vector, float* result) {
+                int column;
+                for(column=0; column<columns; column+=4) {
+                    if((column + 3) < columns) {
+                        float4 clResult = @vFrom(float4, 0f);
+
+                        int row;
+                        for(row=0; row<rows; row+=4) {
+                            if((row + 3) < rows) clResult = clResult + (@vLoad(float4, &vector[row], false) * @vLoad(float4, &matrix[column * rows + row], false));
+                            else break;
+                        }
+
+                        while(row < rows) {
+                            for(int i=0; i<4; i++) clResult[i] += vector[row] * matrix[column * rows + row + i];
+                            row += 1;
+                        }
+
+                        @vStore(clResult, &result[column], false);
+                    }
+                    else break;
+                }
+
+                while(column < columns) {
+                    result[column] = 0f;
+                    for(int row=0; row<rows; row++) result[column] += vector[row] * matrix[column * rows + row];
+                    column += 1;
                 }
             }
 
@@ -193,38 +185,6 @@ import <std/math>
                 }
             }
 
-            void add(float* left, float* right, float* target, int rows, int columns) {
-                for(int i=0; i<rows; i++) {
-                    for(int j=0; j<columns; j++) {
-                        if((j + 7) < columns) {
-                            float8 buffer = @vLoad(float8, &left[i * columns + j], false) + @vLoad(float8, &right[i * columns + j], false);
-                            @vStore(buffer, &target[i * columns + j], false);
-                        }
-                        else {
-                            // Handle the remaining elements that are not a multiple of 8
-                            for(int z=j; z<columns; z++) target[i * columns + z] = left[i * columns + z] + right[i * columns + z];
-                            break; // Exit the loop since we've handled all columns
-                        }
-                    }
-                }
-            }
-
-            void sub(float* left, float* right, float* target, int rows, int columns) {
-                for(int i=0; i<rows; i++) {
-                    for(int j=0; j<columns; j++) {
-                        if((j + 7) < columns) {
-                            float8 buffer = @vLoad(float8, &left[i * columns + j], false) - @vLoad(float8, &right[i * columns + j], false);
-                            @vStore(buffer, &target[i * columns + j], false);
-                        }
-                        else {
-                            // Handle the remaining elements that are not a multiple of 8
-                            for(int z=j; z<columns; z++) target[i * columns + z] = left[i * columns + z] - right[i * columns + z];
-                            break; // Exit the loop since we've handled all columns
-                        }
-                    }
-                }
-            }
-
             void scale(float* matrix, float* target, int rows, int columns, float scalar) {
                 float8 scalarVec = @vFrom(float8, scalar);
                 const(int) rc = (rows * columns);
@@ -238,6 +198,35 @@ import <std/math>
                         for(int j=i; j<rc; j++) target[j] = matrix[j] * scalar;
                         break; // Exit the loop since we've handled all elements
                     }
+                }
+            }
+
+            void vscale(float* matrix, int rows, int columns, float* vector, float* result) {
+                int column;
+                for(column=0; column<columns; column+=8) {
+                    if((column + 7) < columns) {
+                        float8 clResult = @vFrom(float8, 0f);
+
+                        int row;
+                        for(row=0; row<rows; row+=8) {
+                            if((row + 7) < rows) clResult = clResult + (@vLoad(float8, &vector[row], false) * @vLoad(float8, &matrix[column * rows + row], false));
+                            else break;
+                        }
+
+                        while(row < rows) {
+                            for(int i=0; i<8; i++) clResult[i] += vector[row] * matrix[column * rows + row + i];
+                            row += 1;
+                        }
+
+                        @vStore(clResult, &result[column], false);
+                    }
+                    else break;
+                }
+
+                while(column < columns) {
+                    result[column] = 0f;
+                    for(int row=0; row<rows; row++) result[column] += vector[row] * matrix[column * rows + row];
+                    column += 1;
                 }
             }
 
