@@ -931,6 +931,8 @@ namespace std {
 
             void readEntriesBuffer(std::vector<std::string>* list) {
                 std::__findDataW* data = cast(std::__findDataW*)std::malloc(sizeof(std::__findDataW));
+                defer std::free(cast(void*)data);
+
                 void* handle = std::FindFirstFileW(__pathSearch, data);
 
                 if(handle != null) {
