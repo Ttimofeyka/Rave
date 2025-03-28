@@ -17,7 +17,7 @@ int main {
 
     a -= b;
     c += d;
-} => (a+b-c-d);
+} => (a + b * c / d);
 ```
 
 Division by zero is **undefined behavior** regardless of the types of expression.
