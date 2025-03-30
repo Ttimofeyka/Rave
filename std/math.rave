@@ -310,26 +310,30 @@ namespace std {
         double cos(double d) {
             while(d < 0.0) d = d + (2.0 * std::math::PI);
             while(d > (2.0 * std::math::PI)) d = d - (2.0 * std::math::PI);
+
             double t = 1.0;
-            double cos = t;
+            return = t;
+
             for(int i=1; i<40; i+=1) {
                 double mult = (-d) * (d / ((2*i)*(2*i-1)));
                 t = t * mult;
-                cos = cos + t;
+                return += t;
             }
-        } => cos;
+        }
 
         float cos(float f) {
             while(f < 0.0) f = f + (2.0 * std::math::PI);
             while(f > (2.0 * std::math::PI)) f = f - (2.0 * std::math::PI);
+
             float t = 1.0;
-            float cos = t;
+            return = t;
+
             for(int i=1; i<40; i+=1) {
                 float mult = (-f) * (f / ((2*i)*(2*i-1)));
                 t = t * mult;
-                cos = cos + t;
+                return += t;
             }
-        } => cos;
+        }
 
         (conditions: [SIGN_T != void]) char sign<SIGN_T>(SIGN_T x) {
             if(x < cast(SIGN_T)null) return = -1;
