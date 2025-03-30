@@ -20,5 +20,5 @@ void main {
 
     // Let's print a value of "compiler" variable!
     std::json::Value compiler = jvalue.get("compiler");
-    std::println("'compiler' is ", compiler.asCString(), "!"); // You can use .asString() or .asU8String() methods too
+    std::println("'compiler' is ", compiler.asCString(), "!"); // You can use .asString() method too
 }
