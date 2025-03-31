@@ -179,6 +179,8 @@ LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options)
     this->context = LLVMContextCreate();
     this->lModule = LLVMModuleCreateWithNameInContext("rave", this->context);
 
+    if(this->file.find('/') == std::string::npos && this->file.find('\\') == std::string::npos) this->file = "./" + this->file;
+
     functions["llvm.expect.i1"] = {LLVMAddFunction(lModule, "llvm.expect.i1", LLVMFunctionType(
         LLVMInt1TypeInContext(context),
         std::vector<LLVMTypeRef>({LLVMInt1TypeInContext(context), LLVMInt1TypeInContext(context)}).data(),
