@@ -78,7 +78,16 @@ Type* TypePointer::check(Type* parent) {
     return nullptr; 
 }
 
-int TypePointer::getSize() {return 64;}
+int TypePointer::getSize() {
+    if(AST::aliasTable.find("__RAVE_PLATFORM") != AST::aliasTable.end()) {
+        if(((NodeString*)AST::aliasTable["__RAVE_PLATFORM"])->value == "X86_64" ||
+           ((NodeString*)AST::aliasTable["__RAVE_PLATFORM"])->value == "AARCH64" ||
+           ((NodeString*)AST::aliasTable["__RAVE_PLATFORM"])->value == "POWERPC64" ||
+           ((NodeString*)AST::aliasTable["__RAVE_PLATFORM"])->value == "MIPS64") return 64;
+        return 32;
+    }
+    return 64;
+}
 std::string TypePointer::toString() {return instance->toString() + "*";}
 Type* TypePointer::getElType() {
     while(instanceof<TypeConst>(instance)) instance = instance->getElType();
