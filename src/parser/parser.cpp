@@ -809,6 +809,7 @@ Type* Parser::parseTypeAtom() {
     if(this->peek()->type == TokType::Identifier) {
         std::string id = this->peek()->value;
         this->next();
+
         if(id == "void") return typeVoid;
         else if(id == "auto") return new TypeAuto();
         else if(id == "const") {

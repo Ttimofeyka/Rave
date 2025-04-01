@@ -9,8 +9,8 @@ import <std/memory> <std/map>
 namespace std {
     (data: "data", length: "length", conditions: [VECTOR_T != void]) struct vector<VECTOR_T> {
         (noOperators) VECTOR_T* data;
-        int capacity;
-        int length;
+        uint capacity;
+        uint length;
 
         (arrayable) std::vector<VECTOR_T> this {
             std::vector<VECTOR_T> this;

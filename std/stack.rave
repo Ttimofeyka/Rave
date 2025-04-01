@@ -9,8 +9,8 @@ import <std/memory> <std/map>
 namespace std {
     (conditions: [STACK_T != void]) struct stack<STACK_T> {
         (noOperators) STACK_T* data;
-        int capacity;
-        int length;
+        uint capacity;
+        uint length;
 
         (arrayable) std::stack<STACK_T> this {
             std::stack<STACK_T> this;

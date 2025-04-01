@@ -17,8 +17,8 @@ namespace std {
 
     (conditions: [K != void, V != void]) struct hashmap<K, V> {
         std::hashmap::Entry<K, V>** table;
-        int length;
-        int mapSize;
+        uint length;
+        uint mapSize;
 
         std::hashmap<K, V> this {
             std::hashmap<K, V> this;
@@ -51,12 +51,14 @@ namespace std {
 
             std::hashmap::Entry<K, V>* entry = table[index];
             bool setted = false;
+
             while(entry != null) {
                 if(key == entry.key) {
                     entry.value = value;
                     setted = true;
                     break;
                 }
+
                 entry = entry.next;
             }
 
@@ -80,6 +82,7 @@ namespace std {
                     entry.next = null;
                     previous.next = entry;
                 }
+
                 length += 1;
             }
         }
@@ -150,6 +153,7 @@ namespace std {
 
                 table[i] = null;
             }
+
             length = 0;
         }
 
@@ -166,6 +170,7 @@ namespace std {
                         std::free(cast(void*)old);
                     }
                 }
+
                 this.table = null;
             }
         }

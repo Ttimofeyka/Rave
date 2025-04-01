@@ -12,8 +12,8 @@ namespace std {
 
     (data: "data", length: "length") struct string {
         char* data;
-        int length;
-        int capacity;
+        uint length;
+        uint capacity;
 
         std::string this(char* str) {
             std::string this;
