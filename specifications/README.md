@@ -34,6 +34,7 @@ The characters are enclosed in single quotes (").
 ##### [std/cstring](std/cstring.md)
 ##### [std/hash](std/hash.md)
 ##### [std/io](std/io.md)
+##### [std/json](std/json.md)
 ##### [std/library](std/library.md)
 ##### [std/memory](std/memory.md)
 ##### [std/random](std/random.md)
