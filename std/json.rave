@@ -160,6 +160,12 @@ namespace std {
 
             (inline) void setString(char* name, std::string str) => this.setCString(name, str.data, str.length);
 
+            void setBoolean(char* name, bool value) {
+                std::json::Value newBoolean;
+                newBoolean.makeBoolean(value);
+                this.set(name, newBoolean);
+            }
+
             void setLong(char* name, long number) {
                 std::json::Value newInteger;
                 newInteger.makeInteger(number);
