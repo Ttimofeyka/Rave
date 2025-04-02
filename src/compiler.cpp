@@ -522,7 +522,7 @@ void Compiler::compileAll() {
         else {
             #if defined(__linux__) || defined(__FreeBSD__)
             if(
-                Compiler::toImport[i].find("Rave/std/") != std::string::npos && !Compiler::settings.recompileStd &&
+                Compiler::toImport[i].find(exePath + "std/") != std::string::npos && !Compiler::settings.recompileStd &&
                 access(std::regex_replace(Compiler::toImport[i], std::regex("\\.rave"), std::string(".") + Compiler::outType+".o").c_str(), 0) != -1
             ) linkString += std::regex_replace(Compiler::toImport[i], std::regex("\\.rave"), std::string(".") + Compiler::outType+".o") + " ";
             else {
@@ -535,7 +535,7 @@ void Compiler::compileAll() {
                 std::string compiledFile = std::regex_replace(Compiler::toImport[i], std::regex("\\.rave"), ".o");
                 linkString += compiledFile + " ";
                 #if defined(__linux__) || defined(__FreeBSD__)
-                if(Compiler::toImport[i].find("Rave/std/") == std::string::npos) toRemove.push_back(compiledFile);
+                if(Compiler::toImport[i].find(exePath + "std/") == std::string::npos) toRemove.push_back(compiledFile);
                 else {
                     std::ifstream src(compiledFile, std::ios::binary);
                     std::ofstream dst(std::regex_replace(compiledFile, std::regex("\\.o"), std::string(".") + Compiler::outType + ".o"));
