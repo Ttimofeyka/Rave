@@ -17,7 +17,7 @@ Node* NodeBreak::comptime() {return this;}
 Node* NodeBreak::copy() {return new NodeBreak(this->loc);}
 
 int NodeBreak::getWhileLoop() {
-    int i = generator->activeLoops.size()-1;
+    int i = generator->activeLoops.size() - 1;
     while((i >= 0) && generator->activeLoops[i].isIf) i -= 1;
     if(generator->activeLoops[i].isIf) i = -1;
     return i;

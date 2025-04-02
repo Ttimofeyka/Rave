@@ -217,6 +217,7 @@ std::string getDirectory3(std::string file) {
 RaveValue NodeBuiltin::generate() {
     this->name = trim(this->name);
     if(this->name[0] == '@') this->name = this->name.substr(1);
+
     if(this->name == "baseType") {
         if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
 
@@ -226,8 +227,8 @@ RaveValue NodeBuiltin::generate() {
         else this->type = ty;
         return {nullptr, nullptr};
     }
-    if(this->name == "typeToString") return (new NodeString(this->asType(0)->type->toString(), false))->generate();
-    if(this->name == "fmodf") {
+    else if(this->name == "typeToString") return (new NodeString(this->asType(0)->type->toString(), false))->generate();
+    else if(this->name == "fmodf") {
         // one = step, two = 0
         RaveValue one = this->args[0]->generate(), two = this->args[1]->generate();
         if(instanceof<TypePointer>(one.type)) one = LLVM::load(one, "fmodf_load", loc);
@@ -280,27 +281,27 @@ RaveValue NodeBuiltin::generate() {
 
         return result;
     }
-    if(this->name == "aliasExists") {
+    else if(this->name == "aliasExists") {
         if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
 
         if(AST::aliasTable.find(this->getAliasName(0)) != AST::aliasTable.end()) return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
         return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
     }
-    if(this->name == "foreachArgs") {
+    else if(this->name == "foreachArgs") {
         for(int i=generator->currentBuiltinArg; i<AST::funcTable[currScope->funcName]->args.size(); i++) {
             this->block->generate();
             generator->currentBuiltinArg += 1;
         }
         return {};
     }
-    if(this->name == "sizeOf") {
+    else if(this->name == "sizeOf") {
         if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
 
         return {LLVM::makeInt(32, (asType(0)->type)->getSize() / 8, false), basicTypes[BasicType::Bool]};
     }
-    if(this->name == "argsLength") return (new NodeInt(AST::funcTable[currScope->funcName]->args.size()))->generate();
-    if(this->name == "getCurrArgNumber") return (new NodeInt(generator->currentBuiltinArg))->generate();
-    if(this->name == "callWithArgs") {
+    else if(this->name == "argsLength") return (new NodeInt(AST::funcTable[currScope->funcName]->args.size()))->generate();
+    else if(this->name == "getCurrArgNumber") return (new NodeInt(generator->currentBuiltinArg))->generate();
+    else if(this->name == "callWithArgs") {
         std::vector<Node*> nodes;
         for(int i=generator->currentBuiltinArg; i<AST::funcTable[currScope->funcName]->args.size(); i++) {
             nodes.push_back(new NodeIden("_RaveArg" + std::to_string(i), this->loc));
@@ -308,7 +309,7 @@ RaveValue NodeBuiltin::generate() {
         for(int i=1; i<args.size(); i++) nodes.push_back(args[i]);
         return (new NodeCall(this->loc, args[0], nodes))->generate();
     }
-    if(this->name == "callWithBeforeArgs") {
+    else if(this->name == "callWithBeforeArgs") {
         std::vector<Node*> nodes;
         for(int i=1; i<args.size(); i++) nodes.push_back(args[i]);
         for(int i=generator->currentBuiltinArg; i<AST::funcTable[currScope->funcName]->args.size(); i++) {
@@ -316,58 +317,58 @@ RaveValue NodeBuiltin::generate() {
         }
         return (new NodeCall(this->loc, args[0], nodes))->generate();
     }
-    if(this->name == "tEquals") {
+    else if(this->name == "tEquals") {
         if(this->args.size() < 2) generator->error("at least two arguments are required!", this->loc);
 
         if(this->asType(0)->type->toString() == this->asType(1)->type->toString()) return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
         return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
     }
-    if(this->name == "isArray") {
+    else if(this->name == "isArray") {
         if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
 
         Type* ty = this->asType(0)->type;
-        while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
+        while(instanceof<TypeConst>(ty)) ty = ty->getElType();
         return {LLVM::makeInt(1, instanceof<TypeArray>(ty), false), basicTypes[BasicType::Bool]};
     }
-    if(this->name == "isVector") {
+    else if(this->name == "isVector") {
         if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
 
         Type* ty = this->asType(0)->type;
-        while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
+        while(instanceof<TypeConst>(ty)) ty = ty->getElType();
         return {LLVM::makeInt(1, instanceof<TypeVector>(ty), false), basicTypes[BasicType::Bool]};
     }
-    if(this->name == "isPointer") {
+    else if(this->name == "isPointer") {
         if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
 
         Type* ty = this->asType(0)->type;
-        while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
+        while(instanceof<TypeConst>(ty)) ty = ty->getElType();
         return {LLVM::makeInt(1, instanceof<TypePointer>(ty), false), basicTypes[BasicType::Bool]};
     }
-    if(this->name == "getCurrArg") {
+    else if(this->name == "getCurrArg") {
         if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
 
         return (new NodeCast(asType(0)->type, new NodeIden("_RaveArg" + std::to_string(generator->currentBuiltinArg), this->loc), this->loc))->generate();
     }
-    if(this->name == "getArg") {
+    else if(this->name == "getArg") {
         if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
 
         return (new NodeCast(asType(0)->type, new NodeIden("_RaveArg" + asNumber(1).to_string(), this->loc), this->loc))->generate();
     }
-    if(this->name == "getArgType") {
+    else if(this->name == "getArgType") {
         if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
 
         this->type = currScope->getVar("_RaveArg" + asNumber(1).to_string())->type;
         return {};
     }
-    if(this->name == "skipArg") {
+    else if(this->name == "skipArg") {
         generator->currentBuiltinArg += 1;
         return {};
     }
-    if(this->name == "getCurrArgType") {
+    else if(this->name == "getCurrArgType") {
         this->type = currScope->getVar("_RaveArg" + std::to_string(generator->currentBuiltinArg), this->loc)->type;
         return {};
     }
-    if(this->name == "compileAndLink") {
+    else if(this->name == "compileAndLink") {
         if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
 
         std::string iden = this->asStringIden(0);
@@ -375,31 +376,31 @@ RaveValue NodeBuiltin::generate() {
         else AST::addToImport.push_back(getDirectory3(AST::mainFile) + "/" + iden.substr(1, iden.size()-1) + ".rave");
         return {};
     }
-    if(this->name == "isStructure") {
+    else if(this->name == "isStructure") {
         if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
 
         if(instanceof<TypeStruct>(asType(0)->type)) return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
         return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
     }
-    if(this->name == "isNumeric") {
+    else if(this->name == "isNumeric") {
         if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
 
         if(instanceof<TypeBasic>(asType(0)->type)) return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
         return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
     }
-    if(this->name == "isUnsigned") {
+    else if(this->name == "isUnsigned") {
         if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
 
         if(instanceof<TypeBasic>(asType(0)->type)) return {LLVM::makeInt(1, ((TypeBasic*)asType(0)->type)->isUnsigned(), false), basicTypes[BasicType::Bool]};
         return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
     }
-    if(this->name == "echo") {
+    else if(this->name == "echo") {
         std::string buffer = "";
         for(int i=0; i<this->args.size(); i++) buffer += this->asStringIden(i);
         std::cout << buffer << std::endl;
         return {};
     }
-    if(this->name == "warning") {
+    else if(this->name == "warning") {
         if(generator->settings.disableWarnings) return {};
 
         std::string buffer = "";
@@ -407,13 +408,13 @@ RaveValue NodeBuiltin::generate() {
         generator->warning(buffer, this->loc);
         return {};
     }
-    if(this->name == "error") {
+    else if(this->name == "error") {
         std::string buffer = "";
         for(int i=0; i<this->args.size(); i++) buffer += this->asStringIden(i);
         generator->error(buffer, this->loc);
         return {};
     }
-    if(this->name == "addLibrary") {
+    else if(this->name == "addLibrary") {
         if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
 
         Compiler::linkString += " -l" + asStringIden(0) + " ";
@@ -777,6 +778,7 @@ RaveValue NodeBuiltin::generate() {
             }
         }
     }
+
     generator->error("builtin with the name '" + this->name + "' does not exist!", this->loc);
     return {};
 }
@@ -784,8 +786,9 @@ RaveValue NodeBuiltin::generate() {
 Node* NodeBuiltin::comptime() {
     this->name = trim(this->name);
     if(this->name[0] == '@') this->name = this->name.substr(1);
+
     if(this->name == "aliasExists") return new NodeBool(AST::aliasTable.find(this->getAliasName(0)) != AST::aliasTable.end());
-    if(this->name == "getLinkName") {
+    else if(this->name == "getLinkName") {
         if(instanceof<NodeIden>(this->args[0])) {
             NodeIden* niden = (NodeIden*)this->args[0];
 
@@ -795,18 +798,18 @@ Node* NodeBuiltin::comptime() {
         generator->error("cannot get the link name of this value!", this->loc);
         return nullptr;
     }
-    if(this->name == "sizeOf") return new NodeInt((asType(0)->type->getSize()) / 8);
-    if(this->name == "tEquals") return new NodeBool(asType(0)->type->toString() == asType(1)->type->toString());
-    if(this->name == "isStructure") return new NodeBool(instanceof<TypeStruct>(asType(0)->type));
-    if(this->name == "isNumeric") return new NodeBool(instanceof<TypeBasic>(asType(0)->type));
-    if(this->name == "isUnsigned") {
+    else if(this->name == "sizeOf") return new NodeInt((asType(0)->type->getSize()) / 8);
+    else if(this->name == "tEquals") return new NodeBool(asType(0)->type->toString() == asType(1)->type->toString());
+    else if(this->name == "isStructure") return new NodeBool(instanceof<TypeStruct>(asType(0)->type));
+    else if(this->name == "isNumeric") return new NodeBool(instanceof<TypeBasic>(asType(0)->type));
+    else if(this->name == "isUnsigned") {
         Type* _type = asType(0)->type;
         if(!instanceof<TypeBasic>(_type)) return new NodeBool(false);
         return new NodeBool(((TypeBasic*)_type)->isUnsigned());
     }
-    if(this->name == "argsLength") return new NodeInt(AST::funcTable[currScope->funcName]->args.size());
-    if(this->name == "typeToString") return new NodeString(this->asType(0)->type->toString(), false);
-    if(this->name == "baseType") {
+    else if(this->name == "argsLength") return new NodeInt(AST::funcTable[currScope->funcName]->args.size());
+    else if(this->name == "typeToString") return new NodeString(this->asType(0)->type->toString(), false);
+    else if(this->name == "baseType") {
         Type* ty = this->asType(0)->type;
         if(instanceof<TypeArray>(ty)) this->type = ((TypeArray*)ty)->element;
         else if(instanceof<TypePointer>(ty)) this->type = ((TypePointer*)ty)->instance;
@@ -814,31 +817,31 @@ Node* NodeBuiltin::comptime() {
         else this->type = ty;
         return new NodeType(ty, this->loc);
     }
-    if(this->name == "isArray") {
+    else if(this->name == "isArray") {
         Type* ty = this->asType(0)->type;
-        while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
+        while(instanceof<TypeConst>(ty)) ty = ty->getElType();
         return new NodeBool(instanceof<TypeArray>(ty));
     }
-    if(this->name == "isVector") {
+    else if(this->name == "isVector") {
         Type* ty = this->asType(0)->type;
-        while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
+        while(instanceof<TypeConst>(ty)) ty = ty->getElType();
         return new NodeBool(instanceof<TypeVector>(ty));
     }
-    if(this->name == "isPointer") {
+    else if(this->name == "isPointer") {
         Type* ty = this->asType(0)->type;
-        while(instanceof<TypeConst>(ty)) ty = ((TypeConst*)ty)->instance;
+        while(instanceof<TypeConst>(ty)) ty = ty->getElType();
         return new NodeBool(instanceof<TypePointer>(ty));
     }
-    if(this->name == "getArgType") {
+    else if(this->name == "getArgType") {
         this->type = currScope->getVar("_RaveArg" + asNumber(1).to_string())->type;
         return new NodeType(this->type, loc);
     }
-    if(this->name == "getCurrArgType") {
+    else if(this->name == "getCurrArgType") {
         this->type = currScope->getVar("_RaveArg" + std::to_string(generator->currentBuiltinArg), this->loc)->type;
         return new NodeType(this->type, loc);
     }
-    if(this->name == "contains") return new NodeBool(asStringIden(0).find(asStringIden(1)) != std::string::npos);
-    if(this->name == "hasMethod") {
+    else if(this->name == "contains") return new NodeBool(asStringIden(0).find(asStringIden(1)) != std::string::npos);
+    else if(this->name == "hasMethod") {
         Type* ty = asType(0)->type;
         if(generator->toReplace.find(ty->toString()) != generator->toReplace.end()) ty = generator->toReplace[ty->toString()];
 
@@ -862,7 +865,7 @@ Node* NodeBuiltin::comptime() {
 
         return new NodeBool(false);
     }
-    if(this->name == "hasDestructor") {
+    else if(this->name == "hasDestructor") {
         Type* ty = asType(0)->type;
         if(!instanceof<TypeStruct>(ty)) return new NodeBool(false);
         TypeStruct* tstruct = (TypeStruct*)ty;
@@ -914,6 +917,7 @@ Node* NodeBuiltin::comptime() {
             }
         }
     }
+
     AST::checkError("builtin with name '" + this->name + "' does not exist!", this->loc);
     return nullptr;
 }
