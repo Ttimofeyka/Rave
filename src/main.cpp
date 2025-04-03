@@ -102,27 +102,25 @@ int main(int argc, char** argv) {
 
     if(files.size() == 0) {
         if(options.recompileStd) {
-            #if defined(__linux__) || defined(__FreeBSD__)
             Compiler::initialize(outFile, outType, options, {""});
             auto stdFiles = filesInDirectory(exePath + "std");
             for(int i=0; i<stdFiles.size(); i++) {
                 if(stdFiles[i].find(".ll") == std::string::npos && stdFiles[i].find(".rave") != std::string::npos) {
                     std::string compiledFile = std::regex_replace(exePath + "std/" + stdFiles[i], std::regex("\\.rave"), ".o");
                     Compiler::compile(exePath + "std/" + stdFiles[i]);
+
                     if(options.emitLLVM) {
                         char* err;
                         LLVMPrintModuleToFile(generator->lModule, (exePath + "std/" + stdFiles[i] + ".ll").c_str(), &err);
                     }
+
                     std::ifstream src(compiledFile, std::ios::binary);
-                    std::ofstream dst(std::regex_replace(compiledFile, std::regex("\\.o"), std::string(".") + Compiler::outType + ".o"));
+                    std::ofstream dst(std::regex_replace(compiledFile, std::regex("\\.o"), std::string(".") + Compiler::outType + ".o"), std::ios::binary);
                     dst << src.rdbuf();
                 }
             }
+
             std::cout << "Time spent by lexer: " << std::to_string(Compiler::lexTime) << "ms\nTime spent by parser: " << std::to_string(Compiler::parseTime) << "ms\nTime spent by generator: " << std::to_string(Compiler::genTime) << "ms" << std::endl;
-            #else
-            // Platform without standard library caching support
-            std::cout << "\033[0;33mWarning: your host platform does not support caching of the standard library.\033[0;0m" << std::endl;
-            #endif
             return 0;
         }
         std::cout << "\033[0;31mError: no files to compile!\033[0;0m" << std::endl;
