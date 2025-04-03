@@ -18,7 +18,7 @@ endif
 
 ifeq ($(WINBUILD),1)
 	BIN = rave.exe
-	ifeq ("$(wildcard ~/LLVM)", "")
+	ifneq ("$(wildcard ./LLVM)", "")
 		LLVM_CONFIG = ./LLVM/bin/llvm-config.exe
 	endif
 	LLVM_FULL_VERSION = $(shell $(LLVM_CONFIG) --version)
@@ -27,7 +27,6 @@ ifeq ($(WINBUILD),1)
 	# Otherwise static only
 	ifneq (shared, $(shell $(LLVM_CONFIG) --shared-mode))
 		LLVM_STATIC = 1
-		LLVM_NO_SHARED = 1
 	endif
 	# the following branch is thoughtful, as LLVM_STATIC has priority over llvm's default mode
 	LLVM_STATIC_FLAG1 =
