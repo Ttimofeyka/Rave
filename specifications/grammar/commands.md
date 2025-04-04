@@ -339,7 +339,7 @@ Example:
 
 ```d
 (ctargs) int sumOfTwo {
-    int one = @getCurrArg(0, int);
+    int one = @getCurrArg(int);
     int two = @getArg(1, int);
 } => one + two;
 ```
