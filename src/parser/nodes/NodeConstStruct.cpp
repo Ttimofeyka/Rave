@@ -13,6 +13,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeVar.hpp"
 #include "../../include/parser/ast.hpp"
 #include "../../include/llvm.hpp"
+#include "../../include/lexer/lexer.hpp"
 
 NodeConstStruct::NodeConstStruct(std::string name, std::vector<Node*> values, int loc) {
     this->structName = name;
@@ -24,13 +25,38 @@ NodeConstStruct::~NodeConstStruct() {
     for(int i=0; i<values.size(); i++) if(values[i] != nullptr) delete values[i];
 }
 
-Type* NodeConstStruct::getType() {return new TypeStruct(this->structName);}
+Type* NodeConstStruct::getType() {return new TypeStruct(structName);}
 Node* NodeConstStruct::comptime() {return this;}
 Node* NodeConstStruct::copy() {return new NodeConstStruct(this->structName, this->values, this->loc);}
 void NodeConstStruct::check() {this->isChecked = true;}
 
 RaveValue NodeConstStruct::generate() {
-    LLVMTypeRef constStructType = generator->genType(new TypeStruct(this->structName), this->loc);
+    if(structName.find('<') != std::string::npos && AST::structTable.find(structName) == AST::structTable.end()) {
+        std::string sTypes = structName.substr(structName.find('<') + 1, structName.find('>') - structName.find('<') - 1);
+
+        Lexer tLexer(sTypes, 1);
+        Parser tParser(tLexer.tokens, "(builtin)");
+        std::vector<Type*> types;
+
+        while(tParser.peek()->type != TokType::Eof) {
+            switch(tParser.peek()->type) {
+                case TokType::Number: case TokType::HexNumber: case TokType::FloatNumber: {
+                    Node* value = tParser.parseExpr();
+                    types.push_back(new TypeTemplateMember(value->getType(), value));
+                    break;
+                }
+                default:
+                    types.push_back(tParser.parseType(true));
+                    break;
+            }
+
+            if(tParser.peek()->type == TokType::Comma) tParser.next();
+        }
+
+        AST::structTable[structName.substr(0, structName.find('<'))]->genWithTemplate("<" + sTypes + ">", types);
+    }
+
+    LLVMTypeRef constStructType = generator->genType(new TypeStruct(structName), this->loc);
     std::vector<RaveValue> llvmValues;
 
     bool isConst = true;
@@ -43,14 +69,28 @@ RaveValue NodeConstStruct::generate() {
         llvmValues.push_back(generated);
     }
 
+    if(AST::structTable.find(structName) == AST::structTable.end()) generator->error("structure '" + structName + "' does not exists!", loc);
+
+    NodeStruct* structNode = AST::structTable[structName];
+    std::vector<NodeVar*> variables = structNode->getVariables();
+
     if(isConst) {
         std::vector<LLVMValueRef> __data;
-        for(int i=0; i<llvmValues.size(); i++) __data.push_back(llvmValues[i].value);
+        for(int i=0; i<llvmValues.size(); i++) {
+            if(variables[i]->getType()->toString() != llvmValues[i].type->toString()) {
+                Type* varType = variables[i]->getType();
+
+                if(instanceof<TypeBasic>(varType) && instanceof<TypeBasic>(llvmValues[i].type)) LLVM::cast(llvmValues[i], varType, loc);
+                else generator->error("incompatible types in constant structure: value of type '" + llvmValues[i].type->toString() + "' trying to be assigned to variable named '" + variables[i]->name + "' of type '" + varType->toString() + "'", loc);
+            }
+
+            __data.push_back(llvmValues[i].value);
+        }
 
         return {LLVMConstNamedStruct(constStructType, __data.data(), __data.size()), this->getType()};
     }
     else {
-        if(currScope == nullptr) generator->error("constant structure with dynamic values cannot be created outside a function!", this->loc);
+        if(currScope == nullptr) generator->error("constant structure with dynamic values cannot be created outside a function!", loc);
         RaveValue temp = LLVM::alloc(new TypeStruct(this->structName), "constStruct_temp");
 
         std::vector<std::string> elements;
