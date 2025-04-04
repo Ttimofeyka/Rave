@@ -80,7 +80,7 @@ public:
     bool isTemplateVariable();
 
     Type* parseTypeAtom();
-    Type* parseType(bool cannotBeTemplate = false);
+    Type* parseType(bool cannotBeTemplate = false, bool isDeclaration = false);
     std::vector<TypeFuncArg*> parseFuncArgs();
     std::vector<Node*> parseFuncCallArgs();
 };

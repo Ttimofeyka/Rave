@@ -315,7 +315,8 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
     }
 
     int currIdx = this->idx;
-    auto type = this->parseType();
+    auto type = this->parseType(false, true);
+
     if(instanceof<TypeCall>(type)) {
         this->idx = currIdx;
         Node* n = this->parseAtom(s);
@@ -329,6 +330,7 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
         name = this->peek()->value;
         if(isBasicType(name)) this->error("a declaration cannot be named as basic types!");
     }
+
     loc = this->peek()->line;
 
     this->next();
@@ -607,14 +609,40 @@ Node* Parser::parseAtom(std::string f) {
                 this->next();
                 std::string all = t->value + "<";
                 int countOfL = 0;
+
                 while(countOfL != -1) {
                     all += this->peek()->value;
                     if(this->peek()->type == TokType::Less) countOfL += 1;
                     else if(this->peek()->type == TokType::More) countOfL -= 1;
                     this->next();
                 }
+
                 if(this->peek()->type == TokType::More) this->next();
                 if(this->peek()->type == TokType::Rbra) return parseConstantStructure(all);
+                
+                // Check for lambda
+                if(peek()->type == TokType::Rpar) {
+                    int rpars = 0;
+                    long oldIdx = this->idx;
+
+                    while(rpars != -1) {
+                        idx += 1;
+
+                        if(peek()->type == TokType::Rpar) rpars += 1;
+                        else if(peek()->type == TokType::Lpar) rpars -= 1;
+                    }
+
+                    this->next();
+
+                    if(peek()->type == TokType::ShortRet) {
+                        idx = oldIdx;
+                        auto args = parseFuncArgs();
+                        idx += 1;
+                        return new NodeLambda(peek()->line, new TypeFunc(new TypeStruct(all), args, false), new NodeBlock({new NodeRet(parseExpr(), oldIdx)}));
+                    }
+                    else idx = oldIdx;
+                }
+
                 return this->parseCall(new NodeIden(all, this->peek()->line));
             }
         }
@@ -853,7 +881,7 @@ std::vector<TypeFuncArg*> Parser::parseFuncArgs() {
     return buffer;
 }
 
-Type* Parser::parseType(bool cannotBeTemplate) {
+Type* Parser::parseType(bool cannotBeTemplate, bool isDeclaration) {
     if(this->peek()->type == TokType::Builtin && this->peek()->value == "@value") {
         // @value(type, name) is used for entering values right into structure template.
         this->next();
@@ -897,6 +925,7 @@ Type* Parser::parseType(bool cannotBeTemplate) {
             std::vector<Type*> tTypes;
             std::string tTypesString = "";
             this->next();
+
             while(this->peek()->type != TokType::More) {
                 if(this->peek()->type == TokType::Number || this->peek()->type == TokType::HexNumber || this->peek()->type == TokType::FloatNumber) {
                     Node* number = this->parseAtom();
@@ -907,9 +936,14 @@ Type* Parser::parseType(bool cannotBeTemplate) {
                 if(this->peek()->type == TokType::Comma) this->next();
                 else if(this->peek()->type != TokType::More) this->error("expected token '>'!");
             } this->next();
+
             for(int i=0; i<tTypes.size(); i++) tTypesString += tTypes[i]->toString() + ",";
             ty = new TypeStruct(ty->toString() + "<" + tTypesString.substr(0, tTypesString.size() - 1) + ">", tTypes);
-            if(this->peek()->type == TokType::Rpar) ty = new TypeCall(((TypeStruct*)ty)->name,this->parseFuncCallArgs());
+
+            if(this->peek()->type == TokType::Rpar) {
+                if(isDeclaration) ty = new TypeFunc(ty, this->parseFuncArgs(), false);
+                else ty = new TypeCall(((TypeStruct*)ty)->name, this->parseFuncCallArgs());
+            }
         }
     }
     return ty;
@@ -1514,7 +1548,7 @@ bool Parser::isDefinedLambda(bool updateIdx) {
 
 Node* Parser::parseLambda() {
     int loc = peek()->line;
-    Type* type = this->parseType();
+    Type* type = this->parseType(false, true);
     std::string name = "";
 
     if(peek()->type == TokType::Identifier) {
