@@ -430,7 +430,7 @@ LLVMTypeRef NodeStruct::genWithTemplate(std::string sTypes, std::vector<Type*> t
         }
     }
 
-    generator->toReplace[name + _fn.substr(0, _fn.size()-1) + ">"] = new TypeStruct(name + sTypes);
+    generator->toReplace[name + _fn.substr(0, _fn.size() - 1) + ">"] = new TypeStruct(name + sTypes);
 
     NodeStruct* _struct = new NodeStruct(name + sTypes, this->copyElements(), this->loc, "", {}, this->mods);
     _struct->isTemplated = true;
