@@ -93,13 +93,15 @@ RaveValue NodeConstStruct::generate() {
         if(currScope == nullptr) generator->error("constant structure with dynamic values cannot be created outside a function!", loc);
         RaveValue temp = LLVM::alloc(new TypeStruct(this->structName), "constStruct_temp");
 
-        std::vector<std::string> elements;
-        for(int i=0; i<AST::structTable[this->structName]->elements.size(); i++) {
-            if(instanceof<NodeVar>(AST::structTable[this->structName]->elements[i])) elements.push_back(((NodeVar*)AST::structTable[this->structName]->elements[i])->name);
-        }
-
         for(int i=0; i<this->values.size(); i++) {
-            (new NodeBinary(TokType::Equ, new NodeGet(new NodeDone(temp), elements[i], true, this->loc), new NodeDone(llvmValues[i]), this->loc))->generate();
+            if(variables[i]->getType()->toString() != llvmValues[i].type->toString()) {
+                Type* varType = variables[i]->getType();
+
+                if(instanceof<TypeBasic>(varType) && instanceof<TypeBasic>(llvmValues[i].type)) LLVM::cast(llvmValues[i], varType, loc);
+                else generator->error("incompatible types in constant structure: value of type '" + llvmValues[i].type->toString() + "' trying to be assigned to variable named '" + variables[i]->name + "' of type '" + varType->toString() + "'!", loc);
+            }
+
+            (new NodeBinary(TokType::Equ, new NodeGet(new NodeDone(temp), variables[i]->name, true, this->loc), new NodeDone(llvmValues[i]), this->loc))->generate();
         }
 
         return LLVM::load(temp, "constStruct_tempLoad", loc);
