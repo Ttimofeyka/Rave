@@ -40,15 +40,6 @@ namespace std {
     }
 }
 
-@if((__RAVE_OS != "LINUX") && (__RAVE_OS != "FREEBSD")) {
-    namespace std {
-        namespace file {
-            extern(linkname: "rename") int rename(char* oldpath, char* newpath);
-            extern(linkname: "remove") int remove(char* pathname);
-        }
-    }
-}
-
 @if((__RAVE_OS == "LINUX") || (__RAVE_OS == "FREEBSD")) {
     namespace std {
         namespace file {
@@ -63,7 +54,7 @@ namespace std {
 
             (inline) int __unlinkat(int dirfd, char* pathname, int flags) => cast(int)std::syscall(std::sysctable::UnlinkAt, dirfd, pathname, flags);
 
-            int remove(char* pathname) => std::file::__unlinkat(-100, pathname, 0);
+            int remove(char* path) => std::file::__unlinkat(-100, path, 0);
             int getStat(int fd, std::fstat* buffer) => cast(int)std::syscall(std::sysctable::FStat, fd, buffer);
 
             (inline) int __faccessat(int dirfd, char* fname, int mode, int flag) => cast(int)std::syscall(std::sysctable::FAccessAt, dirfd, fname, mode, flag);
@@ -75,6 +66,22 @@ namespace std {
     namespace std {
         namespace file {
             extern(linkname: "MoveFileW") char __rename(ushort* oldpath, ushort* newpath);
+            extern(linkname: "DeleteFileW") char __remove(ushort* path);
+
+            int rename(char* oldpath, char* newpath) {
+                ushort* __oldpath = std::utf8::toUTF16(oldpath);
+                ushort* __newpath = std::utf8::toUTF16(newpath);
+                defer std::free(__oldpath);
+                defer std::free(__newpath);
+                return = cast(int)(std::file::__rename(__oldpath, __newpath) > 0);
+            }
+
+            int remove(char* path) {
+                ushort* __path = std::utf8::toUTF16(path);
+                defer std::free(__path);
+                return = cast(int)(std::file::__remove(__path) > 0);
+            }
+
             extern(linkname: "_access") int __access(char* fname, int flag);
         }
     }
@@ -82,6 +89,9 @@ namespace std {
 @else {
     namespace std {
         namespace file {
+            extern(linkname: "rename") int rename(char* oldpath, char* newpath);
+            extern(linkname: "remove") int remove(char* path);
+
             int __access(char* fname, int flag) {
                 libc::File* f = libc::fopen(fname, "r");
                 if(f == null) return = -1;
@@ -96,7 +106,13 @@ namespace std {
 
 namespace std {
     namespace file {
+        (inline) int rename(std::string oldpath, std::string newpath) => std::file::rename(oldpath.data, newpath.data);
+
+        (inline) int remove(std::string path) => std::file::remove(path.data);
+
         (inline) bool exists(char* fname) => (std::file::__access(fname, 0) == 0);
+
+        (inline) bool exists(std::string fname) => (std::file::__access(fname.data, 0) == 0);
     }
 }
 
@@ -542,7 +558,7 @@ namespace std {
                 this.name = to;
             }
 
-            void remove {std::file::remove(this.name);}
+            (inline) void remove {std::file::remove(this.name);}
 
             int read(void* buffer, int size) => libc::fread(buffer, 1, size, this._file);
             int write(void* buffer, int size) => libc::fwrite(buffer, 1, size, this._file);
@@ -861,7 +877,7 @@ namespace std {
                 std::free(u16Str);
             }
 
-            int __create(ushort* dname) => cast(int)std::__CreateDirectoryW(dname, null);
+            (inline) int __create(ushort* dname) => cast(int)std::__CreateDirectoryW(dname, null);
 
             (inline) int create(char* dname) {
                 ushort* u16Str = std::utf8::toUTF16(dname);
