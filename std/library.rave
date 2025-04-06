@@ -18,7 +18,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
             (inline) void* open(char* filename) => std::library::__LoadLibraryA(filename);
             (inline) int close(void* handle) => std::library::__FreeLibrary(handle);
             (inline) void* sym(void* handle, char* name) => std::library::__GetProcAddressA(handle, name);
-            (inline) char* error => "";
+            (inline) char* error => null;
         }
     }
 }
