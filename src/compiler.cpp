@@ -545,7 +545,6 @@ void Compiler::compileAll() {
     }
 
     if(Compiler::outFile == "") Compiler::outFile = "a";
-    else if(Compiler::outFile[0] != '/' && getDirectory(Compiler::files[0]).find(".rave") == std::string::npos) Compiler::outFile = getDirectory(Compiler::files[0]) + "/" + Compiler::outFile;
 
     if(Compiler::settings.onlyObject) Compiler::linkString += "-r ";
     if(Compiler::settings.isStatic) Compiler::linkString += "-static ";

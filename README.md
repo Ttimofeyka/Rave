@@ -41,8 +41,8 @@ For maximum performance, use the `-Ofast` or `-O3 --noChecks`. Also, don't forge
 
 ## Dependencies
 
-* `llvm-16`
-**You can also use LLVM from 14 to 20.**
+* `llvm`
+**You can use LLVM from 14 to 20.**
 * `clang` or `gcc`
 * C++ compiler (with support of C++17 and higher)
 * Make
@@ -57,7 +57,7 @@ If the installer does not work well on your system, you can try to install all t
 After install write `make` in the Rave directory.
 
 You can compile, for example, "Hello world!" example using `./rave examples/hello_world.rave -o hello_world` in directory with Rave.
-To run this example after compiling, try `./examples/hello_world`.
+To run this example after compiling, try `./hello_world`.
 
 ### Cross-compilation programs from Linux for Windows
 
