@@ -6,6 +6,10 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "./include/compiler.hpp"
 #include "./include/parser/ast.hpp"
+#include "./include/parser/nodes/NodeString.hpp"
+#include "./include/parser/nodes/NodeBool.hpp"
+#include "./include/parser/nodes/NodeInt.hpp"
+#include "./include/parser/nodes/NodeImport.hpp"
 #include <iostream>
 #include <fstream>
 #include <chrono>
@@ -240,9 +244,6 @@ void Compiler::compile(std::string file) {
     char c;
     while(fContent.get(c)) content += c;
 
-    int offset = 0;
-    std::string oldContent = content;
-
     std::string ravePlatform = "UNKNOWN";
     std::string raveOs = "UNKNOWN";
 
@@ -288,13 +289,11 @@ void Compiler::compile(std::string file) {
         raveOs = RAVE_OS;
     }
 
-    std::string littleEndian = "false";
-    std::string bigEndian = "false";
+    bool littleEndian = true;
 
     // Note: PowerPC must be rechecked for endianness
 
-    if(ravePlatform == "MIPS64" || ravePlatform == "MIPS") bigEndian = "true";
-    else littleEndian = "true";
+    if(ravePlatform == "MIPS64" || ravePlatform == "MIPS") littleEndian = false;
 
     bool sse = settings.sse && Compiler::options["sse"].template get<bool>();
     bool sse2 = settings.sse2 && Compiler::options["sse2"].template get<bool>();
@@ -327,26 +326,38 @@ void Compiler::compile(std::string file) {
     }
     else Compiler::features = std::string(LLVMGetHostCPUFeatures());
 
-    content = "alias __RAVE_PLATFORM = \"" + ravePlatform + "\"; alias __RAVE_OS = \"" + raveOs + "\"; alias __RAVE_OPTIMIZATION_LEVEL = " + std::to_string(settings.optLevel) + "; " +
-              "alias __RAVE_RUNTIME_CHECKS = " + (settings.noChecks ? "false" : "true") + "; "
-              + "alias __RAVE_SSE = " + (sse ? "true" : "false") + "; " + "alias __RAVE_SSE2 = " + (sse2 ? "true" : "false") + "; "
-              + "alias __RAVE_SSE3 = " + (sse3 ? "true" : "false")+ "; " + "alias __RAVE_SSSE3 = " + (ssse3 ? "true" : "false") + "; "
-              + "alias __RAVE_SSE4A = " + (sse4a ? "true" : "false") + "; "
-              + "alias __RAVE_SSE4_1 = " + (sse4_1 ? "true" : "false") + "; " + "alias __RAVE_SSE4_2 = " + (sse4_2 ? "true" : "false") + "; "
-              + "; alias __RAVE_AVX = " + (avx ? "true" : "false") + "; " + "alias __RAVE_AVX2 = " + (avx2 ? "true" : "false") + "; " + "alias __RAVE_AVX512 = " + (avx512 ? "true" : "false") + "; "
-              + "alias __RAVE_LITTLE_ENDIAN = \"" + littleEndian + "\"; alias __RAVE_BIG_ENDIAN = \"" + bigEndian + "\"; " 
-              + (Compiler::settings.noPrelude || file.find("std/prelude.rave") != std::string::npos || file.find("std/memory.rave") != std::string::npos ? "" : "import <std/prelude> <std/memory>") +
-              "\n" + oldContent;
+    AST::aliasTable["__RAVE_PLATFORM"] = new NodeString(ravePlatform, false);
+    AST::aliasTable["__RAVE_OS"] = new NodeString(raveOs, false);
+    AST::aliasTable["__RAVE_OPTIMIZATION_LEVEL"] = new NodeInt(settings.optLevel);
+    AST::aliasTable["__RAVE_RUNTIME_CHECKS"] = new NodeBool(!settings.noChecks);
+    AST::aliasTable["__RAVE_SSE"] = new NodeBool(sse);
+    AST::aliasTable["__RAVE_SSE2"] = new NodeBool(sse2);
+    AST::aliasTable["__RAVE_SSE3"] = new NodeBool(sse3);
+    AST::aliasTable["__RAVE_SSSE3"] = new NodeBool(ssse3);
+    AST::aliasTable["__RAVE_SSE4A"] = new NodeBool(sse4a);
+    AST::aliasTable["__RAVE_SSE4_1"] = new NodeBool(sse4_1);
+    AST::aliasTable["__RAVE_SSE4_2"] = new NodeBool(sse4_2);
+    AST::aliasTable["__RAVE_AVX"] = new NodeBool(avx);
+    AST::aliasTable["__RAVE_AVX2"] = new NodeBool(avx2);
+    AST::aliasTable["__RAVE_AVX512"] = new NodeBool(avx512);
+    AST::aliasTable["__RAVE_LITTLE_ENDIAN"] = new NodeBool(littleEndian);
+    AST::aliasTable["__RAVE_BIG_ENDIAN"] = new NodeBool(!littleEndian);
 
     AST::mainFile = Compiler::files[0];
 
     auto start = std::chrono::steady_clock::now();
-    Lexer* lexer = new Lexer(content, offset);
+    Lexer* lexer = new Lexer(content, -1);
     auto end = std::chrono::steady_clock::now();
     Compiler::lexTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
     
     start = end;
     Parser* parser = new Parser(lexer->tokens, file);
+
+    if(!Compiler::settings.noPrelude && !endsWith(file, "std/prelude.rave") && !endsWith(file, "std/memory.rave")) {
+        parser->nodes.push_back(new NodeImport(ImportFile{exePath + "std/prelude.rave", true}, {}, -1));
+        parser->nodes.push_back(new NodeImport(ImportFile{exePath + "std/memory.rave", true}, {}, -1));
+    }
+
     parser->parseAll();
     end = std::chrono::steady_clock::now();
     for(int i=0; i<parser->nodes.size(); i++) parser->nodes[i]->check();
