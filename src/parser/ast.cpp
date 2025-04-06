@@ -181,12 +181,6 @@ LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options)
 
     if(this->file.find('/') == std::string::npos && this->file.find('\\') == std::string::npos) this->file = "./" + this->file;
 
-    functions["llvm.expect.i1"] = {LLVMAddFunction(lModule, "llvm.expect.i1", LLVMFunctionType(
-        LLVMInt1TypeInContext(context),
-        std::vector<LLVMTypeRef>({LLVMInt1TypeInContext(context), LLVMInt1TypeInContext(context)}).data(),
-        2, false
-    )), new TypeFunc(new TypeBasic(BasicType::Bool), {new TypeFuncArg(new TypeBasic(BasicType::Bool), "v1"), new TypeFuncArg(new TypeBasic(BasicType::Bool), "v2")}, false)};
-
     if(settings.sse2 && settings.ssse3 && options["sse2"].template get<bool>() && options["ssse3"].template get<bool>()) {
         functions["llvm.x86.ssse3.phadd.d.128"] = {LLVMAddFunction(lModule, "llvm.x86.ssse3.phadd.d.128", LLVMFunctionType(
             LLVMVectorType(LLVMInt32TypeInContext(context), 4),

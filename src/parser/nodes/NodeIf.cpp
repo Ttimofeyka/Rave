@@ -64,8 +64,17 @@ RaveValue NodeIf::generate() {
 
     RaveValue condValue = cond->generate();
 
-    if(isLikely) LLVM::call(generator->functions["llvm.expect.i1"], {condValue, {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]}}, "likely");
-    else if(isUnlikely) LLVM::call(generator->functions["llvm.expect.i1"], {condValue, {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]}}, "unlikely");
+    if(isLikely || isUnlikely) {
+        if(generator->functions.find("llvm.expect.i1") == generator->functions.end()) {
+            generator->functions["llvm.expect.i1"] = {LLVMAddFunction(generator->lModule, "llvm.expect.i1", LLVMFunctionType(
+            LLVMInt1TypeInContext(generator->context),
+            std::vector<LLVMTypeRef>({LLVMInt1TypeInContext(generator->context), LLVMInt1TypeInContext(generator->context)}).data(),
+            2, false
+            )), new TypeFunc(new TypeBasic(BasicType::Bool), {new TypeFuncArg(new TypeBasic(BasicType::Bool), "v1"), new TypeFuncArg(new TypeBasic(BasicType::Bool), "v2")}, false)};
+        }
+
+        LLVM::call(generator->functions["llvm.expect.i1"], {condValue, {LLVM::makeInt(1, isLikely ? 1 : 0, false), basicTypes[BasicType::Bool]}}, isLikely ? "likely" : "unlikely");
+    }
 
     LLVMBuildCondBr(generator->builder, condValue.value, thenBlock, elseBlock);
 
