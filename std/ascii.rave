@@ -11,7 +11,7 @@ namespace std {
         (inline) bool isLower(char c) => (c > 96c) && (c < 123c);
         (inline) bool isUpper(char c) => (c > 64c) && (c < 91c);
         (inline) bool isDigit(char c) => (c >= '0') && (c <= '9');
-        (inline) bool isXDigit(char c) => ((c >= 'A') && (c <= 'Z')) || ((c >= 'a') && (c <= 'z')) || ((c >= '0') || (c <= '9'));
+        (inline) bool isXDigit(char c) => (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 
         (inline) char toLower(char c) {
             return = c;
