@@ -295,16 +295,18 @@ void Compiler::compile(std::string file) {
 
     if(ravePlatform == "MIPS64" || ravePlatform == "MIPS") littleEndian = false;
 
-    bool sse = settings.sse && Compiler::options["sse"].template get<bool>();
-    bool sse2 = settings.sse2 && Compiler::options["sse2"].template get<bool>();
-    bool sse3 = settings.sse3 && Compiler::options["sse3"].template get<bool>();
-    bool ssse3 = settings.ssse3 && Compiler::options["ssse3"].template get<bool>();
-    bool sse4a = settings.sse4a && Compiler::options["sse4a"].template get<bool>();
-    bool sse4_1 = settings.sse4_1 && Compiler::options["sse4_1"].template get<bool>();
-    bool sse4_2 = settings.sse4_2 && Compiler::options["sse4_2"].template get<bool>();
-    bool avx = settings.avx && Compiler::options["avx"].template get<bool>();
-    bool avx2 = settings.avx2 && Compiler::options["avx2"].template get<bool>();
-    bool avx512 = settings.avx512 && Compiler::options["avx512"].template get<bool>();
+    bool isX86 = ravePlatform == "X86_64" || ravePlatform == "X86";
+
+    bool sse = settings.sse && Compiler::options["sse"].template get<bool>() && isX86;
+    bool sse2 = settings.sse2 && Compiler::options["sse2"].template get<bool>() && isX86;
+    bool sse3 = settings.sse3 && Compiler::options["sse3"].template get<bool>() && isX86;
+    bool ssse3 = settings.ssse3 && Compiler::options["ssse3"].template get<bool>() && isX86;
+    bool sse4a = settings.sse4a && Compiler::options["sse4a"].template get<bool>() && isX86;
+    bool sse4_1 = settings.sse4_1 && Compiler::options["sse4_1"].template get<bool>() && isX86;
+    bool sse4_2 = settings.sse4_2 && Compiler::options["sse4_2"].template get<bool>() && isX86;
+    bool avx = settings.avx && Compiler::options["avx"].template get<bool>() && isX86;
+    bool avx2 = settings.avx2 && Compiler::options["avx2"].template get<bool>() && isX86;
+    bool avx512 = settings.avx512 && Compiler::options["avx512"].template get<bool>() && isX86;
 
     if(!settings.isNative) {
         Compiler::features = "";
