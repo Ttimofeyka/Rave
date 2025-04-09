@@ -12,6 +12,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <vector>
 #include <string>
 
+extern Type* getIdenType(std::string name, int loc);
+
 class NodeIden : public Node {
 public:
     std::string name;

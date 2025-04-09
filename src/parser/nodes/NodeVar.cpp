@@ -337,7 +337,7 @@ RaveValue NodeVar::generate() {
             }
         }
 
-        if(this->value != nullptr) (new NodeBinary(TokType::Equ, new NodeIden(this->name, this->loc), this->value, this->loc))->generate();
+        if(this->value != nullptr) Binary::operation(TokType::Equ, new NodeIden(name, loc), value, loc);
         else if((instanceof<TypeBasic>(type) || instanceof<TypePointer>(type)) && !noZeroInit) LLVMBuildStore(generator->builder, LLVMConstNull(gT), currScope->localScope[this->name].value);
 
         return currScope->localScope[this->name];

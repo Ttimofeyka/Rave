@@ -23,21 +23,24 @@ NodeIden::NodeIden(std::string name, int loc, bool isMustBePtr) {
 }
 
 Node* NodeIden::copy() {return new NodeIden(this->name, this->loc, this->isMustBePtr);}
+
 void NodeIden::check() {this->isChecked = true;}
 
-Type* NodeIden::getType() {
-    if(AST::aliasTable.find(this->name) != AST::aliasTable.end()) return AST::aliasTable[this->name]->getType();
-    if(AST::funcTable.find(this->name) != AST::funcTable.end()) return AST::funcTable[this->name]->getType();
-    if(!currScope->has(this->name) && !currScope->hasAtThis(this->name)) {
-        if(generator->toReplace.find(this->name) != generator->toReplace.end()) {
-            NodeIden* newNode = new NodeIden(generator->toReplace[this->name]->toString(), loc);
-            newNode->isMustBePtr = this->isMustBePtr;
-            return newNode->getType();
-        }
-        generator->error("unknown identifier '" + this->name + "'!", this->loc);
+Type* getIdenType(std::string idenName, int loc) {
+    if(AST::aliasTable.find(idenName) != AST::aliasTable.end()) return AST::aliasTable[idenName]->getType();
+    if(AST::funcTable.find(idenName) != AST::funcTable.end()) return AST::funcTable[idenName]->getType();
+    if(!currScope->has(idenName) && !currScope->hasAtThis(idenName)) {
+        if(generator->toReplace.find(idenName) != generator->toReplace.end()) return getIdenType(generator->toReplace[idenName]->toString(), loc);
+
+        generator->error("unknown identifier '" + idenName + "'!", loc);
         return nullptr;
     }
-    return currScope->getVar(this->name, this->loc)->getType();
+
+    return currScope->getVar(idenName, loc)->getType();
+}
+
+Type* NodeIden::getType() {
+    return getIdenType(name, loc);
 }
 
 Node* NodeIden::comptime() {

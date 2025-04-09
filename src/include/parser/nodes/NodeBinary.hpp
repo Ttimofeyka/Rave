@@ -14,6 +14,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Binary {
     extern void store(RaveValue pointer, RaveValue value, int loc = -1);
+    extern RaveValue operation(char op, Node* First, Node* second, int loc);
+    extern std::pair<std::string, std::string> isOperatorOverload(Node* firstNode, Node* secondNode, RaveValue first, RaveValue second, char op);
 }
 
 class NodeBinary : public Node {

@@ -68,7 +68,7 @@ NodeBinary::NodeBinary(char op, Node* first, Node* second, int loc, bool isStati
     this->isStatic = isStatic;
 }
 
-std::pair<std::string, std::string> NodeBinary::isOperatorOverload(RaveValue first, RaveValue second, char op) {
+std::pair<std::string, std::string> Binary::isOperatorOverload(Node* firstNode, Node* secondNode, RaveValue first, RaveValue second, char op) {
     if(first.value == nullptr || second.value == nullptr) return {"", ""};
 
     Type* type = first.type;
@@ -78,23 +78,24 @@ std::pair<std::string, std::string> NodeBinary::isOperatorOverload(RaveValue fir
         if(AST::structTable.find(structName) != AST::structTable.end()) {
             auto& operators = AST::structTable[structName]->operators;
             if(operators.find(op) != operators.end()) {
-                std::vector<Type*> types = {this->first->getType(), this->second->getType()};
+                std::vector<Type*> types = {firstNode->getType(), secondNode->getType()};
                 std::string sTypes = typesToString(types);
 
                 if(operators[op].find(sTypes) != operators[op].end()) return {structName, sTypes};
                 else if(op == TokType::In) return {structName, operators[op].begin()->second->name.substr(operators[op].begin()->second->name.find('['))};
             }
             else if(op == TokType::Nequal && operators.find(TokType::Equal) != operators.end()) {
-                std::vector<Type*> types = {this->first->getType(), this->second->getType()};
+                std::vector<Type*> types = {firstNode->getType(), secondNode->getType()};
                 std::string sTypes = typesToString(types);
                 if(operators[TokType::Equal].find(sTypes) != operators[TokType::Equal].end()) return {"!" + structName, sTypes};
             }
         }
     }
+
     return {"", ""};
 }
 
-Node* NodeBinary::copy() {return new NodeBinary(this->op, this->first->copy(), this->second->copy(), this->loc, this->isStatic);}
+Node* NodeBinary::copy() {return new NodeBinary(this->op, first->copy(), second->copy(), loc, this->isStatic);}
 void NodeBinary::check() {this->isChecked = true;}
 
 Node* NodeBinary::comptime() {
@@ -238,8 +239,8 @@ Type* NodeBinary::getType() {
         case TokType::Equal: case TokType::Nequal: case TokType::More: case TokType::Less: case TokType::MoreEqual: case TokType::LessEqual:
         case TokType::And: case TokType::Or: case TokType::In: case TokType::NeIn: return basicTypes[BasicType::Bool];
         default:
-            Type* firstType = this->first->getType();
-            Type* secondType = this->second->getType();
+            Type* firstType = first->getType();
+            Type* secondType = second->getType();
             if(firstType == nullptr) return secondType;
             if(secondType == nullptr) return firstType;
             return (firstType->getSize() >= secondType->getSize()) ? firstType : secondType;
@@ -247,113 +248,79 @@ Type* NodeBinary::getType() {
     return nullptr;
 }
 
-RaveValue NodeBinary::generate() {
-    bool isAliasIden = (this->first != nullptr && instanceof<NodeIden>(this->first) && AST::aliasTable.find(((NodeIden*)this->first)->name) != AST::aliasTable.end());
+RaveValue Binary::operation(char op, Node* first, Node* second, int loc) {
+    if(first == nullptr || second == nullptr) return {};
 
-    if(this->op == TokType::PluEqu || this->op == TokType::MinEqu || this->op == TokType::MulEqu || this->op == TokType::DivEqu) {
-        RaveValue value;
-        NodeBinary* bin = new NodeBinary(TokType::Equ, this->first->copy(), new NodeBinary((
-            (this->op == TokType::PluEqu ? TokType::Plus : (this->op == TokType::MinEqu ? TokType::Minus : (this->op == TokType::MulEqu ? TokType::Multiply : TokType::Divide)))
-        ), this->first->copy(), this->second->copy(), loc), loc);
-        bin->check();
-        value = bin->generate();
-        return value;
-    }
+    bool isAliasIden = (instanceof<NodeIden>(first) && AST::aliasTable.find(((NodeIden*)first)->name) != AST::aliasTable.end());
 
-    if(this->op == TokType::Equ) {
-        if((instanceof<NodeCast>(second)) && instanceof<TypeVoid>(second->getType())) {
-            generator->error("an attempt to store a void to the variable!", this->loc);
-            return {};
-        }
+    if(op == TokType::PluEqu || op == TokType::MinEqu || op == TokType::MulEqu || op == TokType::DivEqu)
+        return Binary::operation(TokType::Equ, first, new NodeBinary(op == TokType::PluEqu ? TokType::Plus : (op == TokType::MinEqu ? TokType::Minus : (op == TokType::MulEqu ? TokType::Multiply : TokType::Divide)), first->copy(), second, loc), loc);
+
+    if(op == TokType::Equ) {
+        if((instanceof<NodeCast>(second)) && instanceof<TypeVoid>(second->getType())) generator->error("an attempt to store a void to the variable!", loc);
 
         if(instanceof<NodeIden>(first)) {
             NodeIden* id = ((NodeIden*)first);
 
-            if(isAliasIden) {AST::aliasTable[id->name] = this->second->copy(); return {};}
+            if(isAliasIden) {AST::aliasTable[id->name] = second->copy(); return {};}
 
-            if(currScope->locatedAtThis(id->name)) {
-                this->first = new NodeGet(new NodeIden("this", this->loc), id->name, true, id->loc);
-                return this->generate();
-            }
+            if(currScope->locatedAtThis(id->name)) return Binary::operation(TokType::Equ, new NodeGet(new NodeIden("this", loc), id->name, true, id->loc), second, loc);
 
-            if(currScope->getVar(id->name, this->loc)->isConst && id->name != "this" && currScope->getVar(id->name, this->loc)->isChanged) {
-                generator->error("an attempt to change the value of a constant variable!", this->loc);
-                return {};
-            }
+            NodeVar* nvar = currScope->getVar(id->name, loc);
 
-            if(!currScope->getVar(id->name, this->loc)->isChanged) currScope->hasChanged(id->name);
+            if(nvar->isConst && nvar->isChanged && id->name != "this") generator->error("an attempt to change the value of a constant variable!", loc);
+            else if(!nvar->isChanged) currScope->hasChanged(id->name);
 
             if(currScope->localVars.find(id->name) != currScope->localVars.end()) currScope->localVars[id->name]->isUsed = true;
 
-            NodeVar* nvar = currScope->getVar(id->name, this->loc);
+            RaveValue vFirst = currScope->getWithoutLoad(id->name, loc);
+            RaveValue vSecond = second->generate();
 
-            RaveValue vSecond = {nullptr, nullptr};
+            if(instanceof<NodeNull>(second)) ((NodeNull*)second)->type = vFirst.type->getElType();
             
-            if(instanceof<TypeStruct>(nvar->type) || (instanceof<TypePointer>(nvar->type) && instanceof<TypeStruct>(((TypePointer*)nvar->type)->instance))
-               &&!instanceof<TypeStruct>(this->second->getType()) || (instanceof<TypePointer>(this->second->getType()) && instanceof<TypeStruct>(((TypePointer*)this->second->getType())->instance))
+            if(instanceof<TypeStruct>(nvar->type) || (instanceof<TypePointer>(nvar->type) && instanceof<TypeStruct>(nvar->type->getElType()))
+               && !instanceof<TypeStruct>(second->getType()) || (instanceof<TypePointer>(second->getType()) && instanceof<TypeStruct>(second->getType()->getElType()))
             ) {
-                RaveValue vFirst = first->generate();
-                vSecond = second->generate();
-
-                std::pair<std::string, std::string> opOverload = isOperatorOverload(vFirst, vSecond, this->op);
+                std::pair<std::string, std::string> opOverload = Binary::isOperatorOverload(first, second, vFirst, vSecond, op);
 
                 if(opOverload.first != "") {
-                    if(opOverload.first[0] == '!') return (new NodeUnary(this->loc, TokType::Ne, (new NodeCall(
-                        this->loc, new NodeIden(AST::structTable[opOverload.first.substr(1)]->operators[this->op][opOverload.second]->name, this->loc),
-                        std::vector<Node*>({new NodeDone(vFirst), new NodeDone(vSecond)})))))->generate();
-                    return (new NodeCall(
-                        this->loc, new NodeIden(AST::structTable[opOverload.first]->operators[this->op][opOverload.second]->name, this->loc),
-                        std::vector<Node*>({new NodeDone(vFirst), new NodeDone(vSecond)})))->generate();
+                    NodeCall* _overloadedCall = new NodeCall(loc,
+                        new NodeIden(AST::structTable[opOverload.first[0] == '!' ? opOverload.first.substr(1) : opOverload.first]->operators[op][opOverload.second]->name, loc),
+                        std::vector<Node*>({new NodeDone(vFirst), new NodeDone(vSecond)})
+                    );
+
+                    return opOverload.first[0] == '!' ? (new NodeUnary(loc, TokType::Ne, _overloadedCall))->generate() : _overloadedCall->generate();
                 }
-                else if(instanceof<TypeBasic>(this->second->getType())) {
-                    generator->error("an attempt to change value of the structure as the variable '" + id->name + "' without overloading!", this->loc);
-                    return {};
-                }
-            }
-            else vSecond = second->generate();
-
-            RaveValue value = currScope->getWithoutLoad(id->name, this->loc);
-
-            if(vSecond.type && vSecond.type->toString() == value.type->toString()) vSecond = LLVM::load(vSecond, "NodeBinary_NodeIden_load", loc);
-
-            if(instanceof<NodeNull>(this->second)) {
-                ((NodeNull*)(this->second))->type = value.type->getElType();
-                vSecond = second->generate();
+                else if(instanceof<TypeBasic>(second->getType()))
+                    generator->error("an attempt to change value of the structure as the variable '" + id->name + "' without overloading!", loc);
             }
 
-            if(instanceof<TypeArray>(value.type->getElType()) && instanceof<TypePointer>(vSecond.type)) generator->error("cannot store a value of type " + vSecond.type->toString() + " into a variable of type " + value.type->getElType()->toString() + "!", loc);
+            if(vSecond.type && vSecond.type->toString() == vFirst.type->toString()) vSecond = LLVM::load(vSecond, "NodeBinary_NodeIden_load", loc);
 
-            Binary::store(value, vSecond, loc);
+            if(instanceof<TypeArray>(vFirst.type->getElType()) && instanceof<TypePointer>(vSecond.type)) generator->error("cannot store a value of type " + vSecond.type->toString() + " into a variable of type " + vFirst.type->getElType()->toString() + "!", loc);
+
+            Binary::store(vFirst, vSecond, loc);
             return {};
         }
-        else if(instanceof<NodeGet>(this->first)) {
-            NodeGet* nget = (NodeGet*)this->first;
-            RaveValue fValue = nget->generate();
-
-            if(instanceof<NodeNull>(this->second)) {
-                ((NodeNull*)this->second)->type = fValue.type->getElType();
-            }
-
-            RaveValue sValue = this->second->generate();
-
+        else if(instanceof<NodeGet>(first)) {
+            NodeGet* nget = (NodeGet*)first;
             nget->isMustBePtr = true;
-            fValue = nget->generate();
 
-            if(nget->elementIsConst) {
-                generator->error("An attempt to change the constant element!", loc);
-                return {};
-            }
+            RaveValue fValue = nget->generate();
+            RaveValue sValue = second->generate();
+
+            if(nget->elementIsConst) generator->error("An attempt to change the constant element!", loc);
  
             Binary::store(fValue, sValue, loc);
             return {};
         }
-        else if(instanceof<NodeIndex>(this->first)) {
-            NodeIndex* ind = (NodeIndex*)this->first;
+        else if(instanceof<NodeIndex>(first)) {
+            NodeIndex* ind = (NodeIndex*)first;
             ind->isMustBePtr = true;
 
             if(instanceof<NodeIden>(ind->element) && currScope->locatedAtThis(((NodeIden*)ind->element)->name)) {
-                ind->element = new NodeGet(new NodeIden("this", this->loc), ((NodeIden*)ind->element)->name, true, ((NodeIden*)ind->element)->loc);
-                return this->generate();
+                ind->element = new NodeGet(new NodeIden("this", loc), ((NodeIden*)ind->element)->name, true, ((NodeIden*)ind->element)->loc);
+                return Binary::operation(op, first, second, loc);
             }
 
             RaveValue value = {nullptr, nullptr};
@@ -364,7 +331,7 @@ RaveValue NodeBinary::generate() {
             // Check for TypeVector
             if(instanceof<TypeVector>(ind->element->getType())) {
                 Type* elType = ((TypeVector*)ind->element->getType())->getElType();
-                RaveValue number = this->second->generate();
+                RaveValue number = second->generate();
 
                 if(instanceof<TypeBasic>(number.type) && ((TypeBasic*)number.type)->type != ((TypeBasic*)elType)->type) LLVM::cast(number, elType, loc);
 
@@ -376,54 +343,52 @@ RaveValue NodeBinary::generate() {
                 }
                 else value = {LLVMBuildInsertElement(generator->builder, value.value, number.value, ind->indexes[0]->generate().value, "NodeBinary_TypeVector_insert"), ptr.type};
             }
-            else value = this->second->generate();
+            else value = second->generate();
 
-            if(instanceof<NodeNull>(this->second)) ((NodeNull*)this->second)->type = ptr.type->getElType();
+            if(instanceof<NodeNull>(second)) ((NodeNull*)second)->type = ptr.type->getElType();
             
             Binary::store(ptr, value, loc);
             return {};
         }
-        else if(instanceof<NodeDone>(this->first)) {
-            Binary::store(this->first->generate(), this->second->generate(), loc);
+        else if(instanceof<NodeDone>(first)) {
+            Binary::store(first->generate(), second->generate(), loc);
             return {};
         }
     }
 
-    if(instanceof<NodeNull>(this->first)) ((NodeNull*)this->first)->type = this->second->getType();
-    else if(instanceof<NodeNull>(this->second)) ((NodeNull*)this->second)->type = this->first->getType();   
+    if(instanceof<NodeNull>(first)) ((NodeNull*)first)->type = second->getType();
+    else if(instanceof<NodeNull>(second)) ((NodeNull*)second)->type = first->getType();   
 
-    if(this->op == TokType::Rem) {
-        RaveValue _first = this->first->generate();
+    if(op == TokType::Rem) {
+        RaveValue _first = first->generate();
         if(instanceof<TypePointer>(_first.type)) _first = LLVM::load(_first, "NodeBinary_Rem_load", loc);
 
-        RaveValue _second = this->second->generate();
+        RaveValue _second = second->generate();
         if(instanceof<TypePointer>(_second.type)) _second = LLVM::load(_second, "NodeBinary_Rem_load2", loc);
 
         LLVM::cast(_second, _first.type, loc);
 
-        if(isFloatType(_first.type)) return (new NodeBuiltin(
-            "fmodf", {new NodeDone(_first), new NodeDone(_second)}, loc, nullptr
-        ))->generate();
+        if(isFloatType(_first.type)) return (new NodeBuiltin("fmodf", {new NodeDone(_first), new NodeDone(_second)}, loc, nullptr))->generate();
 
         if(((TypeBasic*)_first.type)->isUnsigned()) return {LLVMBuildURem(generator->builder, _first.value, _second.value, "LLVM_urem"), _first.type};
         return {LLVMBuildSRem(generator->builder, _first.value, _second.value, "LLVM_srem"), _first.type};
     }
 
-    RaveValue vFirst = this->first->generate();
-    RaveValue vSecond = this->second->generate();
+    RaveValue vFirst = first->generate();
+    RaveValue vSecond = second->generate();
 
     while(instanceof<TypeConst>(vFirst.type)) vFirst.type = vFirst.type->getElType();
     while(instanceof<TypeConst>(vSecond.type)) vSecond.type = vSecond.type->getElType();
 
-    if(instanceof<TypeStruct>(this->first->getType()) || instanceof<TypePointer>(this->first->getType())
-     && !instanceof<TypeStruct>(this->second->getType()) && !instanceof<TypePointer>(this->second->getType())) {
-        std::pair<std::string, std::string> opOverload = isOperatorOverload(vFirst, vSecond, this->op);
+    if(instanceof<TypeStruct>(first->getType()) || instanceof<TypePointer>(first->getType())
+     && !instanceof<TypeStruct>(second->getType()) && !instanceof<TypePointer>(second->getType())) {
+        std::pair<std::string, std::string> opOverload = Binary::isOperatorOverload(first, second, vFirst, vSecond, op);
         if(opOverload.first != "") {
             if(opOverload.first[0] == '!') return (new NodeUnary(loc, TokType::Ne, (new NodeCall(
-                this->loc, new NodeIden(AST::structTable[opOverload.first.substr(1)]->operators[TokType::Equal][opOverload.second]->name, this->loc),
+                loc, new NodeIden(AST::structTable[opOverload.first.substr(1)]->operators[TokType::Equal][opOverload.second]->name, loc),
                 std::vector<Node*>({first, second})))))->generate();
             return (new NodeCall(
-                this->loc, new NodeIden(AST::structTable[opOverload.first]->operators[this->op][opOverload.second]->name, this->loc),
+                loc, new NodeIden(AST::structTable[opOverload.first]->operators[op][opOverload.second]->name, loc),
                 std::vector<Node*>({first, second})))->generate();
         }
     }
@@ -441,7 +406,7 @@ RaveValue NodeBinary::generate() {
         char exprOp = (op == TokType::In ? TokType::Equal : TokType::Nequal);
 
         if(instanceof<TypeStruct>(vSecond.type->getElType())) {
-            auto overload = isOperatorOverload(vSecond, vFirst, TokType::In);
+            auto overload = Binary::isOperatorOverload(first, second, vSecond, vFirst, TokType::In);
 
             if(overload.first != "" && overload.second != "") {
                 NodeStruct* _struct = AST::structTable[overload.first];
@@ -449,7 +414,7 @@ RaveValue NodeBinary::generate() {
 
                 if(_operator == nullptr) generator->error("operator not found!", loc);
                 else {
-                    NodeCall* _call = new NodeCall(this->loc, new NodeIden(_operator->name, this->loc), std::vector<Node*>({new NodeDone(vSecond), new NodeDone(vFirst)}));
+                    NodeCall* _call = new NodeCall(loc, new NodeIden(_operator->name, loc), std::vector<Node*>({new NodeDone(vSecond), new NodeDone(vFirst)}));
 
                     return (op == TokType::NeIn ? (new NodeUnary(loc, TokType::Ne, _call))->generate() : _call->generate());
                 }
@@ -481,24 +446,29 @@ RaveValue NodeBinary::generate() {
         if(!instanceof<TypeBasic>(vFirst.type) || !instanceof<TypeBasic>(vSecond.type)) generator->error("value types '" + vFirst.type->toString() + "' and '" + vSecond.type->toString() + "' are incompatible!", loc);
     }
 
-    switch(this->op) {
+    switch(op) {
         case TokType::Plus: return LLVM::sum(vFirst, vSecond);
         case TokType::Minus: return LLVM::sub(vFirst, vSecond);
         case TokType::Multiply: return LLVM::mul(vFirst, vSecond);
         case TokType::Divide: return LLVM::div(vFirst, vSecond, (instanceof<TypeBasic>(first->getType()) && ((TypeBasic*)first->getType())->isUnsigned()));
         case TokType::Equal: case TokType::Nequal:
         case TokType::Less: case TokType::More:
-        case TokType::LessEqual: case TokType::MoreEqual: return LLVM::compare(vFirst, vSecond, this->op);
+        case TokType::LessEqual: case TokType::MoreEqual: return LLVM::compare(vFirst, vSecond, op);
         case TokType::And: return {LLVMBuildAnd(generator->builder, vFirst.value, vSecond.value, "NodeBinary_and"), vFirst.type};
         case TokType::Or: return {LLVMBuildOr(generator->builder, vFirst.value, vSecond.value, "NodeBinary_or"), vFirst.type};
         case TokType::BitXor: return {LLVMBuildXor(generator->builder, vFirst.value, vSecond.value, "NodeBinary_xor"), vFirst.type};
         case TokType::BitLeft: return {LLVMBuildShl(generator->builder, vFirst.value, vSecond.value, "NodeBinary_and"), vFirst.type};
         case TokType::BitRight: return {LLVMBuildLShr(generator->builder, vFirst.value, vSecond.value, "NodeBinary_and"), vFirst.type};
-        default: generator->error("undefined operator " + std::to_string(this->op) + "!", this->loc); return {};
+        default: generator->error("undefined operator " + std::to_string(op) + "!", loc); return {};
     }
 }
 
+
+RaveValue NodeBinary::generate() {
+    return Binary::operation(op, first, second, loc);
+}
+
 NodeBinary::~NodeBinary() {
-    if(this->first != nullptr) delete this->first;
-    if(this->second != nullptr) delete this->second;
+    if(first != nullptr) delete first;
+    if(second != nullptr) delete second;
 }

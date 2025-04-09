@@ -101,7 +101,7 @@ RaveValue NodeConstStruct::generate() {
                 else generator->error("incompatible types in constant structure: value of type '" + llvmValues[i].type->toString() + "' trying to be assigned to variable named '" + variables[i]->name + "' of type '" + varType->toString() + "'!", loc);
             }
 
-            (new NodeBinary(TokType::Equ, new NodeGet(new NodeDone(temp), variables[i]->name, true, this->loc), new NodeDone(llvmValues[i]), this->loc))->generate();
+            Binary::operation(TokType::Equ, new NodeGet(new NodeDone(temp), variables[i]->name, true, this->loc), new NodeDone(llvmValues[i]), loc);
         }
 
         return LLVM::load(temp, "constStruct_tempLoad", loc);
