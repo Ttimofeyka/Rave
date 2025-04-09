@@ -383,13 +383,16 @@ RaveValue Binary::operation(char op, Node* first, Node* second, int loc) {
     if(instanceof<TypeStruct>(first->getType()) || instanceof<TypePointer>(first->getType())
      && !instanceof<TypeStruct>(second->getType()) && !instanceof<TypePointer>(second->getType())) {
         std::pair<std::string, std::string> opOverload = Binary::isOperatorOverload(first, second, vFirst, vSecond, op);
+
         if(opOverload.first != "") {
-            if(opOverload.first[0] == '!') return (new NodeUnary(loc, TokType::Ne, (new NodeCall(
-                loc, new NodeIden(AST::structTable[opOverload.first.substr(1)]->operators[TokType::Equal][opOverload.second]->name, loc),
-                std::vector<Node*>({first, second})))))->generate();
-            return (new NodeCall(
-                loc, new NodeIden(AST::structTable[opOverload.first]->operators[op][opOverload.second]->name, loc),
-                std::vector<Node*>({first, second})))->generate();
+            bool isNegative = opOverload.first[0] == '!';
+
+            NodeCall* _overloadedCall = new NodeCall(loc,
+                new NodeIden(AST::structTable[isNegative ? opOverload.first.substr(1) : opOverload.first]->operators[isNegative ? TokType::Equal : op][opOverload.second]->name, loc),
+                std::vector<Node*>({new NodeDone(vFirst), new NodeDone(vSecond)})
+            );
+
+            return isNegative ? (new NodeUnary(loc, TokType::Ne, _overloadedCall))->generate() : _overloadedCall->generate();
         }
     }
 

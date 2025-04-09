@@ -332,15 +332,19 @@ RaveValue NodeStruct::generate() {
         for(int i=0; i<this->predefines.size(); i++) {
             if(!this->predefines[i].isStruct) constructorBlock->nodes.push_back(new NodeBinary(TokType::Equ, new NodeGet(new NodeIden("this", this->loc), this->predefines[i].name, true, this->loc), this->predefines[i].value, this->loc));
         }
+
         NodeFunc* constructor = new NodeFunc(
             this->origname, std::vector<FuncArgSet>({FuncArgSet{.name = "this", .type = thisType, .internalTypes = {thisType}}}),
             constructorBlock, false, std::vector<DeclarMod>(), this->loc,
             new TypeStruct(this->name), std::vector<std::string>()
         );
+
         constructor->namespacesNames = std::vector<std::string>(this->namespacesNames);
         constructor->isTemplatePart = this->isLinkOnce;
         constructor->isComdat = this->isComdat;
+
         if(this->isImported) constructor->isExtern = true;
+
         constructor->check();
         constructor->generate();
         this->constructors.push_back(constructor);
@@ -353,10 +357,10 @@ RaveValue NodeStruct::generate() {
     }
 
     if(this->destructor == nullptr) {
-        // Creating default destructor
+        // Creating default (empty) destructor
         this->destructor = new NodeFunc(
             "~" + this->origname, std::vector<FuncArgSet>(),
-            new NodeBlock({new NodeCall(this->loc, new NodeIden("std::free", this->loc), {new NodeIden("this", this->loc)})}), false,
+            new NodeBlock({}), false,
             std::vector<DeclarMod>(), this->loc, typeVoid, std::vector<std::string>()
         );
         this->destructor->namespacesNames = std::vector<std::string>(this->namespacesNames);
