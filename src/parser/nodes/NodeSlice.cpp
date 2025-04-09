@@ -91,8 +91,8 @@ RaveValue NodeSlice::generate() {
 
         NodeFor* _for = new NodeFor(
             {
-                new NodeVar("__RAVE_NODESLICE_I", new NodeDone(lStart), false, false, false, {}, loc, new TypeBasic(BasicType::Int)),
-                new NodeVar("__RAVE_NODESLICE_J", new NodeInt(0), false, false, false, {}, loc, new TypeBasic(BasicType::Int))
+                new NodeVar("__RAVE_NODESLICE_I", new NodeDone(lStart), false, false, false, {}, loc, basicTypes[BasicType::Int]),
+                new NodeVar("__RAVE_NODESLICE_J", new NodeInt(0), false, false, false, {}, loc, basicTypes[BasicType::Int])
             },
             new NodeBinary(TokType::Less, new NodeIden("__RAVE_NODESLICE_I", loc), new NodeDone(lEnd), loc),
             {

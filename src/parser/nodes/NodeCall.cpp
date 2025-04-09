@@ -610,7 +610,8 @@ RaveValue NodeCall::generate() {
 
     if(instanceof<NodeUnary>(this->func)) {
         NodeCall* nc = new NodeCall(this->loc, ((NodeUnary*)this->func)->base, this->args);
-        return (new NodeUnary(loc, ((NodeUnary*)this->func)->type, nc))->generate();
+        ((NodeUnary*)this->func)->base = nc;
+        return this->func->generate();
     }
 
     generator->error("a call of this kind is temporarily unavailable!", this->loc);

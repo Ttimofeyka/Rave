@@ -70,7 +70,7 @@ RaveValue NodeIf::generate() {
             LLVMInt1TypeInContext(generator->context),
             std::vector<LLVMTypeRef>({LLVMInt1TypeInContext(generator->context), LLVMInt1TypeInContext(generator->context)}).data(),
             2, false
-            )), new TypeFunc(new TypeBasic(BasicType::Bool), {new TypeFuncArg(new TypeBasic(BasicType::Bool), "v1"), new TypeFuncArg(new TypeBasic(BasicType::Bool), "v2")}, false)};
+            )), new TypeFunc(basicTypes[BasicType::Bool], {new TypeFuncArg(basicTypes[BasicType::Bool], "v1"), new TypeFuncArg(basicTypes[BasicType::Bool], "v2")}, false)};
         }
 
         LLVM::call(generator->functions["llvm.expect.i1"], {condValue, {LLVM::makeInt(1, isLikely ? 1 : 0, false), basicTypes[BasicType::Bool]}}, isLikely ? "likely" : "unlikely");

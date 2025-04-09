@@ -684,7 +684,7 @@ RaveValue NodeBuiltin::generate() {
                 LLVMInt32TypeInContext(generator->context),
                 std::vector<LLVMTypeRef>({LLVMVectorType(LLVMInt8TypeInContext(generator->context), 16)}).data(),
                 1, false
-            )), new TypeFunc(new TypeBasic(BasicType::Int), {new TypeFuncArg(new TypeVector(basicTypes[BasicType::Char], 16), "v")}, false)};
+            )), new TypeFunc(basicTypes[BasicType::Int], {new TypeFuncArg(new TypeVector(basicTypes[BasicType::Char], 16), "v")}, false)};
         }
 
         if(((TypeVector*)value.type)->count != 16) LLVM::cast(value, new TypeVector(basicTypes[BasicType::Char], 16), this->loc);

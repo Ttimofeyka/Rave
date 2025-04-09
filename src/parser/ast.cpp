@@ -187,8 +187,8 @@ LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options)
             std::vector<LLVMTypeRef>({LLVMVectorType(LLVMInt32TypeInContext(context), 4), LLVMVectorType(LLVMInt32TypeInContext(context), 4)}).data(),
             2, false
         )), new TypeFunc(
-            new TypeVector(new TypeBasic(BasicType::Int), 4),
-            {new TypeFuncArg(new TypeVector(new TypeBasic(BasicType::Int), 4), "v1"), new TypeFuncArg(new TypeVector(new TypeBasic(BasicType::Int), 4), "v2")},
+            new TypeVector(basicTypes[BasicType::Int], 4),
+            {new TypeFuncArg(new TypeVector(basicTypes[BasicType::Int], 4), "v1"), new TypeFuncArg(new TypeVector(basicTypes[BasicType::Int], 4), "v2")},
             false
         )};
 
@@ -197,8 +197,8 @@ LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options)
             std::vector<LLVMTypeRef>({LLVMVectorType(LLVMInt16TypeInContext(context), 8), LLVMVectorType(LLVMInt16TypeInContext(context), 8)}).data(),
             2, false
         )), new TypeFunc(
-            new TypeVector(new TypeBasic(BasicType::Short), 8),
-            {new TypeFuncArg(new TypeVector(new TypeBasic(BasicType::Short), 8), "v1"), new TypeFuncArg(new TypeVector(new TypeBasic(BasicType::Short), 8), "v2")},
+            new TypeVector(basicTypes[BasicType::Short], 8),
+            {new TypeFuncArg(new TypeVector(basicTypes[BasicType::Short], 8), "v1"), new TypeFuncArg(new TypeVector(basicTypes[BasicType::Short], 8), "v2")},
             false
         )};
     }
@@ -209,8 +209,8 @@ LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options)
             std::vector<LLVMTypeRef>({LLVMVectorType(LLVMFloatTypeInContext(context), 4), LLVMVectorType(LLVMFloatTypeInContext(context), 4)}).data(),
             2, false
         )), new TypeFunc(
-            new TypeVector(new TypeBasic(BasicType::Float), 4),
-            {new TypeFuncArg(new TypeVector(new TypeBasic(BasicType::Float), 4), "v1"), new TypeFuncArg(new TypeVector(new TypeBasic(BasicType::Float), 4), "v2")},
+            new TypeVector(basicTypes[BasicType::Float], 4),
+            {new TypeFuncArg(new TypeVector(basicTypes[BasicType::Float], 4), "v1"), new TypeFuncArg(new TypeVector(basicTypes[BasicType::Float], 4), "v2")},
             false
         )};
     }
@@ -326,7 +326,7 @@ LLVMTypeRef LLVMGen::genType(Type* type, int loc) {
     if(instanceof<TypeVoid>(type)) return LLVMVoidTypeInContext(this->context);
     if(instanceof<TypeFunc>(type)) {
         TypeFunc* tf = (TypeFunc*)type;
-        if(instanceof<TypeVoid>(tf->main)) tf->main = new TypeBasic(BasicType::Char);
+        if(instanceof<TypeVoid>(tf->main)) tf->main = basicTypes[BasicType::Char];
         std::vector<LLVMTypeRef> types;
         for(int i=0; i<tf->args.size(); i++) types.push_back(this->genType(tf->args[i]->type, loc));
         return LLVMPointerType(LLVMFunctionType(this->genType(tf->main, loc), types.data(), types.size(), false), 0);
