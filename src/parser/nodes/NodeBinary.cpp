@@ -432,17 +432,12 @@ RaveValue Binary::operation(char op, Node* first, Node* second, int loc) {
 
         if(length == 0) generator->error("array is empty!", loc);
 
-        NodeBinary* out = nullptr;
-        NodeBinary* binary = new NodeBinary(exprOp, first, new NodeDone({LLVMBuildExtractValue(generator->builder, vSecond.value, 0, "NodeBinary_extract"), arrayType}), loc);
+        NodeBinary* out = new NodeBinary(exprOp, first, new NodeDone({LLVMBuildExtractValue(generator->builder, vSecond.value, 0, "NodeBinary_extract"), arrayType}), loc);
 
-        for(int i=1; i<length; i++) {
-            if(out == nullptr)
-                out = new NodeBinary(connect, binary, new NodeBinary(exprOp, first, new NodeDone({LLVMBuildExtractValue(generator->builder, vSecond.value, i, "NodeBinary_extract"), arrayType}), loc), loc);
-            else
-                out = new NodeBinary(connect, out, new NodeBinary(exprOp, first, new NodeDone({LLVMBuildExtractValue(generator->builder, vSecond.value, i, "NodeBinary_extract"), arrayType}), loc), loc);
-        }
+        for(int i=1; i<length; i++)
+            out = new NodeBinary(connect, out, new NodeBinary(exprOp, first, new NodeDone({LLVMBuildExtractValue(generator->builder, vSecond.value, i, "NodeBinary_extract"), arrayType}), loc), loc);
 
-        return (out == nullptr ? binary->generate() : out->generate());
+        return (out->generate());
     }
 
     if(vFirst.type->toString() != vSecond.type->toString()) {
