@@ -123,6 +123,10 @@ defer ~buffer;
 f.close();
 ```
 
+### readLineBuffer, readAllBuffer
+
+The call is equivalent to calling functions without a 'Buffer', but instead of a new buffer, the buffer from the argument is used.
+
 ### seek
 
 The method for moving the current file position.
