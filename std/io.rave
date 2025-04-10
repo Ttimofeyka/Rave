@@ -617,11 +617,11 @@ namespace std {
         std::__putswnlSL.unlock();
     }
 
-    (inline) void putswnlS(std::string s) => std::putswnl(s.data);
+    (inline) void putswnl(std::string s) => std::putswnl(s.data);
 
     (private, ctargs, inline) void print {
         std::string s = @callWithArgs(std::gsprint);
-        std::putswnlS(s);
+        std::putswnl(s);
     }
 
     (private, ctargs, inline) void println {
