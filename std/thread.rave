@@ -24,7 +24,7 @@ import <std/process> <std/map>
     
             int join => pthread::join(this.id, cast(void**)null);
 
-            int hash => (9437 * cast(int)(this.id));
+            uint hash => (9437 * cast(uint)(this.id));
         }
 
         namespace thread {

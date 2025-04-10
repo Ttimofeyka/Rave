@@ -135,7 +135,7 @@ namespace std {
             for(int i=0; i<this.length; i++) this.data[i] = fn(this.data[i]);
         }
 
-        int hash {
+        uint hash {
             return = this.length;
             for(int i=0; i<this.length; i++) return = return * i + 7588 + (return <. 6) + (return >. 2);
         }

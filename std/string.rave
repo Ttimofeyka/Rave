@@ -313,7 +313,7 @@ namespace std {
             }
         } => buffer;
 
-        int hash => std::hash::crc32(this.data, this.length);
+        uint hash => std::hash::crc32(this.data, this.length);
     }
 
     namespace string {

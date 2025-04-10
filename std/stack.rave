@@ -88,7 +88,7 @@ namespace std {
             }
         }
 
-        int hash {
+        uint hash {
             return = this.length + (this.capacity * sizeof(STACK_T));
             for(int i=0; i<this.length; i++) return = return * i + 5213 + (return <. 6) + (return >. 2);
         }

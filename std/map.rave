@@ -44,10 +44,8 @@ namespace std {
                 mapSize = mapSize * 2;
             }
 
-            @if(@hasMethod(K, hash)) int index = key.hash() % mapSize;
-            @else int index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
-
-            if(index < 0) index = -index;
+            @if(@hasMethod(K, hash)) uint index = key.hash() % mapSize;
+            @else uint index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
 
             std::hashmap::Entry<K, V>* entry = table[index];
             bool setted = false;
