@@ -453,11 +453,8 @@ RaveValue NodeBuiltin::generate() {
             }
         }
 
-        for(auto &&x : AST::methodTable) {
-            if(x.first.first == tstruct->name && x.second->origName == methodName) {
-                if(fnType == nullptr) return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
-            }
-        }
+        auto it = AST::methodTable.find({tstruct->name, methodName});
+        if(it != AST::methodTable.end() && fnType == nullptr) return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
 
         return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
     }
