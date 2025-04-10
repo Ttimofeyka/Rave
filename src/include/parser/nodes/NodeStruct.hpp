@@ -27,7 +27,7 @@ class NodeStruct : public Node {
 public:
     std::string name;
     std::vector<Node*> elements;
-    std::vector<StructPredefined> predefines;
+    std::map<std::string, StructPredefined> predefines;
     std::vector<std::string> namespacesNames;
     int loc;
     std::string origname;

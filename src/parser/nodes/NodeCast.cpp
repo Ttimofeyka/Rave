@@ -69,10 +69,8 @@ RaveValue NodeCast::generate() {
                 LLVMBuildSIToFP(
                     generator->builder, LLVMBuildPtrToInt(generator->builder, result.value, LLVMInt64TypeInContext(generator->context), "NodeCast_temp"),
                     generator->genType(this->type, loc), "NodeCast_ptof"
-                ),
-                this->type
+                ), this->type
             };
-            generator->error("casting a pointer to the float is prohibited!", loc);
         }
 
         if(instanceof<TypeStruct>(result.type)) generator->error("casting a structure to the basic type is prohibited!", loc);

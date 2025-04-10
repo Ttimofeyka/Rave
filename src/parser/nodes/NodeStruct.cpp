@@ -99,17 +99,19 @@ Type* checkForTemplated(Type* type) {
 
 std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
     std::vector<LLVMTypeRef> values;
+
     for(int i=0; i<this->elements.size(); i++) {
         if(instanceof<NodeVar>(this->elements[i])) {
             NodeVar* var = (NodeVar*)this->elements[i];
             var->isExtern = (var->isExtern || this->isImported);
             var->isComdat = this->isComdat;
             AST::structsNumbers[std::pair<std::string, std::string>(this->name, var->name)] = StructMember{.number = i, .var = var};
-            if(var->value != nullptr && !instanceof<NodeNone>(var->value)) this->predefines.push_back(StructPredefined{.element = i, .value = var->value, .isStruct = false, .name = var->name});
+
+            if(var->value != nullptr && !instanceof<NodeNone>(var->value)) this->predefines[var->name] = StructPredefined{.element = i, .value = var->value, .isStruct = false, .name = var->name};
             else if(instanceof<TypeStruct>(var->type)) {
                 TypeStruct* ts = (TypeStruct*)var->type;
                 if(AST::structTable.find(ts->name) != AST::structTable.end() && AST::structTable[ts->name]->hasPredefines()) {
-                    this->predefines.push_back(StructPredefined{.element = i, .value = var->value, .isStruct = true, .name = var->name});
+                    this->predefines[var->name] = StructPredefined{.element = i, .value = nullptr, .isStruct = true, .name = var->name};
                 }
             }
             values.push_back(generator->genType(var->type, this->loc));
@@ -127,12 +129,14 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 func->namespacesNames = std::vector<std::string>(this->namespacesNames);
                 func->isTemplatePart = this->isLinkOnce;
                 func->isComdat = this->isComdat;
+
                 if(this->isImported) {
                     func->isExtern = true;
                     func->check();
                     this->constructors.push_back(func);
                     continue;
                 }
+
                 std::vector<Node*> toAdd;
                 for(int i=0; i<toAdd.size(); i++) func->block->nodes.insert(func->block->nodes.begin(), (toAdd[i]));
                 func->check();
@@ -268,7 +272,7 @@ void NodeStruct::check() {
             if(!method->isNoCopy) this->methods.push_back(method);
         }
 
-        this->predefines.insert(this->predefines.end(), extended->predefines.begin(), extended->predefines.end());
+        // this->predefines.insert(this->predefines.end(), extended->predefines.begin(), extended->predefines.end());
     }
 
     AST::structTable[this->name] = this;
@@ -324,32 +328,7 @@ RaveValue NodeStruct::generate() {
     std::vector<LLVMTypeRef> params = this->getParameters(this->isTemplated);
     LLVMStructSetBody(generator->structures[this->name], params.data(), params.size(), this->isPacked);
 
-    if(this->constructors.empty() && this->predefines.size() > 0) {
-        // Creating the default constructor
-        Type* thisType = new TypePointer(new TypeStruct(this->name));
-        NodeBlock* constructorBlock = new NodeBlock({});
-
-        for(int i=0; i<this->predefines.size(); i++) {
-            if(!this->predefines[i].isStruct) constructorBlock->nodes.push_back(new NodeBinary(TokType::Equ, new NodeGet(new NodeIden("this", this->loc), this->predefines[i].name, true, this->loc), this->predefines[i].value, this->loc));
-        }
-
-        NodeFunc* constructor = new NodeFunc(
-            this->origname, std::vector<FuncArgSet>({FuncArgSet{.name = "this", .type = thisType, .internalTypes = {thisType}}}),
-            constructorBlock, false, std::vector<DeclarMod>(), this->loc,
-            new TypeStruct(this->name), std::vector<std::string>()
-        );
-
-        constructor->namespacesNames = std::vector<std::string>(this->namespacesNames);
-        constructor->isTemplatePart = this->isLinkOnce;
-        constructor->isComdat = this->isComdat;
-
-        if(this->isImported) constructor->isExtern = true;
-
-        constructor->check();
-        constructor->generate();
-        this->constructors.push_back(constructor);
-    }
-    else {
+    if(!this->constructors.empty()) {
         for(int i=0; i<this->constructors.size(); i++) {
             if(!this->constructors[i]->isChecked) this->constructors[i]->check();
             this->constructors[i]->generate();

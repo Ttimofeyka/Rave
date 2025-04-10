@@ -11,7 +11,7 @@ namespace std {
     extern(private, linkname: "sscanf") int format(char* buff, char* fmt);
 
     (data: "data", length: "length") struct string {
-        char* data;
+        char* data = null;
         uint length;
         uint capacity;
 
@@ -49,7 +49,50 @@ namespace std {
             this.data[0] = '\0';
         } => this;
 
-        (nochecks) void operator=(std::string* one, char* two) {one[0] = std::string(two);}
+        void setValue(char* a) {
+            if(data == null) {
+                if(a != null) {
+                    this.length = std::cstring::strlen(a);
+                    this.capacity = (this.length * 2) + 2;
+                    if(this.capacity <= 0) this.capacity = 2;
+                    if(this.data != null) std::free(this.data);
+                    this.data = std::malloc(this.capacity);
+
+                    int i = 0;
+                    while(i < this.length) {
+                        this.data[i] = a[i];
+                        i += 1;
+                    }
+
+                    this.data[i] = '\0';
+                }
+                else {
+                    this.length = 0;
+                    this.capacity = 2;
+                    if(this.data != null) std::free(this.data);
+                    this.data = std::malloc(this.capacity);
+                    this.data[0] = '\0';
+                }
+            }
+            else {
+                this.length = std::cstring::strlen(a);
+
+                if(this.capacity < this.length) {
+                    this.capacity = (this.length * 2) + 2;
+                    this.data = std::realloc(this.data, this.capacity);
+                }
+
+                int i = 0;
+                while(i < this.length) {
+                    this.data[i] = a[i];
+                    i += 1;
+                }
+
+                this.data[i] = '\0';
+            }
+        }
+
+        (nochecks) void operator=(std::string* one, char* two) {one.setValue(two);}
 
         void ~this {
             if(this.data != null) {
@@ -57,30 +100,6 @@ namespace std {
                 this.data = null;
                 this.length = 0;
                 this.capacity = 0;
-            }
-        }
-
-        void setValue(char* a) {
-            if(a != null) {
-                this.length = std::cstring::strlen(a);
-                this.capacity = (this.length * 2) + 2;
-                if(this.capacity <= 0) this.capacity = 2;
-                if(this.data != null) std::free(this.data);
-                this.data = std::malloc(this.capacity);
-
-                int i = 0;
-                while(i<this.length) {
-                    this.data[i] = a[i];
-                    i += 1;
-                }
-                this.data[i] = '\0';
-            }
-            else {
-                this.length = 0;
-                this.capacity = 2;
-                if(this.data != null) std::free(this.data);
-                this.data = std::malloc(this.capacity);
-                this.data[0] = '\0';
             }
         }
 

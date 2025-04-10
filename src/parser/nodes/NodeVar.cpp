@@ -17,6 +17,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeIden.hpp"
 #include "../../include/parser/nodes/NodeFunc.hpp"
 #include "../../include/parser/nodes/NodeCall.hpp"
+#include "../../include/parser/nodes/NodeGet.hpp"
 #include "../../include/lexer/lexer.hpp"
 #include "../../include/parser/parser.hpp"
 #include "../../include/llvm.hpp"
@@ -333,7 +334,14 @@ RaveValue NodeVar::generate() {
 
         if((this->value == nullptr || instanceof<NodeCall>(this->value)) && instanceof<TypeStruct>(this->type)) {
             if(AST::structTable[((TypeStruct*)this->type)->name]->predefines.size() > 0) {
-                (new NodeCall(this->loc, new NodeIden(((TypeStruct*)this->type)->name, this->loc), std::vector<Node*>({new NodeIden(this->name, this->loc)})))->generate();
+                NodeGet* getter = new NodeGet(new NodeIden(name, loc), "", true, loc);
+
+                for(auto& predefine : AST::structTable[((TypeStruct*)this->type)->name]->predefines) {
+                    // TODO: Support of predefine.second.isStruct
+
+                    getter->field = predefine.first;
+                    if(predefine.second.value != nullptr) Binary::operation(TokType::Equ, getter, predefine.second.value, loc);
+                }
             }
         }
 
