@@ -70,10 +70,12 @@ namespace std {
                 else {
                     std::hashmap::Entry<K, V>* previous = null;
                     entry = table[index];
+
                     while(entry != null) {
                         previous = entry;
                         entry = entry.next;
                     }
+
                     entry = cast(std::hashmap::Entry<K, V>*)std::malloc(sizeof(std::hashmap::Entry<K, V>));
                     entry.key = key;
                     entry.value = value;
@@ -88,10 +90,8 @@ namespace std {
         std::hashmap::Entry<K, V>* find(K key) {
             return = cast(std::hashmap::Entry<K, V>*)null;
 
-            @if(@hasMethod(K, hash)) int index = key.hash() % mapSize;
-            @else int index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
-
-            if(index < 0) index = -index;
+            @if(@hasMethod(K, hash)) uint index = key.hash() % mapSize;
+            @else uint index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
 
             std::hashmap::Entry<K, V>* entry = table[index];
             while(entry != null) {
@@ -115,10 +115,8 @@ namespace std {
         bool remove(K key) {
             return = false;
 
-            @if(@hasMethod(K, hash)) int index = key.hash() % mapSize;
-            @else int index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
-
-            if(index < 0) index = -index;
+            @if(@hasMethod(K, hash)) uint index = key.hash() % mapSize;
+            @else uint index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
 
             std::hashmap::Entry<K, V>* entry = table[index];
             std::hashmap::Entry<K, V>* prev = null;
