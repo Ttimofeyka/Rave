@@ -10,6 +10,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "./include/parser/nodes/NodeBool.hpp"
 #include "./include/parser/nodes/NodeInt.hpp"
 #include "./include/parser/nodes/NodeImport.hpp"
+#include "./include/parser/nodes/NodeRet.hpp"
 #include <iostream>
 #include <fstream>
 #include <chrono>
@@ -62,6 +63,9 @@ double Compiler::genTime = 0.0;
 std::vector<std::string> Compiler::files;
 std::vector<std::string> Compiler::toImport;
 bool Compiler::debugMode;
+std::string Compiler::ravePlatform;
+std::string Compiler::raveOs;
+
 
 std::string getDirectory(std::string file) {
     return file.substr(0, file.find_last_of("/\\"));
@@ -86,6 +90,71 @@ bool endsWith(const std::string &str, const std::string &suffix) {
     return str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
 }
 
+void Compiler::loadPlatformVars() {
+    if(outType == "") {
+        ravePlatform = RAVE_PLATFORM;
+        raveOs = RAVE_OS;
+    }
+    else {
+        if(outType.find("i686") != std::string::npos || outType.find("i386") != std::string::npos) ravePlatform = "X86";
+        else if(outType.find("aarch64") != std::string::npos || outType.find("arm64") != std::string::npos) ravePlatform = "AARCH64";
+        else if(outType.find("x86_64") != std::string::npos || outType.find("win64") != std::string::npos) ravePlatform = "X86_64";
+        else if(outType.find("x86") != std::string::npos) ravePlatform = "X86";
+        else if(outType.find("arm") != std::string::npos) ravePlatform = "ARM";
+        else if(outType.find("mips64") != std::string::npos) ravePlatform = "MIPS64";
+        else if(outType.find("mips") != std::string::npos) ravePlatform = "MIPS";
+        else if(outType.find("powerpc64le") != std::string::npos) ravePlatform = "POWERPC64LE";
+        else if(outType.find("powerpc64") != std::string::npos) ravePlatform = "POWERPC64";
+        else if(outType.find("powerpc") != std::string::npos) ravePlatform = "POWERPC";
+        else if(outType.find("sparcv9") != std::string::npos) ravePlatform = "SPARCV9";
+        else if(outType.find("sparc") != std::string::npos) ravePlatform = "SPARC";
+        else if(outType.find("s390x") != std::string::npos) ravePlatform = "S390X";
+        else if(outType.find("wasm") != std::string::npos) ravePlatform = "WASM";
+        else if(outType.find("avr") != std::string::npos) {
+            ravePlatform = "AVR";
+            raveOs = "ARDUINO";
+        }
+        if(outType.find("win32") != std::string::npos) {
+            #ifndef _WIN32
+            linkString += " --target=i686-pc-windows-gnu ";
+            #endif
+            raveOs = "WINDOWS";
+        }
+        else if(outType.find("win64") != std::string::npos || outType.find("windows") != std::string::npos) {
+            #ifndef _WIN32
+            linkString += " --target=x86_64-pc-windows-gnu ";
+            #endif
+            raveOs = "WINDOWS";
+        }
+        else if(outType.find("linux") != std::string::npos) raveOs = "LINUX";
+        else if(outType.find("freebsd") != std::string::npos) raveOs = "FREEBSD";
+        else if(outType.find("darwin") != std::string::npos || outType.find("macos") != std::string::npos) raveOs = "DARWIN";
+        else if(outType.find("android") != std::string::npos) raveOs = "ANDROID";
+        else if(outType.find("ios") != std::string::npos) raveOs = "IOS";
+    }
+    if (outType == "") {
+        if(raveOs == "LINUX") {
+            if(ravePlatform == "X86_64") Compiler::outType = "linux-gnu-pc-x86_64";
+            else if(ravePlatform == "X86") Compiler::outType = "linux-gnu-pc-i686";
+            else if(ravePlatform == "AARCH64") Compiler::outType = "linux-gnu-aarch64";
+            else if(ravePlatform == "ARM") Compiler::outType = "linux-gnu-armv7";
+            else Compiler::outType = "linux-unknown";
+        }
+        else if(raveOs == "FREEBSD") {
+            if(ravePlatform == "X86_64") Compiler::outType = "freebsd-gnu-pc-x86_64";
+            else if(ravePlatform == "X86") Compiler::outType = "freebsd-gnu-pc-i686";
+            else if(ravePlatform == "AARCH64") Compiler::outType = "freebsd-gnu-aarch64";
+            else if(ravePlatform == "ARM") Compiler::outType = "freebsd-gnu-armv7";
+            else Compiler::outType = "freebsd-unknown";
+        }
+        else if(raveOs == "WINDOWS") {
+            if(ravePlatform == "X86_64") Compiler::outType = "x86_64-pc-windows-gnu";
+            else Compiler::outType = "i686-win32-gnu";
+        }
+        else Compiler::outType = "unknown";
+    }
+}
+
 void Compiler::error(std::string message) {
     std::cout << "\033[0;31mError: "+message+"\033[0;0m\n";
     std::exit(1);
@@ -96,6 +165,8 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
     Compiler::outType = outType;
     Compiler::settings = settings;
     Compiler::files = files;
+
+    loadPlatformVars();
     
     if(access((exePath + "options.json").c_str(), 0) == 0) {
         // If file exists - read it
@@ -237,65 +308,28 @@ void Compiler::clearAll() {
     currScope = nullptr;
 }
 
-void Compiler::compile(std::string file) {
+void Compiler::compile(std::string const& file, std::string const& outputObj, std::string const& outputLLVM) {
     std::ifstream fContent(file);
     std::string content = "";
 
     char c;
     while(fContent.get(c)) content += c;
 
-    std::string ravePlatform = "UNKNOWN";
-    std::string raveOs = "UNKNOWN";
+    int offset = 0;
+    std::string oldContent = content;
 
-    if(outType != "") {
-        if(outType.find("i686") != std::string::npos || outType.find("i386") != std::string::npos) ravePlatform = "X86";
-        else if(outType.find("aarch64") != std::string::npos || outType.find("arm64") != std::string::npos) ravePlatform = "AARCH64";
-        else if(outType.find("x86_64") != std::string::npos || outType.find("win64") != std::string::npos) ravePlatform = "X86_64";
-        else if(outType.find("x86") != std::string::npos) ravePlatform = "X86";
-        else if(outType.find("arm") != std::string::npos) ravePlatform = "ARM";
-        else if(outType.find("mips64") != std::string::npos) ravePlatform = "MIPS64";
-        else if(outType.find("mips") != std::string::npos) ravePlatform = "MIPS";
-        else if(outType.find("powerpc64") != std::string::npos) ravePlatform = "POWERPC64";
-        else if(outType.find("powerpc") != std::string::npos) ravePlatform = "POWERPC";
-        else if(outType.find("sparcv9") != std::string::npos) ravePlatform = "SPARCV9";
-        else if(outType.find("sparc") != std::string::npos) ravePlatform = "SPARC";
-        else if(outType.find("s390x") != std::string::npos) ravePlatform = "S390X";
-        else if(outType.find("wasm") != std::string::npos) ravePlatform = "WASM";
-        else if(outType.find("avr") != std::string::npos) {
-            ravePlatform = "AVR";
-            raveOs = "ARDUINO";
-        }
-
-        if(outType.find("win32") != std::string::npos) {
-            #ifndef _WIN32
-                Compiler::linkString += " --target=i686-pc-windows-gnu ";
-            #endif
-            raveOs = "WINDOWS";
-        }
-        else if(outType.find("win64") != std::string::npos || outType.find("windows") != std::string::npos) {
-            #ifndef _WIN32
-                Compiler::linkString += " --target=x86_64-pc-windows-gnu ";
-            #endif
-            raveOs = "WINDOWS";
-        }
-        else if(outType.find("linux") != std::string::npos) raveOs = "LINUX";
-        else if(outType.find("freebsd") != std::string::npos) raveOs = "FREEBSD";
-        else if(outType.find("darwin") != std::string::npos || outType.find("macos") != std::string::npos) raveOs = "DARWIN";
-        else if(outType.find("android") != std::string::npos) raveOs = "ANDROID";
-        else if(outType.find("ios") != std::string::npos) raveOs = "IOS";
-    }
-    else {
-        ravePlatform = RAVE_PLATFORM;
-        raveOs = RAVE_OS;
-    }
-
-    bool littleEndian = true;
+    loadPlatformVars();
 
     // Note: PowerPC must be rechecked for endianness
 
-    if(ravePlatform == "MIPS64" || ravePlatform == "MIPS") littleEndian = false;
-
     bool isX86 = ravePlatform == "X86_64" || ravePlatform == "X86";
+
+    bool bigEndian = (
+        ravePlatform == "MIPS64" ||
+        ravePlatform == "MIPS" ||
+        ravePlatform == "POWERPC64" ||
+        ravePlatform == "POWERPC"
+    );
 
     bool sse = settings.sse && Compiler::options["sse"].template get<bool>() && isX86;
     bool sse2 = settings.sse2 && Compiler::options["sse2"].template get<bool>() && isX86;
@@ -320,7 +354,7 @@ void Compiler::compile(std::string file) {
         if(avx) Compiler::features += "+avx,";
         if(avx2) Compiler::features += "+avx2,";
         if(avx512) Compiler::features += "+avx512,";
-        
+
         if(ravePlatform == "X86_64") Compiler::features += "+64bit,+fma,+f16c,";
         else if(ravePlatform == "X86") Compiler::features += "+fma,";
 
@@ -342,8 +376,8 @@ void Compiler::compile(std::string file) {
     AST::aliasTable["__RAVE_AVX"] = new NodeBool(avx);
     AST::aliasTable["__RAVE_AVX2"] = new NodeBool(avx2);
     AST::aliasTable["__RAVE_AVX512"] = new NodeBool(avx512);
-    AST::aliasTable["__RAVE_LITTLE_ENDIAN"] = new NodeBool(littleEndian);
-    AST::aliasTable["__RAVE_BIG_ENDIAN"] = new NodeBool(!littleEndian);
+    AST::aliasTable["__RAVE_LITTLE_ENDIAN"] = new NodeBool(!bigEndian);
+    AST::aliasTable["__RAVE_BIG_ENDIAN"] = new NodeBool(bigEndian);
 
     AST::mainFile = Compiler::files[0];
 
@@ -351,42 +385,24 @@ void Compiler::compile(std::string file) {
     Lexer* lexer = new Lexer(content, -1);
     auto end = std::chrono::steady_clock::now();
     Compiler::lexTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-    
+
     start = end;
     Parser* parser = new Parser(lexer->tokens, file);
 
     if(!Compiler::settings.noPrelude && !endsWith(file, "std/prelude.rave") && !endsWith(file, "std/memory.rave")) {
+        // add global imports
         parser->nodes.push_back(new NodeImport(ImportFile{exePath + "std/prelude.rave", true}, {}, -1));
         parser->nodes.push_back(new NodeImport(ImportFile{exePath + "std/memory.rave", true}, {}, -1));
     }
 
     parser->parseAll();
     end = std::chrono::steady_clock::now();
-    for(int i=0; i<parser->nodes.size(); i++) parser->nodes[i]->check();
+    for(size_t i=0; i<parser->nodes.size(); i++) parser->nodes[i]->check();
     Compiler::parseTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
     start = end;
+    if (generator != nullptr) delete generator;
     generator = new LLVMGen(file, Compiler::settings, Compiler::options);
-
-    if(raveOs == "LINUX") {
-        if(ravePlatform == "X86_64") Compiler::outType = "linux-gnu-pc-x86_64";
-        else if(ravePlatform == "X86") Compiler::outType = "linux-gnu-pc-i686";
-        else if(ravePlatform == "AARCH64") Compiler::outType = "linux-gnu-aarch64";
-        else if(ravePlatform == "ARM") Compiler::outType = "linux-gnu-armv7";
-        else Compiler::outType = "linux-unknown";
-    }
-    else if(raveOs == "FREEBSD") {
-        if(ravePlatform == "X86_64") Compiler::outType = "freebsd-gnu-pc-x86_64";
-        else if(ravePlatform == "X86") Compiler::outType = "freebsd-gnu-pc-i686";
-        else if(ravePlatform == "AARCH64") Compiler::outType = "freebsd-gnu-aarch64";
-        else if(ravePlatform == "ARM") Compiler::outType = "freebsd-gnu-armv7";
-        else Compiler::outType = "freebsd-unknown";
-    }
-    else if(raveOs == "WINDOWS") {
-        if(ravePlatform == "X86_64") Compiler::outType = "x86_64-pc-windows-gnu";
-        else Compiler::outType = "i686-win32-gnu";
-    }
-    else Compiler::outType = "unknown";
 
     char* errors = nullptr;
     LLVMTargetRef target;
@@ -417,7 +433,7 @@ void Compiler::compile(std::string file) {
     generator->targetData = LLVMCreateTargetDataLayout(machine);
     LLVMSetDataLayout(generator->lModule, LLVMCopyStringRepOfTargetData(generator->targetData));
 
-    for(int i=0; i<parser->nodes.size(); i++) parser->nodes[i]->generate();
+    for(size_t i=0; i<parser->nodes.size(); i++) parser->nodes[i]->generate();
 
     #if LLVM_VERSION < 17
     LLVMPassManagerRef pm = LLVMCreatePassManager();
@@ -480,15 +496,25 @@ void Compiler::compile(std::string file) {
     LLVMDisposePassBuilderOptions(pbOptions);
     #endif
 
-    LLVMTargetMachineEmitToFile(machine, generator->lModule, (char*)(std::regex_replace(file, std::regex("\\.rave"), ".o")).c_str(), LLVMObjectFile, &errors);
-    if(errors != nullptr) {
-        Compiler::error("target machine emit to file: " + std::string(errors));
-        std::exit(1);
+    if(outputObj.size()) {
+        LLVMTargetMachineEmitToFile(machine, generator->lModule, outputObj.c_str(), LLVMObjectFile, &errors);
+        if(errors != nullptr) {
+            Compiler::error("target machine emit to file: " + std::string(errors));
+            std::exit(1);
+        }
     }
+    if (outputLLVM.size()) {
+        LLVMPrintModuleToFile(generator->lModule, outputLLVM.c_str(), &errors);
+        if(errors != nullptr) {
+            Compiler::error("print module to file: " + std::string(errors));
+            std::exit(1);
+        }
+    }
+
     end = std::chrono::steady_clock::now();
     Compiler::genTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-    for(int i=0; i<AST::importedFiles.size(); i++) {
+    for(size_t i=0; i<AST::importedFiles.size(); i++) {
         if(std::find(Compiler::toImport.begin(), Compiler::toImport.end(), AST::importedFiles[i]) == Compiler::toImport.end()) Compiler::toImport.push_back(AST::importedFiles[i]);
     }
 
@@ -499,33 +525,45 @@ void Compiler::compileAll() {
     AST::debugMode = Compiler::debugMode;
     std::vector<std::string> toRemove;
 
-    for(int i=0; i<Compiler::files.size(); i++) {
+    for(size_t i=0; i<Compiler::files.size(); i++) {
         if(access(Compiler::files[i].c_str(), 0) != 0) {
             Compiler::error("file '" + Compiler::files[i] + "' does not exists!");
             return;
         }
-        if(Compiler::files[i].size() > 2 && (endsWith(Compiler::files[i], ".a") || endsWith(Compiler::files[i], ".o") || endsWith(Compiler::files[i], ".lib")))
+        if(endsWith(Compiler::files[i], ".a") || endsWith(Compiler::files[i], ".o") || endsWith(Compiler::files[i], ".lib"))
             Compiler::linkString += Compiler::files[i] + " ";
         else {
-            Compiler::compile(Compiler::files[i]);
-            if(Compiler::settings.emitLLVM) {
-                char* err;
-                LLVMPrintModuleToFile(generator->lModule, (Compiler::files[i]+".ll").c_str(), &err);
+            std::string outObj = "";
+            std::string outLLVM = "";
+            if(settings.emitLLVM) {
+                if(files.size() == 1 && !settings.recompileStd && !settings.emitObjCode && Compiler::outFile.size())
+                    outLLVM = Compiler::outFile;
+                else outLLVM = (Compiler::files[i]+".ll");
             }
-            std::string compiledFile = std::regex_replace(Compiler::files[i], std::regex("\\.rave"), ".o");
-            Compiler::linkString += compiledFile + " ";
-            if(!Compiler::settings.saveObjectFiles) toRemove.push_back(compiledFile);
+            if(settings.emitObjCode || !settings.emitLLVM) {
+                if(files.size() == 1 && settings.emitObjCode && Compiler::outFile.size())
+                    outObj = Compiler::outFile;
+                else if (settings.saveObjectFiles) {
+                    outObj = std::regex_replace(files[i], std::regex("\\.rave"), ".o");
+                } else {
+                    // TODO: store object files completely in RAM
+                    outObj = std::string(".__rvobj_") + std::regex_replace(files[i], std::regex("\\.rave"), ".o");
+                    toRemove.push_back(outObj);
+                }
+                Compiler::linkString += outObj + " ";
+            }
+            compile(files[i], outObj, outLLVM);
         }
     }
 
-    for(int i=0; i<AST::addToImport.size(); i++) {
+    for(size_t i=0; i<AST::addToImport.size(); i++) {
         std::string fname = replaceAll(AST::addToImport[i], ">", "");
         if(std::count(Compiler::toImport.begin(), Compiler::toImport.end(), fname) == 0 &&
            std::count(Compiler::files.begin(), Compiler::files.end(), fname) == 0
         ) Compiler::toImport.push_back(fname);
     }
 
-    for(int i=0; i<Compiler::toImport.size(); i++) {
+    for(size_t i=0; i<Compiler::toImport.size(); i++) {
         if(access(Compiler::toImport[i].c_str(), 0) != 0) {
             Compiler::error("file '" + Compiler::files[i] + "' does not exists!");
             return;
@@ -533,33 +571,32 @@ void Compiler::compileAll() {
         if(Compiler::toImport[i].size() > 2 && (endsWith(Compiler::toImport[i], ".a") || endsWith(Compiler::toImport[i], ".o") || endsWith(Compiler::toImport[i], ".lib")))
             Compiler::linkString += Compiler::toImport[i] + " ";
         else {
+            #ifndef _WIN32
+            #  define fileExists(path) (access(path, 0) != -1)
+            #else
+            #  define fileExists(path) (GetFileAttributesA(path) != INVALID_FILE_ATTRIBUTES)
+            #endif
+            std::string compiledFile = std::regex_replace(Compiler::toImport[i], std::regex("\\.rave"), std::string(".") + Compiler::outType+".o");
             if(
                 Compiler::toImport[i].find(exePath + "std/") != std::string::npos && !Compiler::settings.recompileStd &&
-                access(std::regex_replace(Compiler::toImport[i], std::regex("\\.rave"), std::string(".") + Compiler::outType + ".o").c_str(), 0) != -1
-            ) linkString += std::regex_replace(Compiler::toImport[i], std::regex("\\.rave"), std::string(".") + Compiler::outType + ".o") + " ";
+                fileExists(compiledFile.c_str())
+            ) linkString += compiledFile + " ";
+            #undef fileExists
             else {
                 compile(Compiler::toImport[i]);
                 if(Compiler::settings.emitLLVM) {
                     char* err;
                     LLVMPrintModuleToFile(generator->lModule, (Compiler::toImport[i] + ".ll").c_str(), &err);
                 }
-                std::string compiledFile = std::regex_replace(Compiler::toImport[i], std::regex("\\.rave"), ".o");
                 linkString += compiledFile + " ";
-
-                if(Compiler::toImport[i].find(exePath + "std/") != std::string::npos) {
-                    std::ifstream src(compiledFile, std::ios::binary);
-                    std::ofstream dst(std::regex_replace(compiledFile, std::regex("\\.o"), std::string(".") + Compiler::outType + ".o"), std::ios::binary);
-                    dst << src.rdbuf();
-                }
-
-                toRemove.push_back(compiledFile);
+                if(!Compiler::settings.saveObjectFiles && Compiler::toImport[i].find(exePath + "std/") == std::string::npos) toRemove.push_back(compiledFile);
             }
         }
     }
 
     if(Compiler::outFile == "") Compiler::outFile = "a";
 
-    if(Compiler::settings.onlyObject) Compiler::linkString += "-r ";
+    if(Compiler::settings.emitObjCode) Compiler::linkString += "-r ";
     if(Compiler::settings.isStatic) Compiler::linkString += "-static ";
     if(Compiler::settings.isPIC) Compiler::linkString += "-no-pie ";
 
@@ -569,14 +606,17 @@ void Compiler::compileAll() {
         if(Compiler::options["compiler"].template get<std::string>().find("clang") != std::string::npos) Compiler::linkString += " -fuse-ld=ld ";
     #endif
 
-    ShellResult result = exec(Compiler::linkString + " -o " + Compiler::outFile);
-    if(result.status != 0) {
-        Compiler::error("error when linking!\nLinking string: '" + Compiler::linkString+" -o " + Compiler::outFile + "'");
-        std::exit(result.status);
-        return;
+    if (Compiler::settings.emitLLVM || (Compiler::settings.emitObjCode && Compiler::files.size() == 1));
+    else {
+        ShellResult result = exec(Compiler::linkString + " -o " + Compiler::outFile);
+        if(result.status != 0) {
+            Compiler::error("error when linking!\nLinking string: '" + Compiler::linkString+" -o " + Compiler::outFile + "'");
+            std::exit(result.status);
+            return;
+        }
     }
 
-    for(int i=0; i<toRemove.size(); i++) std::remove(toRemove[i].c_str());
+    for(size_t i=0; i<toRemove.size(); i++) std::remove(toRemove[i].c_str());
 
     std::cout << "Time spent by lexer: " << std::to_string(Compiler::lexTime) << "ms\nTime spent by parser: " << std::to_string(Compiler::parseTime) << "ms\nTime spent by generator: " << std::to_string(Compiler::genTime) << "ms" << std::endl;
 }

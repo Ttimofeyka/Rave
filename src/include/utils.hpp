@@ -117,7 +117,7 @@ typedef struct genSettings {
     bool noPrelude = false;
     bool runtimeChecks = true;
     bool emitLLVM = false;
-    bool onlyObject = false;
+    bool emitObjCode = false;
     bool noEntry = false;
     bool noStd = false;
     int optLevel = 1;
@@ -171,7 +171,7 @@ static inline std::string trim(std::string s) {
 #include <algorithm> // for transform() in get_exe_path()
 #define WIN32_LEAN_AND_MEAN
 #define VC_EXTRALEAN
-#include <Windows.h>
+#include <windows.h>
 #elif defined(__linux__)
 #include <unistd.h>
 #endif

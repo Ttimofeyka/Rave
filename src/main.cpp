@@ -30,7 +30,7 @@ genSettings analyzeArguments(std::vector<std::string>& arguments) {
         else if(arguments[i] == "-eml" || arguments[i] == "--emitLLVM" || arguments[i] == "-emit-llvm") settings.emitLLVM = true; // Enables output of .ll files
         else if(arguments[i] == "-l" || arguments[i] == "--link") {settings.linkParams += "-l" + arguments[i + 1] + " "; i += 1;} // Adds library to the linker
         else if(arguments[i] == "-rcs" || arguments[i] == "--recompileStd") settings.recompileStd = true; // Recompiles the standard library
-        else if(arguments[i] == "-c") {settings.onlyObject = true; settings.isStatic = true;} // Enables onlyObject mode
+        else if(arguments[i] == "-c") {settings.emitObjCode = true; settings.isStatic = true;}
         else if(arguments[i] == "-ne" || arguments[i] == "--noEntry") settings.noEntry = true; // Disables 'main' function as entry
         else if(arguments[i] == "-ns" || arguments[i] == "--noStd") settings.noStd = true; // Disables auto-linking with the standard library
         else if(arguments[i] == "-nc" || arguments[i] == "--noChecks") settings.noChecks = true; // Disables runtime checks
@@ -104,22 +104,15 @@ int main(int argc, char** argv) {
         if(options.recompileStd) {
             Compiler::initialize(outFile, outType, options, {""});
             auto stdFiles = filesInDirectory(exePath + "std");
-            for(int i=0; i<stdFiles.size(); i++) {
+            for(size_t i=0; i<stdFiles.size(); i++) {
                 if(stdFiles[i].find(".ll") == std::string::npos && stdFiles[i].find(".rave") != std::string::npos) {
-                    std::string compiledFile = std::regex_replace(exePath + "std/" + stdFiles[i], std::regex("\\.rave"), ".o");
-                    Compiler::compile(exePath + "std/" + stdFiles[i]);
-
-                    if(options.emitLLVM) {
-                        char* err;
-                        LLVMPrintModuleToFile(generator->lModule, (exePath + "std/" + stdFiles[i] + ".ll").c_str(), &err);
-                    }
-
-                    std::ifstream src(compiledFile, std::ios::binary);
-                    std::ofstream dst(std::regex_replace(compiledFile, std::regex("\\.o"), std::string(".") + Compiler::outType + ".o"), std::ios::binary);
-                    dst << src.rdbuf();
+                    std::string fullpath = exePath + "std/" + stdFiles[i];
+                    std::string compiledFile = std::regex_replace(fullpath, std::regex("\\.rave"), std::string(".") + Compiler::outType + ".o");
+                    std::string llvmIR;
+                    if(options.emitLLVM) llvmIR = exePath + "std/" + stdFiles[i] + ".ll";
+                    Compiler::compile(fullpath, compiledFile, llvmIR);
                 }
             }
-
             std::cout << "Time spent by lexer: " << std::to_string(Compiler::lexTime) << "ms\nTime spent by parser: " << std::to_string(Compiler::parseTime) << "ms\nTime spent by generator: " << std::to_string(Compiler::genTime) << "ms" << std::endl;
             return 0;
         }

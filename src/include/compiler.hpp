@@ -13,6 +13,8 @@ namespace Compiler {
     extern std::string linkString;
     extern std::string outFile;
     extern std::string outType;
+    extern std::string ravePlatform;
+    extern std::string raveOs;
     extern genSettings settings;
     extern nlohmann::json options;
     extern double lexTime;
@@ -23,9 +25,13 @@ namespace Compiler {
     extern bool debugMode;
     extern std::string features;
 
+    extern void loadPlatformVars();
+    extern void setASTVariables();
+
     extern void error(std::string message);
     extern void initialize(std::string outFile, std::string outType, genSettings settings, std::vector<std::string> files);
     extern void clearAll();
-    extern void compile(std::string file);
+    extern void compile(std::string const& file, std::string const& outputObj = "", std::string const& outputLLVM = "");
+
     extern void compileAll();
 }
