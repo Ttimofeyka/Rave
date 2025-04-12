@@ -132,7 +132,7 @@ void Compiler::loadPlatformVars() {
         else if(outType.find("android") != std::string::npos) raveOs = "ANDROID";
         else if(outType.find("ios") != std::string::npos) raveOs = "IOS";
     }
-    if (outType == "") {
+    if(outType == "") {
         if(raveOs == "LINUX") {
             if(ravePlatform == "X86_64") Compiler::outType = "linux-gnu-pc-x86_64";
             else if(ravePlatform == "X86") Compiler::outType = "linux-gnu-pc-i686";
@@ -390,7 +390,6 @@ void Compiler::compile(std::string const& file, std::string const& outputObj, st
     Parser* parser = new Parser(lexer->tokens, file);
 
     if(!Compiler::settings.noPrelude && !endsWith(file, "std/prelude.rave") && !endsWith(file, "std/memory.rave")) {
-        // add global imports
         parser->nodes.push_back(new NodeImport(ImportFile{exePath + "std/prelude.rave", true}, {}, -1));
         parser->nodes.push_back(new NodeImport(ImportFile{exePath + "std/memory.rave", true}, {}, -1));
     }
@@ -401,7 +400,7 @@ void Compiler::compile(std::string const& file, std::string const& outputObj, st
     Compiler::parseTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
     start = end;
-    if (generator != nullptr) delete generator;
+    if(generator != nullptr) delete generator;
     generator = new LLVMGen(file, Compiler::settings, Compiler::options);
 
     char* errors = nullptr;
@@ -503,7 +502,7 @@ void Compiler::compile(std::string const& file, std::string const& outputObj, st
             std::exit(1);
         }
     }
-    if (outputLLVM.size()) {
+    if(outputLLVM.size()) {
         LLVMPrintModuleToFile(generator->lModule, outputLLVM.c_str(), &errors);
         if(errors != nullptr) {
             Compiler::error("print module to file: " + std::string(errors));
@@ -543,7 +542,7 @@ void Compiler::compileAll() {
             if(settings.emitObjCode || !settings.emitLLVM) {
                 if(files.size() == 1 && settings.emitObjCode && Compiler::outFile.size())
                     outObj = Compiler::outFile;
-                else if (settings.saveObjectFiles) {
+                else if(settings.saveObjectFiles) {
                     outObj = std::regex_replace(files[i], std::regex("\\.rave"), ".o");
                 } else {
                     // TODO: store object files completely in RAM
@@ -606,7 +605,7 @@ void Compiler::compileAll() {
         if(Compiler::options["compiler"].template get<std::string>().find("clang") != std::string::npos) Compiler::linkString += " -fuse-ld=ld ";
     #endif
 
-    if (Compiler::settings.emitLLVM || (Compiler::settings.emitObjCode && Compiler::files.size() == 1));
+    if(Compiler::settings.emitLLVM || (Compiler::settings.emitObjCode && Compiler::files.size() == 1));
     else {
         ShellResult result = exec(Compiler::linkString + " -o " + Compiler::outFile);
         if(result.status != 0) {
