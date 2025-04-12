@@ -39,123 +39,9 @@ inline void checkAndGenerate(std::string name) {
     if(generator->functions.find(name) == generator->functions.end()) AST::funcTable[name]->generate();
 }
 
-// Get a vector of arguments types
-std::vector<Type*> NodeCall::getTypes() {
-    std::vector<Type*> arr;
-    for(int i=0; i<this->args.size(); i++) arr.push_back(this->args[i]->getType());
-    return arr;
-}
-
-// Correct arguments by using a vector of FuncArgSet
-std::vector<RaveValue> NodeCall::correctByLLVM(std::vector<RaveValue> values, std::vector<FuncArgSet> fas) {
-    std::vector<RaveValue> params = std::vector<RaveValue>(values);
-    if(fas.empty() || params.size() != fas.size()) return params;
-
-    for(int i=0; i<params.size(); i++) {
-        if(isBytePointer(fas[i].type)) {
-            if((!instanceof<TypePointer>(params[i].type) || !instanceof<TypeBasic>(params[i].type->getElType()))) LLVM::cast(params[i], new TypePointer(basicTypes[BasicType::Char]));
-        }
-        else if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(((TypePointer*)fas[i].type)->instance)) {
-            if(!instanceof<TypePointer>(params[i].type)) LLVM::makeAsPointer(params[i]);
-        }
-        else if(instanceof<TypeBasic>(fas[i].type) && instanceof<TypeBasic>(values[i].type)) {
-            if(((TypeBasic*)fas[i].type)->type != ((TypeBasic*)params[i].type)->type && !isFloatType(fas[i].type) && !isFloatType(params[i].type)) LLVM::cast(params[i], fas[i].type);
-        }
-        else if(!instanceof<TypePointer>(fas[i].type) && instanceof<TypePointer>(params[i].type)) {
-            if(LLVMIsAFunction(params[i].value) == nullptr) {
-                if(instanceof<TypeStruct>(fas[i].type)) {
-                    params[i].value = LLVMBuildLoad2(generator->builder, generator->genType(fas[i].type, loc), params[i].value, "correctLoad");
-                    params[i].type = fas[i].type;
-                }
-                else params[i] = LLVM::load(params[i], "correctLoad", loc);
-            }
-        }
-    }
-
-    return params;
-}
-
-// Generate parameters
-std::vector<RaveValue> NodeCall::getParameters(std::vector<int>& byVals, NodeFunc* nfunc, bool isVararg, std::vector<FuncArgSet> fas) {
-    std::vector<RaveValue> params;
-
-    if(this->args.size() != fas.size()) {
-        for(int i=0; i<this->args.size(); i++) {
-            // If this is a NodeIden/NodeIndex/NodeGet - set the 'isMustBePtr' to false
-            if(instanceof<NodeIden>(args[i])) ((NodeIden*)args[i])->isMustBePtr = false;
-            else if(instanceof<NodeIndex>(args[i])) ((NodeIndex*)args[i])->isMustBePtr = false;
-            else if(instanceof<NodeGet>(args[i])) ((NodeGet*)args[i])->isMustBePtr = false;
-            params.push_back(this->args[i]->generate());
-        }
-
-        return params;
-    }
-
-    for(int i=0; i<this->args.size(); i++) {
-        if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(fas[i].type->getElType()) && !instanceof<TypePointer>(this->args[i]->getType())) {
-            if(instanceof<NodeIden>(this->args[i])) ((NodeIden*)this->args[i])->isMustBePtr = true;
-            else if(instanceof<NodeGet>(this->args[i])) ((NodeGet*)this->args[i])->isMustBePtr = true;
-            else if(instanceof<NodeIndex>(this->args[i])) ((NodeIndex*)this->args[i])->isMustBePtr = true;
-        }
-
-        params.push_back(this->args[i]->generate());
-    }
-
-    for(int i=0; i<params.size(); i++) {
-        if(isBytePointer(fas[i].type)) {
-            if(!instanceof<TypePointer>(params[i].type) || !instanceof<TypeBasic>(params[i].type->getElType())) LLVM::cast(params[i], new TypePointer(basicTypes[BasicType::Char]));
-        }
-        else if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(fas[i].type->getElType())) {
-            if(!instanceof<TypePointer>(params[i].type)) LLVM::makeAsPointer(params[i]);
-        }
-        else if(!instanceof<TypePointer>(fas[i].type) && instanceof<TypePointer>(params[i].type)) {
-            if(instanceof<TypeStruct>(fas[i].type)) {
-                if(AST::structTable.find(fas[i].type->toString()) != AST::structTable.end()) params[i] = LLVM::load(params[i], "getParameters_load", loc);
-            }
-            else params[i] = LLVM::load(params[i], "getParameters_load", loc);
-        }
-        else if(instanceof<TypeBasic>(fas[i].type) && instanceof<TypeBasic>(params[i].type) && !((TypeBasic*)params[i].type)->isFloat()) {
-            TypeBasic* tbasic = (TypeBasic*)(fas[i].type);
-            if(!tbasic->isFloat() && tbasic->type != ((TypeBasic*)params[i].type)->type) LLVM::cast(params[i], tbasic);
-        }
-        else if(instanceof<TypeBasic>(fas[i].type) && instanceof<TypeBasic>(params[i].type) &&  ((TypeBasic*)params[i].type)->type == BasicType::Double) {
-            if(((TypeBasic*)fas[i].type)->type == BasicType::Float) LLVM::cast(params[i], fas[i].type);
-        }
-        else if(isCW64) {
-            if(instanceof<TypeDivided>(fas[i].internalTypes[0])) {
-                if(!instanceof<TypePointer>(params[i].type)) {
-                    RaveValue temp = LLVM::alloc(params[i].type, "getParameters_stotd_temp");
-                    LLVMBuildStore(generator->builder, params[i].value, temp.value);
-                    params[i].value = temp.value;
-                }
-                params[i].value = LLVMBuildLoad2(generator->builder, generator->genType(((TypeDivided*)fas[i].internalTypes[0])->mainType, loc), params[i].value, "getParameters_stotd");
-            }
-            else if(instanceof<TypeByval>(fas[i].internalTypes[0])) {
-                if(!instanceof<TypePointer>(params[i].type)) LLVM::makeAsPointer(params[i]);
-
-                byVals.push_back(i);
-            }
-        }
-        else if(instanceof<TypeFunc>(fas[i].type)) {
-            TypeFunc* tfunc = (TypeFunc*)(fas[i].type);
-            if(instanceof<TypeBasic>(tfunc->main) && ((TypeBasic*)(tfunc->main))->type == BasicType::Char) {
-                if(instanceof<TypePointer>(params[i].type) && instanceof<TypeFunc>(params[i].type->getElType())
-                && instanceof<TypeVoid>(((TypeFunc*)params[i].type->getElType())->main)) {
-                    // Casting void(...) to char(...)
-                    params[i].value = LLVMBuildPointerCast(generator->builder, params[i].value, generator->genType(fas[i].type, this->loc), "castVFtoCF");
-                    TypeFunc* tfunc = ((TypeFunc*)params[i].type->getElType());
-                    tfunc->main = basicTypes[BasicType::Char];
-                    ((TypePointer*)params[i].type)->instance = tfunc;
-                }
-            }
-        }
-    }
-    
-    return params;
-}
-
 bool hasIdenticallyArgs(std::vector<Type*> one, std::vector<Type*> two) {
     if(one.size() != two.size()) return false;
+
     for(int i=0; i<one.size(); i++) {
         if(instanceof<TypeBasic>(one[i]) && instanceof<TypeBasic>(two[i])) {
             if(one[i]->toString() != two[i]->toString()) {
@@ -175,6 +61,7 @@ bool hasIdenticallyArgs(std::vector<Type*> one, std::vector<Type*> two) {
 
 bool hasIdenticallyArgs(std::vector<Type*> one, std::vector<FuncArgSet> two) {
     if(one.size() != two.size()) return false;
+
     for(int i=0; i<one.size(); i++) {
         if(instanceof<TypeBasic>(one[i]) && instanceof<TypeBasic>(two[i].type)) {
             if(one[i]->toString() != two[i].type->toString()) {
@@ -187,8 +74,19 @@ bool hasIdenticallyArgs(std::vector<Type*> one, std::vector<FuncArgSet> two) {
                 else return false;
             }
         }
-        else if(one[i] == nullptr || two[i].type == nullptr || one[i]->toString() != two[i].type->toString()) return false;
+        else if(one[i] == nullptr || two[i].type == nullptr || one[i]->toString() != two[i].type->toString()) {
+            if(one[i] != nullptr && two[i].type != nullptr) {
+                while(instanceof<TypeConst>(one[i])) one[i] = one[i]->getElType();
+                while(instanceof<TypeConst>(two[i].type)) two[i].type = two[i].type->getElType();
+
+                if(instanceof<TypeStruct>(one[i]) && instanceof<TypePointer>(two[i].type)) continue;
+                if(instanceof<TypeStruct>(two[i].type) && instanceof<TypePointer>(one[i])) continue;
+            }
+
+            return false;
+        }
     }
+
     return true;
 }
 
@@ -205,7 +103,9 @@ Type* NodeCall::__getType(Node* _fn) {
         if(AST::aliasTable.find(niden->name) != AST::aliasTable.end()) return __getType(AST::aliasTable[niden->name]);
         else if(currScope != nullptr && currScope->aliasTable.find(niden->name) != currScope->aliasTable.end()) return __getType(currScope->aliasTable[niden->name]);
 
-        if(AST::funcTable.find((niden->name + typesToString(this->getTypes()))) != AST::funcTable.end()) return AST::funcTable[(((NodeIden*)_fn)->name + typesToString(this->getTypes()))]->getType();
+        std::vector<Type*> types = Call::getTypes(args);
+
+        if(AST::funcTable.find((niden->name + typesToString(types))) != AST::funcTable.end()) return AST::funcTable[(((NodeIden*)_fn)->name + typesToString(types))]->getType();
         if(AST::funcTable.find(niden->name) != AST::funcTable.end()) return AST::funcTable[((NodeIden*)_fn)->name]->type;
         if(currScope->has(niden->name)) {
             if(!instanceof<TypeFunc>(currScope->getVar(niden->name, this->loc)->type)) {
@@ -226,164 +126,285 @@ Type* NodeCall::getType() {
     return __getType(this->func);
 }
 
-RaveValue NodeCall::generate() {
+std::vector<Type*> Call::getTypes(std::vector<Node*>& arguments) {
+    std::vector<Type*> array;
+    for(int i=0; i<arguments.size(); i++) array.push_back(arguments[i]->getType());
+    return array;
+}
+
+std::vector<Type*> Call::getParamsTypes(std::vector<RaveValue>& params) {
+    std::vector<Type*> array;
+    for(int i=0; i<params.size(); i++) array.push_back(params[i].type);
+    return array;
+}
+
+std::vector<RaveValue> Call::genParameters(std::vector<Node*>& arguments, std::vector<int>& byVals, std::vector<FuncArgSet>& fas, CallSettings settings) {
+    std::vector<RaveValue> params;
+
+    if(arguments.size() != fas.size()) {
+        for(int i=0; i<arguments.size(); i++) {
+            // If this is a NodeIden/NodeIndex/NodeGet - set the 'isMustBePtr' to false
+            if(instanceof<NodeIden>(arguments[i])) ((NodeIden*)arguments[i])->isMustBePtr = false;
+            else if(instanceof<NodeIndex>(arguments[i])) ((NodeIndex*)arguments[i])->isMustBePtr = false;
+            else if(instanceof<NodeGet>(arguments[i])) ((NodeGet*)arguments[i])->isMustBePtr = false;
+            params.push_back(arguments[i]->generate());
+        }
+
+        return params;
+    }
+
+    for(int i=0; i<arguments.size(); i++) {
+        if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(fas[i].type->getElType()) && !instanceof<TypePointer>(arguments[i]->getType())) {
+            if(instanceof<NodeIden>(arguments[i])) ((NodeIden*)arguments[i])->isMustBePtr = true;
+            else if(instanceof<NodeGet>(arguments[i])) ((NodeGet*)arguments[i])->isMustBePtr = true;
+            else if(instanceof<NodeIndex>(arguments[i])) ((NodeIndex*)arguments[i])->isMustBePtr = true;
+        }
+
+        if(instanceof<TypeStruct>(fas[i].type) && instanceof<TypePointer>(arguments[i]->getType())) {
+            if(instanceof<NodeIden>(arguments[i])) ((NodeIden*)arguments[i])->isMustBePtr = false;
+            else if(instanceof<NodeGet>(arguments[i])) ((NodeGet*)arguments[i])->isMustBePtr = false;
+            else if(instanceof<NodeIndex>(arguments[i])) ((NodeIndex*)arguments[i])->isMustBePtr = false;
+        }
+        
+        params.push_back(arguments[i]->generate());
+    }
+
+    for(int i=0; i<params.size(); i++) {
+        if(instanceof<TypePointer>(fas[i].type)) {
+            if(instanceof<TypeStruct>(fas[i].type->getElType()) && !instanceof<TypePointer>(params[i].type)) LLVM::makeAsPointer(params[i]);
+            else if(isBytePointer(fas[i].type) && fas[i].type->toString() != params[i].type->toString()) LLVM::cast(params[i], new TypePointer(basicTypes[BasicType::Char]));
+        }
+        else {
+            while(instanceof<TypePointer>(params[i].type)) {
+                params[i] = LLVM::load(params[i], "genParameters_load", settings.loc);
+            }
+
+            if(instanceof<TypeBasic>(fas[i].type)) {
+                if(instanceof<TypeBasic>(params[i].type) && ((TypeBasic*)fas[i].type) != ((TypeBasic*)params[i].type)) LLVM::cast(params[i], fas[i].type);
+            }
+        }
+
+        if(settings.isCW64) {
+            if(instanceof<TypeDivided>(fas[i].internalTypes[0])) {
+                if(!instanceof<TypePointer>(params[i].type)) {
+                    RaveValue temp = LLVM::alloc(params[i].type, "getParameters_stotd_temp");
+                    LLVMBuildStore(generator->builder, params[i].value, temp.value);
+                    params[i].value = temp.value;
+                }
+
+                params[i].value = LLVMBuildLoad2(generator->builder, generator->genType(((TypeDivided*)fas[i].internalTypes[0])->mainType, settings.loc), params[i].value, "getParameters_stotd");
+            }
+            else if(instanceof<TypeByval>(fas[i].internalTypes[0])) {
+                if(!instanceof<TypePointer>(params[i].type)) LLVM::makeAsPointer(params[i]);
+
+                byVals.push_back(i);
+            }
+        }
+        else if(instanceof<TypeFunc>(fas[i].type)) {
+            TypeFunc* tfunc = (TypeFunc*)(fas[i].type);
+            if(instanceof<TypeBasic>(tfunc->main) && ((TypeBasic*)(tfunc->main))->type == BasicType::Char) {
+                if(instanceof<TypePointer>(params[i].type) && instanceof<TypeFunc>(params[i].type->getElType())
+                && instanceof<TypeVoid>(((TypeFunc*)params[i].type->getElType())->main)) {
+                    // Casting void(...) to char(...)
+                    params[i].value = LLVMBuildPointerCast(generator->builder, params[i].value, generator->genType(fas[i].type, settings.loc), "castVFtoCF");
+                    TypeFunc* tfunc = ((TypeFunc*)params[i].type->getElType());
+                    tfunc->main = basicTypes[BasicType::Char];
+                    ((TypePointer*)params[i].type)->instance = tfunc;
+                }
+            }
+        }
+    }
+    
+    return params;
+}
+
+inline std::vector<RaveValue> Call::genParameters(std::vector<Node*>& arguments, std::vector<int>& byVals, NodeFunc* function, int loc) {
+    return Call::genParameters(arguments, byVals, function->args, CallSettings{function->isCdecl64 || function->isWin64, function->isVararg, loc});
+}
+
+std::string Template::fromTypes(std::vector<Type*>& types) {
+    std::string sTypes = "<";
+    for(int i=0; i<types.size(); i++) sTypes += types[i]->toString() + ",";
+    sTypes.back() = '>';
+    return sTypes;
+}
+
+std::map<std::pair<std::string, std::string>, NodeFunc*>::iterator Call::findMethod(std::string structName, std::string methodName, std::vector<Node*>& arguments, int loc) {
+    auto method = std::pair<std::string, std::string>(structName, methodName);
+    auto methodf = AST::methodTable.find(method);
+
+    if(methodf == AST::methodTable.end() || !hasIdenticallyArgs(Call::getTypes(arguments), methodf->second->args)) {method.second += typesToString(Call::getTypes(arguments)); methodf = AST::methodTable.find(method);}
+
+    if(methodf == AST::methodTable.end()) {method.second = method.second.substr(0, method.second.find('[')); methodf = AST::methodTable.find(method);}
+
+    if(methodf == AST::methodTable.end() || methodf->second->args.size() != arguments.size()) {
+        // Choose the most right overload
+        for(auto& it : AST::methodTable) {
+            if(it.first.first != structName || it.second->args.size() != arguments.size()) continue;
+
+            if(it.first.second != methodName) {
+                if(it.first.second.find(methodName + "[") != 0 && it.first.second.find(methodName + "<") != 0) continue;
+            }
+
+            method.second = it.first.second;
+            methodf = AST::methodTable.find(method);
+            break;
+        }
+    }
+
+    if(methodf == AST::methodTable.end()) generator->error("undefined method '" + methodName + "' of the structure '" + structName + "'!", loc);
+
+    if(generator->functions.find(methodf->second->name) == generator->functions.end()) methodf->second->generate();
+
+    return methodf;
+}
+
+RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
     std::vector<int> byVals;
 
-    if(instanceof<NodeIden>(this->func)) {
-        NodeIden* idenFunc = (NodeIden*)this->func;
-        std::string& ifName = idenFunc->name;
+    if(instanceof<NodeIden>(function)) {
+        std::string& ifName = ((NodeIden*)function)->name;
 
-        if(AST::aliasTable.find(ifName) != AST::aliasTable.end()) return (new NodeCall(loc, AST::aliasTable[ifName], this->args))->generate();
-        else if(currScope != nullptr && currScope->aliasTable.find(ifName) != currScope->aliasTable.end())
-            return (new NodeCall(loc, currScope->aliasTable[ifName], this->args))->generate();
+        if(AST::aliasTable.find(ifName) != AST::aliasTable.end()) return Call::make(loc, AST::aliasTable[ifName], arguments);
+        else if(currScope != nullptr && currScope->aliasTable.find(ifName) != currScope->aliasTable.end()) return Call::make(loc, currScope->aliasTable[ifName], arguments);
 
         if(AST::funcTable.find(ifName) != AST::funcTable.end()) {
             checkAndGenerate(ifName);
 
-            std::vector<Type*> __types = this->getTypes();
-            std::string sTypes = typesToString(__types);
+            std::vector<Type*> types = Call::getTypes(arguments);
+            std::string sTypes = typesToString(types);
 
             if(generator->functions.find(ifName) == generator->functions.end()) {
                 // Function with compile-time args (ctargs)
                 if(AST::funcTable[ifName]->isCtargs) {
-                    std::vector<RaveValue> params = this->getParameters(byVals, nullptr, false);
+                    std::vector<RaveValue> params = Call::genParameters(arguments, byVals, AST::funcTable[ifName], loc);
 
-                    if(generator->functions.find(ifName + sTypes) != generator->functions.end()) {
+                    if(generator->functions.find(ifName + sTypes) != generator->functions.end())
                         return LLVM::call(generator->functions[ifName + sTypes], params, (instanceof<TypeVoid>(AST::funcTable[ifName]->type) ? "" : "callFunc"), byVals);
-                    }
-
-                    std::vector<Type*> types;
-                    for(int i=0; i<params.size(); i++) types.push_back(params[i].type);
-                    return LLVM::call(generator->functions[AST::funcTable[ifName]->generateWithCtargs(types)], params, (instanceof<TypeVoid>(AST::funcTable[ifName]->type) ? "" : "callFunc"));
+                    
+                    return LLVM::call(generator->functions[AST::funcTable[ifName]->generateWithCtargs(Call::getParamsTypes(params))], params, (instanceof<TypeVoid>(AST::funcTable[ifName]->type) ? "" : "callFunc"));
                 }
 
+                // Function with templates
                 if(AST::funcTable[ifName]->templateNames.size() > 0) {
-                    // Template function
-                    std::string __typesAll = "<";
-                    for(int i=0; i<__types.size(); i++) __typesAll += __types[i]->toString() + ",";
-                    __typesAll.back() = '>';
+                    std::string sTypes = Template::fromTypes(types);
 
-                    if((AST::funcTable[ifName]->args.size() != this->args.size()) && !isCW64 && (!AST::funcTable[ifName]->isVararg))
-                        generator->error("wrong number of arguments for calling function '" + ifName + __typesAll + "' (" + std::to_string(AST::funcTable[ifName]->args.size()) + " expected, " + std::to_string(this->args.size()) + " provided)!", this->loc);
-
-                    if(AST::funcTable.find(ifName + __typesAll) != AST::funcTable.end()) {
-                        // If it was already generated - call it
-                        std::vector<RaveValue> params = this->getParameters(byVals, AST::funcTable[ifName + __typesAll], false, AST::funcTable[ifName + __typesAll]->args);
-                        return LLVM::call(generator->functions[ifName + __typesAll], params, instanceof<TypeVoid>(AST::funcTable[ifName + __typesAll]->type) ? "" : "callFunc", byVals);
+                    if(AST::funcTable[ifName]->args.size() != arguments.size() && !AST::funcTable[ifName]->isCdecl64 && !AST::funcTable[ifName]->isWin64 && !AST::funcTable[ifName]->isVararg)
+                        generator->error("wrong number of arguments for calling function '" + ifName + sTypes + "' (" + std::to_string(AST::funcTable[ifName]->args.size()) + " expected, " + std::to_string(arguments.size()) + " provided)!", loc);
+                
+                    // If it was already generated - call it
+                    if(AST::funcTable.find(ifName + sTypes) != AST::funcTable.end()) {
+                        std::vector<RaveValue> params = Call::genParameters(arguments, byVals, AST::funcTable[ifName + sTypes], loc);
+                        return LLVM::call(generator->functions[ifName + sTypes], params, (instanceof<TypeVoid>(AST::funcTable[ifName + sTypes]->type) ? "" : "callFunc"), byVals);
                     }
 
                     size_t tnSize = AST::funcTable[ifName]->templateNames.size();
-                    NodeFunc* nfunc = AST::funcTable[ifName];
+                    NodeFunc* tnFunction = AST::funcTable[ifName];
 
-                    std::vector<RaveValue> params = this->getParameters(byVals, nfunc, false);
-                    std::vector<Type*> types;
-                    std::string all = "<";
-
-                    for(int i=0; i<params.size(); i++) types.push_back(params[i].type);
+                    std::vector<RaveValue> params = Call::genParameters(arguments, byVals, tnFunction, loc);
+                    types = Call::getParamsTypes(params);
+                    
+                    // If types of parameters more than template types - remove last types
                     while(types.size() > tnSize) types.pop_back();
 
-                    if(types.size() == tnSize) {
-                        for(int i=0; i<types.size(); i++) all += types[i]->toString() + ",";
-                        all.back() = '>';
+                    sTypes = Template::fromTypes(types);
 
-                        RaveValue fn = AST::funcTable[ifName]->generateWithTemplate(types, ifName + all);
-                        if(AST::funcTable.find(ifName + all) != AST::funcTable.end()) {
-                            return LLVM::call(fn, params, instanceof<TypeVoid>(AST::funcTable[ifName + all]) ? "" : "callFunc", byVals);
-                        }
-                    }
+                    if(types.size() == tnSize)
+                        return LLVM::call(tnFunction->generateWithTemplate(types, ifName + sTypes), params, (instanceof<TypeVoid>(tnFunction->type) ? "" : "callFunc"), byVals);
+                    else generator->error("wrong number of template types for calling function '" + ifName + "' (" + std::to_string(tnSize) + " expected, " + std::to_string(types.size()) + " provided)!", loc);
                 }
 
-                if(AST::debugMode) {
-                    for(auto const& x : generator->functions) std::cout << "\t" << x.first << std::endl;
-                    std::cout << "DEBUG_MODE: undefined function (generator->functions)!" << std::endl;
-                }
-
-                generator->error("undefined function '" + ifName + "'!", this->loc);
-                return {};
+                // Function is undefined
+                generator->error("undefined function '" + ifName + "'!", loc);
             }
 
             if(AST::funcTable.find(ifName + sTypes) != AST::funcTable.end()) {
                 checkAndGenerate(ifName + sTypes);
-
-                isCW64 = AST::funcTable[ifName + sTypes]->isCdecl64 || AST::funcTable[ifName + sTypes]->isWin64;
-                std::vector<RaveValue> params = this->getParameters(byVals, AST::funcTable[ifName + sTypes], false, AST::funcTable[ifName + sTypes]->args);
+                std::vector<RaveValue> params = Call::genParameters(arguments, byVals, AST::funcTable[ifName + sTypes], loc);
                 return LLVM::call(generator->functions[ifName + sTypes], params, (instanceof<TypeVoid>(AST::funcTable[ifName + sTypes]->type) ? "" : "callFunc"), byVals);
             }
-            else if(AST::funcTable[ifName]->isArrayable && this->args.size() > 0) {
+            else {
                 // Arrayable - accepts pointer and length instead of array
-                std::vector<Node*> newArgs;
-                bool isChanged = false;
+                if(AST::funcTable[ifName]->isArrayable && arguments.size() > 0) {
+                    std::vector<Node*> newArgs;
+                    bool isChanged = false;
 
-                for(int i=0; i<args.size(); i++) {
-                    if(instanceof<TypeArray>(args[i]->getType())) {
-                        isChanged = true;
-                        newArgs.insert(newArgs.end(), { new NodeUnary(loc, TokType::GetPtr, args[i]), ((TypeArray*)args[i]->getType())->count->comptime() });
+                    for(int i=0; i<arguments.size(); i++) {
+                        if(instanceof<TypeArray>(arguments[i]->getType())) {
+                            isChanged = true;
+                            newArgs.insert(newArgs.end(), {new NodeUnary(loc, TokType::GetPtr, arguments[i]), ((TypeArray*)arguments[i]->getType())->count->comptime()});
+                        }
+                        else newArgs.push_back(arguments[i]);
                     }
-                    else newArgs.push_back(args[i]);
-                }
 
-                if(isChanged) {
-                    std::vector<Type*> newTypes;
-                    for(int i=0; i<newArgs.size(); i++) newTypes.push_back(newArgs[i]->getType());
-                    std::string newSTypes = typesToString(newTypes);
-                    if(AST::funcTable.find(ifName + newSTypes) != AST::funcTable.end()) {
-                        this->args = std::move(newArgs);
-                        isCW64 = AST::funcTable[ifName + newSTypes]->isCdecl64 || AST::funcTable[ifName + newSTypes]->isWin64;
-                        std::vector<RaveValue> params = this->getParameters(byVals, AST::funcTable[ifName + newSTypes], false, AST::funcTable[ifName + newSTypes]->args);
-                        return LLVM::call(generator->functions[ifName + newSTypes], params, (instanceof<TypeVoid>(AST::funcTable[ifName + newSTypes]->type) ? "" : "callFunc"), byVals);
-                    }
-                }
-            }
+                    // If changed - just call it
+                    if(isChanged) {
+                        std::vector<Type*> newTypes = Call::getTypes(newArgs);
+                        std::string newSTypes = Template::fromTypes(types);
 
-            if(!hasIdenticallyArgs(__types, AST::funcTable[ifName]->args)) {
-                // Maybe because of unsigned?
-                for(auto const& x : AST::funcTable) {
-                    if(x.first.find(ifName) == 0 && hasIdenticallyArgs(__types, x.second->args)) {
-                        checkAndGenerate(x.first);
-                        isCW64 = x.second->isCdecl64 || x.second->isWin64;
-                        std::vector<RaveValue> params = this->getParameters(byVals, x.second, false, x.second->args);
-                        return LLVM::call(generator->functions[x.first], params, (instanceof<TypeVoid>(x.second->type) ? "" : "callFunc"), byVals);
-                    }
-                }
-
-                if(AST::funcTable[ifName]->args.size() != this->args.size()) {
-                    // Choose the most right overload
-                    for(auto const& x : AST::funcTable) {
-                        if(x.first.find(ifName) == 0 && x.second->args.size() == this->args.size()) {
-                            checkAndGenerate(x.first);
-                            isCW64 = x.second->isCdecl64 || x.second->isWin64;
-                            std::vector<RaveValue> params = this->getParameters(byVals, x.second, false, x.second->args);
-                            return LLVM::call(generator->functions[x.first], params, (instanceof<TypeVoid>(x.second->type) ? "" : "callFunc"), byVals);
+                        if(AST::funcTable.find(ifName + newSTypes) != AST::funcTable.end()) {
+                            std::vector<RaveValue> params = Call::genParameters(newArgs, byVals, AST::funcTable[ifName + newSTypes], loc);
+                            return LLVM::call(generator->functions[ifName + newSTypes], params, (instanceof<TypeVoid>(AST::funcTable[ifName + newSTypes]->type) ? "" : "callFunc"), byVals);
                         }
                     }
 
-                    if(!isCW64 && (!AST::funcTable[ifName]->isVararg))
-                        generator->error("wrong number of arguments for calling function '" + ifName + "' (" + std::to_string(AST::funcTable[ifName]->args.size()) + " expected, " + std::to_string(this->args.size()) + " provided)!", this->loc);
-                }
-            }
+                    if(!hasIdenticallyArgs(types, AST::funcTable[ifName]->args)) {
+                        for(auto& it : AST::funcTable) {
+                            if(hasIdenticallyArgs(types, it.second->args)) {
+                                checkAndGenerate(it.first);
+                                std::vector<RaveValue> params = Call::genParameters(arguments, byVals, it.second, loc);
+                                return LLVM::call(generator->functions[it.first], params, (instanceof<TypeVoid>(it.second->type) ? "" : "callFunc"), byVals);
+                            }
+                        }
 
-            isCW64 = AST::funcTable[ifName]->isCdecl64 || AST::funcTable[ifName]->isWin64;
-            std::vector<RaveValue> params = this->getParameters(byVals, AST::funcTable[ifName], false, AST::funcTable[ifName]->args);
-            return LLVM::call(generator->functions[ifName], params, (instanceof<TypeVoid>(AST::funcTable[ifName]->type) ? "" : "callFunc"), byVals);
+                        if(AST::funcTable[ifName]->args.size() != arguments.size()) {
+                            // Choose the most right overload
+                            for(auto& it : AST::funcTable) {
+                                if(it.second->args.size() != arguments.size()) continue;
+
+                                if(it.first != ifName) {
+                                    if(it.first.find(ifName + "[") != 0 && it.first.find(ifName + "<") != 0) continue;
+                                }
+
+                                checkAndGenerate(it.first);
+                                std::vector<RaveValue> params = Call::genParameters(arguments, byVals, it.second, loc);
+                                return LLVM::call(generator->functions[it.first], params, (instanceof<TypeVoid>(it.second->type) ? "" : "callFunc"), byVals);
+                            }
+                        }
+
+                        if(!AST::funcTable[ifName]->isCdecl64 && !AST::funcTable[ifName]->isWin64 && !AST::funcTable[ifName]->isVararg)
+                            generator->error("wrong number of arguments for calling function '" + ifName + "' (" + std::to_string(AST::funcTable[ifName]->args.size()) + " expected, " + std::to_string(arguments.size()) + " provided)!", loc);
+                    }
+
+                    std::vector<RaveValue> params = Call::genParameters(arguments, byVals, AST::funcTable[ifName], loc);
+                    return LLVM::call(generator->functions[ifName], params, (instanceof<TypeVoid>(AST::funcTable[ifName]->type) ? "" : "callFunc"), byVals);
+                }
+
+                std::vector<RaveValue> params = Call::genParameters(arguments, byVals, AST::funcTable[ifName], loc);
+
+                return LLVM::call(generator->functions[ifName], params, (instanceof<TypeVoid>(AST::funcTable[ifName]->type) ? "" : "callFunc"), byVals);
+            }
         }
 
+        // Function is a variable?
         if(currScope->has(ifName)) {
-            if(!instanceof<TypeFunc>(currScope->getVar(ifName, this->loc)->type)) generator->error("undefined function '" + ifName + "'!", this->loc);
+            if(!instanceof<TypeFunc>(currScope->getVar(ifName, loc)->type)) generator->error("undefined function '" + ifName + "'!", loc);
 
-            TypeFunc* fn = (TypeFunc*)currScope->getVar(ifName, this->loc)->type;
-            std::vector<RaveValue> params = this->getParameters(byVals, nullptr, false, tfaToFas(fn->args));
+            TypeFunc* fn = (TypeFunc*)currScope->getVar(ifName, loc)->type;
+            std::vector<FuncArgSet> fas = tfaToFas(fn->args);
+            std::vector<RaveValue> params = Call::genParameters(arguments, byVals, fas, CallSettings{false, fn->isVarArg, loc});
             return LLVM::call(currScope->get(ifName), params, (instanceof<TypeVoid>(fn->main) ? "" : "callFunc"), byVals);
         }
 
+        // Function is a template?
         if(ifName.find('<') != std::string::npos) {
             std::string mainName = ifName.substr(0, ifName.find('<'));
             bool presenceInFt = AST::funcTable.find(mainName) != AST::funcTable.end();
-            std::string callTypes = typesToString(this->getTypes());
+            std::string callTypes = typesToString(Call::getTypes(arguments));
             std::string sTypes;
 
             if(AST::funcTable.find(ifName + callTypes) != AST::funcTable.end()) {
-                isCW64 = AST::funcTable[ifName + callTypes]->isCdecl64 || AST::funcTable[ifName + callTypes]->isWin64;
-                std::vector<RaveValue> params = this->getParameters(byVals, AST::funcTable[ifName + callTypes], false, AST::funcTable[ifName + callTypes]->args);
+                std::vector<RaveValue> params = Call::genParameters(arguments, byVals, AST::funcTable[ifName + callTypes], loc);
                 return LLVM::call(generator->functions[ifName + callTypes], params, (instanceof<TypeVoid>(AST::funcTable[ifName + callTypes]->type) ? "" : "callFunc"), byVals);
             }
 
@@ -391,21 +412,21 @@ RaveValue NodeCall::generate() {
                 if(AST::funcTable.find(mainName + callTypes) != AST::funcTable.end()) {
                     if(generator->functions.find(ifName + callTypes) != generator->functions.end()) {
                         // This function is already exists - just call it
-                        isCW64 = AST::funcTable[ifName + callTypes]->isCdecl64 || AST::funcTable[ifName + callTypes]->isWin64;
-                        std::vector<RaveValue> values = this->getParameters(byVals, AST::funcTable[ifName + callTypes], false);
-                        return LLVM::call(generator->functions[ifName + callTypes], values, instanceof<TypeVoid>(AST::funcTable[ifName + callTypes]->type) ? "" : "callFunc", byVals);
+                        std::vector<RaveValue> params = Call::genParameters(arguments, byVals, AST::funcTable[ifName + callTypes], loc);
+                        return LLVM::call(generator->functions[ifName + callTypes], params, (instanceof<TypeVoid>(AST::funcTable[ifName + callTypes]->type) ? "" : "callFunc"), byVals);
                     }
+
                     mainName += callTypes;
                 }
-                else if((AST::funcTable[mainName]->args.size() != this->args.size()) && !isCW64 && (!AST::funcTable[mainName]->isVararg))
-                    generator->error("wrong number of arguments for calling function '" + ifName + "' (" + std::to_string(AST::funcTable[mainName]->args.size()) + " expected, " + std::to_string(this->args.size()) + " provided)!", this->loc);
+                else if((AST::funcTable[mainName]->args.size() != arguments.size()) && !AST::funcTable[mainName]->isCdecl64 && !AST::funcTable[mainName]->isWin64 && !AST::funcTable[mainName]->isVararg)
+                    generator->error("wrong number of arguments for calling function '" + ifName + "' (" + std::to_string(AST::funcTable[mainName]->args.size()) + " expected, " + std::to_string(arguments.size()) + " provided)!", loc);
             }
 
-            sTypes = ifName.substr(ifName.find('<') + 1);
-            sTypes = sTypes.substr(0, sTypes.length() - 1);
+            sTypes = ifName.substr(ifName.find('<') + 1, ifName.find('>') - ifName.find('<') - 1);
 
             Lexer tLexer(sTypes, 1);
             Parser tParser(tLexer.tokens, "(builtin)");
+            
             std::vector<Type*> types;
             sTypes = "";
 
@@ -449,7 +470,7 @@ RaveValue NodeCall::generate() {
 
                 sTypes = "<" + sTypes.substr(0, sTypes.length() - 1) + ">";
 
-                if(AST::funcTable.find(mainName + sTypes) != AST::funcTable.end()) return (new NodeCall(loc, new NodeIden(mainName + sTypes, loc), args))->generate();
+                if(AST::funcTable.find(mainName + sTypes) != AST::funcTable.end()) return Call::make(loc, new NodeIden(mainName + sTypes, loc), arguments);
                 AST::funcTable[mainName]->generateWithTemplate(types, mainName + sTypes + (mainName.find('[') == std::string::npos ? callTypes : ""));
             }
             else {
@@ -464,158 +485,147 @@ RaveValue NodeCall::generate() {
 
                 ifName = mainName + sTypes;
                 mainName = ifName.substr(0, ifName.find('<'));
+
                 if(AST::funcTable.find(mainName) == AST::funcTable.end()) {
                     // Not working... maybe generate structure?
                     if(AST::structTable.find(mainName) != AST::structTable.end()) AST::structTable[mainName]->genWithTemplate(sTypes, types);
-                    else generator->error("undefined structure '" + ifName + "'!", this->loc);
+                    else generator->error("undefined structure '" + ifName + "'!", loc);
                 }
+
+                return Call::make(loc, AST::funcTable[ifName], arguments);
             }
-            return this->generate();
+
+            return Call::make(loc, function, arguments);
         }
 
         if(currScope->has("this")) {
             NodeVar* _this = currScope->getVar("this", loc);
             if(instanceof<TypeStruct>(_this->type->getElType())) {
                 TypeStruct* _struct = (TypeStruct*)_this->type->getElType();
-                auto method = std::pair<std::string, std::string>(_struct->name, ifName);
+                arguments.insert(arguments.begin(), _this);
 
-                std::vector<RaveValue> params = this->getParameters(byVals, nullptr, false);
-                std::vector<Type*> types;
+                auto methodf = Call::findMethod(_struct->name, ifName, arguments, loc);
 
-                params.insert(params.begin(), currScope->getWithoutLoad("this"));
-                if(instanceof<TypePointer>(params[0].type->getElType())) params[0] = LLVM::load(params[0], "NodeCall_load", loc);
-                for(int i=0; i<params.size(); i++) types.push_back(params[i].type);
+                std::vector<Type*> types = Call::getTypes(arguments);
 
-                auto methodf = AST::methodTable.find(method);
-
-                if(methodf == AST::methodTable.end() || !hasIdenticallyArgs(types, AST::methodTable[method]->args)) {method.second += typesToString(types); methodf = AST::methodTable.find(method);}
-                if(methodf == AST::methodTable.end()) {method.second = method.second.substr(0, method.second.find('[')); methodf = AST::methodTable.find(method);}
-                if(methodf != AST::methodTable.end()) {
-                    params = this->correctByLLVM(params, methodf->second->args);
-                    return LLVM::call(generator->functions[methodf->second->name], params, (instanceof<TypeVoid>(methodf->second->type) ? "" : "callFunc"), byVals);
+                if(!hasIdenticallyArgs(types, methodf->second->args)) {
+                    for(auto& it : AST::funcTable) {
+                        if(hasIdenticallyArgs(types, it.second->args)) {
+                            if(generator->functions.find(it.second->name) == generator->functions.end()) it.second->generate();
+                            std::vector<RaveValue> params = Call::genParameters(arguments, byVals, it.second, loc);
+                            return LLVM::call(generator->functions[it.second->name], params, (instanceof<TypeVoid>(it.second->type) ? "" : "callFunc"), byVals);
+                        }
+                    }
                 }
+
+                std::vector<RaveValue> params = Call::genParameters(arguments, byVals, methodf->second, loc);
+                if(instanceof<TypePointer>(params[0].type->getElType())) params[0] = LLVM::load(params[0], "NodeCall_load", loc);
+
+                return LLVM::call(generator->functions[methodf->second->name], params, (instanceof<TypeVoid>(methodf->second->type) ? "" : "callFunc"), byVals);
             }
         }
 
-        if(AST::debugMode) {
-            for(auto const& x : AST::funcTable) std::cout << "\t" << x.first << std::endl;
-            std::cout << "DEBUG_MODE 2: undefined function!" << std::endl;
-        }
-
-        generator->error("undefined function '" + ifName + "'!", this->loc);
+        generator->error("undefined function '" + ifName + "'!", loc);
     }
 
-    if(instanceof<NodeGet>(this->func)) {
-        NodeGet* getFunc = (NodeGet*)this->func;
-        if(instanceof<NodeIden>(getFunc->base)) {
-            NodeIden* idenFunc = (NodeIden*)getFunc->base;
-            std::string const &ifName = idenFunc->name;
-            if(!currScope->has(ifName) && !currScope->hasAtThis(ifName)) generator->error("undefined variable '" + ifName + "'!", this->loc);
+    if(instanceof<NodeGet>(function)) {
+        NodeGet* getFunc = (NodeGet*)function;
 
-            NodeVar* var = currScope->getVar(ifName, this->loc);
-            var->isUsed = true;
+        if(instanceof<NodeIden>(getFunc->base)) {
+            std::string &ifName = ((NodeIden*)getFunc->base)->name;
+
+            if(!currScope->has(ifName) && !currScope->hasAtThis(ifName)) generator->error("undefined variable '" + ifName + "'!", loc);
+
+            NodeVar* variable = currScope->getVar(ifName, loc);
+            variable->isUsed = true;
+
             TypeStruct* structure = nullptr;
 
-            if(instanceof<TypeStruct>(var->type)) structure = (TypeStruct*)var->type;
-            else if(instanceof<TypePointer>(var->type) && instanceof<TypeStruct>(((TypePointer*)var->type)->instance)) structure = (TypeStruct*)((TypePointer*)var->type)->instance;
-            else generator->error("variable '" + ifName + "' does not have structure as type!", this->loc);
+            if(instanceof<TypeStruct>(variable->type)) structure = (TypeStruct*)(variable->type);
+            else if(instanceof<TypePointer>(variable->type) && instanceof<TypeStruct>(variable->type->getElType())) structure = (TypeStruct*)(variable->type->getElType());
+            else generator->error("type of the variable '" + ifName + "' is not a structure!", loc);
 
             if(AST::structTable.find(structure->name) != AST::structTable.end()) {
-                std::vector<RaveValue> params = this->getParameters(byVals, nullptr, false);
-                std::vector<Type*> types;
+                arguments.insert(arguments.begin(), getFunc->base);
+                auto methodf = Call::findMethod(structure->name, getFunc->field, arguments, loc);
 
-                params.insert(params.begin(), currScope->getWithoutLoad(ifName));
+                std::vector<RaveValue> params = Call::genParameters(arguments, byVals, methodf->second, loc);
                 if(instanceof<TypePointer>(params[0].type->getElType())) params[0] = LLVM::load(params[0], "NodeCall_load", loc);
-                for(int i=0; i<params.size(); i++) types.push_back(params[i].type);
 
-                std::pair<std::string, std::string> method = std::pair<std::string, std::string>(structure->name, getFunc->field);
-
-                auto methodf = AST::methodTable.find(method);
-
-                if(methodf == AST::methodTable.end() || !hasIdenticallyArgs(types, AST::methodTable[method]->args)) {method.second += typesToString(types); methodf = AST::methodTable.find(method);}
-                if(methodf == AST::methodTable.end()) {
-                    bool founded = false;
-
-                    for(auto const& x : AST::methodTable){
-                        if(x.first.first == method.first && x.first.second.find(getFunc->field) == 0) {
-                            if(hasIdenticallyArgs(types, x.second->args)) {
-                                founded = true;
-                                method.second = x.first.second;
-                                break;
-                            }
-                        }
-                    }
-
-                    if(!founded) method.second = method.second.substr(0, method.second.find('['));
-                    methodf = AST::methodTable.find(method);
-                }
-                
-                if(methodf == AST::methodTable.end()) generator->error("undefined method '" + method.second.substr(0, method.second.find('[')) + "' of structure '" + structure->name + "'!", this->loc);
-
-                if(generator->functions.find(methodf->second->name) == generator->functions.end()) methodf->second->generate();
-
-                if(generator->functions[methodf->second->name].value == nullptr) generator->error("using '" + methodf->second->origName + "' method before declaring it!", this->loc);
-
-                params = this->correctByLLVM(params, methodf->second->args);
                 return LLVM::call(generator->functions[methodf->second->name], params, (instanceof<TypeVoid>(methodf->second->type) ? "" : "callFunc"), byVals);
             }
 
-            generator->error("undefined structure '" + structure->name + "'!", this->loc);
+            generator->error("structure '" + structure->name + "' does not exist!", loc);
         }
-        else if(instanceof<NodeCall>(getFunc->base)) {
+
+        if(instanceof<NodeDone>(getFunc->base)) {
+            RaveValue value = ((NodeDone*)getFunc->base)->value;
+            Type* structure = value.type;
+
+            while(instanceof<TypePointer>(structure)) structure = structure->getElType();
+
+            if(AST::structTable.find(structure->toString()) != AST::structTable.end()) {
+                arguments.insert(arguments.begin(), getFunc->base);
+                auto methodf = Call::findMethod(structure->toString(), getFunc->field, arguments, loc);
+
+                std::vector<RaveValue> params = Call::genParameters(arguments, byVals, methodf->second, loc);
+                if(instanceof<TypePointer>(params[0].type->getElType())) params[0] = LLVM::load(params[0], "NodeCall_load", loc);
+
+                return LLVM::call(generator->functions[methodf->second->name], params, (instanceof<TypeVoid>(methodf->second->type) ? "" : "callFunc"), byVals);
+            }
+
+            generator->error("structure '" + structure->toString() + "' does not exist!", loc);
+        }
+
+        if(instanceof<NodeCall>(getFunc->base)) {
             NodeCall* ncall = (NodeCall*)getFunc->base;
-            RaveValue result = ncall->generate();
-
-            if(currScope->localVars.find("__RAVE_NG_NGC") != currScope->localVars.end() && currScope->localVars["__RAVE_NG_NGC"] != nullptr) delete currScope->localVars["__RAVE_NG_NGC"];
-
-            // Creating a temp variable
-            currScope->localScope["__RAVE_NG_NGC"] = result;
-            currScope->localVars["__RAVE_NG_NGC"] = new NodeVar(
-                "__RAVE_NG_NGC", nullptr, false, false, false, {},
-                this->loc, currScope->localScope["__RAVE_NG_NGC"].type
-            );
-
-            return (new NodeCall(this->loc, new NodeGet(new NodeIden("__RAVE_NG_NGC", this->loc), getFunc->field, getFunc->isMustBePtr, this->loc), this->args))->generate();
+            
+            return Call::make(loc, new NodeGet(new NodeDone(ncall->generate()), getFunc->field, getFunc->isMustBePtr, loc), arguments);
         }
-        else if(instanceof<NodeGet>(getFunc->base)) {
+
+        if(instanceof<NodeGet>(getFunc->base)) {
             NodeGet* nget = (NodeGet*)getFunc->base;
+            nget->isMustBePtr = true;
 
-            if(currScope->localVars.find("__RAVE_NG_NG") != currScope->localVars.end() && currScope->localVars["__RAVE_NG_NG"] != nullptr) delete currScope->localVars["__RAVE_NG_NG"];
+            RaveValue value = nget->generate();
+            Type* structure = value.type;
 
-            // Creating a temp variable
-            currScope->localScope["__RAVE_NG_NG"] = nget->generate();
-            currScope->localVars["__RAVE_NG_NG"] = new NodeVar(
-                "__RAVE_NG_NG", nullptr, false, false, false, {},
-                this->loc, currScope->localScope["__RAVE_NG_NG"].type
-            );
+            while(instanceof<TypePointer>(structure)) structure = structure->getElType();
 
-            return (new NodeCall(this->loc, new NodeGet(new NodeIden("__RAVE_NG_NG", this->loc), getFunc->field, getFunc->isMustBePtr, this->loc), this->args))->generate();
+            if(AST::structTable.find(structure->toString()) != AST::structTable.end()) {
+                arguments.insert(arguments.begin(), getFunc->base);
+                auto methodf = Call::findMethod(structure->toString(), getFunc->field, arguments, loc);
+
+                std::vector<RaveValue> params = Call::genParameters(arguments, byVals, methodf->second, loc);
+                if(instanceof<TypePointer>(params[0].type->getElType())) params[0] = LLVM::load(params[0], "NodeCall_load", loc);
+
+                return LLVM::call(generator->functions[methodf->second->name], params, (instanceof<TypeVoid>(methodf->second->type) ? "" : "callFunc"), byVals);
+            }
+
+            generator->error("structure '" + structure->toString() + "' does not exist!", loc);
         }
-        else if(instanceof<NodeIndex>(getFunc->base)) {
+
+        if(instanceof<NodeIndex>(getFunc->base)) {
             NodeIndex* nindex = (NodeIndex*)getFunc->base;
+            nindex->isMustBePtr = true;
 
-            if(currScope->localVars.find("__RAVE_NG_NI") != currScope->localVars.end() && currScope->localVars["__RAVE_NG_NI"] != nullptr) delete currScope->localVars["__RAVE_NG_NI"];
-
-            // Creating a temp variable
-            currScope->localScope["__RAVE_NG_NI"] = nindex->generate();
-            currScope->localVars["__RAVE_NG_NI"] = new NodeVar(
-                "__RAVE_NG_NI", nullptr, false, false, false, {},
-                this->loc, currScope->localScope["__RAVE_NG_NI"].type
-            );
-
-            return (new NodeCall(this->loc, new NodeGet(new NodeIden("__RAVE_NG_NI", this->loc), getFunc->field, getFunc->isMustBePtr, this->loc), this->args))->generate();
+            return Call::make(loc, new NodeGet(new NodeDone(nindex->generate()), getFunc->field, getFunc->isMustBePtr, loc), arguments);
         }
-        generator->error("a call of this kind (NodeGet + " + std::string(typeid(this->func[0]).name()) + ") is temporarily unavailable!", this->loc);
+
+        generator->error("a call of this kind (NodeGet + " + std::string(typeid(function[0]).name()) + ") is unavailable!", loc);
     }
 
-    if(instanceof<NodeUnary>(this->func)) {
-        NodeCall* nc = new NodeCall(this->loc, ((NodeUnary*)this->func)->base, this->args);
-        ((NodeUnary*)this->func)->base = nc;
-        return this->func->generate();
+    if(instanceof<NodeUnary>(function)) {
+        ((NodeUnary*)function)->base = new NodeDone(Call::make(loc, ((NodeUnary*)function)->base, arguments));
+        return ((NodeUnary*)function)->generate();
     }
 
-    generator->error("a call of this kind is temporarily unavailable!", this->loc);
+    generator->error("a call of this kind is unavailable!", loc);
     return {};
+}
+
+RaveValue NodeCall::generate() {
+    return Call::make(loc, func, args);
 }
 
 void NodeCall::check() {this->isChecked = true;}

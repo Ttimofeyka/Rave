@@ -12,6 +12,25 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 class NodeFunc;
 
+struct CallSettings {
+    bool isCW64;
+    bool isVararg;
+    int loc;
+};
+
+namespace Template {
+    extern std::string fromTypes(std::vector<Type*>& types);
+}
+
+namespace Call {
+    extern std::vector<Type*> getParamsTypes(std::vector<RaveValue>& params);
+    extern std::vector<Type*> getTypes(std::vector<Node*>& arguments);
+    extern std::vector<RaveValue> genParameters(std::vector<Node*>& arguments, std::vector<int>& byVals, std::vector<FuncArgSet>& fas, CallSettings settings);
+    extern std::vector<RaveValue> genParameters(std::vector<Node*>& arguments, std::vector<int>& byVals, NodeFunc* function, int loc);
+    extern std::map<std::pair<std::string, std::string>, NodeFunc *>::iterator findMethod(std::string structName, std::string methodName, std::vector<Node*>& arguments, int loc);
+    extern RaveValue make(int loc, Node* function, std::vector<Node*> arguments);
+}
+
 class NodeCall : public Node {
 public:
     int loc;
@@ -26,9 +45,6 @@ public:
     Type* __getType(Node* fn);
     Type* getType() override;
     
-    std::vector<Type*> getTypes();
-    std::vector<RaveValue> getParameters(std::vector<int>& byVals, NodeFunc* nfunc, bool isVararg, std::vector<FuncArgSet> fas = std::vector<FuncArgSet>());
-    std::vector<RaveValue> correctByLLVM(std::vector<RaveValue> values, std::vector<FuncArgSet> fas);
     Node* comptime() override;
     Node* copy() override;
     void check() override;

@@ -42,9 +42,10 @@ RaveValue NodeWhile::generate() {
     currScope->blockExit = LLVM::makeBlock("exit", function.value);
 
     LLVMBuildBr(generator->builder, condBlock);
-    LLVMPositionBuilderAtEnd(generator->builder, condBlock);
+    LLVM::Builder::atEnd(condBlock);
+
     LLVMBuildCondBr(generator->builder, this->cond->generate().value, whileBlock, currScope->blockExit);
-    LLVMPositionBuilderAtEnd(generator->builder, whileBlock);
+    LLVM::Builder::atEnd(whileBlock);
 
     size_t selfNumber = generator->activeLoops.size();
     generator->activeLoops[selfNumber] = {

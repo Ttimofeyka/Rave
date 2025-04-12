@@ -81,8 +81,7 @@ RaveValue NodeIf::generate() {
     int selfNum = generator->activeLoops.size();
     generator->activeLoops[selfNum] = Loop{.isActive = true, .start = thenBlock, .end = endBlock, .hasEnd = false, .isIf = true, .loopRets = std::vector<LoopReturn>(), .owner = this};
 
-    LLVMPositionBuilderAtEnd(generator->builder, thenBlock);
-    generator->currBB = thenBlock;
+    LLVM::Builder::atEnd(thenBlock);
 
     currScope = copyScope(origScope);
 
@@ -96,8 +95,7 @@ RaveValue NodeIf::generate() {
     delete currScope;
     currScope = copyScope(origScope);
 
-    LLVMPositionBuilderAtEnd(generator->builder, elseBlock);
-	generator->currBB = elseBlock;
+    LLVM::Builder::atEnd(elseBlock);
     if(this->_else != nullptr) this->_else->generate();
 
     if(!generator->activeLoops[selfNum].hasEnd) LLVMBuildBr(generator->builder, endBlock);
@@ -106,8 +104,7 @@ RaveValue NodeIf::generate() {
 
     currScope = origScope;
 
-    LLVMPositionBuilderAtEnd(generator->builder, endBlock);
-    generator->currBB = endBlock;
+    LLVM::Builder::atEnd(endBlock);
     generator->activeLoops.erase(selfNum);
 
     LLVMValueRef lastInstr = LLVMGetLastInstruction(endBlock);

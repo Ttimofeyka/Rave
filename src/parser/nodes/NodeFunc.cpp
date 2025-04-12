@@ -383,8 +383,13 @@ RaveValue NodeFunc::generate() {
         LLVMBasicBlockRef entry = LLVM::makeBlock("entry", name);
         this->exitBlock = LLVM::makeBlock("exit", name);
         this->builder = LLVMCreateBuilderInContext(generator->context);
+
+        LLVMBuilderRef oldBuilder = generator->builder;
         generator->builder = this->builder;
-        LLVMPositionBuilderAtEnd(generator->builder, entry);
+
+        LLVMBasicBlockRef oldCurrBB = generator->currBB;
+        LLVM::Builder::atEnd(entry);
+
         if(!Compiler::settings.noFastMath) LLVM::setFastMath(generator->builder, true, false, true, true);
 
         std::map<std::string, int> indexes;
@@ -393,6 +398,8 @@ RaveValue NodeFunc::generate() {
             indexes.insert({this->args[i].name, i});
             vars.insert({this->args[i].name, new NodeVar(this->args[i].name, nullptr, false, true, false, {}, this->loc, this->args[i].type)});
         }
+
+        Scope* oldScope = currScope;
 
         currScope = new Scope(this->name, indexes, vars);
         generator->currBB = entry;
@@ -418,19 +425,20 @@ RaveValue NodeFunc::generate() {
         LLVMGetBasicBlocks(generator->functions[currScope->funcName].value, basicBlocks);
             for(int i=0; i<bbLength; i++) {
                 if(basicBlocks[i] != nullptr && std::string(LLVMGetBasicBlockName(basicBlocks[i])) != "exit" && LLVMGetBasicBlockTerminator(basicBlocks[i]) == nullptr) {
-                    LLVMPositionBuilderAtEnd(generator->builder, basicBlocks[i]);
+                    LLVM::Builder::atEnd(basicBlocks[i]);
                     LLVMBuildBr(generator->builder, this->exitBlock);
                 }
             }
         free(basicBlocks);
 
-        LLVMPositionBuilderAtEnd(generator->builder, this->exitBlock);
+        LLVM::Builder::atEnd(exitBlock);
 
         if(!instanceof<TypeVoid>(this->type)) LLVMBuildRet(generator->builder, currScope->get("return", this->loc).value);
         else LLVMBuildRetVoid(generator->builder);
 
-        generator->builder = nullptr;
-        currScope = nullptr;
+        generator->builder = oldBuilder;
+        currScope = oldScope;
+        generator->currBB = oldCurrBB;
 
         generator->currentBuiltinArg = oldCurrentBuiltinArg;
     }

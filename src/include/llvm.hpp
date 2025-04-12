@@ -53,4 +53,8 @@ namespace LLVM {
     extern RaveValue mul(RaveValue first, RaveValue second);
     extern RaveValue div(RaveValue first, RaveValue second, bool isUnsigned = false);
     extern RaveValue compare(RaveValue first, RaveValue second, char op);
+
+    namespace Builder {
+        extern void atEnd(LLVMBasicBlockRef block);
+    }
 }

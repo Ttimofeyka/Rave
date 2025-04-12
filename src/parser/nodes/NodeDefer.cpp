@@ -32,16 +32,14 @@ RaveValue NodeDefer::generate() {
             Loop loop = generator->activeLoops[generator->activeLoops.size() - 1];
             LLVMBasicBlockRef oldBB = generator->currBB;
 
-            LLVMPositionBuilderAtEnd(generator->builder, loop.end);
-            generator->currBB = loop.end;
+            LLVM::Builder::atEnd(loop.end);
 
             auto oldScope = currScope;
             currScope = copyScope(oldScope);
 
             instruction->generate();
 
-            LLVMPositionBuilderAtEnd(generator->builder, oldBB);
-            generator->currBB = oldBB;
+            LLVM::Builder::atEnd(oldBB);
 
             delete currScope;
             currScope = oldScope;
@@ -51,16 +49,14 @@ RaveValue NodeDefer::generate() {
 
     if(currScope->fnEnd != nullptr) {
         LLVMBasicBlockRef oldBB = generator->currBB;
-        LLVMPositionBuilderAtEnd(generator->builder, currScope->fnEnd);
-        generator->currBB = currScope->fnEnd;
+        LLVM::Builder::atEnd(currScope->fnEnd);
 
         auto oldScope = currScope;
         currScope = copyScope(oldScope);
 
         instruction->generate();
 
-        LLVMPositionBuilderAtEnd(generator->builder, oldBB);
-        generator->currBB = oldBB;
+        LLVM::Builder::atEnd(oldBB);
         delete currScope;
         currScope = oldScope;
     }

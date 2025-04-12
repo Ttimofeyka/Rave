@@ -293,3 +293,8 @@ RaveValue LLVM::compare(RaveValue first, RaveValue second, char op) {
 
     return {nullptr, nullptr};
 }
+
+void LLVM::Builder::atEnd(LLVMBasicBlockRef block) {
+    generator->currBB = block;
+    LLVMPositionBuilderAtEnd(generator->builder, block);
+}
