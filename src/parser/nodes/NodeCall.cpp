@@ -526,7 +526,7 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
             NodeVar* _this = currScope->getVar("this", loc);
             if(instanceof<TypeStruct>(_this->type->getElType())) {
                 TypeStruct* _struct = (TypeStruct*)_this->type->getElType();
-                arguments.insert(arguments.begin(), _this);
+                arguments.insert(arguments.begin(), new NodeIden("this", loc));
 
                 auto methodf = Call::findMethod(_struct->name, ifName, arguments, loc);
 
