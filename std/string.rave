@@ -182,9 +182,9 @@ namespace std {
         (inline) void append(std::string str) => this.appendC(str.data, str.length);
 
         (inline) std::string copy {
-            std::string cp = std::string("");
-            cp.append(this);
-        } => cp;
+            return = std::string("");
+            return.append(this);
+        }
 
         void replace(char c, char to) {
             int i = 0;
