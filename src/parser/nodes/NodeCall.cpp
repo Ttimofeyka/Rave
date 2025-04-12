@@ -92,7 +92,13 @@ bool hasIdenticallyArgs(std::vector<Type*> one, std::vector<FuncArgSet> two) {
 
 std::vector<FuncArgSet> tfaToFas(std::vector<TypeFuncArg*> tfa) {
     std::vector<FuncArgSet> fas;
-    for(int i=0; i<tfa.size(); i++) fas.push_back(FuncArgSet{.name = tfa[i]->name, .type = tfa[i]->type});
+    for(int i=0; i<tfa.size(); i++) {
+        Type* type = tfa[i]->type;
+        while(generator->toReplace.find(type->toString()) != generator->toReplace.end()) type = generator->toReplace[type->toString()];
+
+        fas.push_back(FuncArgSet{.name = tfa[i]->name, .type = type});
+    }
+
     return fas;
 }
 
@@ -350,6 +356,10 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
 
                     if(!hasIdenticallyArgs(types, AST::funcTable[ifName]->args)) {
                         for(auto& it : AST::funcTable) {
+                            if(it.first != ifName) {
+                                if(it.first.find(ifName + "[") != 0 && it.first.find(ifName + "<") != 0) continue;
+                            }
+
                             if(hasIdenticallyArgs(types, it.second->args)) {
                                 checkAndGenerate(it.first);
                                 std::vector<RaveValue> params = Call::genParameters(arguments, byVals, it.second, loc);
@@ -379,9 +389,22 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
                     std::vector<RaveValue> params = Call::genParameters(arguments, byVals, AST::funcTable[ifName], loc);
                     return LLVM::call(generator->functions[ifName], params, (instanceof<TypeVoid>(AST::funcTable[ifName]->type) ? "" : "callFunc"), byVals);
                 }
+                else if(!hasIdenticallyArgs(types, AST::funcTable[ifName]->args)) {
+                    // Choose the most right overload
+                    for(auto& it : AST::funcTable) {
+                        if(it.first != ifName) {
+                            if(it.first.find(ifName + "[") != 0 && it.first.find(ifName + "<") != 0) continue;
+                        }
+
+                        if(hasIdenticallyArgs(types, it.second->args)) {
+                            checkAndGenerate(it.first);
+                            std::vector<RaveValue> params = Call::genParameters(arguments, byVals, it.second, loc);
+                            return LLVM::call(generator->functions[it.first], params, (instanceof<TypeVoid>(it.second->type) ? "" : "callFunc"), byVals);
+                        }
+                    }
+                }
 
                 std::vector<RaveValue> params = Call::genParameters(arguments, byVals, AST::funcTable[ifName], loc);
-
                 return LLVM::call(generator->functions[ifName], params, (instanceof<TypeVoid>(AST::funcTable[ifName]->type) ? "" : "callFunc"), byVals);
             }
         }
@@ -392,6 +415,7 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
 
             TypeFunc* fn = (TypeFunc*)currScope->getVar(ifName, loc)->type;
             std::vector<FuncArgSet> fas = tfaToFas(fn->args);
+
             std::vector<RaveValue> params = Call::genParameters(arguments, byVals, fas, CallSettings{false, fn->isVarArg, loc});
             return LLVM::call(currScope->get(ifName), params, (instanceof<TypeVoid>(fn->main) ? "" : "callFunc"), byVals);
         }
