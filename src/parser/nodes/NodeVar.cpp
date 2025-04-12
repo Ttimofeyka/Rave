@@ -332,7 +332,7 @@ RaveValue NodeVar::generate() {
         if(alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
         else if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->getWithoutLoad(this->name, this->loc).value, generator->getAlignment(this->type));
 
-        if((this->value == nullptr || instanceof<NodeCall>(this->value)) && instanceof<TypeStruct>(this->type)) {
+        if(instanceof<TypeStruct>(this->type)) {
             if(AST::structTable[((TypeStruct*)this->type)->name]->predefines.size() > 0) {
                 NodeGet* getter = new NodeGet(new NodeIden(name, loc), "", true, loc);
 
