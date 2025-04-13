@@ -13,6 +13,10 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <vector>
 #include <string>
 
+namespace Unary {
+    extern RaveValue make(int loc, char type, Node* base);
+}
+
 class NodeUnary : public Node {
 public:
     int loc;
@@ -22,7 +26,6 @@ public:
 
     NodeUnary(int loc, char type, Node* base);
 
-    RaveValue generatePtr();
     RaveValue generateConst();
     void check() override;
     Type* getType() override;

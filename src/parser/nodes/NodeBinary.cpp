@@ -289,7 +289,7 @@ RaveValue Binary::operation(char op, Node* first, Node* second, int loc) {
                         std::vector<Node*>({new NodeDone(vFirst), new NodeDone(vSecond)})
                     );
 
-                    return opOverload.first[0] == '!' ? (new NodeUnary(loc, TokType::Ne, _overloadedCall))->generate() : _overloadedCall->generate();
+                    return opOverload.first[0] == '!' ? Unary::make(loc, TokType::Ne, _overloadedCall) : _overloadedCall->generate();
                 }
                 else if(instanceof<TypeBasic>(second->getType()))
                     generator->error("an attempt to change value of the structure as the variable '" + id->name + "' without overloading!", loc);
@@ -304,14 +304,11 @@ RaveValue Binary::operation(char op, Node* first, Node* second, int loc) {
         }
         else if(instanceof<NodeGet>(first)) {
             NodeGet* nget = (NodeGet*)first;
-            nget->isMustBePtr = true;
-
-            RaveValue fValue = nget->generate();
-            RaveValue sValue = second->generate();
-
             if(nget->elementIsConst) generator->error("An attempt to change the constant element!", loc);
+
+            nget->isMustBePtr = true;
  
-            Binary::store(fValue, sValue, loc);
+            Binary::store(nget->generate(), second->generate(), loc);
             return {};
         }
         else if(instanceof<NodeIndex>(first)) {
@@ -392,7 +389,7 @@ RaveValue Binary::operation(char op, Node* first, Node* second, int loc) {
                 std::vector<Node*>({new NodeDone(vFirst), new NodeDone(vSecond)})
             );
 
-            return isNegative ? (new NodeUnary(loc, TokType::Ne, _overloadedCall))->generate() : _overloadedCall->generate();
+            return isNegative ? Unary::make(loc, TokType::Ne, _overloadedCall) : _overloadedCall->generate();
         }
     }
 
@@ -418,8 +415,7 @@ RaveValue Binary::operation(char op, Node* first, Node* second, int loc) {
                 if(_operator == nullptr) generator->error("operator not found!", loc);
                 else {
                     NodeCall* _call = new NodeCall(loc, new NodeIden(_operator->name, loc), std::vector<Node*>({new NodeDone(vSecond), new NodeDone(vFirst)}));
-
-                    return (op == TokType::NeIn ? (new NodeUnary(loc, TokType::Ne, _call))->generate() : _call->generate());
+                    return (op == TokType::NeIn ? Unary::make(loc, TokType::Ne, _call) : _call->generate());
                 }
             }
         }
