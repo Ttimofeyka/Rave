@@ -51,14 +51,8 @@ RaveValue NodeIf::generate() {
 	LLVMBasicBlockRef elseBlock = LLVM::makeBlock("else", currScope->funcName);
 	LLVMBasicBlockRef endBlock = nullptr;
 
-    if(this->_else != nullptr && instanceof<NodeIf>(this->_else)) {
-        if(currScope->elseIfEnd == nullptr) currScope->elseIfEnd = LLVM::makeBlock("elseIfEnd", currScope->funcName);
-        endBlock = currScope->elseIfEnd;
-    }
-    else {
-        endBlock = LLVM::makeBlock("end", currScope->funcName);
-        currScope->elseIfEnd = nullptr;
-    }
+    
+    endBlock = LLVM::makeBlock("end", currScope->funcName);
 
     auto origScope = currScope;
 
@@ -108,7 +102,7 @@ RaveValue NodeIf::generate() {
     generator->activeLoops.erase(selfNum);
 
     LLVMValueRef lastInstr = LLVMGetLastInstruction(endBlock);
-    if(lastInstr != nullptr && LLVMGetInstructionOpcode(lastInstr) == LLVMBr && std::string(LLVMPrintValueToString(LLVMGetOperand(lastInstr, 0))).find("elseIfEnd") != std::string::npos) LLVMInstructionEraseFromParent(lastInstr);
+    if(lastInstr != nullptr && LLVMGetInstructionOpcode(lastInstr) == LLVMBr) LLVMInstructionEraseFromParent(lastInstr);
 
     lastInstr = LLVMGetLastInstruction(thenBlock);
     if(lastInstr != nullptr && LLVMGetInstructionOpcode(lastInstr) == LLVMBr &&
