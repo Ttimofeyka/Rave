@@ -121,7 +121,6 @@ public:
     std::map<std::string, NodeVar*> argVars;
     std::map<std::string, Node*> aliasTable;
     LLVMBasicBlockRef fnEnd;
-    LLVMBasicBlockRef elseIfEnd = nullptr;
     bool detectMemoryLeaks = false;
 
     Scope(std::string funcName, std::map<std::string, int> args, std::map<std::string, NodeVar*> argVars);
