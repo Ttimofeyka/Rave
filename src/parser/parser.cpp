@@ -324,103 +324,152 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
         return n;
     }
     if(peek()->value == "operator") return this->parseOperatorOverload(type, s);
-    if(peek()->value == "~" && this->tokens[this->idx+1]->value == "with") {this->next(); name = "~with";}
-    else {
-        if(peek()->type != TokType::Identifier) this->error("a declaration name must be identifier!");
-        name = this->peek()->value;
-        if(isBasicType(name)) this->error("a declaration cannot be named as basic types!");
-    }
+	
+	loc = this->peek()->line;
 
-    loc = this->peek()->line;
+	bool stdmv; // Single-type declaration of multiple variables
+	NodeVar* save = nullptr;
+	
+	do {
+		stdmv = false;
+		
+		if(peek()->type != TokType::Identifier) this->error("a declaration name must be identifier!");
+		name = this->peek()->value;
+		if(isBasicType(name)) this->error("a declaration cannot be named as basic types!");
+		
+		this->next();
 
-    this->next();
+		switch (peek()->type) {
+			case TokType::Less:
+			case TokType::Rpar:
+			case TokType::Rbra:
+			case TokType::ShortRet:
+			case TokType::Equ:
+			case TokType::Semicolon:
+				break;
+			case TokType::Comma:
+				stdmv = true;
+				break;
+			default:
+				this->error("expected token ';'!", loc);
+				if(save != nullptr) delete save;
+				return nullptr;
+		}
+		
+		if(peek()->type == TokType::Rbra && s.find("__RAVE_PARSER_FUNCTION_") != std::string::npos) {
+			this->error("function declarations cannot be inside other functions!", loc);
+			if(save != nullptr) delete save;
+			return nullptr;
+		}
 
-    if(peek()->type != TokType::Less && peek()->type != TokType::Rpar && peek()->type != TokType::Rbra
-    && peek()->type != TokType::ShortRet && peek()->type != TokType::Equ && peek()->type != TokType::Semicolon) {
-        this->error("expected token ';'!", loc);
-        return nullptr;
-    }
+		std::vector<std::string> templates;
+		if(peek()->type == TokType::Less) {
+			this->next();
+			while(peek()->type != TokType::More) {
+				templates.push_back(this->peek()->value);
+				this->next();
+				if(peek()->type == TokType::Comma) this->next();
+			} this->next();
+		}
+		
+		switch (peek()->type) {
+			case TokType::Rpar:
+			case TokType::Rbra:
+			case TokType::ShortRet: {
+				if(save != nullptr) {
+					this->error("function declaration inside of multiple variables declaration is not allowed", loc);
+					delete save;
+				}
+			}
+			default: break;
+		}
 
-    if(peek()->type == TokType::Rbra && s.find("__RAVE_PARSER_FUNCTION_") != std::string::npos) {
-        this->error("function declarations cannot be inside other functions!", loc);
-        return nullptr;
-    }
+		if(peek()->type == TokType::Rpar) {
+			std::vector<FuncArgSet> args = this->parseFuncArgSets();
+			if(peek()->type == TokType::Lpar) this->next();
+			if(peek()->type == TokType::Rbra) this->next();
+			if(peek()->type == TokType::ShortRet) {
+				this->next();
+				Node* expr = this->parseExpr();
+				if(peek()->type != TokType::Lpar) {
+					if(peek()->type != TokType::Semicolon) this->error("expected token ';'!");
+					this->next();
+				}
+				return new NodeFunc(name, args, new NodeBlock({new NodeRet(expr, loc)}), isExtern, mods, loc, type, templates);
+			}
+			else if(peek()->type == TokType::Semicolon) {
+				this->next();
+				return new NodeFunc(name, args, new NodeBlock({}), isExtern, mods, loc, type, templates);
+			}
+			NodeBlock* block = this->parseBlock(name);
+			if(peek()->type == TokType::ShortRet) {
+				this->next();
+				Node* n = this->parseExpr();
+				if(peek()->type == TokType::Semicolon) next();
 
-    std::vector<std::string> templates;
-    if(peek()->type == TokType::Less) {
-        this->next();
-        while(peek()->type != TokType::More) {
-            templates.push_back(this->peek()->value);
-            this->next();
-            if(peek()->type == TokType::Comma) this->next();
-        } this->next();
-    }
-
-    if(peek()->type == TokType::Rpar) {
-        std::vector<FuncArgSet> args = this->parseFuncArgSets();
-        if(peek()->type == TokType::Lpar) this->next();
-        if(peek()->type == TokType::Rbra) this->next();
-        if(peek()->type == TokType::ShortRet) {
-            this->next();
-            Node* expr = this->parseExpr();
-            if(peek()->type != TokType::Lpar) {
-                if(peek()->type != TokType::Semicolon) this->error("expected token ';'!");
-                this->next();
-            }
-            return new NodeFunc(name, args, new NodeBlock({new NodeRet(expr, loc)}), isExtern, mods, loc, type, templates);
-        }
-        else if(peek()->type == TokType::Semicolon) {
-            this->next();
-            return new NodeFunc(name, args, new NodeBlock({}), isExtern, mods, loc, type, templates);
-        }
-        NodeBlock* block = this->parseBlock(name);
-        if(peek()->type == TokType::ShortRet) {
-            this->next();
-            Node* n = this->parseExpr();
-            if(peek()->type == TokType::Semicolon) next();
-
-            if(instanceof<TypeVoid>(type)) block->nodes.push_back(n);
-            else block->nodes.push_back(new NodeRet(n, loc));
-        }
-        return new NodeFunc(name, args, block, isExtern, mods, loc, type, templates);
-    }
-    else if(peek()->type == TokType::Rbra) {
-        NodeBlock* block = this->parseBlock("__RAVE_PARSER_FUNCTION_" + name);
-        if(peek()->type == TokType::ShortRet) {
-            this->next();
-            Node* n = this->parseExpr();
-            if(peek()->type == TokType::Semicolon) this->next();
-            if(instanceof<TypeVoid>(type)) block->nodes.push_back(n);
-            else block->nodes.push_back(new NodeRet(n, this->peek()->line));
-        }
-        return new NodeFunc(name, {}, block, isExtern, mods, loc, type, templates);
-    }
-    else if(peek()->type == TokType::ShortRet) {
-        this->next();
-        Node* n = this->parseExpr();
-        if(peek()->type != TokType::Lpar) {
-            if(peek()->type != TokType::Semicolon) this->error("expected token ';'!");
-            this->next();
-        }
-
-        if(!instanceof<TypeVoid>(type)) return new NodeFunc(name, {}, new NodeBlock({new NodeRet(n, loc)}), isExtern, mods, loc, type, templates);
-        return new NodeFunc(name, {}, new NodeBlock({n}), isExtern, mods, loc, type, templates);
-    }
-    else if(peek()->type == TokType::Semicolon) {
-        this->next();
-        return new NodeVar(name, nullptr, isExtern, instanceof<TypeConst>(type), (s==""), mods, loc, type, isVolatile);
-    }
-    else if(peek()->type == TokType::Equ) {
-        this->next();
-        Node* n = this->parseExpr();
-        if(peek()->type != TokType::Lpar) {
-            if(peek()->type != TokType::Semicolon) this->error("expected token ';'!");
-            this->next();
-        }
-        return new NodeVar(name, n, isExtern, instanceof<TypeConst>(type), (s == ""), mods, loc, type, isVolatile);
-    }
-    NodeBlock* _b = this->parseBlock(name);
-    return new NodeFunc(name, {}, _b, isExtern, mods, loc, type, templates);
+				if(instanceof<TypeVoid>(type)) block->nodes.push_back(n);
+				else block->nodes.push_back(new NodeRet(n, loc));
+			}
+			return new NodeFunc(name, args, block, isExtern, mods, loc, type, templates);
+		}
+		else if(peek()->type == TokType::Rbra) {
+			NodeBlock* block = this->parseBlock("__RAVE_PARSER_FUNCTION_" + name);
+			if(peek()->type == TokType::ShortRet) {
+				this->next();
+				Node* n = this->parseExpr();
+				if(peek()->type == TokType::Semicolon) this->next();
+				if(instanceof<TypeVoid>(type)) block->nodes.push_back(n);
+				else block->nodes.push_back(new NodeRet(n, this->peek()->line));
+			}
+			return new NodeFunc(name, {}, block, isExtern, mods, loc, type, templates);
+		}
+		else if(peek()->type == TokType::ShortRet) {
+			this->next();
+			Node* n = this->parseExpr();
+			if(peek()->type != TokType::Lpar) {
+				if(peek()->type != TokType::Semicolon) this->error("expected token ';'!");
+				this->next();
+			}
+			if(!instanceof<TypeVoid>(type)) return new NodeFunc(name, {}, new NodeBlock({new NodeRet(n, loc)}), isExtern, mods, loc, type, templates);
+			return new NodeFunc(name, {}, new NodeBlock({n}), isExtern, mods, loc, type, templates);
+		}
+		else if(peek()->type == TokType::Semicolon) {
+			this->next();
+			NodeVar* nv = new NodeVar(name, nullptr, isExtern, instanceof<TypeConst>(type), (s==""), mods, loc, type, isVolatile);
+			if(save != nullptr) nv->next = save;
+			return nv;
+		}
+		else if(peek()->type == TokType::Equ) {
+			this->next();
+			Node* n = this->parseExpr();
+			switch(peek()->type) {
+				case TokType::Semicolon: this->next();
+				case TokType::Lpar:
+				case TokType::Comma:
+					break;
+				default: this->error("expected token ';'!");
+			}
+			NodeVar* nv = new NodeVar(name, n, isExtern, instanceof<TypeConst>(type), (s == ""), mods, loc, type, isVolatile);
+			if(save != nullptr) nv->next = save;
+			if(stdmv) { // equiv. to if(peek()->type == TokType::Comma)
+				save = nv;
+				this->next();
+				continue;
+			}
+			else return nv;
+		}
+		else if(peek()->type == TokType::Comma) { // equiv. to if (stdmv)
+			save = new NodeVar(name, nullptr, isExtern, instanceof<TypeConst>(type), (s == ""), mods, loc, type, isVolatile);
+			this->next();
+			continue;
+		}
+		NodeBlock* _b = this->parseBlock(name);
+		return new NodeFunc(name, {}, _b, isExtern, mods, loc, type, templates);
+	}
+	while(stdmv);
+	
+	// unreachable
+	throw nullptr;
 }
 
 Node* Parser::parseCmpXchg(std::string s) {

@@ -20,10 +20,11 @@ public:
     std::string linkName;
     Node* value;
     std::vector<DeclarMod> mods;
-    int loc;
     Type* type;
     std::vector<std::string> namespacesNames;
-
+	NodeVar* next = nullptr; // for single-type declaration of multiple variables
+	int loc;
+	
     bool isConst;
     bool isGlobal;
     bool isExtern;

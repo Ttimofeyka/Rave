@@ -70,7 +70,11 @@ NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, boo
 
 NodeVar::~NodeVar() {
     if(value != nullptr) delete value;
-    if(type != nullptr && !instanceof<TypeBasic>(type) && !instanceof<TypeVoid>(type)) delete type;
+	// Assuming that:
+	// in multiple-variable declarations (if .next != nullptr), all instances of NodeVar in this chain do share the same type as described in parser,
+	// then the pointer of type should be freed by the last variable in the chain that definitely has .next == nullptr.
+	if(next != nullptr) delete next;
+    else if(type != nullptr && !instanceof<TypeBasic>(type) && !instanceof<TypeVoid>(type)) delete type;
 }
 
 Type* NodeVar::getType() {return this->type->copy();}
