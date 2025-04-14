@@ -337,11 +337,12 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
 	
 	loc = this->peek()->line;
 
-	bool stdmv; // Single-type declaration of multiple variables
-	NodeVar* save = nullptr;
+	bool multidecl;
+	NodeVar* first = nullptr;
+	NodeVar* last = nullptr;
 	
 	do {
-		stdmv = false;
+		multidecl = false;
 		
 		if(peek()->type != TokType::Identifier) this->error("a declaration name must be identifier!");
 		name = this->peek()->value;
@@ -358,17 +359,17 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
 			case TokType::Semicolon:
 				break;
 			case TokType::Comma:
-				stdmv = true;
+				multidecl = true;
 				break;
 			default:
 				this->error("expected token ';'!", loc);
-				if(save != nullptr) delete save;
+				if(first != nullptr) delete first;
 				return nullptr;
 		}
 		
 		if(peek()->type == TokType::Rbra && s.find("__RAVE_PARSER_FUNCTION_") != std::string::npos) {
 			this->error("function declarations cannot be inside other functions!", loc);
-			if(save != nullptr) delete save;
+			if(first != nullptr) delete first;
 			return nullptr;
 		}
 
@@ -386,9 +387,9 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
 			case TokType::Rpar:
 			case TokType::Rbra:
 			case TokType::ShortRet: {
-				if(save != nullptr) {
+				if(first != nullptr) {
 					this->error("function declaration inside of multiple variables declaration is not allowed", loc);
-					delete save;
+					delete first;
 				}
 			}
 			default: break;
@@ -446,9 +447,10 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
 		else if(peek()->type == TokType::Semicolon) {
 			this->next();
 			NodeVar* nv = new NodeVar(name, nullptr, isExtern, instanceof<TypeConst>(type), (s==""), mods, loc, type, isVolatile);
-			if(save != nullptr) {
-				save->next = nv;
-				nv = save;
+			if(last) {
+				last->next = nv;
+				last = nv;
+				return first;
 			}
 			return nv;
 		}
@@ -463,26 +465,27 @@ Node* Parser::parseDecl(std::string s, std::vector<DeclarMod> _mods) {
 				default: this->error("expected token ';'!");
 			}
 			NodeVar* nv = new NodeVar(name, n, isExtern, instanceof<TypeConst>(type), (s == ""), mods, loc, type, isVolatile);
-			if(save != nullptr) {
-				save->next = nv;
-				nv = save;
-			}
-			if(stdmv) { // equiv. to if(peek()->type == TokType::Comma)
-				save = nv;
+			if(last != nullptr) {last->next = nv; last = nv; nv = first;}
+			if(peek()->type == TokType::Comma) {
+				if(last == nullptr) first = last = nv;
 				this->next();
+				multidecl = true;
 				continue;
 			}
 			else return nv;
 		}
-		else if(peek()->type == TokType::Comma) { // equiv. to if (stdmv)
-			save = new NodeVar(name, nullptr, isExtern, instanceof<TypeConst>(type), (s == ""), mods, loc, type, isVolatile);
+		else if(peek()->type == TokType::Comma) {
+			NodeVar* nv = new NodeVar(name, nullptr, isExtern, instanceof<TypeConst>(type), (s == ""), mods, loc, type, isVolatile);
+			if(first == nullptr) first = last = nv;
+			else {last->next = nv; last = nv;}
 			this->next();
+			multidecl = true;
 			continue;
 		}
 		NodeBlock* _b = this->parseBlock(name);
 		return new NodeFunc(name, {}, _b, isExtern, mods, loc, type, templates);
 	}
-	while(stdmv);
+	while(multidecl);
 	
 	// unreachable
 	throw nullptr;
