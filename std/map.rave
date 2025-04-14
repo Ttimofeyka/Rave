@@ -8,15 +8,20 @@ import <std/hash>
 
 namespace std {
     namespace hashmap {
-        struct Entry<KE, VE> {
+        struct entry<KE, VE> {
             KE key;
             VE value;
-            std::hashmap::Entry<KE, VE>* next;
+            std::hashmap::entry<KE, VE>* next;
+        }
+
+        struct iterator<KI, VI> {
+            uint currentHighest = 0;
+            std::hashmap::entry<KI, VI>* current = null;
         }
     }
 
     (conditions: [K != void, V != void]) struct hashmap<K, V> {
-        std::hashmap::Entry<K, V>** table;
+        std::hashmap::entry<K, V>** table;
         uint length;
         uint mapSize;
 
@@ -24,7 +29,7 @@ namespace std {
             std::hashmap<K, V> this;
             this.mapSize = 128;
             this.length = 0;
-            this.table = cast(std::hashmap::Entry<K, V>**)std::malloc(sizeof(std::hashmap::Entry<K, V>*) * this.mapSize);
+            this.table = cast(std::hashmap::entry<K, V>**)std::malloc(sizeof(std::hashmap::entry<K, V>*) * this.mapSize);
             for(int i=0; i<this.mapSize; i++) this.table[i] = null;
         } => this;
 
@@ -32,14 +37,14 @@ namespace std {
             std::hashmap<K, V> this;
             this.mapSize = mapSize;
             this.length = 0;
-            this.table = cast(std::hashmap::Entry<K, V>**)std::malloc(sizeof(std::hashmap::Entry<K, V>*) * mapSize);
+            this.table = cast(std::hashmap::entry<K, V>**)std::malloc(sizeof(std::hashmap::entry<K, V>*) * mapSize);
             for(int i=0; i<mapSize; i++) this.table[i] = null;
         } => this;
 
         void set(K key, V value) {
             // if(length > (mapSize * 0.75))
             if(length > (mapSize >. 1) + (mapSize >. 2)) {
-                table = cast(std::hashmap::Entry<K, V>**)std::realloc(table,sizeof(std::hashmap::Entry<K, V>*) * (mapSize * 2));
+                table = cast(std::hashmap::entry<K, V>**)std::realloc(table,sizeof(std::hashmap::entry<K, V>*) * (mapSize * 2));
                 for(int i=mapSize; i<(mapSize * 2); i++) table[i] = null;
                 mapSize = mapSize * 2;
             }
@@ -47,7 +52,7 @@ namespace std {
             @if(@hasMethod(K, hash)) uint index = key.hash() % mapSize;
             @else uint index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
 
-            std::hashmap::Entry<K, V>* entry = table[index];
+            std::hashmap::entry<K, V>* entry = table[index];
             bool setted = false;
 
             while(entry != null) {
@@ -62,13 +67,13 @@ namespace std {
 
             if(!setted) {
                 if(table[index] == null) {
-                    table[index] = cast(std::hashmap::Entry<K, V>*)std::malloc(sizeof(std::hashmap::Entry<K, V>));
+                    table[index] = cast(std::hashmap::entry<K, V>*)std::malloc(sizeof(std::hashmap::entry<K, V>));
                     table[index].key = key;
                     table[index].value = value;
                     table[index].next = null;
                 }
                 else {
-                    std::hashmap::Entry<K, V>* previous = null;
+                    std::hashmap::entry<K, V>* previous = null;
                     entry = table[index];
 
                     while(entry != null) {
@@ -76,7 +81,7 @@ namespace std {
                         entry = entry.next;
                     }
 
-                    entry = cast(std::hashmap::Entry<K, V>*)std::malloc(sizeof(std::hashmap::Entry<K, V>));
+                    entry = cast(std::hashmap::entry<K, V>*)std::malloc(sizeof(std::hashmap::entry<K, V>));
                     entry.key = key;
                     entry.value = value;
                     entry.next = null;
@@ -87,13 +92,13 @@ namespace std {
             }
         }
 
-        std::hashmap::Entry<K, V>* find(K key) {
-            return = cast(std::hashmap::Entry<K, V>*)null;
+        std::hashmap::entry<K, V>* find(K key) {
+            return = cast(std::hashmap::entry<K, V>*)null;
 
             @if(@hasMethod(K, hash)) uint index = key.hash() % mapSize;
             @else uint index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
 
-            std::hashmap::Entry<K, V>* entry = table[index];
+            std::hashmap::entry<K, V>* entry = table[index];
             while(entry != null) {
                 if(key == entry.key) {
                     return = entry;
@@ -103,12 +108,12 @@ namespace std {
             }
         }
 
-        (inline) bool contains(K key) => find(key) != cast(std::hashmap::Entry<K, V>*)null;
+        (inline) bool contains(K key) => find(key) != cast(std::hashmap::entry<K, V>*)null;
 
         (inline) V get(K key) {
-            std::hashmap::Entry<K, V>* kv = find(key);
+            std::hashmap::entry<K, V>* kv = find(key);
 
-            if(kv == cast(std::hashmap::Entry<K, V>*)null) return = cast(V)null;
+            if(kv == cast(std::hashmap::entry<K, V>*)null) return = cast(V)null;
             else return = kv.value;
         }
 
@@ -118,8 +123,8 @@ namespace std {
             @if(@hasMethod(K, hash)) uint index = key.hash() % mapSize;
             @else uint index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
 
-            std::hashmap::Entry<K, V>* entry = table[index];
-            std::hashmap::Entry<K, V>* prev = null;
+            std::hashmap::entry<K, V>* entry = table[index];
+            std::hashmap::entry<K, V>* prev = null;
 
             while(entry != null) {
                 if(key == entry.key) {
@@ -138,8 +143,8 @@ namespace std {
 
         void clear {
             for(int i=0; i<mapSize; i++) {
-                std::hashmap::Entry<K, V>* entry = table[i];
-                std::hashmap::Entry<K, V>* old = null;
+                std::hashmap::entry<K, V>* entry = table[i];
+                std::hashmap::entry<K, V>* old = null;
 
                 while(entry != null) {
                     old = entry;
@@ -153,12 +158,46 @@ namespace std {
             length = 0;
         }
 
+        void next(std::hashmap::iterator<K, V>* iterator) {
+            if(length > 0) {
+                if(iterator.current == null) {
+                    for(uint i=0; i<mapSize; i++) {
+                        if(table[i] != null) {
+                            iterator.current = table[i];
+                            iterator.currentHighest = i;
+                            break;
+                        }
+                    }
+                }
+                else {
+                    if(iterator.current.next != null) iterator.current = iterator.current.next;
+                    else {
+                        iterator.currentHighest += 1;
+
+                        if(iterator.currentHighest >= mapSize) {
+                            iterator.current = null;
+                            iterator.currentHighest = 0;
+                        }
+                        else {
+                            for(uint i=iterator.currentHighest; i<mapSize; i++) {
+                                if(table[i] != null) {
+                                    iterator.current = table[i];
+                                    iterator.currentHighest = i;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         void ~this {
             if(this.table != null) {
                 defer std::free(cast(void*)(this.table));
                 for(int i=0; i<this.mapSize; i++) {
-                    std::hashmap::Entry<K, V>* entry = this.table[i];
-                    std::hashmap::Entry<K, V>* old = null;
+                    std::hashmap::entry<K, V>* entry = this.table[i];
+                    std::hashmap::entry<K, V>* old = null;
 
                     while(entry != null) {
                         old = entry;
