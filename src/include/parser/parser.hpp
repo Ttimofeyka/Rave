@@ -40,7 +40,7 @@ public:
     Parser(std::vector<Token*> tokens, std::string file);
 
     void parseAll();
-    Node* parseTopLevel(std::string s = "");
+    void parseTopLevel(std::vector<Node*>& list, std::string s = "");
     Node* parseNamespace(std::string s = "");
     Node* parseStruct(std::vector<DeclarMod> mods = std::vector<DeclarMod>());
     Node* parseUsing();
@@ -53,7 +53,7 @@ public:
     Node* parsePrefix(std::string f = "");
     Node* parseBasic(std::string f = "");
     Node* parseSuffix(Node* base, std::string f = "");
-    Node* parseDecl(std::string f = "", std::vector<DeclarMod> mods = std::vector<DeclarMod>());
+    void parseDecl(std::vector<Node*>& list, std::string f = "", std::vector<DeclarMod> mods = std::vector<DeclarMod>());
     Node* parseLambda();
     Node* parseCmpXchg(std::string s = "");
     Node* parseCall(Node* func);

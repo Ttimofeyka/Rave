@@ -450,7 +450,7 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
 
             Lexer tLexer(sTypes, 1);
             Parser tParser(tLexer.tokens, "(builtin)");
-            
+
             std::vector<Type*> types;
             sTypes = "";
 
