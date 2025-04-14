@@ -107,6 +107,8 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
             var->isComdat = this->isComdat;
             AST::structsNumbers[std::pair<std::string, std::string>(this->name, var->name)] = StructMember{.number = i, .var = var};
 
+            Template::replaceTemplates(&var->type);
+
             if(var->value != nullptr && !instanceof<NodeNone>(var->value)) this->predefines[var->name] = StructPredefined{.element = i, .value = var->value, .isStruct = false, .name = var->name};
             else if(instanceof<TypeStruct>(var->type)) {
                 TypeStruct* ts = (TypeStruct*)var->type;
@@ -114,6 +116,7 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                     this->predefines[var->name] = StructPredefined{.element = i, .value = nullptr, .isStruct = true, .name = var->name};
                 }
             }
+
             values.push_back(generator->genType(var->type, this->loc));
         }
         else {
@@ -183,19 +186,6 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 this->operators[oper][(oper != TokType::Rbra ? typesToString(func->args) : "")] = func;
                 this->methods.push_back(func);
                 func->check();
-            }
-            else if(func->origName == "~with") {
-                func->isMethod = true;
-                func->isTemplatePart = isLinkOnce;
-                func->name = "~with." + this->name;
-                Type* outType = this->constructors[0]->type;
-                if(instanceof<TypeStruct>(outType)) outType = new TypePointer(outType);
-                func->args = {FuncArgSet{.name = "this", .type = outType, .internalTypes = {outType}}};
-                this->with = func;
-                if(this->isImported) {
-                    func->isExtern = true;
-                    func->check();
-                }
             }
             else {
                 Type* outType = nullptr;

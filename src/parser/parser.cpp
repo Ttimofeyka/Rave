@@ -352,13 +352,10 @@ void Parser::parseDecl(std::vector<Node*>& list, std::string s, std::vector<Decl
     }
 
     if(this->peek()->value == "operator") return list.push_back(parseOperatorOverload(type, s));
+    if(this->peek()->type != TokType::Identifier) this->error("a declaration name must be identifier!");
 
-    if(this->peek()->value == "~" && this->tokens[this->idx + 1]->value == "with") {this->next(); name = "~with";}
-    else {
-        if(this->peek()->type != TokType::Identifier) this->error("a declaration name must be identifier!");
-        name = this->peek()->value;
-        if(isBasicType(name)) this->error("a declaration cannot be named as basic types!");
-    }
+    name = this->peek()->value;
+    if(isBasicType(name)) this->error("a declaration cannot be named as basic types!");
 
     loc = this->peek()->line;
     this->next();

@@ -483,3 +483,40 @@ bool isBytePointer(Type* type) {
     std::string str = type->toString();
     return str == "void*" || str == "char*" || str == "uchar*";
 }
+
+bool Template::replaceTemplates(Type** _type) {
+    Type* type = _type[0];
+    Type* parent = nullptr;
+    bool isChanged = false;
+
+    while(instanceof<TypeConst>(type) || instanceof<TypePointer>(type) || instanceof<TypeArray>(type)) {
+        parent = type;
+        type = type->getElType();
+    }
+
+    if(instanceof<TypeStruct>(type)) {
+        TypeStruct* structure = (TypeStruct*)type;
+
+        if(generator->toReplace.find(structure->name) != generator->toReplace.end()) {
+            isChanged = true;
+
+            if(parent == nullptr) _type[0] = generator->toReplace[structure->name]->copy();
+            else {
+                if(instanceof<TypePointer>(parent)) ((TypePointer*)parent)->instance = generator->toReplace[structure->name]->copy();
+                else if(instanceof<TypeArray>(parent)) ((TypeArray*)parent)->element = generator->toReplace[structure->name]->copy();
+                else if(instanceof<TypeConst>(parent)) ((TypeConst*)parent)->instance = generator->toReplace[structure->name]->copy();
+            }
+        }
+
+        if(structure->types.size() > 0) {
+            for(int i=0; i<structure->types.size(); i++) {
+                bool isChangedType = Template::replaceTemplates(&structure->types[i]);
+                isChanged = isChanged || isChangedType;
+            }
+
+            if(isChanged) structure->updateByTypes();
+        }
+    }
+
+    return isChanged;
+}

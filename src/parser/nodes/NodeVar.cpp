@@ -87,13 +87,16 @@ Node* NodeVar::copy() {
 void NodeVar::check() {
     bool oldCheck = this->isChecked;
     this->isChecked = true;
+
     if(!oldCheck) {
         if(this->namespacesNames.size() > 0) this->name = namespacesToString(this->namespacesNames, this->name);
         if(this->isGlobal) AST::varTable[this->name] = this;
+
         if(instanceof<TypeBasic>(this->type) && !AST::aliasTypes.empty()) {
             Type* _type = this->type->check(nullptr);
             if(_type != nullptr) this->type = _type;
         }
+
         if(instanceof<TypeStruct>(this->type)) {
             TypeStruct* ts = (TypeStruct*)this->type;
             if(ts->types.size() > 0 && generator != nullptr && generator->toReplace.size() > 0) {

@@ -291,19 +291,29 @@ LLVMTypeRef LLVMGen::genType(Type* type, int loc) {
     if(instanceof<TypeArray>(type)) return LLVMArrayType(this->genType(((TypeArray*)type)->element, loc), ((NodeInt*)((TypeArray*)type)->count->comptime())->value.to_int());
     if(instanceof<TypeStruct>(type)) {
         TypeStruct* s = (TypeStruct*)type;
+
         if(this->structures.find(s->name) == this->structures.end()) {
             if(AST::structTable.find(s->name) != AST::structTable.end() && AST::structTable[s->name]->templateNames.size() > 0) {
                 generator->error("trying to generate template structure without templates!", loc);
             }
 
-            if(this->toReplace.find(s->name) != this->toReplace.end()) {
-                return this->genType(this->toReplace[s->name], loc);
-            }
+            if(this->toReplace.find(s->name) != this->toReplace.end()) return this->genType(this->toReplace[s->name], loc);
 
             if(s->name.find('<') != std::string::npos) {
                 TypeStruct* sCopy = (TypeStruct*)s->copy();
-                for(int i=0; i<sCopy->types.size(); i++) sCopy->types[i] = this->setByTypeList(getTrueTypeList(sCopy->types[i]));
-                sCopy->updateByTypes();
+                if(sCopy->types.size() > 0) {
+                    for(int i=0; i<sCopy->types.size(); i++) {
+                        Type* ty = sCopy->types[i];
+
+                        while(instanceof<TypeConst>(ty) || instanceof<TypeByval>(ty) || instanceof<TypeArray>(ty) || instanceof<TypePointer>(ty)) ty = ty->getElType();
+
+                        if(generator->toReplace.find(ty->toString()) != generator->toReplace.end())
+                            sCopy->types[i] = generator->toReplace[ty->toString()];
+                    }
+
+                    sCopy->updateByTypes();
+                }
+
                 if(this->structures.find(sCopy->name) != this->structures.end()) return this->structures[sCopy->name];
                 std::string origStruct = sCopy->name.substr(0, sCopy->name.find('<'));
                 

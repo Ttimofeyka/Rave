@@ -274,5 +274,8 @@ public:
 extern Type* getType(std::string id);
 extern bool isFloatType(Type* type);
 extern bool isBytePointer(Type* type);
-
 extern TypeVoid* typeVoid;
+
+namespace Template {
+    extern bool replaceTemplates(Type** type);
+}

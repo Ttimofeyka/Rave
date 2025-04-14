@@ -40,14 +40,7 @@ Type* NodeGet::getType() {
         return nullptr;
     }
 
-    TypeStruct* old = ts;
-
-    // Replace ts if needed
-    auto it = generator->toReplace.find(ts->name);
-    while(it != generator->toReplace.end()) {
-        ts = static_cast<TypeStruct*>(it->second);
-        it = generator->toReplace.find(ts->name);
-    }
+    Template::replaceTemplates((Type**)&ts);
 
     // Check method table
     auto methodIt = AST::methodTable.find({ts->name, this->field});
@@ -154,13 +147,7 @@ RaveValue NodeGet::generate() {
     }
 
     TypeStruct* tstruct = static_cast<TypeStruct*>(ty ? ty->getElType() : ptr.type->getElType());
-
-    for(auto& type : tstruct->types) {
-        auto it = generator->toReplace.find(type->toString());
-        if(it != generator->toReplace.end()) type = it->second;
-    }
-
-    if(!tstruct->types.empty()) tstruct->updateByTypes();
+    Template::replaceTemplates((Type**)&tstruct);
 
     if(structName.empty()) structName = tstruct->toString();
 
@@ -171,7 +158,6 @@ RaveValue NodeGet::generate() {
     int fieldNumber = AST::structsNumbers[structPair].number;
 
     if(this->isMustBePtr) return LLVM::structGep(ptr, fieldNumber, "NodeGet_generate_ptr");
-
     return LLVM::load(LLVM::structGep(ptr, fieldNumber, "NodeGet_generate_preload"), "NodeGet_generate_load", loc);
 }
 
