@@ -1,0 +1,798 @@
+/*
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+
+/*
+Note: This implementation is not completely full and very experimental.
+ALL input/output pointers assumes to have 16-byte alignment.
+*/
+
+import <std/io>
+
+@if((!__RAVE_SSE2) && (!__RAVE_AVX2)) {
+    // Using naive methods (slowly, but works)
+
+    namespace std {
+        namespace blas {
+            (conditions: [@isNumeric(VABS_T)]) VABS_T abs<VABS_T>(uint n, VABS_T* x) {
+                for(uint i=0; i<n; i++) x[i] = std::math::abs<VABS_T>(x[i]);
+            }
+
+            // Vector sum of absolute values: result += abs(x[i])
+            (conditions: [@isNumeric(ASUM_T)]) ASUM_T asum<ASUM_T>(uint n, ASUM_T* x) {
+                for(uint i=0; i<n; i++) return += std::math::abs<ASUM_T>(x[i]);
+            }
+
+            // Vector addition: y[i] += (alpha * x[i])
+            (conditions: [@isNumeric(AXPY_T)]) void axpy<AXPY_T>(uint n, AXPY_T alpha, AXPY_T* x, AXPY_T* y) {
+                for(uint i=0; i<n; i++) y[i] += (alpha * x[i]);
+            }
+
+            // Scales two vectors, adds them to one another and stores result in the vector
+            (conditions: [@isNumeric(AXPBY_T)]) void axpby<AXPBY_T>(uint n, AXPBY_T alpha, AXPBY_T* x, APXBY_T beta, AXPBY_T* y) {
+                for(uint i=0; i<n; i++) y[i] = (alpha * x[i]) + (beta * y[i]);
+            }
+
+            // Dot product: result += x[i] * y[i]
+            (conditions: [@isNumeric(DOT_T)]) DOT_T dot<DOT_T>(uint n, DOT_T* x, DOT_T* y) {
+                for(uint i=0; i<n; i++) return += x[i] * y[i];
+            }
+
+            // Scalar multiplication: x[i] = alpha * x[i]
+            (conditions: [@isNumeric(SCAL_T)]) void scale<SCAL_T>(uint n, SCAL_T* x, SCAL_T alpha) {
+                for(uint i=0; i<n; i++) x[i] = x[i] * alpha; 
+            }
+
+            // Vector norm: sqrt(return += ||x[i]||^2)
+            (conditions: [@isNumeric(NRM2_T)]) NRM2_T norm<NRM2_T>(uint n, NRM2_T* x) {
+                for(uint i=0; i<n; i++) {
+                    NRM2_T xi = std::math::abs<NRM2_T>(x[i]);
+                    return += xi * xi;
+                }
+
+                return = std::math::sqrt(return);
+            }
+
+            // Index of the maximum absolute value element of a vector
+            (conditions: [@isNumeric(AMAX_T)]) AMAX_T amax<AMAX_T>(uint n, AMAX_T* x) {
+                if(n > 0) return = x[0];
+
+                for(uint i=1; i<n; i++) {
+                    if(x[i] > return) return = x[i];
+                }
+            }
+
+            // Index of the minimum absolute value element of a vector
+            (conditions: [@isNumeric(AMIN_T)]) AMIN_T amax<AMIN_T>(uint n, AMIN_T* x) {
+                if(n > 0) return = x[0];
+
+                for(uint i=1; i<n; i++) {
+                    if(x[i] < return) return = x[i];
+                }
+            }
+
+            // Matrix/vector multiplication
+            (conditions: [@isNumeric(VECMATMUL_T)]) void vecmatmul<VECMATMUL_T>(uint rows, uint columns, VECMATMUL_T* vector, VECMATMUL_T* matrix, VECMATMUL_T* result) {
+                for(uint column=0; column<columns; column++) {
+                    result[column] = cast(VECMATMUL_T)0;
+
+                    for(uint row=0; row<rows; row++) result[column] += vector[row] * matrix[column * rows + row];
+                }
+            }
+
+            // Matrix transpose
+            (conditions: [@isNumeric(TRANSMAT_T)]) void transpose<TRANSMAT_T>(uint rows, uint columns, TRANSMAT_T* matrix, TRANSMAT_T* target) {
+                for(uint i=0; i<rows; i++) {
+                    for(uint j=0; j<columns; j++) target[j * rows + i] = matrix[i * columns + j];
+                }
+            }
+
+            // Matrix/matrix multiplication
+            (conditions: [@isNumeric(MATMUL_T)]) void matmul<MATMUL_T>(uint rows, uint columns, uint inners, MATMUL_T* mat1, MATMUL_T* mat2, MATMUL_T* result) {
+                for(int row=0; row<rows; row++) {
+                    for(int inner=0; inner<inners; inner++) {
+                        for(int col=0; col<columns; col++) result[row * columns + col] += mat1[row * columns + inner] * mat2[inner * columns + col];
+                    }
+                }
+            }
+        }
+    }
+}
+
+@if((__RAVE_SSE2) && (!__RAVE_AVX2)) {
+    // Using SSE instructions (faster, but requires SSE2 and higher)
+
+    namespace std {
+        namespace blas {
+            (conditions: [@isNumeric(VABS_T)]) VABS_T abs<VABS_T>(uint n, VABS_T* x) {
+                for(uint i=0; i<n; i++) x[i] = std::math::abs<VABS_T>(x[i]);
+            }
+
+            // Vector sum of absolute values: result += abs(x[i])
+            (conditions: [@isNumeric(ASUM_T)]) ASUM_T asum<ASUM_T>(uint n, ASUM_T* x) {
+                for(uint i=0; i<n; i++) return += std::math::abs<VABS_T>(x[i]);
+            }
+
+            // Vector addition: y[i] += (alpha * x[i])
+            (conditions: [@isNumeric(AXPY_T)]) void axpy<AXPY_T>(uint n, AXPY_T alpha, AXPY_T* x, AXPY_T* y) {
+                uint i = 0;
+
+                @if(AXPY_T == float) {
+                    float4 chunkAlpha = @vFrom(float4, alpha);
+                    
+                    for(; (i + 3) < n; i+=4) {
+                        float4 chunkY = @vLoad(float4, &y[i]);
+                        @vStore(chunkY + (@vLoad(float4, &x[i]) * chunkAlpha), &y[i]);
+                    }
+                }
+                @else @if(AXPY_T == int) {
+                    int4 chunkAlpha = @vFrom(int4, alpha);
+                    
+                    for(; (i + 3) < n; i+=4) {
+                        int4 chunkY = @vLoad(int4, &y[i]);
+                        @vStore(chunkY + (@vLoad(int4, &x[i]) * chunkAlpha), &y[i]);
+                    }
+                }
+                @else @if(AXPY_T == double) {
+                    double2 chunkAlpha = @vFrom(double2, alpha);
+                    
+                    for(; (i + 1) < n; i+=2) {
+                        double2 chunkY = @vLoad(double2, &y[i]);
+                        @vStore(chunkY + (@vLoad(double2, &x[i]) * chunkAlpha), &y[i]);
+                    }
+                }
+
+                for(; i<n; i++) y[i] += (alpha * x[i]);
+            }
+
+            // Scales two vectors, adds them to one another and stores result in the vector
+            (conditions: [@isNumeric(AXPBY_T)]) void axpby<AXPBY_T>(uint n, AXPBY_T alpha, AXPBY_T* x, AXPBY_T beta, AXPBY_T* y) {
+                uint i = 0;
+
+                @if(AXPBY_T == float) {
+                    float4 chunkAlpha = @vFrom(float4, alpha), chunkBeta = @vFrom(float4, beta);
+
+                    for(; (i + 3) < n; i+=4) {
+                        float4 chunkY = @vLoad(float4, &y[i]);
+                        @vStore((chunkAlpha * @vLoad(float4, &x[i])) + (chunkBeta * chunkY), &y[i]);
+                    }
+                }
+                @else @if(AXPBY_T == int) {
+                    int4 chunkAlpha = @vFrom(int4, alpha), chunkBeta = @vFrom(int4, beta);
+
+                    for(; (i + 3) < n; i+=4) {
+                        int4 chunkY = @vLoad(int4, &y[i]);
+                        @vStore((chunkAlpha * @vLoad(int4, &x[i])) + (chunkBeta * chunkY), &y[i]);
+                    }
+                }
+                @else @if(AXPBY_T == double) {
+                    double2 chunkAlpha = @vFrom(double2, alpha), chunkBeta = @vFrom(double2, beta);
+
+                    for(; (i + 1) < n; i+=2) {
+                        double2 chunkY = @vLoad(double2, &y[i]);
+                        @vStore((chunkAlpha * @vLoad(double2, &x[i])) + (chunkBeta * chunkY), &y[i]);
+                    }
+                }
+
+                for(; i<n; i++) y[i] = (alpha * x[i]) + (beta * y[i]);
+            }
+
+            // Dot product: result += x[i] * y[i]
+            (conditions: [@isNumeric(DOT_T)]) DOT_T dot<DOT_T>(uint n, DOT_T* x, DOT_T* y) {
+                uint i = 0;
+
+                @if(DOT_T == float) {
+                    for(; (i + 3) < n; i+=4) {
+                        float4 sumAll = @vSumAll(@vLoad(float4, &x[i]) * @vLoad(float4, &y[i]));
+                        return += sumAll[0];
+                    }
+                }
+                @else @if(DOT_T == int) {
+                    for(; (i + 3) < n; i+=4) {
+                        int sumAll = @vSumAll(@vLoad(int4, &x[i]) * @vLoad(int4, &y[i]));
+                        return += sumAll[0];
+                    }
+                }
+                @else @if(DOT_T == double) {
+                    for(; (i + 1) < n; i+=2) {
+                        double2 sumAll = @vSumAll(@vLoad(double2, &x[i]) * @vLoad(double2, &y[i]));
+                        return += sumAll[0];
+                    }
+                }
+
+                for(; i<n; i++) return += x[i] * y[i];
+            }
+
+            // Scalar multiplication: x[i] = alpha * x[i]
+            (conditions: [@isNumeric(SCAL_T)]) void scale<SCAL_T>(uint n, SCAL_T* x, SCAL_T alpha) {
+                uint i = 0;
+
+                @if(DOT_T == float) {
+                    float4 chunkAlpha = @vFrom(float4, alpha);
+
+                    for(; (i + 3) < n; i+=4) @vStore(@vLoad(float4, &x[i]) * chunkAlpha, &x[i]);
+                }
+                @else @if(DOT_T == int) {
+                    int4 chunkAlpha = @vFrom(int4, alpha);
+
+                    for(; (i + 3) < n; i+=4) @vStore(@vLoad(int4, &x[i]) * chunkAlpha, &x[i]);
+                }
+                @else @if(DOT_T == double) {
+                    double2 chunkAlpha = @vFrom(double2, alpha);
+
+                    for(; (i + 1) < n; i+=2) @vStore(@vLoad(double2, &x[i]) * chunkAlpha, &x[i]);
+                }
+
+                for(; i<n; i++) x[i] = x[i] * alpha; 
+            }
+
+            // Vector norm: sqrt(return += ||x[i]||^2)
+            (conditions: [@isNumeric(NRM2_T)]) NRM2_T norm<NRM2_T>(uint n, NRM2_T* x) {
+                for(uint i = 0; i<n; i++) {
+                    NRM2_T xi = std::math::abs<NRM2_T>(x[i]);
+                    return += xi * xi;
+                }
+
+                return = std::math::sqrt(return);
+            }
+
+            // Index of the maximum absolute value element of a vector
+            (conditions: [@isNumeric(AMAX_T)]) AMAX_T amax<AMAX_T>(uint n, AMAX_T* x) {
+                if(n > 0) return = x[0];
+
+                for(uint i=1; i<n; i++) {
+                    if(x[i] > return) return = x[i];
+                }
+            }
+
+            // Index of the minimum absolute value element of a vector
+            (conditions: [@isNumeric(AMIN_T)]) AMIN_T amax<AMIN_T>(uint n, AMIN_T* x) {
+                if(n > 0) return = x[0];
+
+                for(uint i=1; i<n; i++) {
+                    if(x[i] < return) return = x[i];
+                }
+            }
+
+            // Matrix/vector multiplication
+            (conditions: [@isNumeric(VECMATMUL_T)]) void vecmatmul<VECMATMUL_T>(uint rows, uint columns, VECMATMUL_T* vector, VECMATMUL_T* matrix, VECMATMUL_T* result) {
+                uint column = 0;
+
+                @if(VECMATMUL_T == float) {
+                    if(rows % 4 == 0) for(; (column + 3) < columns; column+=4) {
+                        float4 chunkResult = @vFrom(float4, 0f);
+
+                        for(uint row=0; row<rows; row+=4) chunkResult += @vLoad(float4, &vector[row]) * @vLoad(float4, &matrix[row * columns + column]);
+
+                        @vStore(chunkResult, &result[column]);
+                    }
+                }
+                @else @if(VECMATMUL_T == int) {
+                    if(rows % 4 == 0) for(; (column + 3) < columns; column+=4) {
+                        int4 chunkResult = @vFrom(int4, 0);
+
+                        for(uint row=0; row<rows; row+=4) chunkResult += @vLoad(int4, &vector[row]) * @vLoad(int4, &matrix[row * columns + column]);
+
+                        @vStore(chunkResult, &result[column]);
+                    }
+                }
+                @else @if(VECMATMUL_T == double) {
+                    if(rows % 2 == 0) for(; (column + 1) < columns; column+=2) {
+                        double2 chunkResult = @vFrom(double2, 0d);
+
+                        for(uint row=0; row<rows; row+=2) chunkResult += @vLoad(double2, &vector[row]) * @vLoad(double2, &matrix[column * rows + row]);
+
+                        @vStore(chunkResult, &result[column]);
+                    }
+                }
+
+                for(; column<columns; column++) {
+                    result[column] = cast(VECMATMUL_T)0;
+
+                    for(uint row=0; row<rows; row++) result[column] += vector[row] * matrix[column * rows + row];
+                }
+            }
+
+            (conditions: [@isNumeric(TRANSMAT_T)]) void transpose<TRANSMAT_T>(uint rows, uint columns, TRANSMAT_T* matrix, TRANSMAT_T* target) {
+                uint i = 0;
+                uint j = 0;
+
+                @if(TRANSMAT_T == float) {
+                    for(; (i + 3) < rows; i+=4) {
+                        for(; (j + 3) < columns; j+=4) {
+                            // Load block from source matrix
+                            float4 row1 = @vLoad(float4, &matrix[i * columns + j]);
+                            float4 row2 = @vLoad(float4, &matrix[(i + 1) * columns + j]);
+                            float4 row3 = @vLoad(float4, &matrix[(i + 2) * columns + j]);
+                            float4 row4 = @vLoad(float4, &matrix[(i + 3) * columns + j]);
+
+                            // Transpose the block using @vShuffle
+                            float4 tmp1 = @vShuffle(row1, row2, [1, 0, 1, 0]);
+                            float4 tmp2 = @vShuffle(row3, row4, [1, 0, 1, 0]);
+                            float4 tmp3 = @vShuffle(row1, row2, [3, 2, 3, 2]);
+                            float4 tmp4 = @vShuffle(row3, row4, [3, 2, 3, 2]);
+
+                            row1 = @vShuffle(tmp1, tmp2, [2, 0, 2, 0]);
+                            row2 = @vShuffle(tmp1, tmp2, [3, 1, 3, 1]);
+                            row3 = @vShuffle(tmp3, tmp4, [2, 0, 2, 0]);
+                            row4 = @vShuffle(tmp3, tmp4, [3, 1, 3, 1]);
+
+                            // Store the transposed block to the target matrix
+                            @vStore(row1, &target[j * rows + i]);
+                            @vStore(row2, &target[(j + 1) * rows + i]);
+                            @vStore(row3, &target[(j + 2) * rows + i]);
+                            @vStore(row4, &target[(j + 3) * rows + i]);
+                        }
+                    }
+
+                    uint remains = (columns % 4);
+                }
+                @else @if(TRANSMAT_T == int) {
+                    for(; (i + 3) < rows; i+=4) {
+                        for(; (j + 3) < columns; j+=4) {
+                            // Load block from source matrix
+                            int4 row1 = @vLoad(int4, &matrix[i * columns + j]);
+                            int4 row2 = @vLoad(int4, &matrix[(i + 1) * columns + j]);
+                            int4 row3 = @vLoad(int4, &matrix[(i + 2) * columns + j]);
+                            int4 row4 = @vLoad(int4, &matrix[(i + 3) * columns + j]);
+
+                            // Transpose the block using @vShuffle
+                            int4 tmp1 = @vShuffle(row1, row2, [1, 0, 1, 0]);
+                            int4 tmp2 = @vShuffle(row3, row4, [1, 0, 1, 0]);
+                            int4 tmp3 = @vShuffle(row1, row2, [3, 2, 3, 2]);
+                            int4 tmp4 = @vShuffle(row3, row4, [3, 2, 3, 2]);
+
+                            row1 = @vShuffle(tmp1, tmp2, [2, 0, 2, 0]);
+                            row2 = @vShuffle(tmp1, tmp2, [3, 1, 3, 1]);
+                            row3 = @vShuffle(tmp3, tmp4, [2, 0, 2, 0]);
+                            row4 = @vShuffle(tmp3, tmp4, [3, 1, 3, 1]);
+
+                            // Store the transposed block to the target matrix
+                            @vStore(row1, &target[j * rows + i]);
+                            @vStore(row2, &target[(j + 1) * rows + i]);
+                            @vStore(row3, &target[(j + 2) * rows + i]);
+                            @vStore(row4, &target[(j + 3) * rows + i]);
+                        }
+                    }
+
+                    uint remains = (columns % 4);
+                }
+                @else @if(TRANSMAT_T == double) {
+                    for(; (i + 1) < rows; i+=2) {
+                        for(; (j + 1) < columns; j+=2) {
+                            // Load block from source matrix
+                            double2 row1 = @vLoad(double2, &matrix[i * columns + j]);
+                            double2 row2 = @vLoad(double2, &matrix[(i + 1) * columns + j]);
+                            double2 row3 = @vLoad(double2, &matrix[(i + 2) * columns + j]);
+                            double2 row4 = @vLoad(double2, &matrix[(i + 3) * columns + j]);
+
+                            // Transpose the block using @vShuffle
+                            double2 tmp1 = @vShuffle(row1, row2, [1, 0, 1, 0]);
+                            double2 tmp2 = @vShuffle(row3, row4, [1, 0, 1, 0]);
+                            double2 tmp3 = @vShuffle(row1, row2, [3, 2, 3, 2]);
+                            double2 tmp4 = @vShuffle(row3, row4, [3, 2, 3, 2]);
+
+                            row1 = @vShuffle(tmp1, tmp2, [2, 0, 2, 0]);
+                            row2 = @vShuffle(tmp1, tmp2, [3, 1, 3, 1]);
+                            row3 = @vShuffle(tmp3, tmp4, [2, 0, 2, 0]);
+                            row4 = @vShuffle(tmp3, tmp4, [3, 1, 3, 1]);
+
+                            // Store the transposed block to the target matrix
+                            @vStore(row1, &target[j * rows + i]);
+                            @vStore(row2, &target[(j + 1) * rows + i]);
+                            @vStore(row3, &target[(j + 2) * rows + i]);
+                            @vStore(row4, &target[(j + 3) * rows + i]);
+                        }
+                    }
+
+                    uint remains = (columns % 2);
+                }
+
+                // Handle remaining rows
+                for(; i<rows; i++) {
+                    for(j=0; j<columns; j++) target[j * rows + i] = matrix[i * columns + j];
+                }
+
+                // Handle remaining columns
+                for(i=0; i<rows; i+=4) {
+                    for(; j<columns - remains; j++) {
+                        target[j * rows + i] = matrix[i * columns + j];
+                        target[j * rows + (i + 1)] = matrix[(i + 1) * columns + j];
+                        target[j * rows + (i + 2)] = matrix[(i + 2) * columns + j];
+                        target[j * rows + (i + 3)] = matrix[(i + 3) * columns + j];
+                    }
+                }
+            }
+
+            // Matrix/matrix multiplication
+            (conditions: [@isNumeric(MATMUL_T)]) void matmul<MATMUL_T>(uint rows, uint columns, uint inners, MATMUL_T* mat1, MATMUL_T* mat2, MATMUL_T* result) {
+                for(uint row=0; row<rows; row++) {
+                    for(uint inner=0; inner<inners; inner++) {
+                        uint col = 0;
+
+                        @if(MATMUL_T == float) {
+                            float4 leftVec = @vFrom(float4, mat1[row * inners + inner]);
+
+                            for(; (col + 3) < columns; col+=4) {
+                                float4 rightVec = @vLoad(float4, &mat2[inner * columns + col]);
+                                float4 resultVec = @vLoad(float4, &result[row * columns + col]) + (leftVec * rightVec);
+                                @vStore(resultVec, &result[row * columns + col]);
+                            }
+                        }
+                        @else @if(MATMUL_T == int) {
+                            int4 leftVec = @vFrom(int4, mat1[row * inners + inner]);
+
+                            for(; (col + 3) < columns; col+=4) {
+                                int4 rightVec = @vLoad(int4, &mat2[inner * columns + col]);
+                                int4 resultVec = @vLoad(int4, &result[row * columns + col]) + (leftVec * rightVec);
+                                @vStore(resultVec, &result[row * columns + col]);
+                            }
+                        }
+                        @else @if(MATMUL_T == double) {
+                            double2 leftVec = @vFrom(double2, mat1[row * inners + inner]);
+
+                            for(; (col + 1) < columns; col+=2) {
+                                double2 rightVec = @vLoad(double2, &mat2[inner * columns + col]);
+                                double2 resultVec = @vLoad(double2, &result[row * columns + col]) + (leftVec * rightVec);
+                                @vStore(resultVec, &result[row * columns + col]);
+                            }
+                        }
+
+                        // Handle the remaining elements that are not a multiple of X
+                        for(; col<columns; col++) result[row * columns + col] += mat1[row * inners + inner] * mat2[inner * columns + col];
+                    }
+                }
+            }
+        }
+    }
+}
+
+@if(__RAVE_AVX2) {
+    // Using AVX instructions (fastest, but requires AVX2)
+
+    namespace std {
+        namespace blas {
+            (conditions: [@isNumeric(VABS_T)]) VABS_T abs<VABS_T>(uint n, VABS_T* x) {
+                for(uint i=0; i<n; i++) x[i] = std::math::abs<VABS_T>(x[i]);
+            }
+
+            // Vector sum of absolute values: result += abs(x[i])
+            (conditions: [@isNumeric(ASUM_T)]) ASUM_T asum<ASUM_T>(uint n, ASUM_T* x) {
+                for(uint i=0; i<n; i++) return += std::math::abs<VABS_T>(x[i]);
+            }
+
+            // Vector addition: y[i] += (alpha * x[i])
+            (conditions: [@isNumeric(AXPY_T)]) void axpy<AXPY_T>(uint n, AXPY_T alpha, AXPY_T* x, AXPY_T* y) {
+                uint i = 0;
+
+                @if(AXPY_T == float) {
+                    float4 chunkAlpha = @vFrom(float8, alpha);
+                    
+                    for(; (i + 7) < n; i+=8) {
+                        float8 chunkY = @vLoad(float8, &y[i]);
+                        @vStore(chunkY + (@vLoad(float8, &x[i]) * chunkAlpha), &y[i]);
+                    }
+                }
+                @else @if(AXPY_T == int) {
+                    int8 chunkAlpha = @vFrom(int8, alpha);
+                    
+                    for(; (i + 7) < n; i+=8) {
+                        int8 chunkY = @vLoad(int8, &y[i]);
+                        @vStore(chunkY + (@vLoad(int8, &x[i]) * chunkAlpha), &y[i]);
+                    }
+                }
+                @else @if(AXPY_T == double) {
+                    double4 chunkAlpha = @vFrom(double4, alpha);
+                    
+                    for(; (i + 3) < n; i+=4) {
+                        double4 chunkY = @vLoad(double4, &y[i]);
+                        @vStore(chunkY + (@vLoad(double4, &x[i]) * chunkAlpha), &y[i]);
+                    }
+                }
+
+                for(; i<n; i++) y[i] += (alpha * x[i]);
+            }
+
+            // Scales two vectors, adds them to one another and stores result in the vector
+            (conditions: [@isNumeric(AXPBY_T)]) void axpby<AXPBY_T>(uint n, AXPBY_T alpha, AXPBY_T* x, AXPBY_T beta, AXPBY_T* y) {
+                uint i = 0;
+
+                @if(AXPBY_T == float) {
+                    float8 chunkAlpha = @vFrom(float8, alpha), chunkBeta = @vFrom(float8, beta);
+
+                    for(; (i + 7) < n; i+=8) {
+                        float8 chunkY = @vLoad(float8, &y[i]);
+                        @vStore((chunkAlpha * @vLoad(float8, &x[i])) + (chunkBeta * chunkY), &y[i]);
+                    }
+                }
+                @else @if(AXPBY_T == int) {
+                    int8 chunkAlpha = @vFrom(int8, alpha), chunkBeta = @vFrom(int8, beta);
+
+                    for(; (i + 7) < n; i+=8) {
+                        int8 chunkY = @vLoad(int8, &y[i]);
+                        @vStore((chunkAlpha * @vLoad(int8, &x[i])) + (chunkBeta * chunkY), &y[i]);
+                    }
+                }
+                @else @if(AXPBY_T == double) {
+                    double4 chunkAlpha = @vFrom(double4, alpha), chunkBeta = @vFrom(double4, beta);
+
+                    for(; (i + 3) < n; i+=4) {
+                        double4 chunkY = @vLoad(double4, &y[i]);
+                        @vStore((chunkAlpha * @vLoad(double4, &x[i])) + (chunkBeta * chunkY), &y[i]);
+                    }
+                }
+
+                for(; i<n; i++) y[i] = (alpha * x[i]) + (beta * y[i]);
+            }
+
+            // Dot product: result += x[i] * y[i]
+            (conditions: [@isNumeric(DOT_T)]) DOT_T dot<DOT_T>(uint n, DOT_T* x, DOT_T* y) {
+                uint i = 0;
+
+                @if(DOT_T == float) {
+                    for(; (i + 7) < n; i+=8) {
+                        float8 sumAll = @vSumAll(@vLoad(float8, &x[i]) * @vLoad(float8, &y[i]));
+                        return += sumAll[0];
+                    }
+                }
+                @else @if(DOT_T == int) {
+                    for(; (i + 7) < n; i+=8) {
+                        int sumAll = @vSumAll(@vLoad(int8, &x[i]) * @vLoad(int8, &y[i]));
+                        return += sumAll[0];
+                    }
+                }
+                @else @if(DOT_T == double) {
+                    for(; (i + 3) < n; i+=4) {
+                        double2 sumAll = @vSumAll(@vLoad(double2, &x[i]) * @vLoad(double2, &y[i]));
+                        return += sumAll[0];
+                    }
+                }
+
+                for(; i<n; i++) return += x[i] * y[i];
+            }
+
+            // Scalar multiplication: x[i] = alpha * x[i]
+            (conditions: [@isNumeric(SCAL_T)]) void scale<SCAL_T>(uint n, SCAL_T* x, SCAL_T alpha) {
+                uint i = 0;
+
+                @if(DOT_T == float) {
+                    float8 chunkAlpha = @vFrom(float8, alpha);
+
+                    for(; (i + 7) < n; i+=8) @vStore(@vLoad(float8, &x[i]) * chunkAlpha, &x[i]);
+                }
+                @else @if(DOT_T == int) {
+                    int8 chunkAlpha = @vFrom(int8, alpha);
+
+                    for(; (i + 7) < n; i+=8) @vStore(@vLoad(int8, &x[i]) * chunkAlpha, &x[i]);
+                }
+                @else @if(DOT_T == double) {
+                    double4 chunkAlpha = @vFrom(double4, alpha);
+
+                    for(; (i + 3) < n; i+=4) @vStore(@vLoad(double4, &x[i]) * chunkAlpha, &x[i]);
+                }
+
+                for(; i<n; i++) x[i] = x[i] * alpha; 
+            }
+
+            // Vector norm: sqrt(return += ||x[i]||^2)
+            (conditions: [@isNumeric(NRM2_T)]) NRM2_T norm<NRM2_T>(uint n, NRM2_T* x) {
+                for(uint i = 0; i<n; i++) {
+                    NRM2_T xi = std::math::abs<NRM2_T>(x[i]);
+                    return += xi * xi;
+                }
+
+                return = std::math::sqrt(return);
+            }
+
+            // Index of the maximum absolute value element of a vector
+            (conditions: [@isNumeric(AMAX_T)]) AMAX_T amax<AMAX_T>(uint n, AMAX_T* x) {
+                if(n > 0) return = x[0];
+
+                for(uint i=1; i<n; i++) {
+                    if(x[i] > return) return = x[i];
+                }
+            }
+
+            // Index of the minimum absolute value element of a vector
+            (conditions: [@isNumeric(AMIN_T)]) AMIN_T amax<AMIN_T>(uint n, AMIN_T* x) {
+                if(n > 0) return = x[0];
+
+                for(uint i=1; i<n; i++) {
+                    if(x[i] < return) return = x[i];
+                }
+            }
+
+            // Matrix/vector multiplication
+            (conditions: [@isNumeric(VECMATMUL_T)]) void vecmatmul<VECMATMUL_T>(uint rows, uint columns, VECMATMUL_T* vector, VECMATMUL_T* matrix, VECMATMUL_T* result) {
+                uint column = 0;
+
+                @if(VECMATMUL_T == float) {
+                    if(rows % 8 == 0) for(; (column + 7) < columns; column+=8) {
+                        float8 chunkResult = @vFrom(float8, 0f);
+
+                        for(uint row=0; row<rows; row+=8) chunkResult += @vLoad(float8, &vector[row]) * @vLoad(float8, &matrix[row * columns + column]);
+
+                        @vStore(chunkResult, &result[column]);
+                    }
+                }
+                @else @if(VECMATMUL_T == int) {
+                    if(rows % 8 == 0) for(; (column + 7) < columns; column+=8) {
+                        int4 chunkResult = @vFrom(int8, 0);
+
+                        for(uint row=0; row<rows; row+=8) chunkResult += @vLoad(int8, &vector[row]) * @vLoad(int8, &matrix[row * columns + column]);
+
+                        @vStore(chunkResult, &result[column]);
+                    }
+                }
+                @else @if(VECMATMUL_T == double) {
+                    if(rows % 4 == 0) for(; (column + 3) < columns; column+=4) {
+                        double4 chunkResult = @vFrom(double4, 0d);
+
+                        for(uint row=0; row<rows; row+=4) chunkResult += @vLoad(double4, &vector[row]) * @vLoad(double4, &matrix[column * rows + row]);
+
+                        @vStore(chunkResult, &result[column]);
+                    }
+                }
+
+                for(; column<columns; column++) {
+                    result[column] = cast(VECMATMUL_T)0;
+
+                    for(uint row=0; row<rows; row++) result[column] += vector[row] * matrix[column * rows + row];
+                }
+            }
+
+            (conditions: [@isNumeric(TRANSMAT_T)]) void transpose<TRANSMAT_T>(uint rows, uint columns, TRANSMAT_T* matrix, TRANSMAT_T* target) {
+                uint i = 0;
+                uint j = 0;
+
+                @if(TRANSMAT_T == float) {
+                    for(; (i + 7) < rows; i+=8) {
+                        for(; (j + 7) < columns; j+=8) {
+                            // Load block from source matrix
+                            float8 row1 = @vLoad(float8, &matrix[i * columns + j]);
+                            float8 row2 = @vLoad(float8, &matrix[(i + 1) * columns + j]);
+                            float8 row3 = @vLoad(float8, &matrix[(i + 2) * columns + j]);
+                            float8 row4 = @vLoad(float8, &matrix[(i + 3) * columns + j]);
+
+                            // Transpose the block using @vShuffle
+                            float8 tmp1 = @vShuffle(row1, row2, [1, 0, 1, 0]);
+                            float8 tmp2 = @vShuffle(row3, row4, [1, 0, 1, 0]);
+                            float8 tmp3 = @vShuffle(row1, row2, [3, 2, 3, 2]);
+                            float8 tmp4 = @vShuffle(row3, row4, [3, 2, 3, 2]);
+
+                            row1 = @vShuffle(tmp1, tmp2, [2, 0, 2, 0]);
+                            row2 = @vShuffle(tmp1, tmp2, [3, 1, 3, 1]);
+                            row3 = @vShuffle(tmp3, tmp4, [2, 0, 2, 0]);
+                            row4 = @vShuffle(tmp3, tmp4, [3, 1, 3, 1]);
+
+                            // Store the transposed block to the target matrix
+                            @vStore(row1, &target[j * rows + i]);
+                            @vStore(row2, &target[(j + 1) * rows + i]);
+                            @vStore(row3, &target[(j + 2) * rows + i]);
+                            @vStore(row4, &target[(j + 3) * rows + i]);
+                        }
+                    }
+
+                    uint remains = (columns % 8);
+                }
+                @else @if(TRANSMAT_T == int) {
+                    for(; (i + 7) < rows; i+=8) {
+                        for(; (j + 7) < columns; j+=8) {
+                            // Load block from source matrix
+                            int8 row1 = @vLoad(int8, &matrix[i * columns + j]);
+                            int8 row2 = @vLoad(int8, &matrix[(i + 1) * columns + j]);
+                            int8 row3 = @vLoad(int8, &matrix[(i + 2) * columns + j]);
+                            int8 row4 = @vLoad(int8, &matrix[(i + 3) * columns + j]);
+
+                            // Transpose the block using @vShuffle
+                            int8 tmp1 = @vShuffle(row1, row2, [1, 0, 1, 0]);
+                            int8 tmp2 = @vShuffle(row3, row4, [1, 0, 1, 0]);
+                            int8 tmp3 = @vShuffle(row1, row2, [3, 2, 3, 2]);
+                            int8 tmp4 = @vShuffle(row3, row4, [3, 2, 3, 2]);
+
+                            row1 = @vShuffle(tmp1, tmp2, [2, 0, 2, 0]);
+                            row2 = @vShuffle(tmp1, tmp2, [3, 1, 3, 1]);
+                            row3 = @vShuffle(tmp3, tmp4, [2, 0, 2, 0]);
+                            row4 = @vShuffle(tmp3, tmp4, [3, 1, 3, 1]);
+
+                            // Store the transposed block to the target matrix
+                            @vStore(row1, &target[j * rows + i]);
+                            @vStore(row2, &target[(j + 1) * rows + i]);
+                            @vStore(row3, &target[(j + 2) * rows + i]);
+                            @vStore(row4, &target[(j + 3) * rows + i]);
+                        }
+                    }
+
+                    uint remains = (columns % 8);
+                }
+                @else @if(TRANSMAT_T == double) {
+                    for(; (i + 3) < rows; i+=4) {
+                        for(; (j + 3) < columns; j+=4) {
+                            // Load block from source matrix
+                            double4 row1 = @vLoad(double4, &matrix[i * columns + j]);
+                            double4 row2 = @vLoad(double4, &matrix[(i + 1) * columns + j]);
+                            double4 row3 = @vLoad(double4, &matrix[(i + 2) * columns + j]);
+                            double4 row4 = @vLoad(double4, &matrix[(i + 3) * columns + j]);
+
+                            // Transpose the block using @vShuffle
+                            double4 tmp1 = @vShuffle(row1, row2, [1, 0, 1, 0]);
+                            double4 tmp2 = @vShuffle(row3, row4, [1, 0, 1, 0]);
+                            double4 tmp3 = @vShuffle(row1, row2, [3, 2, 3, 2]);
+                            double4 tmp4 = @vShuffle(row3, row4, [3, 2, 3, 2]);
+
+                            row1 = @vShuffle(tmp1, tmp2, [2, 0, 2, 0]);
+                            row2 = @vShuffle(tmp1, tmp2, [3, 1, 3, 1]);
+                            row3 = @vShuffle(tmp3, tmp4, [2, 0, 2, 0]);
+                            row4 = @vShuffle(tmp3, tmp4, [3, 1, 3, 1]);
+
+                            // Store the transposed block to the target matrix
+                            @vStore(row1, &target[j * rows + i]);
+                            @vStore(row2, &target[(j + 1) * rows + i]);
+                            @vStore(row3, &target[(j + 2) * rows + i]);
+                            @vStore(row4, &target[(j + 3) * rows + i]);
+                        }
+                    }
+
+                    uint remains = (columns % 4);
+                }
+
+                // Handle remaining rows
+                for(; i<rows; i++) {
+                    for(j=0; j<columns; j++) target[j * rows + i] = matrix[i * columns + j];
+                }
+
+                // Handle remaining columns
+                for(i=0; i<rows; i+=4) {
+                    for(; j<columns - remains; j++) {
+                        target[j * rows + i] = matrix[i * columns + j];
+                        target[j * rows + (i + 1)] = matrix[(i + 1) * columns + j];
+                        target[j * rows + (i + 2)] = matrix[(i + 2) * columns + j];
+                        target[j * rows + (i + 3)] = matrix[(i + 3) * columns + j];
+                    }
+                }
+            }
+
+            // Matrix/matrix multiplication
+            (conditions: [@isNumeric(MATMUL_T)]) void matmul<MATMUL_T>(uint rows, uint columns, uint inners, MATMUL_T* mat1, MATMUL_T* mat2, MATMUL_T* result) {
+                for(uint row=0; row<rows; row++) {
+                    for(uint inner=0; inner<inners; inner++) {
+                        uint col = 0;
+
+                        @if(MATMUL_T == float) {
+                            float8 leftVec = @vFrom(float4, mat1[row * inners + inner]);
+
+                            for(; (col + 7) < columns; col+=8) {
+                                float8 rightVec = @vLoad(float8, &mat2[inner * columns + col]);
+                                float8 resultVec = @vLoad(float8, &result[row * columns + col]) + (leftVec * rightVec);
+                                @vStore(resultVec, &result[row * columns + col]);
+                            }
+                        }
+                        @else @if(MATMUL_T == int) {
+                            int8 leftVec = @vFrom(int8, mat1[row * inners + inner]);
+
+                            for(; (col + 3) < columns; col+=8) {
+                                int8 rightVec = @vLoad(int8, &mat2[inner * columns + col]);
+                                int8 resultVec = @vLoad(int8, &result[row * columns + col]) + (leftVec * rightVec);
+                                @vStore(resultVec, &result[row * columns + col]);
+                            }
+                        }
+                        @else @if(MATMUL_T == double) {
+                            double4 leftVec = @vFrom(double4, mat1[row * inners + inner]);
+
+                            for(; (col + 3) < columns; col+=4) {
+                                double4 rightVec = @vLoad(double4, &mat2[inner * columns + col]);
+                                double4 resultVec = @vLoad(double4, &result[row * columns + col]) + (leftVec * rightVec);
+                                @vStore(resultVec, &result[row * columns + col]);
+                            }
+                        }
+
+                        // Handle the remaining elements that are not a multiple of X
+                        for(; col<columns; col++) result[row * columns + col] += mat1[row * inners + inner] * mat2[inner * columns + col];
+                    }
+                }
+            }
+        }
+    }
+}
