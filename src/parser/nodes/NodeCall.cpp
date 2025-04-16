@@ -134,7 +134,11 @@ Type* NodeCall::getType() {
 
 std::vector<Type*> Call::getTypes(std::vector<Node*>& arguments) {
     std::vector<Type*> array;
-    for(int i=0; i<arguments.size(); i++) array.push_back(arguments[i]->getType());
+    for(int i=0; i<arguments.size(); i++) {
+        Type* t = arguments[i]->getType();
+        Template::replaceTemplates(&t);
+        array.push_back(t);
+    }
     return array;
 }
 
@@ -469,41 +473,24 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
                 if(tParser.peek()->type == TokType::Comma) tParser.next();
             }
 
+            for(int i=0; i<types.size(); i++) Template::replaceTemplates(&types[i]);
+
             if(presenceInFt) {
-                for(int i=0; i<types.size(); i++) {
-                    Type* current = types[i];
-                    Type* previous = nullptr;
-
-                    while(instanceof<TypeConst>(current) || instanceof<TypeArray>(current) || instanceof<TypePointer>(current) || instanceof<TypeStruct>(current)) {
-                        if(instanceof<TypeConst>(current)) {previous = current; current = ((TypeConst*)previous)->instance;}
-                        else if(instanceof<TypeArray>(current)) {previous = current; current = ((TypeArray*)previous)->element;}
-                        else if(instanceof<TypePointer>(current)) {previous = current; current = ((TypePointer*)previous)->instance;}
-                        else {
-                            while(generator->toReplace.find(current->toString()) != generator->toReplace.end()) current = generator->toReplace[current->toString()];
-
-                            if(previous == nullptr) types[i] = current->copy();
-                            else if(instanceof<TypeConst>(previous)) ((TypeConst*)previous)->instance = current->copy();
-                            else if(instanceof<TypeArray>(previous)) ((TypeArray*)previous)->element = current->copy();
-                            else ((TypePointer*)previous)->instance = current->copy();
-                            break;
-                        }
-                    }
-
-                    sTypes += types[i]->toString() + ",";
-                }
+                for(int i=0; i<types.size(); i++) sTypes += types[i]->toString() + ",";
 
                 sTypes = "<" + sTypes.substr(0, sTypes.length() - 1) + ">";
 
                 if(AST::funcTable.find(mainName + sTypes) != AST::funcTable.end()) return Call::make(loc, new NodeIden(mainName + sTypes, loc), arguments);
+
+                std::string sTypes2 = sTypes + typesToString(types);
+                if(AST::funcTable.find(mainName + sTypes2) != AST::funcTable.end()) return Call::make(loc, new NodeIden(mainName + sTypes2, loc), arguments);
+
                 AST::funcTable[mainName]->generateWithTemplate(types, mainName + sTypes + (mainName.find('[') == std::string::npos ? callTypes : ""));
             }
             else {
                 sTypes = "<";
 
-                for(int i=0; i<types.size(); i++) {
-                    while(generator->toReplace.find(types[i]->toString()) != generator->toReplace.end()) types[i] = generator->toReplace[types[i]->toString()];
-                    sTypes += types[i]->toString() + ",";
-                }
+                for(int i=0; i<types.size(); i++) sTypes += types[i]->toString() + ",";
 
                 sTypes.back() = '>';
 

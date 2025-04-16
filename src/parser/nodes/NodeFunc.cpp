@@ -91,10 +91,7 @@ void NodeFunc::check() {
         }
 
         for(int i=0; i<this->args.size(); i++) {
-            if(this->args[i].type != nullptr && generator != nullptr) {
-                while(generator->toReplace.find(this->args[i].type->toString()) != generator->toReplace.end())
-                    this->args[i].type = generator->toReplace[this->args[i].type->toString()];
-            }
+            if(this->args[i].type != nullptr && generator != nullptr) Template::replaceTemplates(&this->args[i].type);
         }
 
         if(instanceof<TypeStruct>(this->type) && generator != nullptr) {
