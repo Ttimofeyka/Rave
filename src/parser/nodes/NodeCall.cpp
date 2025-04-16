@@ -352,7 +352,7 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
                     // If changed - just call it
                     if(isChanged) {
                         std::vector<Type*> newTypes = Call::getTypes(newArgs);
-                        std::string newSTypes = Template::fromTypes(types);
+                        std::string newSTypes = typesToString(newTypes);
 
                         if(AST::funcTable.find(ifName + newSTypes) != AST::funcTable.end()) {
                             std::vector<RaveValue> params = Call::genParameters(newArgs, byVals, AST::funcTable[ifName + newSTypes], loc);
