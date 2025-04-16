@@ -46,10 +46,10 @@ TypeFunc* callToTFunc(NodeCall* call) {
     std::vector<TypeFuncArg*> argTypes;
     for(Node* nd: call->args) {
         if(instanceof<NodeCall>(nd)) argTypes.push_back(new TypeFuncArg(callToTFunc((NodeCall*)nd), ""));
-        else if(instanceof<NodeIden>(nd)) argTypes.push_back(new TypeFuncArg(getType(((NodeIden*)nd)->name), ""));
+        else if(instanceof<NodeIden>(nd)) argTypes.push_back(new TypeFuncArg(getTypeByName(((NodeIden*)nd)->name), ""));
         else if(instanceof<NodeType>(nd)) argTypes.push_back(new TypeFuncArg(((NodeType*)nd)->type, ""));
     }
-    return new TypeFunc(getType(((NodeIden*)call->func)->name), argTypes, false);
+    return new TypeFunc(getTypeByName(((NodeIden*)call->func)->name), argTypes, false);
 }
 
 std::vector<Type*> parametersToTypes(std::vector<RaveValue> params) {

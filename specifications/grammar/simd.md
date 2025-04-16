@@ -65,7 +65,7 @@ foo = @vHAdd32x4(foo, foo); // 200, 200, 200, 200
 
 **@vSumAll(vector)** - Returns a vector, where each of its elements is the sum of the elements from the incoming vector.
 
-It only works for `short8`, `int4` and `float4`.
+It only works for `short8`, `int4`, `float4` and `double2`.
 
 Example:
 

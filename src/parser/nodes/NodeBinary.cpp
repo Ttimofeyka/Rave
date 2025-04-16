@@ -440,6 +440,25 @@ RaveValue Binary::operation(char op, Node* first, Node* second, int loc) {
         if(!instanceof<TypeBasic>(vFirst.type) || !instanceof<TypeBasic>(vSecond.type)) generator->error("value types '" + vFirst.type->toString() + "' and '" + vSecond.type->toString() + "' are incompatible!", loc);
     }
 
+    if(instanceof<TypeVector>(vFirst.type) && instanceof<TypeVector>(vSecond.type)) {
+        if(op == TokType::And || op == TokType::Or || op == TokType::BitXor) {
+            if(isFloatType((vFirst.type->getElType()))) {
+                // Cast both vectors to int and then back
+                Type* oldType = vFirst.type;
+
+                LLVM::cast(vFirst, new TypeVector(basicTypes[BasicType::Int], ((TypeVector*)vFirst.type)->count), loc);
+                LLVM::cast(vSecond, vFirst.type);
+
+                RaveValue result = {(op == TokType::And ? LLVMBuildAnd(generator->builder, vFirst.value, vSecond.value, "NodeBinary_and") :
+                    (op == TokType::Or ? LLVMBuildOr(generator->builder, vFirst.value, vSecond.value, "NodeBinary_or") :
+                    LLVMBuildXor(generator->builder, vFirst.value, vSecond.value, "NodeBinary_xor"))
+                ), vFirst.type};
+
+                LLVM::cast(result, oldType, loc);
+            }
+        }
+    }
+
     switch(op) {
         case TokType::Plus: return LLVM::sum(vFirst, vSecond);
         case TokType::Minus: return LLVM::sub(vFirst, vSecond);

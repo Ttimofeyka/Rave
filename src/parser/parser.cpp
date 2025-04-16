@@ -903,7 +903,7 @@ Type* Parser::parseTypeAtom() {
             else this->error("expected token ')'!");
             return new TypeConst(_t); 
         }
-        else return getType(id);
+        else return getTypeByName(id);
     }
     else if(this->peek()->type == TokType::Builtin) {
         std::vector<Node*> args;
@@ -1090,14 +1090,17 @@ Node* Parser::parsePrefix(std::string f) {
     if(std::find(operators.begin(), operators.end(), this->peek()->type) != operators.end()) {
         auto tok = this->peek();
         this->next();
+
         auto tok2 = this->peek();
         this->next();
+
         if(tok2->value == "[" || tok2->value == ".") {
             this->idx -= 1;
             return new NodeUnary(tok->line, tok->type, this->parseSuffix(this->parseAtom(f), f));
         }
         else this->idx -= 1;
-        return new NodeUnary(tok->line, tok->type, this->parsePrefix(f));
+
+        return new NodeUnary(tok->line, tok->type, this->parseExpr(f));
     }
 
     return this->parseAtom(f);
@@ -1255,10 +1258,12 @@ Node* Parser::parseFor(std::string f) {
             curr += 1;
             this->next();
         }
+
         if(this->peek()->type == TokType::Comma) this->next();
 
         if(curr == 0) {
             if(this->tokens[this->idx + 1]->type == TokType::Equ) presets.push_back(this->parseExpr(f));
+            else if(this->tokens[this->idx + 1]->type == TokType::Semicolon) {curr += 1; this->next();}
             else {
                 Type* type = this->parseType();
                 std::string name = this->peek()->value;

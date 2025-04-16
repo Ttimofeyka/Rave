@@ -134,11 +134,13 @@ Type* NodeCall::getType() {
 
 std::vector<Type*> Call::getTypes(std::vector<Node*>& arguments) {
     std::vector<Type*> array;
+
     for(int i=0; i<arguments.size(); i++) {
         Type* t = arguments[i]->getType();
         Template::replaceTemplates(&t);
         array.push_back(t);
     }
+    
     return array;
 }
 

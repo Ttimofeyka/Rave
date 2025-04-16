@@ -442,7 +442,7 @@ Type* TypeDivided::getElType() {return this;}
 
 TypeVoid* typeVoid;
 
-Type* getType(std::string id) {
+Type* getTypeByName(std::string id) {
     static const std::map<std::string, Type*> types = {
         {"bool", basicTypes[BasicType::Bool]},
         {"char", basicTypes[BasicType::Char]},
@@ -462,12 +462,14 @@ Type* getType(std::string id) {
         {"real", basicTypes[BasicType::Real]},
         {"void", typeVoid},
         {"alias", new TypeAlias()},
-        {"int4", new TypeVector(new TypeBasic(BasicType::Int), 4)},
-        {"int8", new TypeVector(new TypeBasic(BasicType::Int), 8)},
-        {"float4", new TypeVector(new TypeBasic(BasicType::Float), 4)},
-        {"float2", new TypeVector(new TypeBasic(BasicType::Float), 2)},
-        {"float8", new TypeVector(new TypeBasic(BasicType::Float), 8)},
-        {"short8", new TypeVector(new TypeBasic(BasicType::Short), 8)},
+        {"int4", new TypeVector(basicTypes[BasicType::Int], 4)},
+        {"int8", new TypeVector(basicTypes[BasicType::Int], 8)},
+        {"float2", new TypeVector(basicTypes[BasicType::Float], 2)},
+        {"float4", new TypeVector(basicTypes[BasicType::Float], 4)},
+        {"float8", new TypeVector(basicTypes[BasicType::Float], 8)},
+        {"double2", new TypeVector(basicTypes[BasicType::Double], 2)},
+        {"double4", new TypeVector(basicTypes[BasicType::Double], 4)},
+        {"short8", new TypeVector(basicTypes[BasicType::Short], 8)},
     };
 
     auto it = types.find(id);
