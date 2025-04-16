@@ -5,6 +5,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 namespace std {
+    extern(linkname: "aligned_alloc") void* amalloc(int alignment, int size);
     extern(linkname: "malloc") void* malloc(int size);
     extern(linkname: "free") void free(void* ptr);
     extern(linkname: "realloc") void* realloc(void* ptr, int newsize);
@@ -48,6 +49,9 @@ namespace std {
 
     (inline) NEW_T* new<NEW_T>(int n) => cast(NEW_T*)std::malloc(n * sizeof(NEW_T));
     (inline) NEW_T* new<NEW_T>() => cast(NEW_T*)std::malloc(sizeof(NEW_T));
+
+    (inline) ANEW_T* anew<ANEW_T>(int alignment, int n) => cast(ANEW_T*)std::amalloc(alignment, n * sizeof(ANEW_T));
+    (inline) ANEW_T* anew<ANEW_T>(int alignment) => cast(ANEW_T*)std::amalloc(alignment, sizeof(ANEW_T));
 
     struct pair<P1, P2> {
         P1 first;
