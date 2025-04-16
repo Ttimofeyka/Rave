@@ -468,7 +468,7 @@ import <std/io>
                 uint i = 0;
 
                 @if(AXPY_T == float) {
-                    float4 chunkAlpha = @vFrom(float8, alpha);
+                    float8 chunkAlpha = @vFrom(float8, alpha);
                     
                     for(; (i + 7) < n; i+=8) {
                         float8 chunkY = @vLoad(float8, &y[i]);
