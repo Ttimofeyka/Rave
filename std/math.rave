@@ -57,7 +57,7 @@ namespace std {
 
         ABS_T abs<ABS_T>(ABS_T value) {
             return = value;
-            if(value < cast(ABS_T)null) value = -value;
+            if(value < cast(ABS_T)null) return = -return;
         }
 
         char getSign<GETSIGN_T>(GETSIGN_T value) {
