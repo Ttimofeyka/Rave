@@ -103,7 +103,8 @@
         "__tuple": "cpp",
         "ios": "cpp",
         "locale": "cpp",
-        "queue": "cpp"
+        "queue": "cpp",
+        "*.inc": "cpp"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/clang++"
 }

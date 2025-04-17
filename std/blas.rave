@@ -9,15 +9,19 @@ Note: This implementation is not completely full and very experimental.
 ALL input/output pointers assumes to have 16-byte alignment.
 */
 
-import <std/io>
+import <std/math>
 
 @if((!__RAVE_SSE2) && (!__RAVE_AVX2)) {
     // Using naive methods (slowly, but works)
 
     namespace std {
         namespace blas {
-            (conditions: [@isNumeric(VABS_T)]) VABS_T abs<VABS_T>(uint n, VABS_T* x) {
+            (conditions: [@isNumeric(VABS_T)]) void abs<VABS_T>(uint n, VABS_T* x) {
                 for(uint i=0; i<n; i++) x[i] = std::math::abs<VABS_T>(x[i]);
+            }
+
+            (conditions: [@isNumeric(SQRT_T)]) void sqrt<SQRT_T>(uint n, SQRT_T* x) {
+                for(uint i=0; i<n; i++) x[i] = std::math::sqrt(x[i]);
             }
 
             // Vector sum of absolute values: result += abs(x[i])
@@ -106,8 +110,21 @@ import <std/io>
 
     namespace std {
         namespace blas {
-            (conditions: [@isNumeric(VABS_T)]) VABS_T abs<VABS_T>(uint n, VABS_T* x) {
+            (conditions: [@isNumeric(VABS_T)]) void abs<VABS_T>(uint n, VABS_T* x) {
                 for(uint i=0; i<n; i++) x[i] = std::math::abs<VABS_T>(x[i]);
+            }
+
+            (conditions: [@isNumeric(SQRT_T)]) void sqrt<SQRT_T>(uint n, SQRT_T* x) {
+                uint i;
+
+                @if(SQRT_T == float) {
+                    for(; (i + 3) < n; i+=4) @vStore(@__sqrtf4(@vLoad(float4, &x[i])), &x[i]);
+                }
+                @else @if(SQRT_T == double) {
+                    for(; (i + 1) < n; i+=2) @vStore(@__sqrtd2(@vLoad(double2, &x[i])), &x[i]);
+                }
+
+                for(; i<n; i++) x[i] = std::math::sqrt(x[i]);
             }
 
             // Vector sum of absolute values: result += abs(x[i])
@@ -439,8 +456,21 @@ import <std/io>
 
     namespace std {
         namespace blas {
-            (conditions: [@isNumeric(VABS_T)]) VABS_T abs<VABS_T>(uint n, VABS_T* x) {
+            (conditions: [@isNumeric(VABS_T)]) void abs<VABS_T>(uint n, VABS_T* x) {
                 for(uint i=0; i<n; i++) x[i] = std::math::abs<VABS_T>(x[i]);
+            }
+
+            (conditions: [@isNumeric(SQRT_T)]) void sqrt<SQRT_T>(uint n, SQRT_T* x) {
+                uint i;
+
+                @if(SQRT_T == float) {
+                    for(; (i + 7) < n; i+=8) @vStore(@__sqrtf8(@vLoad(float8, &x[i])), &x[i]);
+                }
+                @else @if(SQRT_T == double) {
+                    for(; (i + 3) < n; i+=4) @vStore(@__sqrtd4(@vLoad(double4, &x[i])), &x[i]);
+                }
+
+                for(; i<n; i++) x[i] = std::math::sqrt(x[i]);
             }
 
             // Vector sum of absolute values: result += abs(x[i])
