@@ -76,6 +76,7 @@ Type* NodeBuiltin::getType() {
     || this->name == "vMoveMask128" || this->name == "cttz32" || this->name == "ctlz32") return basicTypes[BasicType::Int];
     if(this->name == "vShuffle" || this->name == "vHAdd32x4" || this->name == "vHAdd16x8"
     || this->name == "vSumAll") return args[0]->getType();
+    if(this->name == "vLoad") return ((NodeType*)args[0])->type;
     if(this->name == "typeToString") return new TypePointer(basicTypes[BasicType::Char]);
     if(this->name == "minOf" || this->name == "maxOf") return basicTypes[BasicType::Ulong];
     return typeVoid;

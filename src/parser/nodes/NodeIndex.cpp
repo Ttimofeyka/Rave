@@ -17,6 +17,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeBinary.hpp"
 #include "../../include/parser/nodes/NodeDone.hpp"
 #include "../../include/parser/nodes/NodeNull.hpp"
+#include "../../include/parser/nodes/NodeBuiltin.hpp"
 #include "../../include/parser/nodes/NodeString.hpp"
 #include "../../include/parser/ast.hpp"
 #include <vector>
@@ -199,17 +200,28 @@ RaveValue NodeIndex::generate() {
             }
         }
 
+        if(instanceof<TypeVector>(ptr.type)) {
+            if(isMustBePtr) return ptr;
+            return {LLVMBuildExtractElement(generator->builder, ptr.value, this->indexes[0]->generate().value, "NodeDone_TypeVector"), ptr.type->getElType()};
+        }
+
         this->elementIsConst = nget->elementIsConst;
         if(!instanceof<TypeArray>(ptr.type->getElType())) {ptr = LLVM::load(ptr, ("NodeIndex_NodeGet_load" + std::to_string(this->loc) + "_").c_str(), loc);}
         RaveValue index = generator->byIndex(ptr, this->generateIndexes());
 
         if(isMustBePtr) return index;
+
         return LLVM::load(index, ("NodeIndex_NodeGet" + std::to_string(this->loc) + "_").c_str(), loc);
     }
 
     if(instanceof<NodeCall>(this->element)) {
         NodeCall* ncall = (NodeCall*)this->element;
         RaveValue vr = ncall->generate();
+
+        if(instanceof<TypeVector>(vr.type)) {
+            if(isMustBePtr) return vr;
+            return {LLVMBuildExtractElement(generator->builder, vr.value, this->indexes[0]->generate().value, "NodeDone_TypeVector"), vr.type->getElType()};
+        }
 
         if(!generator->settings.noChecks && generator->settings.optLevel <= 2 &&
             ((AST::funcTable.find(currScope->funcName) != AST::funcTable.end() && AST::funcTable[currScope->funcName]->isNoChecks == false)
@@ -225,6 +237,7 @@ RaveValue NodeIndex::generate() {
 
         RaveValue index = generator->byIndex(vr, this->generateIndexes());
         if(isMustBePtr) return index;
+
         return LLVM::load(index, ("NodeIndex_NodeCall_load" + std::to_string(this->loc) + "_").c_str(), loc);
     }
 
@@ -245,6 +258,11 @@ RaveValue NodeIndex::generate() {
         NodeCast* ncast = (NodeCast*)this->element;
         RaveValue val = ncast->generate();
 
+        if(instanceof<TypeVector>(val.type)) {
+            if(isMustBePtr) return val;
+            return {LLVMBuildExtractElement(generator->builder, val.value, this->indexes[0]->generate().value, "NodeIndex_vector"), this->getType()};
+        }
+
         if(!generator->settings.noChecks && generator->settings.optLevel <= 2 &&
             ((AST::funcTable.find(currScope->funcName) != AST::funcTable.end() && AST::funcTable[currScope->funcName]->isNoChecks == false)
             || AST::funcTable.find(currScope->funcName) == AST::funcTable.end())
@@ -259,7 +277,23 @@ RaveValue NodeIndex::generate() {
 
         RaveValue index = generator->byIndex(val, this->generateIndexes());
         if(isMustBePtr) return index;
+
         return LLVM::load(index, "NodeIndex_NodeCast_load", loc);
+    }
+
+    if(instanceof<NodeBuiltin>(this->element)) {
+        NodeBuiltin* nbuiltin = (NodeBuiltin*)this->element;
+        RaveValue value = nbuiltin->generate();
+
+        if(instanceof<TypeVector>(value.type)) {
+            if(isMustBePtr) return value;
+            return {LLVMBuildExtractElement(generator->builder, value.value, this->indexes[0]->generate().value, "NodeIndex_vector"), this->getType()};
+        }
+
+        RaveValue index = generator->byIndex(value, this->generateIndexes());
+        if(isMustBePtr) return index;
+
+        return LLVM::load(index, "NodeIndex_NodeBuiltin_load", loc);
     }
 
     if(instanceof<NodeUnary>(this->element)) {
