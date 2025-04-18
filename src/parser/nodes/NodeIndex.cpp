@@ -89,6 +89,20 @@ bool NodeIndex::isElementConst(Type* type) {
     return false;
 }
 
+void checkForNull(RaveValue ptr, int loc) {
+    if(!generator->settings.noChecks && generator->settings.optLevel <= 2 && !LLVMIsAConstant(ptr.value) &&
+        (AST::funcTable.find(currScope->funcName) == AST::funcTable.end() || !AST::funcTable[currScope->funcName]->isNoChecks)
+    ) {
+        auto assertFunc = AST::funcTable.find("std::assert[_b_pc]");
+        if(assertFunc != AST::funcTable.end()) {
+            (new NodeCall(loc, new NodeIden(assertFunc->second->name, loc), {
+                new NodeBinary(TokType::Nequal, new NodeDone(ptr), new NodeNull(nullptr, loc), loc),
+                new NodeString("Assert in '" + generator->file + "' file in function '" + currScope->funcName + "' at " + std::to_string(loc) + " line: trying to get a value from a null pointer!\n", false)
+            }))->generate();
+        }
+    }
+}
+
 RaveValue NodeIndex::generate() {
     if(instanceof<NodeIden>(this->element)) {
         NodeIden* id = (NodeIden*)this->element;
@@ -108,13 +122,15 @@ RaveValue NodeIndex::generate() {
 
             if(instanceof<TypeStruct>(tstruct)) {
                 std::string structName = ((TypeStruct*)tstruct)->name;
+
                 if(AST::structTable.find(structName) != AST::structTable.end()) {
-                    if(AST::structTable[structName]->operators.find(TokType::Rbra) != AST::structTable[structName]->operators.end()) {
-                        for(auto const& x : AST::structTable[structName]->operators[TokType::Rbra]) {
-                            return (new NodeCall(this->loc, new NodeIden(AST::structTable[structName]->operators[TokType::Rbra][x.first]->name, this->loc),
-                                std::vector<Node*>({id, this->indexes[0]})))->generate();
-                        }
-                    }
+                    auto& operators = AST::structTable[structName]->operators;
+
+                    if(isMustBePtr && operators.find('&') != operators.end())
+                        return Call::make(loc, new NodeIden(operators['&'].begin()->second->name, loc), {id, this->indexes[0]});
+
+                    if(operators.find(TokType::Rbra) != operators.end())
+                        return Call::make(loc, new NodeIden(operators[TokType::Rbra].begin()->second->name, loc), {id, this->indexes[0]});
                 }
             }
         }
@@ -133,17 +149,7 @@ RaveValue NodeIndex::generate() {
         if(instanceof<TypeArray>(ptr.type) && instanceof<TypeArray>(currScope->getWithoutLoad(id->name, this->loc).type)) LLVM::makeAsPointer(ptr);
         else if(!instanceof<TypePointer>(ptr.type)) ptr = currScope->getWithoutLoad(id->name, this->loc);
 
-        if(!generator->settings.noChecks && generator->settings.optLevel <= 2 && !LLVMIsAConstant(ptr.value) &&
-            (AST::funcTable.find(currScope->funcName) == AST::funcTable.end() || !AST::funcTable[currScope->funcName]->isNoChecks)
-        ) {
-            auto assertFunc = AST::funcTable.find("std::assert[_b_pc]");
-            if(assertFunc != AST::funcTable.end()) {
-                (new NodeCall(loc, new NodeIden(assertFunc->second->name, this->loc), {
-                    new NodeBinary(TokType::Nequal, new NodeDone(ptr), new NodeNull(nullptr, loc), loc),
-                    new NodeString("Assert in '" + generator->file + "' file in function '" + currScope->funcName + "' at " + std::to_string(loc) + " line: trying to get a value from a null pointer!\n", false)
-                }))->generate();
-            }
-        }
+        checkForNull(ptr, loc);
 
         RaveValue index = generator->byIndex(ptr, this->generateIndexes());
 
@@ -223,17 +229,7 @@ RaveValue NodeIndex::generate() {
             return {LLVMBuildExtractElement(generator->builder, vr.value, this->indexes[0]->generate().value, "NodeDone_TypeVector"), vr.type->getElType()};
         }
 
-        if(!generator->settings.noChecks && generator->settings.optLevel <= 2 &&
-            ((AST::funcTable.find(currScope->funcName) != AST::funcTable.end() && AST::funcTable[currScope->funcName]->isNoChecks == false)
-            || AST::funcTable.find(currScope->funcName) == AST::funcTable.end())
-        ) {
-            if(AST::funcTable.find("std::assert[_b_pc]") != AST::funcTable.end()) {
-                (new NodeCall(this->loc, new NodeIden("std::assert[_b_pc]", this->loc), {
-                    new NodeBinary(TokType::Nequal, new NodeDone(vr), new NodeNull(nullptr, this->loc), this->loc),
-                    new NodeString("Assert in '" + generator->file + "' file in function '" + currScope->funcName + "' at " + std::to_string(this->loc) + " line: trying to get a value from a null pointer!\n", false)
-                }))->generate();
-            }
-        }
+        checkForNull(vr, loc);
 
         RaveValue index = generator->byIndex(vr, this->generateIndexes());
         if(isMustBePtr) return index;
@@ -263,17 +259,7 @@ RaveValue NodeIndex::generate() {
             return {LLVMBuildExtractElement(generator->builder, val.value, this->indexes[0]->generate().value, "NodeIndex_vector"), this->getType()};
         }
 
-        if(!generator->settings.noChecks && generator->settings.optLevel <= 2 &&
-            ((AST::funcTable.find(currScope->funcName) != AST::funcTable.end() && AST::funcTable[currScope->funcName]->isNoChecks == false)
-            || AST::funcTable.find(currScope->funcName) == AST::funcTable.end())
-        ) {
-            if(AST::funcTable.find("std::assert[_b_pc]") != AST::funcTable.end()) {
-                (new NodeCall(this->loc, new NodeIden("std::assert[_b_pc]", this->loc), {
-                    new NodeBinary(TokType::Nequal, new NodeDone(val), new NodeNull(nullptr, this->loc), this->loc),
-                    new NodeString("Assert in '" + generator->file + "' file in function '" + currScope->funcName + "' at " + std::to_string(this->loc) + " line: trying to get a value from a null pointer!\n", false)
-                }))->generate();
-            }
-        }
+        checkForNull(val, loc);
 
         RaveValue index = generator->byIndex(val, this->generateIndexes());
         if(isMustBePtr) return index;
@@ -316,17 +302,7 @@ RaveValue NodeIndex::generate() {
 
         RaveValue val = nunary->generate();
 
-        if(!generator->settings.noChecks && generator->settings.optLevel <= 2 &&
-            ((AST::funcTable.find(currScope->funcName) != AST::funcTable.end() && AST::funcTable[currScope->funcName]->isNoChecks == false)
-            || AST::funcTable.find(currScope->funcName) == AST::funcTable.end())
-        ) {
-            if(AST::funcTable.find("std::assert[_b_pc]") != AST::funcTable.end()) {
-                (new NodeCall(this->loc, new NodeIden("std::assert[_b_pc]", this->loc), {
-                    new NodeBinary(TokType::Nequal, new NodeDone(val), new NodeNull(nullptr, this->loc), this->loc),
-                    new NodeString("Assert in '" + generator->file + "' file in function '" + currScope->funcName + "' at " + std::to_string(this->loc) + " line: trying to get a value from a null pointer!\n", false)
-                }))->generate();
-            }
-        }
+        checkForNull(val, loc);
 
         RaveValue index = generator->byIndex(val, this->generateIndexes());
         return index;
