@@ -54,9 +54,12 @@ Examples:
 
 - short8
 - int4
-- float4
 - int8
+- float2
+- float4
 - float8
+- double2
+- double4
 
 # Creating new types
 
