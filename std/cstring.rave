@@ -12,8 +12,11 @@ import <std/thread> <std/ascii>
     namespace std {
         namespace cstring {
             int strlen(char* str) {
-                while((ptoi(&str[return]) % 8) != 0) {
-                    if(str[return] == '\0') @return(return);
+                ulong align = ptoi(&str[return]) % 8;
+
+                while(align != 0) {
+                    if(str[return] == '\0') @return();
+                    align -= 1;
                     return += 1;
                 }
 
@@ -34,8 +37,11 @@ import <std/thread> <std/ascii>
     namespace std {
         namespace cstring {
             int strlen(char* str) {
-                while((ptoi(&str[return]) % 4) != 0) {
-                    if(str[return] == '\0') @return(return);
+                uint align = ptoi(&str[return]) % 4;
+
+                while(align != 0) {
+                    if(str[return] == '\0') @return();
+                    align -= 1;
                     return += 1;
                 }
 
