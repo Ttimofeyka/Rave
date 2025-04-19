@@ -59,8 +59,8 @@ import <std/math>
                 return = std::math::sqrt(return);
             }
 
-            // Index of the maximum absolute value element of a vector
-            (conditions: [@isNumeric(AMAX_T)]) AMAX_T amax<AMAX_T>(uint n, AMAX_T* x) {
+            // Index of the maximum value element of a vector
+            (conditions: [@isNumeric(AMAX_T)]) AMAX_T max<AMAX_T>(uint n, AMAX_T* x) {
                 if(n > 0) return = x[0];
 
                 for(uint i=1; i<n; i++) {
@@ -68,8 +68,8 @@ import <std/math>
                 }
             }
 
-            // Index of the minimum absolute value element of a vector
-            (conditions: [@isNumeric(AMIN_T)]) AMIN_T amin<AMIN_T>(uint n, AMIN_T* x) {
+            // Index of the minimum value element of a vector
+            (conditions: [@isNumeric(AMIN_T)]) AMIN_T min<AMIN_T>(uint n, AMIN_T* x) {
                 if(n > 0) return = x[0];
 
                 for(uint i=1; i<n; i++) {
@@ -241,7 +241,7 @@ import <std/math>
             }
 
             // Index of the maximum absolute value element of a vector
-            (conditions: [@isNumeric(AMAX_T)]) AMAX_T amax<AMAX_T>(uint n, AMAX_T* x) {
+            (conditions: [@isNumeric(AMAX_T)]) AMAX_T max<AMAX_T>(uint n, AMAX_T* x) {
                 if(n > 0) return = x[0];
 
                 for(uint i=1; i<n; i++) {
@@ -250,7 +250,7 @@ import <std/math>
             }
 
             // Index of the minimum absolute value element of a vector
-            (conditions: [@isNumeric(AMIN_T)]) AMIN_T amin<AMIN_T>(uint n, AMIN_T* x) {
+            (conditions: [@isNumeric(AMIN_T)]) AMIN_T min<AMIN_T>(uint n, AMIN_T* x) {
                 if(n > 0) return = x[0];
 
                 for(uint i=1; i<n; i++) {
@@ -587,7 +587,7 @@ import <std/math>
             }
 
             // Index of the maximum absolute value element of a vector
-            (conditions: [@isNumeric(AMAX_T)]) AMAX_T amax<AMAX_T>(uint n, AMAX_T* x) {
+            (conditions: [@isNumeric(AMAX_T)]) AMAX_T max<AMAX_T>(uint n, AMAX_T* x) {
                 if(n > 0) return = x[0];
 
                 for(uint i=1; i<n; i++) {
@@ -596,7 +596,7 @@ import <std/math>
             }
 
             // Index of the minimum absolute value element of a vector
-            (conditions: [@isNumeric(AMIN_T)]) AMIN_T amin<AMIN_T>(uint n, AMIN_T* x) {
+            (conditions: [@isNumeric(AMIN_T)]) AMIN_T min<AMIN_T>(uint n, AMIN_T* x) {
                 if(n > 0) return = x[0];
 
                 for(uint i=1; i<n; i++) {
