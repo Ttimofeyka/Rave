@@ -10,6 +10,16 @@ Example:
 int* ptr = cast(int*)std::malloc(sizeof(int) * 8);
 ```
 
+## std::amalloc
+
+Returns an aligned pointer to the memory allocated on the heap.
+
+Example:
+
+```d
+float* bow = cast(float*)std::amalloc(8, sizeof(float) * 4); // 8-byte alignment
+```
+
 ## std::free
 
 Frees up the memory in the passed pointer.
@@ -110,6 +120,16 @@ int* ptr1 = cast(int*)std::malloc(4);
 
 // std::new version
 int* ptr2 = std::new<int>();
+```
+
+## std::anew
+
+It has the same return value as **std::new**, but the returned pointer is aligned.
+
+Example:
+
+```d
+double* foo = std::anew<double>(16, 4); // 16-byte alignment
 ```
 
 ## std::pair
