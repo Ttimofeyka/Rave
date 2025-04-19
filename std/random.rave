@@ -49,10 +49,11 @@ namespace std {
 
     void randomBuffer(char* buffer, int length) {
         std::__randomGen();
-        int n = 0;
+        char n = 0;
         for(int i=0; i<length; i++) {
             buffer[i] = (cast(char*)std::rseed1)[n];
-            if(n == 8) std::__randomGen();
+            if(n == 8c) std::__randomGen();
+            n += 1c;
         }
     }
 }
