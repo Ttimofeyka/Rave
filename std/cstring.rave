@@ -11,7 +11,7 @@ import <std/thread> <std/ascii>
 @if((__RAVE_PLATFORM == "X86_64") || (__RAVE_PLATFORM == "AARCH64") || (__RAVE_PLATFORM == "POWERPC64")) {
     namespace std {
         namespace cstring {
-            int strlen(char* str) {
+            uint strlen(char* str) {
                 ulong align = ptoi(&str[return]) % 8;
 
                 while(align != 0) {
@@ -36,7 +36,7 @@ import <std/thread> <std/ascii>
 @else @if((__RAVE_PLATFORM == "X86") || (__RAVE_PLATFORM == "ARM") || (__RAVE_PLATFORM == "POWERPC")) {
     namespace std {
         namespace cstring {
-            int strlen(char* str) {
+            uint strlen(char* str) {
                 uint align = ptoi(&str[return]) % 4;
 
                 while(align != 0) {
@@ -61,7 +61,7 @@ import <std/thread> <std/ascii>
 @else {
     namespace std {
         namespace cstring {
-            int strlen(char* str) {
+            uint strlen(char* str) {
                 while(str[return] != '\0') return += 1;
             }
         }
@@ -75,7 +75,7 @@ namespace std {
             if(b) return = "true";
         }
 
-        (inline) bool strncmp(const(char)* s1, const(char)* s2, int n) {
+        (inline) bool strncmp(const(char)* s1, const(char)* s2, uint n) {
             int i = 0;
             return = true;
             while(i < n) {
@@ -98,13 +98,15 @@ namespace std {
         }
 
         (inline, nochecks) char* strchr(char* chars, char c) {
-            int i = 0;
+            uint i = 0;
             return = null;
+
             while(chars[i] != '\0') {
                 if(chars[i] == c) {
                     return = &chars[i];
                     break;
                 }
+
                 i += 1;
             }
         }
