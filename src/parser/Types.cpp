@@ -14,6 +14,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../include/parser/nodes/NodeFloat.hpp"
 #include <iostream>
 
+int pointerSize;
+
 // Type
 
 Type::~Type() {}
@@ -79,15 +81,9 @@ Type* TypePointer::check(Type* parent) {
 }
 
 int TypePointer::getSize() {
-    if(AST::aliasTable.find("__RAVE_PLATFORM") != AST::aliasTable.end()) {
-        if(((NodeString*)AST::aliasTable["__RAVE_PLATFORM"])->value == "X86_64" ||
-           ((NodeString*)AST::aliasTable["__RAVE_PLATFORM"])->value == "AARCH64" ||
-           ((NodeString*)AST::aliasTable["__RAVE_PLATFORM"])->value == "POWERPC64" ||
-           ((NodeString*)AST::aliasTable["__RAVE_PLATFORM"])->value == "MIPS64") return 64;
-        return 32;
-    }
-    return 64;
+    return pointerSize;
 }
+
 std::string TypePointer::toString() {return instance->toString() + "*";}
 Type* TypePointer::getElType() {
     while(instanceof<TypeConst>(instance)) instance = instance->getElType();
@@ -522,3 +518,4 @@ bool Template::replaceTemplates(Type** _type) {
 
     return isChanged;
 }
+

@@ -291,6 +291,25 @@ RaveValue NodeVar::generate() {
 
                         if(isVolatile) LLVMSetVolatile(currScope->localScope[this->name].value, true);
 
+                        if(generator->settings.outDebugInfo) {
+                            auto debugLoc = LLVMDIBuilderCreateDebugLocation(generator->context, loc, 0, AST::funcTable[currScope->funcName]->diFuncScope, nullptr);
+    
+                            auto varType = debugInfo->genType(type, loc);
+    
+                            LLVMMetadataRef emptyExpr = LLVMDIBuilderCreateExpression(debugInfo->diBuilder, nullptr, 0);
+    
+                            auto varInfo = LLVMDIBuilderCreateAutoVariable(
+                                debugInfo->diBuilder, AST::funcTable[currScope->funcName]->diFuncScope, name.c_str(), name.length(),
+                                debugInfo->diFile, loc, varType, true,
+                                LLVMDIFlagZero, alignment > 0 ? alignment : 0
+                            );
+    
+                            LLVMDIBuilderInsertDeclareAtEnd(
+                                debugInfo->diBuilder, currScope->localScope[this->name].value,
+                                varInfo, emptyExpr, debugLoc, generator->currBB
+                            );
+                        }
+
                         if(alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
                         else if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->localScope[this->name].value, generator->getAlignment(this->type));
                         
@@ -306,6 +325,25 @@ RaveValue NodeVar::generate() {
 
                     if(isVolatile) LLVMSetVolatile(currScope->localScope[this->name].value, true);
 
+                    if(generator->settings.outDebugInfo) {
+                        auto debugLoc = LLVMDIBuilderCreateDebugLocation(generator->context, loc, 0, AST::funcTable[currScope->funcName]->diFuncScope, nullptr);
+
+                        auto varType = debugInfo->genType(type, loc);
+
+                        LLVMMetadataRef emptyExpr = LLVMDIBuilderCreateExpression(debugInfo->diBuilder, nullptr, 0);
+
+                        auto varInfo = LLVMDIBuilderCreateAutoVariable(
+                            debugInfo->diBuilder, AST::funcTable[currScope->funcName]->diFuncScope, name.c_str(), name.length(),
+                            debugInfo->diFile, loc, varType, true,
+                            LLVMDIFlagZero, alignment > 0 ? alignment : 0
+                        );
+
+                        LLVMDIBuilderInsertDeclareAtEnd(
+                            debugInfo->diBuilder, currScope->localScope[this->name].value,
+                            varInfo, emptyExpr, debugLoc, generator->currBB
+                        );
+                    }
+
                     if(alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
                     else if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->localScope[this->name].value, generator->getAlignment(this->type));
 
@@ -318,9 +356,31 @@ RaveValue NodeVar::generate() {
                 RaveValue val = this->value->generate();
                 currScope->localScope[this->name] = LLVM::alloc(val.type, name.c_str());
                 this->type = value->getType();
+
                 if(isVolatile) LLVMSetVolatile(currScope->localScope[this->name].value, true);
+
+                if(generator->settings.outDebugInfo) {
+                    auto debugLoc = LLVMDIBuilderCreateDebugLocation(generator->context, loc, 0, AST::funcTable[currScope->funcName]->diFuncScope, nullptr);
+
+                    auto varType = debugInfo->genType(type, loc);
+
+                    LLVMMetadataRef emptyExpr = LLVMDIBuilderCreateExpression(debugInfo->diBuilder, nullptr, 0);
+
+                    auto varInfo = LLVMDIBuilderCreateAutoVariable(
+                        debugInfo->diBuilder, AST::funcTable[currScope->funcName]->diFuncScope, name.c_str(), name.length(),
+                        debugInfo->diFile, loc, varType, true,
+                        LLVMDIFlagZero, alignment > 0 ? alignment : 0
+                    );
+
+                    LLVMDIBuilderInsertDeclareAtEnd(
+                        debugInfo->diBuilder, currScope->localScope[this->name].value,
+                        varInfo, emptyExpr, debugLoc, generator->currBB
+                    );
+                }
+
                 if(alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
                 else if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->localScope[this->name].value, generator->getAlignment(this->type));
+
                 LLVMBuildStore(generator->builder, val.value, currScope->localScope[this->name].value);
                 return currScope->localScope[this->name];
             }
@@ -330,6 +390,25 @@ RaveValue NodeVar::generate() {
 
         LLVMTypeRef gT = generator->genType(this->type, this->loc);
         currScope->localScope[this->name] = LLVM::alloc(this->type, name.c_str());
+
+        if(generator->settings.outDebugInfo) {
+            auto debugLoc = LLVMDIBuilderCreateDebugLocation(generator->context, loc, 0, AST::funcTable[currScope->funcName]->diFuncScope, nullptr);
+
+            auto varType = debugInfo->genType(type, loc);
+
+            LLVMMetadataRef emptyExpr = LLVMDIBuilderCreateExpression(debugInfo->diBuilder, nullptr, 0);
+
+            auto varInfo = LLVMDIBuilderCreateAutoVariable(
+                debugInfo->diBuilder, AST::funcTable[currScope->funcName]->diFuncScope, name.c_str(), name.length(),
+                debugInfo->diFile, loc, varType, true,
+                LLVMDIFlagZero, alignment > 0 ? alignment : 0
+            );
+
+            LLVMDIBuilderInsertDeclareAtEnd(
+                debugInfo->diBuilder, currScope->localScope[this->name].value,
+                varInfo, emptyExpr, debugLoc, generator->currBB
+            );
+        }
 
         if(isVolatile) LLVMSetVolatile(currScope->localScope[this->name].value, true);
         if(alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);

@@ -47,6 +47,7 @@ genSettings analyzeArguments(std::vector<std::string>& arguments) {
         else if(arguments[i] == "-t" || arguments[i] == "--target") {outType = arguments[i + 1]; i += 1;} // Sets the target platform type
         else if(arguments[i] == "-h" || arguments[i] == "--help") helpCalled = true; // Outputs all possible arguments
         else if(arguments[i] == "-native") settings.isNative = true; // Enables native mode (for better optimizations)
+        else if(arguments[i] == "-g") settings.outDebugInfo = true;
         else if(arguments[i] == "-noSSE") settings.sse = false;
         else if(arguments[i] == "-noSSE2") settings.sse2 = false;
         else if(arguments[i] == "-noSSE3") settings.sse3 = false;

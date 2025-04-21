@@ -32,6 +32,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeForeach.hpp"
 #include <llvm-c/Comdat.h>
 #include <llvm-c/Analysis.h>
+#include <llvm-c/DebugInfo.h>
+#include <fstream>
 #include "../../include/compiler.hpp"
 #include "../../include/llvm.hpp"
 
@@ -56,6 +58,7 @@ NodeFunc::NodeFunc(const std::string& name, std::vector<FuncArgSet> args, NodeBl
     this->templateNames = templateNames;
     this->isArrayable = false;
     this->isNoCopy = false;
+    this->diFuncScope = nullptr;
 
     for(int i=0; i<mods.size(); i++) {
         if(mods[i].name == "private") this->isPrivate = true;
@@ -396,6 +399,16 @@ RaveValue NodeFunc::generate() {
         this->isExtern = false;
     }
 
+    if(generator->settings.outDebugInfo) {
+        std::vector<LLVMMetadataRef> mTypes;
+        for(int i=0; i<args.size(); i++) mTypes.push_back(debugInfo->genType(args[i].type, loc));
+
+        LLVMMetadataRef funcType = LLVMDIBuilderCreateSubroutineType(debugInfo->diBuilder, debugInfo->diFile, mTypes.data(), mTypes.size(), LLVMDIFlagZero);
+
+        diFuncScope = LLVMDIBuilderCreateFunction(debugInfo->diBuilder, debugInfo->diScope, name.c_str(), name.length(), linkName.c_str(), linkName.length(), debugInfo->diFile,
+            loc, funcType, isPrivate, !isExtern, loc, LLVMDIFlagZero, generator->settings.optLevel > 0);
+    }
+
     if(!this->isExtern) {
         int oldCurrentBuiltinArg = generator->currentBuiltinArg;
         if(this->isCtargsPart || this->isCtargs) generator->currentBuiltinArg = 0;
@@ -464,6 +477,8 @@ RaveValue NodeFunc::generate() {
     }
 
     if(this->isTemplate) generator->toReplace = std::map<std::string, Type*>(oldReplace);
+
+    if(generator->settings.outDebugInfo) LLVMDIBuilderFinalizeSubprogram(debugInfo->diBuilder, diFuncScope);
 
     if(LLVMVerifyFunction(generator->functions[this->name].value, LLVMPrintMessageAction)) {
         std::string content = LLVMPrintValueToString(generator->functions[this->name].value);

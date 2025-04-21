@@ -345,6 +345,9 @@ void Compiler::compile(std::string file) {
     AST::aliasTable["__RAVE_LITTLE_ENDIAN"] = new NodeBool(littleEndian);
     AST::aliasTable["__RAVE_BIG_ENDIAN"] = new NodeBool(!littleEndian);
 
+    if(ravePlatform == "X86_64" || ravePlatform == "AARCH64" || ravePlatform == "POWERPC64" || ravePlatform == "MIPS64") pointerSize = 64;
+    else pointerSize = 32;
+
     AST::mainFile = Compiler::files[0];
 
     auto start = std::chrono::steady_clock::now();
@@ -367,6 +370,9 @@ void Compiler::compile(std::string file) {
 
     start = end;
     generator = new LLVMGen(file, Compiler::settings, Compiler::options);
+
+    if(settings.outDebugInfo) debugInfo = new DebugGen(settings, file, generator->lModule);
+    else debugInfo = nullptr;
 
     if(raveOs == "LINUX") {
         if(ravePlatform == "X86_64") Compiler::outType = "linux-gnu-pc-x86_64";

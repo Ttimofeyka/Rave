@@ -18,6 +18,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../include/parser/nodes/NodeType.hpp"
 #include "../include/parser/nodes/NodeGet.hpp"
 #include "../include/parser/nodes/NodeInt.hpp"
+#include <llvm-c/DebugInfo.h>
 #include "../include/json.hpp"
 #include "../include/compiler.hpp"
 #include <iostream>
@@ -39,6 +40,7 @@ std::vector<std::string> AST::addToImport;
 bool AST::debugMode;
 
 LLVMGen* generator = nullptr;
+DebugGen* debugInfo;
 Scope* currScope;
 LLVMTargetDataRef dataLayout;
 
@@ -172,6 +174,37 @@ void AST::checkError(std::string message, int loc) {
 	exit(1);
 }
 
+DebugGen::DebugGen(genSettings settings, std::string file, LLVMModuleRef module) {
+    this->diBuilder = LLVMCreateDIBuilder(module);
+
+    this->diFile = LLVMDIBuilderCreateFile(diBuilder, file.c_str(), file.length(), "", 0);
+
+    this->diScope = LLVMDIBuilderCreateCompileUnit(
+        diBuilder,
+        LLVMDWARFSourceLanguageC,
+        LLVMDIBuilderCreateFile(diBuilder, file.c_str(), file.length(), "", 0),
+        "rave", 4,
+        settings.optLevel > 0,
+        nullptr, 0,
+        1,
+        "", 0,
+        LLVMDWARFEmissionFull,
+        0,
+        true,
+        true,
+        "", 0,
+        "", 0
+    );
+}
+
+DebugGen::~DebugGen() {
+    LLVMDIBuilderFinalize(diBuilder);
+}
+
+LLVMGen::~LLVMGen() {
+    if(debugInfo != nullptr) delete debugInfo;
+}
+
 LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options) {
     this->file = file;
     this->settings = settings;
@@ -264,6 +297,76 @@ Type* LLVMGen::setByTypeList(std::vector<Type*> list) {
         else if(instanceof<TypeArray>(buffer[i-1])) ((TypeArray*)buffer[i-1])->element = buffer[i];
     }
     return buffer[0];
+}
+
+LLVMMetadataRef DebugGen::genBasicType(TypeBasic* type, int loc) {
+    switch(type->type) {
+        case BasicType::Bool: return LLVMDIBuilderCreateBasicType(diBuilder, "bool", 4, 1, 0, LLVMDIFlagZero);
+        case BasicType::Char: return LLVMDIBuilderCreateBasicType(diBuilder, "char", 4, 8, 0, LLVMDIFlagZero);
+        case BasicType::Uchar: return LLVMDIBuilderCreateBasicType(diBuilder, "uchar", 5, 8, 0, LLVMDIFlagZero);
+        case BasicType::Short: return LLVMDIBuilderCreateBasicType(diBuilder, "short", 5, 16, 0, LLVMDIFlagZero);
+        case BasicType::Ushort: return LLVMDIBuilderCreateBasicType(diBuilder, "ushort", 6, 16, 0, LLVMDIFlagZero);
+        case BasicType::Int: return LLVMDIBuilderCreateBasicType(diBuilder, "int", 3, 32, 0, LLVMDIFlagZero);
+        case BasicType::Uint: return LLVMDIBuilderCreateBasicType(diBuilder, "uint", 4, 32, 0, LLVMDIFlagZero);
+        case BasicType::Long: return LLVMDIBuilderCreateBasicType(diBuilder, "long", 4, 64, 0, LLVMDIFlagZero);
+        case BasicType::Ulong: return LLVMDIBuilderCreateBasicType(diBuilder, "ulong", 5, 64, 0, LLVMDIFlagZero);
+        case BasicType::Cent: return LLVMDIBuilderCreateBasicType(diBuilder, "cent", 4, 128, 0, LLVMDIFlagZero);
+        case BasicType::Ucent: return LLVMDIBuilderCreateBasicType(diBuilder, "ucent", 5, 128, 0, LLVMDIFlagZero);
+        case BasicType::Float: return LLVMDIBuilderCreateBasicType(diBuilder, "float", 5, 32, 0, LLVMDIFlagZero);
+        case BasicType::Double: return LLVMDIBuilderCreateBasicType(diBuilder, "double", 6, 64, 0, LLVMDIFlagZero);
+        default: return nullptr;
+    }
+}
+
+LLVMMetadataRef DebugGen::genPointer(std::string previousName, LLVMMetadataRef type, int loc) {
+    return LLVMDIBuilderCreatePointerType(diBuilder, type, pointerSize, 0, 0, (previousName + "*").c_str(), previousName.length() + 1);
+}
+
+LLVMMetadataRef DebugGen::genArray(int size, LLVMMetadataRef type, int loc) {
+    return LLVMDIBuilderCreateArrayType(diBuilder, size, 0, type, nullptr, 0);
+}
+
+LLVMMetadataRef DebugGen::genStruct(TypeStruct* type, int loc) {
+    return LLVMDIBuilderCreateStructType(diBuilder, diScope, type->toString().c_str(), type->toString().length(), diFile, loc, type->getSize(), 0, LLVMDIFlagZero,
+        nullptr, nullptr, 0, 0, nullptr, nullptr, 0);
+}
+
+LLVMMetadataRef DebugGen::genType(Type* type, int loc) {
+    if(type == nullptr) return genPointer("char", genBasicType(basicTypes[BasicType::Char], loc), loc);
+
+    if(instanceof<TypeBasic>(type)) return genBasicType((TypeBasic*)type, loc);
+    if(instanceof<TypePointer>(type)) return genPointer(type->toString(), genType(type->getElType(), loc), loc);
+    if(instanceof<TypeConst>(type)) return genType(type->getElType(), loc);
+    if(instanceof<TypeVector>(type)) {
+        LLVMMetadataRef subrange = LLVMDIBuilderGetOrCreateSubrange(diBuilder, ((TypeVector*)type)->count, ((TypeVector*)type)->count);
+        return LLVMDIBuilderCreateVectorType(diBuilder, type->getSize(), 0, genType(type->getElType(), loc), &subrange, 1);
+    }
+
+    if(instanceof<TypeArray>(type)) {
+        NodeInt* size = (NodeInt*)(((TypeArray*)type)->count->comptime());
+        return genArray(size->value.to_int(), genType(type->getElType(), loc), loc);
+    }
+
+    if(instanceof<TypeStruct>(type)) {
+        Template::replaceTemplates(&type);
+        return genStruct((TypeStruct*)type, loc);
+    }
+
+    if(instanceof<TypeVoid>(type)) return LLVMDIBuilderCreateBasicType(diBuilder, "void", 4, 0, 0, LLVMDIFlagZero);
+
+    if(instanceof<TypeFunc>(type)) {
+        TypeFunc* tf = (TypeFunc*)type;
+        if(instanceof<TypeVoid>(tf->main)) tf->main = basicTypes[BasicType::Char];
+
+        std::vector<LLVMMetadataRef> types;
+        for(int i=0; i<tf->args.size(); i++) types.push_back(genType(tf->args[i]->type, loc));
+
+        LLVMMetadataRef funcType = LLVMDIBuilderCreateSubroutineType(diBuilder, diFile, types.data(), types.size(), LLVMDIFlagZero);
+        return genPointer(type->toString(), funcType, loc);
+    }
+
+    generator->error("TODO: Add more allowed debug types! Input type: '" + (std::string(typeid(*type).name())) + "'!", loc);
+    return nullptr;
 }
 
 LLVMTypeRef LLVMGen::genType(Type* type, int loc) {

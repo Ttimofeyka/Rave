@@ -9,6 +9,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <string>
 #include <map>
 #include <llvm-c/Core.h>
+#include <llvm-c/DebugInfo.h>
 
 #ifndef LLVM_VERSION
 #error LLVM_VERSION is required
@@ -34,6 +35,8 @@ class NodeLambda;
 class NodeStruct;
 class NodeCall;
 class TypeFunc;
+class TypeBasic;
+class TypeStruct;
 struct Loop;
 
 struct StructMember {
@@ -69,6 +72,24 @@ extern std::string typesToString(std::vector<FuncArgSet> args);
 extern std::string typesToString(std::vector<Type*> args);
 extern std::vector<Type*> parametersToTypes(std::vector<RaveValue> params);
 
+class DebugGen {
+public:
+    LLVMDIBuilderRef diBuilder;
+    LLVMMetadataRef diFile;
+    LLVMMetadataRef diScope;
+
+    LLVMMetadataRef genBasicType(TypeBasic* type, int loc);
+    LLVMMetadataRef genPointer(std::string previousName, LLVMMetadataRef type, int loc);
+    LLVMMetadataRef genArray(int size, LLVMMetadataRef type, int loc);
+    LLVMMetadataRef genStruct(TypeStruct* type, int loc);
+    LLVMMetadataRef genType(Type* type, int loc);
+
+    DebugGen(genSettings settings, std::string file, LLVMModuleRef module);
+    ~DebugGen();
+};
+
+extern DebugGen* debugInfo;
+
 class LLVMGen {
 public:
     LLVMModuleRef lModule;
@@ -97,6 +118,7 @@ public:
     void warning(std::string msg, int line);
 
     LLVMGen(std::string file, genSettings settings, nlohmann::json options);
+    ~LLVMGen();
 
     std::string mangle(std::string name, bool isFunc, bool isMethod);
 

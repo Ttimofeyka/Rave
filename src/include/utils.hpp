@@ -128,6 +128,7 @@ typedef struct genSettings {
     bool isStatic = false;
     bool recompileStd = false;
     bool noChecks = false;
+    bool outDebugInfo = false;
     std::string linkParams = "";
     bool sse = true;
     bool sse2 = true;
