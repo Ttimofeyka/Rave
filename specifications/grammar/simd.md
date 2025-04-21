@@ -62,14 +62,3 @@ Example:
 int4 foo = @vFrom(int4, 100); // 100, 100, 100, 100
 foo = @vHAdd32x4(foo, foo); // 200, 200, 200, 200
 ```
-
-**@vSumAll(vector)** - Returns a vector, where each of its elements is the sum of the elements from the incoming vector.
-
-It only works for `short8`, `int4`, `float4` and `double2`.
-
-Example:
-
-```d
-short8 bow = @vFrom(short8, 20s); // 20, 20, 20, 20, 20, 20, 20, 20 (160)
-bow = @vSumAll(bow); // 160, 160, 160, 160, 160, 160, 160, 160
-```

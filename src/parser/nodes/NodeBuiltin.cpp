@@ -66,7 +66,7 @@ Node* NodeBuiltin::copy() {
 
 Type* NodeBuiltin::getType() {
     if(this->name[0] == '@') this->name = this->name.substr(1);
-    if(this->name == "fmodf") return this->args[0]->getType();
+    if(this->name == "fmodf") return asType(0)->type;
     if(this->name == "getCurrArg") return asType(0)->type;
     if(this->name == "isNumeric" || this->name == "isVector" || this->name == "isPointer"
     || this->name == "isArray" || this->name == "aliasExists" || this->name == "tEquals"
@@ -75,9 +75,9 @@ Type* NodeBuiltin::getType() {
     if(this->name == "sizeOf" || this->name == "argsLength" || this->name == "getCurrArgNumber"
     || this->name == "vMoveMask128" || this->name == "cttz32" || this->name == "ctlz32") return basicTypes[BasicType::Int];
     if(this->name == "vShuffle" || this->name == "vHAdd32x4" || this->name == "vHAdd16x8"
-    || this->name == "vSumAll" || this->name == "__sqrtf4" || this->name == "__sqrtf8"
-    || this->name == "__sqrtd2" || this->name == "__sqrtd4") return args[0]->getType();
-    if(this->name == "vLoad") return ((NodeType*)args[0])->type;
+    || this->name == "__sqrtf4" || this->name == "__sqrtf8"|| this->name == "__sqrtd2"
+    || this->name == "__sqrtd4") return asType(0)->type;
+    if(this->name == "vLoad") return asType(0)->type;
     if(this->name == "typeToString") return new TypePointer(basicTypes[BasicType::Char]);
     if(this->name == "minOf" || this->name == "maxOf") return basicTypes[BasicType::Ulong];
     return typeVoid;
@@ -616,37 +616,6 @@ RaveValue NodeBuiltin::generate() {
         if(vector1.type->getElType()->toString() != vector2.type->getElType()->toString()) generator->error("the values must have the same type!", this->loc);
 
         return LLVM::call(generator->functions["llvm.x86.ssse3.phadd.sw.128"], std::vector<LLVMValueRef>({vector1.value, vector2.value}).data(), 2, "vHAdd16x8");
-    }
-    else if(this->name == "vSumAll") {
-        if(Compiler::features.find("+sse3") == std::string::npos || Compiler::features.find("+ssse3") == std::string::npos)
-            generator->error("your target does not supports SSE3/SSSE3!", this->loc);
-
-        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
-
-        RaveValue value = this->args[0]->generate();
-        if(!instanceof<TypeVector>(value.type)) generator->error("the value must have the vector type!", this->loc);
-
-        unsigned int vectorSize = LLVMGetVectorSize(LLVMTypeOf(value.value));
-        unsigned long long abiSize = LLVMABISizeOfType(generator->targetData, LLVMTypeOf(value.value));
-
-        if(vectorSize == 4 && abiSize == 16) {
-            // 32 x 4
-            RaveValue result = (new NodeBuiltin("vHAdd32x4", {new NodeDone(value), new NodeDone(value)}, this->loc, this->block))->generate();
-            return (new NodeBuiltin("vHAdd32x4", {new NodeDone(result), new NodeDone(result)}, this->loc, this->block))->generate();
-        }
-        else if(vectorSize == 8 && abiSize == 16) {
-            // 16 x 8
-            RaveValue result = (new NodeBuiltin("vHAdd16x8", {new NodeDone(value), new NodeDone(value)}, this->loc, this->block))->generate();
-            result = (new NodeBuiltin("vHAdd16x8", {new NodeDone(result), new NodeDone(result)}, this->loc, this->block))->generate();
-            return (new NodeBuiltin("vHAdd16x8", {new NodeDone(result), new NodeDone(result)}, this->loc, this->block))->generate();
-        }
-        else if(vectorSize == 2 && abiSize == 16) {
-            // 64 x 2
-            return (new NodeBuiltin("vHAdd64x2", {new NodeDone(value), new NodeDone(value)}, this->loc, this->block))->generate();
-        }
-
-        generator->error("unsupported vector!", this->loc);
-        return {};
     }
     else if(this->name == "vMoveMask128") {
         if(Compiler::features.find("+sse2") == std::string::npos)  generator->error("your target does not supports SSE2!", this->loc);

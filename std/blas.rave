@@ -200,9 +200,21 @@ import <std/math>
             (conditions: [@isNumeric(DOT_T)]) DOT_T dot<DOT_T>(uint n, DOT_T* x, DOT_T* y) {
                 uint i = 0;
 
-                @if(DOT_T == float) for(; (i + 3) < n; i+=4) return += @vSumAll(@vLoad(float4, &x[i]) * @vLoad(float4, &y[i]))[0];
-                @else @if(DOT_T == int) for(; (i + 3) < n; i+=4) return += @vSumAll(@vLoad(int4, &x[i]) * @vLoad(int4, &y[i]))[0];
-                @else @if(DOT_T == double) for(; (i + 1) < n; i+=2) return += @vSumAll(@vLoad(double2, &x[i]) * @vLoad(double2, &y[i]))[0];
+                @if(DOT_T == float) {
+                    float4 result;
+                    for(; (i + 3) < n; i+=4) result += @vLoad(float4, &x[i]) * @vLoad(float4, &y[i]);
+                    return = result[0] + result[1] + result[2] + result[3];
+                }
+                @else @if(DOT_T == int) {
+                    int4 result;
+                    for(; (i + 3) < n; i+=4) result += @vLoad(int4, &x[i]) * @vLoad(int4, &y[i]);
+                    return = result[0] + result[1] + result[2] + result[3];
+                }
+                @else @if(DOT_T == double) {
+                    double2 result;
+                    for(; (i + 1) < n; i+=2) result += @vLoad(double2, &x[i]) * @vLoad(double2, &y[i]);
+                    return = result[0] + result[1];
+                }
 
                 for(; i<n; i++) return += x[i] * y[i];
             }
@@ -546,9 +558,21 @@ import <std/math>
             (conditions: [@isNumeric(DOT_T)]) DOT_T dot<DOT_T>(uint n, DOT_T* x, DOT_T* y) {
                 uint i = 0;
 
-                @if(DOT_T == float) for(; (i + 3) < n; i+=4) return += @vSumAll(@vLoad(float4, &x[i]) * @vLoad(float4, &y[i]))[0];
-                @else @if(DOT_T == int) for(; (i + 3) < n; i+=4) return += @vSumAll(@vLoad(int4, &x[i]) * @vLoad(int4, &y[i]))[0];
-                @else @if(DOT_T == double) for(; (i + 1) < n; i+=2) return += @vSumAll(@vLoad(double2, &x[i]) * @vLoad(double2, &y[i]))[0];
+                @if(DOT_T == float) {
+                    float8 result;
+                    for(; (i + 7) < n; i+=8) result += @vLoad(float8, &x[i]) * @vLoad(float8, &y[i]);
+                    return = result[0] + result[1] + result[2] + result[3] + result[4] + result[5] + result[6] + result[7];
+                }
+                @else @if(DOT_T == int) {
+                    int8 result;
+                    for(; (i + 7) < n; i+=8) result += @vLoad(int8, &x[i]) * @vLoad(int8, &y[i]);
+                    return = result[0] + result[1] + result[2] + result[3] + result[4] + result[5] + result[6] + result[7];
+                }
+                @else @if(DOT_T == double) {
+                    double4 result;
+                    for(; (i + 3) < n; i+=4) result += @vLoad(double4, &x[i]) * @vLoad(double4, &y[i]);
+                    return = result[0] + result[1] + result[2] + result[3];
+                }
 
                 for(; i<n; i++) return += x[i] * y[i];
             }
