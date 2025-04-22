@@ -27,6 +27,7 @@ class NodeStruct : public Node {
 public:
     std::string name;
     std::vector<Node*> elements;
+    std::vector<NodeVar*> variables;
     std::map<std::string, StructPredefined> predefines;
     std::vector<std::string> namespacesNames;
     int loc;
@@ -56,7 +57,6 @@ public:
     
     LLVMTypeRef asConstType();
     std::vector<LLVMTypeRef> getParameters(bool isLinkOnce);
-    std::vector<NodeVar*> getVariables();
     LLVMTypeRef genWithTemplate(std::string sTypes, std::vector<Type*> types);
     RaveValue generate() override;
     Type* getType() override;

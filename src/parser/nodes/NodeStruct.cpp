@@ -39,6 +39,10 @@ NodeStruct::NodeStruct(std::string name, std::vector<Node*> elements, int loc, s
     this->destructor = nullptr;
     this->dataVar = "";
     this->lengthVar = "";
+
+    for(int i=0; i<elements.size(); i++) {
+        if(instanceof<NodeVar>(elements[i])) variables.push_back((NodeVar*)elements[i]);
+    }
 }
 
 NodeStruct::~NodeStruct() {
@@ -440,12 +444,4 @@ LLVMTypeRef NodeStruct::genWithTemplate(std::string sTypes, std::vector<Type*> t
     generator->toReplaceValues = std::map<std::string, Node*>(toReplaceValues);
 
     return generator->structures[_struct->name];
-}
-
-std::vector<NodeVar*> NodeStruct::getVariables() {
-    std::vector<NodeVar*> data;
-    for(int i=0; i<elements.size(); i++) {
-        if(instanceof<NodeVar>(elements[i])) data.push_back(((NodeVar*)elements[i]));
-    }
-    return data;
 }

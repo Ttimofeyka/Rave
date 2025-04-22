@@ -103,7 +103,7 @@ RaveValue LLVM::structGep(RaveValue ptr, unsigned int idx, const char* name) {
     return {LLVMBuildStructGEP2(
         generator->builder, generator->genType(ts, -1),
         ptr.value, idx, name
-    ), new TypePointer(AST::structTable[ts->name]->getVariables()[idx]->getType())};
+    ), new TypePointer(AST::structTable[ts->name]->variables[idx]->getType())};
 }
 
 // Wrapper for the LLVMBuildAlloca function using RaveValue. Builds alloca at the first basic block for saving stack memory (C behaviour).

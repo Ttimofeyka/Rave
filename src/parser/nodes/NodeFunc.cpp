@@ -156,7 +156,7 @@ LLVMTypeRef* NodeFunc::getParameters(int callConv) {
                     int tSize = arg.type->getSize();
 
                     if(((TypeStruct*)arg.type)->isSimple()) {
-                        TypeBasic* tArgType = (TypeBasic*)AST::structTable[arg.type->toString()]->getVariables()[0]->type;
+                        TypeBasic* tArgType = (TypeBasic*)AST::structTable[arg.type->toString()]->variables[0]->type;
                         int tElCount = ((TypeStruct*)arg.type)->getElCount();
 
                         if(tElCount == 2) {

@@ -515,6 +515,17 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
             NodeVar* _this = currScope->getVar("this", loc);
             if(instanceof<TypeStruct>(_this->type->getElType())) {
                 TypeStruct* _struct = (TypeStruct*)_this->type->getElType();
+
+                if(AST::structTable.find(_struct->name) != AST::structTable.end()) {
+                    for(auto& it : AST::structTable[_struct->name]->variables) {
+                        if(it->name == ifName && instanceof<TypeFunc>(it->type)) {
+                            std::vector<FuncArgSet> fas = tfaToFas(((TypeFunc*)it->type)->args);
+                            std::vector<RaveValue> params = Call::genParameters(arguments, byVals, fas, CallSettings{false, ((TypeFunc*)it->type)->isVarArg, loc});
+                            return LLVM::call(currScope->getWithoutLoad(it->name), params, (instanceof<TypeVoid>(it->type) ? "" : "callFunc"), byVals);
+                        }
+                    }
+                }
+
                 arguments.insert(arguments.begin(), new NodeIden("this", loc));
 
                 auto methodf = Call::findMethod(_struct->name, ifName, arguments, loc);
@@ -559,6 +570,14 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
             else generator->error("type of the variable '" + ifName + "' is not a structure!", loc);
 
             if(AST::structTable.find(structure->name) != AST::structTable.end()) {
+                for(auto& it : AST::structTable[structure->name]->variables) {
+                    if(it->name == ifName && instanceof<TypeFunc>(it->type)) {
+                        std::vector<FuncArgSet> fas = tfaToFas(((TypeFunc*)it->type)->args);
+                        std::vector<RaveValue> params = Call::genParameters(arguments, byVals, fas, CallSettings{false, ((TypeFunc*)it->type)->isVarArg, loc});
+                        return LLVM::call(currScope->getWithoutLoad(it->name), params, (instanceof<TypeVoid>(it->type) ? "" : "callFunc"), byVals);
+                    }
+                }
+
                 arguments.insert(arguments.begin(), getFunc->base);
                 auto methodf = Call::findMethod(structure->name, getFunc->field, arguments, loc);
 

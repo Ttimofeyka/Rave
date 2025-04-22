@@ -72,7 +72,7 @@ RaveValue NodeConstStruct::generate() {
     if(AST::structTable.find(structName) == AST::structTable.end()) generator->error("structure '" + structName + "' does not exists!", loc);
 
     NodeStruct* structNode = AST::structTable[structName];
-    std::vector<NodeVar*> variables = structNode->getVariables();
+    std::vector<NodeVar*>& variables = structNode->variables;
 
     if(isConst) {
         std::vector<LLVMValueRef> __data;
