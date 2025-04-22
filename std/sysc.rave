@@ -421,6 +421,10 @@ the result of a call with the same parameters and the same number will be the sa
 }
 @else @if(__RAVE_OS == "FREEBSD") {
     namespace std {
+        extern(linkname: "syscall", vararg) void* syscall(int number);
+    }
+
+    namespace std {
         namespace sysctable {
             alias Read = 3;
             alias Write = 4;

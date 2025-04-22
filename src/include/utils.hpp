@@ -35,13 +35,13 @@ static bool isBasicType(std::string s) {
 static std::vector<std::string> filesInDirectory(std::string path) {
     std::vector<std::string> files;
 
-    // check directory exists
+    // Check directory exists
     char fullpath[MAX_PATH];
     GetFullPathNameA(path.c_str(), MAX_PATH, fullpath, 0);
     std::string fp(fullpath);
     if(GetFileAttributesA(fp.c_str()) != FILE_ATTRIBUTE_DIRECTORY) return files;
 
-    // get file names
+    // Get file names
     WIN32_FIND_DATAA findfiledata;
     HANDLE hFind = FindFirstFileA((LPCSTR)(fp + "\\*").c_str(), &findfiledata);
     if(hFind != INVALID_HANDLE_VALUE) {
@@ -52,11 +52,11 @@ static std::vector<std::string> filesInDirectory(std::string path) {
         FindClose(hFind);
     }
 
-    // delete current and parent directories
+    // Delete current and parent directories
     files.erase(std::find(files.begin(), files.end(), "."));
     files.erase(std::find(files.begin(), files.end(), ".."));
 
-    // sort in alphabetical order
+    // Sort in alphabetical order
     std::sort(files.begin(), files.end());
 
     return files;
@@ -147,7 +147,7 @@ typedef struct genSettings {
     std::string linker = "lld";
 } genSettings;
 
-// trim from start (in place)
+// Trim from the start (in place)
 static inline std::string ltrim(std::string s) {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
         return !std::isspace(ch);
@@ -155,7 +155,7 @@ static inline std::string ltrim(std::string s) {
     return s;
 }
 
-// trim from end (in place)
+// Trim from the end (in place)
 static inline std::string rtrim(std::string s) {
     s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
         return !std::isspace(ch);
@@ -163,17 +163,17 @@ static inline std::string rtrim(std::string s) {
     return s;
 }
 
-// trim from both ends (in place)
+// Trim from both ends (in place)
 static inline std::string trim(std::string s) {
     return rtrim(ltrim(s));
 }
 
 #if defined(_WIN32)
-#include <algorithm> // for transform() in get_exe_path()
+#include <algorithm> // For transform() in get_exe_path()
 #define WIN32_LEAN_AND_MEAN
 #define VC_EXTRALEAN
 #include <Windows.h>
-#elif defined(__linux__)
+#else
 #include <unistd.h>
 #endif
 
