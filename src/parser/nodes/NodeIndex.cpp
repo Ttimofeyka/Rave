@@ -170,17 +170,8 @@ RaveValue NodeIndex::generate() {
             if(instanceof<TypePointer>(((TypePointer*)ptr.type)->instance)) ptr = LLVM::load(ptr, "NodeIndex_NodeGet_ptrIndex", loc);
 
             RaveValue index = indexes[0]->generate();
-            index.type = basicTypes[BasicType::Long];
-            index.value = LLVMBuildIntCast(generator->builder, index.value, LLVMInt64TypeInContext(generator->context), "icast");
-            
-            ptr.value = LLVMBuildIntToPtr(
-                generator->builder,
-                LLVMBuildAdd(generator->builder, LLVMBuildMul(
-                    generator->builder,
-                    LLVM::makeInt(64, (((TypePointer*)(ptr.type))->instance->getSize()) / 8, false), index.value, "add"
-                ), LLVMBuildPtrToInt(generator->builder, ptr.value, LLVMInt64TypeInContext(generator->context), "itop"), "add2"),
-                generator->genType(ptr.type, loc), "ptoi"
-            );
+
+            ptr = LLVM::gep(ptr, &index.value, 1, "NodeIndex_NodeGet_gep");
             return ptr;
         }
 
