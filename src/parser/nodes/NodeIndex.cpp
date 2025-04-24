@@ -103,6 +103,32 @@ void checkForNull(RaveValue ptr, int loc) {
     }
 }
 
+RaveValue checkForOverload(bool isMustBePtr, Type* _type, Node* node, Node* index, int loc) {
+    if(instanceof<TypeStruct>(_type) || ((instanceof<TypePointer>(_type) && instanceof<TypeStruct>(_type->getElType())))) {
+        Type* tstruct = nullptr;
+        if(instanceof<TypeStruct>(_type)) tstruct = (TypeStruct*)_type;
+        else tstruct = ((TypePointer*)_type)->instance;
+
+        Template::replaceTemplates(&tstruct);
+
+        if(instanceof<TypeStruct>(tstruct)) {
+            std::string structName = ((TypeStruct*)tstruct)->name;
+
+            if(AST::structTable.find(structName) != AST::structTable.end()) {
+                auto& operators = AST::structTable[structName]->operators;
+
+                if(isMustBePtr && operators.find('&') != operators.end())
+                    return Call::make(loc, new NodeIden(operators['&'].begin()->second->name, loc), {node, index});
+
+                if(operators.find(TokType::Rbra) != operators.end())
+                    return Call::make(loc, new NodeIden(operators[TokType::Rbra].begin()->second->name, loc), {node, index});
+            }
+        }
+    }
+
+    return {nullptr, nullptr};
+}
+
 RaveValue NodeIndex::generate() {
     if(instanceof<NodeIden>(this->element)) {
         NodeIden* id = (NodeIden*)this->element;
@@ -114,36 +140,17 @@ RaveValue NodeIndex::generate() {
             return {LLVMBuildExtractElement(generator->builder, this->element->generate().value, this->indexes[0]->generate().value, "NodeIndex_vector"), this->getType()};
         }
 
-        if(instanceof<TypeStruct>(_t) || ((instanceof<TypePointer>(_t) && instanceof<TypeStruct>(((TypePointer*)_t)->instance)))) {
-            Type* tstruct = nullptr;
-            if(instanceof<TypeStruct>(_t)) tstruct = _t;
-            else tstruct = ((TypePointer*)_t)->instance;
-            while(generator->toReplace.find(tstruct->toString()) != generator->toReplace.end()) tstruct = (TypeStruct*)generator->toReplace[tstruct->toString()];
-
-            if(instanceof<TypeStruct>(tstruct)) {
-                std::string structName = ((TypeStruct*)tstruct)->name;
-
-                if(AST::structTable.find(structName) != AST::structTable.end()) {
-                    auto& operators = AST::structTable[structName]->operators;
-
-                    if(isMustBePtr && operators.find('&') != operators.end())
-                        return Call::make(loc, new NodeIden(operators['&'].begin()->second->name, loc), {id, this->indexes[0]});
-
-                    if(operators.find(TokType::Rbra) != operators.end())
-                        return Call::make(loc, new NodeIden(operators[TokType::Rbra].begin()->second->name, loc), {id, this->indexes[0]});
-                }
-            }
-        }
+        RaveValue checked = checkForOverload(isMustBePtr, _t, id, indexes[0], loc);
+        if(checked.value != nullptr) return checked;
 
         if(instanceof<TypePointer>(_t)) {
             if(instanceof<TypeConst>(((TypePointer*)_t)->instance)) this->elementIsConst = true;
         }
-
         else if(instanceof<TypeArray>(_t)) {
             if(instanceof<TypeConst>(((TypeArray*)_t)->element)) this->elementIsConst = true;
         }
-
         else if(instanceof<TypeConst>(_t)) this->elementIsConst = this->isElementConst(((TypeConst*)_t)->instance);
+
         RaveValue ptr = currScope->get(id->name, this->loc);
 
         if(instanceof<TypeArray>(ptr.type) && instanceof<TypeArray>(currScope->getWithoutLoad(id->name, this->loc).type)) LLVM::makeAsPointer(ptr);
@@ -177,25 +184,8 @@ RaveValue NodeIndex::generate() {
 
         RaveValue ptr = nget->generate();
 
-        if(instanceof<TypeStruct>(ptr.type) || (instanceof<TypePointer>(ptr.type) && instanceof<TypeStruct>(ptr.type->getElType()))) {
-            Type* structType = ptr.type;
-            if(!instanceof<TypeStruct>(structType)) structType = ptr.type->getElType();
-
-            while(generator->toReplace.find(structType->toString()) != generator->toReplace.end()) structType = generator->toReplace[structType->toString()];
-            if(instanceof<TypeStruct>(structType)) {
-                std::string structName = structType->toString();
-                if(AST::structTable.find(structName) != AST::structTable.end()) {
-                    if(AST::structTable[structName]->operators.find(TokType::Rbra) != AST::structTable[structName]->operators.end()) {
-                        for(auto const& x : AST::structTable[structName]->operators[TokType::Rbra]) {
-                            return (new NodeCall(
-                                this->loc, new NodeIden(AST::structTable[structName]->operators[TokType::Rbra][x.first]->name, this->loc),
-                                std::vector<Node*>({new NodeDone(ptr), this->indexes[0]})
-                            ))->generate();
-                        }
-                    }
-                }
-            }
-        }
+        RaveValue checked = checkForOverload(isMustBePtr, ptr.type, nget, indexes[0], loc);
+        if(checked.value != nullptr) return checked;
 
         if(instanceof<TypeVector>(ptr.type)) {
             if(isMustBePtr) return ptr;
@@ -297,6 +287,27 @@ RaveValue NodeIndex::generate() {
 
         RaveValue index = generator->byIndex(val, this->generateIndexes());
         return index;
+    }
+
+    if(instanceof<NodeIndex>(this->element)) {
+        NodeIndex* nindex = (NodeIndex*)this->element;
+
+        Type* _t = nindex->getType();
+        
+        RaveValue checked = checkForOverload(isMustBePtr, _t, nindex, indexes[0], loc);
+        if(checked.value != nullptr) return checked;
+
+        RaveValue value = nindex->generate();
+
+        if(instanceof<TypeVector>(value.type)) {
+            if(isMustBePtr) return value;
+            return {LLVMBuildExtractElement(generator->builder, value.value, this->indexes[0]->generate().value, "NodeIndex_vector"), this->getType()};
+        }
+
+        RaveValue index = generator->byIndex(value, this->generateIndexes());
+        if(isMustBePtr) return index;
+
+        return LLVM::load(index, "NodeIndex_NodeIndex_load", loc);
     }
 
     generator->error("NodeIndex::generate assert!",this->loc);

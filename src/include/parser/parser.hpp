@@ -72,7 +72,7 @@ public:
     Node* parseContinue();
     Node* parseConstantStructure(std::string structName);
     std::vector<FuncArgSet> parseFuncArgSets();
-    std::vector<Node*> parseIndexes();
+    Node* parseIndex(Node* base, std::string f);
 
     bool isDefinedLambda(bool updateIdx = true);
     bool isSlice();

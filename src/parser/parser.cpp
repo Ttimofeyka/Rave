@@ -1115,7 +1115,7 @@ Node* Parser::parseSuffix(Node* base, std::string f) {
         else if(this->peek()->type == TokType::Rarr) {
             if(this->isSlice()) base = parseSlice(base, f);
             else {
-                base = new NodeIndex(base, this->parseIndexes(), this->peek()->line);
+                base = this->parseIndex(base, f);
             }
         }
         else if(this->peek()->type == TokType::Dot) {
@@ -1158,16 +1158,17 @@ Node* Parser::parseSuffix(Node* base, std::string f) {
     return base;
 }
 
-std::vector<Node*> Parser::parseIndexes() {
-    std::vector<Node*> buffer;
+Node* Parser::parseIndex(Node* base, std::string f) {
+    Node* index = base;
+    int loc = peek()->line;
 
-    while(this->peek()->type == TokType::Rarr) {
-        this->next();
-        buffer.push_back(this->parseExpr());
-        this->next();
+    while(peek()->type == TokType::Rarr) {
+        next();
+        index = new NodeIndex(index, {parseExpr(f)}, loc);
+        next();
     }
 
-    return buffer;
+    return index;
 }
 
 Node* Parser::parseCall(Node* func) {
