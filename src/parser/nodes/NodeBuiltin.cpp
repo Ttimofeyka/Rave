@@ -506,6 +506,7 @@ RaveValue NodeBuiltin::generate() {
         ), new TypePointer(new TypeStruct(sName))}, 0, "vLoad_sgep"), "vLoad", loc);
 
         if(!alignment) LLVMSetAlignment(v.value, 1);
+        else LLVMSetAlignment(v.value, resultVectorType->getElType()->getSize() / 2);
         return v;
     }
     else if(this->name == "vStore") {
@@ -535,6 +536,7 @@ RaveValue NodeBuiltin::generate() {
         ), new TypePointer(new TypeStruct(sName))}, 0, "vStore_sgep").value);
 
         if(!alignment) LLVMSetAlignment(vPtr, 1);
+        else LLVMSetAlignment(vPtr, vector.type->getElType()->getSize() / 2);
         return {};
     }
     else if(this->name == "vFrom") {
