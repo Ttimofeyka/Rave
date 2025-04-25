@@ -33,20 +33,58 @@ namespace std {
             for(int i=0; i<this.mapSize; i++) this.table[i] = null;
         } => this;
 
-        std::hashmap<K, V> this(int mapSize) {
+        std::hashmap<K, V> this(uint mapSize) {
             std::hashmap<K, V> this;
             this.mapSize = mapSize;
             this.length = 0;
             this.table = cast(std::hashmap::entry<K, V>**)std::malloc(sizeof(std::hashmap::entry<K, V>*) * mapSize);
-            for(int i=0; i<mapSize; i++) this.table[i] = null;
+            for(uint i=0; i<mapSize; i++) this.table[i] = null;
         } => this;
 
         void set(K key, V value) {
             // if(length > (mapSize * 0.75))
             if(length > (mapSize >. 1) + (mapSize >. 2)) {
-                table = cast(std::hashmap::entry<K, V>**)std::realloc(table,sizeof(std::hashmap::entry<K, V>*) * (mapSize * 2));
-                for(int i=mapSize; i<(mapSize * 2); i++) table[i] = null;
+                // Reconstruct the map
+                uint oldMapSize = mapSize;
                 mapSize = mapSize * 2;
+
+                std::hashmap::entry<K, V>** newTable = cast(std::hashmap::entry<K, V>**)std::malloc(sizeof(std::hashmap::entry<K, V>*) * mapSize);
+                for(uint i=0; i<mapSize; i++) newTable[i] = null;
+
+                for(uint i=0; i<oldMapSize; i++) {
+                    std::hashmap::entry<K, V>* current = table[i];
+
+                    while(current != null) {
+                        defer std::free(current);
+
+                        @if(@hasMethod(K, hash)) uint index = current.key.hash() % mapSize;
+                        @else uint index = std::hash::crc32(cast(void*)current.&key, sizeof(K)) % mapSize;
+
+                        std::hashmap::entry<K, V>* entry = newTable[index];
+                        while(entry != null) {
+                            if(entry.next == null) break;
+                            else entry = entry.next;
+                        }
+
+                        if(entry == null) {
+                            newTable[index] = cast(std::hashmap::entry<K, V>*)std::malloc(sizeof(std::hashmap::entry<K, V>));
+                            newTable[index].key = current.key;
+                            newTable[index].value = current.value;
+                            newTable[index].next = null;
+                        }
+                        else {
+                            entry.next = cast(std::hashmap::entry<K, V>*)std::malloc(sizeof(std::hashmap::entry<K, V>));
+                            entry.next.key = current.key;
+                            entry.next.value = current.value;
+                            entry.next.next = null;
+                        }
+
+                        current = current.next;
+                    }
+                }
+
+                std::free(table);
+                table = newTable;
             }
 
             @if(@hasMethod(K, hash)) uint index = key.hash() % mapSize;
