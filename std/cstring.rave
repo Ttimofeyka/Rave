@@ -112,7 +112,7 @@ namespace std {
         }
 
         (nochecks) char* strstr(const(char)* str, const(char)* substr) {
-            int i = 0;
+            uint i = 0;
             char* ptr = str;
             bool done = false;
             int substrLen = std::cstring::strlen(substr);
@@ -122,6 +122,7 @@ namespace std {
                     done = true;
                     break;
                 }
+
                 ptr = itop(char*, ptoi(ptr) + 1);
             }
 
