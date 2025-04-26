@@ -56,7 +56,7 @@ else
 	else
 		LLVM_FLAGS = `$(LLVM_CONFIG) --libs --cxxflags`
 	endif
-	SRC = $(shell find ./src -name *.cpp)
+	SRC = $(shell find ./src -name "*.cpp")
 endif
 
 ifeq ($(WINBUILD),0)
