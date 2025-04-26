@@ -158,7 +158,7 @@ namespace std {
 
 namespace std {
     namespace utf8 {
-        uint toUTF16Buffer(uchar* u8, uint u8Length, ushort* buffer, uint bufferSize) {
+        uint toUTF16Buffer(char* u8, uint u8Length, ushort* buffer, uint bufferSize) {
             uint i = 0;
             bool isWrite = buffer != null;
 
@@ -186,15 +186,15 @@ namespace std {
             if(isWrite && (return < bufferSize)) buffer[return] = 0s;
         }
 
-        (inline) uint toUTF16Buffer(uchar* u8, ushort* buffer, uint bufferSize) => std::utf8::toUTF16Buffer(u8, std::cstring::strlen(u8), buffer, bufferSize);
+        (inline) uint toUTF16Buffer(char* u8, ushort* buffer, uint bufferSize) => std::utf8::toUTF16Buffer(u8, std::cstring::strlen(u8), buffer, bufferSize);
 
-        (inline) ushort* toUTF16(uchar* u8, uint u8Length) {
+        (inline) ushort* toUTF16(char* u8, uint u8Length) {
             uint size = std::utf8::toUTF16Buffer(u8, u8Length, null, 0);
             return = std::new<ushort>(size + 1);
             std::utf8::toUTF16Buffer(u8, u8Length, return, size + 1);
         }
 
-        (inline) ushort* toUTF16(uchar* u8) {
+        (inline) ushort* toUTF16(char* u8) {
             uint length = std::cstring::strlen(u8);
             uint size = std::utf8::toUTF16Buffer(u8, length, null, 0);
             return = std::new<ushort>(size + 1);
