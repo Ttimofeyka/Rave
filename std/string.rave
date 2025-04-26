@@ -40,7 +40,7 @@ namespace std {
             }
         } => this;
 
-        std::string this(int n) {
+        std::string this(uint n) {
             std::string this;
             this.length = 0;
             this.capacity = n + 1;
@@ -58,7 +58,7 @@ namespace std {
                     if(this.data != null) std::free(this.data);
                     this.data = std::malloc(this.capacity);
 
-                    int i = 0;
+                    uint i = 0;
                     while(i < this.length) {
                         this.data[i] = a[i];
                         i += 1;
@@ -82,7 +82,7 @@ namespace std {
                     this.data = std::realloc(this.data, this.capacity);
                 }
 
-                int i = 0;
+                uint i = 0;
                 while(i < this.length) {
                     this.data[i] = a[i];
                     i += 1;
@@ -103,12 +103,12 @@ namespace std {
             }
         }
 
-        (inline) void set(int index, char ch) {
+        (inline) void set(uint index, char ch) {
             @if(__RAVE_RUNTIME_CHECKS) if((index >= 0) && (index < this.length)) this.data[index] = ch;
             @else this.data[index] = ch;
         }
 
-        (inline) char at(int index) {
+        (inline) char at(uint index) {
             @if(__RAVE_RUNTIME_CHECKS) {
                 if((index >= 0) && (index < this.length)) return = this.data[index];
                 else return = '\0';
@@ -154,10 +154,10 @@ namespace std {
             this.data[this.length] = '\0';
         }
 
-        void appendC(char* cstr, int cstrlen) {
+        void appendC(char* cstr, uint cstrlen) {
             @if(__RAVE_RUNTIME_CHECKS) if(this.data == null) @return();
 
-            int i = 0;
+            uint i = 0;
 
             if((this.length + cstrlen) >= this.capacity) {
                 int minTargetCap = this.capacity + cstrlen + 2;
@@ -187,20 +187,20 @@ namespace std {
         }
 
         void replace(char c, char to) {
-            int i = 0;
+            uint i = 0;
             while(i < this.length) {
                 if(this.data[i] == c) this.data[i] = to;
                 i += 1;
             }
         }
 
-        std::string replace(char* from, int fromLen, char* to, int toLen) {
+        std::string replace(char* from, uint fromLen, char* to, uint toLen) {
             return = "";
 
-            int i = 0;
+            uint i = 0;
             while(i < this.length) {
                 if((this.length - fromLen) <= i) {
-                    for(int j=i; j<this.length; j++) return.add(this.data[j]);
+                    for(uint j=i; j<this.length; j++) return.add(this.data[j]);
                     break;
                 }
 
@@ -219,13 +219,13 @@ namespace std {
 
         (inline) std::string replace(std::string from, std::string to) => this.replace(from.data, from.length, to.data, to.length);
 
-        std::string substring(int from, int to) {
+        std::string substring(uint from, uint to) {
             @if(__RAVE_RUNTIME_CHECKS) {
                 if(((from >= 0) && (from < this.length)) && ((to >= 0) && (to < this.length))) @return(null);
             }
 
             return = "";
-            int i = from;
+            uint i = from;
 
             while(i < to) {
                 return.add(this.data[i]);
@@ -235,15 +235,15 @@ namespace std {
 
         std::string operator+(std::string one, std::string two) {
             std::string third = "";
-            for(int i=0; i<one.length; i+=1) third.add(one.data[i]);
-            for(int i=0; i<two.length; i+=1) third.add(two.data[i]);
+            for(uint i=0; i<one.length; i+=1) third.add(one.data[i]);
+            for(uint i=0; i<two.length; i+=1) third.add(two.data[i]);
         } => third;
 
         bool operator==(std::string one, std::string two) {
             return = true;
             if(one.length != two.length) return = false;
             else {
-                for(int i=0; i<one.length; i+=1) {
+                for(uint i=0; i<one.length; i+=1) {
                     if(one.data[i] != two.data[i]) {
                         return = false;
                         break;
@@ -254,7 +254,7 @@ namespace std {
 
         bool operator==(std::string one, char* two) {
             return = true;
-            for(int i=0; i<one.length; i+=1) {
+            for(uint i=0; i<one.length; i+=1) {
                 if(one.data[i] != two[i]) {
                     return = false;
                     break;
@@ -265,7 +265,7 @@ namespace std {
         std::vector<std::string> split(char ch) {
             return = std::vector<std::string>();
 
-            int idx = 0;
+            uint idx = 0;
             std::string buffer = "";
             while(idx < this.length) {
                 if(this.data[idx] != ch) {
@@ -283,25 +283,25 @@ namespace std {
         }
 
         std::string ltrim {
-            int idx = 0;
+            uint idx = 0;
             while((idx < this.length) && (std::ascii::isSpace(this.data[idx]))) idx += 1;
         } => this.substring(idx, this.length);
 
         std::string rtrim {
-            int idx = this.length - 1;
+            uint idx = this.length - 1;
             while(std::ascii::isSpace(this.data[idx])) idx -= 1;
         } => this.substring(0, idx + 1);
 
         (inline) std::string trim {
-            int idxL = 0;
-            int idxR = this.length - 1;
+            uint idxL = 0;
+            uint idxR = this.length - 1;
             while((idxL < this.length) && (std::ascii::isSpace(this.data[idxL]))) idxL += 1;
             while(std::ascii::isSpace(this.data[idxR])) idxR -= 1;
         } => this.substring(idxL, idxR + 1);
 
         std::string insert(int pos, char* str) {
             std::string buffer = "";
-            int i = 0;
+            uint i = 0;
             while(i < pos) {
                 buffer.add(this.data[i]);
                 i += 1;
