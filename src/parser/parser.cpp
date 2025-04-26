@@ -507,7 +507,23 @@ Node* Parser::parseAtom(std::string f) {
     int size = this->peek()->value.size();
 
     if(t->type == TokType::Number) {
-        if(size > 0 && this->peek()->type == TokType::Identifier) {
+        int expNumber = 0;
+
+        if(peek()->value == "e") {
+            // Exponent
+            this->next();
+
+            char sign = this->peek()->value[0];
+            this->next();
+
+            std::string exponent = this->peek()->value;
+            this->next();
+
+            if(sign == '-') expNumber = std::stoi(exponent) * -1;
+            else expNumber = std::stoi(exponent);
+        }
+
+        if(this->peek()->type == TokType::Identifier) {
             std::string iden = this->peek()->value;
 
             if(iden == "u" || iden == "l" || iden == "c" || iden == "s") {
@@ -521,7 +537,25 @@ Node* Parser::parseAtom(std::string f) {
                 return _int;
             }
             else if(iden == "f" || iden == "d" || iden == "h" || iden == "bh" || iden == "r") {
-                NodeFloat* nfloat = new NodeFloat(std::stod(t->value));
+                NodeFloat* nfloat = nullptr;
+
+                if(expNumber != 0) {
+                    if(expNumber < 0) {
+                        expNumber *= -1;
+                        std::string number = "0.";
+                        for(int i=1; i<expNumber; i++) number += "0";
+
+                        nfloat = new NodeFloat(std::stod(number + t->value));
+                    }
+                    else {
+                        std::string number = t->value;
+                        for(int i=0; i<expNumber; i++) number += "0";
+
+                        nfloat = new NodeFloat(std::stod(t->value + number));
+                    }
+                }
+                else nfloat = new NodeFloat(std::stod(t->value));
+
                 this->next();
 
                 if(iden == "f") nfloat->isMustBeFloat = true;
@@ -537,21 +571,43 @@ Node* Parser::parseAtom(std::string f) {
     }
 
     if(t->type == TokType::FloatNumber) {
-        if(size > 0 && this->peek()->type == TokType::Identifier) {
+        int expNumber;
+
+        if(peek()->value == "e") {
+            // Exponent
+            this->next();
+
+            char sign = this->peek()->value[0];
+            this->next();
+
+            std::string exponent = this->peek()->value;
+            this->next();
+
+            if(sign == '-') expNumber = std::stoi(exponent) * -1;
+            else expNumber = std::stoi(exponent);
+        }
+
+        NodeFloat* value = nullptr;
+
+        double number = std::stod(t->value);
+        if(expNumber != 0) number = std::pow(10, expNumber) * number;
+
+        if(this->peek()->type == TokType::Identifier) {
             std::string suffix = this->peek()->value;
             this->next();
 
-            if(suffix == "d") return new NodeFloat(t->value, basicTypes[BasicType::Double]);
+            if(suffix == "d") value = new NodeFloat(number, basicTypes[BasicType::Double]);
             else if(suffix == "f") {
-                NodeFloat* nfloat = new NodeFloat(t->value, basicTypes[BasicType::Float]);
-                nfloat->isMustBeFloat = true;
-                return nfloat;
+                value = new NodeFloat(number, basicTypes[BasicType::Float]);
+                value->isMustBeFloat = true;
             }
-            else if(suffix == "h") return new NodeFloat(t->value, basicTypes[BasicType::Half]);
-            else if(suffix == "bh") return new NodeFloat(t->value, basicTypes[BasicType::Bhalf]);
-            else if(suffix == "r") return new NodeFloat(t->value, basicTypes[BasicType::Real]);
+            else if(suffix == "h") value = new NodeFloat(number, basicTypes[BasicType::Half]);
+            else if(suffix == "bh") value = new NodeFloat(number, basicTypes[BasicType::Bhalf]);
+            else if(suffix == "r") value = new NodeFloat(number, basicTypes[BasicType::Real]);
         }
-        return new NodeFloat(std::stod(t->value));
+        else value = new NodeFloat(number);
+
+        return value;
     }
 
     if(t->type == TokType::HexNumber) {
@@ -1443,8 +1499,16 @@ Node* Parser::parseStmt(std::string f) {
     if(this->peek()->type == TokType::Rpar) {
         std::vector<DeclarMod> mods;
         this->next();
+
         while(this->peek()->type != TokType::Lpar) {
-            if(this->peek()->type != TokType::Identifier) this->error("expected identifier!");
+            if(this->peek()->type != TokType::Identifier) {
+                // This is an expression
+                this->idx -= 1;
+                Node* expr = this->parseExpr(f);
+                this->next();
+                return expr;
+            }
+
             this->next();
 
             std::string name = this->peek()->value;

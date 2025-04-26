@@ -199,6 +199,7 @@ Lexer::Lexer(std::string text, int offset) {
                         bool isFloat = false;
                         std::string buffer = "";
                         idx -= 1;
+
                         while(isdigit(this->peek()) || (this->peek() == '.' && this->text[this->idx + 1] != '.')) {
                             if(this->peek() == '.') {
                                 isFloat = true;
@@ -209,6 +210,7 @@ Lexer::Lexer(std::string text, int offset) {
                             buffer += peek();
                             this->idx += 1;
                         }
+
                         this->tokens.push_back(new Token(isFloat ? TokType::FloatNumber : TokType::Number, buffer, line));
                     }
                     else {idx -= 1; tokens.push_back(new Token(TokType::HexNumber, getDigit(TokType::HexNumber), line));}
