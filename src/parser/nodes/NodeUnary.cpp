@@ -31,6 +31,12 @@ RaveValue Unary::make(int loc, char type, Node* base) {
             newValue->isMustBeLong = ((NodeInt*)base)->isMustBeLong;
             return newValue->generate();
         }
+        else if(instanceof<NodeFloat>(base)) {
+            NodeFloat* old = (NodeFloat*)base;
+            NodeFloat* newValue = (NodeFloat*)old->copy();
+            newValue->value = (newValue->value[0] == '-' ? "" : "-") + newValue->value;
+            return newValue->generate();
+        }
 
         RaveValue bs = base->generate();
         if(instanceof<TypeBasic>(bs.type) && !((TypeBasic*)bs.type)->isFloat()) return {LLVMBuildNeg(generator->builder, bs.value, "NodeUnary_neg"), bs.type};
@@ -168,6 +174,12 @@ RaveValue NodeUnary::generateConst() {
             newValue->isMustBeChar = ((NodeInt*)this->base)->isMustBeChar;
             newValue->isMustBeShort = ((NodeInt*)this->base)->isMustBeShort;
             newValue->isMustBeLong = ((NodeInt*)this->base)->isMustBeLong;
+            return newValue->generate();
+        }
+        else if(instanceof<NodeFloat>(base)) {
+            NodeFloat* old = (NodeFloat*)base;
+            NodeFloat* newValue = (NodeFloat*)old->copy();
+            newValue->value = (newValue->value[0] == '-' ? "" : "-") + newValue->value;
             return newValue->generate();
         }
 

@@ -571,7 +571,7 @@ Node* Parser::parseAtom(std::string f) {
     }
 
     if(t->type == TokType::FloatNumber) {
-        int expNumber;
+        int expNumber = 0;
 
         if(peek()->value == "e") {
             // Exponent
