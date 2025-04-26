@@ -25,6 +25,7 @@ int NodeBreak::getWhileLoop() {
 
 RaveValue NodeBreak::generate() {
     if(generator->activeLoops.empty()) generator->error("attempt to call 'break' out of the loop!", this->loc);
+
     int id = this->getWhileLoop();
     if(id == -1) generator->error("attempt to call 'break' out of the loop!", this->loc);
 
