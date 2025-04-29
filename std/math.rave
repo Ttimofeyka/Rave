@@ -9,7 +9,9 @@ namespace std {
         alias PI = 3.14159265358979323846d;
         alias PI_f = 3.141592653589793f;
         alias PI_hf = 3.140625h;
-        alias NAN = cast(float)0x7FF8000000000000;
+        alias NAN = cast(double)0x7FF8000000000000;
+        alias NAN_f = cast(float)0x7FC00000;
+        alias NAN_hf = cast(half)0x7FFF;
 
         (inline) double degToRad(double d) => (d * std::math::PI / 180d);
         (inline) float degToRad(float d) => (d * std::math::PI_f / 180f);
