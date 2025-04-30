@@ -22,26 +22,31 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/ast.hpp"
 #include "../../include/llvm.hpp"
 
-RaveValue Unary::make(int loc, char type, Node* base) {
-    if(type == TokType::Minus) {
-        if(instanceof<NodeInt>(base)) {
-            NodeInt* newValue = (new NodeInt(-((NodeInt*)base)->value));
-            newValue->isMustBeChar = ((NodeInt*)base)->isMustBeChar;
-            newValue->isMustBeShort = ((NodeInt*)base)->isMustBeShort;
-            newValue->isMustBeLong = ((NodeInt*)base)->isMustBeLong;
-            return newValue->generate();
-        }
-        else if(instanceof<NodeFloat>(base)) {
-            NodeFloat* old = (NodeFloat*)base;
-            NodeFloat* newValue = (NodeFloat*)old->copy();
-            newValue->value = (newValue->value[0] == '-' ? "" : "-") + newValue->value;
-            return newValue->generate();
-        }
-
-        RaveValue bs = base->generate();
-        if(instanceof<TypeBasic>(bs.type) && !((TypeBasic*)bs.type)->isFloat()) return {LLVMBuildNeg(generator->builder, bs.value, "NodeUnary_neg"), bs.type};
-        return {LLVMBuildFNeg(generator->builder, bs.value, "NodeUnary_fneg"), bs.type};
+RaveValue Unary::negative(Node* base) {
+    if(instanceof<NodeInt>(base)) {
+        NodeInt* newValue = (new NodeInt(-((NodeInt*)base)->value));
+        newValue->isMustBeChar = ((NodeInt*)base)->isMustBeChar;
+        newValue->isMustBeShort = ((NodeInt*)base)->isMustBeShort;
+        newValue->isMustBeLong = ((NodeInt*)base)->isMustBeLong;
+        return newValue->generate();
     }
+    else if(instanceof<NodeFloat>(base)) {
+        NodeFloat* old = (NodeFloat*)base;
+        NodeFloat* newValue = (NodeFloat*)old->copy();
+        newValue->value = (newValue->value[0] == '-' ? "" : "-") + newValue->value;
+        return newValue->generate();
+    }
+
+    RaveValue bs = base->generate();
+
+    if(instanceof<TypeBasic>(bs.type) && !((TypeBasic*)bs.type)->isFloat())
+        return {LLVMBuildNeg(generator->builder, bs.value, "Unary_negative"), bs.type};
+
+    return {LLVMBuildFNeg(generator->builder, bs.value, "Unary_negative"), bs.type};
+}
+
+RaveValue Unary::make(int loc, char type, Node* base) {
+    if(type == TokType::Minus) return Unary::negative(base);
 
     if(type == TokType::GetPtr) {
         RaveValue value;
@@ -168,25 +173,7 @@ void NodeUnary::check() {
 }
 
 RaveValue NodeUnary::generateConst() {
-    if(this->type == TokType::Minus) {
-        if(instanceof<NodeInt>(this->base)) {
-            NodeInt* newValue = (new NodeInt(-((NodeInt*)this->base)->value));
-            newValue->isMustBeChar = ((NodeInt*)this->base)->isMustBeChar;
-            newValue->isMustBeShort = ((NodeInt*)this->base)->isMustBeShort;
-            newValue->isMustBeLong = ((NodeInt*)this->base)->isMustBeLong;
-            return newValue->generate();
-        }
-        else if(instanceof<NodeFloat>(base)) {
-            NodeFloat* old = (NodeFloat*)base;
-            NodeFloat* newValue = (NodeFloat*)old->copy();
-            newValue->value = (newValue->value[0] == '-' ? "" : "-") + newValue->value;
-            return newValue->generate();
-        }
-
-        RaveValue bs = this->base->generate();
-        if(instanceof<TypeBasic>(bs.type) && !((TypeBasic*)bs.type)->isFloat()) return {LLVMBuildNeg(generator->builder, bs.value, ""), bs.type};
-        return {LLVMBuildFNeg(generator->builder, bs.value, ""), bs.type};
-    }
+    if(this->type == TokType::Minus) return Unary::negative(base);
 
     return {};
 }

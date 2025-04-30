@@ -15,6 +15,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Unary {
     extern RaveValue make(int loc, char type, Node* base);
+    extern RaveValue negative(Node* base);
 }
 
 class NodeUnary : public Node {
