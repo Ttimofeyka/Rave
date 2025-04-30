@@ -31,10 +31,12 @@ Type* NodeGet::getType() {
     Type* baseType = this->base->getType();
     TypeStruct* ts = nullptr;
 
-    if(instanceof<TypeStruct>(baseType)) ts = static_cast<TypeStruct*>(baseType);
-    else if(instanceof<TypePointer>(baseType) && instanceof<TypeStruct>(baseType->getElType())) ts = static_cast<TypeStruct*>(static_cast<TypePointer*>(baseType)->instance);
-    else return baseType;
-
+    // Get TypeStruct from base type
+    if(instanceof<TypeStruct>(baseType)) ts = (TypeStruct*)baseType;
+    else if(instanceof<TypePointer>(baseType)) {
+        if(instanceof<TypeStruct>(baseType->getElType())) ts = (TypeStruct*)baseType->getElType();
+    }
+    
     if(!ts) {
         generator->error("type '" + baseType->toString() + "' is not a structure!", loc);
         return nullptr;
@@ -42,48 +44,46 @@ Type* NodeGet::getType() {
 
     Template::replaceTemplates((Type**)&ts);
 
-    // Check method table
-    auto methodIt = AST::methodTable.find({ts->name, this->field});
-    if(methodIt != AST::methodTable.end()) {
-        return methodIt->second->getType();
-    }
+    // Check method table first (most common case)
+    const std::string& structName = ts->name;
+    auto methodKey = std::make_pair(structName, field);
+    auto methodIt = AST::methodTable.find(methodKey);
+
+    if(methodIt != AST::methodTable.end()) return methodIt->second->getType();
 
     // Check struct numbers
-    auto structIt = AST::structsNumbers.find({ts->name, this->field});
+    auto structIt = AST::structsNumbers.find(methodKey);
     if(structIt != AST::structsNumbers.end()) return structIt->second.var->getType();
 
-    // Check for generic types
-    for(const auto& x : generator->toReplace) {
-        if(x.first.find('<') != std::string::npos) return x.second;
-    }
-
-    if(ts->name.find('<') != std::string::npos) {
-        for(int i=0; i<ts->types.size(); i++) {
-            while(generator->toReplace.find(ts->types[i]->toString()) != generator->toReplace.end()) ts->types[i] = generator->toReplace[ts->types[i]->toString()];
-        }
-
-        ts->updateByTypes();
-    }
-
-    generator->error("structure '" + ts->name + "' does not contain element '" + field + "'!", loc);
+    generator->error("structure '" + structName + "' does not contain element '" + field + "'!", loc);
     return nullptr;
 }
 
 RaveValue NodeGet::checkStructure(RaveValue ptr) {
+    // Handle non-pointer types
     if(!instanceof<TypePointer>(ptr.type)) {
-        if(LLVMIsAArgument(ptr.value) && LLVMGetTypeKind(LLVMTypeOf(ptr.value)) == LLVMPointerTypeKind) ptr.type = new TypePointer(ptr.type);
-        else {
+        // Special case for pointer arguments
+        if(LLVMIsAArgument(ptr.value) && LLVMGetTypeKind(LLVMTypeOf(ptr.value)) == LLVMPointerTypeKind) {
+            ptr.type = new TypePointer(ptr.type);
+        } else {
+            // Allocate and store value
             RaveValue temp = LLVM::alloc(ptr.type, "NodeGet_checkStructure");
             LLVMBuildStore(generator->builder, ptr.value, temp.value);
             return temp;
         }
     }
-    
-    while(instanceof<TypePointer>(ptr.type->getElType())) ptr = LLVM::load(ptr, "NodeGet_checkStructure_load", loc);
 
-    while(generator->toReplace.find(ptr.type->getElType()->toString()) != generator->toReplace.end()) {
-        ((TypePointer*)ptr.type)->instance = generator->toReplace[ptr.type->getElType()->toString()];
+    // Dereference nested pointers
+    Type* elType = ptr.type->getElType();
+    while(instanceof<TypePointer>(elType)) {
+        ptr = LLVM::load(ptr, "NodeGet_checkStructure_load", loc);
+        elType = ptr.type->getElType();
     }
+
+    // Handle type replacements
+    const std::string& typeStr = elType->toString();
+    auto it = generator->toReplace.find(typeStr);
+    if(it != generator->toReplace.end()) ((TypePointer*)ptr.type)->instance = it->second;
     
     return ptr;
 }
