@@ -39,54 +39,64 @@ inline void checkAndGenerate(std::string name) {
     if(generator->functions.find(name) == generator->functions.end()) AST::funcTable[name]->generate();
 }
 
-bool hasIdenticallyArgs(std::vector<Type*> one, std::vector<Type*> two) {
+bool hasIdenticallyArgs(const std::vector<Type*>& one, const std::vector<Type*>& two) {
     if(one.size() != two.size()) return false;
 
-    for(int i=0; i<one.size(); i++) {
-        if(instanceof<TypeBasic>(one[i]) && instanceof<TypeBasic>(two[i])) {
-            if(one[i]->toString() != two[i]->toString()) {
-                if(!isFloatType(one[i]) && !isFloatType(two[i])) {
-                    if(
-                        (((TypeBasic*)one[i])->type + 10 != ((TypeBasic*)two[i])->type) &&
-                        (((TypeBasic*)two[i])->type + 10 != ((TypeBasic*)one[i])->type)
-                    ) return false;
+    for(size_t i = 0; i < one.size(); ++i) {
+        Type* t1 = one[i];
+        Type* t2 = two[i];
+        
+        if(instanceof<TypeBasic>(t1) && instanceof<TypeBasic>(t2)) {
+            auto* tb1 = (TypeBasic*)t1;
+            auto* tb2 = (TypeBasic*)t2;
+            
+            if(tb1->type != tb2->type) {
+                if(!isFloatType(tb1) && !isFloatType(tb2)) {
+                    if((tb1->type + 10 != tb2->type) && (tb2->type + 10 != tb1->type)) return false;
                 }
             }
+            continue;
         }
 
-        if(one[i]->toString() != two[i]->toString()) return false;
+        if(t1->toString() != t2->toString()) return false;
     }
     return true;
 }
 
-bool hasIdenticallyArgs(std::vector<Type*> one, std::vector<FuncArgSet> two) {
+bool hasIdenticallyArgs(const std::vector<Type*>& one, const std::vector<FuncArgSet>& two) {
     if(one.size() != two.size()) return false;
 
-    for(int i=0; i<one.size(); i++) {
-        if(instanceof<TypeBasic>(one[i]) && instanceof<TypeBasic>(two[i].type)) {
-            if(one[i]->toString() != two[i].type->toString()) {
-                if(!isFloatType(one[i]) && !isFloatType(two[i].type)) {
-                    if(
-                        (((TypeBasic*)one[i])->type + 10 != ((TypeBasic*)two[i].type)->type) &&
-                        (((TypeBasic*)two[i].type)->type + 10 != ((TypeBasic*)one[i])->type)
-                    ) return false;
+    for(size_t i = 0; i < one.size(); ++i) {
+        Type* t1 = one[i];
+        Type* t2 = two[i].type;
+        
+        if(instanceof<TypeBasic>(t1) && instanceof<TypeBasic>(t2)) {
+            auto* tb1 = (TypeBasic*)t1;
+            auto* tb2 = (TypeBasic*)t2;
+            
+            if(tb1->type != tb2->type) {
+                if(!isFloatType(tb1) && !isFloatType(tb2)) {
+                    if((tb1->type + 10 != tb2->type) && (tb2->type + 10 != tb1->type)) {
+                        return false;
+                    }
+                } else {
+                    return false;
                 }
-                else return false;
             }
+            continue;
         }
-        else if(one[i] == nullptr || two[i].type == nullptr || one[i]->toString() != two[i].type->toString()) {
-            if(one[i] != nullptr && two[i].type != nullptr) {
-                while(instanceof<TypeConst>(one[i])) one[i] = one[i]->getElType();
-                while(instanceof<TypeConst>(two[i].type)) two[i].type = two[i].type->getElType();
 
-                if(instanceof<TypeStruct>(one[i]) && instanceof<TypePointer>(two[i].type)) continue;
-                if(instanceof<TypeStruct>(two[i].type) && instanceof<TypePointer>(one[i])) continue;
+        if(t1 == nullptr || t2 == nullptr || t1->toString() != t2->toString()) {
+            if(t1 != nullptr && t2 != nullptr) {
+                while(instanceof<TypeConst>(t1)) t1 = t1->getElType();
+                while(instanceof<TypeConst>(t2)) t2 = t2->getElType();
+
+                if(instanceof<TypeStruct>(t1) && instanceof<TypePointer>(t2)) continue;
+                if(instanceof<TypeStruct>(t2) && instanceof<TypePointer>(t1)) continue;
             }
-
             return false;
         }
     }
-
     return true;
 }
 
