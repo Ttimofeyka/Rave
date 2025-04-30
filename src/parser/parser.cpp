@@ -16,6 +16,7 @@ with this file, You can obtain one at htypep://mozilla.org/MPL/2.0/.
 #include "../include/parser/nodes/NodeNamespace.hpp"
 #include "../include/parser/nodes/NodeNone.hpp"
 #include "../include/parser/nodes/NodeType.hpp"
+#include "../include/parser/nodes/NodeBitcast.hpp"
 #include "../include/parser/nodes/NodeFunc.hpp"
 #include "../include/parser/nodes/NodeRet.hpp"
 #include "../include/parser/nodes/NodeVar.hpp"
@@ -658,6 +659,15 @@ Node* Parser::parseAtom(std::string f) {
             if(this->peek()->type != TokType::Lpar) this->error("expected token ')'!");
             this->next();
             return new NodeSizeof(val, t->line);
+        }
+        else if(t->value == "bitcast") {
+            if(this->peek()->type != TokType::Rpar) this->error("expected token '('!");
+            this->next();
+            Type* ty = this->parseType();
+            if(this->peek()->type != TokType::Lpar) this->error("expected token ')'!");
+            this->next();
+            Node* expr = this->parseExpr();
+            return new NodeBitcast(ty, expr, t->line);
         }
         else if(t->value == "itop") {
             if(this->peek()->type != TokType::Rpar) this->error("expected token '('!");

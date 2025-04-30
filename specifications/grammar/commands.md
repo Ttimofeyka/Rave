@@ -7,7 +7,7 @@
 Example:
 ```d
 int i = 0;
-while(i<100) {
+while(i < 100) {
     if(i == 40) continue;
     else if(i == 67) break;
     i += 1;
@@ -34,7 +34,7 @@ import "specifications"
 Example:
 ```d
 int i = 0;
-while(i<10) {i += 1;}
+while(i < 10) {i += 1;}
 ```
 
 **[if/else] [likely/unlikely] (cond) [body/{body}]** - A block of code executed if the conditions are true.
@@ -127,6 +127,15 @@ Example:
 ```d
 float a = 0;
 int b = cast(int)a;
+```
+
+**bitcast(type)expr** - Bit-level reinterpretation of an expression to another type without changing the underlying bits.
+
+Example:
+
+```d
+float a = 3.14f;
+int b = bitcast(int)a; // Reinterprets the bits of 'a' as an int
 ```
 
 **defer [body/{body}]** - Generate a body before current block end. If there is no block, the behavior is like fdefer.

@@ -70,6 +70,7 @@ public:
     Node* parseOperatorOverload(Type* type, std::string s);
     Node* parseBreak();
     Node* parseContinue();
+    Node* parseBitcast();
     Node* parseConstantStructure(std::string structName);
     std::vector<FuncArgSet> parseFuncArgSets();
     Node* parseIndex(Node* base, std::string f);
