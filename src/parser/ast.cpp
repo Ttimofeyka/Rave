@@ -388,10 +388,17 @@ LLVMTypeRef LLVMGen::genType(Type* type, int loc) {
         default: return nullptr;
     }
     if(instanceof<TypePointer>(type)) {
-        if(instanceof<TypeVoid>(((TypePointer*)type)->instance)) return LLVMPointerType(LLVMInt8TypeInContext(this->context),0);
-        return LLVMPointerType(this->genType(((TypePointer*)type)->instance, loc),0);
+        if(instanceof<TypeVoid>(((TypePointer*)type)->instance)) return LLVMPointerType(LLVMInt8TypeInContext(this->context), 0);
+
+        Type* instance = type->getElType();
+        if(instanceof<TypeAlias>(instance)) generator->error("cannot generate 'alias' as the part of another type!", loc);
+        return LLVMPointerType(this->genType(instance, loc), 0);
     }
-    if(instanceof<TypeArray>(type)) return LLVMArrayType(this->genType(((TypeArray*)type)->element, loc), ((NodeInt*)((TypeArray*)type)->count->comptime())->value.to_int());
+    if(instanceof<TypeArray>(type)) {
+        Type* element = type->getElType();
+        if(instanceof<TypeAlias>(element)) generator->error("cannot generate 'alias' as the part of another type!", loc);
+        return LLVMArrayType(this->genType(element, loc), ((NodeInt*)((TypeArray*)type)->count->comptime())->value.to_int());
+    }
     if(instanceof<TypeStruct>(type)) {
         TypeStruct* s = (TypeStruct*)type;
 
@@ -445,9 +452,14 @@ LLVMTypeRef LLVMGen::genType(Type* type, int loc) {
         return LLVMPointerType(LLVMFunctionType(this->genType(tf->main, loc), types.data(), types.size(), false), 0);
     }
     if(instanceof<TypeFuncArg>(type)) return this->genType(((TypeFuncArg*)type)->type, loc);
-    if(instanceof<TypeConst>(type)) return this->genType(((TypeConst*)type)->instance, loc);
+    if(instanceof<TypeConst>(type)) {
+        Type* instance = type->getElType();
+        if(instanceof<TypeAlias>(instance)) generator->error("cannot generate 'alias' as the part of another type!", loc);
+        return this->genType(instance, loc);
+    }
     if(instanceof<TypeVector>(type)) return LLVMVectorType(this->genType(((TypeVector*)type)->mainType, loc), ((TypeVector*)type)->count);
     if(instanceof<TypeLLVM>(type)) return ((TypeLLVM*)type)->tr;
+
     this->error("undefined type!", loc);
     return nullptr;
 }

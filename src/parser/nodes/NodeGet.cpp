@@ -63,9 +63,8 @@ RaveValue NodeGet::checkStructure(RaveValue ptr) {
     // Handle non-pointer types
     if(!instanceof<TypePointer>(ptr.type)) {
         // Special case for pointer arguments
-        if(LLVMIsAArgument(ptr.value) && LLVMGetTypeKind(LLVMTypeOf(ptr.value)) == LLVMPointerTypeKind) {
-            ptr.type = new TypePointer(ptr.type);
-        } else {
+        if(LLVMIsAArgument(ptr.value) && LLVMGetTypeKind(LLVMTypeOf(ptr.value)) == LLVMPointerTypeKind) ptr.type = new TypePointer(ptr.type);
+        else {
             // Allocate and store value
             RaveValue temp = LLVM::alloc(ptr.type, "NodeGet_checkStructure");
             LLVMBuildStore(generator->builder, ptr.value, temp.value);
