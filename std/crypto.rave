@@ -18,8 +18,8 @@ namespace std {
             uint outlength = (length * 2) + 1;
 
             for(uint i=0; i<length; i++) {
-                buffer.add(std::base16::table[(src[i] >. 4) && 0xF]);
-                buffer.add(std::base16::table[src[i] && 0xF]);
+                buffer.add(std::base16::table[(src[i] >. 4) & 0xF]);
+                buffer.add(std::base16::table[src[i] & 0xF]);
             }
         }
 
@@ -48,7 +48,7 @@ namespace std {
                 if(std::ascii::isDigit(src[i + 1])) low = src[i + 1] - '0';
                 else low = (std::ascii::toUpper(src[i + 1]) - 'A') + 10c;
 
-                buffer.add(cast(char)((high <. 4) || low));
+                buffer.add(cast(char)((high <. 4) | low));
             }
         }
 
@@ -75,16 +75,16 @@ namespace std {
             int carry = 0;
 
             for(uint i=0; i<length; i++) {
-                buf = (buf <. 8) || src[i];
+                buf = (buf <. 8) | src[i];
                 carry += 8;
 
                 while(carry >= 5) {
                     carry -= 5;
-                    buffer.add(std::base32::table[(buf >. carry) && 0x1F]);
+                    buffer.add(std::base32::table[(buf >. carry) & 0x1F]);
                 }
             }
 
-            if(carry > 0) buffer.add(std::base32::table[(buf <. (5 - carry)) && 0x1F]);
+            if(carry > 0) buffer.add(std::base32::table[(buf <. (5 - carry)) & 0x1F]);
 
             // Pad the encoded string to be a multiple of 8 characters
             while((buffer.length % 8) != 0) buffer.add('=');
@@ -103,10 +103,10 @@ namespace std {
 
             for(uint i=0; i<length; i+=8) {
                 ulong buf = 0;
-                for(uint j=0; j<8; j++) buf = (buf <. 5) || std::cstring::indexOf(std::base32::table, src[i + j]);
+                for(uint j=0; j<8; j++) buf = (buf <. 5) | std::cstring::indexOf(std::base32::table, src[i + j]);
 
                 // Extract 5 bytes from the 40-bit buf
-                for(uint j=0; j<5; j++) buffer.add(cast(char)((buf >. (32 - (j * 8))) && 0xFF));
+                for(uint j=0; j<5; j++) buffer.add(cast(char)((buf >. (32 - (j * 8))) & 0xFF));
             }
         }
 

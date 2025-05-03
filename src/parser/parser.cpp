@@ -65,30 +65,31 @@ Parser::Parser(std::vector<Token*> tokens, std::string file) {
     this->file = file;
 
     operators.clear();
-    operators.insert({TokType::Plus, 0});
-    operators.insert({TokType::Minus, 0});
     operators.insert({TokType::Multiply, 1});
     operators.insert({TokType::Divide, 1});
+    operators.insert({TokType::Plus, 0});
+    operators.insert({TokType::Minus, 0});
     operators.insert({TokType::Rem, 0});
+    operators.insert({TokType::BitLeft, -51});
+    operators.insert({TokType::BitRight, -51});
+    operators.insert({TokType::BitXor, -55});
+    operators.insert({TokType::BitOr, -55});
+    operators.insert({TokType::Amp, -55});
+    operators.insert({TokType::Less, -70});
+    operators.insert({TokType::More, -70});
+    operators.insert({TokType::LessEqual, -70});
+    operators.insert({TokType::MoreEqual, -70});
+    operators.insert({TokType::Equal, -80});
+    operators.insert({TokType::Nequal, -80});
+    operators.insert({TokType::In, -80});
+    operators.insert({TokType::NeIn, -80});
+    operators.insert({TokType::Or, -85});
+    operators.insert({TokType::And, -85});
     operators.insert({TokType::Equ, -95});
     operators.insert({TokType::PluEqu, -97});
     operators.insert({TokType::MinEqu, -97});
     operators.insert({TokType::MulEqu, -97});
     operators.insert({TokType::DivEqu, -97});
-    operators.insert({TokType::Equal, -80});
-    operators.insert({TokType::Nequal, -80});
-    operators.insert({TokType::In, -80});
-    operators.insert({TokType::NeIn, -80});
-    operators.insert({TokType::Less, -70});
-    operators.insert({TokType::More, -70});
-    operators.insert({TokType::LessEqual, -70});
-    operators.insert({TokType::MoreEqual, -70});
-    operators.insert({TokType::Or, -85});
-    operators.insert({TokType::And, -85});
-    operators.insert({TokType::BitLeft, -51});
-    operators.insert({TokType::BitRight, -51});
-    operators.insert({TokType::BitXor, -51});
-    operators.insert({TokType::BitOr, -51});
 }
 
 void Parser::error(std::string msg) {
@@ -1147,7 +1148,7 @@ bool Parser::isTemplate() {
 
 Node* Parser::parsePrefix(std::string f) {
     static const std::vector<char> operators = {
-        TokType::GetPtr,
+        TokType::Amp,
         TokType::Multiply,
         TokType::Minus,
         TokType::Ne,
@@ -1187,7 +1188,7 @@ Node* Parser::parseSuffix(Node* base, std::string f) {
         else if(this->peek()->type == TokType::Dot) {
             this->next();
 
-            bool isPtr = (this->peek()->type == TokType::GetPtr);
+            bool isPtr = (this->peek()->type == TokType::Amp);
             if(isPtr) this->next();
 
             std::string field = this->peek()->value;

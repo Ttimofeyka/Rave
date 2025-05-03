@@ -39,7 +39,7 @@ namespace std {
             std::memset(act.&handler, sizeof(void*), 0);
             act.flags = 0;
 
-            act.flags = act.flags || 268435456;
+            act.flags = act.flags | 268435456;
 
             std::syscall(std::sysctable::SigAction, flag, &act, &oldAct);
         }
