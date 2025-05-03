@@ -48,7 +48,7 @@ RaveValue Unary::negative(Node* base) {
 RaveValue Unary::make(int loc, char type, Node* base) {
     if(type == TokType::Minus) return Unary::negative(base);
 
-    if(type == TokType::GetPtr) {
+    if(type == TokType::Amp) {
         RaveValue value;
 
         if(instanceof<NodeGet>(base)) {
@@ -151,7 +151,7 @@ NodeUnary::~NodeUnary() {
 
 Type* NodeUnary::getType() {
     switch(this->type) {
-        case TokType::GetPtr:
+        case TokType::Amp:
             if(instanceof<TypeArray>(this->base->getType())) return new TypePointer(this->base->getType()->getElType());
             return new TypePointer(this->base->getType());
         case TokType::Minus: case TokType::Ne: return this->base->getType();

@@ -270,7 +270,7 @@ namespace std {
             std::json::Value(std::string*, std::string, int*) __parseObject;
 
             void skip(std::string data, int* idx) {
-                while((std::ascii::isSpace(data.at(idx[0]))) && (idx[0] < data.length)) idx[0] += 1;
+                while((idx[0] < data.length) && (std::ascii::isSpace(data.at(idx[0])))) idx[0] += 1;
             }
 
             std::json::Value parseBoolean(std::string data, int* idx) {

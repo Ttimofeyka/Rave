@@ -130,22 +130,22 @@ namespace std {
             extern(linkname: "gai_strerror") char* getAddrInfoStrErr(int errcode);
 
             (inline) uint htonl(uint hostlong) {
-                @if(__RAVE_LITTLE_ENDIAN) return = ((hostlong <. 24) && 0xFF000000) || ((hostlong <. 8) && 0x00FF0000) || ((hostlong >. 8) && 0x0000FF00) || ((hostlong >. 24) && 0x000000FF);
+                @if(__RAVE_LITTLE_ENDIAN) return = ((hostlong <. 24) & 0xFF000000) | ((hostlong <. 8) & 0x00FF0000) | ((hostlong >. 8) & 0x0000FF00) | ((hostlong >. 24) & 0x000000FF);
                 @else return = hostlong;
             }
 
             (inline) ushort htons(ushort hostshort) {
-                @if(__RAVE_LITTLE_ENDIAN) return = (hostshort <. 8) || (hostshort >. 8);
+                @if(__RAVE_LITTLE_ENDIAN) return = (hostshort <. 8) | (hostshort >. 8);
                 @else return = hostshort;
             }
 
             (inline) uint ntohl(uint netlong) {
-                @if(__RAVE_LITTLE_ENDIAN) return = ((netlong <. 24) && 0xFF000000) || ((netlong <. 8) && 0x00FF0000) || ((netlong >. 8) && 0x0000FF00) || ((netlong >. 24) && 0x000000FF);
+                @if(__RAVE_LITTLE_ENDIAN) return = ((netlong <. 24) & 0xFF000000) | ((netlong <. 8) & 0x00FF0000) | ((netlong >. 8) & 0x0000FF00) | ((netlong >. 24) & 0x000000FF);
                 @else return = netlong;
             }
 
             (inline) ushort ntohs(ushort netshort) {
-                @if(__RAVE_LITTLE_ENDIAN) return = (netshort <. 8) || (netshort >. 8);
+                @if(__RAVE_LITTLE_ENDIAN) return = (netshort <. 8) | (netshort >. 8);
                 @else return = netshort;
             }
 
