@@ -8,23 +8,23 @@ import <std/ascii>
 
 namespace std {
     namespace unicode {
-        (inline) bool isSpace(uint c) => (c == ' ') || (c == '\r') || (c == '\t') || (c == '\n') || (c == '\v');
-        (inline) bool isDigit(uint c) => (c >= '0') && (c <= '9');
+        (inline) bool isSpace(uint c) => (c == ' ') | (c == '\r') | (c == '\t') | (c == '\n') | (c == '\v');
+        (inline) bool isDigit(uint c) => (c >= '0') & (c <= '9');
 
         (inline) bool isLower(uint c) {
             return = false;
-            if(c < 128) return = (c > 96) && (c < 123);
+            if(c < 128) return = (c > 96) & (c < 123);
             else {
-                if((c > 1071) && (c < 1104)) return = true; // Cyrillic (russian)
+                if((c > 1071) & (c < 1104)) return = true; // Cyrillic (russian)
                 // TODO: add completely support of cyrillic
             }
         }
 
         (inline) bool isUpper(uint c) {
             return = false;
-            if(c < 128) return = (c > 64) && (c < 91);
+            if(c < 128) return = (c > 64) & (c < 91);
             else {
-                if((c > 1039) && (c < 1072)) return = true; // Cyrillic (russian)
+                if((c > 1039) & (c < 1072)) return = true; // Cyrillic (russian)
                 // TODO: add completely support of cyrillic
             }
         }
@@ -33,7 +33,7 @@ namespace std {
             return = c;
             if(c < 128) return = std::ascii::toLower(c);
             else {
-                if((c > 1039) && (c < 1072)) return = c + 32; // Cyrillic (russian)
+                if((c > 1039) & (c < 1072)) return = c + 32; // Cyrillic (russian)
                 // TODO: add completely support of cyrillic
             }
         }
@@ -42,7 +42,7 @@ namespace std {
             return = c;
             if(c < 128) return = std::ascii::toUpper(c);
             else {
-                if((c > 1071) && (c < 1104)) return = c - 32; // Cyrillic (russian)
+                if((c > 1071) & (c < 1104)) return = c - 32; // Cyrillic (russian)
                 // TODO: add completely support of cyrillic
             }
         }

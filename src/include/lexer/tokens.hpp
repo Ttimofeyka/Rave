@@ -48,7 +48,7 @@ enum TokType : char {
     DivEqu,
     And,
     Or,
-    GetPtr,
+    Amp,
     VarArg,
 
     SliceOper,
@@ -65,7 +65,6 @@ enum TokType : char {
     Destructor,
 
     BitOr,
-    BitAnd,
 
     In,
     NeIn,

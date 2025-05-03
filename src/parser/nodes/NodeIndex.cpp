@@ -267,7 +267,7 @@ RaveValue NodeIndex::generate() {
         NodeUnary* nunary = (NodeUnary*)this->element;
         Type* nunaryType = nunary->base->getType();
 
-        if((nunary->type == TokType::GetPtr) && (instanceof<TypeStruct>(nunaryType) || (instanceof<TypePointer>(nunaryType) && instanceof<TypeStruct>(((TypePointer*)nunaryType)->instance)))) {
+        if((nunary->type == TokType::Amp) && (instanceof<TypeStruct>(nunaryType) || (instanceof<TypePointer>(nunaryType) && instanceof<TypeStruct>(((TypePointer*)nunaryType)->instance)))) {
             TypeStruct* tstruct = instanceof<TypeStruct>(nunaryType) ? (TypeStruct*)nunaryType : (TypeStruct*)(((TypePointer*)nunaryType)->instance);
             
             if(AST::structTable.find(tstruct->name) != AST::structTable.end()) {

@@ -183,7 +183,7 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 else if(func->origName.find("(!=)") != std::string::npos) {oper = TokType::Nequal; func->name = this->name + "(!=)";}
                 else if(func->origName.find("([])") != std::string::npos) {oper = TokType::Rbra; func->name = this->name + "([])";}
                 else if((func->origName.find("([]=)") != std::string::npos) || (func->origName.find("(=[])") != std::string::npos)) {oper = TokType::Lbra; func->name = this->name + "([]=)";}
-                else if((func->origName.find("([]&)") != std::string::npos) || (func->origName.find("(&[])") != std::string::npos)) {oper = TokType::GetPtr; func->name = this->name + "([]&)";}
+                else if((func->origName.find("([]&)") != std::string::npos) || (func->origName.find("(&[])") != std::string::npos)) {oper = TokType::Amp; func->name = this->name + "([]&)";}
                 else if(func->origName.find("(in)") != std::string::npos) {oper = TokType::In; func->name = this->name + "(in)";}
 
                 if(oper != TokType::Rbra) func->name = func->name + typesToString(func->args);

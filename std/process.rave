@@ -35,9 +35,9 @@ import <std/error>
 
             extern(linkname: "environ") char** environment;
 
-            (inline) int isTermSignal(int s) => s && 0x7F;
+            (inline) int isTermSignal(int s) => s & 0x7F;
             (inline) int isNormalExit(int s) => !(std::process::isTermSignal(s));
-            (inline) int getExitStatus(int s) => ((s) && 0xFF00) >. 8;
+            (inline) int getExitStatus(int s) => ((s) & 0xFF00) >. 8;
 
             (inline) int execve(char* fName, char** argv, char** envp) => cast(int)std::syscall(std::sysctable::Execve);
             (inline) uint wait4(uint pid, int* status, int options, std::process::rusage* rusage) => cast(int)std::syscall(std::sysctable::Wait4, pid, status, options, rusage);
@@ -101,7 +101,7 @@ import <std/error>
             extern(linkname: "TerminateProcess") char __TerminateProcess(void* handle, uint exitCode);
 
             int kill(int pid, int sig) {
-                void* handle = std::process::__OpenProcess(std::process::Terminate || std::process::SuspendAndResume, cast(char)false, pid);
+                void* handle = std::process::__OpenProcess(std::process::Terminate | std::process::SuspendAndResume, cast(char)false, pid);
                 if(handle != null) {   
                     switch(sig) {
                         case(std::SigTerm) return = (std::process::__TerminateProcess(handle, 1) != 0c);

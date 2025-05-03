@@ -39,7 +39,7 @@ namespace std {
             std::memset(act.&handler, sizeof(void*), 0);
             act.flags = 0;
 
-            act.flags = act.flags || 268435456;
+            act.flags = act.flags | 268435456;
 
             std::syscall(std::sysctable::SigAction, flag, &act, &oldAct);
         }
@@ -53,7 +53,7 @@ namespace std {
             // Windows doesn't have a direct equivalent to the POSIX signal function,
             // but we can use the SetConsoleCtrlHandler function to handle some signals.
 
-            if((flag == std::SigInt) || (flag == std::SigTerm)) std::SetConsoleCtrlHandler(cast(char(int))catcher, 1c);
+            if((flag == std::SigInt) | (flag == std::SigTerm)) std::SetConsoleCtrlHandler(cast(char(int))catcher, 1c);
         }
     }
 }

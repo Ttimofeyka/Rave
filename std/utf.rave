@@ -10,7 +10,7 @@ namespace std {
     namespace utf8 {
         const(int[16]) utfLength = [1, 1, 1, 1, 1, 1, 1, 1, 0, 0, 0, 0, 2, 2, 3, 4];
 
-        (inline) bool isStart(char c) => ((c && 0xC0) != 0x80);
+        (inline) bool isStart(char c) => ((c & 0xC0) != 0x80);
 
         int utflen(uchar* str) {
             int i = 0;
@@ -20,9 +20,9 @@ namespace std {
             }
         }
 
-        (inline) int charlen(uchar ch) => cast(int)(std::utf8::utfLength[(ch && 0xFF) >. 4]);
+        (inline) int charlen(uchar ch) => cast(int)(std::utf8::utfLength[(ch & 0xFF) >. 4]);
 
-        (inline) int charlen(uchar* ch, int idx) => cast(int)(std::utf8::utfLength[(ch[idx] && 0xFF) >. 4]);
+        (inline) int charlen(uchar* ch, int idx) => cast(int)(std::utf8::utfLength[(ch[idx] & 0xFF) >. 4]);
 
         int next(uchar* str) {
             return += 1;
@@ -30,36 +30,36 @@ namespace std {
         }
 
         uint toCodepoint(uchar* str, uint at) {
-            if((str[at] && 0x80) == 0) return = cast(uint)str[at];
-            else if((str[at] && 0xE0) == 0xC0) {
-                return = (str[at] && 0x1F) <. 6;
-                return = return || (str[at + 1] && 0x3F);
+            if((str[at] & 0x80) == 0) return = cast(uint)str[at];
+            else if((str[at] & 0xE0) == 0xC0) {
+                return = (str[at] & 0x1F) <. 6;
+                return = return | (str[at + 1] & 0x3F);
             }
-            else if((str[at] && 0xF0) == 0xE0) {
-                return = (str[at] && 0xF) <. 12;
-                return = return || (str[at + 1] && 0x3F) <. 6;
-                return = return || (str[at + 2] && 0x3F);
+            else if((str[at] & 0xF0) == 0xE0) {
+                return = (str[at] & 0xF) <. 12;
+                return = return | (str[at + 1] & 0x3F) <. 6;
+                return = return | (str[at + 2] & 0x3F);
             }
-            else if((str[at] && 0xF8) == 0xF0) {
-                return = (str[at] && 0x7) <. 18;
-                return = return || (str[at + 1] && 0x3F) <. 12;
-                return = return || (str[at + 2] && 0x3F) <. 6;
-                return = return || (str[at + 3] && 0x3F);
+            else if((str[at] & 0xF8) == 0xF0) {
+                return = (str[at] & 0x7) <. 18;
+                return = return | (str[at + 1] & 0x3F) <. 12;
+                return = return | (str[at + 2] & 0x3F) <. 6;
+                return = return | (str[at + 3] & 0x3F);
             }
-            else if((str[at] && 0xFC) == 0xF8) {
-                return = (str[at] && 0x3) <. 24;
-                return = return || (str[at] && 0x3F) <. 18;
-                return = return || (str[at] && 0x3F) <. 12;
-                return = return || (str[at] && 0x3F) <. 6;
-                return = return || (str[at] && 0x3F);
+            else if((str[at] & 0xFC) == 0xF8) {
+                return = (str[at] & 0x3) <. 24;
+                return = return | (str[at] & 0x3F) <. 18;
+                return = return | (str[at] & 0x3F) <. 12;
+                return = return | (str[at] & 0x3F) <. 6;
+                return = return | (str[at] & 0x3F);
             }
-            else if((str[at] && 0xFE) == 0xFC) {
-                return = (str[at] && 0x1) <. 30;
-                return = return || (str[at] && 0x3F) <. 24;
-                return = return || (str[at] && 0x3F) <. 18;
-                return = return || (str[at] && 0x3F) <. 12;
-                return = return || (str[at] && 0x3F) <. 6;
-                return = return || (str[at] && 0x3F);
+            else if((str[at] & 0xFE) == 0xFC) {
+                return = (str[at] & 0x1) <. 30;
+                return = return | (str[at] & 0x3F) <. 24;
+                return = return | (str[at] & 0x3F) <. 18;
+                return = return | (str[at] & 0x3F) <. 12;
+                return = return | (str[at] & 0x3F) <. 6;
+                return = return | (str[at] & 0x3F);
             }
             else return = -1;
         }
@@ -115,19 +115,19 @@ namespace std {
                     switch(len) {
                         case(1) buffer[return] = cast(uchar)codepoint;
                         case(2) {
-                            buffer[return] = cast(uchar)(0xC0 || ((codepoint >. 6) && 0x1F));
-                            buffer[return + 1] = cast(uchar)(0x80 || (codepoint && 0x3F));
+                            buffer[return] = cast(uchar)(0xC0 | ((codepoint >. 6) & 0x1F));
+                            buffer[return + 1] = cast(uchar)(0x80 | (codepoint & 0x3F));
                         }
                         case(3) {
-                            buffer[return] = cast(uchar)(0xE0 || ((codepoint >. 12) && 0x0F));
-                            buffer[return + 1] = cast(uchar)(0x80 || ((codepoint >. 6) && 0x3F));
-                            buffer[return + 2] = cast(uchar)(0x80 || (codepoint && 0x3F));
+                            buffer[return] = cast(uchar)(0xE0 | ((codepoint >. 12) & 0x0F));
+                            buffer[return + 1] = cast(uchar)(0x80 | ((codepoint >. 6) & 0x3F));
+                            buffer[return + 2] = cast(uchar)(0x80 | (codepoint & 0x3F));
                         }
                         case(4) {
-                            buffer[return] = cast(uchar)(0xF0 || ((codepoint >. 18) && 0x07));
-                            buffer[return + 1] = cast(uchar)(0x80 || ((codepoint >. 12) && 0x3F));
-                            buffer[return + 2] = cast(uchar)(0x80 || ((codepoint >. 6) && 0x3F));
-                            buffer[return + 3] = cast(uchar)(0x80 || (codepoint && 0x3F));
+                            buffer[return] = cast(uchar)(0xF0 | ((codepoint >. 18) & 0x07));
+                            buffer[return + 1] = cast(uchar)(0x80 | ((codepoint >. 12) & 0x3F));
+                            buffer[return + 2] = cast(uchar)(0x80 | ((codepoint >. 6) & 0x3F));
+                            buffer[return + 3] = cast(uchar)(0x80 | (codepoint & 0x3F));
                         }
                     }
                 }
@@ -174,8 +174,8 @@ namespace std {
                 }
                 else {
                     if(isWrite && ((return + 1) < bufferSize)) {
-                        buffer[return] = cast(ushort)(0xD800 || ((codepoint - 0x10000) >. 10));
-                        buffer[return + 1] = cast(ushort)(0xDC00 || (codepoint - 0x10000) && 0x3FF);
+                        buffer[return] = cast(ushort)(0xD800 | ((codepoint - 0x10000) >. 10));
+                        buffer[return + 1] = cast(ushort)(0xDC00 | (codepoint - 0x10000) & 0x3FF);
                     }
                     return += 2;
                 }

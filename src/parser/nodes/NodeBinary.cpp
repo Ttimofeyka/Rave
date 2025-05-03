@@ -29,6 +29,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeType.hpp"
 #include "../../include/parser/nodes/NodeIf.hpp"
 #include "../../include/parser/nodes/NodeWhile.hpp"
+#include "../../include/parser/nodes/NodeRet.hpp"
 #include "../../include/llvm.hpp"
 #include "../../include/compiler.hpp"
 #include <iostream>
@@ -185,8 +186,40 @@ Node* NodeBinary::comptime() {
             if(this->op == TokType::Nequal) eqNeqResult->value = !eqNeqResult->value;
 
             return eqNeqResult;
+
+        // TODO: implicit cast of basic types to bool for And & Or
         case TokType::And: return new NodeBool(((NodeBool*)first->comptime())->value && ((NodeBool*)second->comptime())->value);
         case TokType::Or: return new NodeBool(((NodeBool*)first->comptime())->value || ((NodeBool*)second->comptime())->value);
+
+        // TODO:
+        // Current BigInt library is unsuitable for the compiler as it does not support bitwise operations.
+        // Rewrite for 128 bit numbers and continue implementing.
+        /* case TokType::Amp: case TokType::BitOr: {
+            BigInt firstval, secondval;
+            NodeBool* fbool = dynamic_cast<NodeBool*>(first->comptime());
+            NodeInt* fint = dynamic_cast<NodeInt*>(first->comptime());
+            if(fbool != nullptr) firstval = (long long)fbool->value;
+            else if(fint != nullptr) firstval = fint->value;
+            else {
+                // TODO: error handling in comptime
+                return new NodeBool(false);
+            }
+            NodeBool* sbool = dynamic_cast<NodeBool*>(first->comptime());
+            NodeInt* sint = dynamic_cast<NodeInt*>(first->comptime());
+            if(sbool != nullptr) secondval = (long long)sbool->value;
+            else if(sint != nullptr) secondval = sint->value;
+            else {
+                // TODO: error handling in comptime
+                return new NodeBool(false);
+            }
+            if (op == TokType::Amp) {
+                firstval = firstval & secondval;
+            }
+            else
+        } */
+        case TokType::Amp: return new NodeBool(((NodeBool*)first->comptime())->value && ((NodeBool*)second->comptime())->value);
+        case TokType::BitOr: return new NodeBool(((NodeBool*)first->comptime())->value || ((NodeBool*)second->comptime())->value);
+
         case TokType::More: case TokType::Less: case TokType::MoreEqual: case TokType::LessEqual:
             if(instanceof<NodeInt>(first)) {
                 if(instanceof<NodeInt>(second)) {
@@ -370,6 +403,56 @@ RaveValue Binary::operation(char op, Node* first, Node* second, int loc) {
         if(((TypeBasic*)_first.type)->isUnsigned()) return {LLVMBuildURem(generator->builder, _first.value, _second.value, "LLVM_urem"), _first.type};
         return {LLVMBuildSRem(generator->builder, _first.value, _second.value, "LLVM_srem"), _first.type};
     }
+    else if(op == TokType::And) {
+        RaveValue vFirst = first->generate();
+        LLVMBasicBlockRef thenBlock = LLVM::makeBlock("ascend", currScope->funcName); // further calculations are necessary if reached
+        LLVMBasicBlockRef elseBlock = LLVM::makeBlock("shortcut", currScope->funcName); // result is known in advance (false) if reached
+        LLVMBasicBlockRef mergeBlock = LLVM::makeBlock("merge", currScope->funcName);
+
+        LLVMBuildCondBr(generator->builder, vFirst.value, thenBlock, elseBlock);
+
+        LLVM::Builder::atEnd(thenBlock);
+        RaveValue vSecond = second->generate();
+        LLVMBuildBr(generator->builder, mergeBlock);
+        thenBlock = LLVMGetInsertBlock(generator->builder);
+
+        LLVM::Builder::atEnd(elseBlock);
+        LLVMValueRef predicted = LLVM::makeInt(1, false, false);
+        LLVMBuildBr(generator->builder, mergeBlock);
+        elseBlock = LLVMGetInsertBlock(generator->builder);
+
+        LLVM::Builder::atEnd(mergeBlock);
+        LLVMValueRef phi = LLVMBuildPhi(generator->builder, LLVMInt1TypeInContext(generator->context), "phi");
+        LLVMValueRef incomingValues[] = {vSecond.value, predicted};
+        LLVMBasicBlockRef incomingBlocks[] = {thenBlock, elseBlock};
+        LLVMAddIncoming(phi, incomingValues, incomingBlocks, 2);
+        return {phi, basicTypes[BasicType::Bool]};
+    }
+    else if(op == TokType::Or) {
+        RaveValue vFirst = first->generate();
+        LLVMBasicBlockRef thenBlock = LLVM::makeBlock("shortcut", currScope->funcName); // result is known in advance (true) if reached
+        LLVMBasicBlockRef elseBlock = LLVM::makeBlock("ascend", currScope->funcName); // further calculations are necessary if reached
+        LLVMBasicBlockRef mergeBlock = LLVM::makeBlock("merge", currScope->funcName);
+
+        LLVMBuildCondBr(generator->builder, vFirst.value, thenBlock, elseBlock);
+
+        LLVM::Builder::atEnd(thenBlock);
+        LLVMValueRef predicted = LLVM::makeInt(1, false, false);
+        LLVMBuildBr(generator->builder, mergeBlock);
+        thenBlock = LLVMGetInsertBlock(generator->builder);
+
+        LLVM::Builder::atEnd(elseBlock);
+        RaveValue vSecond = second->generate();
+        LLVMBuildBr(generator->builder, mergeBlock);
+        elseBlock = LLVMGetInsertBlock(generator->builder);
+
+        LLVM::Builder::atEnd(mergeBlock);
+        LLVMValueRef phi = LLVMBuildPhi(generator->builder, LLVMInt1TypeInContext(generator->context), "phi");
+        LLVMValueRef incomingValues[] = {predicted, vSecond.value};
+        LLVMBasicBlockRef incomingBlocks[] = {thenBlock, elseBlock};
+        LLVMAddIncoming(phi, incomingValues, incomingBlocks, 2);
+        return {phi, basicTypes[BasicType::Bool]};
+    }
 
     RaveValue vFirst = first->generate();
     RaveValue vSecond = second->generate();
@@ -467,8 +550,8 @@ RaveValue Binary::operation(char op, Node* first, Node* second, int loc) {
         case TokType::Equal: case TokType::Nequal:
         case TokType::Less: case TokType::More:
         case TokType::LessEqual: case TokType::MoreEqual: return LLVM::compare(vFirst, vSecond, op);
-        case TokType::And: return {LLVMBuildAnd(generator->builder, vFirst.value, vSecond.value, "NodeBinary_and"), vFirst.type};
-        case TokType::Or: return {LLVMBuildOr(generator->builder, vFirst.value, vSecond.value, "NodeBinary_or"), vFirst.type};
+        case TokType::Amp: return {LLVMBuildAnd(generator->builder, vFirst.value, vSecond.value, "NodeBinary_and"), vFirst.type};
+        case TokType::BitOr: return {LLVMBuildOr(generator->builder, vFirst.value, vSecond.value, "NodeBinary_or"), vFirst.type};
         case TokType::BitXor: return {LLVMBuildXor(generator->builder, vFirst.value, vSecond.value, "NodeBinary_xor"), vFirst.type};
         case TokType::BitLeft: return {LLVMBuildShl(generator->builder, vFirst.value, vSecond.value, "NodeBinary_and"), vFirst.type};
         case TokType::BitRight: return {LLVMBuildLShr(generator->builder, vFirst.value, vSecond.value, "NodeBinary_and"), vFirst.type};

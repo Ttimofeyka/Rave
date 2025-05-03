@@ -57,7 +57,7 @@ Examples:
 int main {
     int a = 2 <. 2; // Left shift
     int b = 16 >. 3; // Right shift
-    int d = 5 && 5; // AND
+    int d = 5 & 5; // AND
     int e = 10 || 10; // OR
     int c = 10 !! 5; // XOR
 } => 0;

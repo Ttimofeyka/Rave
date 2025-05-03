@@ -354,7 +354,7 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
                     for(int i=0; i<arguments.size(); i++) {
                         if(instanceof<TypeArray>(arguments[i]->getType())) {
                             isChanged = true;
-                            newArgs.insert(newArgs.end(), {new NodeUnary(loc, TokType::GetPtr, arguments[i]), ((TypeArray*)arguments[i]->getType())->count->comptime()});
+                            newArgs.insert(newArgs.end(), {new NodeUnary(loc, TokType::Amp, arguments[i]), ((TypeArray*)arguments[i]->getType())->count->comptime()});
                         }
                         else newArgs.push_back(arguments[i]);
                     }

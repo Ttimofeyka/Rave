@@ -23,7 +23,7 @@ import <std/thread> <std/ascii>
                 while(true) {
                     ulong chunk = ((cast(ulong*)&str[return])[0]);
 
-                    if(((chunk - 0x0101010101010101) && (!chunk) && 0x8080808080808080) != 0) break;
+                    if(((chunk - 0x0101010101010101) & (!chunk) & 0x8080808080808080) != 0) break;
 
                     return += 8;
                 }
@@ -48,7 +48,7 @@ import <std/thread> <std/ascii>
                 while(true) {
                     uint chunk = ((cast(uint*)&str[return])[0]);
 
-                    if(((chunk - 0x01010101) && (!chunk) && 0x80808080) != 0) break;
+                    if(((chunk - 0x01010101) & (!chunk) & 0x80808080) != 0) break;
 
                     return += 4;
                 }
@@ -130,7 +130,7 @@ namespace std {
         } => ptr;
 
         (nochecks) int indexOf(const(char)* str, char ch) {
-            while((str[return] != '\0') && (str[return] != ch)) return += 1;
+            while((str[return] != '\0') & (str[return] != ch)) return += 1;
             if(str[return] == '\0') return = -1;
         }
 
@@ -306,7 +306,7 @@ namespace std {
                     isNegative = true;
                     break;
                 }
-                else if((data[i] < '0') || (data[i] > '9')) break;
+                else if((data[i] < '0') | (data[i] > '9')) break;
                 return += (cast(long)(data[i] - '0') * coeff);
                 coeff *= 10;
             }
@@ -321,7 +321,7 @@ namespace std {
             ulong coeff = 1;
 
             for(int i=length - 1; i>=0; i--) {
-                if((data[i] < '0') || (data[i] > '9')) break;
+                if((data[i] < '0') | (data[i] > '9')) break;
                 return += (cast(ulong)(data[i] - '0') * coeff);
                 coeff *= 10;
             }
@@ -339,7 +339,7 @@ namespace std {
                     isNegative = true;
                     break;
                 }
-                else if((data[i] < '0') || (data[i] > '9')) break;
+                else if((data[i] < '0') | (data[i] > '9')) break;
                 return += (cast(cent)(data[i] - '0') * coeff);
                 coeff *= 10;
             }
@@ -354,7 +354,7 @@ namespace std {
             ucent coeff = 1;
 
             for(int i=length - 1; i>=0; i--) {
-                if((data[i] < '0') || (data[i] > '9')) break;
+                if((data[i] < '0') | (data[i] > '9')) break;
                 return += (cast(ucent)(data[i] - '0') * coeff);
                 coeff *= 10;
             }
@@ -369,22 +369,22 @@ namespace std {
             int decimalPoint = -1;
 
             // Handle optional leading whitespace
-            while((i < length) && (std::ascii::isSpace(data[i]))) i += 1;
+            while((i < length) & (std::ascii::isSpace(data[i]))) i += 1;
 
             // Handle optional sign
-            if((i < length) && ((data[i] == '-') || (data[i] == '+'))) {
+            if((i < length) & ((data[i] == '-') | (data[i] == '+'))) {
                 if(data[i] == '-') isNegative = true;
                 i += 1;
             }
 
             // Process digits before the decimal point
-            while((i < length) && (std::ascii::isDigit(data[i]))) {
+            while((i < length) & (std::ascii::isDigit(data[i]))) {
                 return = return * 10 + (data[i] - '0');
                 i += 1;
             }
 
             // Process the decimal point
-            if((i < length) && (data[i] == '.')) {
+            if((i < length) & (data[i] == '.')) {
                 decimalPoint = i;
                 i += 1;
             }
@@ -392,7 +392,7 @@ namespace std {
             // Process digits after the decimal point
             double fraction = 0.0d;
             double fractionScale = 1.0d;
-            while((i < length) && (std::ascii::isDigit(data[i]))) {
+            while((i < length) & (std::ascii::isDigit(data[i]))) {
                 fraction = fraction * 10 + (data[i] - '0');
                 fractionScale *= 10;
                 i += 1;
@@ -410,22 +410,22 @@ namespace std {
             int decimalPoint = -1;
 
             // Handle optional leading whitespace
-            while((i < length) && (std::ascii::isSpace(data[i]))) i += 1;
+            while((i < length) & (std::ascii::isSpace(data[i]))) i += 1;
 
             // Handle optional sign
-            if((i < length) && ((data[i] == '-') || (data[i] == '+'))) {
+            if((i < length) & ((data[i] == '-') | (data[i] == '+'))) {
                 if(data[i] == '-') isNegative = true;
                 i += 1;
             }
 
             // Process digits before the decimal point
-            while((i < length) && (std::ascii::isDigit(data[i]))) {
+            while((i < length) & (std::ascii::isDigit(data[i]))) {
                 return = return * 10 + (data[i] - '0');
                 i += 1;
             }
 
             // Process the decimal point
-            if((i < length) && (data[i] == '.')) {
+            if((i < length) & (data[i] == '.')) {
                 decimalPoint = i;
                 i += 1;
             }
@@ -433,7 +433,7 @@ namespace std {
             // Process digits after the decimal point
             real fraction = 0.0r;
             real fractionScale = 1.0r;
-            while((i < length) && (std::ascii::isDigit(data[i]))) {
+            while((i < length) & (std::ascii::isDigit(data[i]))) {
                 fraction = fraction * 10r + (data[i] - '0');
                 fractionScale *= 10r;
                 i += 1;

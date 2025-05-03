@@ -163,14 +163,14 @@ namespace std {
             } => this;
 
             void open(char* mode) {
-                if(std::cstring::strcmp(mode, "r")) fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, name, std::file::rdOnly || std::file::oCreate, 448);
+                if(std::cstring::strcmp(mode, "r")) fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, name, std::file::rdOnly | std::file::oCreate, 448);
                 else if(std::cstring::strcmp(mode, "w")) {
-                    fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, name, std::file::wrOnly || std::file::oCreate, 448);
+                    fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, name, std::file::wrOnly | std::file::oCreate, 448);
                     buffer = std::malloc(bufferSize);
                     this.bufferPos = 0;
                 }
                 else if(std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr") || std::cstring::strcmp(mode, "r+") || std::cstring::strcmp(mode, "w+")) {
-                    fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, name, std::file::rdWrOnly || std::file::oCreate, 448);
+                    fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, name, std::file::rdWrOnly | std::file::oCreate, 448);
                     buffer = std::malloc(bufferSize);
                     this.bufferPos = 0;
                 }
@@ -200,7 +200,7 @@ namespace std {
             int seek(int flag, long offset) => cast(int)std::syscall(std::sysctable::LSeek, fd, flag, offset);
 
             void flush {
-                if((fd != -1) && (bufferPos > 0) && (buffer != null)) {
+                if((fd != -1) & (bufferPos > 0) & (buffer != null)) {
                     std::syscall(std::sysctable::Write, fd, buffer, bufferPos);
                     bufferPos = 0;
                 }
@@ -217,7 +217,7 @@ namespace std {
                         for(int i=0; i<bytes; i++) {
                             buffer[bufferPos] = buf[i];
                             bufferPos += 1;
-                            if((buffer[bufferPos - 1] == flushBufferSymbol) || (bufferPos == bufferSize)) this.flush();
+                            if((bufferPos == bufferSize) || (buffer[bufferPos - 1] == flushBufferSymbol)) this.flush();
                         }
                     }
                     else {
@@ -245,7 +245,7 @@ namespace std {
 
             void readLineBuffer(std::string* buffer) {
                 char ch = this.getc();
-                while((ch != '\n') && (ch != 0)) {
+                while((ch != '\n') & (ch != 0)) {
                     buffer.add(ch);
                     ch = this.getc();
                 }
@@ -357,7 +357,7 @@ namespace std {
                 }
                 else if(std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr") || std::cstring::strcmp(mode, "r+") || std::cstring::strcmp(mode, "w+")) {
                     fd = std::file::CreateFileW(
-                        __name, std::file::genericRead || std::file::genericWrite,
+                        __name, std::file::genericRead | std::file::genericWrite,
                         std::file::fileShareRead, null,
                         4, 0, null
                     );
@@ -397,7 +397,7 @@ namespace std {
             int seek(int flag, long offset) => std::file::SetFilePointerEx(fd, offset, cast(long*)null, flag);
 
             void flush {
-                if((fd != null) && (bufferPos > 0) && (buffer != null)) {
+                if((fd != null) & (bufferPos > 0) & (buffer != null)) {
                     std::file::WriteFile(fd, buffer, bufferPos, cast(int*)null, null);
                     bufferPos = 0;
                 }
@@ -407,7 +407,7 @@ namespace std {
                 int bytesCnt = 0;
                 if(fd != null) {
                     std::file::ReadFile(fd, buffer, bufferPos, &return, &bytesCnt);
-                    if((bytesCnt == 0) && (return > 0)) return = -1;
+                    if((bytesCnt == 0) & (return > 0)) return = -1;
                 }
                 else return = -1;
             }
@@ -418,7 +418,7 @@ namespace std {
                         for(int i=0; i<bytes; i++) {
                             buffer[bufferPos] = buf[i];
                             bufferPos += 1;
-                            if((buffer[bufferPos - 1] == flushBufferSymbol) || (bufferPos == bufferSize)) this.flush();
+                            if((bufferPos == bufferSize) || (buffer[bufferPos - 1] == flushBufferSymbol)) this.flush();
                         }
                     }
                     else {
@@ -451,7 +451,7 @@ namespace std {
 
             void readLineBuffer(std::string* buffer) {
                 char ch = this.getc();
-                while((ch != '\n') && (ch != 0)) {
+                while((ch != '\n') & (ch != 0)) {
                     buffer.add(ch);
                     ch = this.getc();
                 }
@@ -569,7 +569,7 @@ namespace std {
 
             void readLineBuffer(std::string* buffer) {
                 char ch = this.getc();
-                while((ch != '\n') && (ch != -1)) {
+                while((ch != '\n') & (ch != -1)) {
                     buffer.add(ch);
                     ch = this.getc();
                 }
@@ -705,7 +705,7 @@ namespace std {
                     c = std::getchar();
                 }
 
-                if((idx < 41) && (c == '.')) {
+                if((idx < 41) & (c == '.')) {
                     buffer[idx] = '.';
                     idx += 1;
 
@@ -742,7 +742,7 @@ namespace std {
 
     void readLineBuffer(std::string* buffer) {
         char ch = std::getchar();
-        while((ch != '\n') && (ch != -1)) {
+        while((ch != '\n') & (ch != -1)) {
             buffer.add(ch);
             ch = std::getchar();
         }
@@ -786,13 +786,13 @@ namespace std {
             alias dtWht = 14;
 
             (inline) bool exists(char* dname) {
-                int fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, dname, std::file::rdOnly || std::file::oDirectory, 448);
+                int fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, dname, std::file::rdOnly | std::file::oDirectory, 448);
 
                 if(fd != -1) {return = true; std::syscall(std::sysctable::Close, fd);}
                 else return = false;
             }
 
-            (inline) int create(char* dname) => cast(int)std::syscall(std::sysctable::MakeDirAt, std::file::atFdCwd, dname, 448 || 56 || 4 || 1);
+            (inline) int create(char* dname) => cast(int)std::syscall(std::sysctable::MakeDirAt, std::file::atFdCwd, dname, 448 | 56 | 4 | 1);
 
             (inline) int create(std::string dname) => std::directory::create(dname.data);
         }
@@ -816,7 +816,7 @@ namespace std {
             } => this;
 
             (inline) void open {
-                fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, path, std::file::rdOnly || std::file::oDirectory, 448);
+                fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, path, std::file::rdOnly | std::file::oDirectory, 448);
             }
 
             (inline) void close {
@@ -868,7 +868,7 @@ namespace std {
         namespace directory {
             bool __exists(ushort* dname) {
                 int type = std::__GetFileAttributesW(dname);
-                return = ((type && std::fileAttributeDirectory) > 0);
+                return = ((type & std::fileAttributeDirectory) > 0);
             }
 
             (inline) bool exists(char* dname) {
