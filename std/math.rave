@@ -19,31 +19,31 @@ namespace std {
         * ====================================================
         */
 
-        namespace impl_exp {
-            double one = 1.0d;
-            double[2] halF = [0.5d, -0.5d];
-            double huge = 1.0e+300d;
+        namespace exp {
+            alias one = 1.0d;
+            const(double[2]) halF = [0.5d, -0.5d];
+            alias huge = 1.0e+300d;
 
-            double twom1000 = 9.33263618503218878990e-302d; /* 2**-1000=0x01700000,0*/
-            double o_threshold =  7.09782712893383973096e+02d;  /* 0x40862E42, 0xFEFA39EF */
-            double u_threshold = -7.45133219101941108420e+02d;  /* 0xc0874910, 0xD52D3051 */
+            alias twom1000 = 9.33263618503218878990e-302d; /* 2**-1000=0x01700000,0*/
+            alias o_threshold =  7.09782712893383973096e+02d;  /* 0x40862E42, 0xFEFA39EF */
+            alias u_threshold = -7.45133219101941108420e+02d;  /* 0xc0874910, 0xD52D3051 */
 
-            double[2] ln2HI = [
+            const(double[2]) ln2HI = [
                 6.93147180369123816490e-01d,  /* 0x3fe62e42, 0xfee00000 */
                 -6.93147180369123816490e-01d  /* 0xbfe62e42, 0xfee00000 */
             ];
 
-            double[2] ln2LO = [
+            const(double[2]) ln2LO = [
                 1.90821492927058770002e-10d,  /* 0x3dea39ef, 0x35793c76 */
                 -1.90821492927058770002e-10d  /* 0xbdea39ef, 0x35793c76 */
             ];
 
-            double invln2 =  1.44269504088896338700d; /* 0x3ff71547, 0x652b82fe */
-            double P1 =  1.66666666666666019037e-01d; /* 0x3FC55555, 0x5555553E */
-            double P2 = -2.77777777770155933842e-03d; /* 0xBF66C16C, 0x16BEBD93 */
-            double P3 =  6.61375632143793436117e-05d; /* 0x3F11566A, 0xAF25DE2C */
-            double P4 = -1.65339022054652515390e-06d; /* 0xBEBBBD41, 0xC5D26BF1 */
-            double P5 =  4.13813679705723846039e-08d; /* 0x3E663769, 0x72BEA4D0 */
+            alias invln2 =  1.44269504088896338700d; /* 0x3ff71547, 0x652b82fe */
+            alias P1 =  1.66666666666666019037e-01d; /* 0x3FC55555, 0x5555553E */
+            alias P2 = -2.77777777770155933842e-03d; /* 0xBF66C16C, 0x16BEBD93 */
+            alias P3 =  6.61375632143793436117e-05d; /* 0x3F11566A, 0xAF25DE2C */
+            alias P4 = -1.65339022054652515390e-06d; /* 0xBEBBBD41, 0xC5D26BF1 */
+            alias P5 =  4.13813679705723846039e-08d; /* 0x3E663769, 0x72BEA4D0 */
         }
 
         double exp(double x) {
@@ -71,47 +71,47 @@ namespace std {
 
                     @return();
                 }
-                if(x > std::math::impl_exp::o_threshold)
-                    @return(std::math::impl_exp::huge * std::math::impl_exp::huge); // overflow
-                if(x < std::math::impl_exp::u_threshold)
-                    @return(std::math::impl_exp::twom1000 * std::math::impl_exp::twom1000); // underflow
+                if(x > std::math::exp::o_threshold)
+                    @return(std::math::exp::huge * std::math::exp::huge); // overflow
+                if(x < std::math::exp::u_threshold)
+                    @return(std::math::exp::twom1000 * std::math::exp::twom1000); // underflow
             }
 
             /* argument reduction */
             if(hx > 0x3fd62e42) { // if  |x| > 0.5 ln2
                 if(hx < 0x3FF0A2B2) { // and |x| < 1.5 ln2
-                    hi = x - std::math::impl_exp::ln2HI[xsb];
-                    lo = std::math::impl_exp::ln2LO[xsb];
+                    hi = x - std::math::exp::ln2HI[xsb];
+                    lo = std::math::exp::ln2LO[xsb];
                     k = 1 - xsb - xsb;
                 }
                 else {
-                    k  = cast(int)(std::math::impl_exp::invln2 * x + std::math::impl_exp::halF[xsb]);
+                    k  = cast(int)(std::math::exp::invln2 * x + std::math::exp::halF[xsb]);
                     t  = k;
-                    hi = x - t * std::math::impl_exp::ln2HI[0]; // t*ln2HI is exact here
-                    lo = t * std::math::impl_exp::ln2LO[0];
+                    hi = x - t * std::math::exp::ln2HI[0]; // t*ln2HI is exact here
+                    lo = t * std::math::exp::ln2LO[0];
                 }
                 x = hi - lo;
             }
             else if(hx < 0x3e300000) {    // when |x|<2**-28
-                if(std::math::impl_exp::huge + x > std::math::impl_exp::one)
-                    @return(std::math::impl_exp::one + x); // trigger inexact
+                if(std::math::exp::huge + x > std::math::exp::one)
+                    @return(std::math::exp::one + x); // trigger inexact
             }
             else k = 0;
 
             /* x is now in primary range */
             t = x * x;
             c = x - t * (
-                std::math::impl_exp::P1 + t * (
-                    std::math::impl_exp::P2 + t * (
-                        std::math::impl_exp::P3 + t * (
-                            std::math::impl_exp::P4 + t * std::math::impl_exp::P5
+                std::math::exp::P1 + t * (
+                    std::math::exp::P2 + t * (
+                        std::math::exp::P3 + t * (
+                            std::math::exp::P4 + t * std::math::exp::P5
                         )
                     )
                 )
             );
 
-            if(k == 0) @return(std::math::impl_exp::one - ((x * c) / (c - 2d) - x));
-            y = std::math::impl_exp::one - ((lo - (x * c) / (2d - c)) - hi);
+            if(k == 0) @return(std::math::exp::one - ((x * c) / (c - 2d) - x));
+            y = std::math::exp::one - ((lo - (x * c) / (2d - c)) - hi);
 
             uint* yp = cast(uint*)&y;
             if(k >= -1021) {
@@ -120,7 +120,7 @@ namespace std {
             }
             else {
                 yp[LE] += ((k + 1000) <. 20); // add k to y's exponent
-                return = y * std::math::impl_exp::twom1000;
+                return = y * std::math::exp::twom1000;
             }
         }
         /* END code from fdlibm */
@@ -151,7 +151,7 @@ namespace std {
             // Extract the exponent and fraction parts
             ulong exponent = (bits >. 52) & 0x7FF;
             ulong fraction = bits & 0xFFFFFFFFFFFFF;
-        } => (exponent == 0x7FF) & (fraction != 0);
+        } => (exponent == 0x7FF) && (fraction != 0);
 
         (inline) bool isNAN(float f) {
             // Interpret the float as an unsigned 32-bit integer
@@ -160,7 +160,7 @@ namespace std {
             // Extract the exponent and fraction parts
             uint exponent = (bits >. 23) & 0xFF;
             uint fraction = bits & 0x7FFFFF;
-        } => (exponent == 0xFF) & (fraction != 0);
+        } => (exponent == 0xFF) && (fraction != 0);
 
         (inline) bool isNAN(half hf) {
             // Interpret the half as an unsigned 16-bit integer
@@ -169,7 +169,7 @@ namespace std {
             // Extract the exponent and fraction parts
             ushort exponent = (bits >. 10) & 0x1F;
             ushort fraction = bits & 0x3FF;
-        } => (exponent == 0x1F) & (fraction != 0);
+        } => (exponent == 0x1F) && (fraction != 0);
 
         long factorial(int n) {
             return = 1;

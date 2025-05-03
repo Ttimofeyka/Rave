@@ -72,7 +72,7 @@ Parser::Parser(std::vector<Token*> tokens, std::string file) {
     operators.insert({TokType::Rem, 0});
     operators.insert({TokType::BitLeft, -51});
     operators.insert({TokType::BitRight, -51});
-    operators.insert({TokType::BitXor, -51});
+    operators.insert({TokType::BitXor, -55});
     operators.insert({TokType::BitOr, -55});
     operators.insert({TokType::Amp, -55});
     operators.insert({TokType::Less, -70});
