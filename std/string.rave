@@ -234,10 +234,10 @@ namespace std {
         }
 
         std::string operator+(std::string one, std::string two) {
-            std::string third = "";
-            for(uint i=0; i<one.length; i+=1) third.add(one.data[i]);
-            for(uint i=0; i<two.length; i+=1) third.add(two.data[i]);
-        } => third;
+            return = "";
+            return.append(one);
+            return.append(two);
+        }
 
         bool operator==(std::string one, std::string two) {
             return = true;
