@@ -59,10 +59,12 @@ genSettings analyzeArguments(std::vector<std::string>& arguments) {
         else if(arguments[i] == "-noAVX2") settings.avx2 = false;
         else if(arguments[i] == "-noAVX512") settings.avx512 = false;
         else if(arguments[i] == "-nfm" || arguments[i] == "--noFastMath") settings.noFastMath = true; // Disables fast math
+        else if(arguments[i] == "-npi" || arguments[i] == "--noPrivateInlining") settings.noPrivateInlining = true; // Disables inlining of private functions
         else if(arguments[i] == "-nio" || arguments[i] == "--noIoInit") settings.noIoInit = true; // Disables io initialize (temporarily does nothing)
         else if(arguments[i][0] == '-') settings.linkParams += arguments[i] + " "; // Adds unknown argument to the linker
         else files.push_back(arguments[i]);
     }
+
     return settings;
 }
 
@@ -95,6 +97,7 @@ int main(int argc, char** argv) {
         + "\n\t-noSSE, -noSSE, -noSSE2, -noSSE3, -noSSSE3, -noSSE4A, -noSSE4_1, -noSSE4_2 - Disable different SSE versions for compiler (if they are available)."
         + "\n\t-noAVX, -noAVX2, -noAVX512 - Disable different AVX versions for compiler (if it is available)."
         + "\n\t--noFastMath (-nfm) - Disable fast math."
+        + "\n\t--noPrivateInlining (-npi) - Disable inlining of private functions."
         + "\n\t--noIoInit (-nio) - Disable the automatic std::io:initialize call at the beginning of 'main'."
         + "\nFor bug reporting, you can use Issues at https://github.com/Ttimofeyka/Rave.";
         std::cout << help << std::endl;

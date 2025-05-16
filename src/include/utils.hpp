@@ -142,6 +142,7 @@ typedef struct genSettings {
     bool avx512 = true;
     bool isNative = false;
     bool noFastMath = false;
+    bool noPrivateInlining = false;
     bool noIoInit = false;
 
     std::string linker = "lld";
