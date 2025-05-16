@@ -491,6 +491,7 @@ void Compiler::compile(std::string file) {
         Compiler::error("target machine emit to file: " + std::string(errors));
         std::exit(1);
     }
+
     end = std::chrono::steady_clock::now();
     Compiler::genTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 

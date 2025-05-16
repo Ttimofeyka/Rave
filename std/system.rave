@@ -32,13 +32,11 @@ namespace std {
                 defer std::free(cast(void*)buffer);
 
                 std::system::__getCurrentDirectory(bufferSize, buffer);
+
                 if(cbuffer == null) return = std::utf16::toUTF8(buffer);
                 else {
-                    // For compability with libc
-                    char* u8Buffer = std::utf16::toUTF8(buffer);
-                    for(int i=0; i<size; i++) cbuffer[i] = u8Buffer[i];
+                    std::utf16::toUTF8Buffer(buffer, cbuffer, size);
                     return = cbuffer;
-                    std::free(u8Buffer);
                 }
             }
         }

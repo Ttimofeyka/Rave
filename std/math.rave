@@ -123,6 +123,7 @@ namespace std {
                 return = y * std::math::exp::twom1000;
             }
         }
+
         /* END code from fdlibm */
 
         float exp(float arg) {
@@ -140,7 +141,7 @@ namespace std {
         (inline) float degToRad(float d) => (d * std::math::PI_f / 180f);
         (inline) half degToRad(half hf) => (hf * std::math::PI_hf / 180h);
 
-        (inline) double radToDeg(double r) => (r * 180 / std::math::PI);
+        (inline) double radToDeg(double r) => (r * 180d / std::math::PI);
         (inline) float radToDeg(float r) => (r * 180f / std::math::PI_f);
         (inline) half radToDeg(half r) => (r * 180h / std::math::PI_hf);
 
@@ -381,6 +382,7 @@ namespace std {
                     return = r;
                 }
             }
+
             if((f < 0d) && (return > 0d)) return = -return;
         }
 
@@ -402,6 +404,7 @@ namespace std {
                     return = r;
                 }
             }
+
             if((f < 0f) && (return > 0f)) return = -return;
         }
 

@@ -85,7 +85,7 @@ namespace std {
             }
         }
 
-        uint toUTF8Buffer(ushort* u16, uint u16Length, uchar* buffer, uint bufferSize) {
+        uint toUTF8Buffer(ushort* u16, uint u16Length, char* buffer, uint bufferSize) {
             uint i = 0;
             bool isWrite = buffer != null;
 
@@ -110,7 +110,7 @@ namespace std {
                 else @return(-1);
 
                 if(isWrite) {
-                    if((return + len) >= bufferSize) @return(-1);
+                    if((return + len) >= bufferSize) @return();
 
                     switch(len) {
                         case(1) buffer[return] = cast(uchar)codepoint;
@@ -139,15 +139,15 @@ namespace std {
             if(isWrite && (return < bufferSize)) buffer[return] = '\0';
         }
 
-        (inline) uint toUTF8Buffer(ushort* u16, uchar* buffer, uint bufferSize) => std::utf16::toUTF8Buffer(u16, std::utf16::strlen(u16), buffer, bufferSize);
+        (inline) uint toUTF8Buffer(ushort* u16, char* buffer, uint bufferSize) => std::utf16::toUTF8Buffer(u16, std::utf16::strlen(u16), buffer, bufferSize);
 
-        (inline) uchar* toUTF8(ushort* u16, uint u16Length) {
+        (inline) char* toUTF8(ushort* u16, uint u16Length) {
             uint size = std::utf16::toUTF8Buffer(u16, u16Length, null, 0);
             return = std::malloc(size + 1);
             std::utf16::toUTF8Buffer(u16, u16Length, return, size + 1);
         }
 
-        (inline) uchar* toUTF8(ushort* u16) {
+        (inline) char* toUTF8(ushort* u16) {
             uint length = std::utf16::strlen(u16);
             uint size = std::utf16::toUTF8Buffer(u16, length, null, 0);
             return = std::malloc(size + 1);
