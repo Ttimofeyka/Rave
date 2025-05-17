@@ -87,7 +87,7 @@ namespace std {
             if(carry > 0) buffer.add(std::base32::table[(buf <. (5 - carry)) & 0x1F]);
 
             // Pad the encoded string to be a multiple of 8 characters
-            while((buffer.length % 8) != 0) buffer.add('=');
+            while((buffer.length & 7) != 0) buffer.add('=');
         }
 
         (inline) std::string encode(char* src, uint length) {return = ""; std::base32::encodeBuffer(&return, src, length);}

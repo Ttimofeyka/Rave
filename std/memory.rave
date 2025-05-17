@@ -14,7 +14,7 @@ namespace std {
 }
 
 namespace std {
-    (nochecks) void* memcpy(void* dest, void* src, int n) {
+    (nochecks) void* memcpy(void* dest, void* src, uint n) {
         for(int i=0; i<n; i+=1) dest[i] = src[i];
     } => dest;
 
@@ -25,7 +25,7 @@ namespace std {
         std::free(temp);
     } => dest;
 
-    (nochecks) void swap(void* one, void* two, int size) {
+    (nochecks) void swap(void* one, void* two, uint size) {
         for(int i=0; i<size; i++) {
             char old = one[i];
             one[i] = two[i];
@@ -64,7 +64,8 @@ namespace std {
         for(; idx<n; idx++) dest[idx] = c;
     }
 
-    (nochecks) bool memcmp(void* one, void* two, int n) {
+    // TODO: Remake for libc compability
+    (nochecks) bool memcmp(void* one, void* two, uint n) {
         return = true;
         for(int i=0; i<n; i+=1) {
             if(one[i] != two[i]) {
