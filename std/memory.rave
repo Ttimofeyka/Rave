@@ -33,6 +33,37 @@ namespace std {
         }
     }
 
+    (nochecks) void memset(void* dest, char c, uint n) {
+        uint idx = 0;
+
+        @if(__RAVE_AVX2) {
+            int8 value = @vFrom(int8, cast(int)c);
+            
+            auto align = ptoi(dest) & 15;
+            while((align > 0) && (idx < n)) {
+                dest[idx] = c;
+                align -= 1;
+                idx += 1;
+            }
+
+            for(; (idx + 31) < n; idx+=32) @vStore(value, &dest[idx]);
+        }
+        @else @if(__RAVE_SSE2) {
+            int4 value = @vFrom(int4, cast(int)c);
+
+            auto align = ptoi(dest) & 15;
+            while((align > 0) && (idx < n)) {
+                dest[idx] = c;
+                align -= 1;
+                idx += 1;
+            }
+
+            for(; (idx + 15) < n; idx+=16) @vStore(value, &dest[idx]);
+        }
+
+        for(; idx<n; idx++) dest[idx] = c;
+    }
+
     (nochecks) bool memcmp(void* one, void* two, int n) {
         return = true;
         for(int i=0; i<n; i+=1) {
@@ -42,10 +73,6 @@ namespace std {
             }
         }
     }
-
-    (nochecks) void* memset(void* dest, int c, int n) {
-        for(int i=0; i<n; i+=1) dest[i] = cast(char)c;
-    } => dest;
 
     (inline) NEW_T* new<NEW_T>(int n) => cast(NEW_T*)std::malloc(n * sizeof(NEW_T));
     (inline) NEW_T* new<NEW_T>() => cast(NEW_T*)std::malloc(sizeof(NEW_T));
