@@ -130,6 +130,11 @@ typedef struct genSettings {
     bool noChecks = false;
     bool outDebugInfo = false;
     std::string linkParams = "";
+
+    // X86, X86_64 features
+    bool popcnt = true;
+    bool fma = true;
+    bool f16c = true;
     bool sse = true;
     bool sse2 = true;
     bool sse3 = true;
@@ -140,6 +145,16 @@ typedef struct genSettings {
     bool avx = true;
     bool avx2 = true;
     bool avx512 = true;
+
+    // AARCH64 features
+    bool asimd = true;
+    bool fp = true;
+    bool sve = true;
+    bool sve2 = true;
+
+    // ARM features
+    bool half = true;
+
     bool isNative = false;
     bool noFastMath = false;
     bool noPrivateInlining = false;

@@ -58,6 +58,14 @@ genSettings analyzeArguments(std::vector<std::string>& arguments) {
         else if(arguments[i] == "-noAVX") settings.avx = false;
         else if(arguments[i] == "-noAVX2") settings.avx2 = false;
         else if(arguments[i] == "-noAVX512") settings.avx512 = false;
+        else if(arguments[i] == "-noPOPCNT") settings.popcnt = false;
+        else if(arguments[i] == "-noFMA") settings.fma = false;
+        else if(arguments[i] == "-noF16C") settings.f16c = false;
+        else if(arguments[i] == "-noASIMD") settings.asimd = false;
+        else if(arguments[i] == "-noFP") settings.fp = false;
+        else if(arguments[i] == "-noSVE") settings.sve = false;
+        else if(arguments[i] == "-noSVE2") settings.sve2 = false;
+        else if(arguments[i] == "-noHALF") settings.half = false;
         else if(arguments[i] == "-nfm" || arguments[i] == "--noFastMath") settings.noFastMath = true; // Disables fast math
         else if(arguments[i] == "-npi" || arguments[i] == "--noPrivateInlining") settings.noPrivateInlining = true; // Disables inlining of private functions
         else if(arguments[i] == "-nio" || arguments[i] == "--noIoInit") settings.noIoInit = true; // Disables io initialize (temporarily does nothing)
@@ -94,8 +102,11 @@ int main(int argc, char** argv) {
         + "\n\t--disableWarnings (-dw) - Disables warnings."
         + "\n\t--shared (-s) - Creates a shared output files."
         + "\n\t-native - Use optimizations from the current platform."
+        + "\n\t-noPOPCNT, -noFMA, -noF16C - Disable different X86 features for compiler (if they are available)."
         + "\n\t-noSSE, -noSSE, -noSSE2, -noSSE3, -noSSSE3, -noSSE4A, -noSSE4_1, -noSSE4_2 - Disable different SSE versions for compiler (if they are available)."
-        + "\n\t-noAVX, -noAVX2, -noAVX512 - Disable different AVX versions for compiler (if it is available)."
+        + "\n\t-noAVX, -noAVX2, -noAVX512 - Disable different AVX versions for compiler (if they are available)."
+        + "\n\t-noASIMD, -noFP, -noSVE, -noSVE2 - Disable different AARCH64 features for compiler (if they are available)."
+        + "\n\t-noHALF - Disable different ARM features for compiler (if they are available)."
         + "\n\t--noFastMath (-nfm) - Disable fast math."
         + "\n\t--noPrivateInlining (-npi) - Disable inlining of private functions."
         + "\n\t--noIoInit (-nio) - Disable the automatic std::io:initialize call at the beginning of 'main'."

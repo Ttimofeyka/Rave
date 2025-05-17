@@ -108,46 +108,58 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
         // If file does not exist - create it with default settings
 
         std::ofstream fOptions(exePath + "options.json");
-        std::string __features = LLVMGetHostCPUFeatures();
-
-        std::string sse = "\"sse\": false";
-        std::string sse2 = "\"sse2\": false";
-        std::string sse3 = "\"sse3\": false";
-        std::string ssse3 = "\"ssse3\": false";
-        std::string sse4a = "\"sse4a\": false";
-        std::string sse4_1 = "\"sse4_1\": false";
-        std::string sse4_2 = "\"sse4_2\": false";
-        std::string avx = "\"avx\": false";
-        std::string avx2 = "\"avx2\": false";
-        std::string avx512 = "\"avx512\": false";
-
-        if(__features.find("+sse,") != std::string::npos) sse = "\"sse\": true";
-        if(__features.find("+sse2") != std::string::npos) sse2 = "\"sse2\": true";
-        if(__features.find("+sse3") != std::string::npos) sse3 = "\"sse3\": true";
-        if(__features.find("+ssse3") != std::string::npos) ssse3 = "\"ssse3\": true";
-        if(__features.find("+sse4.1") != std::string::npos) sse4_1 = "\"sse4_1\": true";
-        if(__features.find("+sse4.2") != std::string::npos) sse4_2 = "\"sse4_2\": true";
-        if(__features.find("+sse4a") != std::string::npos) sse4a = "\"sse4a\": true";
-
-        if(__features.find("+avx,") != std::string::npos) avx = "\"avx\": true";
-        if(__features.find("+avx2") != std::string::npos) avx2 = "\"avx2\": true";
-        if(__features.find("+avx512") != std::string::npos) avx512 = "\"avx512\": true";
 
         #if defined(_WIN32)
-            fOptions << "{\n\t\"compiler\": \"gcc\",\n\t"
-            + sse + ",\n\t" + sse2 + ",\n\t" + sse3 + ",\n\t" + ssse3 + ",\n\t" + sse4_1 + ",\n\t" + sse4_2 + ",\n\t" + sse4a +
-            ",\n\t" + avx + ",\n\t" + avx2 + ",\n\t" + avx512 +
-            "\n}" << std::endl;
+            std::string compiler = "gcc";
         #else
             std::string compiler = "clang";
             ShellResult result = exec("which clang");
             if(result.status != 0) compiler = "gcc";
-            
-            fOptions << "{\n\t\"compiler\": \"" + compiler + "\",\n\t"
-            + sse + ",\n\t" + sse2 + ",\n\t" + sse3 + ",\n\t" + ssse3 + ",\n\t" + sse4_1 + ",\n\t" + sse4_2 + ",\n\t" + sse4a +
-            ",\n\t" + avx + ",\n\t" + avx2 + ",\n\t" + avx512 +
-            "\n}" << std::endl;
         #endif
+
+        fOptions << "{\n\t\"compiler\": \"" << compiler << "\",\n\t"
+        << "\"platforms\": {\n\t\t" <<
+            "\"X86\": {\n\t\t\t" <<
+                "\"POPCNT\": true,\n\t\t\t" <<
+                "\"FMA\": true,\n\t\t\t" <<
+                "\"F16C\": true,\n\t\t\t" <<
+                "\"SSE\": true,\n\t\t\t" <<
+                "\"SSE2\": true,\n\t\t\t" <<
+                "\"SSE3\": true,\n\t\t\t" <<
+                "\"SSSE3\": true,\n\t\t\t" <<
+                "\"SSE4_1\": true,\n\t\t\t" <<
+                "\"SSE4_2\": true,\n\t\t\t" <<
+                "\"SSE4A\": false,\n\t\t\t" <<
+                "\"AVX\": true,\n\t\t\t" <<
+                "\"AVX2\": true\n\t\t" <<
+                "},\n\t\t" <<
+            "\"X86_64\": {\n\t\t\t" <<
+                "\"POPCNT\": true,\n\t\t\t" <<
+                "\"FMA\": true,\n\t\t\t" <<
+                "\"F16C\": true,\n\t\t\t" <<
+                "\"SSE\": true,\n\t\t\t" <<
+                "\"SSE2\": true,\n\t\t\t" <<
+                "\"SSE3\": true,\n\t\t\t" <<
+                "\"SSSE3\": true,\n\t\t\t" <<
+                "\"SSE4_1\": true,\n\t\t\t" <<
+                "\"SSE4_2\": true,\n\t\t\t" <<
+                "\"SSE4A\": false,\n\t\t\t" <<
+                "\"AVX\": true,\n\t\t\t" <<
+                "\"AVX2\": true,\n\t\t\t" <<
+                "\"AVX512\": false\n\t\t"
+                "},\n\t\t" <<
+            "\"AARCH64\": {\n\t\t\t" <<
+                "\"ASIMD\": true,\n\t\t\t" <<
+                "\"FP\": true,\n\t\t\t" <<
+                "\"SVE\": false,\n\t\t\t" <<
+                "\"SVE2\": false\n\t\t" <<
+                "},\n\t\t" <<
+            "\"ARM\": {\n\t\t\t" <<
+                "\"HALF\": true\n\t\t" <<
+                "}\n\t" <<
+            "}\n"
+        "}" << std::endl;
+
         if(fOptions.is_open()) fOptions.close();
 
         std::ifstream rfOptions(exePath + "options.json");
@@ -296,20 +308,62 @@ void Compiler::compile(std::string file) {
     if(ravePlatform == "MIPS64" || ravePlatform == "MIPS") littleEndian = false;
 
     bool isX86 = ravePlatform == "X86_64" || ravePlatform == "X86";
+    bool isAARCH64 = ravePlatform == "AARCH64";
+    bool isARM = ravePlatform == "ARM";
 
-    bool sse = settings.sse && Compiler::options["sse"].template get<bool>() && isX86;
-    bool sse2 = settings.sse2 && Compiler::options["sse2"].template get<bool>() && isX86;
-    bool sse3 = settings.sse3 && Compiler::options["sse3"].template get<bool>() && isX86;
-    bool ssse3 = settings.ssse3 && Compiler::options["ssse3"].template get<bool>() && isX86;
-    bool sse4a = settings.sse4a && Compiler::options["sse4a"].template get<bool>() && isX86;
-    bool sse4_1 = settings.sse4_1 && Compiler::options["sse4_1"].template get<bool>() && isX86;
-    bool sse4_2 = settings.sse4_2 && Compiler::options["sse4_2"].template get<bool>() && isX86;
-    bool avx = settings.avx && Compiler::options["avx"].template get<bool>() && isX86;
-    bool avx2 = settings.avx2 && Compiler::options["avx2"].template get<bool>() && isX86;
-    bool avx512 = settings.avx512 && Compiler::options["avx512"].template get<bool>() && isX86;
+    bool popcnt = settings.popcnt && isX86;
+    bool fma = settings.fma && isX86;
+    bool f16c = settings.f16c && isX86;
+    bool sse = settings.sse && isX86;
+    bool sse2 = settings.sse2 && isX86;
+    bool sse3 = settings.sse3 && isX86;
+    bool ssse3 = settings.ssse3 && isX86;
+    bool sse4a = settings.sse4a && isX86;
+    bool sse4_1 = settings.sse4_1 && isX86;
+    bool sse4_2 = settings.sse4_2 && isX86;
+    bool avx = settings.avx && isX86;
+    bool avx2 = settings.avx2 && isX86;
+    bool avx512 = settings.avx512 && isX86;
+
+    bool asimd = settings.asimd && isAARCH64;
+    bool fp = settings.fp && isAARCH64;
+    bool sve = settings.sve && isAARCH64;
+    bool sve2 = settings.sve2 && isAARCH64;
+
+    bool half = settings.half && isARM;
+
+    if(isX86) {
+        popcnt = popcnt && Compiler::options["platforms"][ravePlatform]["POPCNT"].template get<bool>();
+        fma = fma && Compiler::options["platforms"][ravePlatform]["FMA"].template get<bool>();
+        f16c = f16c && Compiler::options["platforms"][ravePlatform]["F16C"].template get<bool>();
+        sse = sse && Compiler::options["platforms"][ravePlatform]["SSE"].template get<bool>();
+        sse2 = sse2 && Compiler::options["platforms"][ravePlatform]["SSE2"].template get<bool>();
+        sse3 = sse3 && Compiler::options["platforms"][ravePlatform]["SSE3"].template get<bool>();
+        ssse3 = ssse3 && Compiler::options["platforms"][ravePlatform]["SSSE3"].template get<bool>();
+        sse4a = sse4a && Compiler::options["platforms"][ravePlatform]["SSE4A"].template get<bool>();
+        sse4_1 = sse4_1 && Compiler::options["platforms"][ravePlatform]["SSE4_1"].template get<bool>();
+        sse4_2 = sse4_2 && Compiler::options["platforms"][ravePlatform]["SSE4_2"].template get<bool>();
+        avx = avx && Compiler::options["platforms"][ravePlatform]["AVX"].template get<bool>();
+        avx2 = avx2 && Compiler::options["platforms"][ravePlatform]["AVX2"].template get<bool>();
+
+        if(ravePlatform == "X86_64") avx512 = avx512 && Compiler::options["platforms"][ravePlatform]["AVX512"].template get<bool>();
+    }
+    else if(isAARCH64) {
+        asimd = asimd && Compiler::options["platforms"]["AARCH64"]["ASIMD"].template get<bool>();
+        fp = fp && Compiler::options["platforms"]["AARCH64"]["FP"].template get<bool>();
+        sve = sve && Compiler::options["platforms"]["AARCH64"]["SVE"].template get<bool>();
+        sve2 = sve2 && Compiler::options["platforms"]["AARCH64"]["SVE2"].template get<bool>();
+    }
+    else if(isARM) {
+        half = half && Compiler::options["platforms"]["ARM"]["HALF"].template get<bool>();
+    }
 
     if(!settings.isNative) {
         Compiler::features = "";
+
+        if(popcnt) Compiler::features += "+popcnt,";
+        if(fma) Compiler::features += "+fma,";
+        if(f16c) Compiler::features += "+f16c,";
         if(sse) Compiler::features += "+sse,";
         if(sse2) Compiler::features += "+sse2,";
         if(sse3) Compiler::features += "+sse3,";
@@ -320,9 +374,15 @@ void Compiler::compile(std::string file) {
         if(avx) Compiler::features += "+avx,";
         if(avx2) Compiler::features += "+avx2,";
         if(avx512) Compiler::features += "+avx512,";
+
+        if(asimd) Compiler::features += "+neon,";
+        if(fp) Compiler::features += "+fp-armv8,";
+        if(sve) Compiler::features += "+sve,";
+        if(sve2) Compiler::features += "+sve2,";
+
+        if(half) Compiler::features += "+fp16,";
         
-        if(ravePlatform == "X86_64") Compiler::features += "+64bit,+fma,+f16c,";
-        else if(ravePlatform == "X86") Compiler::features += "+fma,";
+        if(ravePlatform == "X86_64") Compiler::features += "+64bit,";
 
         if(Compiler::features.length() > 0) Compiler::features = Compiler::features.substr(0, Compiler::features.length() - 1);
     }
@@ -332,6 +392,10 @@ void Compiler::compile(std::string file) {
     AST::aliasTable["__RAVE_OS"] = new NodeString(raveOs, false);
     AST::aliasTable["__RAVE_OPTIMIZATION_LEVEL"] = new NodeInt(settings.optLevel);
     AST::aliasTable["__RAVE_RUNTIME_CHECKS"] = new NodeBool(!settings.noChecks);
+
+    AST::aliasTable["__RAVE_POPCNT"] = new NodeBool(popcnt);
+    AST::aliasTable["__RAVE_FMA"] = new NodeBool(fma);
+    AST::aliasTable["__RAVE_F16C"] = new NodeBool(f16c);
     AST::aliasTable["__RAVE_SSE"] = new NodeBool(sse);
     AST::aliasTable["__RAVE_SSE2"] = new NodeBool(sse2);
     AST::aliasTable["__RAVE_SSE3"] = new NodeBool(sse3);
@@ -342,10 +406,19 @@ void Compiler::compile(std::string file) {
     AST::aliasTable["__RAVE_AVX"] = new NodeBool(avx);
     AST::aliasTable["__RAVE_AVX2"] = new NodeBool(avx2);
     AST::aliasTable["__RAVE_AVX512"] = new NodeBool(avx512);
+
+    AST::aliasTable["__RAVE_ASIMD"] = new NodeBool(asimd);
+    AST::aliasTable["__RAVE_FP_ARMV8"] = new NodeBool(fp);
+    AST::aliasTable["__RAVE_SVE"] = new NodeBool(sve);
+    AST::aliasTable["__RAVE_SVE2"] = new NodeBool(sve2);
+
+    AST::aliasTable["__RAVE_HALF"] = new NodeBool(half);
+
     AST::aliasTable["__RAVE_LITTLE_ENDIAN"] = new NodeBool(littleEndian);
     AST::aliasTable["__RAVE_BIG_ENDIAN"] = new NodeBool(!littleEndian);
 
     if(ravePlatform == "X86_64" || ravePlatform == "AARCH64" || ravePlatform == "POWERPC64" || ravePlatform == "MIPS64") pointerSize = 64;
+    else if(ravePlatform == "AVR") pointerSize = 16;
     else pointerSize = 32;
 
     AST::mainFile = Compiler::files[0];

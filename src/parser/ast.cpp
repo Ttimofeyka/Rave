@@ -214,7 +214,8 @@ LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options)
 
     if(this->file.find('/') == std::string::npos && this->file.find('\\') == std::string::npos) this->file = "./" + this->file;
 
-    if(settings.sse2 && settings.ssse3 && options["sse2"].template get<bool>() && options["ssse3"].template get<bool>()) {
+    // Add SSE2, SSSE3 internal functions
+    if(Compiler::features.find("+sse2") != std::string::npos && Compiler::features.find("+ssse3") != std::string::npos) {
         functions["llvm.x86.ssse3.phadd.d.128"] = {LLVMAddFunction(lModule, "llvm.x86.ssse3.phadd.d.128", LLVMFunctionType(
             LLVMVectorType(LLVMInt32TypeInContext(context), 4),
             std::vector<LLVMTypeRef>({LLVMVectorType(LLVMInt32TypeInContext(context), 4), LLVMVectorType(LLVMInt32TypeInContext(context), 4)}).data(),
@@ -236,7 +237,8 @@ LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options)
         )};
     }
 
-    if(settings.sse2 && options["sse2"].template get<bool>()) {
+    // Add SSE3 internal functions
+    if(Compiler::features.find("+sse3") != std::string::npos) {
         functions["llvm.x86.sse3.hadd.ps"] = {LLVMAddFunction(lModule, "llvm.x86.sse3.hadd.ps", LLVMFunctionType(
             LLVMVectorType(LLVMFloatTypeInContext(context), 4),
             std::vector<LLVMTypeRef>({LLVMVectorType(LLVMFloatTypeInContext(context), 4), LLVMVectorType(LLVMFloatTypeInContext(context), 4)}).data(),
@@ -247,10 +249,6 @@ LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options)
             false
         )};
     }
-
-    this->neededFunctions["free"] = "std::free";
-    this->neededFunctions["malloc"] = "std::malloc";
-    this->neededFunctions["assert"] = "std::assert[_b_p]";
 }
 
 void LLVMGen::error(std::string msg, int line) {
