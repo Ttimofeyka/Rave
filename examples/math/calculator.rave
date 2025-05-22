@@ -14,12 +14,12 @@ void main {
         std::println("Second number: ");
         std::input(&second);
 
-        std::println("op: ");
+        std::println("Operator: ");
         std::input(&op);
-        std::input(&op); // for space, enter, etc.
+        std::input(&op); // For space, enter, etc.
 
         if(op != '+' && op != '-' && op != '*' && op != '/') {
-            std::println("Undefined op!");
+            std::println("Undefined operator!");
             std::println("- - - - - - - - - - - - - -");
             break;
         }

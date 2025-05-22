@@ -533,9 +533,9 @@ namespace std {
         double sigmoid(double x) => 1d / (1d + std::math::exp(-x));
         float sigmoid(float x) => 1f / (1f + std::math::exp(-x));
 
-        double dsigmoid(double x) => x * (1 - x);
-        float dsigmoid(float x) => x * (1 - x);
-        half dsigmoid(half x) => x * (1 - x);
+        double dsigmoid(double x) => x * (1d - x);
+        float dsigmoid(float x) => x * (1f - x);
+        half dsigmoid(half x) => x * (1h - x);
 
         void softmax(double* x, int size) {
             double maxValue = x[0];
