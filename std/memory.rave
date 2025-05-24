@@ -5,23 +5,23 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 namespace std {
-    extern(linkname: "aligned_alloc") void* amalloc(int alignment, int size);
-    extern(linkname: "malloc") void* malloc(int size);
+    extern(linkname: "aligned_alloc") void* amalloc(uint alignment, uint size);
+    extern(linkname: "malloc") void* malloc(uint size);
     extern(linkname: "free") void free(void* ptr);
-    extern(linkname: "realloc") void* realloc(void* ptr, int newsize);
+    extern(linkname: "realloc") void* realloc(void* ptr, uint newsize);
 
-    (inline) void* calloc(int num, int size) => std::malloc(num * size);
+    (inline) void* calloc(uint num, uint size) => std::malloc(num * size);
 }
 
 namespace std {
     (nochecks) void* memcpy(void* dest, void* src, uint n) {
-        for(int i=0; i<n; i+=1) dest[i] = src[i];
+        for(uint i=0; i<n; i+=1) dest[i] = src[i];
     } => dest;
 
-    (nochecks) void* memmove(void* dest, void* src, int n) {
+    (nochecks) void* memmove(void* dest, void* src, uint n) {
         void* temp = std::malloc(n);
-        for(int i=0; i<n; i+=1) temp[i] = src[i];
-        for(int i=0; i<n; i+=1) dest[i] = temp[i];
+        for(uint i=0; i<n; i++) temp[i] = src[i];
+        for(uint i=0; i<n; i++) dest[i] = temp[i];
         std::free(temp);
     } => dest;
 
@@ -67,19 +67,17 @@ namespace std {
     // TODO: Remake for libc compability
     (nochecks) bool memcmp(void* one, void* two, uint n) {
         return = true;
+
         for(int i=0; i<n; i+=1) {
-            if(one[i] != two[i]) {
-                return = false;
-                break;
-            }
+            if(one[i] != two[i]) @return(false);
         }
     }
 
-    (inline) NEW_T* new<NEW_T>(int n) => cast(NEW_T*)std::malloc(n * sizeof(NEW_T));
+    (inline) NEW_T* new<NEW_T>(uint n) => cast(NEW_T*)std::malloc(n * sizeof(NEW_T));
     (inline) NEW_T* new<NEW_T>() => cast(NEW_T*)std::malloc(sizeof(NEW_T));
 
-    (inline) ANEW_T* anew<ANEW_T>(int alignment, int n) => cast(ANEW_T*)std::amalloc(alignment, n * sizeof(ANEW_T));
-    (inline) ANEW_T* anew<ANEW_T>(int alignment) => cast(ANEW_T*)std::amalloc(alignment, sizeof(ANEW_T));
+    (inline) ANEW_T* anew<ANEW_T>(uint alignment, uint n) => cast(ANEW_T*)std::amalloc(alignment, n * sizeof(ANEW_T));
+    (inline) ANEW_T* anew<ANEW_T>(uint alignment) => cast(ANEW_T*)std::amalloc(alignment, sizeof(ANEW_T));
 
     struct pair<P1, P2> {
         P1 first;
@@ -97,8 +95,8 @@ namespace std {
             char* pFirst = cast(char*)(this.&first);
             char* pSecond = cast(char*)(this.&second);
             
-            for(int i=0; i<sizeof(P1); i++) return = return * pFirst[i] + 7588 + (return <. 6) + (return >. 2);
-            for(int i=0; i<sizeof(P2); i++) return = return * pSecond[i] + 7588 + (return <. 6) + (return >. 2);
+            for(uint i=0; i<sizeof(P1); i++) return = return * pFirst[i] + 7588 + (return <. 6) + (return >. 2);
+            for(uint i=0; i<sizeof(P2); i++) return = return * pSecond[i] + 7588 + (return <. 6) + (return >. 2);
         }
     }
 }

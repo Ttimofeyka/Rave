@@ -76,20 +76,19 @@ namespace std {
         }
 
         (inline) bool strncmp(const(char)* s1, const(char)* s2, uint n) {
-            int i = 0;
+            uint i = 0;
             return = true;
+
             while(i < n) {
-                if(s1[i] != s2[i]) {
-                    return = false;
-                    break;
-                }
+                if(s1[i] != s2[i]) @return(false);
+
                 i += 1;
             }
         }
 
         (inline, nochecks) bool strcmp(const(char)* s1, const(char)* s2) {
-            int length1 = std::cstring::strlen(s1);
-            int length2 = std::cstring::strlen(s2);
+            uint length1 = std::cstring::strlen(s1);
+            uint length2 = std::cstring::strlen(s2);
 
             return = true;
 
