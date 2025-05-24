@@ -15,43 +15,43 @@ namespace std {
         }
 
         struct iterator<KI, VI> {
-            uint currentHighest = 0;
+            usize currentHighest = 0;
             std::hashmap::entry<KI, VI>* current = null;
         }
     }
 
     (conditions: [K != void, V != void]) struct hashmap<K, V> {
         std::hashmap::entry<K, V>** table;
-        uint length;
-        uint mapSize;
+        usize length;
+        usize mapSize;
 
         std::hashmap<K, V> this {
             std::hashmap<K, V> this;
             this.mapSize = 128;
             this.length = 0;
             this.table = cast(std::hashmap::entry<K, V>**)std::malloc(sizeof(std::hashmap::entry<K, V>*) * this.mapSize);
-            for(int i=0; i<this.mapSize; i++) this.table[i] = null;
+            for(usize i=0; i<this.mapSize; i++) this.table[i] = null;
         } => this;
 
-        std::hashmap<K, V> this(uint mapSize) {
+        std::hashmap<K, V> this(usize mapSize) {
             std::hashmap<K, V> this;
             this.mapSize = mapSize;
             this.length = 0;
             this.table = cast(std::hashmap::entry<K, V>**)std::malloc(sizeof(std::hashmap::entry<K, V>*) * mapSize);
-            for(uint i=0; i<mapSize; i++) this.table[i] = null;
+            for(usize i=0; i<mapSize; i++) this.table[i] = null;
         } => this;
 
         void set(K key, V value) {
             // if(length > (mapSize * 0.75))
             if(length > (mapSize >. 1) + (mapSize >. 2)) {
                 // Reconstruct the map
-                uint oldMapSize = mapSize;
+                usize oldMapSize = mapSize;
                 mapSize = mapSize * 2;
 
                 std::hashmap::entry<K, V>** newTable = cast(std::hashmap::entry<K, V>**)std::malloc(sizeof(std::hashmap::entry<K, V>*) * mapSize);
-                for(uint i=0; i<mapSize; i++) newTable[i] = null;
+                for(usize i=0; i<mapSize; i++) newTable[i] = null;
 
-                for(uint i=0; i<oldMapSize; i++) {
+                for(usize i=0; i<oldMapSize; i++) {
                     std::hashmap::entry<K, V>* current = table[i];
 
                     while(current != null) {
@@ -199,7 +199,7 @@ namespace std {
         void next(std::hashmap::iterator<K, V>* iterator) {
             if(length > 0) {
                 if(iterator.current == null) {
-                    for(uint i=0; i<mapSize; i++) {
+                    for(usize i=0; i<mapSize; i++) {
                         if(table[i] != null) {
                             iterator.current = table[i];
                             iterator.currentHighest = i;
@@ -217,7 +217,7 @@ namespace std {
                             iterator.currentHighest = 0;
                         }
                         else {
-                            for(uint i=iterator.currentHighest; i<mapSize; i++) {
+                            for(usize i=iterator.currentHighest; i<mapSize; i++) {
                                 if(table[i] != null) {
                                     iterator.current = table[i];
                                     iterator.currentHighest = i;

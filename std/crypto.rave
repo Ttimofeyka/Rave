@@ -12,12 +12,12 @@ namespace std {
 
         // Encode
 
-        void encodeBuffer(std::string* buffer, char* src, uint length) {
+        void encodeBuffer(std::string* buffer, char* src, usize length) {
             @if(__RAVE_RUNTIME_CHECKS) if(length < 1) @return();
 
-            uint outlength = (length * 2) + 1;
+            usize outlength = (length * 2) + 1;
 
-            for(uint i=0; i<length; i++) {
+            for(usize i=0; i<length; i++) {
                 buffer.add(std::base16::table[(src[i] >. 4) & 0xF]);
                 buffer.add(std::base16::table[src[i] & 0xF]);
             }
@@ -27,7 +27,7 @@ namespace std {
 
         (inline) void encodeBuffer(std::string* buffer, std::string src) => std::base16::encodeBuffer(buffer, src.data, src.length);
         
-        (inline) std::string encode(char* src, uint length) {return = ""; std::base16::encodeBuffer(&return, src, length);}
+        (inline) std::string encode(char* src, usize length) {return = ""; std::base16::encodeBuffer(&return, src, length);}
 
         (inline) std::string encode(char* src) {return = ""; std::base16::encodeBuffer(&return, src, std::cstring::strlen(src));}
 
@@ -35,10 +35,10 @@ namespace std {
 
         // Decode
 
-        void decodeBuffer(std::string* buffer, char* src, uint length) {
+        void decodeBuffer(std::string* buffer, char* src, usize length) {
             @if(__RAVE_RUNTIME_CHECKS) if((length < 2) || ((length % 2) != 0)) @return();
 
-            for(uint i=0; i<length; i+=2) {
+            for(usize i=0; i<length; i+=2) {
                 uchar high;
                 uchar low;
 
@@ -56,7 +56,7 @@ namespace std {
 
         (inline) void decodeBuffer(std::string* buffer, std::string src) => std::base16::decodeBuffer(buffer, src.data, src.length);
 
-        (inline) std::string decode(char* src, uint length) {return = ""; std::base16::decodeBuffer(&return, src, length);}
+        (inline) std::string decode(char* src, usize length) {return = ""; std::base16::decodeBuffer(&return, src, length);}
 
         (inline) std::string decode(char* src) {return = ""; std::base16::decodeBuffer(&return, src, std::cstring::strlen(src));}
 
@@ -68,13 +68,13 @@ namespace std {
 
         // Encode
 
-        void encodeBuffer(std::string* buffer, char* src, uint length) {
+        void encodeBuffer(std::string* buffer, char* src, usize length) {
             @if(__RAVE_RUNTIME_CHECKS) if(length < 1) @return();
 
-            uint buf = 0;
+            usize buf = 0;
             int carry = 0;
 
-            for(uint i=0; i<length; i++) {
+            for(usize i=0; i<length; i++) {
                 buf = (buf <. 8) | src[i];
                 carry += 8;
 
@@ -90,7 +90,7 @@ namespace std {
             while((buffer.length & 7) != 0) buffer.add('=');
         }
 
-        (inline) std::string encode(char* src, uint length) {return = ""; std::base32::encodeBuffer(&return, src, length);}
+        (inline) std::string encode(char* src, usize length) {return = ""; std::base32::encodeBuffer(&return, src, length);}
 
         (inline) std::string encode(char* src) {return = ""; std::base32::encodeBuffer(&return, src, std::cstring::strlen(src));}
 
@@ -98,19 +98,19 @@ namespace std {
 
         // Decode
 
-        void decodeBuffer(std::string* buffer, char* src, uint length) {
+        void decodeBuffer(std::string* buffer, char* src, usize length) {
             @if(__RAVE_RUNTIME_CHECKS) if(length < 2) @return();
 
-            for(uint i=0; i<length; i+=8) {
+            for(usize i=0; i<length; i+=8) {
                 ulong buf = 0;
-                for(uint j=0; j<8; j++) buf = (buf <. 5) | std::cstring::indexOf(std::base32::table, src[i + j]);
+                for(usize j=0; j<8; j++) buf = (buf <. 5) | std::cstring::indexOf(std::base32::table, src[i + j]);
 
                 // Extract 5 bytes from the 40-bit buf
-                for(uint j=0; j<5; j++) buffer.add(cast(char)((buf >. (32 - (j * 8))) & 0xFF));
+                for(usize j=0; j<5; j++) buffer.add(cast(char)((buf >. (32 - (j * 8))) & 0xFF));
             }
         }
 
-        (inline) std::string decode(char* src, uint length) {return = ""; std::base32::decodeBuffer(&return, src, length);}
+        (inline) std::string decode(char* src, usize length) {return = ""; std::base32::decodeBuffer(&return, src, length);}
 
         (inline) std::string decode(char* src) {return = ""; std::base32::decodeBuffer(&return, src, std::cstring::strlen(src));}
 

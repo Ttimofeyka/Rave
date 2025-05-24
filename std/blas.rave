@@ -16,42 +16,42 @@ import <std/math>
 
     namespace std {
         namespace blas {
-            (conditions: [@isNumeric(VABS_T)]) void abs<VABS_T>(uint n, VABS_T* x) {
-                for(uint i=0; i<n; i++) x[i] = std::math::abs<VABS_T>(x[i]);
+            (conditions: [@isNumeric(VABS_T)]) void abs<VABS_T>(usize n, VABS_T* x) {
+                for(usize i=0; i<n; i++) x[i] = std::math::abs<VABS_T>(x[i]);
             }
 
-            (conditions: [@isNumeric(SQRT_T)]) void sqrt<SQRT_T>(uint n, SQRT_T* x) {
-                for(uint i=0; i<n; i++) x[i] = std::math::sqrt(x[i]);
+            (conditions: [@isNumeric(SQRT_T)]) void sqrt<SQRT_T>(usize n, SQRT_T* x) {
+                for(usize i=0; i<n; i++) x[i] = std::math::sqrt(x[i]);
             }
 
             // Vector sum of absolute values: result += abs(x[i])
-            (conditions: [@isNumeric(ASUM_T)]) ASUM_T asum<ASUM_T>(uint n, ASUM_T* x) {
-                for(uint i=0; i<n; i++) return += std::math::abs<ASUM_T>(x[i]);
+            (conditions: [@isNumeric(ASUM_T)]) ASUM_T asum<ASUM_T>(usize n, ASUM_T* x) {
+                for(usize i=0; i<n; i++) return += std::math::abs<ASUM_T>(x[i]);
             }
 
             // Vector addition: y[i] += (alpha * x[i])
-            (conditions: [@isNumeric(AXPY_T)]) void axpy<AXPY_T>(uint n, AXPY_T alpha, AXPY_T* x, AXPY_T* y) {
-                for(uint i=0; i<n; i++) y[i] += (alpha * x[i]);
+            (conditions: [@isNumeric(AXPY_T)]) void axpy<AXPY_T>(usize n, AXPY_T alpha, AXPY_T* x, AXPY_T* y) {
+                for(usize i=0; i<n; i++) y[i] += (alpha * x[i]);
             }
 
             // Scales two vectors, adds them to one another and stores result in the vector
-            (conditions: [@isNumeric(AXPBY_T)]) void axpby<AXPBY_T>(uint n, AXPBY_T alpha, AXPBY_T* x, APXBY_T beta, AXPBY_T* y) {
-                for(uint i=0; i<n; i++) y[i] = (alpha * x[i]) + (beta * y[i]);
+            (conditions: [@isNumeric(AXPBY_T)]) void axpby<AXPBY_T>(usize n, AXPBY_T alpha, AXPBY_T* x, APXBY_T beta, AXPBY_T* y) {
+                for(usize i=0; i<n; i++) y[i] = (alpha * x[i]) + (beta * y[i]);
             }
 
             // Dot product: result += x[i] * y[i]
-            (conditions: [@isNumeric(DOT_T)]) DOT_T dot<DOT_T>(uint n, DOT_T* x, DOT_T* y) {
-                for(uint i=0; i<n; i++) return += x[i] * y[i];
+            (conditions: [@isNumeric(DOT_T)]) DOT_T dot<DOT_T>(usize n, DOT_T* x, DOT_T* y) {
+                for(usize i=0; i<n; i++) return += x[i] * y[i];
             }
 
             // Scalar multiplication: x[i] = alpha * x[i]
-            (conditions: [@isNumeric(SCAL_T)]) void scale<SCAL_T>(uint n, SCAL_T* x, SCAL_T alpha) {
-                for(uint i=0; i<n; i++) x[i] = x[i] * alpha; 
+            (conditions: [@isNumeric(SCAL_T)]) void scale<SCAL_T>(usize n, SCAL_T* x, SCAL_T alpha) {
+                for(usize i=0; i<n; i++) x[i] = x[i] * alpha; 
             }
 
             // Vector norm: sqrt(return += ||x[i]||^2)
-            (conditions: [@isNumeric(NRM2_T)]) NRM2_T norm<NRM2_T>(uint n, NRM2_T* x) {
-                for(uint i=0; i<n; i++) {
+            (conditions: [@isNumeric(NRM2_T)]) NRM2_T norm<NRM2_T>(usize n, NRM2_T* x) {
+                for(usize i=0; i<n; i++) {
                     NRM2_T xi = std::math::abs<NRM2_T>(x[i]);
                     return += xi * xi;
                 }
@@ -60,41 +60,41 @@ import <std/math>
             }
 
             // Index of the maximum value element of a vector
-            (conditions: [@isNumeric(AMAX_T)]) AMAX_T max<AMAX_T>(uint n, AMAX_T* x) {
+            (conditions: [@isNumeric(AMAX_T)]) AMAX_T max<AMAX_T>(usize n, AMAX_T* x) {
                 if(n > 0) return = x[0];
 
-                for(uint i=1; i<n; i++) {
+                for(usize i=1; i<n; i++) {
                     if(x[i] > return) return = x[i];
                 }
             }
 
             // Index of the minimum value element of a vector
-            (conditions: [@isNumeric(AMIN_T)]) AMIN_T min<AMIN_T>(uint n, AMIN_T* x) {
+            (conditions: [@isNumeric(AMIN_T)]) AMIN_T min<AMIN_T>(usize n, AMIN_T* x) {
                 if(n > 0) return = x[0];
 
-                for(uint i=1; i<n; i++) {
+                for(usize i=1; i<n; i++) {
                     if(x[i] < return) return = x[i];
                 }
             }
 
             // Matrix/vector multiplication
-            (conditions: [@isNumeric(VECMATMUL_T)]) void vecmatmul<VECMATMUL_T>(uint rows, uint columns, VECMATMUL_T* vector, VECMATMUL_T* matrix, VECMATMUL_T* result) {
-                for(uint column=0; column<columns; column++) {
+            (conditions: [@isNumeric(VECMATMUL_T)]) void vecmatmul<VECMATMUL_T>(usize rows, usize columns, VECMATMUL_T* vector, VECMATMUL_T* matrix, VECMATMUL_T* result) {
+                for(usize column=0; column<columns; column++) {
                     result[column] = cast(VECMATMUL_T)0;
 
-                    for(uint row=0; row<rows; row++) result[column] += vector[row] * matrix[column * rows + row];
+                    for(usize row=0; row<rows; row++) result[column] += vector[row] * matrix[column * rows + row];
                 }
             }
 
             // Matrix transpose
-            (conditions: [@isNumeric(TRANSMAT_T)]) void transpose<TRANSMAT_T>(uint rows, uint columns, TRANSMAT_T* matrix, TRANSMAT_T* target) {
-                for(uint i=0; i<rows; i++) {
-                    for(uint j=0; j<columns; j++) target[j * rows + i] = matrix[i * columns + j];
+            (conditions: [@isNumeric(TRANSMAT_T)]) void transpose<TRANSMAT_T>(usize rows, usize columns, TRANSMAT_T* matrix, TRANSMAT_T* target) {
+                for(usize i=0; i<rows; i++) {
+                    for(usize j=0; j<columns; j++) target[j * rows + i] = matrix[i * columns + j];
                 }
             }
 
             // Matrix/matrix multiplication
-            (conditions: [@isNumeric(MATMUL_T)]) void matmul<MATMUL_T>(uint rows, uint columns, uint inners, MATMUL_T* mat1, MATMUL_T* mat2, MATMUL_T* result) {
+            (conditions: [@isNumeric(MATMUL_T)]) void matmul<MATMUL_T>(usize rows, usize columns, usize inners, MATMUL_T* mat1, MATMUL_T* mat2, MATMUL_T* result) {
                 for(int row=0; row<rows; row++) {
                     for(int inner=0; inner<inners; inner++) {
                         for(int col=0; col<columns; col++) result[row * columns + col] += mat1[row * columns + inner] * mat2[inner * columns + col];
@@ -110,12 +110,12 @@ import <std/math>
 
     namespace std {
         namespace blas {
-            (conditions: [@isNumeric(VABS_T)]) void abs<VABS_T>(uint n, VABS_T* x) {
-                for(uint i=0; i<n; i++) x[i] = std::math::abs<VABS_T>(x[i]);
+            (conditions: [@isNumeric(VABS_T)]) void abs<VABS_T>(usize n, VABS_T* x) {
+                for(usize i=0; i<n; i++) x[i] = std::math::abs<VABS_T>(x[i]);
             }
 
-            (conditions: [@isNumeric(SQRT_T)]) void sqrt<SQRT_T>(uint n, SQRT_T* x) {
-                uint i;
+            (conditions: [@isNumeric(SQRT_T)]) void sqrt<SQRT_T>(usize n, SQRT_T* x) {
+                usize i;
 
                 @if(SQRT_T == float) {
                     for(; (i + 3) < n; i+=4) @vStore(@__sqrtf4(@vLoad(float4, &x[i])), &x[i]);
@@ -128,13 +128,13 @@ import <std/math>
             }
 
             // Vector sum of absolute values: result += abs(x[i])
-            (conditions: [@isNumeric(ASUM_T)]) ASUM_T asum<ASUM_T>(uint n, ASUM_T* x) {
-                for(uint i=0; i<n; i++) return += std::math::abs<VABS_T>(x[i]);
+            (conditions: [@isNumeric(ASUM_T)]) ASUM_T asum<ASUM_T>(usize n, ASUM_T* x) {
+                for(usize i=0; i<n; i++) return += std::math::abs<VABS_T>(x[i]);
             }
 
             // Vector addition: y[i] += (alpha * x[i])
-            (conditions: [@isNumeric(AXPY_T)]) void axpy<AXPY_T>(uint n, AXPY_T alpha, AXPY_T* x, AXPY_T* y) {
-                uint i = 0;
+            (conditions: [@isNumeric(AXPY_T)]) void axpy<AXPY_T>(usize n, AXPY_T alpha, AXPY_T* x, AXPY_T* y) {
+                usize i = 0;
 
                 @if(AXPY_T == float) {
                     float4 chunkAlpha = @vFrom(float4, alpha);
@@ -165,8 +165,8 @@ import <std/math>
             }
 
             // Scales two vectors, adds them to one another and stores result in the vector
-            (conditions: [@isNumeric(AXPBY_T)]) void axpby<AXPBY_T>(uint n, AXPBY_T alpha, AXPBY_T* x, AXPBY_T beta, AXPBY_T* y) {
-                uint i = 0;
+            (conditions: [@isNumeric(AXPBY_T)]) void axpby<AXPBY_T>(usize n, AXPBY_T alpha, AXPBY_T* x, AXPBY_T beta, AXPBY_T* y) {
+                usize i = 0;
 
                 @if(AXPBY_T == float) {
                     float4 chunkAlpha = @vFrom(float4, alpha), chunkBeta = @vFrom(float4, beta);
@@ -197,8 +197,8 @@ import <std/math>
             }
 
             // Dot product: result += x[i] * y[i]
-            (conditions: [@isNumeric(DOT_T)]) DOT_T dot<DOT_T>(uint n, DOT_T* x, DOT_T* y) {
-                uint i = 0;
+            (conditions: [@isNumeric(DOT_T)]) DOT_T dot<DOT_T>(usize n, DOT_T* x, DOT_T* y) {
+                usize i = 0;
 
                 @if(DOT_T == float) {
                     float4 result;
@@ -220,8 +220,8 @@ import <std/math>
             }
 
             // Scalar multiplication: x[i] = alpha * x[i]
-            (conditions: [@isNumeric(SCAL_T)]) void scale<SCAL_T>(uint n, SCAL_T* x, SCAL_T alpha) {
-                uint i = 0;
+            (conditions: [@isNumeric(SCAL_T)]) void scale<SCAL_T>(usize n, SCAL_T* x, SCAL_T alpha) {
+                usize i = 0;
 
                 @if(DOT_T == float) {
                     float4 chunkAlpha = @vFrom(float4, alpha);
@@ -243,8 +243,8 @@ import <std/math>
             }
 
             // Vector norm: sqrt(return += ||x[i]||^2)
-            (conditions: [@isNumeric(NRM2_T)]) NRM2_T norm<NRM2_T>(uint n, NRM2_T* x) {
-                for(uint i = 0; i<n; i++) {
+            (conditions: [@isNumeric(NRM2_T)]) NRM2_T norm<NRM2_T>(usize n, NRM2_T* x) {
+                for(usize i = 0; i<n; i++) {
                     NRM2_T xi = std::math::abs<NRM2_T>(x[i]);
                     return += xi * xi;
                 }
@@ -253,32 +253,32 @@ import <std/math>
             }
 
             // Index of the maximum absolute value element of a vector
-            (conditions: [@isNumeric(AMAX_T)]) AMAX_T max<AMAX_T>(uint n, AMAX_T* x) {
+            (conditions: [@isNumeric(AMAX_T)]) AMAX_T max<AMAX_T>(usize n, AMAX_T* x) {
                 if(n > 0) return = x[0];
 
-                for(uint i=1; i<n; i++) {
+                for(usize i=1; i<n; i++) {
                     if(x[i] > return) return = x[i];
                 }
             }
 
             // Index of the minimum absolute value element of a vector
-            (conditions: [@isNumeric(AMIN_T)]) AMIN_T min<AMIN_T>(uint n, AMIN_T* x) {
+            (conditions: [@isNumeric(AMIN_T)]) AMIN_T min<AMIN_T>(usize n, AMIN_T* x) {
                 if(n > 0) return = x[0];
 
-                for(uint i=1; i<n; i++) {
+                for(usize i=1; i<n; i++) {
                     if(x[i] < return) return = x[i];
                 }
             }
 
             // Matrix/vector multiplication
-            (conditions: [@isNumeric(VECMATMUL_T)]) void vecmatmul<VECMATMUL_T>(uint rows, uint columns, VECMATMUL_T* vector, VECMATMUL_T* matrix, VECMATMUL_T* result) {
-                uint column = 0;
+            (conditions: [@isNumeric(VECMATMUL_T)]) void vecmatmul<VECMATMUL_T>(usize rows, usize columns, VECMATMUL_T* vector, VECMATMUL_T* matrix, VECMATMUL_T* result) {
+                usize column = 0;
 
                 @if(VECMATMUL_T == float) {
                     if(rows % 4 == 0) for(; (column + 3) < columns; column+=4) {
                         float4 chunkResult = @vFrom(float4, 0f);
 
-                        for(uint row=0; row<rows; row+=4) chunkResult += @vLoad(float4, &vector[row]) * @vLoad(float4, &matrix[row * columns + column]);
+                        for(usize row=0; row<rows; row+=4) chunkResult += @vLoad(float4, &vector[row]) * @vLoad(float4, &matrix[row * columns + column]);
 
                         @vStore(chunkResult, &result[column]);
                     }
@@ -287,7 +287,7 @@ import <std/math>
                     if(rows % 4 == 0) for(; (column + 3) < columns; column+=4) {
                         int4 chunkResult = @vFrom(int4, 0);
 
-                        for(uint row=0; row<rows; row+=4) chunkResult += @vLoad(int4, &vector[row]) * @vLoad(int4, &matrix[row * columns + column]);
+                        for(usize row=0; row<rows; row+=4) chunkResult += @vLoad(int4, &vector[row]) * @vLoad(int4, &matrix[row * columns + column]);
 
                         @vStore(chunkResult, &result[column]);
                     }
@@ -296,7 +296,7 @@ import <std/math>
                     if(rows % 2 == 0) for(; (column + 1) < columns; column+=2) {
                         double2 chunkResult = @vFrom(double2, 0d);
 
-                        for(uint row=0; row<rows; row+=2) chunkResult += @vLoad(double2, &vector[row]) * @vLoad(double2, &matrix[column * rows + row]);
+                        for(usize row=0; row<rows; row+=2) chunkResult += @vLoad(double2, &vector[row]) * @vLoad(double2, &matrix[column * rows + row]);
 
                         @vStore(chunkResult, &result[column]);
                     }
@@ -305,13 +305,13 @@ import <std/math>
                 for(; column<columns; column++) {
                     result[column] = cast(VECMATMUL_T)0;
 
-                    for(uint row=0; row<rows; row++) result[column] += vector[row] * matrix[column * rows + row];
+                    for(usize row=0; row<rows; row++) result[column] += vector[row] * matrix[column * rows + row];
                 }
             }
 
-            (conditions: [@isNumeric(TRANSMAT_T)]) void transpose<TRANSMAT_T>(uint rows, uint columns, TRANSMAT_T* matrix, TRANSMAT_T* target) {
-                uint i = 0;
-                uint j = 0;
+            (conditions: [@isNumeric(TRANSMAT_T)]) void transpose<TRANSMAT_T>(usize rows, usize columns, TRANSMAT_T* matrix, TRANSMAT_T* target) {
+                usize i = 0;
+                usize j = 0;
 
                 @if(TRANSMAT_T == float) {
                     for(; (i + 3) < rows; i+=4) {
@@ -341,7 +341,7 @@ import <std/math>
                         }
                     }
 
-                    uint remains = (columns % 4);
+                    usize remains = (columns % 4);
                 }
                 @else @if(TRANSMAT_T == int) {
                     for(; (i + 3) < rows; i+=4) {
@@ -371,7 +371,7 @@ import <std/math>
                         }
                     }
 
-                    uint remains = (columns % 4);
+                    usize remains = (columns % 4);
                 }
                 @else @if(TRANSMAT_T == double) {
                     for(; (i + 1) < rows; i+=2) {
@@ -401,7 +401,7 @@ import <std/math>
                         }
                     }
 
-                    uint remains = (columns % 2);
+                    usize remains = (columns % 2);
                 }
 
                 // Handle remaining rows
@@ -421,10 +421,10 @@ import <std/math>
             }
 
             // Matrix/matrix multiplication
-            (conditions: [@isNumeric(MATMUL_T)]) void matmul<MATMUL_T>(uint rows, uint columns, uint inners, MATMUL_T* mat1, MATMUL_T* mat2, MATMUL_T* result) {
-                for(uint row=0; row<rows; row++) {
-                    for(uint inner=0; inner<inners; inner++) {
-                        uint col = 0;
+            (conditions: [@isNumeric(MATMUL_T)]) void matmul<MATMUL_T>(usize rows, usize columns, usize inners, MATMUL_T* mat1, MATMUL_T* mat2, MATMUL_T* result) {
+                for(usize row=0; row<rows; row++) {
+                    for(usize inner=0; inner<inners; inner++) {
+                        usize col = 0;
 
                         @if(MATMUL_T == float) {
                             float4 leftVec = @vFrom(float4, mat1[row * inners + inner]);
@@ -468,12 +468,12 @@ import <std/math>
 
     namespace std {
         namespace blas {
-            (conditions: [@isNumeric(VABS_T)]) void abs<VABS_T>(uint n, VABS_T* x) {
-                for(uint i=0; i<n; i++) x[i] = std::math::abs<VABS_T>(x[i]);
+            (conditions: [@isNumeric(VABS_T)]) void abs<VABS_T>(usize n, VABS_T* x) {
+                for(usize i=0; i<n; i++) x[i] = std::math::abs<VABS_T>(x[i]);
             }
 
-            (conditions: [@isNumeric(SQRT_T)]) void sqrt<SQRT_T>(uint n, SQRT_T* x) {
-                uint i;
+            (conditions: [@isNumeric(SQRT_T)]) void sqrt<SQRT_T>(usize n, SQRT_T* x) {
+                usize i;
 
                 @if(SQRT_T == float) {
                     for(; (i + 7) < n; i+=8) @vStore(@__sqrtf8(@vLoad(float8, &x[i])), &x[i]);
@@ -486,13 +486,13 @@ import <std/math>
             }
 
             // Vector sum of absolute values: result += abs(x[i])
-            (conditions: [@isNumeric(ASUM_T)]) ASUM_T asum<ASUM_T>(uint n, ASUM_T* x) {
-                for(uint i=0; i<n; i++) return += std::math::abs<VABS_T>(x[i]);
+            (conditions: [@isNumeric(ASUM_T)]) ASUM_T asum<ASUM_T>(usize n, ASUM_T* x) {
+                for(usize i=0; i<n; i++) return += std::math::abs<VABS_T>(x[i]);
             }
 
             // Vector addition: y[i] += (alpha * x[i])
-            (conditions: [@isNumeric(AXPY_T)]) void axpy<AXPY_T>(uint n, AXPY_T alpha, AXPY_T* x, AXPY_T* y) {
-                uint i = 0;
+            (conditions: [@isNumeric(AXPY_T)]) void axpy<AXPY_T>(usize n, AXPY_T alpha, AXPY_T* x, AXPY_T* y) {
+                usize i = 0;
 
                 @if(AXPY_T == float) {
                     float8 chunkAlpha = @vFrom(float8, alpha);
@@ -523,8 +523,8 @@ import <std/math>
             }
 
             // Scales two vectors, adds them to one another and stores result in the vector
-            (conditions: [@isNumeric(AXPBY_T)]) void axpby<AXPBY_T>(uint n, AXPBY_T alpha, AXPBY_T* x, AXPBY_T beta, AXPBY_T* y) {
-                uint i = 0;
+            (conditions: [@isNumeric(AXPBY_T)]) void axpby<AXPBY_T>(usize n, AXPBY_T alpha, AXPBY_T* x, AXPBY_T beta, AXPBY_T* y) {
+                usize i = 0;
 
                 @if(AXPBY_T == float) {
                     float8 chunkAlpha = @vFrom(float8, alpha), chunkBeta = @vFrom(float8, beta);
@@ -555,8 +555,8 @@ import <std/math>
             }
 
             // Dot product: result += x[i] * y[i]
-            (conditions: [@isNumeric(DOT_T)]) DOT_T dot<DOT_T>(uint n, DOT_T* x, DOT_T* y) {
-                uint i = 0;
+            (conditions: [@isNumeric(DOT_T)]) DOT_T dot<DOT_T>(usize n, DOT_T* x, DOT_T* y) {
+                usize i = 0;
 
                 @if(DOT_T == float) {
                     float8 result;
@@ -578,8 +578,8 @@ import <std/math>
             }
 
             // Scalar multiplication: x[i] = alpha * x[i]
-            (conditions: [@isNumeric(SCAL_T)]) void scale<SCAL_T>(uint n, SCAL_T* x, SCAL_T alpha) {
-                uint i = 0;
+            (conditions: [@isNumeric(SCAL_T)]) void scale<SCAL_T>(usize n, SCAL_T* x, SCAL_T alpha) {
+                usize i = 0;
 
                 @if(DOT_T == float) {
                     float8 chunkAlpha = @vFrom(float8, alpha);
@@ -601,8 +601,8 @@ import <std/math>
             }
 
             // Vector norm: sqrt(return += ||x[i]||^2)
-            (conditions: [@isNumeric(NRM2_T)]) NRM2_T norm<NRM2_T>(uint n, NRM2_T* x) {
-                for(uint i = 0; i<n; i++) {
+            (conditions: [@isNumeric(NRM2_T)]) NRM2_T norm<NRM2_T>(usize n, NRM2_T* x) {
+                for(usize i = 0; i<n; i++) {
                     NRM2_T xi = std::math::abs<NRM2_T>(x[i]);
                     return += xi * xi;
                 }
@@ -611,32 +611,32 @@ import <std/math>
             }
 
             // Index of the maximum absolute value element of a vector
-            (conditions: [@isNumeric(AMAX_T)]) AMAX_T max<AMAX_T>(uint n, AMAX_T* x) {
+            (conditions: [@isNumeric(AMAX_T)]) AMAX_T max<AMAX_T>(usize n, AMAX_T* x) {
                 if(n > 0) return = x[0];
 
-                for(uint i=1; i<n; i++) {
+                for(usize i=1; i<n; i++) {
                     if(x[i] > return) return = x[i];
                 }
             }
 
             // Index of the minimum absolute value element of a vector
-            (conditions: [@isNumeric(AMIN_T)]) AMIN_T min<AMIN_T>(uint n, AMIN_T* x) {
+            (conditions: [@isNumeric(AMIN_T)]) AMIN_T min<AMIN_T>(usize n, AMIN_T* x) {
                 if(n > 0) return = x[0];
 
-                for(uint i=1; i<n; i++) {
+                for(usize i=1; i<n; i++) {
                     if(x[i] < return) return = x[i];
                 }
             }
 
             // Matrix/vector multiplication
-            (conditions: [@isNumeric(VECMATMUL_T)]) void vecmatmul<VECMATMUL_T>(uint rows, uint columns, VECMATMUL_T* vector, VECMATMUL_T* matrix, VECMATMUL_T* result) {
-                uint column = 0;
+            (conditions: [@isNumeric(VECMATMUL_T)]) void vecmatmul<VECMATMUL_T>(usize rows, usize columns, VECMATMUL_T* vector, VECMATMUL_T* matrix, VECMATMUL_T* result) {
+                usize column = 0;
 
                 @if(VECMATMUL_T == float) {
                     if(rows % 8 == 0) for(; (column + 7) < columns; column+=8) {
                         float8 chunkResult = @vFrom(float8, 0f);
 
-                        for(uint row=0; row<rows; row+=8) chunkResult += @vLoad(float8, &vector[row]) * @vLoad(float8, &matrix[row * columns + column]);
+                        for(usize row=0; row<rows; row+=8) chunkResult += @vLoad(float8, &vector[row]) * @vLoad(float8, &matrix[row * columns + column]);
 
                         @vStore(chunkResult, &result[column]);
                     }
@@ -645,7 +645,7 @@ import <std/math>
                     if(rows % 8 == 0) for(; (column + 7) < columns; column+=8) {
                         int4 chunkResult = @vFrom(int8, 0);
 
-                        for(uint row=0; row<rows; row+=8) chunkResult += @vLoad(int8, &vector[row]) * @vLoad(int8, &matrix[row * columns + column]);
+                        for(usize row=0; row<rows; row+=8) chunkResult += @vLoad(int8, &vector[row]) * @vLoad(int8, &matrix[row * columns + column]);
 
                         @vStore(chunkResult, &result[column]);
                     }
@@ -654,7 +654,7 @@ import <std/math>
                     if(rows % 4 == 0) for(; (column + 3) < columns; column+=4) {
                         double4 chunkResult = @vFrom(double4, 0d);
 
-                        for(uint row=0; row<rows; row+=4) chunkResult += @vLoad(double4, &vector[row]) * @vLoad(double4, &matrix[column * rows + row]);
+                        for(usize row=0; row<rows; row+=4) chunkResult += @vLoad(double4, &vector[row]) * @vLoad(double4, &matrix[column * rows + row]);
 
                         @vStore(chunkResult, &result[column]);
                     }
@@ -663,13 +663,13 @@ import <std/math>
                 for(; column<columns; column++) {
                     result[column] = cast(VECMATMUL_T)0;
 
-                    for(uint row=0; row<rows; row++) result[column] += vector[row] * matrix[column * rows + row];
+                    for(usize row=0; row<rows; row++) result[column] += vector[row] * matrix[column * rows + row];
                 }
             }
 
-            (conditions: [@isNumeric(TRANSMAT_T)]) void transpose<TRANSMAT_T>(uint rows, uint columns, TRANSMAT_T* matrix, TRANSMAT_T* target) {
-                uint i = 0;
-                uint j = 0;
+            (conditions: [@isNumeric(TRANSMAT_T)]) void transpose<TRANSMAT_T>(usize rows, usize columns, TRANSMAT_T* matrix, TRANSMAT_T* target) {
+                usize i = 0;
+                usize j = 0;
 
                 @if(TRANSMAT_T == float) {
                     for(; (i + 7) < rows; i+=8) {
@@ -699,7 +699,7 @@ import <std/math>
                         }
                     }
 
-                    uint remains = (columns % 8);
+                    usize remains = (columns % 8);
                 }
                 @else @if(TRANSMAT_T == int) {
                     for(; (i + 7) < rows; i+=8) {
@@ -729,7 +729,7 @@ import <std/math>
                         }
                     }
 
-                    uint remains = (columns % 8);
+                    usize remains = (columns % 8);
                 }
                 @else @if(TRANSMAT_T == double) {
                     for(; (i + 3) < rows; i+=4) {
@@ -759,7 +759,7 @@ import <std/math>
                         }
                     }
 
-                    uint remains = (columns % 4);
+                    usize remains = (columns % 4);
                 }
 
                 // Handle remaining rows
@@ -779,10 +779,10 @@ import <std/math>
             }
 
             // Matrix/matrix multiplication
-            (conditions: [@isNumeric(MATMUL_T)]) void matmul<MATMUL_T>(uint rows, uint columns, uint inners, MATMUL_T* mat1, MATMUL_T* mat2, MATMUL_T* result) {
-                for(uint row=0; row<rows; row++) {
-                    for(uint inner=0; inner<inners; inner++) {
-                        uint col = 0;
+            (conditions: [@isNumeric(MATMUL_T)]) void matmul<MATMUL_T>(usize rows, usize columns, usize inners, MATMUL_T* mat1, MATMUL_T* mat2, MATMUL_T* result) {
+                for(usize row=0; row<rows; row++) {
+                    for(usize inner=0; inner<inners; inner++) {
+                        usize col = 0;
 
                         @if(MATMUL_T == float) {
                             float8 leftVec = @vFrom(float4, mat1[row * inners + inner]);

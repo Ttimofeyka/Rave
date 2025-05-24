@@ -930,15 +930,15 @@ namespace std {
             } => this;
 
             void open {
-                uint pathLen = std::cstring::strlen(path);
-                int length = std::utf8::toUTF16Buffer(path, pathLen, null, 0);
+                usize pathLen = std::cstring::strlen(path);
+                usize length = std::utf8::toUTF16Buffer(path, pathLen, null, 0);
 
                 __path = std::new<ushort>(length + 1);
                 __pathSearch = std::new<ushort>(length + 3);
 
                 std::utf8::toUTF16Buffer(path, pathLen, __path, length);
 
-                int i = 0;
+                usize i = 0;
                 for(; i<length; i++) __pathSearch[i] = __path[i];
                 __pathSearch[i] = cast(ushort)('\\');
                 __pathSearch[i + 1] = cast(ushort)('*');
@@ -953,8 +953,8 @@ namespace std {
 
                 if(handle != null) {
                     while(true) {
-                        uint length = std::utf16::strlen(data.&cFileName);
-                        uint u8Length = std::utf16::toUTF8Buffer(data.&cFileName, length, null, 0);
+                        usize length = std::utf16::strlen(data.&cFileName);
+                        usize u8Length = std::utf16::toUTF8Buffer(data.&cFileName, length, null, 0);
                         std::string str = std::string(u8Length);
                         str.length = u8Length;
                         std::utf16::toUTF8Buffer(data.&cFileName, length, str.data, u8Length + 1);

@@ -8,12 +8,12 @@ import <std/memory>
 
 namespace std {
     // Quicksort method
-    void sort<SORT_T>(SORT_T* ptr, uint length) {
+    void sort<SORT_T>(SORT_T* ptr, usize length) {
         if((ptr != null) && (length > 1)) {
             SORT_T pivot = ptr[length - 1];
-            uint iLargest = 0;
+            usize iLargest = 0;
 
-            for(uint i=0; i < length - 1; i++) {
+            for(usize i=0; i < length - 1; i++) {
                 if(ptr[i] < pivot) {
                     std::swap(&ptr[iLargest], &ptr[i], sizeof(SORT_T));
                     iLargest += 1;

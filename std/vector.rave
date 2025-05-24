@@ -9,8 +9,8 @@ import <std/memory> <std/map>
 namespace std {
     (data: "data", length: "length", conditions: [VECTOR_T != void]) struct vector<VECTOR_T> {
         (noOperators) VECTOR_T* data;
-        uint capacity;
-        uint length;
+        usize capacity;
+        usize length;
 
         (arrayable) std::vector<VECTOR_T> this {
             std::vector<VECTOR_T> this;
@@ -19,14 +19,14 @@ namespace std {
             this.length = 0;
         } => this;
 
-        std::vector<VECTOR_T> this(int size) {
+        std::vector<VECTOR_T> this(usize size) {
             std::vector<VECTOR_T> this;
             this.data = cast(VECTOR_T*)std::malloc(sizeof(VECTOR_T) * size);
             this.capacity = sizeof(VECTOR_T) * size;
             this.length = size;
         } => this;
 
-        std::vector<VECTOR_T> this(VECTOR_T* data, int size) {
+        std::vector<VECTOR_T> this(VECTOR_T* data, usize size) {
             std::vector<VECTOR_T> this;
             this.data = cast(VECTOR_T*)std::malloc(sizeof(VECTOR_T) * size);
             this.capacity = sizeof(VECTOR_T) * size;
@@ -46,16 +46,16 @@ namespace std {
         }
 
         (inline) void assign(std::vector<VECTOR_T> of) {
-            for(int i=0; i<of.length; i+=1) {this.add(of.data[i]);}
+            for(usize i=0; i<of.length; i+=1) {this.add(of.data[i]);}
         }
 
-        (inline) void set(int index, VECTOR_T value) {
+        (inline) void set(usize index, VECTOR_T value) {
             @if(__RAVE_RUNTIME_CHECKS) if((index >= 0) && (index < this.length)) this.data[index] = value;
             @else this.data[index] = value;
         }
 
         void zero {
-            for(int i=0; i<this.length; i++) this.data[i] = cast(VECTOR_T)null;
+            for(usize i=0; i<this.length; i++) this.data[i] = cast(VECTOR_T)null;
         }
 
         void clear {
@@ -73,25 +73,25 @@ namespace std {
             buffer.capacity = this.capacity;
             buffer.length = this.length;
 
-            for(int i=0; i<this.length; i+=1) buffer.set(i, this.data[i]);
+            for(usize i=0; i<this.length; i+=1) buffer.set(i, this.data[i]);
         } => buffer;
 
-        (inline) VECTOR_T operator[](std::vector<VECTOR_T>* v, int index) {
+        (inline) VECTOR_T operator[](std::vector<VECTOR_T>* v, usize index) {
             @if(__RAVE_RUNTIME_CHECKS) if((index >= 0) && (index < v.length)) return = v.data[index];
             @else return = v.data[index];
         }
 
-        (inline) void operator[]=(std::vector<VECTOR_T>* v, int index, VECTOR_T value) {
+        (inline) void operator[]=(std::vector<VECTOR_T>* v, usize index, VECTOR_T value) {
             @if(__RAVE_RUNTIME_CHECKS) if((index >= 0) && (index < v.length)) v.data[index] = value;
             @else v.data[index] = value;
         }
 
-        (inline) VECTOR_T* operator[]&(std::vector<VECTOR_T>* v, int index) {
+        (inline) VECTOR_T* operator[]&(std::vector<VECTOR_T>* v, usize index) {
             @if(__RAVE_RUNTIME_CHECKS) if((index >= 0) && (index < v.length)) return = v.&data[index];
             @else return = v.&data[index];
         }
 
-        (inline) void swap(int first, int second) {
+        (inline) void swap(usize first, usize second) {
             @if(__RAVE_RUNTIME_CHECKS) {
                 if(((first >= 0) && (first < this.length)) && ((second >= 0) && (second < this.length))) @return();
             }
@@ -106,12 +106,12 @@ namespace std {
             cp.assign(two);
         } => cp;
 
-        void remove(int index) {
+        void remove(usize index) {
             @if(__RAVE_RUNTIME_CHECKS) {
                 if((index >= 0) && (index < this.length)) @return();
             }
 
-            for(int i=index; i<this.length; i+=1) {
+            for(usize i=index; i<this.length; i+=1) {
                 if((i + 1) < this.length) this.data[i] = this.data[i + 1];
             }
 
@@ -132,12 +132,12 @@ namespace std {
         }
 
         void transform(VECTOR_T(VECTOR_T) fn) {
-            for(int i=0; i<this.length; i++) this.data[i] = fn(this.data[i]);
+            for(usize i=0; i<this.length; i++) this.data[i] = fn(this.data[i]);
         }
 
         uint hash {
             return = this.length;
-            for(int i=0; i<this.length; i++) return = return * i + 7588 + (return <. 6) + (return >. 2);
+            for(usize i=0; i<this.length; i++) return = return * i + 7588 + (return <. 6) + (return >. 2);
         }
     }
 }

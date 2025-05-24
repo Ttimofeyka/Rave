@@ -25,9 +25,9 @@ static std::string namespacesToString(std::vector<std::string> namespacesNames, 
 }
 
 static bool isBasicType(std::string s) {
-    return s == "char" || s == "uchar" || s == "short" || s == "ushort" || s == "int" ||s == "uint" || s == "long" || s == "ulong"
-    || s == "cent" || s == "ucent" || s == "void" || s == "float" || s == "double" || s == "real" || s == "half" || s == "bhalf"
-    || s == "float4" || s == "int4" || s == "int8" || s == "float8" || s == "short8";
+    return s == "char" || s == "uchar" || s == "short" || s == "ushort" || s == "int" || s == "uint" || s == "long" || s == "ulong"
+    || s == "cent" || s == "ucent" || s == "void" || s == "float" || s == "usize" || s == "double" || s == "real" || s == "half" || s == "bhalf"
+    || s == "float2" || s == "float4" || s == "float8" || s == "double2" || s == "double4" || s == "int4" || s == "int8" || s == "short8";
 }
 
 #ifdef _WIN32

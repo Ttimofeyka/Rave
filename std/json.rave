@@ -21,7 +21,7 @@ namespace std {
         struct Value {
             void* value;
             int type;
-            int length;
+            uint length;
             char* name;
 
             void makeBoolean(bool value) {
@@ -53,21 +53,21 @@ namespace std {
                 this.name = null;
             }
 
-            void makeString(char* cstring, int len) {
+            void makeString(char* cstring, uint len) {
                 this.type = std::json::ValueType::String;
                 this.value = cstring;
                 this.length = len;
                 this.name = null;
             }
 
-            void makeArray(std::json::Value* values, int length) {
+            void makeArray(std::json::Value* values, uint length) {
                 this.type = std::json::ValueType::Array;
                 this.value = cast(void*)values;
                 this.length = length;
                 this.name = null;
             }
 
-            void makeObject(std::json::Value* kv, int length) {
+            void makeObject(std::json::Value* kv, uint length) {
                 this.type = std::json::ValueType::Object;
                 this.value = cast(void*)kv;
                 this.length = length;
@@ -88,11 +88,11 @@ namespace std {
 
             std::json::Value* asPointer => cast(std::json::Value*)value;
 
-            int indexOf(char* name) {
+            usize indexOf(char* name) {
                 return = -1;
                 if(this.type == std::json::ValueType::Object) {
                     std::json::Value* values = cast(std::json::Value*)this.value;
-                    for(int i=0; i<this.length; i++) {
+                    for(uint i=0; i<this.length; i++) {
                         if((values[i].name != null) && (std::cstring::strcmp(values[i].name, name))) {
                             return = i;
                             break;
@@ -101,7 +101,7 @@ namespace std {
                 }
             }
 
-            (inline) int indexOf(std::string name) => this.indexOf(name.data);
+            (inline) usize indexOf(std::string name) => this.indexOf(name.data);
 
             (inline) bool contains(char* name) => this.indexOf(name) != -1;
 
@@ -115,7 +115,7 @@ namespace std {
 
                 if(this.type == std::json::ValueType::Object) {
                     std::json::Value* values = cast(std::json::Value*)this.value;
-                    for(int i=0; i<this.length; i++) {
+                    for(uint i=0; i<this.length; i++) {
                         if((values[i].name != null) && (std::cstring::strcmp(values[i].name, name))) {
                             return.value = values[i].value;
                             return.name = values[i].name;
@@ -128,7 +128,7 @@ namespace std {
             }
 
             void set(char* name, std::json::Value value) {
-                int idx = this.indexOf(name);
+                usize idx = this.indexOf(name);
 
                 if(idx != -1) {
                     std::json::Value* values = cast(std::json::Value*)this.value;
@@ -146,9 +146,9 @@ namespace std {
                 }
             }
 
-            void setCString(char* name, char* cStr, int len) {
+            void setCString(char* name, char* cStr, uint len) {
                 char* ptr = std::malloc(len + 1);
-                for(int i=0; i<len; i++) ptr[i] = cStr[i];
+                for(uint i=0; i<len; i++) ptr[i] = cStr[i];
                 ptr[len] = '\0';
 
                 std::json::Value newStr;
@@ -182,18 +182,18 @@ namespace std {
                 this.set(name, newReal);
             }
 
-            void setArray(char* name, std::json::Value* ptr, int len) {
+            void setArray(char* name, std::json::Value* ptr, uint len) {
                 std::json::Value* newPtr = cast(std::json::Value*)std::malloc(sizeof(std::json::Value) * (len + 1));
-                for(int i=0; i<len; i++) newPtr[i] = ptr[i];
+                for(uint i=0; i<len; i++) newPtr[i] = ptr[i];
 
                 std::json::Value newArray;
                 newArray.makeArray(ptr, len);
                 this.set(name, newArray);
             }
 
-            void setObject(char* name, std::json::Value* ptr, int len) {
+            void setObject(char* name, std::json::Value* ptr, uint len) {
                 std::json::Value* newPtr = cast(std::json::Value*)std::malloc(sizeof(std::json::Value) * (len + 1));
-                for(int i=0; i<len; i++) newPtr[i] = ptr[i];
+                for(uint i=0; i<len; i++) newPtr[i] = ptr[i];
 
                 std::json::Value newObject;
                 newObject.makeObject(ptr, len);
@@ -221,7 +221,7 @@ namespace std {
                     return = std::string("[");
                     std::json::Value* values = this.asPointer();
 
-                    for(int i=0; i<this.length; i++) {
+                    for(uint i=0; i<this.length; i++) {
                         std::string buffer = values[i].toString();
                         return.append(buffer);
                         if((i + 1) < this.length) return.add(',');
@@ -234,7 +234,7 @@ namespace std {
                     return = std::string("{");
                     std::json::Value* values = this.asPointer();
 
-                    for(int i=0; i<this.length; i++) {
+                    for(uint i=0; i<this.length; i++) {
                         std::string buffer = values[i].toString();
                         return.add('"');
                         return.appendC(values[i].name);
@@ -254,7 +254,7 @@ namespace std {
                     if((this.type == std::json::ValueType::Array) || (this.type == std::json::ValueType::Object)) {
                         // Free every element of array or object
                         std::json::Value* elements = cast(std::json::Value*)(this.value);
-                        for(int i=0; i<this.length; i++) {
+                        for(uint i=0; i<this.length; i++) {
                             std::json::Value element = elements[i];
                             ~element;
                         }
@@ -267,13 +267,13 @@ namespace std {
         }
 
         namespace parser {
-            std::json::Value(std::string*, std::string, int*) __parseObject;
+            std::json::Value(std::string*, std::string, usize*) __parseObject;
 
-            void skip(std::string data, int* idx) {
+            void skip(std::string data, usize* idx) {
                 while((idx[0] < data.length) && (std::ascii::isSpace(data.at(idx[0])))) idx[0] += 1;
             }
 
-            std::json::Value parseBoolean(std::string data, int* idx) {
+            std::json::Value parseBoolean(std::string data, usize* idx) {
                 bool value = false;
 
                 if((idx[0] + 5) < data.length) {
@@ -287,7 +287,7 @@ namespace std {
                 return.makeBoolean(value);
             }
             
-            std::json::Value parseNumber(std::string* buffer, std::string data, int* idx) {
+            std::json::Value parseNumber(std::string* buffer, std::string data, usize* idx) {
                 bool isFloat = false;
 
                 std::json::parser::skip(data, idx);
@@ -315,7 +315,7 @@ namespace std {
                 else return.makeInteger(buffer.toLong());
             }
 
-            std::json::Value parseString(std::string* buffer, std::string data, int* idx) {
+            std::json::Value parseString(std::string* buffer, std::string data, usize* idx) {
                 std::json::parser::skip(data, idx);
                 buffer.length = 0;
 
@@ -339,13 +339,13 @@ namespace std {
                 idx[0] += 1; // skip last "
 
                 char* sbuf = std::malloc(buffer.length + 1);
-                for(int i=0; i<buffer.length; i++) sbuf[i] = buffer.data[i];
+                for(usize i=0; i<buffer.length; i++) sbuf[i] = buffer.data[i];
                 sbuf[buffer.length] = '\0';
 
                 return.makeString(sbuf, buffer.length);
             }
 
-            std::json::Value parseArray(std::string* buffer, std::string data, int* idx) {
+            std::json::Value parseArray(std::string* buffer, std::string data, usize* idx) {
                 std::json::parser::skip(data, idx);
 
                 std::vector<std::json::Value> array = std::vector<std::json::Value>();
@@ -367,7 +367,7 @@ namespace std {
                 return.makeArray(array.data, array.length);
             }
 
-            char* parseVarName(std::string* buffer, std::string data, int* idx) {
+            char* parseVarName(std::string* buffer, std::string data, usize* idx) {
                 // TODO: Add checks for possible " errors
                 buffer.length = 0;
                 
@@ -386,11 +386,11 @@ namespace std {
                 idx[0] += 1; // skip last "
 
                 return = std::malloc(buffer.length + 1);
-                for(int i=0; i<buffer.length; i++) return[i] = buffer[0].at(i);
+                for(usize i=0; i<buffer.length; i++) return[i] = buffer[0].at(i);
                 return[buffer.length] = '\0';
             }
 
-            std::json::Value parseObject(std::string* buffer, std::string data, int* idx) {
+            std::json::Value parseObject(std::string* buffer, std::string data, usize* idx) {
                 std::json::parser::skip(data, idx);
 
                 std::vector<std::json::Value> object = std::vector<std::json::Value>();
@@ -431,7 +431,7 @@ namespace std {
         std::json::Value parse(std::string data) {
             std::json::parser::__parseObject = std::json::parser::parseObject;
 
-            int idx = 0;
+            usize idx = 0;
             std::string buffer = ""; // Create a temp buffer for parsing
 
             return = std::json::parser::parseObject(&buffer, data, &idx);

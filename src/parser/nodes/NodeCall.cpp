@@ -51,15 +51,15 @@ bool hasIdenticallyArgs(const std::vector<Type*>& one, const std::vector<Type*>&
             auto* tb2 = (TypeBasic*)t2;
             
             if(tb1->type != tb2->type) {
-                if(!isFloatType(tb1) && !isFloatType(tb2)) {
-                    if((tb1->type + 10 != tb2->type) && (tb2->type + 10 != tb1->type)) return false;
-                }
+                if(isFloatType(tb1) || isFloatType(tb2)) return false;
             }
+
             continue;
         }
 
         if(t1->toString() != t2->toString()) return false;
     }
+
     return true;
 }
 
@@ -75,14 +75,9 @@ bool hasIdenticallyArgs(const std::vector<Type*>& one, const std::vector<FuncArg
             auto* tb2 = (TypeBasic*)t2;
             
             if(tb1->type != tb2->type) {
-                if(!isFloatType(tb1) && !isFloatType(tb2)) {
-                    if((tb1->type + 10 != tb2->type) && (tb2->type + 10 != tb1->type)) {
-                        return false;
-                    }
-                } else {
-                    return false;
-                }
+                if(isFloatType(tb1) || isFloatType(tb2)) return false;
             }
+
             continue;
         }
 
@@ -94,9 +89,11 @@ bool hasIdenticallyArgs(const std::vector<Type*>& one, const std::vector<FuncArg
                 if(instanceof<TypeStruct>(t1) && instanceof<TypePointer>(t2)) continue;
                 if(instanceof<TypeStruct>(t2) && instanceof<TypePointer>(t1)) continue;
             }
+
             return false;
         }
     }
+
     return true;
 }
 
@@ -367,6 +364,16 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
                         if(AST::funcTable.find(ifName + newSTypes) != AST::funcTable.end()) {
                             std::vector<RaveValue> params = Call::genParameters(newArgs, byVals, AST::funcTable[ifName + newSTypes], loc);
                             return LLVM::call(generator->functions[ifName + newSTypes], params, (instanceof<TypeVoid>(AST::funcTable[ifName + newSTypes]->type) ? "" : "callFunc"), byVals);
+                        }
+
+                        // Try to search manually
+                        for(auto& kv : AST::funcTable) {
+                            if(kv.first.find(ifName) != std::string::npos) {
+                                if(hasIdenticallyArgs(newTypes, kv.second->args)) {
+                                    std::vector<RaveValue> params = Call::genParameters(newArgs, byVals, kv.second, loc);
+                                    return LLVM::call(generator->functions[kv.first], params, (instanceof<TypeVoid>(kv.second->type) ? "" : "callFunc"), byVals);
+                                }
+                            }
                         }
                     }
 
