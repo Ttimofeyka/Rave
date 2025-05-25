@@ -89,7 +89,7 @@ namespace std {
             this.second = second;
         } => this;
 
-        usize hash {
+        uint hash {
             return = 2;
 
             char* pFirst = cast(char*)(this.&first);
