@@ -11,7 +11,7 @@ import <std/thread> <std/ascii>
 @if((__RAVE_PLATFORM == "X86_64") || (__RAVE_PLATFORM == "AARCH64") || (__RAVE_PLATFORM == "POWERPC64")) {
     namespace std {
         namespace cstring {
-            uint strlen(char* str) {
+            usize strlen(char* str) {
                 ulong align = ptoi(&str[return]) & 7;
 
                 while(align != 0) {
@@ -36,7 +36,7 @@ import <std/thread> <std/ascii>
 @else @if((__RAVE_PLATFORM == "X86") || (__RAVE_PLATFORM == "ARM") || (__RAVE_PLATFORM == "POWERPC")) {
     namespace std {
         namespace cstring {
-            uint strlen(char* str) {
+            usize strlen(char* str) {
                 uint align = ptoi(&str[return]) & 3;
 
                 while(align != 0) {
@@ -61,7 +61,7 @@ import <std/thread> <std/ascii>
 @else {
     namespace std {
         namespace cstring {
-            uint strlen(char* str) {
+            usize strlen(char* str) {
                 while(str[return] != '\0') return += 1;
             }
         }
@@ -75,8 +75,8 @@ namespace std {
             if(b) return = "true";
         }
 
-        (inline) bool strncmp(const(char)* s1, const(char)* s2, uint n) {
-            uint i = 0;
+        (inline) bool strncmp(const(char)* s1, const(char)* s2, usize n) {
+            usize i = 0;
             return = true;
 
             while(i < n) {
@@ -87,8 +87,8 @@ namespace std {
         }
 
         (inline, nochecks) bool strcmp(const(char)* s1, const(char)* s2) {
-            uint length1 = std::cstring::strlen(s1);
-            uint length2 = std::cstring::strlen(s2);
+            usize length1 = std::cstring::strlen(s1);
+            usize length2 = std::cstring::strlen(s2);
 
             return = true;
 
@@ -97,7 +97,7 @@ namespace std {
         }
 
         (inline, nochecks) char* strchr(char* chars, char c) {
-            uint i = 0;
+            usize i = 0;
             return = null;
 
             while(chars[i] != '\0') {
@@ -111,10 +111,10 @@ namespace std {
         }
 
         (nochecks) char* strstr(const(char)* str, const(char)* substr) {
-            uint i = 0;
+            usize i = 0;
             char* ptr = str;
             bool done = false;
-            int substrLen = std::cstring::strlen(substr);
+            usize substrLen = std::cstring::strlen(substr);
 
             while(ptr[i] != '\0') {
                 if(std::cstring::strncmp(ptr, substr, substrLen)) {
@@ -128,7 +128,7 @@ namespace std {
             if(!done) ptr = null;
         } => ptr;
 
-        (nochecks) int indexOf(const(char)* str, char ch) {
+        (nochecks) usize indexOf(const(char)* str, char ch) {
             while((str[return] != '\0') && (str[return] != ch)) return += 1;
             if(str[return] == '\0') return = -1;
         }
@@ -232,19 +232,20 @@ namespace std {
 
         char* uctos(ucent number, char* endBuffer) {
             char[40] uctBuffer;
-            uint pos;
-            for(pos = 0; number != 0u; pos += 1) {
+            usize pos;
+
+            for(pos = 0; number != 0u; pos++) {
                 uctBuffer[pos] = (number % 10) + '0';
                 number /= 10;
             }
 
-            uint outpos;
-            for(outpos = 0; true; outpos += 1) {
+            usize outpos;
+            for(outpos = 0; true; outpos++) {
                 pos -= 1;
                 endBuffer[outpos] = uctBuffer[pos];
-                if(pos == 0)
-                    break;
+                if(pos == 0) break;
             }
+
             endBuffer[outpos + 1] = '\0';
         } => endBuffer;
         

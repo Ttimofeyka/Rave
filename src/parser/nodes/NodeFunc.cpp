@@ -296,30 +296,8 @@ RaveValue NodeFunc::generate() {
         tfunc->args.push_back(new TypeFuncArg(args[0].type, args[0].name));
 
         for(int i=1; i<args.size(); i++) {
-            Type* cp = args[i].type->copy();
-            ty = cp;
-            parent = nullptr;
-
-            while(instanceof<TypePointer>(ty) || instanceof<TypeArray>(ty)) {
-                parent = ty;
-                ty = ty->getElType();
-            }
-
-            if(instanceof<TypeStruct>(ty)) {
-                if(generator->toReplace.find(ty->toString()) != generator->toReplace.end()) {
-                    if(parent == nullptr) args[i].type = generator->toReplace[ty->toString()];
-                    else if(instanceof<TypePointer>(parent)) ((TypePointer*)parent)->instance = generator->toReplace[ty->toString()];
-                    else ((TypeArray*)parent)->element = generator->toReplace[ty->toString()];
-                }
-                else if(((TypeStruct*)ty)->types.size() > 0) {
-                    for(int i=0; i<((TypeStruct*)ty)->types.size(); i++) {
-                        if(generator->toReplace.find(((TypeStruct*)ty)->types[i]->toString()) != generator->toReplace.end())
-                            ((TypeStruct*)ty)->types[i] = generator->toReplace[((TypeStruct*)ty)->types[i]->toString()];
-                    }
-    
-                    ((TypeStruct*)ty)->updateByTypes();
-                }
-            }
+            Type* cp = args[i].type;
+            Template::replaceTemplates(&cp);
 
             tfunc->args.push_back(new TypeFuncArg(cp, args[i].name));
         }
@@ -330,30 +308,8 @@ RaveValue NodeFunc::generate() {
             continue;
         }
 
-        Type* cp = args[i].type->copy();
-        ty = cp;
-        parent = nullptr;
-
-        while(instanceof<TypePointer>(ty) || instanceof<TypeArray>(ty)) {
-            parent = ty;
-            ty = ty->getElType();
-        }
-
-        if(instanceof<TypeStruct>(ty)) {
-            if(generator->toReplace.find(ty->toString()) != generator->toReplace.end()) {
-                if(parent == nullptr) args[i].type = generator->toReplace[ty->toString()];
-                else if(instanceof<TypePointer>(parent)) ((TypePointer*)parent)->instance = generator->toReplace[ty->toString()];
-                else ((TypeArray*)parent)->element = generator->toReplace[ty->toString()];
-            }
-            else if(((TypeStruct*)ty)->types.size() > 0) {
-                for(int i=0; i<((TypeStruct*)ty)->types.size(); i++) {
-                    if(generator->toReplace.find(((TypeStruct*)ty)->types[i]->toString()) != generator->toReplace.end())
-                        ((TypeStruct*)ty)->types[i] = generator->toReplace[((TypeStruct*)ty)->types[i]->toString()];
-                }
-
-                ((TypeStruct*)ty)->updateByTypes();
-            }
-        }
+        Type* cp = args[i].type;
+        Template::replaceTemplates(&cp);
 
         tfunc->args.push_back(new TypeFuncArg(cp, args[i].name));
     }

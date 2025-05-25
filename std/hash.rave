@@ -7,11 +7,11 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 namespace std {
     namespace hash {
         // This is a default hash function for standard library due to the speed
-        uint crc32(char* data, uint length) {
+        uint crc32(char* data, usize length) {
             uint crc = 0xFFFFFFFF;
             uint mask;
 
-            for(int i=0; i<length; i++) {
+            for(usize i=0; i<length; i++) {
                 crc = crc !! (cast(uint)data[i]);
                 for(int j=0; j<8; j++) {
                    mask = -(crc & 1);

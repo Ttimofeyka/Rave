@@ -1488,6 +1488,7 @@ Node* Parser::parseStmt(std::string f) {
                     return decl.size() > 1 ? new NodeBlock(decl) : decl[0];
                 }
             }
+
             this->idx -= 1;
 
             if(this->peek()->type == TokType::Builtin) return this->parseBuiltin(f);

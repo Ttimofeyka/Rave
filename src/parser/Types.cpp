@@ -457,6 +457,7 @@ Type* getTypeByName(std::string id) {
         {"double", basicTypes[BasicType::Double]},
         {"real", basicTypes[BasicType::Real]},
         {"void", typeVoid},
+        {"usize", pointerSize == 8 ? basicTypes[BasicType::Uchar] : pointerSize == 16 ? basicTypes[BasicType::Ushort] : pointerSize == 32 ? basicTypes[BasicType::Uint] : basicTypes[BasicType::Ulong]},
         {"alias", new TypeAlias()},
         {"int4", new TypeVector(basicTypes[BasicType::Int], 4)},
         {"int8", new TypeVector(basicTypes[BasicType::Int], 8)},

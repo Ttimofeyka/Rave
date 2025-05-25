@@ -9,8 +9,8 @@ import <std/memory> <std/map>
 namespace std {
     (conditions: [STACK_T != void]) struct stack<STACK_T> {
         (noOperators) STACK_T* data;
-        uint capacity;
-        uint length;
+        usize capacity;
+        usize length;
 
         (arrayable) std::stack<STACK_T> this {
             std::stack<STACK_T> this;
@@ -19,7 +19,7 @@ namespace std {
             this.length = 0;
         } => this;
 
-        std::stack<STACK_T> this(STACK_T* data, int size) {
+        std::stack<STACK_T> this(STACK_T* data, usize size) {
             std::stack<STACK_T> this;
             this.data = cast(STACK_T*)std::malloc(sizeof(STACK_T) * size);
             this.capacity = sizeof(STACK_T) * size;
@@ -42,10 +42,10 @@ namespace std {
         STACK_T top => this.data[this.length - 1];
 
         STACK_T pop {
-            if(this.length <= 0) @return(null);
+            if(this.length == 0) @return(null);
             return = this.top();
 
-            for(int i=(this.length - 1); i<this.length; i+=1) {
+            for(usize i=(this.length - 1); i<this.length; i++) {
                 if((i + 1) < this.length) this.data[i] = this.data[i + 1];
             }
 
@@ -53,7 +53,7 @@ namespace std {
         }
 
         (inline) void assign(std::stack<STACK_T> of) {
-            for(int i=0; i<of.length; i+=1) {this.push(of.data[i]);}
+            for(usize i=0; i<of.length; i+=1) {this.push(of.data[i]);}
         }
 
         std::stack<STACK_T> copy {
@@ -62,7 +62,7 @@ namespace std {
             buffer.capacity = this.capacity;
             buffer.length = this.length;
 
-            for(int i=0; i<this.length; i+=1) buffer.data[i] = this.data[i];
+            for(usize i=0; i<this.length; i+=1) buffer.data[i] = this.data[i];
         } => buffer;
 
         std::stack<STACK_T> operator+(std::stack<STACK_T> one, std::stack<STACK_T> two) {
@@ -90,7 +90,7 @@ namespace std {
 
         uint hash {
             return = this.length + (this.capacity * sizeof(STACK_T));
-            for(int i=0; i<this.length; i++) return = return * i + 5213 + (return <. 6) + (return >. 2);
+            for(usize i=0; i<this.length; i++) return = return * i + 5213 + (return <. 6) + (return >. 2);
         }
     }
 }
