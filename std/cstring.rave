@@ -114,7 +114,7 @@ namespace std {
             usize i = 0;
             char* ptr = str;
             bool done = false;
-            int substrLen = std::cstring::strlen(substr);
+            usize substrLen = std::cstring::strlen(substr);
 
             while(ptr[i] != '\0') {
                 if(std::cstring::strncmp(ptr, substr, substrLen)) {
@@ -128,7 +128,7 @@ namespace std {
             if(!done) ptr = null;
         } => ptr;
 
-        (nochecks) int indexOf(const(char)* str, char ch) {
+        (nochecks) usize indexOf(const(char)* str, char ch) {
             while((str[return] != '\0') && (str[return] != ch)) return += 1;
             if(str[return] == '\0') return = -1;
         }
