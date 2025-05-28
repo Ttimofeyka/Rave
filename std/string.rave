@@ -160,9 +160,9 @@ namespace std {
             usize i = 0;
 
             if((this.length + cstrlen) >= this.capacity) {
-                int minTargetCap = this.capacity + cstrlen + 2;
-                int shift = (31 - @ctlz32(minTargetCap, true));
-                int targetCap = (minTargetCap >. shift) <. (shift + 1);
+                usize minTargetCap = this.capacity + cstrlen + 2;
+                usize shift = ((sizeof(usize) * 8) - @ctlz(minTargetCap, true) - 1);
+                usize targetCap = (minTargetCap >. shift) <. (shift + 1);
 
                 this.data = std::realloc(this.data, targetCap);
                 this.capacity = targetCap;
@@ -199,7 +199,7 @@ namespace std {
 
             usize i = 0;
             while(i < this.length) {
-                if((this.length - fromLen) <= i) {
+                if(length <= (i + fromLen)) {
                     for(usize j=i; j<this.length; j++) return.add(this.data[j]);
                     break;
                 }
