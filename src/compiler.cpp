@@ -465,6 +465,10 @@ void Compiler::compile(std::string file) {
         if(ravePlatform == "X86_64") Compiler::outType = "x86_64-pc-windows-gnu";
         else Compiler::outType = "i686-win32-gnu";
     }
+    else if(raveOs == "ARDUINO") {
+        // TODO: Add switch with all possible Arduino platforms
+        Compiler::outType = "atmega328-avr";
+    }
     else Compiler::outType = "unknown";
 
     char* errors = nullptr;
@@ -584,6 +588,7 @@ void Compiler::compileAll() {
             Compiler::error("file '" + Compiler::files[i] + "' does not exists!");
             return;
         }
+
         if(Compiler::files[i].size() > 2 && (endsWith(Compiler::files[i], ".a") || endsWith(Compiler::files[i], ".o") || endsWith(Compiler::files[i], ".lib")))
             Compiler::linkString += Compiler::files[i] + " ";
         else {
@@ -592,9 +597,10 @@ void Compiler::compileAll() {
                 char* err;
                 LLVMPrintModuleToFile(generator->lModule, (Compiler::files[i]+".ll").c_str(), &err);
             }
+
             std::string compiledFile = std::regex_replace(Compiler::files[i], std::regex("\\.rave"), ".o");
             Compiler::linkString += compiledFile + " ";
-            if(!Compiler::settings.saveObjectFiles) toRemove.push_back(compiledFile);
+            if(!Compiler::settings.saveObjectFiles && !Compiler::settings.onlyObject) toRemove.push_back(compiledFile);
         }
     }
 
@@ -610,6 +616,7 @@ void Compiler::compileAll() {
             Compiler::error("file '" + Compiler::files[i] + "' does not exists!");
             return;
         }
+
         if(Compiler::toImport[i].size() > 2 && (endsWith(Compiler::toImport[i], ".a") || endsWith(Compiler::toImport[i], ".o") || endsWith(Compiler::toImport[i], ".lib")))
             Compiler::linkString += Compiler::toImport[i] + " ";
         else {
@@ -619,10 +626,12 @@ void Compiler::compileAll() {
             ) linkString += std::regex_replace(Compiler::toImport[i], std::regex("\\.rave"), std::string(".") + Compiler::outType + ".o") + " ";
             else {
                 compile(Compiler::toImport[i]);
+
                 if(Compiler::settings.emitLLVM) {
                     char* err;
                     LLVMPrintModuleToFile(generator->lModule, (Compiler::toImport[i] + ".ll").c_str(), &err);
                 }
+
                 std::string compiledFile = std::regex_replace(Compiler::toImport[i], std::regex("\\.rave"), ".o");
                 linkString += compiledFile + " ";
 
@@ -639,24 +648,27 @@ void Compiler::compileAll() {
 
     if(Compiler::outFile == "") Compiler::outFile = "a";
 
-    if(Compiler::settings.onlyObject) Compiler::linkString += "-r ";
-    if(Compiler::settings.isStatic) Compiler::linkString += "-static ";
-    if(Compiler::settings.isPIC) Compiler::linkString += "-no-pie ";
+    // TODO: Add support of linking on AVR, improve settings.onlyObject handling
 
-    Compiler::linkString += " " + Compiler::settings.linkParams + " -Wno-unused-command-line-argument ";
+    if(!Compiler::settings.onlyObject) {
+        if(Compiler::settings.isStatic) Compiler::linkString += "-static ";
+        if(Compiler::settings.isPIC) Compiler::linkString += "-no-pie ";
 
-    #ifdef _WIN32
-        if(Compiler::options["compiler"].template get<std::string>().find("clang") != std::string::npos) Compiler::linkString += " -fuse-ld=ld ";
-    #endif
+        Compiler::linkString += " " + Compiler::settings.linkParams + " -Wno-unused-command-line-argument ";
 
-    ShellResult result = exec(Compiler::linkString + " -o " + Compiler::outFile);
-    if(result.status != 0) {
-        Compiler::error("error when linking!\nLinking string: '" + Compiler::linkString+" -o " + Compiler::outFile + "'");
-        std::exit(result.status);
-        return;
+        #ifdef _WIN32
+            if(Compiler::options["compiler"].template get<std::string>().find("clang") != std::string::npos) Compiler::linkString += " -fuse-ld=ld ";
+        #endif
+
+        ShellResult result = exec(Compiler::linkString + " -o " + Compiler::outFile);
+        if(result.status != 0) {
+            Compiler::error("error when linking!\nLinking string: '" + Compiler::linkString+" -o " + Compiler::outFile + "'");
+            std::exit(result.status);
+            return;
+        }
+
+        for(int i=0; i<toRemove.size(); i++) std::remove(toRemove[i].c_str());
     }
-
-    for(int i=0; i<toRemove.size(); i++) std::remove(toRemove[i].c_str());
 
     std::cout << "Time spent by lexer: " << std::to_string(Compiler::lexTime) << "ms\nTime spent by parser: " << std::to_string(Compiler::parseTime) << "ms\nTime spent by generator: " << std::to_string(Compiler::genTime) << "ms" << std::endl;
 }
