@@ -73,7 +73,7 @@ Type* NodeBuiltin::getType() {
     || this->name == "isStructure" || this->name == "hasMethod"
     || this->name == "hasDestructor" || this->name == "contains" || this->name == "isUnsigned") return basicTypes[BasicType::Bool];
     if(this->name == "sizeOf" || this->name == "argsLength" || this->name == "getCurrArgNumber"
-    || this->name == "vMoveMask128" || this->name == "cttz32" || this->name == "ctlz32") return basicTypes[BasicType::Int];
+    || this->name == "vMoveMask128" || this->name == "cttz" || this->name == "ctlz") return basicTypes[BasicType::Int];
     if(this->name == "vShuffle" || this->name == "vHAdd32x4" || this->name == "vHAdd16x8"
     || this->name == "__sqrtf4" || this->name == "__sqrtf8"|| this->name == "__sqrtd2"
     || this->name == "__sqrtd4") return asType(0)->type;
@@ -721,37 +721,47 @@ RaveValue NodeBuiltin::generate() {
 
         return LLVM::call(generator->functions["llvm.sqrt.v4f64"], std::vector<LLVMValueRef>({value.value}).data(), 1, "sqrtd4");
     }
-    else if(this->name == "cttz32") {
+    else if(this->name == "cttz") {
         if(this->args.size() < 2) generator->error("at least two arguments are required!", this->loc);
 
         RaveValue value = this->args[0]->generate();
         RaveValue isZeroPoison = this->args[1]->generate();
 
-        if(generator->functions.find("llvm.cttz.i32") == generator->functions.end()) {
-            generator->functions["llvm.cttz.i32"] = {LLVMAddFunction(generator->lModule, "llvm.cttz.i32", LLVMFunctionType(
-                LLVMInt32TypeInContext(generator->context),
-                std::vector<LLVMTypeRef>({LLVMInt32TypeInContext(generator->context), LLVMInt1TypeInContext(generator->context)}).data(),
+        // TODO: Add check for types
+
+        LLVMTypeRef valueType = LLVMTypeOf(value.value);
+        std::string funcName = std::string("llvm.cttz.") + LLVMPrintTypeToString(valueType);
+
+        if(generator->functions.find(funcName) == generator->functions.end()) {
+            generator->functions[funcName] = {LLVMAddFunction(generator->lModule, funcName.c_str(), LLVMFunctionType(
+                valueType,
+                std::vector<LLVMTypeRef>({valueType, LLVMInt1TypeInContext(generator->context)}).data(),
                 2, false
-            )), new TypeFunc(new TypeBasic(BasicType::Int), {new TypeFuncArg(new TypeBasic(BasicType::Int), "value"), new TypeFuncArg(new TypeBasic(BasicType::Bool), "isZeroPoison")}, false)};
+            )), new TypeFunc(value.type, {new TypeFuncArg(value.type, "value"), new TypeFuncArg(new TypeBasic(BasicType::Bool), "isZeroPoison")}, false)};
         }
 
-        return LLVM::call(generator->functions["llvm.cttz.i32"], std::vector<LLVMValueRef>({value.value, isZeroPoison.value}).data(), 2, "cttz32");
+        return LLVM::call(generator->functions[funcName], std::vector<LLVMValueRef>({value.value, isZeroPoison.value}).data(), 2, "cttz");
     }
-    else if(this->name == "ctlz32") {
+    else if(this->name == "ctlz") {
         if(this->args.size() < 2) generator->error("at least two arguments are required!", this->loc);
 
         RaveValue value = this->args[0]->generate();
         RaveValue isZeroPoison = this->args[1]->generate();
 
-        if(generator->functions.find("llvm.ctlz.i32") == generator->functions.end()) {
-            generator->functions["llvm.ctlz.i32"] = {LLVMAddFunction(generator->lModule, "llvm.ctlz.i32", LLVMFunctionType(
-                LLVMInt32TypeInContext(generator->context),
-                std::vector<LLVMTypeRef>({LLVMInt32TypeInContext(generator->context), LLVMInt1TypeInContext(generator->context)}).data(),
+        // TODO: Add check for types
+
+        LLVMTypeRef valueType = LLVMTypeOf(value.value);
+        std::string funcName = std::string("llvm.ctlz.") + LLVMPrintTypeToString(valueType);
+
+        if(generator->functions.find(funcName) == generator->functions.end()) {
+            generator->functions[funcName] = {LLVMAddFunction(generator->lModule, funcName.c_str(), LLVMFunctionType(
+                valueType,
+                std::vector<LLVMTypeRef>({valueType, LLVMInt1TypeInContext(generator->context)}).data(),
                 2, false
-            )), new TypeFunc(new TypeBasic(BasicType::Int), {new TypeFuncArg(new TypeBasic(BasicType::Int), "value"), new TypeFuncArg(new TypeBasic(BasicType::Bool), "isZeroPoison")}, false)};
+            )), new TypeFunc(value.type, {new TypeFuncArg(value.type, "value"), new TypeFuncArg(new TypeBasic(BasicType::Bool), "isZeroPoison")}, false)};
         }
 
-        return LLVM::call(generator->functions["llvm.ctlz.i32"], std::vector<LLVMValueRef>({value.value, isZeroPoison.value}).data(), 2, "ctlz32");
+        return LLVM::call(generator->functions[funcName], std::vector<LLVMValueRef>({value.value, isZeroPoison.value}).data(), 2, "ctlz");
     }
     else if(this->name == "alloca") {
         if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
