@@ -24,7 +24,7 @@ namespace std {
                 if(this.capacity <= 0) this.capacity = 2;
                 this.data = std::malloc(this.capacity);
 
-                int i = 0;
+                usize i = 0;
                 while(i < this.length) {
                     this.data[i] = str[i];
                     i += 1;
@@ -126,20 +126,20 @@ namespace std {
         (inline) int toInt => cast(int)this.toLong();
         (inline) double toDouble => std::cstring::stod(this.data, this.length);
 
-        int indexOf(char c) => std::cstring::indexOf(this.data, c);
+        usize indexOf(char c) => std::cstring::indexOf(this.data, c);
 
-        int indexOf(char* s, usize begin) {
+        usize indexOf(char* s, usize begin) {
             @if(__RAVE_RUNTIME_CHECKS) if(begin > this.length) @return(-1);
             char* ptr = std::cstring::strstr(itop(char*, ptoi(this.data) + begin), s);
             if(ptr != null) return = ptoi(ptr) - ptoi(this.data);
             else return = -1;
         }
 
-        (inline) int indexOf(char* s) => this.indexOf(s, 0);
+        (inline) usize indexOf(char* s) => this.indexOf(s, 0);
 
-        (inline) int indexOf(std::string s, usize begin) => this.indexOf(s.data, begin);
+        (inline) usize indexOf(std::string s, usize begin) => this.indexOf(s.data, begin);
 
-        (inline) int indexOf(std::string s) => this.indexOf(s.data);
+        (inline) usize indexOf(std::string s) => this.indexOf(s.data);
 
         void add(char c) {
             @if(__RAVE_RUNTIME_CHECKS) if(this.data == null) @return();
@@ -221,7 +221,7 @@ namespace std {
 
         std::string substring(usize from, usize to) {
             @if(__RAVE_RUNTIME_CHECKS) {
-                if(((from >= 0) && (from < this.length)) && ((to >= 0) && (to < this.length))) @return(null);
+                if((from >= this.length) || (to >= this.length)) @return(null);
             }
 
             return = "";
@@ -267,6 +267,7 @@ namespace std {
 
             usize idx = 0;
             std::string buffer = "";
+
             while(idx < this.length) {
                 if(this.data[idx] != ch) {
                     buffer.add(this.data[idx]);
@@ -278,6 +279,7 @@ namespace std {
                     idx += 1;
                 }
             }
+
             if(buffer.length > 0) return.add(buffer.copy());
             ~buffer;
         }
@@ -304,7 +306,7 @@ namespace std {
             while(std::ascii::isSpace(this.data[idxR])) idxR -= 1;
         } => this.substring(idxL, idxR + 1);
 
-        std::string insert(int pos, char* str) {
+        std::string insert(usize pos, char* str) {
             std::string buffer = "";
             usize i = 0;
             while(i < pos) {
