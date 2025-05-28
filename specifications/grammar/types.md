@@ -13,7 +13,7 @@
 - float (32-bit float)
 - double (64-bit float)
 - real (128-bit float)
-- usize (has the size of a pointer)
+- isize / usize (have the size of a pointer)
 - alias (only for variables)
 
 ## Pointers
