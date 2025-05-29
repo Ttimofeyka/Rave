@@ -120,7 +120,7 @@ namespace std {
     namespace std {
         struct file {
             int fd;
-            char* buffer; // default: 1024
+            char* buffer; // Default: 1024
             int bufferSize;
             int bufferPos;
             char* name;
@@ -206,15 +206,15 @@ namespace std {
                 }
             }
 
-            int read(char* buffer, int bytes) {
-                if(fd != -1) return = cast(int)std::syscall(std::sysctable::Read, fd, buffer, bytes);
+            isize read(char* buffer, usize bytes) {
+                if(fd != -1) return = cast(isize)std::syscall(std::sysctable::Read, fd, buffer, bytes);
                 else return = -1;
             }
 
-            int write(char* buf, int bytes) {
+            isize write(char* buf, usize bytes) {
                 if(fd != -1) {
                     if(bytes < bufferSize) {
-                        for(int i=0; i<bytes; i++) {
+                        for(usize i=0; i<bytes; i++) {
                             buffer[bufferPos] = buf[i];
                             bufferPos += 1;
                             if((bufferPos == bufferSize) || (buffer[bufferPos - 1] == flushBufferSymbol)) this.flush();
@@ -222,14 +222,14 @@ namespace std {
                     }
                     else {
                         this.flush();
-                        return = cast(int)std::syscall(std::sysctable::Write, fd, buf, bytes);
+                        return = cast(isize)std::syscall(std::sysctable::Write, fd, buf, bytes);
                     }
                 }
                 else return = -1;
             }
 
             (inline) char getc {this.read(&return, 1);}
-            (inline) int putc(char c) => this.write(&c, 1);
+            (inline) isize putc(char c) => this.write(&c, 1);
 
             void close {
                 if(fd != -1) {
@@ -306,7 +306,7 @@ namespace std {
 
         struct file {
             void* fd;
-            char* buffer; // default: 1024
+            char* buffer; // Default: 1024
             int bufferSize;
             int bufferPos;
             char* name;
@@ -403,8 +403,8 @@ namespace std {
                 }
             }
 
-            int read(char* buffer, int bytes) {
-                int bytesCnt = 0;
+            int read(char* buffer, uint bytes) {
+                uint bytesCnt = 0;
                 if(fd != null) {
                     std::file::ReadFile(fd, buffer, bufferPos, &return, &bytesCnt);
                     if((bytesCnt == 0) && (return > 0)) return = -1;
@@ -412,10 +412,10 @@ namespace std {
                 else return = -1;
             }
 
-            int write(char* buf, int bytes) {
+            int write(char* buf, uint bytes) {
                 if(fd != null) {
                     if(bytes < bufferSize) {
-                        for(int i=0; i<bytes; i++) {
+                        for(uint i=0; i<bytes; i++) {
                             buffer[bufferPos] = buf[i];
                             bufferPos += 1;
                             if((bufferPos == bufferSize) || (buffer[bufferPos - 1] == flushBufferSymbol)) this.flush();
