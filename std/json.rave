@@ -428,14 +428,17 @@ namespace std {
             }
         }
 
-        std::json::Value parse(std::string data) {
+        std::json::Value parseBuffer(std::string* buffer, std::string data) {
             std::json::parser::__parseObject = std::json::parser::parseObject;
 
             usize idx = 0;
-            std::string buffer = ""; // Create a temp buffer for parsing
 
-            return = std::json::parser::parseObject(&buffer, data, &idx);
+            return = std::json::parser::parseObject(buffer, data, &idx);
+        }
 
+        std::json::Value parse(std::string data) {
+            std::string buffer = "";
+            return = std::json::parseBuffer(&buffer, data);
             ~buffer;
         }
     }
