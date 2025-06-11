@@ -27,44 +27,107 @@ namespace std {
     }
 }
 
+@if(__RAVE_OS == "WINDOWS") {
+    namespace std {
+        namespace socket {
+            struct sockaddr {
+                ushort sa_family;
+                char[14] sa_data;
+            }
+
+            struct in_addr {
+                int s_addr;
+            }
+
+            struct sockaddr_storage {
+                short sa_family;
+                char[8] __ss_padding1;
+                long __ss_align;
+                char[128] __ss_padding2;
+            }
+
+            // ANSI version
+            struct addrinfo {
+                int ai_flags;
+                int ai_family;
+                int ai_socktype;
+                int ai_protocol;
+                usize ai_addrlen;
+                char* ai_canonname;
+                std::socket::sockaddr* ai_addr;
+                std::socket::addrinfo* ai_next;
+            }
+
+            struct sockaddr_in {
+                short sin_family;
+                ushort sin_port;
+                std::socket::in_addr sin_addr;
+                char[8] sin_zero;
+            }
+
+            struct hostent {
+                char* h_name;
+                char** h_aliases;
+                short h_addrtype;
+                short h_length;
+                char** h_addr_list;
+            }
+        }
+    }
+}
+@else {
+    namespace std {
+        namespace socket {
+            struct sockaddr {
+                ushort sa_family;
+                char* sa_data;
+            }
+
+            struct in_addr {
+                int s_addr;
+            }
+
+            struct sockaddr_storage {
+                int sa_family;
+                long __ss_align;
+                char[120] __ss_padding;
+            }
+
+            struct addrinfo {
+                int ai_flags;
+                int ai_family;
+                int ai_socktype;
+                int ai_protocol;
+                uint ai_addrlen;
+                std::socket::sockaddr* ai_addr;
+                char* ai_canonname;
+                std::socket::addrinfo* ai_next;
+            }
+
+            struct sockaddr_in {
+                short sin_family;
+                ushort sin_port;
+                std::socket::in_addr sin_addr;
+                char[8] sin_zero;
+            }
+
+            struct hostent {
+                char* h_name;
+                char** h_aliases;
+                int h_addrtype;
+                int h_length;
+                char** h_addr_list;
+                char* h_addr;
+            }
+        }
+    }
+}
+
 namespace std {
     namespace socket {
-        struct sockaddr {
-            ushort sa_family;
-            char* sa_data;
-        }
-
-        struct sockaddr_storage {
-            int sa_family;
-            long __ss_align;
-            char[120] __ss_padding;
-        }
-
-        struct in_addr {
-            int s_addr;
-        }
-
-        struct addrinfo {
-            int ai_flags;
-            int ai_family;
-            int ai_socktype;
-            int ai_protocol;
-            uint ai_addrlen;
-            std::socket::sockaddr* ai_addr;
-            char* ai_canonname;
-            std::socket::addrinfo* ai_next;
-        }
-
         struct hostInfo {
             std::socket::addrinfo* addrinfo;
             int result;
-        }
-        
-        struct sockaddr_in {
-            short sin_family;
-            ushort sin_port;
-            std::socket::in_addr sin_addr;
-            char[8] sin_zero;
         }
 
         struct iovec {
@@ -73,25 +136,36 @@ namespace std {
         }
 
         struct msghdr {
-          void* msg_name;       
-          int msg_namelen;
+            void* msg_name;       
+            int msg_namelen;
 
-          std::socket::iovec* msg_iov;
-          int msg_iovlen;    
+            std::socket::iovec* msg_iov;
+            int msg_iovlen;    
 
-          void* msg_control;    
-          int msg_controllen;
+            void* msg_control;    
+            int msg_controllen;
 
-          int msg_flags;
+            int msg_flags;
         }
 
-        struct hostent {
-            char* h_name;
-            char** h_aliases;
-            int h_addrtype;
-            int h_length;
-            char** h_addr_list;
-            char* h_addr;
+        (inline) uint htonl(uint hostlong) {
+            @if(__RAVE_LITTLE_ENDIAN) return = ((hostlong <. 24) & 0xFF000000) | ((hostlong <. 8) & 0x00FF0000) | ((hostlong >. 8) & 0x0000FF00) | ((hostlong >. 24) & 0x000000FF);
+            @else return = hostlong;
+        }
+
+        (inline) ushort htons(ushort hostshort) {
+            @if(__RAVE_LITTLE_ENDIAN) return = (hostshort <. 8) | (hostshort >. 8);
+            @else return = hostshort;
+        }
+
+        (inline) uint ntohl(uint netlong) {
+            @if(__RAVE_LITTLE_ENDIAN) return = ((netlong <. 24) & 0xFF000000) | ((netlong <. 8) & 0x00FF0000) | ((netlong >. 8) & 0x0000FF00) | ((netlong >. 24) & 0x000000FF);
+            @else return = netlong;
+        }
+
+        (inline) ushort ntohs(ushort netshort) {
+            @if(__RAVE_LITTLE_ENDIAN) return = (netshort <. 8) | (netshort >. 8);
+            @else return = netshort;
         }
     }
 }
@@ -129,26 +203,6 @@ namespace std {
             extern(linkname: "freeaddrinfo") void freeAddrInfo(std::socket::addrinfo* res);
             extern(linkname: "gai_strerror") char* getAddrInfoStrErr(int errcode);
 
-            (inline) uint htonl(uint hostlong) {
-                @if(__RAVE_LITTLE_ENDIAN) return = ((hostlong <. 24) & 0xFF000000) | ((hostlong <. 8) & 0x00FF0000) | ((hostlong >. 8) & 0x0000FF00) | ((hostlong >. 24) & 0x000000FF);
-                @else return = hostlong;
-            }
-
-            (inline) ushort htons(ushort hostshort) {
-                @if(__RAVE_LITTLE_ENDIAN) return = (hostshort <. 8) | (hostshort >. 8);
-                @else return = hostshort;
-            }
-
-            (inline) uint ntohl(uint netlong) {
-                @if(__RAVE_LITTLE_ENDIAN) return = ((netlong <. 24) & 0xFF000000) | ((netlong <. 8) & 0x00FF0000) | ((netlong >. 8) & 0x0000FF00) | ((netlong >. 24) & 0x000000FF);
-                @else return = netlong;
-            }
-
-            (inline) ushort ntohs(ushort netshort) {
-                @if(__RAVE_LITTLE_ENDIAN) return = (netshort <. 8) | (netshort >. 8);
-                @else return = netshort;
-            }
-
             extern(linkname: "gethostbyname") std::socket::hostent* getHostByName(char* name);
             extern(linkname: "gethostbyaddr") std::socket::hostent* getHostByAddr(char* addr, int len, int type);
 
@@ -158,7 +212,7 @@ namespace std {
             extern(linkname: "inet_ntop") char* inetNtop(int af, void* src, char* dst, int cnt);
             extern(linkname: "inet_addr") std::socket::in_addr inetAddr(char* cp);
 
-            extern(vararg, linkname: "ioctl") int ioctl(int d, int request);  
+            extern(vararg, linkname: "ioctl") int ioctl(int d, int request);
         }
 
         struct socket {
