@@ -315,8 +315,26 @@ RaveValue Binary::operation(char op, Node* first, Node* second, int loc) {
             if(nget->elementIsConst) generator->error("An attempt to change the constant element!", loc);
 
             nget->isMustBePtr = true;
- 
-            Binary::store(nget->generate(), second->generate(), loc);
+
+            RaveValue ptr = nget->generate();
+            RaveValue value = second->generate();
+
+            if(instanceof<TypeStruct>(first->getType()) || (instanceof<TypePointer>(first->getType()) && instanceof<TypeStruct>(first->getType()->getElType()))
+               && !instanceof<TypeStruct>(second->getType()) || (instanceof<TypePointer>(second->getType()) && instanceof<TypeStruct>(second->getType()->getElType()))
+            ) {
+                std::pair<std::string, std::string> opOverload = Binary::isOperatorOverload(first, second, ptr, value, op);
+
+                if(opOverload.first != "") {
+                    NodeCall* _overloadedCall = new NodeCall(loc,
+                        new NodeIden(AST::structTable[opOverload.first[0] == '!' ? opOverload.first.substr(1) : opOverload.first]->operators[op][opOverload.second]->name, loc),
+                        std::vector<Node*>({new NodeDone(ptr), new NodeDone(value)})
+                    );
+
+                    return opOverload.first[0] == '!' ? Unary::make(loc, TokType::Ne, _overloadedCall) : _overloadedCall->generate();
+                }
+            }
+            
+            Binary::store(ptr, value, loc);
             return {};
         }
         else if(instanceof<NodeIndex>(first)) {
