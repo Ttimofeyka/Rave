@@ -4,8 +4,6 @@ Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-// Original created via GeckoNerd - https://geckonerd.pw
-
 // NOTE: This code IS outdated and unstable.
 // TODO: Rework it.
 
@@ -25,9 +23,7 @@ import <std/io>
         extern(linkname: "SSL_connect") int connect(void* conn);
         extern(linkname: "SSL_accept") int accept(void* conn);
 
-        extern(linkname: "TLSv1_method") void* methodTLS1();
-        extern(linkname: "TLSv1_1_method") void* methodTLS1_1();
-        extern(linkname: "TLSv1_2_method") void* methodTLS1_2();
+        extern(linkname: "TLS_method") void* tlsMethod();
 
         extern(linkname: "SSL_read") int read(void* ssl, void* buffer, int num);
         extern(linkname: "SSL_read_ex") int readEx(void* ssl, void* buf, int num, int* readbytes);
@@ -196,7 +192,7 @@ import <std/io>
                 std::string reqline = std::sprint(method, " ", url.path, " HTTP/1.0\r\nHost: ", url.host, "\r\nConnection: close\r\n", headers, "\r\n", data);
                 defer ~reqline;
 
-                void* ssl_ctx = ssl::ctxNew(ssl::methodTLS1_2());
+                void* ssl_ctx = ssl::ctxNew(ssl::tlsMethod());
                 defer ssl::ctxFree(ssl_ctx);
 
                 std::socket sock = std::socket();
