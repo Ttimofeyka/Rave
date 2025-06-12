@@ -4,6 +4,8 @@ Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+// If you are using Windows, add -lWSock32 as your compiler flag.
+
 import <std/string> <std/memory>
 
 namespace std {
@@ -21,114 +23,7 @@ namespace std {
 
         alias AiPassive = 1;
         alias AiCanonName = 2;
-        alias SocketReuseAddr = 2;
-        alias SomAxConn = 128;
         alias MsgNoSig = 16384;
-    }
-}
-
-@if(__RAVE_OS == "WINDOWS") {
-    namespace std {
-        namespace socket {
-            struct sockaddr {
-                ushort sa_family;
-                char[14] sa_data;
-            }
-
-            struct in_addr {
-                int s_addr;
-            }
-
-            struct sockaddr_storage {
-                short sa_family;
-                char[8] __ss_padding1;
-                long __ss_align;
-                char[128] __ss_padding2;
-            }
-
-            // ANSI version
-            struct addrinfo {
-                int ai_flags;
-                int ai_family;
-                int ai_socktype;
-                int ai_protocol;
-                usize ai_addrlen;
-                char* ai_canonname;
-                std::socket::sockaddr* ai_addr;
-                std::socket::addrinfo* ai_next;
-            }
-
-            struct sockaddr_in {
-                short sin_family;
-                ushort sin_port;
-                std::socket::in_addr sin_addr;
-                char[8] sin_zero;
-            }
-
-            struct hostent {
-                char* h_name;
-                char** h_aliases;
-                short h_addrtype;
-                short h_length;
-                char** h_addr_list;
-            }
-        }
-    }
-}
-@else {
-    namespace std {
-        namespace socket {
-            struct sockaddr {
-                ushort sa_family;
-                char* sa_data;
-            }
-
-            struct in_addr {
-                int s_addr;
-            }
-
-            struct sockaddr_storage {
-                int sa_family;
-                long __ss_align;
-                char[120] __ss_padding;
-            }
-
-            struct addrinfo {
-                int ai_flags;
-                int ai_family;
-                int ai_socktype;
-                int ai_protocol;
-                uint ai_addrlen;
-                std::socket::sockaddr* ai_addr;
-                char* ai_canonname;
-                std::socket::addrinfo* ai_next;
-            }
-
-            struct sockaddr_in {
-                short sin_family;
-                ushort sin_port;
-                std::socket::in_addr sin_addr;
-                char[8] sin_zero;
-            }
-
-            struct hostent {
-                char* h_name;
-                char** h_aliases;
-                int h_addrtype;
-                int h_length;
-                char** h_addr_list;
-                char* h_addr;
-            }
-        }
-    }
-}
-
-namespace std {
-    namespace socket {
-        struct hostInfo {
-            std::socket::addrinfo* addrinfo;
-            int result;
-        }
 
         struct iovec {
             void* iov_base;
@@ -170,9 +65,60 @@ namespace std {
     }
 }
 
+
 @if((__RAVE_OS == "LINUX") || (__RAVE_OS == "FREEBSD")) {
     namespace std {
         namespace socket {
+            alias SomAxConn = 128;
+            alias SocketReuseAddr = 2;
+
+            struct sockaddr {
+                ushort sa_family;
+                char* sa_data;
+            }
+
+            struct in_addr {
+                int s_addr;
+            }
+
+            struct sockaddr_storage {
+                int sa_family;
+                long __ss_align;
+                char[120] __ss_padding;
+            }
+
+            struct addrinfo {
+                int ai_flags;
+                int ai_family;
+                int ai_socktype;
+                int ai_protocol;
+                uint ai_addrlen;
+                std::socket::sockaddr* ai_addr;
+                char* ai_canonname;
+                std::socket::addrinfo* ai_next;
+            }
+
+            struct hostInfo {
+                std::socket::addrinfo* addrinfo;
+                int result;
+            }
+
+            struct sockaddr_in {
+                short sin_family;
+                ushort sin_port;
+                std::socket::in_addr sin_addr;
+                char[8] sin_zero;
+            }
+
+            struct hostent {
+                char* h_name;
+                char** h_aliases;
+                int h_addrtype;
+                int h_length;
+                char** h_addr_list;
+                char* h_addr;
+            }
+
             (inline) int accept(int sock, std::socket::sockaddr* addr, int* lengthPtr) => cast(int)std::syscall(std::sysctable::Accept4, sock, addr, lengthPtr, 0);
             (inline) int socket(int domain, int type, int protocol) => cast(int)std::syscall(std::sysctable::Socket, domain, type, protocol);
             (inline) int bind(int sock, std::socket::sockaddr* address, int addressLen) => cast(int)std::syscall(std::sysctable::Bind, sock, address, addressLen);
@@ -203,61 +149,60 @@ namespace std {
             extern(linkname: "freeaddrinfo") void freeAddrInfo(std::socket::addrinfo* res);
             extern(linkname: "gai_strerror") char* getAddrInfoStrErr(int errcode);
 
-            extern(linkname: "gethostbyname") std::socket::hostent* getHostByName(char* name);
-            extern(linkname: "gethostbyaddr") std::socket::hostent* getHostByAddr(char* addr, int len, int type);
-
-            extern(linkname: "inet_aton") int inetAton(char* cp, std::socket::in_addr* inp);
-            extern(linkname: "inet_ntoa") char* inetNtoa(std::socket::in_addr _in);
             extern(linkname: "inet_pton") int inetPton(int af, char* src, void* dst);
             extern(linkname: "inet_ntop") char* inetNtop(int af, void* src, char* dst, int cnt);
             extern(linkname: "inet_addr") std::socket::in_addr inetAddr(char* cp);
+
+            extern(linkname: "gethostbyname") std::socket::hostent* getHostByName(char* name);
+            extern(linkname: "gethostbyaddr") std::socket::hostent* getHostByAddr(char* addr, int len, int type);
 
             extern(vararg, linkname: "ioctl") int ioctl(int d, int request);
         }
 
         struct socket {
             int fd;
-            std::socket::sockaddr_in* addr;
-            int addrlen;
+            std::socket::sockaddr_in address;
+            int addressLength;
 
             std::socket this {
                 std::socket this;
                 this.fd = -1;
-                this.addr = null;
-                this.addrlen = 0;
+                this.address = null;
+                this.addressLength = 0;
             } => this;
 
             int open(char* ip, int port, long flag) {
                 this.fd = std::socket::socket(std::socket::AfInet, std::socket::SockStream, 0);
-                if(this.fd < 0) return = this.fd;
+
+                if(this.fd < 0) return = -1;
                 else {
-                    this.addr = std::new<std::socket::sockaddr_in>();
-                    this.addr.sin_family = std::socket::AfInet;
-                    this.addr.sin_port = std::socket::htons(cast(ushort)port);
-                    this.addr.sin_addr.s_addr = std::socket::htonl(flag);
-                    this.addr.sin_addr = std::socket::inetAddr(ip);
+                    this.addressLength = sizeof(std::socket::sockaddr_in);
+                    this.address.sin_family = std::socket::AfInet;
+                    this.address.sin_port = std::socket::htons(cast(ushort)port);
+                    this.address.sin_addr.s_addr = std::socket::htonl(flag);
+                    this.address.sin_addr = std::socket::inetAddr(ip);
                 }
             }
 
             int openAny(int port) {
                 this.fd = std::socket::socket(std::socket::AfInet, std::socket::SockStream, 0);
-                if(this.fd < 0) return = this.fd;
+
+                if(this.fd < 0) return = -1;
                 else {
-                    this.addr = std::new<std::socket::sockaddr_in>();
-                    this.addr.sin_family = std::socket::AfInet;
-                    this.addr.sin_port = std::socket::htons(cast(ushort)port);
-                    this.addr.sin_addr.s_addr = std::socket::htonl(cast(int)0);
+                    this.addressLength = sizeof(std::socket::sockaddr_in);
+                    this.address.sin_family = std::socket::AfInet;
+                    this.address.sin_port = std::socket::htons(cast(ushort)port);
+                    this.address.sin_addr.s_addr = std::socket::htonl(cast(int)0);
                 }
             }
 
-            (inline) int bind => std::socket::bind(this.fd, cast(std::socket::sockaddr*)this.addr, sizeof(std::socket::sockaddr_in));
+            (inline) int bind => std::socket::bind(this.fd, &address, sizeof(std::socket::sockaddr_in));
             (inline) int listen => std::socket::listen(this.fd, std::socket::SomAxConn);
-            (inline) int connect => std::socket::connect(this.fd, cast(std::socket::sockaddr*)this.addr, sizeof(std::socket::sockaddr_in));
+            (inline) int connect => std::socket::connect(this.fd, &address, sizeof(std::socket::sockaddr_in));
 
-            std::socket accept {
-                return = std::socket();
-                return.addrlen = sizeof(std::socket::sockaddr_in);
-                return.fd = std::socket::accept(this.fd, cast(std::socket::sockaddr*)this.addr, return.&addrlen);
+            void accept(std::socket* acceptor) {
+                acceptor.addressLength = sizeof(std::socket::sockaddr_in);
+                acceptor.fd = std::socket::accept(this.fd, &address, acceptor.&addressLength);
             }
 
             (inline) int read(char* data, int length) => std::socket::recv(this.fd, data, length, std::socket::MsgNoSig);
@@ -269,17 +214,184 @@ namespace std {
                 std::socket::close(this.fd);
                 this.fd = -1;
 
-                if(this.addr != null) {
-                    std::free(this.addr);
-                    this.addr = null;
-                }
+                this.address = null;
+                this.addressLength = 0;
             }
 
             void ~this {
-                if(this.addr != null) {
-                    std::free(this.addr);
-                    this.addr = null;
+                if(this.fd != -1) {
+                    std::socket::close(this.fd);
+                    this.fd = -1;
                 }
+                
+                this.address = null;
+                this.addressLength = 0;
+            }
+        }
+    }
+}
+@else @if(__RAVE_OS == "WINDOWS") {
+    namespace std {
+        namespace socket {
+            alias SomAxConn = 5;
+            alias SocketReuseAddr = 4;
+
+            struct sockaddr {
+                ushort sa_family;
+                char[14] sa_data;
+            }
+
+            struct in_addr {
+                int s_addr;
+            }
+
+            struct sockaddr_storage {
+                short sa_family;
+                char[8] __ss_padding1;
+                long __ss_align;
+                char[128] __ss_padding2;
+            }
+
+            // ANSI version
+            struct addrinfo {
+                int ai_flags;
+                int ai_family;
+                int ai_socktype;
+                int ai_protocol;
+                usize ai_addrlen;
+                char* ai_canonname;
+                std::socket::sockaddr* ai_addr;
+                std::socket::addrinfo* ai_next;
+            }
+
+            struct hostInfo {
+                std::socket::addrinfo* addrinfo;
+                int result;
+            }
+
+            struct sockaddr_in {
+                short sin_family;
+                ushort sin_port;
+                std::socket::in_addr sin_addr;
+                char[8] sin_zero;
+            }
+
+            struct hostent {
+                char* h_name;
+                char** h_aliases;
+                short h_addrtype;
+                short h_length;
+                char** h_addr_list;
+            }
+
+            struct WSAData {
+                short wVersion;
+                short wHighVersion;
+
+                ushort iMaxSockets;
+                ushort iMaxUdpDg;
+
+                char* lpVendorInfo;
+
+                char[257] szDescription;
+                char[257] szSystemStatus;
+            }
+
+            extern(linkname: "accept") uint* accept(uint* sock, std::socket::sockaddr* addr, int* lengthPtr);
+            extern(linkname: "socket") uint* socket(int domain, int type, int protocol);
+            extern(linkname: "bind") int bind(uint* sock, std::socket::sockaddr* address, int addressLen);
+            extern(linkname: "connect") int connect(uint* sock, std::socket::sockaddr* address, int addressLen);
+
+            extern(linkname: "getpeername") int getPeerName(uint* sock, std::socket::sockaddr* address, int* addressLen);
+            extern(linkname: "getsockname") int getSockName(uint* sock, std::socket::sockaddr* address, int* addressLen);
+
+            extern(linkname: "getsockopt") int getSockOpt(uint* sock, int level, int optionName, char* optionValue, int* optionLen);
+            extern(linkname: "setsockopt") int setSockOpt(uint* sock, int level, int optionName, char* optionValue, int optionLen);
+
+            extern(linkname: "listen") int listen(uint* sock, int backlog);
+            extern(linkname: "recv") int recv(uint* sock, char* buffer, int length, int flags);
+            extern(linkname: "send") int send(uint* sock, char* message, int length, int flags);
+            extern(linkname: "shutdown") int shutdown(uint* sock, int how);
+            extern(linkname: "close") int close(uint* sock);
+
+            extern(linkname: "inet_pton") int inetPton(int af, char* src, void* dst);
+            extern(linkname: "inet_ntop") char* inetNtop(int af, void* src, char* dst, int cnt);
+            extern(linkname: "inet_addr") std::socket::in_addr inetAddr(char* cp);
+
+            extern(linkname: "gethostbyname") std::socket::hostent* getHostByName(char* name);
+            extern(linkname: "gethostbyaddr") std::socket::hostent* getHostByAddr(char* addr, int len, int type);
+
+            extern(linkname: "WSAStartup") int startup(short versionRequired, std::socket::WSAData* data);
+            extern(linkname: "WSACleanup") int cleanup();
+        }
+
+        struct socket {
+            uint* fd;
+            std::socket::sockaddr_in address;
+            int addressLength;
+
+            std::socket this {
+                std::socket this;
+                this.fd = cast(uint*)-1;
+                this.address = null;
+                this.addressLength = 0;
+            } => this;
+
+            int open(char* ip, int port, long flag) {
+                this.fd = std::socket::socket(std::socket::AfInet, std::socket::SockStream, 0);
+
+                if(this.fd == cast(uint*)-1) return = -1;
+                else {
+                    this.addressLength = sizeof(std::socket::sockaddr_in);
+                    this.address.sin_family = std::socket::AfInet;
+                    this.address.sin_port = std::socket::htons(cast(ushort)port);
+                    this.address.sin_addr.s_addr = std::socket::htonl(flag);
+                    this.address.sin_addr = std::socket::inetAddr(ip);
+                }
+            }
+
+            int openAny(int port) {
+                this.fd = std::socket::socket(std::socket::AfInet, std::socket::SockStream, 0);
+
+                if(this.fd == cast(uint*)-1) return = -1;
+                else {
+                    this.addressLength = sizeof(std::socket::sockaddr_in);
+                    this.address.sin_family = std::socket::AfInet;
+                    this.address.sin_port = std::socket::htons(cast(ushort)port);
+                    this.address.sin_addr.s_addr = std::socket::htonl(cast(int)0);
+                }
+            }
+
+            (inline) int bind => std::socket::bind(this.fd, &address, sizeof(std::socket::sockaddr_in));
+            (inline) int listen => std::socket::listen(this.fd, std::socket::SomAxConn);
+            (inline) int connect => std::socket::connect(this.fd, &address, sizeof(std::socket::sockaddr_in));
+
+            void accept(std::socket* acceptor) {
+                acceptor.addressLength = sizeof(std::socket::sockaddr_in);
+                acceptor.fd = std::socket::accept(this.fd, &address, acceptor.&addressLength);
+            }
+
+            (inline) int read(char* data, int length) => std::socket::recv(this.fd, data, length, 0);
+            (inline) int write(char* data, int length) => std::socket::send(this.fd, data, length, 0);
+            (inline) int write(char* data) => std::socket::send(this.fd, data, std::cstring::strlen(data), 0);
+            (inline) int write(std::string str) => std::socket::send(this.fd, str.data, str.length, 0);
+
+            void close {
+                std::socket::close(this.fd);
+                this.fd = cast(uint*)-1;
+
+                this.address = null;
+                this.addressLength = 0;
+            }
+
+            void ~this {
+                if(this.fd != -1) {
+                    std::socket::close(this.fd);
+                    this.fd = cast(uint*)-1;
+                }
+                
+                this.address = null;
+                this.addressLength = 0;
             }
         }
     }
