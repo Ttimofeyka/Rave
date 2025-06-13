@@ -69,6 +69,32 @@ import <std/thread> <std/ascii>
 }
 
 namespace std {
+    struct cstring {
+        char* data;
+        usize length;
+
+        std::cstring this(char* data, usize length) {
+            std::cstring this;
+
+            this.data = data;
+            this.length = length;
+        } => this;
+
+        std::cstring this(char* data) {
+            std::cstring this;
+
+            this.data = data;
+            if(data == null) this.length = 0;
+            else this.length = std::cstring::strlen(data);
+        } => this;
+
+        (nochecks) void operator=(std::cstring* one, char* two) {
+            one.data = two;
+            if(two == null) one.length = 0;
+            else one.length = std::cstring::strlen(two);
+        }
+    }
+
     namespace cstring {
         (inline) const(char)* fromBool(bool b) {
             return = "false";
@@ -131,6 +157,10 @@ namespace std {
         (nochecks) usize indexOf(const(char)* str, char ch) {
             while((str[return] != '\0') && (str[return] != ch)) return += 1;
             if(str[return] == '\0') return = -1;
+        }
+
+        (nochecks) usize indexOf(const(char)* str, char ch, usize length) {
+            while((return != length) && (str[return] != ch)) return += 1;
         }
 
         char* ltos(long number, char* endBuffer) {

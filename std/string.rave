@@ -122,8 +122,11 @@ namespace std {
 
         (inline) char toChar => this.data[0];
         (inline) cent toCent => std::cstring::stoc(this.data, this.length);
+        (inline) ucent toUcent => std::cstring::stouc(this.data, this.length);
         (inline) long toLong => std::cstring::stol(this.data, this.length);
+        (inline) ulong toUlong => std::cstring::stoul(this.data, this.length);
         (inline) int toInt => cast(int)this.toLong();
+        (inline) uint toUint => cast(uint)this.toUlong();
         (inline) double toDouble => std::cstring::stod(this.data, this.length);
 
         usize indexOf(char c) => std::cstring::indexOf(this.data, c);
@@ -448,6 +451,12 @@ namespace std {
 
                 std::cstring::ltos(tp.milliseconds, cast(char*)&nBuffer);
                 result.appendC(cast(char*)&nBuffer);
+            }
+
+            @if(@getCurrArgType() == std::cstring) {
+                std::cstring cs = @getCurrArg(std::cstring);
+                if(cs.data != null) result.appendC(cs.data, cs.length);
+                else result.appendC("null", 4);
             }
         }
         
