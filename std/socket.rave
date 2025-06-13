@@ -210,8 +210,8 @@ namespace std {
             (inline) int write(char* data) => std::socket::send(this.fd, data, std::cstring::strlen(data), std::socket::MsgNoSig);
             (inline) int write(std::string str) => std::socket::send(this.fd, str.data, str.length, std::socket::MsgNoSig);
 
-            void close {
-                std::socket::close(this.fd);
+            int close {
+                return = std::socket::close(this.fd);
                 this.fd = -1;
 
                 this.address = null;
@@ -376,8 +376,8 @@ namespace std {
             (inline) int write(char* data) => std::socket::send(this.fd, data, std::cstring::strlen(data), 0);
             (inline) int write(std::string str) => std::socket::send(this.fd, str.data, str.length, 0);
 
-            void close {
-                std::socket::close(this.fd);
+            int close {
+                return = std::socket::close(this.fd);
                 this.fd = cast(uint*)-1;
 
                 this.address = null;
@@ -394,5 +394,11 @@ namespace std {
                 this.addressLength = 0;
             }
         }
+    }
+}
+
+namespace std {
+    namespace ipv4 {
+        (inline) bool isValid(char* ip) {std::socket::sockaddr_in sa;} => std::socket::inetPton(std::socket::AfInet, ip, sa.&sin_addr) > 0;
     }
 }

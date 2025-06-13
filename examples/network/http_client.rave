@@ -1,0 +1,20 @@
+import <std/io> <std/http>
+
+void main {
+    @if(__RAVE_OS == "WINDOWS") {
+        std::socket::WSAData data;
+        std::socket::startup(514, &data);
+    }
+
+    std::http::Connection conn = std::http::Connection("http://www.example.com", "80");
+    defer ~conn;
+
+    if(conn.open() < 0) std::exit(1);
+        auto response = conn.request("GET", null, "");
+        defer ~response;
+
+        std::println(response.body);
+    conn.close();
+
+    @if(__RAVE_OS == "WINDOWS") std::socket::cleanup();
+}
