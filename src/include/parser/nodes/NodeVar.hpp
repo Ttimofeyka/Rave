@@ -48,3 +48,7 @@ public:
     Node* copy() override;
     void check() override;
 };
+
+namespace Predefines {
+    extern void handle(Type* type, Node* node, int loc);
+}

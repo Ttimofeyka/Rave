@@ -111,14 +111,14 @@ void NodeVar::check() {
     }
 }
 
-void handlePredefines(Type* type, Node* node, int loc) {
+void Predefines::handle(Type* type, Node* node, int loc) {
     if(AST::structTable[((TypeStruct*)type)->name]->predefines.size() > 0) {
         NodeGet* getter = new NodeGet(node, "", true, loc);
 
         for(auto& predefine : AST::structTable[((TypeStruct*)type)->name]->predefines) {
             getter->field = predefine.first;
 
-            if(predefine.second.isStruct) handlePredefines(getter->getType(), getter, loc);
+            if(predefine.second.isStruct) Predefines::handle(getter->getType(), getter, loc);
             else if(predefine.second.value != nullptr) Binary::operation(TokType::Equ, getter, predefine.second.value, loc);
         }
     }
@@ -427,7 +427,7 @@ RaveValue NodeVar::generate() {
         if(alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
         else if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->getWithoutLoad(this->name, this->loc).value, generator->getAlignment(this->type));
 
-        if(instanceof<TypeStruct>(type)) handlePredefines(type, new NodeIden(name, loc), loc);
+        if(instanceof<TypeStruct>(type)) Predefines::handle(type, new NodeIden(name, loc), loc);
 
         if(this->value != nullptr) Binary::operation(TokType::Equ, new NodeIden(name, loc), value, loc);
         else if((instanceof<TypeBasic>(type) || instanceof<TypePointer>(type)) && !noZeroInit) LLVMBuildStore(generator->builder, LLVMConstNull(gT), currScope->localScope[this->name].value);

@@ -189,6 +189,28 @@ std::vector<RaveValue> Call::genParameters(std::vector<Node*>& arguments, std::v
     }
 
     for(int i=0; i<params.size(); i++) {
+        if(instanceof<TypeStruct>(fas[i].type) && !instanceof<TypeStruct>(params[i].type)) {
+            std::string name = fas[i].type->toString();
+
+            if(AST::structTable.find(name) != AST::structTable.end()) {
+                auto& operators = AST::structTable[name]->operators;
+
+                if(operators.find(TokType::Equ) != operators.end()) {
+                    Type* ty = operators[TokType::Equ].begin()->second->args[1].type;
+
+                    if((isBytePointer(ty) && isBytePointer(params[i].type)) || ty->toString() == params[i].type->toString()) {
+                        // Implicit operator
+                        RaveValue tempVariable = LLVM::alloc(fas[i].type, "getParameters_implicit_op_tempvar");
+                        Predefines::handle(fas[i].type, new NodeDone(tempVariable), -1);
+
+                        checkAndGenerate(operators[TokType::Equ].begin()->second->name);
+                        LLVM::call(generator->functions[operators[TokType::Equ].begin()->second->name], {tempVariable, params[i]}, "");
+                        params[i] = tempVariable;
+                    }
+                }
+            }
+        }
+
         if(instanceof<TypePointer>(fas[i].type)) {
             if(instanceof<TypeStruct>(fas[i].type->getElType()) && !instanceof<TypePointer>(params[i].type)) LLVM::makeAsPointer(params[i]);
             else if(isBytePointer(fas[i].type) && fas[i].type->toString() != params[i].type->toString()) LLVM::cast(params[i], new TypePointer(basicTypes[BasicType::Char]));

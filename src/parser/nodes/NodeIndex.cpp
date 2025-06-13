@@ -39,9 +39,16 @@ NodeIndex::~NodeIndex() {
 
 Type* NodeIndex::getType() {
     Type* type = this->element->getType();
-    
+
     // Remove const qualifiers
     while(instanceof<TypeConst>(type)) type = static_cast<TypeConst*>(type)->instance;
+
+    if(instanceof<TypeStruct>(type) || (instanceof<TypePointer>(type) && instanceof<TypeStruct>(type->getElType()))) {
+        TypeStruct* tstruct = static_cast<TypeStruct*>(type->getElType());
+        auto& operators = AST::structTable[tstruct->name]->operators;
+        auto it = operators.find(TokType::Rbra);
+        if(it != operators.end() && !it->second.empty()) return it->second.begin()->second->type;
+    }
     
     if(instanceof<TypePointer>(type)) {
         Type* tp = static_cast<TypePointer*>(type)->instance;
@@ -49,13 +56,6 @@ Type* NodeIndex::getType() {
     }
     
     if(instanceof<TypeArray>(type)) return static_cast<TypeArray*>(type)->element;
-    
-    if(instanceof<TypeStruct>(type)) {
-        TypeStruct* tstruct = static_cast<TypeStruct*>(type);
-        auto& operators = AST::structTable[tstruct->name]->operators;
-        auto it = operators.find(TokType::Rbra);
-        if(it != operators.end() && !it->second.empty()) return it->second.begin()->second->type;
-    }
 
     if(instanceof<TypeVector>(type)) return static_cast<TypeVector*>(type)->getElType();
     
