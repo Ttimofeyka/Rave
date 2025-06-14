@@ -139,7 +139,7 @@ Type* TypeConst::copy() {return new TypeConst(this->instance->copy());}
 Type* TypeConst::check(Type* parent) {this->instance->check(nullptr); return nullptr;}
 int TypeConst::getSize() {return this->instance->getSize();}
 std::string TypeConst::toString() {return this->instance->toString();}
-Type* TypeConst::getElType() {return this->instance->getElType();}
+Type* TypeConst::getElType() {return this->instance;}
 TypeConst::~TypeConst() {
     if(this->instance != nullptr && !instanceof<TypeBasic>(this->instance) && !instanceof<TypeVoid>(this->instance)) delete this->instance;
 }
