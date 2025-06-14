@@ -27,16 +27,14 @@ namespace std {
 
         (inline) void encodeBuffer(std::string* buffer, std::string src) => std::base16::encodeBuffer(buffer, src.data, src.length);
         
-        (inline) std::string encode(char* src, usize length) {return = ""; std::base16::encodeBuffer(&return, src, length);}
-
-        (inline) std::string encode(char* src) {return = ""; std::base16::encodeBuffer(&return, src, std::cstring::strlen(src));}
+        (inline) std::string encode(std::cstring src) {return = ""; std::base16::encodeBuffer(&return, src.data, src.length);}
 
         (inline) std::string encode(std::string src) {return = ""; std::base16::encodeBuffer(&return, src.data, src.length);}
 
         // Decode
 
         void decodeBuffer(std::string* buffer, char* src, usize length) {
-            @if(__RAVE_RUNTIME_CHECKS) if((length < 2) || ((length % 2) != 0)) @return();
+            @if(__RAVE_RUNTIME_CHECKS) if((length < 2) || ((length & 1) != 0)) @return();
 
             for(usize i=0; i<length; i+=2) {
                 uchar high;
@@ -56,9 +54,7 @@ namespace std {
 
         (inline) void decodeBuffer(std::string* buffer, std::string src) => std::base16::decodeBuffer(buffer, src.data, src.length);
 
-        (inline) std::string decode(char* src, usize length) {return = ""; std::base16::decodeBuffer(&return, src, length);}
-
-        (inline) std::string decode(char* src) {return = ""; std::base16::decodeBuffer(&return, src, std::cstring::strlen(src));}
+        (inline) std::string decode(std::cstring src) {return = ""; std::base16::decodeBuffer(&return, src.data, src.length);}
 
         (inline) std::string decode(std::string src) {return = ""; std::base16::decodeBuffer(&return, src.data, src.length);}
     }
@@ -69,7 +65,7 @@ namespace std {
         // Encode
 
         void encodeBuffer(std::string* buffer, char* src, usize length) {
-            @if(__RAVE_RUNTIME_CHECKS) if(length < 1) @return();
+            @if(__RAVE_RUNTIME_CHECKS) if(length == 0) @return();
 
             usize buf = 0;
             int carry = 0;
@@ -90,9 +86,7 @@ namespace std {
             while((buffer.length & 7) != 0) buffer.add('=');
         }
 
-        (inline) std::string encode(char* src, usize length) {return = ""; std::base32::encodeBuffer(&return, src, length);}
-
-        (inline) std::string encode(char* src) {return = ""; std::base32::encodeBuffer(&return, src, std::cstring::strlen(src));}
+        (inline) std::string encode(std::cstring src) {return = ""; std::base32::encodeBuffer(&return, src.data, src.length);}
 
         (inline) std::string encode(std::string src) {return = ""; std::base32::encodeBuffer(&return, src.data, src.length);}
 
@@ -110,10 +104,77 @@ namespace std {
             }
         }
 
-        (inline) std::string decode(char* src, usize length) {return = ""; std::base32::decodeBuffer(&return, src, length);}
-
-        (inline) std::string decode(char* src) {return = ""; std::base32::decodeBuffer(&return, src, std::cstring::strlen(src));}
+        (inline) std::string decode(std::cstring src) {return = ""; std::base32::decodeBuffer(&return, src.data, src.length);}
 
         (inline) std::string decode(std::string src) {return = ""; std::base32::decodeBuffer(&return, src.data, src.length);}
+    }
+
+    namespace base64 {
+        const(char*) table = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+        // Encode
+
+        void encodeBuffer(std::string* buffer, char* src, usize length) {
+            @if(__RAVE_RUNTIME_CHECKS) if(length == 0) @return();
+        
+            usize fullGroups = length / 3;
+            usize remainder = length % 3;
+
+            usize index = 0;
+        
+            for(usize i=0; i<fullGroups; i++) {
+                uint triple = (src[index] <. 16) | (src[index + 1] <. 8) | src[index + 2];
+                index += 3;
+                buffer.add(std::base64::table[(triple >. 18) & 0x3F]);
+                buffer.add(std::base64::table[(triple >. 12) & 0x3F]);
+                buffer.add(std::base64::table[(triple >. 6) & 0x3F]);
+                buffer.add(std::base64::table[triple & 0x3F]);
+            }
+        
+            if(remainder == 1) {
+                uint triple = (src[index] <. 16);
+                buffer.add(std::base64::table[(triple >. 18) & 0x3F]);
+                buffer.add(std::base64::table[(triple >. 12) & 0x3F]);
+                buffer.appendC("==");
+            }
+            else if(remainder == 2) {
+                uint triple = (src[index] <. 16) | (src[index + 1] <. 8);
+                buffer.add(std::base64::table[(triple >. 18) & 0x3F]);
+                buffer.add(std::base64::table[(triple >. 12) & 0x3F]);
+                buffer.add(std::base64::table[(triple >. 6) & 0x3F]);
+                buffer.add('=');
+            }
+        }
+
+        (inline) std::string encode(std::cstring src) {return = ""; std::base64::encodeBuffer(&return, src.data, src.length);}
+
+        (inline) std::string encode(std::string src) {return = ""; std::base64::encodeBuffer(&return, src.data, src.length);}
+
+        // Decode
+
+        void decodeBuffer(std::string* buffer, char* src, usize length) {
+            @if(__RAVE_RUNTIME_CHECKS) if(length == 0) @return();
+
+            char counts = 0;
+            char[4] buf;
+
+            for(usize i = 0; i<length; i++) {
+                char k;
+                for(k=0; (k < 64) && (std::base64::table[k] != src[i]); k++) {}
+                buf[counts] = k;
+                counts += 1;
+
+                if(counts == 4) {
+                    buffer.add((buf[0] <. 2) + (buf[1] >. 4));
+                    if(buf[2] != 64) buffer.add((buf[1] <. 4) + (buf[2] >. 2));
+                    if(buf[3] != 64) buffer.add((buf[2] <. 6) + buf[3]);
+                    counts = 0;
+                }
+            }
+        }
+
+        (inline) std::string decode(std::cstring src) {return = ""; std::base64::decodeBuffer(&return, src.data, src.length);}
+
+        (inline) std::string decode(std::string src) {return = ""; std::base64::decodeBuffer(&return, src.data, src.length);}
     }
 }
