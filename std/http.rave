@@ -171,9 +171,17 @@ namespace std {
                     @return();
                 }
 
-                while((std::ascii::isSpace(buf[0])) && (readed > 0)) readed = socket.read(&buf, 1);
-                while((!std::ascii::isSpace(buf[0])) && (readed > 0)) readed = socket.read(&buf, 1);
-                while((std::ascii::isSpace(buf[0])) && (readed > 0)) readed = socket.read(&buf, 1);
+                while(readed > 0) {
+                    if((buf[0] == '\r')) {
+                        readed = socket.read(&buf, 1);
+
+                        if((readed > 0) && (buf[0] == '\n')) {
+                            readed = socket.read(&buf, 1);
+                            break;
+                        }
+                    }
+                    else readed = socket.read(&buf, 1);
+                }
 
                 while(readed > 0) {
                     if(buf[0] == '\r') {
