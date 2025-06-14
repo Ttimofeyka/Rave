@@ -1,5 +1,7 @@
 import <std/io> <std/http>
 
+// Add -lWSock32 -lws2_32 as your compiler flags if you are using Windows.
+
 void main {
     @if(__RAVE_OS == "WINDOWS") {
         std::socket::WSAData data;

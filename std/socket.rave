@@ -314,6 +314,10 @@ namespace std {
             extern(linkname: "shutdown") int shutdown(uint* sock, int how);
             extern(linkname: "close") int close(uint* sock);
 
+            extern(linkname: "getaddrinfo") int getAddrInfo(char* node, char* service, std::socket::addrinfo* hints, std::socket::addrinfo** res);
+            extern(linkname: "freeaddrinfo") void freeAddrInfo(std::socket::addrinfo* res);
+            extern(linkname: "gai_strerror") char* getAddrInfoStrErr(int errcode);
+
             extern(linkname: "inet_pton") int inetPton(int af, char* src, void* dst);
             extern(linkname: "inet_ntop") char* inetNtop(int af, void* src, char* dst, int cnt);
             extern(linkname: "inet_addr") std::socket::in_addr inetAddr(char* cp);
