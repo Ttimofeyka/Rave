@@ -550,7 +550,7 @@ RaveValue Scope::get(std::string name, int loc) {
         }
         else return {LLVMGetParam(generator->functions[this->funcName].value, this->args[name]), AST::funcTable[this->funcName]->getArgType(name)};
     }
-    
+
     if(value.value == nullptr && hasAtThis(name)) {
         NodeVar* nv = this->getVar("this", loc);
         TypeStruct* ts = nullptr;
@@ -564,7 +564,12 @@ RaveValue Scope::get(std::string name, int loc) {
     }
 
     if(value.value == nullptr) generator->error("undefined identifier '" + name + "' at function '" + this->funcName + "'!", loc);
+
+    while(instanceof<TypeConst>(value.type)) value.type = value.type->getElType();
+
     if(instanceof<TypePointer>(value.type)) value = LLVM::load(value, "scopeGetLoad", loc);
+    while(instanceof<TypeConst>(value.type)) value.type = value.type->getElType();
+
     return value;
 }
 

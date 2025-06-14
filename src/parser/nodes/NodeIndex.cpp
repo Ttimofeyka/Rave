@@ -52,6 +52,9 @@ Type* NodeIndex::getType() {
     
     if(instanceof<TypePointer>(type)) {
         Type* tp = static_cast<TypePointer*>(type)->instance;
+
+        while(instanceof<TypeConst>(tp)) tp = static_cast<TypeConst*>(tp)->instance;
+
         return instanceof<TypeVoid>(tp) ? basicTypes[BasicType::Char] : tp;
     }
     
@@ -104,6 +107,8 @@ void checkForNull(RaveValue ptr, int loc) {
 }
 
 RaveValue checkForOverload(bool isMustBePtr, Type* _type, Node* node, Node* index, int loc) {
+    while(instanceof<TypeConst>(_type)) _type = static_cast<TypeConst*>(_type)->instance;
+
     if(instanceof<TypeStruct>(_type) || ((instanceof<TypePointer>(_type) && instanceof<TypeStruct>(_type->getElType())))) {
         Type* tstruct = nullptr;
         if(instanceof<TypeStruct>(_type)) tstruct = (TypeStruct*)_type;
@@ -133,6 +138,7 @@ RaveValue NodeIndex::generate() {
     if(instanceof<NodeIden>(this->element)) {
         NodeIden* id = (NodeIden*)this->element;
         if(currScope->localVars.find(id->name) != currScope->localVars.end()) currScope->localVars[id->name]->isUsed = true;
+
         Type* _t = currScope->getVar(id->name, this->loc)->type;
 
         if(instanceof<TypeVector>(_t)) {
@@ -150,6 +156,8 @@ RaveValue NodeIndex::generate() {
             if(instanceof<TypeConst>(((TypeArray*)_t)->element)) this->elementIsConst = true;
         }
         else if(instanceof<TypeConst>(_t)) this->elementIsConst = this->isElementConst(((TypeConst*)_t)->instance);
+
+        while(instanceof<TypeConst>(_t)) _t = static_cast<TypeConst*>(_t)->instance;
 
         RaveValue ptr = currScope->get(id->name, this->loc);
 

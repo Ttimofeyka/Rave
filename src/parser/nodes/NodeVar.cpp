@@ -199,7 +199,7 @@ RaveValue NodeVar::generate() {
                 generator->lModule,
                 globalType,
                 linkName.c_str()
-            ), new TypePointer(this->type)};
+            ), (instanceof<TypeConst>(type) ? new TypePointer(((TypeConst*)type)->instance) : new TypePointer(this->type))};
 
             if(!isExtern) {
                 if(value != nullptr) LLVMSetInitializer(generator->globals[name].value, this->value->generate().value);
@@ -225,7 +225,6 @@ RaveValue NodeVar::generate() {
             this->type = value->getType();
 
             LLVMSetInitializer(generator->globals[this->name].value, val.value);
-            LLVMSetGlobalConstant(generator->globals[this->name].value, this->isConst);
 
             if(alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
             else if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(generator->globals[this->name].value, generator->getAlignment(this->type));
