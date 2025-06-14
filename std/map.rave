@@ -217,12 +217,20 @@ namespace std {
                             iterator.currentHighest = 0;
                         }
                         else {
+                            bool isSetted = false;
+
                             for(usize i=iterator.currentHighest; i<mapSize; i++) {
                                 if(table[i] != null) {
                                     iterator.current = table[i];
                                     iterator.currentHighest = i;
+                                    isSetted = true;
                                     break;
                                 }
+                            }
+
+                            if(!isSetted) {
+                                iterator.current = null;
+                                iterator.currentHighest = 0;
                             }
                         }
                     }
