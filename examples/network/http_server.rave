@@ -26,6 +26,7 @@ void main {
             std::http::Response res = std::http::Response();
             defer ~res;
 
+            res.status = 200;
             res.body = "Hello from Rave HTTP-backend!";
             res.headers.set(std::string("Content-Length"), std::string::fromNumber(res.body.length));
 

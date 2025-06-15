@@ -37,6 +37,8 @@ examples/math/calculator
 examples/math/sum_of_input
 examples/multithread/thread_test
 examples/network/socket_server
+examples/network/http_client
+examples/network/http_server
 examples/time/test_time
 examples/memory/defer
 examples/memory/null_access
