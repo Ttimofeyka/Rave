@@ -24,6 +24,15 @@ namespace std {
             } => this;
 
             void ~this {
+                std::hashmap::iterator<std::string, std::string> it;
+                this.headers.next(&it);
+
+                while(it.current != null) {
+                    ~(it.current.key);
+                    ~(it.current.value);
+                    this.headers.next(&it);
+                }
+
                 ~(this.headers);
                 ~(this.body);
                 this.status = 0;
@@ -49,6 +58,15 @@ namespace std {
             } => this;
 
             void ~this {
+                std::hashmap::iterator<std::string, std::string> it;
+                this.headers.next(&it);
+
+                while(it.current != null) {
+                    ~(it.current.key);
+                    ~(it.current.value);
+                    this.headers.next(&it);
+                }
+
                 ~(this.headers);
                 ~(this.body);
                 ~(this.method);
