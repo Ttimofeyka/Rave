@@ -59,6 +59,7 @@ public:
     bool isWin64 = false;
     bool isArrayable = false;
     bool isNoCopy = false;
+    bool isExplicit = false;
 
     LLVMMetadataRef diFuncScope;
 

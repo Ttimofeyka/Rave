@@ -235,6 +235,7 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
 void Compiler::clearAll() {
     AST::varTable.clear();
     AST::funcTable.clear();
+    AST::funcVersionsTable.clear();
     AST::aliasTable.clear();
     AST::structTable.clear();
     AST::structsNumbers.clear();

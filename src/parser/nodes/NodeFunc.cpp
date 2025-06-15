@@ -59,6 +59,7 @@ NodeFunc::NodeFunc(const std::string& name, std::vector<FuncArgSet> args, NodeBl
     this->isArrayable = false;
     this->isNoCopy = false;
     this->diFuncScope = nullptr;
+    this->isExplicit = false;
 
     for(int i=0; i<mods.size(); i++) {
         if(mods[i].name == "private") this->isPrivate = true;
@@ -78,6 +79,9 @@ void NodeFunc::check() {
     this->isChecked = true;
 
     if(!oldCheck) {
+        Template::replaceTemplates(&type);
+        for(size_t i=0; i<args.size(); i++) Template::replaceTemplates(&args[i].type);
+
         for(int i=0; i<this->mods.size(); i++) {
             if(this->mods[i].name == "method") {
                 Type* structure = this->args[0].type;
@@ -93,44 +97,25 @@ void NodeFunc::check() {
             if(nt != nullptr) this->type = nt;
         }
 
-        for(int i=0; i<this->args.size(); i++) {
-            if(this->args[i].type != nullptr && generator != nullptr) {
-                while(generator->toReplace.find(this->args[i].type->toString()) != generator->toReplace.end())
-                    this->args[i].type = generator->toReplace[this->args[i].type->toString()];
-            }
-        }
-
-        if(instanceof<TypeStruct>(this->type) && generator != nullptr) {
-            TypeStruct* ts = (TypeStruct*)this->type;
-            for(int i=0; i<ts->types.size(); i++) {
-                if(ts->types[i] != nullptr) {
-                    if(generator->toReplace.find(ts->types[i]->toString() + "@") != generator->toReplace.end()) ts->types[i] = generator->toReplace[ts->types[i]->toString() + "@"];
-                    else while(generator->toReplace.find(ts->types[i]->toString()) != generator->toReplace.end()) {
-                        ts->types[i] = generator->toReplace[ts->types[i]->toString()];
-                    }
-                }
-            }
-            if(ts->types.size() > 0) ts->updateByTypes();
-            if(ts != nullptr && generator != nullptr) {
-                while(generator->toReplace.find(this->type->toString()) != generator->toReplace.end())
-                    this->type = generator->toReplace[this->type->toString()];
-            }
-        }
-
-        if(AST::funcTable.find(this->name) != AST::funcTable.end()) {
+        if(AST::funcTable.find(name) != AST::funcTable.end()) {
+            // New overload
             std::string toAdd = typesToString(args);
+
             if(typesToString(AST::funcTable[name]->args) == toAdd) {
                 if(this->isCtargs || this->isCtargsPart || this->isTemplate) {
                     this->noCompile = true;
                     return;
                 }
                 else {
-                    AST::checkError("a function with '" + this->name + "' name already exists on " + std::to_string(AST::funcTable[this->name]->loc) + " line!", this->loc);
+                    AST::checkError("a function with name '" + this->name + "' already exists on " + std::to_string(AST::funcTable[this->name]->loc) + " line!", this->loc);
                     return;
                 }
             }
-            this->name += toAdd;
+
+            AST::funcVersionsTable[name].push_back(this);
+            name += toAdd;
         }
+        else AST::funcVersionsTable[name].push_back(this);
 
         AST::funcTable[this->name] = this;
         for(int i=0; i<this->block->nodes.size(); i++) {
@@ -223,36 +208,37 @@ RaveValue NodeFunc::generate() {
         if(instanceof<TypeVoid>(this->type)) this->type = basicTypes[BasicType::Int];
     }
 
-    for(int i=0; i<this->mods.size(); i++) {
+    for(int i=0; i<mods.size(); i++) {
         while(AST::aliasTable.find(mods[i].name) != AST::aliasTable.end()) {
-            if(instanceof<NodeArray>(AST::aliasTable[this->mods[i].name])) {
-                NodeArray* array = (NodeArray*)AST::aliasTable[this->mods[i].name];
-                this->mods[i].name = ((NodeString*)array->values[0])->value;
-                this->mods[i].value = array->values[1];
+            if(instanceof<NodeArray>(AST::aliasTable[mods[i].name])) {
+                NodeArray* array = (NodeArray*)AST::aliasTable[mods[i].name];
+                mods[i].name = ((NodeString*)array->values[0])->value;
+                mods[i].value = array->values[1];
             }
-            else this->mods[i].name = ((NodeString*)AST::aliasTable[this->mods[i].name])->value;
+            else mods[i].name = ((NodeString*)AST::aliasTable[mods[i].name])->value;
         }
 
-        if(this->mods[i].name == "C") linkName = this->name;
-        else if(this->mods[i].name == "vararg") this->isVararg = true;
-        else if(this->mods[i].name == "fastcc") callConv = LLVMFastCallConv;
-        else if(this->mods[i].name == "coldcc") callConv = LLVMColdCallConv;
-        else if(this->mods[i].name == "stdcc") callConv = LLVMX86StdcallCallConv;
-        else if(this->mods[i].name == "armapcs") callConv = LLVMARMAPCSCallConv;
-        else if(this->mods[i].name == "armaapcs") callConv = LLVMARMAAPCSCallConv;
-        else if(this->mods[i].name == "cdecl64") {callConv = LLVMCCallConv; this->isCdecl64 = true;}
-        else if(this->mods[i].name == "win64") {callConv = LLVMCCallConv; this->isWin64 = true;}
-        else if(this->mods[i].name == "inline") this->isInline = true;
-        else if(this->mods[i].name == "linkname") {
-            Node* newLinkName = this->mods[i].value->comptime();
+        if(mods[i].name == "C") linkName = name;
+        else if(mods[i].name == "vararg") isVararg = true;
+        else if(mods[i].name == "fastcc") callConv = LLVMFastCallConv;
+        else if(mods[i].name == "coldcc") callConv = LLVMColdCallConv;
+        else if(mods[i].name == "stdcc") callConv = LLVMX86StdcallCallConv;
+        else if(mods[i].name == "armapcs") callConv = LLVMARMAPCSCallConv;
+        else if(mods[i].name == "armaapcs") callConv = LLVMARMAAPCSCallConv;
+        else if(mods[i].name == "cdecl64") {callConv = LLVMCCallConv; isCdecl64 = true;}
+        else if(mods[i].name == "win64") {callConv = LLVMCCallConv; isWin64 = true;}
+        else if(mods[i].name == "inline") isInline = true;
+        else if(mods[i].name == "linkname") {
+            Node* newLinkName = mods[i].value->comptime();
             if(!instanceof<NodeString>(newLinkName)) generator->error("value type of 'linkname' must be a string!", loc);
             linkName = ((NodeString*)newLinkName)->value;
         }
-        else if(this->mods[i].name == "comdat") this->isComdat = true;
-        else if(this->mods[i].name == "nochecks") this->isNoChecks = true;
-        else if(this->mods[i].name == "noOptimize") this->isNoOpt = true;
-        else if(this->mods[i].name == "arrayable") this->isArrayable = true;
-        else if(this->mods[i].name == "conditions") conditions = (NodeArray*)this->mods[i].value;
+        else if(mods[i].name == "comdat") isComdat = true;
+        else if(mods[i].name == "nochecks") isNoChecks = true;
+        else if(mods[i].name == "noOptimize") isNoOpt = true;
+        else if(mods[i].name == "arrayable") isArrayable = true;
+        else if(mods[i].name == "conditions") conditions = (NodeArray*)mods[i].value;
+        else if(mods[i].name == "explicit") isExplicit = true;
     }
 
     if(!this->isTemplate && this->isCtargs) return {};
@@ -505,7 +491,14 @@ RaveValue NodeFunc::generateWithTemplate(std::vector<Type*>& types, const std::s
 Node* NodeFunc::comptime() {return this;}
 Type* NodeFunc::getType() {return this->type;}
 
-Node* NodeFunc::copy() {return new NodeFunc(this->name, this->args, (NodeBlock*)this->block->copy(), this->isExtern, this->mods, this->loc, this->type->copy(), this->templateNames);}
+Node* NodeFunc::copy() {
+    std::vector<FuncArgSet> args = this->args;
+    for(size_t i=0; i<args.size(); i++) args[i].type = args[i].type->copy();
+
+    NodeFunc* fn = new NodeFunc(this->name, args, (NodeBlock*)this->block->copy(), this->isExtern, this->mods, this->loc, this->type->copy(), this->templateNames);
+    fn->isExplicit = isExplicit;
+    return fn;
+}
 
 Type* NodeFunc::getInternalArgType(LLVMValueRef value) {
     std::string __n = LLVMPrintValueToString(value);

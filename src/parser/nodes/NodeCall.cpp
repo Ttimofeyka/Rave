@@ -39,36 +39,33 @@ inline void checkAndGenerate(std::string name) {
     if(generator->functions.find(name) == generator->functions.end()) AST::funcTable[name]->generate();
 }
 
-bool hasIdenticallyArgs(const std::vector<Type*>& one, const std::vector<Type*>& two) {
+bool hasIdenticallyArgs(const std::vector<Type*>& one, const std::vector<FuncArgSet>& two, NodeFunc* fn) {
     if(one.size() != two.size()) return false;
 
-    for(size_t i = 0; i < one.size(); ++i) {
-        Type* t1 = one[i];
-        Type* t2 = two[i];
-        
-        if(instanceof<TypeBasic>(t1) && instanceof<TypeBasic>(t2)) {
-            auto* tb1 = (TypeBasic*)t1;
-            auto* tb2 = (TypeBasic*)t2;
-            
-            if(tb1->type != tb2->type) {
-                if(isFloatType(tb1) || isFloatType(tb2)) return false;
-            }
-
-            continue;
-        }
-
-        if(t1->toString() != t2->toString()) return false;
-    }
-
-    return true;
-}
-
-bool hasIdenticallyArgs(const std::vector<Type*>& one, const std::vector<FuncArgSet>& two) {
-    if(one.size() != two.size()) return false;
-
-    for(size_t i = 0; i < one.size(); ++i) {
+    for(size_t i=0; i<one.size(); i++) {
         Type* t1 = one[i];
         Type* t2 = two[i].type;
+
+        // Check for implicit operator=
+
+        if(instanceof<TypeStruct>(t2) && !instanceof<TypeStruct>(t1)) {
+            if(fn->isExplicit) return false;
+
+            std::string name = t1->toString();
+
+            if(AST::structTable.find(name) != AST::structTable.end()) {
+                auto& operators = AST::structTable[name]->operators;
+
+                if(operators.find(TokType::Equ) != operators.end()) {
+                    Type* ty = operators[TokType::Equ].begin()->second->args[1].type;
+
+                    if((isBytePointer(ty) && isBytePointer(t1)) || ty->toString() == t1->toString()) {
+                        // Implicit operator=
+                        continue;
+                    }
+                }
+            }
+        }
         
         if(instanceof<TypeBasic>(t1) && instanceof<TypeBasic>(t2)) {
             auto* tb1 = (TypeBasic*)t1;
@@ -199,7 +196,7 @@ std::vector<RaveValue> Call::genParameters(std::vector<Node*>& arguments, std::v
                     Type* ty = operators[TokType::Equ].begin()->second->args[1].type;
 
                     if((isBytePointer(ty) && isBytePointer(params[i].type)) || ty->toString() == params[i].type->toString()) {
-                        // Implicit operator
+                        // Implicit operator=
                         RaveValue tempVariable = LLVM::alloc(fas[i].type, "getParameters_implicit_op_tempvar");
                         Predefines::handle(fas[i].type, new NodeDone(tempVariable), -1);
 
@@ -274,7 +271,7 @@ std::map<std::pair<std::string, std::string>, NodeFunc*>::iterator Call::findMet
     auto method = std::pair<std::string, std::string>(structName, methodName);
     auto methodf = AST::methodTable.find(method);
 
-    if(methodf == AST::methodTable.end() || !hasIdenticallyArgs(Call::getTypes(arguments), methodf->second->args)) {method.second += typesToString(Call::getTypes(arguments)); methodf = AST::methodTable.find(method);}
+    if(methodf == AST::methodTable.end() || !hasIdenticallyArgs(Call::getTypes(arguments), methodf->second->args, methodf->second)) {method.second += typesToString(Call::getTypes(arguments)); methodf = AST::methodTable.find(method);}
 
     if(methodf == AST::methodTable.end()) {method.second = method.second.substr(0, method.second.find('[')); methodf = AST::methodTable.find(method);}
 
@@ -364,94 +361,43 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
                 std::vector<RaveValue> params = Call::genParameters(arguments, byVals, AST::funcTable[ifName + sTypes], loc);
                 return LLVM::call(generator->functions[ifName + sTypes], params, (instanceof<TypeVoid>(AST::funcTable[ifName + sTypes]->type) ? "" : "callFunc"), byVals);
             }
-            else {
-                // Arrayable - accepts pointer and length instead of array
-                if(AST::funcTable[ifName]->isArrayable && arguments.size() > 0) {
-                    std::vector<Node*> newArgs;
-                    bool isChanged = false;
 
-                    for(int i=0; i<arguments.size(); i++) {
-                        if(instanceof<TypeArray>(arguments[i]->getType())) {
-                            isChanged = true;
-                            newArgs.insert(newArgs.end(), {new NodeUnary(loc, TokType::Amp, arguments[i]), ((TypeArray*)arguments[i]->getType())->count->comptime()});
-                        }
-                        else newArgs.push_back(arguments[i]);
+            std::vector<NodeFunc*>& related = AST::funcVersionsTable[ifName];
+
+            if(AST::funcTable[ifName]->isArrayable && arguments.size() > 0) {
+                // Arrayable - uses pointer and length instead of array
+                std::vector<Node*> newArgs;
+                bool isChanged = false;
+
+                for(size_t i=0; i<arguments.size(); i++) {
+                    if(instanceof<TypeArray>(arguments[i]->getType())) {
+                        isChanged = true;
+                        newArgs.insert(newArgs.end(), {new NodeUnary(loc, TokType::Amp, arguments[i]), ((TypeArray*)arguments[i]->getType())->count->comptime()});
                     }
-
-                    // If changed - just call it
-                    if(isChanged) {
-                        std::vector<Type*> newTypes = Call::getTypes(newArgs);
-                        std::string newSTypes = typesToString(newTypes);
-
-                        if(AST::funcTable.find(ifName + newSTypes) != AST::funcTable.end()) {
-                            std::vector<RaveValue> params = Call::genParameters(newArgs, byVals, AST::funcTable[ifName + newSTypes], loc);
-                            return LLVM::call(generator->functions[ifName + newSTypes], params, (instanceof<TypeVoid>(AST::funcTable[ifName + newSTypes]->type) ? "" : "callFunc"), byVals);
-                        }
-
-                        // Try to search manually
-                        for(auto& kv : AST::funcTable) {
-                            if(kv.first.find(ifName) != std::string::npos) {
-                                if(hasIdenticallyArgs(newTypes, kv.second->args)) {
-                                    std::vector<RaveValue> params = Call::genParameters(newArgs, byVals, kv.second, loc);
-                                    return LLVM::call(generator->functions[kv.first], params, (instanceof<TypeVoid>(kv.second->type) ? "" : "callFunc"), byVals);
-                                }
-                            }
-                        }
-                    }
-
-                    if(!hasIdenticallyArgs(types, AST::funcTable[ifName]->args)) {
-                        for(auto& it : AST::funcTable) {
-                            if(it.first != ifName) {
-                                if(it.first.find(ifName + "[") != 0 && it.first.find(ifName + "<") != 0) continue;
-                            }
-
-                            if(hasIdenticallyArgs(types, it.second->args)) {
-                                checkAndGenerate(it.first);
-                                std::vector<RaveValue> params = Call::genParameters(arguments, byVals, it.second, loc);
-                                return LLVM::call(generator->functions[it.first], params, (instanceof<TypeVoid>(it.second->type) ? "" : "callFunc"), byVals);
-                            }
-                        }
-
-                        if(AST::funcTable[ifName]->args.size() != arguments.size()) {
-                            // Choose the most right overload
-                            for(auto& it : AST::funcTable) {
-                                if(it.second->args.size() != arguments.size()) continue;
-
-                                if(it.first != ifName) {
-                                    if(it.first.find(ifName + "[") != 0 && it.first.find(ifName + "<") != 0) continue;
-                                }
-
-                                checkAndGenerate(it.first);
-                                std::vector<RaveValue> params = Call::genParameters(arguments, byVals, it.second, loc);
-                                return LLVM::call(generator->functions[it.first], params, (instanceof<TypeVoid>(it.second->type) ? "" : "callFunc"), byVals);
-                            }
-                        }
-
-                        if(!AST::funcTable[ifName]->isCdecl64 && !AST::funcTable[ifName]->isWin64 && !AST::funcTable[ifName]->isVararg)
-                            generator->error("wrong number of arguments for calling function '" + ifName + "' (" + std::to_string(AST::funcTable[ifName]->args.size()) + " expected, " + std::to_string(arguments.size()) + " provided)!", loc);
-                    }
-
-                    std::vector<RaveValue> params = Call::genParameters(arguments, byVals, AST::funcTable[ifName], loc);
-                    return LLVM::call(generator->functions[ifName], params, (instanceof<TypeVoid>(AST::funcTable[ifName]->type) ? "" : "callFunc"), byVals);
-                }
-                else if(!hasIdenticallyArgs(types, AST::funcTable[ifName]->args)) {
-                    // Choose the most right overload
-                    for(auto& it : AST::funcTable) {
-                        if(it.first != ifName) {
-                            if(it.first.find(ifName + "[") != 0 && it.first.find(ifName + "<") != 0) continue;
-                        }
-
-                        if(hasIdenticallyArgs(types, it.second->args)) {
-                            checkAndGenerate(it.first);
-                            std::vector<RaveValue> params = Call::genParameters(arguments, byVals, it.second, loc);
-                            return LLVM::call(generator->functions[it.first], params, (instanceof<TypeVoid>(it.second->type) ? "" : "callFunc"), byVals);
-                        }
-                    }
+                    else newArgs.push_back(arguments[i]);
                 }
 
-                std::vector<RaveValue> params = Call::genParameters(arguments, byVals, AST::funcTable[ifName], loc);
-                return LLVM::call(generator->functions[ifName], params, (instanceof<TypeVoid>(AST::funcTable[ifName]->type) ? "" : "callFunc"), byVals);
+                if(isChanged) {
+                    arguments = newArgs;
+                    types = Call::getTypes(newArgs);
+                    sTypes = typesToString(types);
+                }
             }
+
+            // Find the most right version
+            for(size_t i=0; i<related.size(); i++) {
+                if(hasIdenticallyArgs(types, related[i]->args, related[i])) {
+                    checkAndGenerate(related[i]->name);
+                    std::vector<RaveValue> params = Call::genParameters(arguments, byVals, related[i], loc);
+                    return LLVM::call(generator->functions[related[i]->name], params, (instanceof<TypeVoid>(related[i]->type) ? "" : "callFunc"), byVals);
+                }
+            }
+
+            if(!AST::funcTable[ifName]->isCdecl64 && !AST::funcTable[ifName]->isWin64 && !AST::funcTable[ifName]->isVararg && AST::funcTable[ifName]->args.size() != arguments.size())
+                generator->error("wrong number of arguments for calling function '" + ifName + "' (" + std::to_string(AST::funcTable[ifName]->args.size()) + " expected, " + std::to_string(arguments.size()) + " provided)!", loc);
+
+            std::vector<RaveValue> params = Call::genParameters(arguments, byVals, AST::funcTable[ifName], loc);
+            return LLVM::call(generator->functions[ifName], params, (instanceof<TypeVoid>(AST::funcTable[ifName]->type) ? "" : "callFunc"), byVals);
         }
 
         // Function is a variable?
@@ -570,16 +516,6 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
                 auto methodf = Call::findMethod(_struct->name, ifName, arguments, loc);
 
                 std::vector<Type*> types = Call::getTypes(arguments);
-
-                if(!hasIdenticallyArgs(types, methodf->second->args)) {
-                    for(auto& it : AST::funcTable) {
-                        if(hasIdenticallyArgs(types, it.second->args)) {
-                            if(generator->functions.find(it.second->name) == generator->functions.end()) it.second->generate();
-                            std::vector<RaveValue> params = Call::genParameters(arguments, byVals, it.second, loc);
-                            return LLVM::call(generator->functions[it.second->name], params, (instanceof<TypeVoid>(it.second->type) ? "" : "callFunc"), byVals);
-                        }
-                    }
-                }
 
                 std::vector<RaveValue> params = Call::genParameters(arguments, byVals, methodf->second, loc);
                 if(instanceof<TypePointer>(params[0].type->getElType())) params[0] = LLVM::load(params[0], "NodeCall_load", loc);

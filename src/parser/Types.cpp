@@ -485,6 +485,8 @@ bool isBytePointer(Type* type) {
 }
 
 bool Template::replaceTemplates(Type** _type) {
+    if(generator == nullptr) return false;
+
     Type* type = _type[0];
     Type* parent = nullptr;
     bool isChanged = false;

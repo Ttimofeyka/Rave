@@ -186,6 +186,9 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 else if((func->origName.find("([]&)") != std::string::npos) || (func->origName.find("(&[])") != std::string::npos)) {oper = TokType::Amp; func->name = this->name + "([]&)";}
                 else if(func->origName.find("(in)") != std::string::npos) {oper = TokType::In; func->name = this->name + "(in)";}
 
+                Template::replaceTemplates(&func->type);
+                for(size_t i=0; i<func->args.size(); i++) Template::replaceTemplates(&func->args[i].type);
+
                 if(oper != TokType::Rbra) func->name = func->name + typesToString(func->args);
                 this->operators[oper][(oper != TokType::Rbra ? typesToString(func->args) : "")] = func;
                 this->methods.push_back(func);
@@ -193,21 +196,23 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
             }
             else {
                 Type* outType = nullptr;
+
                 if(!this->constructors.empty()) {
                     outType = this->constructors[0]->type;
                     if(instanceof<TypeStruct>(outType)) outType = new TypePointer(outType);
                 }
                 else outType = new TypePointer(new TypeStruct(this->name));
+
                 if((func->args.size() > 0 && func->args[0].name != "this") || func->args.size() == 0) func->args.insert(func->args.begin(), FuncArgSet{.name = "this", .type = outType, .internalTypes = {outType}});
-                
+
                 func->isTemplatePart = this->isLinkOnce;
                 func->name = this->name + "." + func->origName;
                 func->isMethod = true;
                 func->isExtern = (func->isExtern || this->isImported);
                 func->isComdat = this->isComdat;
 
-                // Check for template structure as return type
-                checkForTemplated(func->type);
+                Template::replaceTemplates(&func->type);
+                for(size_t i=0; i<func->args.size(); i++) Template::replaceTemplates(&func->args[i].type);
 
                 if(AST::methodTable.find(std::pair<std::string, std::string>(this->name, func->origName)) != AST::methodTable.end()) {
                     std::string sTypes = typesToString(AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)]->args);
@@ -413,26 +418,6 @@ LLVMTypeRef NodeStruct::genWithTemplate(std::string sTypes, std::vector<Type*> t
     _struct->isTemplated = true;
     _struct->isComdat = true;
 
-    for(int i=0; i<_struct->elements.size(); i+=1) {
-        if(instanceof<NodeVar>(_struct->elements[i])) {
-            Type* parent = nullptr;
-            Type* ty = ((NodeVar*)_struct->elements[i])->type;
-
-            while(instanceof<TypeConst>(ty) || instanceof<TypePointer>(ty) || instanceof<TypeArray>(ty)) {
-                parent = ty;
-                ty = ty->getElType();
-            }
-
-            if(instanceof<TypeStruct>(ty)) {
-                while(generator->toReplace.find(ty->toString()) != generator->toReplace.end()) ty = generator->toReplace[ty->toString()];
-
-                if(parent == nullptr) ((NodeVar*)_struct->elements[i])->type = ty;
-                else if(instanceof<TypeConst>(parent)) ((TypeConst*)parent)->instance = ty;
-                else if(instanceof<TypePointer>(parent)) ((TypePointer*)parent)->instance = ty;
-                else if(instanceof<TypeArray>(parent)) ((TypeArray*)parent)->element = ty;
-            }
-        }
-    }
     _struct->check();
     _struct->generate();
 

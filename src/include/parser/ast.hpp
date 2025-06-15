@@ -55,6 +55,7 @@ namespace AST {
     extern std::map<std::string, Node*> aliasTable;
     extern std::map<std::string, NodeVar*> varTable;
     extern std::map<std::string, NodeFunc*> funcTable;
+    extern std::map<std::string, std::vector<NodeFunc*>> funcVersionsTable;
     extern std::map<std::string, NodeStruct*> structTable;
     extern std::map<std::string, NodeLambda*> lambdaTable;
     extern std::map<std::pair<std::string, std::string>, NodeFunc*> methodTable;

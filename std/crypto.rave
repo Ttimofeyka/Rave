@@ -29,7 +29,7 @@ namespace std {
         
         (inline) std::string encode(std::cstring src) {return = ""; std::base16::encodeBuffer(&return, src.data, src.length);}
 
-        (inline) std::string encode(std::string src) {return = ""; std::base16::encodeBuffer(&return, src.data, src.length);}
+        (inline, explicit) std::string encode(std::string src) {return = ""; std::base16::encodeBuffer(&return, src.data, src.length);}
 
         // Decode
 
@@ -56,7 +56,7 @@ namespace std {
 
         (inline) std::string decode(std::cstring src) {return = ""; std::base16::decodeBuffer(&return, src.data, src.length);}
 
-        (inline) std::string decode(std::string src) {return = ""; std::base16::decodeBuffer(&return, src.data, src.length);}
+        (inline, explicit) std::string decode(std::string src) {return = ""; std::base16::decodeBuffer(&return, src.data, src.length);}
     }
 
     namespace base32 {
@@ -88,7 +88,7 @@ namespace std {
 
         (inline) std::string encode(std::cstring src) {return = ""; std::base32::encodeBuffer(&return, src.data, src.length);}
 
-        (inline) std::string encode(std::string src) {return = ""; std::base32::encodeBuffer(&return, src.data, src.length);}
+        (inline, explicit) std::string encode(std::string src) {return = ""; std::base32::encodeBuffer(&return, src.data, src.length);}
 
         // Decode
 
@@ -106,7 +106,7 @@ namespace std {
 
         (inline) std::string decode(std::cstring src) {return = ""; std::base32::decodeBuffer(&return, src.data, src.length);}
 
-        (inline) std::string decode(std::string src) {return = ""; std::base32::decodeBuffer(&return, src.data, src.length);}
+        (inline, explicit) std::string decode(std::string src) {return = ""; std::base32::decodeBuffer(&return, src.data, src.length);}
     }
 
     namespace base64 {
@@ -148,7 +148,7 @@ namespace std {
 
         (inline) std::string encode(std::cstring src) {return = ""; std::base64::encodeBuffer(&return, src.data, src.length);}
 
-        (inline) std::string encode(std::string src) {return = ""; std::base64::encodeBuffer(&return, src.data, src.length);}
+        (inline, explicit) std::string encode(std::string src) {return = ""; std::base64::encodeBuffer(&return, src.data, src.length);}
 
         // Decode
 
@@ -175,6 +175,6 @@ namespace std {
 
         (inline) std::string decode(std::cstring src) {return = ""; std::base64::decodeBuffer(&return, src.data, src.length);}
 
-        (inline) std::string decode(std::string src) {return = ""; std::base64::decodeBuffer(&return, src.data, src.length);}
+        (inline, explicit) std::string decode(std::string src) {return = ""; std::base64::decodeBuffer(&return, src.data, src.length);}
     }
 }

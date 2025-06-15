@@ -29,6 +29,7 @@ std::map<std::string, Type*> AST::aliasTypes;
 std::map<std::string, Node*> AST::aliasTable;
 std::map<std::string, NodeVar*> AST::varTable;
 std::map<std::string, NodeFunc*> AST::funcTable;
+std::map<std::string, std::vector<NodeFunc*>> AST::funcVersionsTable;
 std::map<std::string, NodeLambda*> AST::lambdaTable;
 std::map<std::string, NodeStruct*> AST::structTable;
 std::map<std::pair<std::string, std::string>, NodeFunc*> AST::methodTable;
@@ -137,17 +138,12 @@ std::string typeToString(Type* arg) {
         return buffer;
     }
     else if(instanceof<TypeStruct>(arg)) {
-        TypeStruct* ts = (TypeStruct*)arg;
-        Type* t = ts;
-        while(instanceof<TypeStruct>(t) && generator->toReplace.find(t->toString()) != generator->toReplace.end()) t = generator->toReplace[ts->toString()]->copy();
-        if(!instanceof<TypeStruct>(t)) return typeToString(t);
-        else ts = (TypeStruct*)t;
+        Type* ty = arg;
+        Template::replaceTemplates(&ty);
 
-        for(int i=0; i<ts->types.size(); i++) {
-            while(generator->toReplace.find(ts->types[i]->toString()) != generator->toReplace.end()) ts->types[i] = generator->toReplace[ts->types[i]->toString()]->copy();
-        }
-        if(ts->types.size() > 0) ts->updateByTypes();
-        return "s-" + ts->toString();
+        if(!instanceof<TypeStruct>(ty)) return typeToString(ty);
+
+        return "s-" + ty->toString();
     }
     else if(instanceof<TypeVector>(arg)) return "v" + typeToString(((TypeVector*)arg)->mainType) + std::to_string(((TypeVector*)arg)->count);
     else if(instanceof<TypeFunc>(arg)) return "func";

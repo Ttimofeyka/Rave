@@ -92,21 +92,11 @@ void NodeVar::check() {
         if(this->namespacesNames.size() > 0) this->name = namespacesToString(this->namespacesNames, this->name);
         if(this->isGlobal) AST::varTable[this->name] = this;
 
+        Template::replaceTemplates(&type);
+
         if(instanceof<TypeBasic>(this->type) && !AST::aliasTypes.empty()) {
             Type* _type = this->type->check(nullptr);
             if(_type != nullptr) this->type = _type;
-        }
-
-        if(instanceof<TypeStruct>(this->type)) {
-            TypeStruct* ts = (TypeStruct*)this->type;
-            if(ts->types.size() > 0 && generator != nullptr && generator->toReplace.size() > 0) {
-                for(int i=0; i<ts->types.size(); i++) {
-                    Type* _type = ts->types[i];
-                    while(generator->toReplace.find(_type->toString()) != generator->toReplace.end()) _type = generator->toReplace[_type->toString()];
-                    _type = _type->copy();
-                    ts->types[i] = _type;
-                }
-            }
         }
     }
 }
