@@ -16,6 +16,7 @@ List of possible declarations:
 - private - This function/variable will not be imported from other files.
 - noOptimize - Forces the compiler to bypass the function during optimization.
 - align: number - Allows you to set the alignment value. It is mainly used in SIMD.
+- explicit - Disables the possibility of using the implicit overload of operator `=` when calling a function.
 
 Also, it should be noted that you cannot use the parameter C with linkname, since they interfere with each other.
 
