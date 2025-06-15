@@ -253,6 +253,8 @@ namespace std {
                 }
 
                 this.table = null;
+                this.mapSize = 0;
+                this.length = 0;
             }
         }
     }
