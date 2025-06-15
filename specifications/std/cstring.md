@@ -1,5 +1,9 @@
 # std/cstring.rave
 
+## std::cstring
+
+The structure is designed to transfer С-strings (or byte buffers) along with their length.
+
 ## std::cstring::strlen
 
 Get the length of the C-string.
