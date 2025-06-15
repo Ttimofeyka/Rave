@@ -1,0 +1,53 @@
+import <std/io> <std/http>
+
+// Add -lWSock32 -lws2_32 as your compiler flags if you are using Windows.
+
+void main {
+    @if(__RAVE_OS == "WINDOWS") {
+        std::socket::WSAData data;
+        std::socket::startup(514, &data);
+    }
+
+    std::http::Server server = std::http::Server();
+
+    int openStatus = server.open("127.0.0.1", 80);
+    if(openStatus < 0) std::exit(-openStatus);
+
+    while(true) {
+        std::http::Connection conn = server.accept();
+        defer ~conn;
+
+        std::http::Request req = conn.readRequest();
+        defer ~req;
+
+        std::println("Method: ", req.method, ", URL: ", req.url);
+
+        if(req.url == "/") {
+            std::http::Response res = std::http::Response();
+            defer ~res;
+
+            res.body = "Hello from Rave HTTP-backend!";
+            res.headers.set(std::string("Content-Length"), std::string::fromNumber(res.body.length));
+
+            conn.sendResponse(res);
+
+            // We need to clear each header (key/value) after the end of sending a response.
+            // You can always use more direct functions to work with memory more efficiently.
+
+            std::hashmap::iterator<std::string, std::string> it;
+            res.headers.next(&it);
+
+            while(it.current != null) {
+                ~(it.current.key);
+                ~(it.current.value);
+                res.headers.next(&it);
+            }
+        }
+
+        conn.close();
+    }
+
+    server.close();
+
+    @if(__RAVE_OS == "WINDOWS") std::socket::cleanup();
+}

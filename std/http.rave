@@ -31,6 +31,32 @@ namespace std {
             }
         }
 
+        struct Request {
+            std::hashmap<std::string, std::string> headers;
+            std::string body;
+            std::string method;
+            std::string url;
+            int success;
+
+            std::http::Request this {
+                std::http::Request this;
+
+                this.headers = std::hashmap<std::string, std::string>();
+                this.body = "";
+                this.method = "";
+                this.url = "";
+                this.success = 0;
+            } => this;
+
+            void ~this {
+                ~(this.headers);
+                ~(this.body);
+                ~(this.method);
+                ~(this.url);
+                this.success = 0;
+            }
+        }
+
         struct Connection {
             std::socket socket;
 
@@ -49,25 +75,27 @@ namespace std {
                 usize p = 0;
                 usize state = 0;
 
-                while(url[p] != '\0') {
-                    if(state == 0) {
-                        if(url[p] != ':') {
-                            this.protocol.add(url[p]);
-                            p += 1;
+                if(url != null) {
+                    while(url[p] != '\0') {
+                        if(state == 0) {
+                            if(url[p] != ':') {
+                                this.protocol.add(url[p]);
+                                p += 1;
+                            }
+                            else {
+                                p += 3; // Skip the double slash
+                                state += 1;
+                            }
                         }
                         else {
-                            p += 3; // Skip the double slash
-                            state += 1;
+                            if(state == 1) {
+                                if(url[p] != '/') this.host.add(url[p]);
+                                else state += 1;
+                            }
+                            else this.path.add(url[p]);
+    
+                            p += 1;
                         }
-                    }
-                    else {
-                        if(state == 1) {
-                            if(url[p] != '/') this.host.add(url[p]);
-                            else state += 1;
-                        }
-                        else this.path.add(url[p]);
-
-                        p += 1;
                     }
                 }
             } => this;
@@ -107,8 +135,7 @@ namespace std {
 
             (inline) int close => socket.close();
 
-            // HTTP/1.1 request (write + read)
-            std::http::Response request(std::cstring method, std::hashmap<std::string, std::string>* headers, std::cstring body) {
+            int sendRequestData(std::cstring method, std::hashmap<std::string, std::string>* headers, std::cstring body) {
                 std::string req = std::sprint(method, " ", path, " HTTP/1.1\r\nHost: ", host, "\r\n");
                 defer ~req;
 
@@ -124,20 +151,49 @@ namespace std {
                         headers.next(&iterator);
                     }
                 }
+                else req.appendC("\r\n", 2);
 
                 req.appendC("\r\n", 2);
-                req.appendC(body.data, body.length);
+                if(body.data != null) req.appendC(body.data, body.length);
 
-                char[513] buf;
+                if(socket.write(req) < 0) @return(-1);
+            }
 
-                if(socket.write(req) < 0) {
-                    return.status = -1;
-                    return.success = -1; // Bad write
-                    @return();
+            int sendRequest(std::http::Request req) => sendRequestData(std::cstring(req.method.data, req.method.length), req.&headers, std::cstring(req.body.data, req.body.length));
+
+            int sendResponseData(int status, std::cstring message, std::hashmap<std::string, std::string>* headers, std::cstring body) {
+                std::string res = std::sprint("HTTP/1.1 ", status);
+                defer ~res;
+
+                if(message.data != null) {
+                    res.appendC(message.data, message.length);
+                    res.add(' ');
                 }
 
-                return = std::http::Response();
+                if(headers != null) {
+                    std::hashmap::iterator<std::string, std::string> iterator;
+                    headers.next(&iterator);
 
+                    while(iterator.current != null) {
+                        res.append(iterator.current.key);
+                        res.appendC(": ", 2);
+                        res.append(iterator.current.value);
+                        res.appendC("\r\n", 2);
+                        headers.next(&iterator);
+                    }
+                }
+                else res.appendC("\r\n", 2);
+
+                res.appendC("\r\n", 2);
+                if(body.data != null) res.appendC(body.data, body.length);
+
+                if(socket.write(res) < 0) @return(-1);
+            }
+
+            int sendResponse(std::http::Response res) => sendResponseData(res.status, std::cstring("", 0), res.&headers, std::cstring(res.body.data, res.body.length));
+
+            int readHeaders(long* contentLength, std::hashmap<std::string, std::string>* headers) {
+                char[513] buf;
                 bool isR = false;
                 bool isValueMode = false;
 
@@ -147,41 +203,7 @@ namespace std {
                 std::string headerValue = "";
                 defer ~headerValue;
 
-                long contentLength = -1;
                 int readed = socket.read(&buf, 1);
-
-                // Parse first line (skip HTTP version, get status, skip message)
-                while((std::ascii::isSpace(buf[0])) && (readed > 0)) readed = socket.read(&buf, 1);
-                while((!std::ascii::isSpace(buf[0])) && (readed > 0)) readed = socket.read(&buf, 1);
-                while((std::ascii::isSpace(buf[0])) && (readed > 0)) readed = socket.read(&buf, 1);
-
-                // Status
-                std::string status = "";
-                defer ~status;
-
-                while((!std::ascii::isSpace(buf[0])) && (readed > 0)) {
-                    status.add(buf[0]);
-                    readed = socket.read(&buf, 1);
-                }
-
-                if(status.length > 0) return.status = status.toInt();
-                else {
-                    return.status = -1;
-                    return.success = -2; // Bad HTTP status
-                    @return();
-                }
-
-                while(readed > 0) {
-                    if((buf[0] == '\r')) {
-                        readed = socket.read(&buf, 1);
-
-                        if((readed > 0) && (buf[0] == '\n')) {
-                            readed = socket.read(&buf, 1);
-                            break;
-                        }
-                    }
-                    else readed = socket.read(&buf, 1);
-                }
 
                 while(readed > 0) {
                     if(buf[0] == '\r') {
@@ -193,11 +215,11 @@ namespace std {
                                 if(std::ascii::toLower(headerName.data[i]) != cl[i]) {isEqual = false; break;}
                             }
 
-                            if(isEqual) contentLength = headerValue.toInt();
+                            if(isEqual) contentLength[0] = headerValue.toInt();
                         }
 
                         if(headerName.length > 0) {
-                            return.headers.set(headerName, headerValue);
+                            headers.set(headerName, headerValue);
 
                             headerName = std::string("");
                             headerValue = std::string("");
@@ -238,6 +260,107 @@ namespace std {
                         readed = socket.read(&buf, 1);
                     }
                 }
+            }
+
+            int readResponseData(int* statusPtr, std::hashmap<std::string, std::string>* headers, std::string* body) {
+                char[513] buf;
+
+                long contentLength = -1;
+                int readed = socket.read(&buf, 1);
+
+                // Parse first line (skip HTTP version, get status, skip message)
+                while((std::ascii::isSpace(buf[0])) && (readed > 0)) readed = socket.read(&buf, 1);
+                while((!std::ascii::isSpace(buf[0])) && (readed > 0)) readed = socket.read(&buf, 1);
+                while((std::ascii::isSpace(buf[0])) && (readed > 0)) readed = socket.read(&buf, 1);
+
+                // Status
+                std::string status = "";
+                defer ~status;
+
+                while((!std::ascii::isSpace(buf[0])) && (readed > 0)) {
+                    status.add(buf[0]);
+                    readed = socket.read(&buf, 1);
+                }
+
+                if(status.length > 0) statusPtr[0] = status.toInt();
+                else @return(-1); // Bad HTTP status
+
+                while(readed > 0) {
+                    if((buf[0] == '\r')) {
+                        readed = socket.read(&buf, 1);
+
+                        if((readed > 0) && (buf[0] == '\n')) {
+                            readed = socket.read(&buf, 1);
+                            break;
+                        }
+                    }
+                    else readed = socket.read(&buf, 1);
+                }
+
+                if(readHeaders(&contentLength, headers) == -1) @return(-1);
+
+                if(contentLength > 0) {
+                    while(contentLength >= 512) {
+                        readed = socket.read(&buf, 512);
+                        if(readed > 0) body.appendC(&buf, readed);
+
+                        contentLength -= 512;
+                    }
+
+                    readed = socket.read(&buf, contentLength);
+                    if(readed > 0) body.appendC(&buf, readed);
+                }
+            }
+
+            (inline) std::http::Response readResponse {
+                return = std::http::Response();
+
+                if(readResponseData(return.&status, return.&headers, return.&body) == -1) {
+                    return.status = -1;
+                    return.success = -1;
+                }
+            }
+
+            std::http::Request readRequest {
+                return = std::http::Request();
+
+                char[513] buf;
+
+                long contentLength = -1;
+                int readed = socket.read(&buf, 1);
+
+                // Parse first line (get method, get url, skip HTTP version)
+
+                // Method
+                while((std::ascii::isSpace(buf[0])) && (readed > 0)) readed = socket.read(&buf, 1);
+                while((!std::ascii::isSpace(buf[0])) && (readed > 0)) {
+                    return.method.add(buf[0]);
+                    readed = socket.read(&buf, 1);
+                }
+
+                // URL
+                while((std::ascii::isSpace(buf[0])) && (readed > 0)) readed = socket.read(&buf, 1);
+                while((!std::ascii::isSpace(buf[0])) && (readed > 0)) {
+                    return.url.add(buf[0]);
+                    readed = socket.read(&buf, 1);
+                }
+
+                while(readed > 0) {
+                    if((buf[0] == '\r')) {
+                        readed = socket.read(&buf, 1);
+
+                        if((readed > 0) && (buf[0] == '\n')) {
+                            readed = socket.read(&buf, 1);
+                            break;
+                        }
+                    }
+                    else readed = socket.read(&buf, 1);
+                }
+
+                if(readHeaders(&contentLength, return.&headers) == -1) {
+                    return.success = -1;
+                    @return();
+                }
 
                 if(contentLength > 0) {
                     while(contentLength >= 512) {
@@ -250,13 +373,21 @@ namespace std {
                     readed = socket.read(&buf, contentLength);
                     if(readed > 0) return.body.appendC(&buf, readed);
                 }
-                else if(contentLength != 0) {
-                    socket.read(&buf, 512);
+            }
 
-                    while(readed > 0) {
-                        return.body.appendC(&buf, readed);
-                        readed = socket.read(&buf, 512);
-                    }
+            // HTTP/1.1 request (write + read)
+            std::http::Response request(std::cstring method, std::hashmap<std::string, std::string>* headers, std::cstring body) {
+                return = std::http::Response();
+
+                if(sendRequestData(method, headers, body) == -1) {
+                    return.status = -1;
+                    return.success = -1;
+                    @return();
+                }
+
+                if(readResponseData(return.&status, return.&headers, return.&body) == -1) {
+                    return.status = -1;
+                    return.success = -1;
                 }
             }
 
@@ -265,6 +396,39 @@ namespace std {
                 ~(this.protocol);
                 ~(this.host);
                 ~(this.path);
+            }
+        }
+
+        struct Server {
+            std::socket socket;
+            std::string port;
+
+            std::http::Server this {
+                std::http::Server this;
+
+                this.socket = std::socket();
+                this.port = null;
+            } => this;
+
+            int open(char* url, int port) {
+                this.port = std::string::fromNumber(port);
+
+                if(socket.open(url, port, std::socket::InAddrAny) == -1) @return(-1);
+                if(socket.bind() == -1) @return(-2);
+                if(socket.listen() == -1) @return(-3);
+            }
+
+            std::http::Connection accept {
+                return = std::http::Connection(null, port.data);
+
+                socket.accept(return.&socket);
+            }
+
+            (inline) int close => socket.close();
+
+            void ~this {
+                ~(this.socket);
+                if(this.port != null) ~(this.port);
             }
         }
     }
