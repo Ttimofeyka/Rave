@@ -45,6 +45,18 @@ void main {
             }
         }
 
+        // We need to clear each header (key/value) after the end of handling a request.
+        // You can always use more direct functions to work with memory more efficiently.
+
+        std::hashmap::iterator<std::string, std::string> it;
+        req.headers.next(&it);
+
+        while(it.current != null) {
+            ~(it.current.key);
+            ~(it.current.value);
+            req.headers.next(&it);
+        }
+
         conn.close();
     }
 
