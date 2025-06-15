@@ -117,27 +117,27 @@ namespace std {
         void encodeBuffer(std::string* buffer, char* src, usize length) {
             @if(__RAVE_RUNTIME_CHECKS) if(length == 0) @return();
         
-            usize fullGroups = length / 3;
-            usize remainder = length % 3;
-
+            usize remaining = length;
             usize index = 0;
         
-            for(usize i=0; i<fullGroups; i++) {
+            while(remaining >= 3) {
                 uint triple = (src[index] <. 16) | (src[index + 1] <. 8) | src[index + 2];
-                index += 3;
                 buffer.add(std::base64::table[(triple >. 18) & 0x3F]);
                 buffer.add(std::base64::table[(triple >. 12) & 0x3F]);
                 buffer.add(std::base64::table[(triple >. 6) & 0x3F]);
                 buffer.add(std::base64::table[triple & 0x3F]);
+
+                index += 3;
+                remaining -= 3;
             }
         
-            if(remainder == 1) {
+            if(remaining == 1) {
                 uint triple = (src[index] <. 16);
                 buffer.add(std::base64::table[(triple >. 18) & 0x3F]);
                 buffer.add(std::base64::table[(triple >. 12) & 0x3F]);
                 buffer.appendC("==");
             }
-            else if(remainder == 2) {
+            else if(remaining == 2) {
                 uint triple = (src[index] <. 16) | (src[index + 1] <. 8);
                 buffer.add(std::base64::table[(triple >. 18) & 0x3F]);
                 buffer.add(std::base64::table[(triple >. 12) & 0x3F]);
