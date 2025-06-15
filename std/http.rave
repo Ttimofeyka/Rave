@@ -190,7 +190,7 @@ namespace std {
                 if(socket.write(res) < 0) @return(-1);
             }
 
-            int sendResponse(std::http::Response res) => sendResponseData(res.status, std::cstring("", 0), res.&headers, std::cstring(res.body.data, res.body.length));
+            int sendResponse(std::http::Response res) => sendResponseData(res.status, std::cstring(null, 0), res.&headers, std::cstring(res.body.data, res.body.length));
 
             int readHeaders(long* contentLength, std::hashmap<std::string, std::string>* headers) {
                 char[513] buf;
