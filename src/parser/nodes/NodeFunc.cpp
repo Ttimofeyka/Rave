@@ -80,7 +80,11 @@ void NodeFunc::check() {
 
     if(!oldCheck) {
         Template::replaceTemplates(&type);
-        for(size_t i=0; i<args.size(); i++) Template::replaceTemplates(&args[i].type);
+        for(size_t i=0; i<args.size(); i++) {
+            Template::replaceTemplates(&args[i].type);
+
+            if(instanceof<TypeVoid>(args[i].type)) AST::checkError("using \033[1mvoid\033[22m as a variable type is prohibited!", this->loc);
+        }
 
         for(int i=0; i<this->mods.size(); i++) {
             if(this->mods[i].name == "method") {
@@ -230,7 +234,7 @@ RaveValue NodeFunc::generate() {
         else if(mods[i].name == "inline") isInline = true;
         else if(mods[i].name == "linkname") {
             Node* newLinkName = mods[i].value->comptime();
-            if(!instanceof<NodeString>(newLinkName)) generator->error("value type of 'linkname' must be a string!", loc);
+            if(!instanceof<NodeString>(newLinkName)) generator->error("value type of \033[1mlinkname\033[22m must be a string!", loc);
             linkName = ((NodeString*)newLinkName)->value;
         }
         else if(mods[i].name == "comdat") isComdat = true;
@@ -252,7 +256,7 @@ RaveValue NodeFunc::generate() {
     if(conditions != nullptr) for(Node* node : conditions->values) {
         Node* result = node->comptime();
         if(instanceof<NodeBool>(result) && !((NodeBool*)result)->value) {
-            generator->error("The conditions were failed when generating the function '" + this->name + "'!", this->loc);
+            generator->error("The conditions were failed when generating the function \033[1m" + this->name + "\033[22m!", this->loc);
             return {};
         }
     }
@@ -430,7 +434,7 @@ RaveValue NodeFunc::generate() {
     if(LLVMVerifyFunction(generator->functions[this->name].value, LLVMPrintMessageAction)) {
         std::string content = LLVMPrintValueToString(generator->functions[this->name].value);
         if(content.length() > 12000) content = content.substr(0, 12000) + "...";
-        generator->error("LLVM errors into the function '" + this->name + "'! Content:\n" + content, this->loc);
+        generator->error("LLVM errors into the function \033[1m" + this->name + "\033[22m! Content:\n" + content, this->loc);
     }
 
     return generator->functions[this->name];
