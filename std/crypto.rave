@@ -4,7 +4,7 @@ Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-import <std/string> <std/ascii>
+import <std/cstring> <std/string> <std/ascii>
 
 namespace std {
     namespace base16 {
@@ -12,51 +12,39 @@ namespace std {
 
         // Encode
 
-        void encodeBuffer(std::string* buffer, char* src, usize length) {
-            @if(__RAVE_RUNTIME_CHECKS) if(length < 1) @return();
+        void encode(std::string* buffer, std::cstring str) {
+            @if(__RAVE_RUNTIME_CHECKS) if(str.length < 1) @return();
 
-            usize outlength = (length * 2) + 1;
+            usize outlength = (str.length * 2) + 1;
 
-            for(usize i=0; i<length; i++) {
-                buffer.add(std::base16::table[(src[i] >. 4) & 0xF]);
-                buffer.add(std::base16::table[src[i] & 0xF]);
+            for(usize i=0; i<str.length; i++) {
+                buffer.add(std::base16::table[(str.data[i] >. 4) & 0xF]);
+                buffer.add(std::base16::table[str.data[i] & 0xF]);
             }
         }
 
-        (inline) void encodeBuffer(std::string* buffer, char* src) => std::base16::encodeBuffer(buffer, src, std::cstring::strlen(src));
-
-        (inline) void encodeBuffer(std::string* buffer, std::string src) => std::base16::encodeBuffer(buffer, src.data, src.length);
-        
-        (inline) std::string encode(std::cstring src) {return = ""; std::base16::encodeBuffer(&return, src.data, src.length);}
-
-        (inline, explicit) std::string encode(std::string src) {return = ""; std::base16::encodeBuffer(&return, src.data, src.length);}
+        (inline, explicit) void encode(std::string* buffer, std::string str) => std::base16::encode(buffer, std::cstring(str.data, str.length));
 
         // Decode
 
-        void decodeBuffer(std::string* buffer, char* src, usize length) {
+        void decode(std::string* buffer, std::cstring str) {
             @if(__RAVE_RUNTIME_CHECKS) if((length < 2) || ((length & 1) != 0)) @return();
 
-            for(usize i=0; i<length; i+=2) {
+            for(usize i=0; i<str.length; i+=2) {
                 uchar high;
                 uchar low;
 
-                if(std::ascii::isDigit(src[i])) high = src[i] - '0';
-                else high = (std::ascii::toUpper(src[i]) - 'A') + 10c;
+                if(std::ascii::isDigit(str.data[i])) high = str.data[i] - '0';
+                else high = (std::ascii::toUpper(str.data[i]) - 'A') + 10c;
 
-                if(std::ascii::isDigit(src[i + 1])) low = src[i + 1] - '0';
-                else low = (std::ascii::toUpper(src[i + 1]) - 'A') + 10c;
+                if(std::ascii::isDigit(str.data[i + 1])) low = str.data[i + 1] - '0';
+                else low = (std::ascii::toUpper(str.data[i + 1]) - 'A') + 10c;
 
                 buffer.add(cast(char)((high <. 4) | low));
             }
         }
 
-        (inline) void decodeBuffer(std::string* buffer, char* src) => std::base16::decodeBuffer(buffer, src, std::cstring::strlen(src));
-
-        (inline) void decodeBuffer(std::string* buffer, std::string src) => std::base16::decodeBuffer(buffer, src.data, src.length);
-
-        (inline) std::string decode(std::cstring src) {return = ""; std::base16::decodeBuffer(&return, src.data, src.length);}
-
-        (inline, explicit) std::string decode(std::string src) {return = ""; std::base16::decodeBuffer(&return, src.data, src.length);}
+        (inline, explicit) void decode(std::string* buffer, std::string str) => std::base16::decode(buffer, std::cstring(str.data, str.length));
     }
 
     namespace base32 {
@@ -64,49 +52,47 @@ namespace std {
 
         // Encode
 
-        void encodeBuffer(std::string* buffer, char* src, usize length) {
-            @if(__RAVE_RUNTIME_CHECKS) if(length == 0) @return();
+        void encode(std::string* buffer, std::cstring str) {
+            @if(__RAVE_RUNTIME_CHECKS) if(str.length == 0) @return();
 
             usize buf = 0;
+            usize added = 0;
             int carry = 0;
 
-            for(usize i=0; i<length; i++) {
-                buf = (buf <. 8) | src[i];
+            for(usize i=0; i<str.length; i++) {
+                buf = (buf <. 8) | str.data[i];
                 carry += 8;
 
                 while(carry >= 5) {
                     carry -= 5;
                     buffer.add(std::base32::table[(buf >. carry) & 0x1F]);
+                    added += 1;
                 }
             }
 
-            if(carry > 0) buffer.add(std::base32::table[(buf <. (5 - carry)) & 0x1F]);
+            if(carry > 0) {buffer.add(std::base32::table[(buf <. (5 - carry)) & 0x1F]); added += 1;}
 
             // Pad the encoded string to be a multiple of 8 characters
-            while((buffer.length & 7) != 0) buffer.add('=');
+            while((added & 7) != 0) {buffer.add('='); added += 1;}
         }
 
-        (inline) std::string encode(std::cstring src) {return = ""; std::base32::encodeBuffer(&return, src.data, src.length);}
-
-        (inline, explicit) std::string encode(std::string src) {return = ""; std::base32::encodeBuffer(&return, src.data, src.length);}
+        (inline, explicit) void encode(std::string* buffer, std::string str) => std::base32::encode(buffer, std::cstring(str.data, str.length));
 
         // Decode
 
-        void decodeBuffer(std::string* buffer, char* src, usize length) {
-            @if(__RAVE_RUNTIME_CHECKS) if(length < 2) @return();
+        void decode(std::string* buffer, std::cstring str) {
+            @if(__RAVE_RUNTIME_CHECKS) if(str.length < 2) @return();
 
-            for(usize i=0; i<length; i+=8) {
+            for(usize i=0; i<str.length; i+=8) {
                 ulong buf = 0;
-                for(usize j=0; j<8; j++) buf = (buf <. 5) | std::cstring::indexOf(std::base32::table, src[i + j]);
+                for(usize j=0; j<8; j++) buf = (buf <. 5) | std::cstring::indexOf(std::base32::table, str.data[i + j]);
 
                 // Extract 5 bytes from the 40-bit buf
                 for(usize j=0; j<5; j++) buffer.add(cast(char)((buf >. (32 - (j * 8))) & 0xFF));
             }
         }
 
-        (inline) std::string decode(std::cstring src) {return = ""; std::base32::decodeBuffer(&return, src.data, src.length);}
-
-        (inline, explicit) std::string decode(std::string src) {return = ""; std::base32::decodeBuffer(&return, src.data, src.length);}
+        (inline, explicit) void decode(std::string* buffer, std::string str) => std::base32::decode(buffer, std::cstring(str.data, str.length));
     }
 
     namespace base64 {
@@ -114,53 +100,61 @@ namespace std {
 
         // Encode
 
-        void encodeBuffer(std::string* buffer, char* src, usize length) {
-            @if(__RAVE_RUNTIME_CHECKS) if(length == 0) @return();
-        
-            usize remaining = length;
+        void encode(std::string* buffer, std::cstring str) {
+            @if(__RAVE_RUNTIME_CHECKS) if(str.length == 0) @return();
+
+            usize remaining = str.length;
             usize index = 0;
-        
+
+            char[128] buf;
+            usize bufIndex = 0;
+
             while(remaining >= 3) {
-                uint triple = (src[index] <. 16) | (src[index + 1] <. 8) | src[index + 2];
-                buffer.add(std::base64::table[(triple >. 18) & 0x3F]);
-                buffer.add(std::base64::table[(triple >. 12) & 0x3F]);
-                buffer.add(std::base64::table[(triple >. 6) & 0x3F]);
-                buffer.add(std::base64::table[triple & 0x3F]);
+                uint triple = (str.data[index] <. 16) | (str.data[index + 1] <. 8) | str.data[index + 2];
+
+                if(bufIndex >= 128) {
+                    buffer.appendC(&buf, 128);
+                    bufIndex = 0;
+                }
+
+                buf[bufIndex] = std::base64::table[(triple >. 18) & 0x3F];
+                buf[bufIndex + 1] = std::base64::table[(triple >. 12) & 0x3F];
+                buf[bufIndex + 2] = std::base64::table[(triple >. 6) & 0x3F];
+                buf[bufIndex + 3] = std::base64::table[triple & 0x3F];
+
+                bufIndex += 4;
 
                 index += 3;
                 remaining -= 3;
             }
-        
+
+            if(bufIndex > 0) buffer.appendC(&buf, bufIndex);
+
             if(remaining == 1) {
-                uint triple = (src[index] <. 16);
-                buffer.add(std::base64::table[(triple >. 18) & 0x3F]);
-                buffer.add(std::base64::table[(triple >. 12) & 0x3F]);
-                buffer.appendC("==");
+                uint triple = (str.data[index] <. 16);
+
+                buffer.appendC(&[std::base64::table[(triple >. 18) & 0x3F], std::base64::table[(triple >. 12) & 0x3F], '=', '='], 4);
             }
             else if(remaining == 2) {
-                uint triple = (src[index] <. 16) | (src[index + 1] <. 8);
-                buffer.add(std::base64::table[(triple >. 18) & 0x3F]);
-                buffer.add(std::base64::table[(triple >. 12) & 0x3F]);
-                buffer.add(std::base64::table[(triple >. 6) & 0x3F]);
-                buffer.add('=');
+                uint triple = (str.data[index] <. 16) | (str.data[index + 1] <. 8);
+
+                buffer.appendC(&[std::base64::table[(triple >. 18) & 0x3F], std::base64::table[(triple >. 12) & 0x3F], std::base64::table[(triple >. 6) & 0x3F], '='], 4);
             }
         }
 
-        (inline) std::string encode(std::cstring src) {return = ""; std::base64::encodeBuffer(&return, src.data, src.length);}
-
-        (inline, explicit) std::string encode(std::string src) {return = ""; std::base64::encodeBuffer(&return, src.data, src.length);}
+        (inline) void encode(std::string* buffer, std::string str) => std::base64::encode(buffer, std::cstring(str.data, str.length));
 
         // Decode
 
-        void decodeBuffer(std::string* buffer, char* src, usize length) {
-            @if(__RAVE_RUNTIME_CHECKS) if(length == 0) @return();
+        void decode(std::string* buffer, std::cstring str) {
+            @if(__RAVE_RUNTIME_CHECKS) if(str.length == 0) @return();
 
             char counts = 0;
             char[4] buf;
 
-            for(usize i = 0; i<length; i++) {
+            for(usize i = 0; i<str.length; i++) {
                 char k;
-                for(k=0; (k < 64) && (std::base64::table[k] != src[i]); k++) {}
+                for(k=0; (k < 64) && (std::base64::table[k] != str.data[i]); k++) {}
                 buf[counts] = k;
                 counts += 1;
 
@@ -173,8 +167,6 @@ namespace std {
             }
         }
 
-        (inline) std::string decode(std::cstring src) {return = ""; std::base64::decodeBuffer(&return, src.data, src.length);}
-
-        (inline, explicit) std::string decode(std::string src) {return = ""; std::base64::decodeBuffer(&return, src.data, src.length);}
+        (inline) void decode(std::string* buffer, std::string str) => std::base64::decode(buffer, std::cstring(str.data, str.length));
     }
 }

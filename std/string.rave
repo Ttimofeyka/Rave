@@ -143,7 +143,7 @@ namespace std {
         (inline) usize indexOf(std::string s, usize begin) => this.indexOf(s.data, begin);
 
         (inline) usize indexOf(std::string s) => this.indexOf(s.data);
-
+ 
         void add(char c) {
             @if(__RAVE_RUNTIME_CHECKS) if(this.data == null) @return();
             this.length += 1;
@@ -160,8 +160,6 @@ namespace std {
         void appendC(char* cstr, usize cstrlen) {
             @if(__RAVE_RUNTIME_CHECKS) if(this.data == null) @return();
 
-            usize i = 0;
-
             if((this.length + cstrlen) >= this.capacity) {
                 usize minTargetCap = this.capacity + cstrlen + 2;
                 usize shift = ((sizeof(usize) * 8) - @ctlz(minTargetCap, true) - 1);
@@ -171,10 +169,9 @@ namespace std {
                 this.capacity = targetCap;
             }
 
-            while(i < cstrlen) {
+            for(usize i=0; i<cstrlen; i++) {
+                this.data[this.length] = cstr[i];
                 this.length += 1;
-                this.data[this.length - 1] = cstr[i];
-                i += 1;
             }
 
             this.data[this.length] = '\0';
