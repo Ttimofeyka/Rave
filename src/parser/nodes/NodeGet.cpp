@@ -11,6 +11,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeIndex.hpp"
 #include "../../include/parser/nodes/NodeCall.hpp"
 #include "../../include/parser/nodes/NodeDone.hpp"
+#include "../../include/parser/nodes/NodeBinary.hpp"
 #include "../../include/parser/ast.hpp"
 #include "../../include/llvm.hpp"
 #include <vector>
@@ -130,7 +131,7 @@ RaveValue NodeGet::generate() {
         else static_cast<NodeGet*>(this->base)->isMustBePtr = true;
         ptr = checkStructure(this->base->generate());
     }
-    else if(instanceof<NodeCall>(this->base) || instanceof<NodeDone>(this->base)) {
+    else if(instanceof<NodeCall>(this->base) || instanceof<NodeDone>(this->base) || instanceof<NodeBinary>(this->base)) {
         Node* node = this->base;
         ty = node->getType();
         if(ty != nullptr && instanceof<TypeStruct>(ty)) {
