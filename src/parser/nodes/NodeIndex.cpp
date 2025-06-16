@@ -318,6 +318,6 @@ RaveValue NodeIndex::generate() {
         return LLVM::load(index, "NodeIndex_NodeIndex_load", loc);
     }
 
-    generator->error("NodeIndex::generate assert!",this->loc);
+    generator->error("NodeIndex::generate assert!", this->loc);
     return {};
 }

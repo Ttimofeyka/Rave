@@ -119,7 +119,7 @@ RaveValue NodeVar::generate() {
 
     if(instanceof<TypeVoid>(this->type)) {
         // error: variable cannot be void
-        generator->error("using 'void' in variable '" + this->name + "' is prohibited!", this->loc);
+        generator->error("using \033[1mvoid\033[22m as a variable type is prohibited!", this->loc);
         return {};
     }
 
@@ -130,7 +130,7 @@ RaveValue NodeVar::generate() {
     }
 
     if(instanceof<TypeAuto>(this->type) && value == nullptr) {
-        generator->error("using 'auto' without an explicit value is prohibited!", this->loc);
+        generator->error("using \033[1mauto\033[22m without an explicit value is prohibited!", this->loc);
         return {};
     }
 

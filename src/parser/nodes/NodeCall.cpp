@@ -119,7 +119,7 @@ Type* NodeCall::__getType(Node* _fn) {
         if(AST::funcTable.find(niden->name) != AST::funcTable.end()) return AST::funcTable[((NodeIden*)_fn)->name]->type;
         if(currScope->has(niden->name)) {
             if(!instanceof<TypeFunc>(currScope->getVar(niden->name, this->loc)->type)) {
-                generator->error("undefined function '" + niden->name + "'!", this->loc);
+                generator->error("undefined function \033[1m" + niden->name + "\033[22m!", this->loc);
                 return nullptr;
             }
 
@@ -290,7 +290,7 @@ std::map<std::pair<std::string, std::string>, NodeFunc*>::iterator Call::findMet
         }
     }
 
-    if(methodf == AST::methodTable.end()) generator->error("undefined method '" + methodName + "' of the structure '" + structName + "'!", loc);
+    if(methodf == AST::methodTable.end()) generator->error("undefined method \033[1m" + methodName + "\033[22m of the structure \033[1m" + structName + "\033[22m!", loc);
 
     if(generator->functions.find(methodf->second->name) == generator->functions.end()) methodf->second->generate();
 
@@ -328,7 +328,7 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
                     std::string sTypes = Template::fromTypes(types);
 
                     if(AST::funcTable[ifName]->args.size() != arguments.size() && !AST::funcTable[ifName]->isCdecl64 && !AST::funcTable[ifName]->isWin64 && !AST::funcTable[ifName]->isVararg)
-                        generator->error("wrong number of arguments for calling function '" + ifName + sTypes + "' (" + std::to_string(AST::funcTable[ifName]->args.size()) + " expected, " + std::to_string(arguments.size()) + " provided)!", loc);
+                        generator->error("wrong number of arguments for calling function \033[1m" + ifName + sTypes + "\033[22m (\033[1m" + std::to_string(AST::funcTable[ifName]->args.size()) + "\033[22m expected, \033[1m" + std::to_string(arguments.size()) + "\033[22m provided)!", loc);
                 
                     // If it was already generated - call it
                     if(AST::funcTable.find(ifName + sTypes) != AST::funcTable.end()) {
@@ -349,11 +349,11 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
 
                     if(types.size() == tnSize)
                         return LLVM::call(tnFunction->generateWithTemplate(types, ifName + sTypes), params, (instanceof<TypeVoid>(tnFunction->type) ? "" : "callFunc"), byVals);
-                    else generator->error("wrong number of template types for calling function '" + ifName + "' (" + std::to_string(tnSize) + " expected, " + std::to_string(types.size()) + " provided)!", loc);
+                    else generator->error("wrong number of template types for calling function \033[1m" + ifName + "\033[22m (\033[1m" + std::to_string(tnSize) + "\033[22m expected, \033[1m" + std::to_string(types.size()) + "\033[22m provided)!", loc);
                 }
 
                 // Function is undefined
-                generator->error("undefined function '" + ifName + "'!", loc);
+                generator->error("undefined function \033[1m" + ifName + "\033[22m!", loc);
             }
 
             if(AST::funcTable.find(ifName + sTypes) != AST::funcTable.end()) {
@@ -394,7 +394,7 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
             }
 
             if(!AST::funcTable[ifName]->isCdecl64 && !AST::funcTable[ifName]->isWin64 && !AST::funcTable[ifName]->isVararg && AST::funcTable[ifName]->args.size() != arguments.size())
-                generator->error("wrong number of arguments for calling function '" + ifName + "' (" + std::to_string(AST::funcTable[ifName]->args.size()) + " expected, " + std::to_string(arguments.size()) + " provided)!", loc);
+                generator->error("wrong number of arguments for calling function \033[1m" + ifName + "\033[22m (\033[1m" + std::to_string(AST::funcTable[ifName]->args.size()) + "\033[22m expected, \033[1m" + std::to_string(arguments.size()) + "\033[22m provided)!", loc);
 
             std::vector<RaveValue> params = Call::genParameters(arguments, byVals, AST::funcTable[ifName], loc);
             return LLVM::call(generator->functions[ifName], params, (instanceof<TypeVoid>(AST::funcTable[ifName]->type) ? "" : "callFunc"), byVals);
@@ -402,7 +402,7 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
 
         // Function is a variable?
         if(currScope->has(ifName)) {
-            if(!instanceof<TypeFunc>(currScope->getVar(ifName, loc)->type)) generator->error("undefined function '" + ifName + "'!", loc);
+            if(!instanceof<TypeFunc>(currScope->getVar(ifName, loc)->type)) generator->error("undefined function \033[1m" + ifName + "\033[22m!", loc);
 
             TypeFunc* fn = (TypeFunc*)currScope->getVar(ifName, loc)->type;
             std::vector<FuncArgSet> fas = tfaToFas(fn->args);
@@ -434,7 +434,7 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
                     mainName += callTypes;
                 }
                 else if((AST::funcTable[mainName]->args.size() != arguments.size()) && !AST::funcTable[mainName]->isCdecl64 && !AST::funcTable[mainName]->isWin64 && !AST::funcTable[mainName]->isVararg)
-                    generator->error("wrong number of arguments for calling function '" + ifName + "' (" + std::to_string(AST::funcTable[mainName]->args.size()) + " expected, " + std::to_string(arguments.size()) + " provided)!", loc);
+                    generator->error("wrong number of arguments for calling function \033[1m" + ifName + "\033[22m (\033[1m" + std::to_string(AST::funcTable[mainName]->args.size()) + "\033[22m expected, \033[1m" + std::to_string(arguments.size()) + "\033[22m provided)!", loc);
             }
 
             sTypes = ifName.substr(ifName.find('<') + 1, ifName.find('>') - ifName.find('<') - 1);
@@ -487,7 +487,7 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
                 if(AST::funcTable.find(mainName) == AST::funcTable.end()) {
                     // Not working... maybe generate structure?
                     if(AST::structTable.find(mainName) != AST::structTable.end()) AST::structTable[mainName]->genWithTemplate(sTypes, types);
-                    else generator->error("undefined structure '" + ifName + "'!", loc);
+                    else generator->error("undefined structure \033[1m" + ifName + "\033[22m!", loc);
                 }
 
                 return Call::make(loc, AST::funcTable[ifName], arguments);
@@ -524,7 +524,7 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
             }
         }
 
-        generator->error("undefined function '" + ifName + "'!", loc);
+        generator->error("undefined function \033[1m" + ifName + "\033[22m!", loc);
     }
 
     if(instanceof<NodeGet>(function)) {
@@ -533,7 +533,7 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
         if(instanceof<NodeIden>(getFunc->base)) {
             std::string &ifName = ((NodeIden*)getFunc->base)->name;
 
-            if(!currScope->has(ifName) && !currScope->hasAtThis(ifName)) generator->error("undefined variable '" + ifName + "'!", loc);
+            if(!currScope->has(ifName) && !currScope->hasAtThis(ifName)) generator->error("undefined variable \033[1m" + ifName + "\033[22m!", loc);
 
             NodeVar* variable = currScope->getVar(ifName, loc);
             variable->isUsed = true;
@@ -542,7 +542,7 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
 
             if(instanceof<TypeStruct>(variable->type)) structure = (TypeStruct*)(variable->type);
             else if(instanceof<TypePointer>(variable->type) && instanceof<TypeStruct>(variable->type->getElType())) structure = (TypeStruct*)(variable->type->getElType());
-            else generator->error("type of the variable '" + ifName + "' is not a structure!", loc);
+            else generator->error("type of the variable \033[1m" + ifName + "\033[22m is not a structure!", loc);
 
             if(AST::structTable.find(structure->name) != AST::structTable.end()) {
                 for(auto& it : AST::structTable[structure->name]->variables) {
@@ -562,7 +562,7 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
                 return LLVM::call(generator->functions[methodf->second->name], params, (instanceof<TypeVoid>(methodf->second->type) ? "" : "callFunc"), byVals);
             }
 
-            generator->error("structure '" + structure->name + "' does not exist!", loc);
+            generator->error("structure \033[1m" + structure->name + "\033[22m does not exist!", loc);
         }
 
         if(instanceof<NodeDone>(getFunc->base)) {
@@ -581,7 +581,7 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
                 return LLVM::call(generator->functions[methodf->second->name], params, (instanceof<TypeVoid>(methodf->second->type) ? "" : "callFunc"), byVals);
             }
 
-            generator->error("structure '" + structure->toString() + "' does not exist!", loc);
+            generator->error("structure \033[1m" + structure->toString() + "\033[22m does not exist!", loc);
         }
 
         if(instanceof<NodeCall>(getFunc->base)) {
@@ -609,7 +609,7 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
                 return LLVM::call(generator->functions[methodf->second->name], params, (instanceof<TypeVoid>(methodf->second->type) ? "" : "callFunc"), byVals);
             }
 
-            generator->error("structure '" + structure->toString() + "' does not exist!", loc);
+            generator->error("structure \033[1m" + structure->toString() + "\033[22m does not exist!", loc);
         }
 
         if(instanceof<NodeIndex>(getFunc->base)) {

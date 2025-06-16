@@ -586,7 +586,7 @@ void Compiler::compileAll() {
 
     for(int i=0; i<Compiler::files.size(); i++) {
         if(access(Compiler::files[i].c_str(), 0) != 0) {
-            Compiler::error("file '" + Compiler::files[i] + "' does not exists!");
+            Compiler::error("file '" + Compiler::files[i] + "' does not exist!");
             return;
         }
 
@@ -614,7 +614,7 @@ void Compiler::compileAll() {
 
     for(int i=0; i<Compiler::toImport.size(); i++) {
         if(access(Compiler::toImport[i].c_str(), 0) != 0) {
-            Compiler::error("file '" + Compiler::files[i] + "' does not exists!");
+            Compiler::error("file '" + Compiler::files[i] + "' does not exist!");
             return;
         }
 

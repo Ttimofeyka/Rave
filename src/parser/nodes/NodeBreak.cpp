@@ -24,10 +24,10 @@ int NodeBreak::getWhileLoop() {
 }
 
 RaveValue NodeBreak::generate() {
-    if(generator->activeLoops.empty()) generator->error("attempt to call 'break' out of the loop!", this->loc);
+    if(generator->activeLoops.empty()) generator->error("attempt to call \033[1mbreak\033[22m out of the loop!", this->loc);
 
     int id = this->getWhileLoop();
-    if(id == -1) generator->error("attempt to call 'break' out of the loop!", this->loc);
+    if(id == -1) generator->error("attempt to call \033[1mbreak\033[22m out of the loop!", this->loc);
 
     generator->activeLoops[generator->activeLoops.size() - 1].hasEnd = true;
     LLVMBuildBr(generator->builder, generator->activeLoops[id].end);

@@ -176,7 +176,7 @@ int TypeStruct::getSize() {
 
     if(instanceof<TypeStruct>(t)) {
         TypeStruct* ts = (TypeStruct*)t;
-        if(AST::structTable.find(ts->name) == AST::structTable.end()) generator->error("undefined structure '" + ts->name + "'!", -1);
+        if(AST::structTable.find(ts->name) == AST::structTable.end()) generator->error("undefined structure \033[1m" + ts->name + "\033[22m!", -1);
         if(!ts->types.empty()) {
             AST::structTable[ts->name]->genWithTemplate(ts->name.substr(ts->name.find('<')), ts->types);
         }
@@ -201,7 +201,7 @@ bool TypeStruct::isSimple() {
 
     if(instanceof<TypeStruct>(t)) {
         TypeStruct* ts = (TypeStruct*)t;
-        if(AST::structTable.find(ts->name) == AST::structTable.end()) generator->error("undefined structure '" + ts->name + "'!", -1);
+        if(AST::structTable.find(ts->name) == AST::structTable.end()) generator->error("undefined structure \033[1m" + ts->name + "\033[22m!", -1);
         if(!ts->types.empty()) {
             AST::structTable[ts->name]->genWithTemplate(ts->name.substr(ts->name.find('<')), ts->types);
         }
@@ -226,7 +226,7 @@ int TypeStruct::getElCount() {
 
     if(instanceof<TypeStruct>(t)) {
         TypeStruct* ts = (TypeStruct*)t;
-        if(AST::structTable.find(ts->name) == AST::structTable.end()) generator->error("undefined structure '" + ts->name + "'!", -1);
+        if(AST::structTable.find(ts->name) == AST::structTable.end()) generator->error("undefined structure \033[1m" + ts->name + "\033[22m!", -1);
         if(!ts->types.empty()) {
             AST::structTable[ts->name]->genWithTemplate(ts->name.substr(ts->name.find('<')), ts->types);
         }

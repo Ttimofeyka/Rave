@@ -432,7 +432,7 @@ RaveValue NodeBuiltin::generate() {
             if(instanceof<NodeCall>(args[2])) fnType = callToTFunc(((NodeCall*)args[2]));
             else if(instanceof<NodeType>(args[2])) fnType = (TypeFunc*)((NodeType*)args[2])->type;
             else {
-                generator->error("undefined type of method '" + methodName + "'!", this->loc);
+                generator->error("undefined type of method \033[1m" + methodName + "\033[22m!", this->loc);
                 return {};
             }
         }
@@ -583,7 +583,7 @@ RaveValue NodeBuiltin::generate() {
     }
     else if(this->name == "vHAdd32x4") {
         if(Compiler::features.find("+sse3") == std::string::npos || Compiler::features.find("+ssse3") == std::string::npos)
-            generator->error("your target does not supports SSE3/SSSE3!", this->loc);
+            generator->error("your target does not support SSE3/SSSE3!", this->loc);
 
 
         if(this->args.size() < 2) generator->error("at least two arguments are required!", this->loc);
@@ -602,7 +602,7 @@ RaveValue NodeBuiltin::generate() {
     }
     else if(this->name == "vHAdd16x8") {
         if(Compiler::features.find("+ssse3") == std::string::npos) {
-            generator->error("your target does not supports SSSE3!", this->loc);
+            generator->error("your target does not support SSSE3!", this->loc);
             return {};
         }
 
@@ -620,7 +620,7 @@ RaveValue NodeBuiltin::generate() {
         return LLVM::call(generator->functions["llvm.x86.ssse3.phadd.sw.128"], std::vector<LLVMValueRef>({vector1.value, vector2.value}).data(), 2, "vHAdd16x8");
     }
     else if(this->name == "vMoveMask128") {
-        if(Compiler::features.find("+sse2") == std::string::npos)  generator->error("your target does not supports SSE2!", this->loc);
+        if(Compiler::features.find("+sse2") == std::string::npos)  generator->error("your target does not support SSE2!", this->loc);
 
         if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
 
@@ -642,7 +642,7 @@ RaveValue NodeBuiltin::generate() {
         return LLVM::call(generator->functions["llvm.x86.sse2.pmovmskb.128"], std::vector<LLVMValueRef>({value.value}).data(), 1, "vMoveMask128");
     }
     else if(this->name == "__sqrtf4") {
-        if(Compiler::features.find("+sse") == std::string::npos)  generator->error("your target does not supports SSE!", this->loc);
+        if(Compiler::features.find("+sse") == std::string::npos)  generator->error("your target does not support SSE!", this->loc);
 
         if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
 
@@ -662,7 +662,7 @@ RaveValue NodeBuiltin::generate() {
         return LLVM::call(generator->functions["llvm.sqrt.v4f32"], std::vector<LLVMValueRef>({value.value}).data(), 1, "sqrtf4");
     }
     else if(this->name == "__sqrtf8") {
-        if(Compiler::features.find("+avx") == std::string::npos)  generator->error("your target does not supports AVX!", this->loc);
+        if(Compiler::features.find("+avx") == std::string::npos)  generator->error("your target does not support AVX!", this->loc);
 
         if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
 
@@ -682,7 +682,7 @@ RaveValue NodeBuiltin::generate() {
         return LLVM::call(generator->functions["llvm.sqrt.v8f32"], std::vector<LLVMValueRef>({value.value}).data(), 1, "sqrtf8");
     }
     else if(this->name == "__sqrtd2") {
-        if(Compiler::features.find("+sse2") == std::string::npos)  generator->error("your target does not supports SSE2!", this->loc);
+        if(Compiler::features.find("+sse2") == std::string::npos)  generator->error("your target does not support SSE2!", this->loc);
 
         if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
 
@@ -702,7 +702,7 @@ RaveValue NodeBuiltin::generate() {
         return LLVM::call(generator->functions["llvm.sqrt.v2f64"], std::vector<LLVMValueRef>({value.value}).data(), 1, "sqrtd2");
     }
     else if(this->name == "__sqrtd4") {
-        if(Compiler::features.find("+avx") == std::string::npos)  generator->error("your target does not supports AVX!", this->loc);
+        if(Compiler::features.find("+avx") == std::string::npos)  generator->error("your target does not support AVX!", this->loc);
 
         if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
 
@@ -820,7 +820,7 @@ RaveValue NodeBuiltin::generate() {
         }
     }
 
-    generator->error("builtin with the name '" + this->name + "' does not exist!", this->loc);
+    generator->error("builtin with the name \033[1m" + this->name + "\033[22m does not exist!", this->loc);
     return {};
 }
 
@@ -896,7 +896,7 @@ Node* NodeBuiltin::comptime() {
             if(instanceof<NodeCall>(args[2])) fnType = callToTFunc(((NodeCall*)args[2]));
             else if(instanceof<NodeType>(args[2])) fnType = (TypeFunc*)((NodeType*)args[2])->type;
             else {
-                generator->error("undefined type of method '"+methodName+"'!", this->loc);
+                generator->error("undefined type of method \033[1m" + methodName + "\033[22m!", this->loc);
                 return nullptr;
             }
         }

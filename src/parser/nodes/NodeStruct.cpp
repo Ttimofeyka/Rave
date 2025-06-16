@@ -224,7 +224,7 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                         func->origName += types;
                         AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)] = func;
                     }
-                    else generator->error("method '" + func->origName + "' has already been declared on " + std::to_string(AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)]->loc) + " line!", this->loc);
+                    else generator->error("method \033[1m" + func->origName + "\033[22m has already been declared on " + std::to_string(AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)]->loc) + " line!", this->loc);
                 }
                 else AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)] = func;
                 this->methods.push_back(func);
@@ -256,7 +256,7 @@ void NodeStruct::check() {
     if(!this->extends.empty()) {
         auto extendedIt = AST::structTable.find(this->extends);
         if(extendedIt == AST::structTable.end()) {
-            generator->error("extended struct '" + this->extends + "' not found!", this->loc);
+            generator->error("extended struct \033[1m" + this->extends + "\033[22m not found!", this->loc);
             return;
         }
 
@@ -320,7 +320,7 @@ RaveValue NodeStruct::generate() {
     if(conditions != nullptr) for(Node* n : conditions->values) {
         Node* result = n->comptime();
         if(instanceof<NodeBool>(result) && !((NodeBool*)result)->value) {
-            generator->error("The conditions were failed when generating the structure '" + this->name + "'!", this->loc);
+            generator->error("The conditions were failed when generating the structure \033[1m" + this->name + "\033[22m!", this->loc);
             return {};
         }
     }

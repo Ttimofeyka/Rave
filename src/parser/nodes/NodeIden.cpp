@@ -32,7 +32,7 @@ Type* getIdenType(std::string idenName, int loc) {
     if(!currScope->has(idenName) && !currScope->hasAtThis(idenName)) {
         if(generator->toReplace.find(idenName) != generator->toReplace.end()) return getIdenType(generator->toReplace[idenName]->toString(), loc);
 
-        generator->error("unknown identifier '" + idenName + "'!", loc);
+        generator->error("unknown identifier \033[1m" + idenName + "\033[22m!", loc);
         return nullptr;
     }
 
@@ -47,7 +47,7 @@ Node* NodeIden::comptime() {
     if(generator != nullptr && generator->toReplaceValues.find(name) != generator->toReplaceValues.end()) return generator->toReplaceValues[name]->comptime();
 
     if(AST::aliasTable.find(this->name) == AST::aliasTable.end()) {
-        generator->error("unknown alias '" + name + "'!", loc);
+        generator->error("unknown alias \033[1m" + name + "\033[22m!", loc);
         return nullptr;
     }
 
@@ -78,6 +78,6 @@ RaveValue NodeIden::generate() {
         }
     }
     
-    generator->error("unknown identifier '" + this->name + "'!", loc);
+    generator->error("unknown identifier \033[1m" + this->name + "\033[22m!", loc);
     return {};
 }

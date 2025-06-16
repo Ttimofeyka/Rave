@@ -42,7 +42,7 @@ RaveValue NodeCast::generate() {
 
     checkForTemplated(this->type);
 
-    if(instanceof<TypeVoid>(this->type)) generator->error("cannot cast to a void!", loc);
+    if(instanceof<TypeVoid>(this->type)) generator->error("cannot cast to \033[1mvoid\033[22m!", loc);
 
     if(instanceof<TypeBasic>(this->type)) {
         TypeBasic* tbasic = (TypeBasic*)this->type;

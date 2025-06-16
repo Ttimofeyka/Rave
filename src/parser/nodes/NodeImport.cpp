@@ -77,7 +77,7 @@ RaveValue NodeImport::generate() {
 
     if(AST::parsed.find(file.file) == AST::parsed.end()) {
         if(!fs::exists(file.file)) {
-            generator->error("file '" + file.file + "' does not exist!", this->loc);
+            generator->error("file \033[1m" + file.file + "\033[22m does not exist!", this->loc);
             return {};
         }
 

@@ -385,12 +385,12 @@ LLVMTypeRef LLVMGen::genType(Type* type, int loc) {
         if(instanceof<TypeVoid>(((TypePointer*)type)->instance)) return LLVMPointerType(LLVMInt8TypeInContext(this->context), 0);
 
         Type* instance = type->getElType();
-        if(instanceof<TypeAlias>(instance)) generator->error("cannot generate 'alias' as the part of another type!", loc);
+        if(instanceof<TypeAlias>(instance)) generator->error("cannot generate \033[1malias\033[22m as the part of another type!", loc);
         return LLVMPointerType(this->genType(instance, loc), 0);
     }
     if(instanceof<TypeArray>(type)) {
         Type* element = type->getElType();
-        if(instanceof<TypeAlias>(element)) generator->error("cannot generate 'alias' as the part of another type!", loc);
+        if(instanceof<TypeAlias>(element)) generator->error("cannot generate \033[1malias\033[22m as the part of another type!", loc);
         return LLVMArrayType(this->genType(element, loc), ((NodeInt*)((TypeArray*)type)->count->comptime())->value.to_int());
     }
     if(instanceof<TypeStruct>(type)) {
@@ -448,7 +448,7 @@ LLVMTypeRef LLVMGen::genType(Type* type, int loc) {
     if(instanceof<TypeFuncArg>(type)) return this->genType(((TypeFuncArg*)type)->type, loc);
     if(instanceof<TypeConst>(type)) {
         Type* instance = type->getElType();
-        if(instanceof<TypeAlias>(instance)) generator->error("cannot generate 'alias' as the part of another type!", loc);
+        if(instanceof<TypeAlias>(instance)) generator->error("cannot generate \033[1malias\033[22m as the part of another type!", loc);
         return this->genType(instance, loc);
     }
     if(instanceof<TypeVector>(type)) return LLVMVectorType(this->genType(((TypeVector*)type)->mainType, loc), ((TypeVector*)type)->count);
@@ -559,7 +559,7 @@ RaveValue Scope::get(std::string name, int loc) {
         }
     }
 
-    if(value.value == nullptr) generator->error("undefined identifier '" + name + "' at function '" + this->funcName + "'!", loc);
+    if(value.value == nullptr) generator->error("undefined identifier \033[1m" + name + "\033[22m at function '" + this->funcName + "'!", loc);
 
     while(instanceof<TypeConst>(value.type)) value.type = value.type->getElType();
 
@@ -586,7 +586,7 @@ RaveValue Scope::getWithoutLoad(std::string name, int loc) {
             return nget->generate();
         }
     }
-    if(this->args.find(name) == this->args.end()) generator->error("undefined identifier '" + name + "' at function '" + this->funcName + "'!", loc);
+    if(this->args.find(name) == this->args.end()) generator->error("undefined identifier \033[1m" + name + "\033[22m at function '" + this->funcName + "'!", loc);
     return {LLVMGetParam(generator->functions[this->funcName].value, this->args[name]), AST::funcTable[this->funcName]->getArgType(name)};
 }
 

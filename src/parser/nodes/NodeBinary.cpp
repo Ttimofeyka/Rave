@@ -47,13 +47,13 @@ void Binary::store(RaveValue pointer, RaveValue value, int loc) {
             if(memBasic->type != valBasic->type) LLVM::cast(value, memType, loc);
         }
         else if(!instanceof<TypeStruct>(value.type)) {
-            generator->error("cannot store a value of type " + value.type->toString() + " into a value of type " + memType->toString() + "!", loc);
+            generator->error("cannot store a value of type \033[1m" + value.type->toString() + "\033[22m into a value of type \033[1m" + memType->toString() + "\033[22m!", loc);
             return;
         }
     }
     else if(instanceof<TypePointer>(memType)) {
         if(instanceof<TypeBasic>(value.type)) {
-            generator->error("cannot store a value of type " + value.type->toString() + " into a value of type " + memType->toString() + "!", loc);
+            generator->error("cannot store a value of type \033[1m" + value.type->toString() + "\033[22m into a value of type \033[1m" + memType->toString() + "\033[22m!", loc);
             return;
         }
     }
@@ -265,7 +265,7 @@ RaveValue Binary::operation(char op, Node* first, Node* second, int loc) {
         return Binary::operation(TokType::Equ, first, new NodeBinary(op == TokType::PluEqu ? TokType::Plus : (op == TokType::MinEqu ? TokType::Minus : (op == TokType::MulEqu ? TokType::Multiply : TokType::Divide)), first->copy(), second, loc), loc);
 
     if(op == TokType::Equ) {
-        if((instanceof<NodeCast>(second)) && instanceof<TypeVoid>(second->getType())) generator->error("an attempt to store a void to the variable!", loc);
+        if((instanceof<NodeCast>(second)) && instanceof<TypeVoid>(second->getType())) generator->error("an attempt to store a \033[1mvoid\033[22m value to the variable!", loc);
 
         if(instanceof<NodeIden>(first)) {
             NodeIden* id = ((NodeIden*)first);
@@ -300,12 +300,12 @@ RaveValue Binary::operation(char op, Node* first, Node* second, int loc) {
                     return opOverload.first[0] == '!' ? Unary::make(loc, TokType::Ne, _overloadedCall) : _overloadedCall->generate();
                 }
                 else if(instanceof<TypeBasic>(second->getType()))
-                    generator->error("an attempt to change value of the structure as the variable '" + id->name + "' without overloading!", loc);
+                    generator->error("an attempt to change value of the structure as the variable \033[1m" + id->name + "\033[22m without overloading!", loc);
             }
 
             if(vSecond.type && vSecond.type->toString() == vFirst.type->toString()) vSecond = LLVM::load(vSecond, "NodeBinary_NodeIden_load", loc);
 
-            if(instanceof<TypeArray>(vFirst.type->getElType()) && instanceof<TypePointer>(vSecond.type)) generator->error("cannot store a value of type " + vSecond.type->toString() + " into a variable of type " + vFirst.type->getElType()->toString() + "!", loc);
+            if(instanceof<TypeArray>(vFirst.type->getElType()) && instanceof<TypePointer>(vSecond.type)) generator->error("cannot store a value of type \033[1m" + vSecond.type->toString() + "\033[22m into a variable of type \033[1m" + vFirst.type->getElType()->toString() + "\033[22m!", loc);
 
             Binary::store(vFirst, vSecond, loc);
             return {};
@@ -358,7 +358,7 @@ RaveValue Binary::operation(char op, Node* first, Node* second, int loc) {
 
                 if(instanceof<TypeBasic>(number.type) && ((TypeBasic*)number.type)->type != ((TypeBasic*)elType)->type) LLVM::cast(number, elType, loc);
 
-                if(number.type->toString() != elType->toString()) generator->error("cannot store a value of type " + number.type->toString() + " into a value of type " + elType->toString() + "!", loc);
+                if(number.type->toString() != elType->toString()) generator->error("cannot store a value of type \033[1m" + number.type->toString() + "\033[22m into a value of type \033[1m" + elType->toString() + "\033[22m!", loc);
 
                 if(instanceof<TypePointer>(ptr.type)) {
                     value = LLVM::load(ptr, "NodeBinary_TypeVector_load", loc);
@@ -485,7 +485,7 @@ RaveValue Binary::operation(char op, Node* first, Node* second, int loc) {
     }
 
     if(vFirst.type->toString() != vSecond.type->toString()) {
-        if(!instanceof<TypeBasic>(vFirst.type) || !instanceof<TypeBasic>(vSecond.type)) generator->error("value types '" + vFirst.type->toString() + "' and '" + vSecond.type->toString() + "' are incompatible!", loc);
+        if(!instanceof<TypeBasic>(vFirst.type) || !instanceof<TypeBasic>(vSecond.type)) generator->error("value types \033[1m" + vFirst.type->toString() + "\033[22m and \033[1m" + vSecond.type->toString() + "\033[22m are incompatible!", loc);
     }
 
     if(instanceof<TypeVector>(vFirst.type) && instanceof<TypeVector>(vSecond.type)) {
@@ -520,7 +520,7 @@ RaveValue Binary::operation(char op, Node* first, Node* second, int loc) {
         case TokType::BitXor: return {LLVMBuildXor(generator->builder, vFirst.value, vSecond.value, "NodeBinary_xor"), vFirst.type};
         case TokType::BitLeft: return {LLVMBuildShl(generator->builder, vFirst.value, vSecond.value, "NodeBinary_and"), vFirst.type};
         case TokType::BitRight: return {LLVMBuildLShr(generator->builder, vFirst.value, vSecond.value, "NodeBinary_and"), vFirst.type};
-        default: generator->error("undefined operator " + std::to_string(op) + "!", loc); return {};
+        default: generator->error("undefined operator \033[1m" + std::to_string(op) + "\033[22m!", loc); return {};
     }
 }
 

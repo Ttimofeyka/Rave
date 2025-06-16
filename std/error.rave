@@ -50,7 +50,7 @@ namespace std {
         extern(linkname: "SetConsoleCtrlHandler") char SetConsoleCtrlHandler(char(int) handler, char add);
 
         void signal(int flag, void(int) catcher) {
-            // Windows doesn't have a direct equivalent to the POSIX signal function,
+            // Windows does not have a direct equivalent to the POSIX signal function,
             // but we can use the SetConsoleCtrlHandler function to handle some signals.
 
             if((flag == std::SigInt) || (flag == std::SigTerm)) std::SetConsoleCtrlHandler(cast(char(int))catcher, 1c);

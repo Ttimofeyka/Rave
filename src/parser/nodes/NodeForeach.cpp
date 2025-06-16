@@ -53,7 +53,7 @@ RaveValue NodeForeach::generate() {
                 if(AST::structTable.find(ts->name) != AST::structTable.end()) {
                     NodeStruct* ns = (NodeStruct*)AST::structTable[ts->name];
                     if(ns->dataVar == "" || ns->lengthVar == "") {
-                        generator->error("structure '" + ts->name + "' doesn't contain the parameters data or length!", this->loc);
+                        generator->error("structure \033[1m" + ts->name + "\033[22m does not contain the parameters data or length!", this->loc);
                         return {};
                     }
                     this->varLength = new NodeGet(niVarData, ns->lengthVar, false, this->loc);

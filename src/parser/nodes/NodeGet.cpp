@@ -39,7 +39,7 @@ Type* NodeGet::getType() {
     }
     
     if(!ts) {
-        generator->error("type '" + baseType->toString() + "' is not a structure!", loc);
+        generator->error("type \033[1m" + baseType->toString() + "\033[22m is not a structure!", loc);
         return nullptr;
     }
 
@@ -56,7 +56,7 @@ Type* NodeGet::getType() {
     auto structIt = AST::structsNumbers.find(methodKey);
     if(structIt != AST::structsNumbers.end()) return structIt->second.var->getType();
 
-    generator->error("structure '" + structName + "' does not contain element '" + field + "'!", loc);
+    generator->error("structure \033[1m" + structName + "\033[22m does not contain element \033[1m" + field + "\033[22m!", loc);
     return nullptr;
 }
 
@@ -91,7 +91,7 @@ RaveValue NodeGet::checkStructure(RaveValue ptr) {
 RaveValue NodeGet::checkIn(std::string structure) {
     auto structIt = AST::structTable.find(structure);
     if(structIt == AST::structTable.end()) {
-        generator->error("structure '" + structure + "' does not exist!", loc);
+        generator->error("structure \033[1m" + structure + "\033[22m does not exist!", loc);
         return {};
     }
 
@@ -101,7 +101,7 @@ RaveValue NodeGet::checkIn(std::string structure) {
     if(numberIt == AST::structsNumbers.end()) {
         auto methodIt = AST::methodTable.find(member);
         if(methodIt != AST::methodTable.end()) return generator->functions[methodIt->second->name];
-        generator->error("structure '" + structure + "' does not contain element '" + field + "'!", loc);
+        generator->error("structure \033[1m" + structure + "\033[22m does not contain element \033[1m" + field + "\033[22m!", loc);
         return {};
     }
 
@@ -124,7 +124,7 @@ RaveValue NodeGet::generate() {
 
         while(instanceof<TypePointer>(t)) t = t->getElType();
 
-        if(!instanceof<TypeStruct>(t)) generator->error("type '" + ty->toString() + "' is not a structure!", loc);
+        if(!instanceof<TypeStruct>(t)) generator->error("type \033[1m" + ty->toString() + "\033[22m is not a structure!", loc);
     }
     else if(instanceof<NodeIndex>(this->base) || instanceof<NodeGet>(this->base)) {
         if(instanceof<NodeIndex>(this->base)) static_cast<NodeIndex*>(this->base)->isMustBePtr = true;
