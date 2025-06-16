@@ -56,7 +56,10 @@ RaveValue NodeRet::generate() {
 
     if(this->value == nullptr) this->value = new NodeNull(currScope->getVar("return", loc)->getType(), this->loc);
     
-    RaveValue generated = value->generate();    
+    RaveValue generated = value->generate();
+
+    if(instanceof<TypeVoid>(generated.type)) generator->error("cannot return a void value in a non-void function!", loc);
+
     RaveValue ptr = currScope->getWithoutLoad("return", loc);
 
     if(generated.type->toString() == ptr.type->toString()) generated = LLVM::load(generated, "NodeRet_load", loc);
