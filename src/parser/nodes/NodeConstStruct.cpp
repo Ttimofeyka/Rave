@@ -81,7 +81,7 @@ RaveValue NodeConstStruct::generate() {
                 Type* varType = variables[i]->getType();
 
                 if(instanceof<TypeBasic>(varType) && instanceof<TypeBasic>(llvmValues[i].type)) LLVM::cast(llvmValues[i], varType, loc);
-                else generator->error("incompatible types in constant structure: value of type '" + llvmValues[i].type->toString() + "' trying to be assigned to variable named '" + variables[i]->name + "' of type '" + varType->toString() + "'!", loc);
+                else generator->error("incompatible types in constant structure: value of type \033[1m" + llvmValues[i].type->toString() + "\033[22m trying to be assigned to variable named \033[1m" + variables[i]->name + "\033[22m of type \033[1m" + varType->toString() + "\033[22m!", loc);
             }
 
             __data.push_back(llvmValues[i].value);

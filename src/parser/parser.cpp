@@ -93,21 +93,21 @@ Parser::Parser(std::vector<Token*> tokens, std::string file) {
 }
 
 void Parser::error(std::string msg) {
-    std::cout << "\033[0;31mError in '" + this->file + "' file at " + std::to_string(this->peek()->line)+ " line: " + msg + "\033[0;0m" << std::endl;
+    std::cout << "\033[0;31mError in \033[1m" + this->file + "\033[22m file at " + std::to_string(this->peek()->line)+ " line: " + msg + "\033[0;0m" << std::endl;
     std::exit(1);
 }
 
 void Parser::error(std::string msg, int line) {
-    std::cout << "\033[0;31mError in '" + this->file + "' file at " + std::to_string(line) + " line: " + msg + "\033[0;0m" << std::endl;
+    std::cout << "\033[0;31mError in \033[1m" + this->file + "\033[22m file at " + std::to_string(line) + " line: " + msg + "\033[0;0m" << std::endl;
     std::exit(1);
 }
 
 void Parser::warning(std::string msg) {
-    std::cout << "\033[0;33mWarning in '" + this->file + "' file at "+  std::to_string(this->peek()->line) + " line: " + msg + "\033[0;0m" << std::endl;
+    std::cout << "\033[0;33mWarning in \033[1m" + this->file + "\033[22m file at "+  std::to_string(this->peek()->line) + " line: " + msg + "\033[0;0m" << std::endl;
 }
 
 void Parser::warning(std::string msg, int line) {
-    std::cout << "\033[0;33mWarning in '" + this->file + "' file at " + std::to_string(line) + " line: " + msg + "\033[0;0m" << std::endl;
+    std::cout << "\033[0;33mWarning in \033[1m" + this->file + "\033[22m file at " + std::to_string(line) + " line: " + msg + "\033[0;0m" << std::endl;
 }
 
 Token* Parser::peek() {return this->tokens[this->idx];}
@@ -846,7 +846,7 @@ Node* Parser::parseAtom(std::string f) {
         return new NodeBuiltin(name, args, t->line, block);
     }
     if(t->type == TokType::Destructor) return new NodeUnary(t->line, TokType::Destructor, this->parseExpr());
-    this->error("expected a number, true/false, char, variable or expression. Got: '" + t->value + "' on " + std::to_string(t->line) + " line.");
+    this->error("expected a number, true/false, char, variable or expression. Got: \033[1m" + t->value + "\033[22m on \033[1m" + std::to_string(t->line) + "\033[22m line.");
     return nullptr;
 }
 
@@ -983,7 +983,7 @@ Type* Parser::parseTypeAtom() {
         if(this->peek()->type == TokType::Rbra) return new TypeBuiltin(info->value, args, parseBlock(""));
         return new TypeBuiltin(info->value, args, new NodeBlock({}));
     }
-    else this->error("expected a type name, not '" + this->peek()->value + "'!");
+    else this->error("expected a type name, not \033[1m" + this->peek()->value + "\033[22m!");
     return nullptr;
 }
 

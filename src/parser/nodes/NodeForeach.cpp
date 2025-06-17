@@ -91,7 +91,7 @@ RaveValue NodeForeach::generate() {
 
 void NodeForeach::optimize() {
     for(Node *nd: block->nodes) {
-        if(instanceof<NodeVar>(nd) && !((NodeVar*)nd)->isGlobal && !((NodeVar*)nd)->isUsed) generator->warning("unused variable '" + ((NodeVar*)nd)->name + "'!", loc);
+        if(instanceof<NodeVar>(nd) && !((NodeVar*)nd)->isGlobal && !((NodeVar*)nd)->isUsed) generator->warning("unused variable \033[1m" + ((NodeVar*)nd)->name + "\033[22m!", loc);
         else nd->optimize();
     }
 }

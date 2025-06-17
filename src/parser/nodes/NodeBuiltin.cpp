@@ -959,6 +959,6 @@ Node* NodeBuiltin::comptime() {
         }
     }
 
-    AST::checkError("builtin with name '" + this->name + "' does not exist!", this->loc);
+    AST::checkError("builtin with name \033[1m" + this->name + "\033[22m does not exist!", this->loc);
     return nullptr;
 }

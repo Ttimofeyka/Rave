@@ -587,7 +587,7 @@ void Compiler::compileAll() {
 
     for(int i=0; i<Compiler::files.size(); i++) {
         if(access(Compiler::files[i].c_str(), 0) != 0) {
-            Compiler::error("file '" + Compiler::files[i] + "' does not exist!");
+            Compiler::error("file \033[1m" + Compiler::files[i] + "\033[22m does not exist!");
             return;
         }
 
@@ -615,7 +615,7 @@ void Compiler::compileAll() {
 
     for(int i=0; i<Compiler::toImport.size(); i++) {
         if(access(Compiler::toImport[i].c_str(), 0) != 0) {
-            Compiler::error("file '" + Compiler::files[i] + "' does not exist!");
+            Compiler::error("file \033[1m" + Compiler::files[i] + "\033[22m does not exist!");
             return;
         }
 
@@ -664,7 +664,7 @@ void Compiler::compileAll() {
 
         ShellResult result = exec(Compiler::linkString + " -o " + Compiler::outFile);
         if(result.status != 0) {
-            Compiler::error("error when linking!\nLinking string: '" + Compiler::linkString+" -o " + Compiler::outFile + "'");
+            Compiler::error("error when linking!\nLinking string: '" + Compiler::linkString + " -o " + Compiler::outFile + "'");
             std::exit(result.status);
             return;
         }

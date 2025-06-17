@@ -224,7 +224,7 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                         func->origName += types;
                         AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)] = func;
                     }
-                    else generator->error("method \033[1m" + func->origName + "\033[22m has already been declared on " + std::to_string(AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)]->loc) + " line!", this->loc);
+                    else generator->error("method \033[1m" + func->origName + "\033[22m has already been declared on \033[1m" + std::to_string(AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)]->loc) + "\033[22m line!", this->loc);
                 }
                 else AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)] = func;
                 this->methods.push_back(func);

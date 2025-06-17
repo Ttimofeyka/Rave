@@ -111,7 +111,7 @@ void NodeFunc::check() {
                     return;
                 }
                 else {
-                    AST::checkError("a function with name '" + this->name + "' already exists on " + std::to_string(AST::funcTable[this->name]->loc) + " line!", this->loc);
+                    AST::checkError("a function with name \033[1m" + this->name + "\033[22m already exists on \033[1m" + std::to_string(AST::funcTable[this->name]->loc) + "\033[22m line!", this->loc);
                     return;
                 }
             }

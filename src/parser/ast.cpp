@@ -166,7 +166,7 @@ std::string typesToString(std::vector<FuncArgSet> args) {
 }
 
 void AST::checkError(std::string message, int loc) {
-    std::cout << "\033[0;31mError on " + std::to_string(loc) + " line: " + message + "\033[0;0m\n";
+    std::cout << "\033[0;31mError on \033[1m" + std::to_string(loc) + "\033[22m line: " + message + "\033[0;0m\n";
 	exit(1);
 }
 
@@ -248,12 +248,12 @@ LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options)
 }
 
 void LLVMGen::error(std::string msg, int line) {
-    std::cout << "\033[0;31mError in '" + this->file + "' file at " + std::to_string(line) + " line: " + msg + "\033[0;0m" << std::endl;
+    std::cout << "\033[0;31mError in \033[1m" + this->file + "\033[22m file at \033[1m" + std::to_string(line) + "\033[22m line: " + msg + "\033[0;0m" << std::endl;
     std::exit(1);
 }
 
 void LLVMGen::warning(std::string msg, int line) {
-    std::cout << "\033[0;33mWarning in '" + this->file + "' file at " + std::to_string(line) + " line: " + msg + "\033[0;0m" << std::endl;
+    std::cout << "\033[0;33mWarning in \033[1m" + this->file + "\033[22m file at \033[1m" + std::to_string(line) + "\033[22m line: " + msg + "\033[0;0m" << std::endl;
 }
 
 std::string LLVMGen::mangle(std::string name, bool isFunc, bool isMethod) {
@@ -359,7 +359,7 @@ LLVMMetadataRef DebugGen::genType(Type* type, int loc) {
         return genPointer(type->toString(), funcType, loc);
     }
 
-    generator->error("TODO: Add more allowed debug types! Input type: '" + (std::string(typeid(*type).name())) + "'!", loc);
+    generator->error("TODO: Add more allowed debug types! Input type: \033[1m" + (std::string(typeid(*type).name())) + "\033[22m!", loc);
     return nullptr;
 }
 
@@ -433,7 +433,7 @@ LLVMTypeRef LLVMGen::genType(Type* type, int loc) {
             }
             else if(AST::aliasTypes.find(s->name) != AST::aliasTypes.end()) return this->genType(AST::aliasTypes[s->name], loc);
             
-            this->error("unknown structure '" + s->name + "'!", loc);
+            this->error("unknown structure \033[1m" + s->name + "\033[22m!", loc);
         }
         return this->structures[s->name];
     }
@@ -478,19 +478,19 @@ RaveValue LLVMGen::byIndex(RaveValue value, std::vector<LLVMValueRef> indexes) {
 
 void LLVMGen::addAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, int loc, unsigned long value) {
     int id = LLVMGetEnumAttributeKindForName(name.c_str(), name.size());
-    if(id == 0) this->error("unknown attribute '" + name + "'!", loc);
+    if(id == 0) this->error("unknown attribute \033[1m" + name + "\033[22m!", loc);
     LLVMAddAttributeAtIndex(ptr, index, LLVMCreateEnumAttribute(generator->context, id, value));
 }
 
 void LLVMGen::addTypeAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, int loc, LLVMTypeRef value) {
     LLVMAttributeRef attr = LLVMCreateTypeAttribute(generator->context, LLVMGetEnumAttributeKindForName(name.c_str(), name.size()), value);
-    if(attr == nullptr) this->error("unknown attribute '" + name + "!", loc);
+    if(attr == nullptr) this->error("unknown attribute \033[1m" + name + "\033[22m!", loc);
     LLVMAddAttributeAtIndex(ptr, index, attr);
 }
 
 void LLVMGen::addStrAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, int loc, std::string value) {
     LLVMAttributeRef attr = LLVMCreateStringAttribute(generator->context, name.c_str(), name.size(), value.c_str(), value.size());
-    if(attr == nullptr) this->error("unknown attribute '" + name + "'!", loc);
+    if(attr == nullptr) this->error("unknown attribute \033[1m" + name + "\033[22m!", loc);
     LLVMAddAttributeAtIndex(ptr, index, attr);
 }
 
@@ -559,7 +559,7 @@ RaveValue Scope::get(std::string name, int loc) {
         }
     }
 
-    if(value.value == nullptr) generator->error("undefined identifier \033[1m" + name + "\033[22m at function '" + this->funcName + "'!", loc);
+    if(value.value == nullptr) generator->error("undefined identifier \033[1m" + name + "\033[22m at function \033[1m" + this->funcName + "\033[22m!", loc);
 
     while(instanceof<TypeConst>(value.type)) value.type = value.type->getElType();
 
@@ -586,7 +586,7 @@ RaveValue Scope::getWithoutLoad(std::string name, int loc) {
             return nget->generate();
         }
     }
-    if(this->args.find(name) == this->args.end()) generator->error("undefined identifier \033[1m" + name + "\033[22m at function '" + this->funcName + "'!", loc);
+    if(this->args.find(name) == this->args.end()) generator->error("undefined identifier \033[1m" + name + "\033[22m at function \033[1m" + this->funcName + "\033[22m!", loc);
     return {LLVMGetParam(generator->functions[this->funcName].value, this->args[name]), AST::funcTable[this->funcName]->getArgType(name)};
 }
 
@@ -637,7 +637,7 @@ NodeVar* Scope::getVar(std::string name, int loc) {
             return AST::structsNumbers[{ts->toString(), name}].var;
         }
     }
-    generator->error("undefined variable '" + name + "'!", loc);
+    generator->error("undefined variable \033[1m" + name + "\033[22m!", loc);
     return nullptr;
 }
 
