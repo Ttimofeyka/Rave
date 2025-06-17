@@ -163,13 +163,13 @@ RaveValue NodeVar::generate() {
             else if(mods[i].name == "volatile") isVolatile = true;
             else if(mods[i].name == "linkname") {
                 Node* newLinkName = mods[i].value->comptime();
-                if(!instanceof<NodeString>(newLinkName)) generator->error("value type of 'linkname' must be a string!", loc);
+                if(!instanceof<NodeString>(newLinkName)) generator->error("value type of \033[1mlinkname\033[22m must be a string!", loc);
                 linkName = ((NodeString*)newLinkName)->value;
             }
             else if(mods[i].name == "noOperators") isNoOperators = true;
             else if(mods[i].name == "align") {
                 Node* newAlignment = mods[i].value->comptime();
-                if(!instanceof<NodeInt>(newAlignment)) generator->error("value type of 'align' must be an integer!", loc);
+                if(!instanceof<NodeInt>(newAlignment)) generator->error("value type of \033[1malign\033[22m must be an integer!", loc);
                 alignment = ((NodeInt*)(mods[i].value))->value.to_int();
             }
             else if(mods[i].name == "nozeroinit") noZeroInit = true;

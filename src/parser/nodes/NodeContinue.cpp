@@ -24,9 +24,9 @@ int NodeContinue::getWhileLoop() {
 }
 
 RaveValue NodeContinue::generate() {
-    if(generator->activeLoops.empty()) generator->error("attempt to call 'continue' out of the loop!", this->loc);
+    if(generator->activeLoops.empty()) generator->error("attempt to call \033[1mcontinue\033[22m out of the loop!", this->loc);
     int id = this->getWhileLoop();
-    if(id == -1) generator->error("attempt to call 'continue' out of the loop!", this->loc);
+    if(id == -1) generator->error("attempt to call \033[22mcontinue\033[22m out of the loop!", this->loc);
 
     LLVMBuildBr(generator->builder, generator->activeLoops[id].start);
 
