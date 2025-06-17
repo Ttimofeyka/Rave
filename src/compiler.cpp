@@ -438,8 +438,9 @@ void Compiler::compile(std::string file) {
     }
 
     parser->parseAll();
-    end = std::chrono::steady_clock::now();
     for(int i=0; i<parser->nodes.size(); i++) parser->nodes[i]->check();
+    end = std::chrono::steady_clock::now();
+
     Compiler::parseTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
     start = end;

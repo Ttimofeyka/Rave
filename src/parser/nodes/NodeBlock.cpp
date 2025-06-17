@@ -35,7 +35,7 @@ void NodeBlock::check() {
 
 void NodeBlock::optimize() {
     for(Node* nd: this->nodes) {
-        NodeVar *ndvar = dynamic_cast<NodeVar *>(nd);
+        NodeVar *ndvar = dynamic_cast<NodeVar*>(nd);
         if(ndvar == nullptr) nd->optimize();
         else if(!ndvar->isGlobal && !ndvar->isUsed) generator->warning("unused variable '" + ndvar->name + "'!", ndvar->loc);
     }

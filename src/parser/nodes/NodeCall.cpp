@@ -117,6 +117,7 @@ Type* NodeCall::__getType(Node* _fn) {
 
         if(AST::funcTable.find((niden->name + typesToString(types))) != AST::funcTable.end()) return AST::funcTable[(((NodeIden*)_fn)->name + typesToString(types))]->getType();
         if(AST::funcTable.find(niden->name) != AST::funcTable.end()) return AST::funcTable[((NodeIden*)_fn)->name]->type;
+
         if(currScope->has(niden->name)) {
             if(!instanceof<TypeFunc>(currScope->getVar(niden->name, this->loc)->type)) {
                 generator->error("undefined function \033[1m" + niden->name + "\033[22m!", this->loc);

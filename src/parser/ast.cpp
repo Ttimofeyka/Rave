@@ -628,8 +628,10 @@ NodeVar* Scope::getVar(std::string name, int loc) {
     if(this->has("this") && (AST::funcTable.find(this->funcName) != AST::funcTable.end() && AST::funcTable[this->funcName]->isMethod)) {
         NodeVar* nv = this->getVar("this", loc);
         TypeStruct* ts = nullptr;
+
         if(instanceof<TypeStruct>(nv->type)) ts = (TypeStruct*)nv->type;
-        else if(instanceof<TypePointer>(nv->type) && instanceof<TypeStruct>(((TypePointer*)nv->type)->instance)) ts = (TypeStruct*)(((TypePointer*)nv->type)->instance);
+        else if(instanceof<TypePointer>(nv->type) && instanceof<TypeStruct>(nv->type->getElType())) ts = (TypeStruct*)(nv->type->getElType());
+
         if(ts != nullptr && AST::structTable.find(ts->toString()) != AST::structTable.end() &&
            AST::structsNumbers.find({ts->toString(), name}) != AST::structsNumbers.end()) {
             return AST::structsNumbers[{ts->toString(), name}].var;
