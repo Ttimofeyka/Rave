@@ -68,7 +68,23 @@ namespace std {
     (nochecks) bool memcmp(void* one, void* two, usize n) {
         return = true;
 
-        for(int i=0; i<n; i+=1) {
+        usize i = 0;
+
+        @if(__RAVE_SSE2) {
+            int4 left, right;
+
+            for(; (i + 15) < n; i+=16) {
+                left = @vLoad(int4, &one[i], false);
+                right = @vLoad(int4, &two[i], false);
+
+                bool[4] result = left != right;
+                if(result[0] && result[1] && result[2] && result[3]) @return(false);
+
+                i += 16;
+            }
+        }
+
+        for(; i<n; i+=1) {
             if(one[i] != two[i]) @return(false);
         }
     }
