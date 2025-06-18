@@ -211,7 +211,7 @@ namespace std {
 
         double ceil(double d) => -(std::math::floor(-d));
         float ceil(float f) => -(std::math::floor(-f));
-        half ceil(half f) => -(std::math::floor(-f));
+        half ceil(half h) => -(std::math::floor(-h));
 
         double loge(double x) {
             if(x <= 0) return = 0d;
