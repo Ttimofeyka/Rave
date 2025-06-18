@@ -36,7 +36,7 @@ bool value = std::cstring::strcmp("One", "Two"); // false
 
 ## std::cstring::strncmp
 
-Compare two C-strings with fixed count of comparing characters.
+Compare two C-strings with fixed max count of comparing characters.
 
 Example:
 ```d

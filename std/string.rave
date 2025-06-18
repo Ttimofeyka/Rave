@@ -204,7 +204,7 @@ namespace std {
                     break;
                 }
 
-                if(std::cstring::strncmp(itop(char*, ptoi(this.data) + i), from, fromLen)) {
+                if(std::memcmp(itop(char*, ptoi(this.data) + i), from, fromLen)) {
                     return.appendC(to, toLen);
                     i += fromLen;
                     continue;
