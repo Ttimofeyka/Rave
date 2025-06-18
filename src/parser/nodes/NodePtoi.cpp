@@ -17,9 +17,10 @@ Node* NodePtoi::comptime() {return this;}
 Node* NodePtoi::copy() {return new NodePtoi(this->value->copy(), this->loc);}
 
 void NodePtoi::check() {
-    bool oldCheck = this->isChecked;
-    this->isChecked = true;
-    if(!oldCheck) this->value->check();
+    if(isChecked) return;
+    isChecked = true;
+
+    value->check();
 }
 
 RaveValue NodePtoi::generate() {

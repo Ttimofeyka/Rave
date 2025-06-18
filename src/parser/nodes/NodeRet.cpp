@@ -32,9 +32,7 @@ NodeRet::~NodeRet() {
     if(this->value != nullptr) delete this->value;
 }
 
-void NodeRet::check() {
-    this->isChecked = true;
-}
+void NodeRet::check() {isChecked = true;}
 
 Loop NodeRet::getParentBlock(int n) {
     if(generator->activeLoops.size() == 0) return Loop{.isActive = false, .start = nullptr, .end = nullptr, .hasEnd = false, .isIf = false, .loopRets = std::vector<LoopReturn>()};

@@ -41,7 +41,7 @@ Node* NodeFor::copy() {
 }
 
 Node* NodeFor::comptime() {return this;}
-void NodeFor::check() {this->isChecked = true;}
+void NodeFor::check() {isChecked = true;}
 Type* NodeFor::getType() {return typeVoid;}
 
 RaveValue NodeFor::generate() {

@@ -85,19 +85,17 @@ Node* NodeVar::copy() {
 }
 
 void NodeVar::check() {
-    bool oldCheck = this->isChecked;
-    this->isChecked = true;
+    if(isChecked) return;
+    isChecked = true;
 
-    if(!oldCheck) {
-        if(this->namespacesNames.size() > 0) this->name = namespacesToString(this->namespacesNames, this->name);
-        if(this->isGlobal) AST::varTable[this->name] = this;
+    if(namespacesNames.size() > 0) name = namespacesToString(namespacesNames, name);
+    if(isGlobal) AST::varTable[this->name] = this;
 
-        Template::replaceTemplates(&type);
+    Template::replaceTemplates(&type);
 
-        if(instanceof<TypeBasic>(this->type) && !AST::aliasTypes.empty()) {
-            Type* _type = this->type->check(nullptr);
-            if(_type != nullptr) this->type = _type;
-        }
+    if(instanceof<TypeBasic>(type) && !AST::aliasTypes.empty()) {
+        Type* _type = type->check(nullptr);
+        if(_type != nullptr) type = _type;
     }
 }
 

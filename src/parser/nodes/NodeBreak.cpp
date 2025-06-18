@@ -11,7 +11,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <string>
 
 NodeBreak::NodeBreak(int loc) {this->loc = loc;}
-void NodeBreak::check() {this->isChecked = true;}
+void NodeBreak::check() {isChecked = true;}
 Type* NodeBreak::getType() {return typeVoid;}
 Node* NodeBreak::comptime() {return this;}
 Node* NodeBreak::copy() {return new NodeBreak(this->loc);}

@@ -52,6 +52,6 @@ RaveValue NodeArray::generate() {
     return LLVM::load(arr, "loadNodeArray", loc);
 }
 
-void NodeArray::check() {this->isChecked = true;}
+void NodeArray::check() {isChecked = true;}
 Node* NodeArray::comptime() {return this;}
 Node* NodeArray::copy() {return new NodeArray(this->loc, this->values);}

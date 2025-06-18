@@ -7,7 +7,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeDone.hpp"
 
 NodeDone::NodeDone(RaveValue value) {this->value = value;}
-void NodeDone::check() {this->isChecked = true;}
+void NodeDone::check() {isChecked = true;}
 RaveValue NodeDone::generate() {return this->value;}
 Type* NodeDone::getType() {return value.type;}
 Node* NodeDone::comptime() {return this;}

@@ -23,7 +23,7 @@ NodeCmpxchg::~NodeCmpxchg() {
 
 Node* NodeCmpxchg::copy() {return new NodeCmpxchg(this->ptr->copy(), this->value1->copy(), this->value2->copy(), this->loc);}
 Type* NodeCmpxchg::getType() {return typeVoid;}
-void NodeCmpxchg::check() {this->isChecked = true;}
+void NodeCmpxchg::check() {isChecked = true;}
 Node* NodeCmpxchg::comptime() {return this;}
 
 RaveValue NodeCmpxchg::generate() {

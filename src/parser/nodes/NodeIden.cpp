@@ -24,7 +24,7 @@ NodeIden::NodeIden(std::string name, int loc, bool isMustBePtr) {
 
 Node* NodeIden::copy() {return new NodeIden(this->name, this->loc, this->isMustBePtr);}
 
-void NodeIden::check() {this->isChecked = true;}
+void NodeIden::check() {isChecked = true;}
 
 Type* getIdenType(std::string idenName, int loc) {
     if(AST::aliasTable.find(idenName) != AST::aliasTable.end()) return AST::aliasTable[idenName]->getType();

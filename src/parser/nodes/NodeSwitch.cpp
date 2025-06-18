@@ -36,7 +36,7 @@ NodeSwitch::~NodeSwitch() {
 
 Type* NodeSwitch::getType() {return typeVoid;}
 
-void NodeSwitch::check() {}
+void NodeSwitch::check() {isChecked = true;}
 
 RaveValue NodeSwitch::generate() {
     if(statements.empty()) {

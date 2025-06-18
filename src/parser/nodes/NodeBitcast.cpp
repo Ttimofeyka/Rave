@@ -16,9 +16,10 @@ NodeBitcast::NodeBitcast(Type* type, Node* value, int loc) {
 }
 
 void NodeBitcast::check() {
-    bool oldCheck = isChecked;
-    this->isChecked = true;
-    if(!oldCheck) this->value->check();
+    if(isChecked) return;
+    isChecked = true;
+
+    value->check();
 }
 
 NodeBitcast::~NodeBitcast() {

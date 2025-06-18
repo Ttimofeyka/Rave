@@ -31,13 +31,12 @@ NodeIf::NodeIf(Node* cond, Node* body, Node* _else, int loc, bool isStatic) {
 Type* NodeIf::getType() {return typeVoid;}
 
 void NodeIf::check() {
-    bool oldCheck = this->isChecked;
-    this->isChecked = true;
+    if(!isChecked && !isStatic) {
+        isChecked = true;
 
-    if(!oldCheck && !isStatic) {
-        this->cond->check();
-        if(this->body != nullptr) this->body->check();
-        if(this->_else != nullptr) this->_else->check();
+        cond->check();
+        if(body) body->check();
+        if(_else) _else->check();
     }
 }
 

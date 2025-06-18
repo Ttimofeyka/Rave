@@ -18,7 +18,7 @@ static std::string replaceAll(std::string str, std::string substr1, std::string 
     return str;
 }
 
-static std::string namespacesToString(std::vector<std::string> namespacesNames, std::string n) {
+static std::string namespacesToString(std::vector<std::string>& namespacesNames, std::string n) {
     std::string ret = n;
     for(int i=0; i<namespacesNames.size(); i++) ret = namespacesNames[i] + "::" + ret;
     return ret;

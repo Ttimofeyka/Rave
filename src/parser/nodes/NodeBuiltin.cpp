@@ -83,7 +83,7 @@ Type* NodeBuiltin::getType() {
     return typeVoid;
 }
 
-void NodeBuiltin::check() {this->isChecked = true;}
+void NodeBuiltin::check() {isChecked = true;}
 
 std::string NodeBuiltin::getAliasName(int n) {
     if(instanceof<NodeIden>(this->args[n])) return ((NodeIden*)this->args[n])->name;

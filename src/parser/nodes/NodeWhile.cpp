@@ -31,9 +31,7 @@ Type* NodeWhile::getType() {return typeVoid;}
 Node* NodeWhile::comptime() {return this;}
 Node* NodeWhile::copy() {return new NodeWhile(this->cond->copy(), this->body->copy(), this->loc);}
 
-void NodeWhile::check() {
-    this->isChecked = true;
-}
+void NodeWhile::check() {isChecked = true;}
 
 RaveValue NodeWhile::generate() {
     auto& function = generator->functions[currScope->funcName];

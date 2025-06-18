@@ -23,7 +23,7 @@ NodeInt::NodeInt(BigInt value, char type, Type* isVarVal, unsigned char sys, boo
 }
 
 Node* NodeInt::comptime() {return this;}
-void NodeInt::check() {this->isChecked = true;}
+void NodeInt::check() {isChecked = true;}
 
 Type* NodeInt::getType() {
     if(this->isMustBeLong) return basicTypes[BasicType::Long];

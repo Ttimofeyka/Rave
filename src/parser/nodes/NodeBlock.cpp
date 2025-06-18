@@ -26,10 +26,11 @@ Node* NodeBlock::copy() {
 }
 
 void NodeBlock::check() {
-    bool oldCheck = this->isChecked;
-    this->isChecked = true;
-    if(!oldCheck) for(int i=0; i<this->nodes.size(); i++) {
-        if(this->nodes[i] != nullptr) this->nodes[i]->check();
+    if(isChecked) return;
+    isChecked = true;
+
+    for(size_t i=0; i<nodes.size(); i++) {
+        if(nodes[i] != nullptr) nodes[i]->check();
     }
 }
 

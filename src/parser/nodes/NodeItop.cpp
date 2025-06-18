@@ -21,9 +21,10 @@ Node* NodeItop::comptime() {return this;}
 Node* NodeItop::copy() {return new NodeItop(this->value->copy(), this->type->copy(), this->loc);}
 
 void NodeItop::check() {
-    bool oldCheck = this->isChecked;
-    this->isChecked = true;
-    if(!oldCheck) this->value->check();
+    if(isChecked) return;
+    isChecked = true;
+
+    value->check();
 }
 
 RaveValue NodeItop::generate() {

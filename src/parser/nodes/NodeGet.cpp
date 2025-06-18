@@ -161,7 +161,7 @@ RaveValue NodeGet::generate() {
     return LLVM::load(LLVM::structGep(ptr, fieldNumber, "NodeGet_generate_preload"), "NodeGet_generate_load", loc);
 }
 
-void NodeGet::check() {this->isChecked = true;}
+void NodeGet::check() {isChecked = true;}
 
 Node* NodeGet::copy() {
     NodeGet* nget = new NodeGet(this->base->copy(), this->field, this->isMustBePtr, this->loc);

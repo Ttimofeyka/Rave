@@ -18,7 +18,7 @@ NodeString::NodeString(std::string value, bool isWide) {
 Node* NodeString::copy() {return new NodeString(this->value, this->isWide);}
 Type* NodeString::getType() {return new TypePointer(basicTypes[isWide ? BasicType::Uint : BasicType::Char]);}
 Node* NodeString::comptime() {return this;}
-void NodeString::check() {this->isChecked = true;}
+void NodeString::check() {isChecked = true;}
 
 RaveValue NodeString::generate() {
     LLVMTypeRef elemType = isWide ? LLVMInt32TypeInContext(generator->context) : LLVMInt8TypeInContext(generator->context);

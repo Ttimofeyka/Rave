@@ -67,9 +67,10 @@ Type* NodeIndex::getType() {
 }
 
 void NodeIndex::check() {
-    bool oldCheck = this->isChecked;
-    this->isChecked = true;
-    if(!oldCheck) this->element->check();
+    if(isChecked) return;
+    isChecked = true;
+
+    element->check();
 }
 
 Node* NodeIndex::copy() {return new NodeIndex(this->element->copy(), this->indexes, this->loc);}

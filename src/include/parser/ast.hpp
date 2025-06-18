@@ -69,8 +69,8 @@ namespace AST {
     void checkError(std::string message, int loc);
 }
 
-extern std::string typesToString(std::vector<FuncArgSet> args);
-extern std::string typesToString(std::vector<Type*> args);
+extern std::string typesToString(std::vector<FuncArgSet>& args);
+extern std::string typesToString(std::vector<Type*>& args);
 extern std::vector<Type*> parametersToTypes(std::vector<RaveValue> params);
 
 class DebugGen {

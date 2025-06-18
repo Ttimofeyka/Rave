@@ -168,7 +168,7 @@ NodeImports::NodeImports(std::vector<NodeImport*> imports, int loc) {
 }
 
 Node* NodeImports::comptime() {return nullptr;}
-void NodeImports::check() {this->isChecked = true;}
+void NodeImports::check() {isChecked = true;}
 Type* NodeImports::getType() {return typeVoid;}
 
 Node* NodeImports::copy() {

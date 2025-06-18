@@ -272,7 +272,11 @@ std::map<std::pair<std::string, std::string>, NodeFunc*>::iterator Call::findMet
     auto method = std::pair<std::string, std::string>(structName, methodName);
     auto methodf = AST::methodTable.find(method);
 
-    if(methodf == AST::methodTable.end() || !hasIdenticallyArgs(Call::getTypes(arguments), methodf->second->args, methodf->second)) {method.second += typesToString(Call::getTypes(arguments)); methodf = AST::methodTable.find(method);}
+    if(methodf == AST::methodTable.end() || !hasIdenticallyArgs(Call::getTypes(arguments), methodf->second->args, methodf->second)) {
+        std::vector<Type*> types = Call::getTypes(arguments);
+        method.second += typesToString(types);
+        methodf = AST::methodTable.find(method);
+    }
 
     if(methodf == AST::methodTable.end()) {method.second = method.second.substr(0, method.second.find('[')); methodf = AST::methodTable.find(method);}
 
@@ -416,7 +420,8 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
         if(ifName.find('<') != std::string::npos) {
             std::string mainName = ifName.substr(0, ifName.find('<'));
             bool presenceInFt = AST::funcTable.find(mainName) != AST::funcTable.end();
-            std::string callTypes = typesToString(Call::getTypes(arguments));
+            std::vector<Type*> pTypes = Call::getTypes(arguments);
+            std::string callTypes = typesToString(pTypes);
             std::string sTypes;
 
             if(AST::funcTable.find(ifName + callTypes) != AST::funcTable.end()) {
@@ -636,6 +641,6 @@ RaveValue NodeCall::generate() {
     return Call::make(loc, func, args);
 }
 
-void NodeCall::check() {this->isChecked = true;}
+void NodeCall::check() {isChecked = true;}
 Node* NodeCall::comptime() {return this;}
 Node* NodeCall::copy() {return new NodeCall(this->loc, this->func, this->args);}

@@ -243,41 +243,42 @@ long NodeStruct::getSize() {
 }
 
 void NodeStruct::check() {
-    if(this->isChecked) return;
-    this->isChecked = true;
+    if(isChecked) return;
+    isChecked = true;
 
-    if(!this->namespacesNames.empty()) this->name = namespacesToString(this->namespacesNames, this->name);
+    if(!namespacesNames.empty()) name = namespacesToString(namespacesNames, name);
 
-    if(AST::structTable.find(this->name) != AST::structTable.end()) {
+    if(AST::structTable.find(name) != AST::structTable.end()) {
         noCompile = true;
         return;
     }
 
-    if(!this->extends.empty()) {
-        auto extendedIt = AST::structTable.find(this->extends);
+    if(!extends.empty()) {
+        auto extendedIt = AST::structTable.find(extends);
         if(extendedIt == AST::structTable.end()) {
-            generator->error("extended struct \033[1m" + this->extends + "\033[22m not found!", this->loc);
+            generator->error("extended struct \033[1m" + extends + "\033[22m not found!", loc);
             return;
         }
 
         NodeStruct* extended = extendedIt->second;
-        
+
         for(const auto& element : extended->elements) {
             if(instanceof<NodeVar>(element)) {
-                if(!static_cast<NodeVar*>(element)->isNoCopy) this->elements.push_back(element);
+                if(!static_cast<NodeVar*>(element)->isNoCopy) elements.push_back(element);
             }
-            else this->elements.push_back(element);
+            else elements.push_back(element);
         }
 
-        this->methods.reserve(this->methods.size() + extended->methods.size());
+        methods.reserve(methods.size() + extended->methods.size());
+
         for(const auto& method : extended->methods) {
-            if(!method->isNoCopy) this->methods.push_back(method);
+            if(!method->isNoCopy) methods.push_back(method);
         }
 
         // this->predefines.insert(this->predefines.end(), extended->predefines.begin(), extended->predefines.end());
     }
 
-    AST::structTable[this->name] = this;
+    AST::structTable[name] = this;
 }
 
 bool NodeStruct::hasPredefines() {

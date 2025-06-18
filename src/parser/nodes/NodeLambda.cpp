@@ -23,7 +23,7 @@ NodeLambda::~NodeLambda() {
 Type* NodeLambda::getType() {return (Type*)this->tf;}
 Node* NodeLambda::copy() {return new NodeLambda(loc, (TypeFunc*)this->tf->copy(), (NodeBlock*)this->block->copy(), this->name);}
 Node* NodeLambda::comptime() {return this;}
-void NodeLambda::check() {}
+void NodeLambda::check() {isChecked = true;}
 
 std::vector<LLVMTypeRef> NodeLambda::generateTypes() {
     std::vector<LLVMTypeRef> buffer;

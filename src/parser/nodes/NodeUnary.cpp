@@ -166,10 +166,10 @@ Type* NodeUnary::getType() {
     return nullptr;
 }
 void NodeUnary::check() {
-    bool oldCheck = this->isChecked;
-    this->isChecked = true;
+    if(isChecked) return;
+    isChecked = true;
 
-    if(!oldCheck) this->base->check();
+    base->check();
 }
 
 RaveValue NodeUnary::generateConst() {

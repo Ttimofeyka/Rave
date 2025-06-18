@@ -23,9 +23,10 @@ NodeCast::NodeCast(Type* type, Node* value, int loc) {
 }
 
 void NodeCast::check() {
-    bool oldCheck = isChecked;
-    this->isChecked = true;
-    if(!oldCheck) this->value->check();
+    if(isChecked) return;
+    isChecked = true;
+
+    value->check();
 }
 
 NodeCast::~NodeCast() {

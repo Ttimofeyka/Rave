@@ -18,7 +18,7 @@ NodeChar::NodeChar(std::string value, bool isWide) {
 Node* NodeChar::copy() {return new NodeChar(this->value, this->isWide);}
 Type* NodeChar::getType() {return isWide ? basicTypes[BasicType::Int] : basicTypes[BasicType::Char];}
 Node* NodeChar::comptime() {return this;}
-void NodeChar::check() {this->isChecked = true;}
+void NodeChar::check() {isChecked = true;}
 
 RaveValue NodeChar::generate() {
     if(this->value.size() > 1 && this->value[0] == '\\') {

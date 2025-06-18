@@ -151,18 +151,20 @@ std::string typeToString(Type* arg) {
     return "";
 }
 
-std::string typesToString(std::vector<Type*> args) {
+std::string typesToString(std::vector<Type*>& args) {
     std::string data = "[";
-    for(int i=0; i<args.size(); i++) {
-        data += "_" + typeToString(args[i]);
-    }
+
+    for(size_t i=0; i<args.size(); i++) data += "_" + typeToString(args[i]);
+
     return data + "]";
 }
 
-std::string typesToString(std::vector<FuncArgSet> args) {
-    std::vector<Type*> types;
-    for(int i=0; i<args.size(); i++) types.push_back(args[i].type);
-    return typesToString(types);
+std::string typesToString(std::vector<FuncArgSet>& args) {
+    std::string data = "[";
+
+    for(size_t i=0; i<args.size(); i++) data += "_" + typeToString(args[i].type);
+
+    return data + "]";
 }
 
 void AST::checkError(std::string message, int loc) {

@@ -23,7 +23,7 @@ Node* NodeComptime::copy() {
 }
 
 void NodeComptime::check() {
-    this->isChecked = true;
+    isChecked = true;
 }
 
 Type* NodeComptime::getType() {

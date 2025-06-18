@@ -37,7 +37,7 @@ Type* NodeSlice::getType() {
 
 Node* NodeSlice::comptime() {return this;}
 Node* NodeSlice::copy() {return new NodeSlice(this->base, this->start, this->end, this->loc);}
-void NodeSlice::check() {this->isChecked = true;}
+void NodeSlice::check() {isChecked = true;}
 
 NodeSlice::~NodeSlice() {
     if(this->base != nullptr) delete this->base;

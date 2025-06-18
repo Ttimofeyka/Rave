@@ -28,7 +28,7 @@ NodeConstStruct::~NodeConstStruct() {
 Type* NodeConstStruct::getType() {return new TypeStruct(structName);}
 Node* NodeConstStruct::comptime() {return this;}
 Node* NodeConstStruct::copy() {return new NodeConstStruct(this->structName, this->values, this->loc);}
-void NodeConstStruct::check() {this->isChecked = true;}
+void NodeConstStruct::check() {isChecked = true;}
 
 RaveValue NodeConstStruct::generate() {
     if(structName.find('<') != std::string::npos && AST::structTable.find(structName) == AST::structTable.end()) {

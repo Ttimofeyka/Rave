@@ -16,7 +16,7 @@ NodeDefer::NodeDefer(Node* instruction, int loc, bool isFunctionScope) {
 
 Type* NodeDefer::getType() {return typeVoid;}
 
-void NodeDefer::check() {}
+void NodeDefer::check() {isChecked = true;}
 
 Node* NodeDefer::comptime() {return this;}
 

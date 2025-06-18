@@ -26,7 +26,7 @@ Node* NodeAsm::copy() {
 
 Type* NodeAsm::getType() {return this->type;}
 Node* NodeAsm::comptime() {return nullptr;}
-void NodeAsm::check() {this->isChecked = true;}
+void NodeAsm::check() {isChecked = true;}
 
 RaveValue NodeAsm::generate() {
     std::vector<LLVMValueRef> values;

@@ -17,7 +17,7 @@ NodeSizeof::NodeSizeof(Node* value, int loc) {
 Type* NodeSizeof::getType() {return basicTypes[BasicType::Int];}
 Node* NodeSizeof::comptime() {return this;}
 Node* NodeSizeof::copy() {return new NodeSizeof(this->value->copy(), this->loc);}
-void NodeSizeof::check() {this->isChecked = true;}
+void NodeSizeof::check() {isChecked = true;}
 
 RaveValue NodeSizeof::generate() {
     if(instanceof<NodeType>(this->value)) {

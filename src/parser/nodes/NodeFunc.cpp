@@ -75,57 +75,47 @@ NodeFunc::~NodeFunc() {
 }
 
 void NodeFunc::check() {
-    bool oldCheck = this->isChecked;
-    this->isChecked = true;
+    if(isChecked) return;
+    isChecked = true;
 
-    if(!oldCheck) {
-        Template::replaceTemplates(&type);
-        for(size_t i=0; i<args.size(); i++) {
-            Template::replaceTemplates(&args[i].type);
-
-            if(instanceof<TypeVoid>(args[i].type)) AST::checkError("using \033[1mvoid\033[22m as a variable type is prohibited!", this->loc);
-        }
-
-        for(int i=0; i<this->mods.size(); i++) {
-            if(this->mods[i].name == "method") {
-                Type* structure = this->args[0].type;
-                this->name = "{" + structure->toString() + "}" + this->name;
-            }
-            else if(mods[i].name == "noNamespaces") this->isNoNamespaces = true;
-        }
-
-        if(this->namespacesNames.size() > 0 && !this->isNoNamespaces) name = namespacesToString(namespacesNames, this->name);
-
-        if(!instanceof<TypeBasic>(this->type) && !AST::aliasTypes.empty()) {
-            Type* nt = this->type->check(nullptr);
-            if(nt != nullptr) this->type = nt;
-        }
-
-        if(AST::funcTable.find(name) != AST::funcTable.end()) {
-            // New overload
-            std::string toAdd = typesToString(args);
-
-            if(typesToString(AST::funcTable[name]->args) == toAdd) {
-                if(this->isCtargs || this->isCtargsPart || this->isTemplate) {
-                    this->noCompile = true;
-                    return;
-                }
-                else {
-                    AST::checkError("a function with name \033[1m" + this->name + "\033[22m already exists on \033[1m" + std::to_string(AST::funcTable[this->name]->loc) + "\033[22m line!", this->loc);
-                    return;
-                }
-            }
-
-            AST::funcVersionsTable[name].push_back(this);
-            name += toAdd;
-        }
-        else AST::funcVersionsTable[name].push_back(this);
-
-        AST::funcTable[this->name] = this;
-        for(int i=0; i<this->block->nodes.size(); i++) {
-            this->block->nodes[i]->check();
-        }
+    // Handle possible templates and void
+    Template::replaceTemplates(&type);
+    for(auto& arg : args) {
+        Template::replaceTemplates(&arg.type);
+        if(instanceof<TypeVoid>(arg.type)) AST::checkError("using \033[1mvoid\033[22m as a variable type is prohibited!", loc);
     }
+
+    // Process modifiers
+    for(const auto& mod : mods) {
+        if(mod.name == "method") name = "{" + args[0].type->toString() + "}" + name;
+        else if (mod.name == "noNamespaces") isNoNamespaces = true;
+    }
+
+    // Handle namespaces
+    if(!namespacesNames.empty() && !isNoNamespaces) name = namespacesToString(namespacesNames, name);
+
+    // Check for existing function
+    if(auto it = AST::funcTable.find(name); it != AST::funcTable.end()) {
+        std::string argTypes = typesToString(args);
+        if(typesToString(it->second->args) == argTypes) {
+            if (isCtargs || isCtargsPart || isTemplate) {
+                noCompile = true;
+                return;
+            }
+
+            AST::checkError("a function with name \033[1m" + name + "\033[22m already exists on \033[1m" + std::to_string(it->second->loc) + "\033[22m line!", loc);
+        }
+
+        AST::funcVersionsTable[name].push_back(this);
+        name += argTypes;
+    }
+    else AST::funcVersionsTable[name].push_back(this);
+
+    // Register function
+    AST::funcTable[name] = this;
+
+    // Check block contents
+    for(auto node : block->nodes) node->check();
 }
 
 LLVMTypeRef* NodeFunc::getParameters(int callConv) {

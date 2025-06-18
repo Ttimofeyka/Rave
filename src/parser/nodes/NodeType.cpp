@@ -12,7 +12,7 @@ NodeType::NodeType(Type* type, int loc) {
 }
 
 Type* NodeType::getType() {return this->type;}
-void NodeType::check() {this->isChecked = true;}
+void NodeType::check() {isChecked = true;}
 RaveValue NodeType::generate() {return {};}
 Node* NodeType::comptime() {return this;}
 Node* NodeType::copy() {return new NodeType(this->type->copy(), this->loc);}

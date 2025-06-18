@@ -97,7 +97,7 @@ std::pair<std::string, std::string> Binary::isOperatorOverload(Node* firstNode, 
 }
 
 Node* NodeBinary::copy() {return new NodeBinary(this->op, first->copy(), second->copy(), loc, this->isStatic);}
-void NodeBinary::check() {this->isChecked = true;}
+void NodeBinary::check() {isChecked = true;}
 
 Node* NodeBinary::comptime() {
     Node* first = this->first;

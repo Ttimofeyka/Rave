@@ -50,5 +50,5 @@ Node* NodeFloat::copy() {
     return nf;
 }
 
-void NodeFloat::check() {this->isChecked = true;}
+void NodeFloat::check() {isChecked = true;}
 Node* NodeFloat::comptime() {return this;}

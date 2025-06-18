@@ -13,7 +13,7 @@ RaveValue Node::generate() {
     return {};
 }
 
-void Node::check() {this->isChecked = true;}
+void Node::check() {isChecked = true;}
 void Node::optimize() {}
 Node* Node::comptime() {return this;}
 Type* Node::getType() {return nullptr;}

@@ -18,7 +18,7 @@ RaveValue NodeNull::generate() {
     return {LLVMConstNull(LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0)), new TypePointer(typeVoid)};
 }
 
-void NodeNull::check() {this->isChecked = true;}
+void NodeNull::check() {isChecked = true;}
 Node* NodeNull::comptime() {return this;}
 Node* NodeNull::copy() {return new NodeNull(this->type, this->loc);}
 
