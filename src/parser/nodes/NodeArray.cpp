@@ -16,20 +16,20 @@ NodeArray::NodeArray(int loc, std::vector<Node*> values) {
 }
 
 Type* NodeArray::getType() {
-    if(this->values.size() > 0) return new TypeArray(new NodeInt(this->values.size()), this->values[0]->getType());
+    if(values.size() > 0) return new TypeArray(new NodeInt(values.size()), values[0]->getType());
     return typeVoid;
 }
 
 NodeArray::~NodeArray() {
-    for(int i=0; i<values.size(); i++) if(this->values[i] != nullptr) delete this->values[i];
+    for(size_t i=0; i<values.size(); i++) if(values[i] != nullptr) delete values[i];
 }
 
 std::vector<RaveValue> NodeArray::getValues() {
     std::vector<RaveValue> buffer;
 
-    this->type = values[0]->getType();
+    type = values[0]->getType();
 
-    for(int i=0; i<this->values.size(); i++) {
+    for(size_t i=0; i<values.size(); i++) {
         buffer.push_back(values[i]->generate());
         if(!LLVMIsConstant(buffer[buffer.size() - 1].value)) isConst = false;
     }
@@ -38,20 +38,19 @@ std::vector<RaveValue> NodeArray::getValues() {
 }
 
 RaveValue NodeArray::generate() {
-    std::vector<RaveValue> genValues = this->getValues();
+    std::vector<RaveValue> genValues = getValues();
 
     // If this is a constant array - just return LLVM constant array with provided values
-    if(isConst) return LLVM::makeCArray(this->type, genValues);
+    if(isConst) return LLVM::makeCArray(type, genValues);
 
-    RaveValue arr = LLVM::alloc(new TypeArray(new NodeInt(this->values.size()), this->type), "NodeArray");
+    RaveValue arr = LLVM::alloc(new TypeArray(new NodeInt(values.size()), type), "NodeArray");
 
-    for(int i=0; i<this->values.size(); i++) {
-        LLVMBuildStore(generator->builder, genValues[i].value, generator->byIndex(arr, std::vector<LLVMValueRef>({LLVM::makeInt(32, i, false)})).value);
-    }
+    for(size_t i=0; i<values.size(); i++)
+        LLVMBuildStore(generator->builder, genValues[i].value, generator->byIndex(arr, std::vector<LLVMValueRef>({LLVM::makeInt(pointerSize, i, true)})).value);
 
     return LLVM::load(arr, "loadNodeArray", loc);
 }
 
 void NodeArray::check() {isChecked = true;}
 Node* NodeArray::comptime() {return this;}
-Node* NodeArray::copy() {return new NodeArray(this->loc, this->values);}
+Node* NodeArray::copy() {return new NodeArray(loc, values);}
