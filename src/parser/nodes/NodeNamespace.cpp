@@ -18,52 +18,92 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <string>
 
 // TODO: Use for NodeComptime inside NodeNamespace
-void addNamespaceNames(Node* node, std::vector<std::string>& names) {
-    if(node == nullptr || node->isChecked) return;
+void addNamespaceNames(Node* node, std::vector<std::string>& names, bool isImported, bool isSetChecked) {
+    if(node == nullptr) return;
+    if(!isSetChecked && node->isChecked) return;
 
     if(instanceof<NodeBlock>(node)) {
         NodeBlock* block = (NodeBlock*)node;
 
         for(size_t i=0; i<block->nodes.size(); i++) {
-            addNamespaceNames(block->nodes[i], names);
+            addNamespaceNames(block->nodes[i], names, isImported, isSetChecked);
             block->nodes[i]->check();
         }
     }
     else if(instanceof<NodeIf>(node)) {
         NodeIf* _if = (NodeIf*)node;
 
-        if(_if->body != nullptr) addNamespaceNames(_if->body, names);
-        if(_if->_else != nullptr) addNamespaceNames(_if->_else, names);
+        if(_if->body != nullptr) addNamespaceNames(_if->body, names, isImported, isSetChecked);
+        if(_if->_else != nullptr) addNamespaceNames(_if->_else, names, isImported, isSetChecked);
 
         _if->check();
     }
     else if(instanceof<NodeComptime>(node)) {
-        addNamespaceNames(((NodeComptime*)node)->node, names);
+        addNamespaceNames(((NodeComptime*)node)->node, names, isImported, isSetChecked);
         node->check();
     }
     else if(instanceof<NodeVar>(node)) {
         NodeVar* variable = (NodeVar*)node;
+
+        if(isSetChecked) {
+            variable->isChecked = false;
+            variable->name = variable->origName;
+            variable->namespacesNames.clear();
+        }
+
         variable->origName = variable->name;
+        variable->isExtern = variable->isExtern || isImported;
 
         for(size_t i=0; i<names.size(); i++) variable->namespacesNames.insert(variable->namespacesNames.begin(), names[i]);
         variable->check();
     }
     else if(instanceof<NodeFunc>(node)) {
         NodeFunc* function = (NodeFunc*)node;
+
+        if(isSetChecked) {
+            function->isChecked = false;
+            function->name = function->origName;
+            function->namespacesNames.clear();
+        }
+
         function->origName = function->name;
+        function->isExtern = function->isExtern || isImported;
 
         for(size_t i=0; i<names.size(); i++) function->namespacesNames.insert(function->namespacesNames.begin(), names[i]);
         function->check();
     }
     else if(instanceof<NodeStruct>(node)) {
         NodeStruct* structure = (NodeStruct*)node;
+
+        if(isSetChecked) {
+            structure->isChecked = false;
+            structure->name = structure->origname;
+            structure->namespacesNames.clear();
+        }
+
         structure->origname = structure->name;
+        structure->isImported = structure->isImported || isImported;
 
         for(size_t i=0; i<names.size(); i++) structure->namespacesNames.insert(structure->namespacesNames.begin(), names[i]);
         structure->check();
     }
+    else if(instanceof<NodeAliasType>(node)) {
+        NodeAliasType* alias = (NodeAliasType*)node;
+
+        if(isSetChecked) {
+            alias->isChecked = false;
+            alias->name = alias->origName;
+            alias->namespacesNames.clear();
+        }
+
+        for(size_t i=0; i<names.size(); i++) alias->namespacesNames.insert(alias->namespacesNames.begin(), names[i]);
+        alias->check();
+    }
     else if(instanceof<NodeNamespace>(node)) {
         NodeNamespace* nNamespace = (NodeNamespace*)node;
+        nNamespace->isImported = nNamespace->isImported || isImported;
+
+        if(isSetChecked) nNamespace->isChecked = false;
 
         for(size_t i=0; i<names.size(); i++) nNamespace->names.insert(nNamespace->names.begin() + i, names[i]);
         nNamespace->check();
@@ -124,12 +164,18 @@ void NodeNamespace::check() {
 
             if(isImported && nnamespace->isChecked) {
                 nnamespace->isChecked = false;
-                //nnamespace->names.erase(nnamespace->names.begin());
+                // nnamespace->names.erase(nnamespace->names.begin());
             }
             else for(size_t i=0; i<names.size(); i++) nnamespace->names.insert(nnamespace->names.begin() + i, names[i]);
 
             nnamespace->isImported = (nnamespace->isImported || isImported);
             nodes[i]->check();
+        }
+        else if(instanceof<NodeComptime>(nodes[i])) {
+            NodeComptime* ncomptime = (NodeComptime*)nodes[i];
+
+            ncomptime->isImported = ncomptime->isImported || isImported;
+            addNamespaceNames(ncomptime, names, isImported, isImported && ncomptime->isChecked);
         }
         else if(instanceof<NodeVar>(nodes[i])) {
             NodeVar* nvar = (NodeVar*)nodes[i];
@@ -191,6 +237,14 @@ RaveValue NodeNamespace::generate() {
 
             nnamespace->isImported = (nnamespace->isImported || isImported);
             nnamespace->generate();
+        }
+        else if(instanceof<NodeComptime>(nodes[i])) {
+            NodeComptime* ncomptime = (NodeComptime*)nodes[i];
+
+            addNamespaceNames(ncomptime, names, isImported, false);
+
+            ncomptime->isImported = ncomptime->isImported || isImported;
+            ncomptime->generate();
         }
         else if(instanceof<NodeVar>(nodes[i])) {
             NodeVar* nvar = (NodeVar*)nodes[i];
