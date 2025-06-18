@@ -34,14 +34,15 @@ NodeIndex::NodeIndex(Node* element, std::vector<Node*> indexes, int loc) {
 
 NodeIndex::~NodeIndex() {
     if(element != nullptr) delete element;
-    for(int i=0; i<indexes.size(); i++) if(indexes[i] != nullptr) delete indexes[i];
+    for(size_t i=0; i<indexes.size(); i++) if(indexes[i] != nullptr) delete indexes[i];
 }
 
 Type* NodeIndex::getType() {
-    Type* type = this->element->getType();
-
-    // Remove const qualifiers
-    while(instanceof<TypeConst>(type)) type = static_cast<TypeConst*>(type)->instance;
+    // Get base type and strip const qualifiers
+    Type* type = element->getType();
+    
+    // Remove all const qualifiers recursively
+    while(instanceof<TypeConst>(type)) type = type->getElType();
 
     if(instanceof<TypeStruct>(type) || (instanceof<TypePointer>(type) && instanceof<TypeStruct>(type->getElType()))) {
         TypeStruct* tstruct = static_cast<TypeStruct*>(type->getElType());
@@ -62,7 +63,8 @@ Type* NodeIndex::getType() {
 
     if(instanceof<TypeVector>(type)) return static_cast<TypeVector*>(type)->getElType();
     
-    generator->error("Invalid type in NodeIndex::getType: " + type->toString(), this->loc);
+    // Report error for unsupported indexing types
+    generator->error("Invalid type in NodeIndex::getType: " + type->toString(), loc);
     return nullptr;
 }
 
@@ -78,7 +80,9 @@ Node* NodeIndex::comptime() {return this;}
 
 std::vector<LLVMValueRef> NodeIndex::generateIndexes() {
     std::vector<LLVMValueRef> buffer;
-    for(int i=0; i<this->indexes.size(); i++) buffer.push_back(this->indexes[i]->generate().value);
+    buffer.reserve(indexes.size());  // Pre-allocate for performance
+
+    for(auto index : indexes) buffer.push_back(index->generate().value);
     return buffer;
 }
 
@@ -136,9 +140,12 @@ RaveValue checkForOverload(bool isMustBePtr, Type* _type, Node* node, Node* inde
 }
 
 RaveValue NodeIndex::generate() {
-    if(instanceof<NodeIden>(this->element)) {
-        NodeIden* id = (NodeIden*)this->element;
-        if(currScope->localVars.find(id->name) != currScope->localVars.end()) currScope->localVars[id->name]->isUsed = true;
+    // Handle identifier-based element (most common case)
+    if(instanceof<NodeIden>(element)) {
+        NodeIden* id = (NodeIden*)element;
+        
+        // Mark variable as used in current scope
+        if(auto var = currScope->getVar(id->name, loc); var) var->isUsed = true;
 
         Type* _t = currScope->getVar(id->name, this->loc)->type;
 
@@ -177,8 +184,9 @@ RaveValue NodeIndex::generate() {
         return loaded;
     }
 
-    if(instanceof<NodeGet>(this->element)) {
-        NodeGet* nget = (NodeGet*)this->element;
+    // Handle element accessed via dot operator (struct/class member)
+    if(instanceof<NodeGet>(element)) {
+        NodeGet* nget = (NodeGet*)element;
         nget->isMustBePtr = true;
 
         if(nget->isPtrForIndex) {
@@ -210,8 +218,9 @@ RaveValue NodeIndex::generate() {
         return LLVM::load(index, ("NodeIndex_NodeGet" + std::to_string(this->loc) + "_").c_str(), loc);
     }
 
-    if(instanceof<NodeCall>(this->element)) {
-        NodeCall* ncall = (NodeCall*)this->element;
+    // Handle element from function call return value
+    if(instanceof<NodeCall>(element)) {
+        NodeCall* ncall = (NodeCall*)element;
         RaveValue vr = ncall->generate();
 
         if(instanceof<TypeVector>(vr.type)) {
@@ -319,6 +328,6 @@ RaveValue NodeIndex::generate() {
         return LLVM::load(index, "NodeIndex_NodeIndex_load", loc);
     }
 
-    generator->error("NodeIndex::generate assert!", this->loc);
+    generator->error("Unsupported element type in NodeIndex::generate!", loc);
     return {};
 }

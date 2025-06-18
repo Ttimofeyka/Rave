@@ -49,7 +49,6 @@ RaveValue NodeIf::generate() {
     LLVMBasicBlockRef thenBlock = LLVM::makeBlock("then", currScope->funcName);
 	LLVMBasicBlockRef elseBlock = LLVM::makeBlock("else", currScope->funcName);
 	LLVMBasicBlockRef endBlock = nullptr;
-
     
     endBlock = LLVM::makeBlock("end", currScope->funcName);
 
