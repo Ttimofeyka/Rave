@@ -462,7 +462,7 @@ LLVMTypeRef LLVMGen::genType(Type* type, int loc) {
 
 RaveValue LLVMGen::byIndex(RaveValue value, std::vector<LLVMValueRef> indexes) {
     if(instanceof<TypeArray>(value.type)) return byIndex(
-        LLVM::gep(value, std::vector<LLVMValueRef>({LLVMConstInt(LLVMInt32TypeInContext(generator->context), 0, false)}).data(), 2, "gep_byIndex"), indexes
+        LLVM::gep(value, std::vector<LLVMValueRef>({LLVM::makeInt(pointerSize, 0, true)}).data(), 2, "gep_byIndex"), indexes
     );
 
     if(instanceof<TypeArray>(value.type->getElType())) {
