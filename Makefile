@@ -40,7 +40,13 @@ ifeq ($(WINBUILD),1)
 	SRC = $(patsubst ".\\%",$ .\src\\%, $(shell ./getFiles.sh))
 	LLVM_COMPILE_FLAGS = `$(LLVM_CONFIG) --cflags`
 else
-	ifneq (, $(shell command -v llvm-config-16))
+	ifneq (, $(shell command -v llvm-config-18))
+ 		LLVM_VERSION = 18
+		LLVM_CONFIG = llvm-config-18
+	else ifneq (, $(shell command -v llvm-config-17))
+ 		LLVM_VERSION = 17
+		LLVM_CONFIG = llvm-config-17
+	else ifneq (, $(shell command -v llvm-config-16))
  		LLVM_VERSION = 16
 		LLVM_CONFIG = llvm-config-16
 	else ifneq (, $(shell command -v llvm-config-15))
