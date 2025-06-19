@@ -28,7 +28,7 @@ namespace std {
         // Decode
 
         void decode(std::string* buffer, std::cstring str) {
-            @if(__RAVE_RUNTIME_CHECKS) if((str.length < 2) || ((str.length & 1) != 0)) @return();
+            @if(__RAVE_RUNTIME_CHECKS) if((str.length & 1) != 0) @return();
 
             for(usize i=0; i<str.length; i+=2) {
                 uchar high;
