@@ -48,6 +48,8 @@ examples/simd/sse
 # Benchmarks
 benchmarks/c/nqueen
 benchmarks/rave/nqueen
+benchmarks/c/dirichlet
+benchmarks/rave/dirichlet
 
 std/*.o
 src/*.o
