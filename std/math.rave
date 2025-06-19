@@ -603,9 +603,8 @@ namespace std {
             for(int i=0; i<size; i++) out[i] = weight[i] * (ss * x[i]);
         }
 
-        double relu(double x) => std::math::max(0.0d, x);
-        float relu(float x) => std::math::max(0.0f, x);
-        half relu(half x) => std::math::max(0.0h, x);
+        (inline) double relu(double x) => std::math::max(0.0d, x);
+        (inline) float relu(float x) => std::math::max(0.0f, x);
 
         double drelu(double x) {
             if(x >= 0.0) return = 1.0d;

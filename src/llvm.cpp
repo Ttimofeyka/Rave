@@ -271,12 +271,12 @@ RaveValue LLVM::compare(RaveValue first, RaveValue second, char op) {
     }
 
     if(isFloatType(first.type)) switch(op) {
-        case TokType::Equal: return {LLVMBuildFCmp(generator->builder, LLVMRealOEQ, first.value, second.value, "compareIEQ"), basicTypes[BasicType::Bool]};
-        case TokType::Nequal: return {LLVMBuildFCmp(generator->builder, LLVMRealONE, first.value, second.value, "compareINEQ"), basicTypes[BasicType::Bool]};
-        case TokType::More: return {LLVMBuildFCmp(generator->builder, LLVMRealOGT, first.value, second.value, "compareIMR"), basicTypes[BasicType::Bool]};
-        case TokType::Less: return {LLVMBuildFCmp(generator->builder, LLVMRealOLT, first.value, second.value, "compareILS"), basicTypes[BasicType::Bool]};
-        case TokType::MoreEqual: return {LLVMBuildFCmp(generator->builder, LLVMRealOGE, first.value, second.value, "compareIME"), basicTypes[BasicType::Bool]};
-        case TokType::LessEqual: return {LLVMBuildFCmp(generator->builder, LLVMRealOLE, first.value, second.value, "compareILE"), basicTypes[BasicType::Bool]};
+        case TokType::Equal: return {LLVMBuildFCmp(generator->builder, LLVMRealOEQ, first.value, second.value, "compareOEQ"), basicTypes[BasicType::Bool]};
+        case TokType::Nequal: return {LLVMBuildFCmp(generator->builder, LLVMRealUNE, first.value, second.value, "compareONE"), basicTypes[BasicType::Bool]};
+        case TokType::More: return {LLVMBuildFCmp(generator->builder, LLVMRealOGT, first.value, second.value, "compareOGT"), basicTypes[BasicType::Bool]};
+        case TokType::Less: return {LLVMBuildFCmp(generator->builder, LLVMRealOLT, first.value, second.value, "compareOLT"), basicTypes[BasicType::Bool]};
+        case TokType::MoreEqual: return {LLVMBuildFCmp(generator->builder, LLVMRealOGE, first.value, second.value, "compareOGE"), basicTypes[BasicType::Bool]};
+        case TokType::LessEqual: return {LLVMBuildFCmp(generator->builder, LLVMRealOLE, first.value, second.value, "compareOLE"), basicTypes[BasicType::Bool]};
         default: return {nullptr, nullptr};
     }
 
