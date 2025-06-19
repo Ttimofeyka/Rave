@@ -173,7 +173,7 @@ namespace std {
                 number = -number;
             }
 
-            int index = 0;
+            usize index = 0;
             while(number > 0) {
                 ltosBuffer[index] = ((number % 10l) + '0');
                 number = number / 10l;
@@ -187,9 +187,9 @@ namespace std {
 
             endBuffer[index] = '\0';
 
-            int endI = 0;
-            for(int i=index-1; i>=0; i--) {
-                endBuffer[endI] = ltosBuffer[i];
+            usize endI = 0;
+            for(usize i=index; i>=1; i--) {
+                endBuffer[endI] = ltosBuffer[i - 1];
                 endI += 1;
             }
         } => endBuffer;
@@ -203,7 +203,7 @@ namespace std {
                 @return(endBuffer);
             }
 
-            int index = 0;
+            usize index = 0;
             while(number > 0) {
                 ltosBuffer[index] = ((number % 10) + '0');
                 number = number / 10;
@@ -212,9 +212,9 @@ namespace std {
 
             endBuffer[index] = '\0';
 
-            int endI = 0;
-            for(int i=index-1; i>=0; i--) {
-                endBuffer[endI] = ltosBuffer[i];
+            usize endI = 0;
+            for(usize i=index; i>=1; i--) {
+                endBuffer[endI] = ltosBuffer[i - 1];
                 endI += 1;
             }
         } => endBuffer;
@@ -234,7 +234,7 @@ namespace std {
                 number = -number;
             }
 
-            int index = 0;
+            usize index = 0;
             while(number > 0) {
                 ctosBuffer[index] = ((number % cast(cent)10) + '0');
                 number = number / 10;
@@ -248,9 +248,9 @@ namespace std {
 
             endBuffer[index] = '\0';
 
-            int endI = 0;
-            for(int i=index-1; i>=0; i--) {
-                endBuffer[endI] = ctosBuffer[i];
+            usize endI = 0;
+            for(usize i=index; i>=1; i--) {
+                endBuffer[endI] = ctosBuffer[i - 1];
                 endI += 1;
             }
         } => endBuffer;
