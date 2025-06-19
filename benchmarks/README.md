@@ -8,10 +8,14 @@ Compilation flags are marked with a comment inside each file.
 
 All tests were performed on Windows 10 (**WSL**), i5-12400f, 32GB DDR4 3200 Mhz.
 
+Version of **gcc**: 14
+
+**LLVM** version: 18
+
 ### nqueen
 
 | Time | Rave | C (gcc) | C (clang) |
 | ---- | ---- | ------- | --------- |
-| First Run | 2.816s | 3.023s | 2.696s |
-| Second Run | 2.790s | 3.008s | 2.820s |
-| **Average** | **2.803s** | **3.016s** | **2.758s** |
+| Best Run | 2.664s | 2.884s | 2.687s |
+| Worst Run | 2.774s | 3.048s | 2.785s |
+| **Average** | <u>**2.719s**</u> | **2.966s** | **2.736s** |
