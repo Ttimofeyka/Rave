@@ -534,6 +534,7 @@ void Compiler::compile(std::string file) {
 	        LLVMAddStripDeadPrototypesPass(pm);
             LLVMAddLoopRotatePass(pm);
             LLVMAddLoopVectorizePass(pm);
+            LLVMAddTailCallEliminationPass(pm);
         }
 
         LLVMAddCFGSimplificationPass(pm);
