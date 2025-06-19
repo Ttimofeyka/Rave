@@ -4,7 +4,8 @@ FLAGS ?= -O3
 
 COMPILER ?= $(CXX)
 
-LLVM_VERSION =
+LLVM_VERSION ?=
+LLVM_CUSTOM_VERSION=0
 LLVM_FLAGS =
 LLVM_CONFIG = llvm-config
 LLVM_STATIC ?= 0
@@ -40,22 +41,31 @@ ifeq ($(WINBUILD),1)
 	SRC = $(patsubst ".\\%",$ .\src\\%, $(shell ./getFiles.sh))
 	LLVM_COMPILE_FLAGS = `$(LLVM_CONFIG) --cflags`
 else
-	ifneq (, $(shell command -v llvm-config-18))
- 		LLVM_VERSION = 18
-		LLVM_CONFIG = llvm-config-18
-	else ifneq (, $(shell command -v llvm-config-17))
- 		LLVM_VERSION = 17
-		LLVM_CONFIG = llvm-config-17
-	else ifneq (, $(shell command -v llvm-config-16))
- 		LLVM_VERSION = 16
-		LLVM_CONFIG = llvm-config-16
-	else ifneq (, $(shell command -v llvm-config-15))
-		LLVM_VERSION = 15
-		LLVM_CONFIG = llvm-config-15
-	else ifneq (, $(shell command -v llvm-config))
-		LLVM_FULL_VERSION = $(shell llvm-config --version)
-		LLVM_VERSION = $(firstword $(subst ., ,$(LLVM_FULL_VERSION)))
-		LLVM_CONFIG = llvm-config
+	ifdef LLVM_VERSION
+		ifneq (, $(shell command -v llvm-config-$(LLVM_VERSION)))
+			LLVM_CONFIG = llvm-config-$(LLVM_VERSION)
+			LLVM_CUSTOM_VERSION=1
+		endif
+	endif
+
+	ifeq ($(LLVM_CUSTOM_VERSION), 0)
+		ifneq (, $(shell command -v llvm-config-18))
+			override LLVM_VERSION = 18
+			LLVM_CONFIG = llvm-config-18
+		else ifneq (, $(shell command -v llvm-config-17))
+			override LLVM_VERSION = 17
+			LLVM_CONFIG = llvm-config-17
+		else ifneq (, $(shell command -v llvm-config-16))
+			override LLVM_VERSION = 16
+			LLVM_CONFIG = llvm-config-16
+		else ifneq (, $(shell command -v llvm-config-15))
+			override LLVM_VERSION = 15
+			LLVM_CONFIG = llvm-config-15
+		else ifneq (, $(shell command -v llvm-config))
+			LLVM_FULL_VERSION = $(shell llvm-config --version)
+			override LLVM_VERSION = $(firstword $(subst ., ,$(LLVM_FULL_VERSION)))
+			LLVM_CONFIG = llvm-config
+		endif
 	endif
 	ifeq ($(LLVM_STATIC), 1)
 		LLVM_FLAGS = `$(LLVM_CONFIG) --ldflags --link-static --libs --system-libs --cxxflags`
