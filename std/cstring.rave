@@ -114,8 +114,6 @@ namespace std {
         }
 
         (inline, nochecks) bool strcmp(std::cstring s1, std::cstring s2) {
-            return = true;
-
             if(s1.length != s2.length) return = false;
             else return = std::memcmp(s1.data, s2.data, s1.length);
         }
