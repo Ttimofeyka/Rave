@@ -4,10 +4,10 @@ import <std/io>
 
 alias N = 150000000;
 
-int[N + 1] spf;
-int[N + 1] d;
-int[N + 1] e;
-int[N + 1] primes;
+(private) int[N + 1] spf;
+(private) int[N + 1] d;
+(private) int[N + 1] e;
+(private) int[N + 1] primes;
 
 void main {
     ulong pcount = 0;
