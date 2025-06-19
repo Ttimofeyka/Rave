@@ -1,3 +1,5 @@
+// -Ofast -flto
+
 import <std/io>
 
 alias N = 150000000;

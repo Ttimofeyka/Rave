@@ -1,3 +1,5 @@
+// -O3 -flto
+
 #include <stdio.h>
 
 #define N 150000000
