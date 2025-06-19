@@ -26,4 +26,4 @@ All tests were performed on Windows 10 (**WSL**), i5-12400f, 32GB DDR4 3200 Mhz.
 | ---- | ---- | ------- | --------- |
 | Best Run | 1.032s | 1.194s | 1.111s |
 | Worst Run | 1.166s | 1.362s | 1.272s |
-| **Average** | <ins>**1.032s**</ins> | **1.362s** | **1.272s** |
+| **Average** | <ins>**1.099s**</ins> | **1.278s** | **1.192s** |
