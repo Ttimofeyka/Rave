@@ -18,6 +18,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeFunc.hpp"
 #include "../../include/parser/nodes/NodeCall.hpp"
 #include "../../include/parser/nodes/NodeGet.hpp"
+#include "../../include/parser/nodes/NodeNull.hpp"
 #include "../../include/lexer/lexer.hpp"
 #include "../../include/parser/parser.hpp"
 #include "../../include/llvm.hpp"
@@ -91,7 +92,7 @@ void NodeVar::check() {
     if(namespacesNames.size() > 0) name = namespacesToString(namespacesNames, name);
     if(isGlobal) AST::varTable[this->name] = this;
 
-    Template::replaceTemplates(&type);
+    Types::replaceTemplates(&type);
 
     if(instanceof<TypeBasic>(type) && !AST::aliasTypes.empty()) {
         Type* _type = type->check(nullptr);
@@ -113,32 +114,30 @@ void Predefines::handle(Type* type, Node* node, int loc) {
 }
 
 RaveValue NodeVar::generate() {
-    while(AST::aliasTypes.find(this->type->toString()) != AST::aliasTypes.end()) this->type = AST::aliasTypes[this->type->toString()];
+    while(AST::aliasTypes.find(type->toString()) != AST::aliasTypes.end()) type = AST::aliasTypes[type->toString()];
 
-    if(instanceof<TypeVoid>(this->type)) {
+    Types::replaceTemplates(&type);
+    Types::replaceComptime(type);
+
+    if(instanceof<TypeVoid>(type)) {
         // error: variable cannot be void
-        generator->error("using \033[1mvoid\033[22m as a variable type is prohibited!", this->loc);
+        generator->error("using \033[1mvoid\033[22m as a variable type is prohibited!", loc);
         return {};
     }
 
-    if(instanceof<TypeAlias>(this->type)) {
-        if(currScope != nullptr) currScope->aliasTable[this->name] = this->value;
-        else AST::aliasTable[this->name] = this->value;
+    if(instanceof<TypeAlias>(type)) {
+        if(currScope != nullptr) currScope->aliasTable[name] = value;
+        else AST::aliasTable[name] = value;
+
         return {};
     }
 
     if(instanceof<TypeAuto>(this->type) && value == nullptr) {
-        generator->error("using \033[1mauto\033[22m without an explicit value is prohibited!", this->loc);
+        generator->error("using \033[1mauto\033[22m without an explicit value is prohibited!", loc);
         return {};
     }
 
-    if(instanceof<TypeStruct>(this->type)) {
-        while(instanceof<TypeStruct>(this->type) &&
-              generator->toReplace.find(((TypeStruct*)this->type)->name) != generator->toReplace.end()
-        ) this->type = generator->toReplace[((TypeStruct*)this->type)->name];
-    }
-
-    if(this->type != nullptr) checkForTemplated(this->type);
+    if(type != nullptr) checkForTemplated(type);
 
     linkName = this->name;
 

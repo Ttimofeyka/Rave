@@ -110,7 +110,13 @@ Type* TypeArray::check(Type* parent) {
 }
 
 int TypeArray::getSize() {return ((NodeInt*)this->count->comptime())->value.to_int() * this->element->getSize();}
-std::string TypeArray::toString() {return this->element->toString() + "[" + std::to_string(((NodeInt*)this->count->comptime())->value.to_int()) + "]";}
+
+std::string TypeArray::toString() {
+    if(instanceof<NodeInt>(count)) return element->toString() + "[" + std::to_string(((NodeInt*)this->count->comptime())->value.to_int()) + "]";
+
+    return element->toString() + "[" + typeid(*count).name() + "]";
+}
+
 Type* TypeArray::getElType() {return element;}
 
 TypeArray::~TypeArray() {
@@ -484,7 +490,7 @@ bool isBytePointer(Type* type) {
     return str == "void*" || str == "char*" || str == "uchar*";
 }
 
-bool Template::replaceTemplates(Type** _type) {
+bool Types::replaceTemplates(Type** _type) {
     if(generator == nullptr) return false;
 
     Type* type = _type[0];
@@ -512,7 +518,7 @@ bool Template::replaceTemplates(Type** _type) {
 
         if(structure->types.size() > 0) {
             for(int i=0; i<structure->types.size(); i++) {
-                bool isChangedType = Template::replaceTemplates(&structure->types[i]);
+                bool isChangedType = Types::replaceTemplates(&structure->types[i]);
                 isChanged = isChanged || isChangedType;
             }
 
@@ -523,3 +529,18 @@ bool Template::replaceTemplates(Type** _type) {
     return isChanged;
 }
 
+void Types::replaceComptime(Type* _type) {
+    Type* type = _type;
+
+    while(instanceof<TypeConst>(type) || instanceof<TypePointer>(type)) type = type->getElType();
+
+    if(instanceof<TypeArray>(type)) {
+        TypeArray* array = (TypeArray*)type;
+
+        // TODO: error handling?
+
+        while(!instanceof<NodeInt>(array->count)) array->count = array->count->comptime();
+
+        Types::replaceComptime(array->element);
+    }
+}

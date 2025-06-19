@@ -277,6 +277,7 @@ extern bool isBytePointer(Type* type);
 extern TypeVoid* typeVoid;
 extern int pointerSize;
 
-namespace Template {
+namespace Types {
     extern bool replaceTemplates(Type** type);
+    extern void replaceComptime(Type* type);
 }

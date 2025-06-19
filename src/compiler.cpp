@@ -651,6 +651,8 @@ void Compiler::compileAll() {
 
     if(Compiler::outFile == "") Compiler::outFile = "a";
 
+    Compiler::linkString += " -Wl,--no-relax ";
+
     // TODO: Add support of linking on AVR, improve settings.onlyObject handling
 
     if(!Compiler::settings.onlyObject) {

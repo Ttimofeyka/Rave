@@ -33,7 +33,7 @@ Node* NodeBitcast::comptime() {return nullptr;}
 
 RaveValue NodeBitcast::generate() {
     RaveValue result = this->value->generate();
-    Template::replaceTemplates(&this->type);
+    Types::replaceTemplates(&this->type);
     
     return {
         LLVMBuildBitCast(

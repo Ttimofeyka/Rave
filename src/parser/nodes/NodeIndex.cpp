@@ -119,7 +119,7 @@ RaveValue checkForOverload(bool isMustBePtr, Type* _type, Node* node, Node* inde
         if(instanceof<TypeStruct>(_type)) tstruct = (TypeStruct*)_type;
         else tstruct = ((TypePointer*)_type)->instance;
 
-        Template::replaceTemplates(&tstruct);
+        Types::replaceTemplates(&tstruct);
 
         if(instanceof<TypeStruct>(tstruct)) {
             std::string structName = ((TypeStruct*)tstruct)->name;

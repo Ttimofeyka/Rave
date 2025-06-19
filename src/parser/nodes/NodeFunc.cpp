@@ -79,9 +79,11 @@ void NodeFunc::check() {
     isChecked = true;
 
     // Handle possible templates and void
-    Template::replaceTemplates(&type);
+    Types::replaceTemplates(&type);
+
     for(auto& arg : args) {
-        Template::replaceTemplates(&arg.type);
+        Types::replaceTemplates(&arg.type);
+
         if(instanceof<TypeVoid>(arg.type)) AST::checkError("using \033[1mvoid\033[22m as a variable type is prohibited!", loc);
     }
 
@@ -193,6 +195,10 @@ RaveValue NodeFunc::generate() {
         return {};
     }
 
+    Types::replaceComptime(type);
+
+    for(size_t i=0; i<args.size(); i++) Types::replaceComptime(args[i].type);
+
     linkName = generator->mangle(this->name, true, this->isMethod);
     int callConv = LLVMCCallConv;
     NodeArray* conditions = nullptr;
@@ -277,7 +283,7 @@ RaveValue NodeFunc::generate() {
 
         for(int i=1; i<args.size(); i++) {
             Type* cp = args[i].type;
-            Template::replaceTemplates(&cp);
+            Types::replaceTemplates(&cp);
 
             tfunc->args.push_back(new TypeFuncArg(cp, args[i].name));
         }
@@ -289,7 +295,7 @@ RaveValue NodeFunc::generate() {
         }
 
         Type* cp = args[i].type;
-        Template::replaceTemplates(&cp);
+        Types::replaceTemplates(&cp);
 
         tfunc->args.push_back(new TypeFuncArg(cp, args[i].name));
     }

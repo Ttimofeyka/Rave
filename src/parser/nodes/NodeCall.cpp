@@ -142,7 +142,7 @@ std::vector<Type*> Call::getTypes(std::vector<Node*>& arguments) {
 
     for(int i=0; i<arguments.size(); i++) {
         Type* t = arguments[i]->getType();
-        Template::replaceTemplates(&t);
+        Types::replaceTemplates(&t);
         array.push_back(t);
     }
     
@@ -466,7 +466,7 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
                 if(tParser.peek()->type == TokType::Comma) tParser.next();
             }
 
-            for(int i=0; i<types.size(); i++) Template::replaceTemplates(&types[i]);
+            for(int i=0; i<types.size(); i++) Types::replaceTemplates(&types[i]);
 
             if(presenceInFt) {
                 for(int i=0; i<types.size(); i++) sTypes += types[i]->toString() + ",";

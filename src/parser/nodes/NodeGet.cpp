@@ -53,7 +53,7 @@ Type* NodeGet::getType() {
     }
 
     // Apply template substitutions if needed
-    Template::replaceTemplates((Type**)&ts);
+    Types::replaceTemplates((Type**)&ts);
 
     const std::string& structName = ts->name;
     const auto memberKey = std::make_pair(structName, field);
@@ -147,7 +147,7 @@ RaveValue NodeGet::generate() {
 
     // Resolve struct type with template handling
     TypeStruct* tstruct = static_cast<TypeStruct*>(ty ? ty->getElType() : ptr.type->getElType());
-    Template::replaceTemplates(reinterpret_cast<Type**>(&tstruct));
+    Types::replaceTemplates(reinterpret_cast<Type**>(&tstruct));
     if(structName.empty()) structName = tstruct->toString();
 
     // Check for method access

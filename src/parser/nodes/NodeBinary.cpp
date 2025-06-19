@@ -109,14 +109,12 @@ Node* NodeBinary::comptime() {
     while(!instanceof<NodeType>(first) && !instanceof<NodeBool>(first) && !instanceof<NodeString>(first) && !instanceof<NodeIden>(first) && !instanceof<NodeInt>(first) && !instanceof<NodeFloat>(first)) first = first->comptime();
     while(!instanceof<NodeType>(second) && !instanceof<NodeBool>(second) && !instanceof<NodeString>(second) && !instanceof<NodeIden>(second) && !instanceof<NodeInt>(second) && !instanceof<NodeFloat>(second)) second = second->comptime();
 
-    if(instanceof<NodeIden>(first) || instanceof<NodeIden>(second) || instanceof<NodeType>(first) || instanceof<NodeType>(second)) {        
+    if((instanceof<NodeIden>(first) || instanceof<NodeType>(first)) && (instanceof<NodeIden>(second) || instanceof<NodeType>(second))) {
         Type* firstType = (instanceof<NodeIden>(first) ? new TypeStruct(((NodeIden*)first)->name) : ((NodeType*)first)->type);
         Type* secondType = (instanceof<NodeIden>(second) ? new TypeStruct(((NodeIden*)second)->name) : ((NodeType*)second)->type);
 
-        if(generator != nullptr) {
-            while(generator->toReplace.find(firstType->toString()) != generator->toReplace.end()) firstType = generator->toReplace[firstType->toString()];
-            while(generator->toReplace.find(secondType->toString()) != generator->toReplace.end()) secondType = generator->toReplace[secondType->toString()];
-        }
+        Types::replaceTemplates(&firstType);
+        Types::replaceTemplates(&secondType);
 
         switch(this->op) {
             case TokType::Equal: return new NodeBool(firstType->toString() == secondType->toString());
@@ -236,6 +234,58 @@ Node* NodeBinary::comptime() {
                 }
                 // TODO: add bool
             }
+            return new NodeBool(false);
+        case TokType::Plus:
+        case TokType::Minus:
+        case TokType::Multiply:
+        case TokType::Divide:
+            if(instanceof<NodeInt>(first)) {
+                if(instanceof<NodeInt>(second)) return new NodeInt(((NodeInt*)first)->value + ((NodeInt*)second)->value);
+                else if(instanceof<NodeFloat>(second)) {
+                    R128 r128_1;
+                    r128FromInt(&r128_1, ((NodeInt*)first)->value.to_long_long());
+
+                    R128 r128_2;
+                    r128FromString(&r128_2, ((NodeFloat*)second)->value.c_str(), nullptr);
+
+                    R128 r128_result;
+                    switch(op) {
+                        case TokType::Plus: r128_result = r128_1 + r128_2; break;
+                        case TokType::Minus: r128_result = r128_1 - r128_2; break;
+                        case TokType::Multiply: r128_result = r128_1 * r128_2; break;
+                        case TokType::Divide: r128_result = r128_1 / r128_2; break;
+                        default: break;
+                    }
+
+                    char buffer[48];
+                    r128ToString(buffer, 48, &r128_result);
+
+                    return new NodeFloat(std::string(buffer));
+                }
+            }
+            else if(instanceof<NodeFloat>(first)) {
+                R128 r128_1;
+                r128FromString(&r128_1, ((NodeFloat*)second)->value.c_str(), nullptr);
+
+                R128 r128_2;
+                if(instanceof<NodeInt>(second)) r128FromInt(&r128_2, ((NodeInt*)second)->value.to_long_long());
+                else if(instanceof<NodeFloat>(second)) r128FromString(&r128_2, ((NodeFloat*)second)->value.c_str(), nullptr);
+
+                R128 r128_result;
+                switch(op) {
+                    case TokType::Plus: r128_result = r128_1 + r128_2; break;
+                    case TokType::Minus: r128_result = r128_1 - r128_2; break;
+                    case TokType::Multiply: r128_result = r128_1 * r128_2; break;
+                    case TokType::Divide: r128_result = r128_1 / r128_2; break;
+                    default: break;
+                }
+
+                char buffer[48];
+                r128ToString(buffer, 48, &r128_result);
+
+                return new NodeFloat(std::string(buffer));
+            }
+
             return new NodeBool(false);
         default: return new NodeBool(false);
     }

@@ -139,7 +139,7 @@ std::string typeToString(Type* arg) {
     }
     else if(instanceof<TypeStruct>(arg)) {
         Type* ty = arg;
-        Template::replaceTemplates(&ty);
+        Types::replaceTemplates(&ty);
 
         if(!instanceof<TypeStruct>(ty)) return typeToString(ty);
 
@@ -344,7 +344,7 @@ LLVMMetadataRef DebugGen::genType(Type* type, int loc) {
     }
 
     if(instanceof<TypeStruct>(type)) {
-        Template::replaceTemplates(&type);
+        Types::replaceTemplates(&type);
         return genStruct((TypeStruct*)type, loc);
     }
 

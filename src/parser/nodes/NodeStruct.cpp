@@ -111,7 +111,7 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
             var->isComdat = this->isComdat;
             AST::structsNumbers[std::pair<std::string, std::string>(this->name, var->name)] = StructMember{.number = i, .var = var};
 
-            Template::replaceTemplates(&var->type);
+            Types::replaceTemplates(&var->type);
 
             if(var->value != nullptr && !instanceof<NodeNone>(var->value)) this->predefines[var->name] = StructPredefined{.element = i, .value = var->value, .isStruct = false, .name = var->name};
             else if(instanceof<TypeStruct>(var->type)) {
@@ -189,8 +189,8 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 else if((func->origName.find("([]&)") != std::string::npos) || (func->origName.find("(&[])") != std::string::npos)) {oper = TokType::Amp; func->name = this->name + "([]&)";}
                 else if(func->origName.find("(in)") != std::string::npos) {oper = TokType::In; func->name = this->name + "(in)";}
 
-                Template::replaceTemplates(&func->type);
-                for(size_t i=0; i<func->args.size(); i++) Template::replaceTemplates(&func->args[i].type);
+                Types::replaceTemplates(&func->type);
+                for(size_t i=0; i<func->args.size(); i++) Types::replaceTemplates(&func->args[i].type);
 
                 if(oper != TokType::Rbra) func->name = func->name + typesToString(func->args);
                 this->operators[oper][(oper != TokType::Rbra ? typesToString(func->args) : "")] = func;
@@ -214,8 +214,8 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 func->isExtern = (func->isExtern || this->isImported);
                 func->isComdat = this->isComdat;
 
-                Template::replaceTemplates(&func->type);
-                for(size_t i=0; i<func->args.size(); i++) Template::replaceTemplates(&func->args[i].type);
+                Types::replaceTemplates(&func->type);
+                for(size_t i=0; i<func->args.size(); i++) Types::replaceTemplates(&func->args[i].type);
 
                 if(AST::methodTable.find(std::pair<std::string, std::string>(this->name, func->origName)) != AST::methodTable.end()) {
                     std::string sTypes = typesToString(AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)]->args);
