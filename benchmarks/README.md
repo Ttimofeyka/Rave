@@ -18,9 +18,9 @@ Enabled technologies: **SSE**, **SSE2**
 
 | Time | Rave | C (gcc) | C (clang) |
 | ---- | ---- | ------- | --------- |
-| Best Run | 2.658s | 2.884s | 2.687s |
-| Worst Run | 2.814s | 3.048s | 2.785s |
-| **Average** | <ins>**2.736s**</ins> | **2.966s** | <ins>**2.736s**</ins> |
+| Best Run | 2.7s | 2.884s | 2.687s |
+| Worst Run | 2.86s | 3.048s | 2.785s |
+| **Average** | **2.78s** | **2.966s** | <ins>**2.736s**</ins> |
 
 ### dirichlet
 
