@@ -308,6 +308,8 @@ LLVMMetadataRef DebugGen::genBasicType(TypeBasic* type, int loc) {
         case BasicType::Ulong: return LLVMDIBuilderCreateBasicType(diBuilder, "ulong", 5, 64, 0, LLVMDIFlagZero);
         case BasicType::Cent: return LLVMDIBuilderCreateBasicType(diBuilder, "cent", 4, 128, 0, LLVMDIFlagZero);
         case BasicType::Ucent: return LLVMDIBuilderCreateBasicType(diBuilder, "ucent", 5, 128, 0, LLVMDIFlagZero);
+        case BasicType::Half: return LLVMDIBuilderCreateBasicType(diBuilder, "half", 4, 16, 0, LLVMDIFlagZero);
+        case BasicType::Bhalf: return LLVMDIBuilderCreateBasicType(diBuilder, "bhalf", 5, 16, 0, LLVMDIFlagZero);
         case BasicType::Float: return LLVMDIBuilderCreateBasicType(diBuilder, "float", 5, 32, 0, LLVMDIFlagZero);
         case BasicType::Double: return LLVMDIBuilderCreateBasicType(diBuilder, "double", 6, 64, 0, LLVMDIFlagZero);
         default: return nullptr;

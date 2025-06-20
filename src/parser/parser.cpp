@@ -60,128 +60,143 @@ with this file, You can obtain one at htypep://mozilla.org/MPL/2.0/.
 
 std::map<char, int> operators;
 
-Parser::Parser(std::vector<Token*> tokens, std::string file) {
-    this->tokens = tokens;
-    this->file = file;
-
-    operators.clear();
-    operators.insert({TokType::Multiply, 1});
-    operators.insert({TokType::Divide, 1});
-    operators.insert({TokType::Plus, 0});
-    operators.insert({TokType::Minus, 0});
-    operators.insert({TokType::Rem, 0});
-    operators.insert({TokType::BitLeft, -51});
-    operators.insert({TokType::BitRight, -51});
-    operators.insert({TokType::BitXor, -55});
-    operators.insert({TokType::BitOr, -55});
-    operators.insert({TokType::Amp, -55});
-    operators.insert({TokType::Less, -70});
-    operators.insert({TokType::More, -70});
-    operators.insert({TokType::LessEqual, -70});
-    operators.insert({TokType::MoreEqual, -70});
-    operators.insert({TokType::Equal, -80});
-    operators.insert({TokType::Nequal, -80});
-    operators.insert({TokType::In, -80});
-    operators.insert({TokType::NeIn, -80});
-    operators.insert({TokType::Or, -85});
-    operators.insert({TokType::And, -85});
-    operators.insert({TokType::Equ, -95});
-    operators.insert({TokType::PluEqu, -97});
-    operators.insert({TokType::MinEqu, -97});
-    operators.insert({TokType::MulEqu, -97});
-    operators.insert({TokType::DivEqu, -97});
+Parser::Parser(std::vector<Token*> tokens, std::string file) 
+    : tokens(tokens), file(file) {
+    
+    operators = {
+        {TokType::Multiply, 1},
+        {TokType::Divide, 1},
+        {TokType::Plus, 0},
+        {TokType::Minus, 0},
+        {TokType::Rem, 0},
+        {TokType::BitLeft, -51},
+        {TokType::BitRight, -51},
+        {TokType::BitXor, -55},
+        {TokType::BitOr, -55},
+        {TokType::Amp, -55},
+        {TokType::Less, -70},
+        {TokType::More, -70},
+        {TokType::LessEqual, -70},
+        {TokType::MoreEqual, -70},
+        {TokType::Equal, -80},
+        {TokType::Nequal, -80},
+        {TokType::In, -80},
+        {TokType::NeIn, -80},
+        {TokType::Or, -85},
+        {TokType::And, -85},
+        {TokType::Equ, -95},
+        {TokType::PluEqu, -97},
+        {TokType::MinEqu, -97},
+        {TokType::MulEqu, -97},
+        {TokType::DivEqu, -97}
+    };
 }
 
 void Parser::error(std::string msg) {
-    std::cout << "\033[0;31mError in \033[1m" + this->file + "\033[22m file at " + std::to_string(this->peek()->line)+ " line: " + msg + "\033[0;0m" << std::endl;
+    std::cout << "\033[0;31mError in \033[1m" + file + "\033[22m file at " 
+              << peek()->line << " line: " << msg << "\033[0;0m" << std::endl;
     std::exit(1);
 }
 
 void Parser::error(std::string msg, int line) {
-    std::cout << "\033[0;31mError in \033[1m" + this->file + "\033[22m file at " + std::to_string(line) + " line: " + msg + "\033[0;0m" << std::endl;
+    std::cout << "\033[0;31mError in \033[1m" + file + "\033[22m file at " 
+              << line << " line: " << msg << "\033[0;0m" << std::endl;
     std::exit(1);
 }
 
 void Parser::warning(std::string msg) {
-    std::cout << "\033[0;33mWarning in \033[1m" + this->file + "\033[22m file at "+  std::to_string(this->peek()->line) + " line: " + msg + "\033[0;0m" << std::endl;
+    std::cout << "\033[0;33mWarning in \033[1m" + file + "\033[22m file at " 
+              << peek()->line << " line: " << msg << "\033[0;0m" << std::endl;
 }
 
 void Parser::warning(std::string msg, int line) {
-    std::cout << "\033[0;33mWarning in \033[1m" + this->file + "\033[22m file at " + std::to_string(line) + " line: " + msg + "\033[0;0m" << std::endl;
+    std::cout << "\033[0;33mWarning in \033[1m" + file + "\033[22m file at " 
+              << line << " line: " << msg << "\033[0;0m" << std::endl;
 }
 
-Token* Parser::peek() {return this->tokens[this->idx];}
-Token* Parser::next() {this->idx += 1; return this->tokens[this->idx];}
+Token* Parser::peek() {return tokens[idx];}
+
+Token* Parser::next(int add) {idx += add; return tokens[idx];}
+
+Token* Parser::expect(int type, std::string msg, int add) {
+    Token* _next = next(add);
+
+    if(_next->type != type) error(msg);
+    return _next;
+}
 
 void Parser::parseAll() {
-    while(this->peek()->type != TokType::Eof) {
+    while(peek()->type != TokType::Eof) {
         std::vector<Node*> _nodes;
         parseTopLevel(_nodes);
 
-        for(int i=0; i<_nodes.size(); i++) {
-            if(_nodes[i] != nullptr && !instanceof<NodeNone>(_nodes[i])) this->nodes.push_back(_nodes[i]);
+        for(auto node : _nodes) {
+            if(node != nullptr && !instanceof<NodeNone>(node)) nodes.push_back(node);
         }
     }
 }
 
 void Parser::parseTopLevel(std::vector<Node*>& list, std::string s) {
-    while(this->peek()->type == TokType::Semicolon) this->next();
-    if(this->peek()->type == TokType::Eof || this->peek()->type == TokType::Lbra) return;
+    while(peek()->type == TokType::Semicolon) next();
+    if(peek()->type == TokType::Eof || peek()->type == TokType::Lbra) return;
 
-    if(this->peek()->value == "namespace") return list.push_back(parseNamespace(s));
-    else if(this->peek()->value == "struct") return list.push_back(parseStruct());
-    else if(this->peek()->value == "using") return list.push_back(parseUsing());
-    else if(this->peek()->value == "import") return list.push_back(parseImport());
-    else if(this->peek()->value == "type") return list.push_back(parseAliasType());
-    else if(this->peek()->type == TokType::Builtin) {
-        if(this->peek()->value == "@if") return list.push_back(parseIf(s, true));
+    if(peek()->value == "namespace") return list.push_back(parseNamespace(s));
+    else if(peek()->value == "struct") return list.push_back(parseStruct());
+    else if(peek()->value == "using") return list.push_back(parseUsing());
+    else if(peek()->value == "import") return list.push_back(parseImport());
+    else if(peek()->value == "type") return list.push_back(parseAliasType());
+    else if(peek()->type == TokType::Builtin) {
+        if(peek()->value == "@if") return list.push_back(parseIf(s, true));
 
-        Token* tok = this->peek();
-        this->next();
+        Token* tok = peek();
+        next();
 
         std::vector<Node*> args;
-        if(this->peek()->type == TokType::Rpar) {
-            this->next();
+        if(peek()->type == TokType::Rpar) {
+            next();
 
-            while(this->peek()->type != TokType::Lpar) {
-                args.push_back(this->parseExpr(s));
-                if(this->peek()->type == TokType::Comma) this->next();
+            while(peek()->type != TokType::Lpar) {
+                args.push_back(parseExpr(s));
+                if(peek()->type == TokType::Comma) next();
             }
 
-            this->next();
+            next();
         }
     
         NodeBlock* block = new NodeBlock({});
-        if(this->peek()->type == TokType::Rbra) {
-            this->next();
-            while(this->peek()->type != TokType::Lbra) parseTopLevel(block->nodes, s);
-            this->next();
+        if(peek()->type == TokType::Rbra) {
+            next();
+            while(peek()->type != TokType::Lbra) parseTopLevel(block->nodes, s);
+            next();
         }
 
         NodeBuiltin* nb = new NodeBuiltin(tok->value, args, tok->line, block);
         nb->isTopLevel = true;
         return list.push_back(nb);
     }
-    else if(this->peek()->type == TokType::Rpar) {
+    else if(peek()->type == TokType::Rpar) {
         std::vector<DeclarMod> mods;
-        this->next();
+        next();
 
-        while(this->peek()->type != TokType::Lpar) {
-            std::string name = this->peek()->value;
-            this->next();
+        while(peek()->type != TokType::Lpar) {
+            std::string name = peek()->value;
+            next();
+
             Node* value = nullptr;
-            if(this->peek()->type == TokType::ValSel) {
-                this->next();
-                value = this->parseExpr(s);
+            if(peek()->type == TokType::ValSel) {
+                next();
+                value = parseExpr(s);
             }
+
             mods.push_back(DeclarMod{.name = name, .value = value});
-            if(this->peek()->type == TokType::Comma) this->next();
-            else if(this->peek()->type == TokType::Lpar) break;
+
+            if(peek()->type == TokType::Comma) next();
+            else if(peek()->type == TokType::Lpar) break;
         }
         
-        this->next();
+        next();
 
-        if(this->peek()->value != "struct") return parseDecl(list, s, mods);
+        if(peek()->value != "struct") return parseDecl(list, s, mods);
         return list.push_back(parseStruct(mods));
     }
 
@@ -189,11 +204,13 @@ void Parser::parseTopLevel(std::vector<Node*>& list, std::string s) {
 }
 
 Node* Parser::parseNamespace(std::string s) {
-    int loc = this->peek()->line; this->next();
-    std::string name = this->peek()->value; this->next();
+    int loc = peek()->line;
+    next();
 
-    if(this->peek()->type != TokType::Rbra) this->error("expected token '{'!");
-    this->next();
+    std::string name = peek()->value;
+
+    expect(TokType::Rbra, "expected token '{'!");
+    next();
 
     std::vector<Node*> nNodes;
     std::vector<Node*> _nodes;
@@ -206,48 +223,54 @@ Node* Parser::parseNamespace(std::string s) {
         parseTopLevel(_nodes, s);
     }
 
-    if(this->peek()->type != TokType::Lbra) this->error("expected token '}'!");
-    this->next();
+    expect(TokType::Lbra, "expected token '}'!", 0);
+    next();
 
     return new NodeNamespace(name, nNodes, loc);
 }
 
 std::vector<FuncArgSet> Parser::parseFuncArgSets() {
     std::vector<FuncArgSet> args;
-    if(this->peek()->type != TokType::Rpar) return args;
-    this->next();
-    while(this->peek()->type != TokType::Lpar) {
-        Type* type = this->parseType();
-        std::string name = this->peek()->value;
-        this->next();
+
+    if(peek()->type != TokType::Rpar) return args;
+    next();
+
+    while(peek()->type != TokType::Lpar) {
+        Type* type = parseType();
+        std::string name = peek()->value;
+
+        next();
         args.push_back(FuncArgSet{.name = name, .type = type, .internalTypes = {type}});
-        if(this->peek()->type == TokType::Comma) this->next();
+
+        if(peek()->type == TokType::Comma) next();
     }
+
     return args;
 }
 
 Node* Parser::parseBuiltin(std::string f) {
-    std::string name = this->peek()->value;
-    if(name == "@if") return this->parseIf(f, true);
+    std::string name = peek()->value;
+    if(name == "@if") return parseIf(f, true);
 
     std::vector<Node*> args;
     NodeBlock* block;
     bool isTopLevel = false;
 
-    this->next();
-    if(this->peek()->type == TokType::Rpar) {
-        this->next();
-        while(this->peek()->type != TokType::Lpar) {
-            args.push_back(this->parseExpr(f));
-            if(this->peek()->type == TokType::Comma) this->next();
-        } this->next();
+    next();
+    if(peek()->type == TokType::Rpar) {
+        next();
+        while(peek()->type != TokType::Lpar) {
+            args.push_back(parseExpr(f));
+            if(peek()->type == TokType::Comma) next();
+        }
+        next();
     }
 
-    if(this->peek()->type == TokType::Rbra) {
-        if(f != "") block = this->parseBlock(f);
+    if(peek()->type == TokType::Rbra) {
+        if(f != "") block = parseBlock(f);
         else {
             block = new NodeBlock({});
-            this->next();
+            next();
 
             std::vector<Node*> _nodes;
             parseTopLevel(_nodes, f);
@@ -258,59 +281,60 @@ Node* Parser::parseBuiltin(std::string f) {
                 parseTopLevel(_nodes, f);
             }
 
-            this->next();
+            next();
             isTopLevel = true;
         }
     }
     else block = new NodeBlock({});
 
-    NodeBuiltin* nb = new NodeBuiltin(name, args, this->peek()->line, block);
+    NodeBuiltin* nb = new NodeBuiltin(name, args, peek()->line, block);
     nb->isTopLevel = isTopLevel;
     return nb;
 }
 
 Node* Parser::parseOperatorOverload(Type* type, std::string s) {
-    this->next();
-    std::string name = s + "(" + this->peek()->value + ")";
-    Token* _t = this->peek();
-    this->next();
+    next();
+    std::string name = s + "(" + peek()->value + ")";
+    Token* _t = peek();
+    next();
 
-    if(this->peek()->type != TokType::Rpar) {
-        Token* _t2 = this->peek();
-        name = s + "(" + _t->value+_t2->value + ")";
-        this->next();
-        if(this->peek()->type != TokType::Rpar) {
-            name = s + "(" + _t->value + _t2->value + this->peek()->value + ")";
-            this->next();
+    if(peek()->type != TokType::Rpar) {
+        Token* _t2 = peek();
+        name = s + "(" + _t->value + _t2->value + ")";
+        next();
+        if(peek()->type != TokType::Rpar) {
+            name = s + "(" + _t->value + _t2->value + peek()->value + ")";
+            next();
         }
     }
 
     std::vector<FuncArgSet> args;
 
-    if(this->peek()->type == TokType::Rpar) {
-        this->next();
-        while(this->peek()->type != TokType::Lpar) {
-            Type* type = this->parseType();
-            args.push_back(FuncArgSet{.name = this->peek()->value, .type = type, .internalTypes = {type}});
-            this->next();
-            if(this->peek()->type == TokType::Comma) this->next();
-        } this->next();
+    if(peek()->type == TokType::Rpar) {
+        next();
+        while(peek()->type != TokType::Lpar) {
+            Type* type = parseType();
+            args.push_back(FuncArgSet{.name = peek()->value, .type = type, .internalTypes = {type}});
+            next();
+            if(peek()->type == TokType::Comma) next();
+        }
+        next();
     }
 
-    if(this->peek()->type == TokType::ShortRet) {
+    if(peek()->type == TokType::ShortRet) {
         NodeBlock* nb = new NodeBlock({});
-        this->next();
-        nb->nodes.push_back(new NodeRet(this->parseExpr("operator"), _t->line));
-        if(this->peek()->type == TokType::Semicolon) this->next();
+        next();
+        nb->nodes.push_back(new NodeRet(parseExpr("operator"), _t->line));
+        if(peek()->type == TokType::Semicolon) next();
         return new NodeFunc(name, args, nb, false, {}, _t->line, type, {});
     }
 
-    this->next();
-    NodeBlock* nb = this->parseBlock("operator");
+    next();
+    NodeBlock* nb = parseBlock("operator");
 
-    if(this->peek()->type == TokType::ShortRet) {
-        this->next();
-        nb->nodes.push_back(new NodeRet(this->parseExpr("operator"), _t->line));
+    if(peek()->type == TokType::ShortRet) {
+        next();
+        nb->nodes.push_back(new NodeRet(parseExpr("operator"), _t->line));
     }
 
     return new NodeFunc(name, args, nb, false, {}, _t->line, type, {});
@@ -323,214 +347,215 @@ void Parser::parseDecl(std::vector<Node*>& list, std::string s, std::vector<Decl
     bool isExtern = false;
     bool isVolatile = false;
 
-    if(this->peek()->value == "extern") {isExtern = true; this->next();}
-    if(this->peek()->value == "volatile") {isVolatile = true; this->next();}
+    if(peek()->value == "extern") {isExtern = true; next();}
+    if(peek()->value == "volatile") {isVolatile = true; next();}
 
-    if(this->peek()->type == TokType::Rpar) {
-        this->next();
-        while(this->peek()->type != TokType::Lpar) {
-            std::string name = this->peek()->value;
-            this->next();
+    if(peek()->type == TokType::Rpar) {
+        next();
+        while(peek()->type != TokType::Lpar) {
+            std::string name = peek()->value;
+            next();
             Node* value = nullptr;
-            if(this->peek()->type == TokType::ValSel) {
-                this->next();
-                value = this->parseExpr();
+            if(peek()->type == TokType::ValSel) {
+                next();
+                value = parseExpr();
             }
             mods.push_back(DeclarMod{.name = name, .value = value});
-            if(this->peek()->type == TokType::Comma) this->next();
-            else if(this->peek()->type == TokType::Lpar) break;
+            if(peek()->type == TokType::Comma) next();
+            else if(peek()->type == TokType::Lpar) break;
         }
-        this->next();
+        next();
     }
 
-    int currIdx = this->idx;
-    auto type = this->parseType(false, true);
+    int currIdx = idx;
+    auto type = parseType(false, true);
 
     if(instanceof<TypeCall>(type)) {
-        this->idx = currIdx;
-        Node* n = this->parseAtom(s);
-        if(this->peek()->type == TokType::Semicolon) this->next();
+        idx = currIdx;
+        Node* n = parseAtom(s);
+        if(peek()->type == TokType::Semicolon) next();
         return list.push_back(n);
     }
 
-    if(this->peek()->value == "operator") return list.push_back(parseOperatorOverload(type, s));
-    if(this->peek()->type != TokType::Identifier) this->error("a declaration name must be identifier!");
+    expect(TokType::Identifier, "a declaration name must be an identifier!", 0);
 
-    name = this->peek()->value;
-    if(isBasicType(name)) this->error("a declaration cannot be named as basic types!");
+    if(peek()->value == "operator") return list.push_back(parseOperatorOverload(type, s));
 
-    loc = this->peek()->line;
-    this->next();
+    name = peek()->value;
+    if(isBasicType(name)) error("a declaration cannot be named as a basic type!");
 
-    if(this->peek()->type != TokType::Less && this->peek()->type != TokType::Rpar && this->peek()->type != TokType::Rbra
-    && this->peek()->type != TokType::ShortRet && this->peek()->type != TokType::Equ && this->peek()->type != TokType::Semicolon
-    && this->peek()->type != TokType::Comma) {
-        this->error("expected token ';'!", loc);
+    loc = peek()->line;
+    next();
+
+    if(peek()->type != TokType::Less && peek()->type != TokType::Rpar && peek()->type != TokType::Rbra
+    && peek()->type != TokType::ShortRet && peek()->type != TokType::Equ && peek()->type != TokType::Semicolon
+    && peek()->type != TokType::Comma) {
+        error("expected token ';'!", loc);
         return;
     }
 
-    if(this->peek()->type == TokType::Rbra && s.find("__RAVE_PARSER_FUNCTION_") != std::string::npos) {
-        this->error("function declarations cannot be inside other functions!", loc);
+    if(peek()->type == TokType::Rbra && s.find("__RAVE_PARSER_FUNCTION_") != std::string::npos) {
+        error("function declarations cannot be inside other functions!", loc);
         return;
     }
 
     std::vector<std::string> templates;
-    if(this->peek()->type == TokType::Less) {
-        this->next();
-        while(this->peek()->type != TokType::More) {
-            templates.push_back(this->peek()->value);
-            this->next();
-            if(this->peek()->type == TokType::Comma) this->next();
+    if(peek()->type == TokType::Less) {
+        next();
+        while(peek()->type != TokType::More) {
+            templates.push_back(peek()->value);
+            next();
+            if(peek()->type == TokType::Comma) next();
         }
-        this->next();
+        next();
     }
 
-    if(this->peek()->type == TokType::Rpar) {
-        std::vector<FuncArgSet> args = this->parseFuncArgSets();
-        if(this->peek()->type == TokType::Lpar) this->next();
-        if(this->peek()->type == TokType::Rbra) this->next();
-        if(this->peek()->type == TokType::ShortRet) {
-            this->next();
-            Node* expr = this->parseExpr();
-            if(this->peek()->type != TokType::Lpar) {
-                if(this->peek()->type != TokType::Semicolon) this->error("expected token ';'!");
-                this->next();
+    if(peek()->type == TokType::Rpar) {
+        std::vector<FuncArgSet> args = parseFuncArgSets();
+        if(peek()->type == TokType::Lpar) next();
+        if(peek()->type == TokType::Rbra) next();
+        if(peek()->type == TokType::ShortRet) {
+            next();
+            Node* expr = parseExpr();
+            if(peek()->type != TokType::Lpar) {
+                if(peek()->type != TokType::Semicolon) error("expected token ';'!");
+                next();
             }
             return list.push_back(new NodeFunc(name, args, new NodeBlock({new NodeRet(expr, loc)}), isExtern, mods, loc, type, templates));
         }
-        else if(this->peek()->type == TokType::Semicolon) {
-            this->next();
+        else if(peek()->type == TokType::Semicolon) {
+            next();
             return list.push_back(new NodeFunc(name, args, new NodeBlock({}), isExtern, mods, loc, type, templates));
         }
 
-        NodeBlock* block = this->parseBlock(name);
-        if(this->peek()->type == TokType::ShortRet) {
-            this->next();
-            Node* n = this->parseExpr();
-            if(this->peek()->type == TokType::Semicolon) next();
+        NodeBlock* block = parseBlock(name);
+        if(peek()->type == TokType::ShortRet) {
+            next();
+            Node* n = parseExpr();
+            if(peek()->type == TokType::Semicolon) next();
 
             if(instanceof<TypeVoid>(type)) block->nodes.push_back(n);
             else block->nodes.push_back(new NodeRet(n, loc));
         }
         return list.push_back(new NodeFunc(name, args, block, isExtern, mods, loc, type, templates));
     }
-    else if(this->peek()->type == TokType::Rbra) {
-        NodeBlock* block = this->parseBlock("__RAVE_PARSER_FUNCTION_" + name);
-        if(this->peek()->type == TokType::ShortRet) {
-            this->next();
-            Node* n = this->parseExpr();
-            if(this->peek()->type == TokType::Semicolon) this->next();
+    else if(peek()->type == TokType::Rbra) {
+        NodeBlock* block = parseBlock("__RAVE_PARSER_FUNCTION_" + name);
+        if(peek()->type == TokType::ShortRet) {
+            next();
+            Node* n = parseExpr();
+            if(peek()->type == TokType::Semicolon) next();
             if(instanceof<TypeVoid>(type)) block->nodes.push_back(n);
-            else block->nodes.push_back(new NodeRet(n, this->peek()->line));
+            else block->nodes.push_back(new NodeRet(n, peek()->line));
         }
         return list.push_back(new NodeFunc(name, {}, block, isExtern, mods, loc, type, templates));
     }
-    else if(this->peek()->type == TokType::ShortRet) {
-        this->next();
-        Node* n = this->parseExpr();
-        if(this->peek()->type != TokType::Lpar) {
-            if(this->peek()->type != TokType::Semicolon) this->error("expected token ';'!");
-            this->next();
+    else if(peek()->type == TokType::ShortRet) {
+        next();
+        Node* n = parseExpr();
+        if(peek()->type != TokType::Lpar) {
+            if(peek()->type != TokType::Semicolon) error("expected token ';'!");
+            next();
         }
 
         if(!instanceof<TypeVoid>(type)) return list.push_back(new NodeFunc(name, {}, new NodeBlock({new NodeRet(n, loc)}), isExtern, mods, loc, type, templates));
         return list.push_back(new NodeFunc(name, {}, new NodeBlock({n}), isExtern, mods, loc, type, templates));
     }
-    else if(this->peek()->type == TokType::Semicolon) {
-        this->next();
+    else if(peek()->type == TokType::Semicolon) {
+        next();
         return list.push_back(new NodeVar(name, nullptr, isExtern, instanceof<TypeConst>(type), (s == ""), mods, loc, type, isVolatile));
     }
-    else if(this->peek()->type == TokType::Comma || this->peek()->type == TokType::Semicolon || this->peek()->type == TokType::Equ) {
+    else if(peek()->type == TokType::Comma || peek()->type == TokType::Semicolon || peek()->type == TokType::Equ) {
         NodeVar* variable = new NodeVar(name, nullptr, isExtern, instanceof<TypeConst>(type), (s == ""), mods, loc, type, isVolatile);
 
-        if(this->peek()->type == TokType::Equ) {
-            this->next();
-            variable->value = this->parseExpr();
+        if(peek()->type == TokType::Equ) {
+            next();
+            variable->value = parseExpr();
         }
 
         list.push_back(variable);
-        if(this->peek()->type != TokType::Semicolon) this->next();
+        if(peek()->type != TokType::Semicolon) next();
 
-        while(this->peek()->type != TokType::Semicolon) {
-            std::string varName = this->peek()->value;
-            this->next();
+        while(peek()->type != TokType::Semicolon) {
+            std::string varName = peek()->value;
+            next();
 
             Node* varValue = nullptr;
 
-            if(this->peek()->type == TokType::Equ) {
-                this->next();
-                varValue = this->parseExpr();
+            if(peek()->type == TokType::Equ) {
+                next();
+                varValue = parseExpr();
             }
 
-            if(this->peek()->type == TokType::Comma) this->next();
+            if(peek()->type == TokType::Comma) next();
             list.push_back(new NodeVar(varName, varValue, isExtern, instanceof<TypeConst>(type), (s == ""), mods, loc, type, isVolatile));
         }
 
-        this->next();
+        next();
         return;
     }
 
-    NodeBlock* _b = this->parseBlock(name);
+    NodeBlock* _b = parseBlock(name);
     return list.push_back(new NodeFunc(name, {}, _b, isExtern, mods, loc, type, templates));
 }
 
 Node* Parser::parseCmpXchg(std::string s) {
-    int loc = this->peek()->line;
-    this->next();
-    Node* ptr = this->parseExpr(s);
-    if(this->peek()->type == TokType::Comma) this->next();
-    Node* val1 = this->parseExpr(s);
-    if(this->peek()->type == TokType::Comma) this->next();
-    Node* val2 = this->parseExpr(s);
-    if(this->peek()->type == TokType::Lpar) this->next();
+    int loc = peek()->line;
+    next();
+    Node* ptr = parseExpr(s);
+    if(peek()->type == TokType::Comma) next();
+    Node* val1 = parseExpr(s);
+    if(peek()->type == TokType::Comma) next();
+    Node* val2 = parseExpr(s);
+    if(peek()->type == TokType::Lpar) next();
     return new NodeCmpxchg(ptr, val1, val2, loc);
 }
 
 Node* Parser::parseConstantStructure(std::string structName) {
-    int loc = this->peek()->line;
+    int loc = peek()->line;
 
-    this->next();
+    next();
     std::vector<Node*> values;
 
-    while(this->peek()->type != TokType::Lbra) {
+    while(peek()->type != TokType::Lbra) {
         values.push_back(parseExpr(structName));
-        if(this->peek()->type == TokType::Comma) this->next();
-        else if(this->peek()->type != TokType::Lbra) this->error("expected token '}'!");
+        if(peek()->type == TokType::Comma) next();
+        else if(peek()->type != TokType::Lbra) error("expected token '}'!");
     }
-    this->next();
+    next();
 
     return new NodeConstStruct(structName, values, loc);
 }
 
 Node* Parser::parseAtom(std::string f) {
-    Token* t = this->peek();
-    this->next();
+    Token* t = peek();
+    next();
 
-    int size = this->peek()->value.size();
+    int size = peek()->value.size();
 
     if(t->type == TokType::Number) {
         int expNumber = 0;
 
         if(peek()->value == "e") {
             // Exponent
-            this->next();
+            next();
 
-            char sign = this->peek()->value[0];
-            this->next();
+            char sign = peek()->value[0];
+            next();
 
-            std::string exponent = this->peek()->value;
-            this->next();
+            std::string exponent = peek()->value;
+            next();
 
             if(sign == '-') expNumber = std::stoi(exponent) * -1;
             else expNumber = std::stoi(exponent);
         }
 
-        if(this->peek()->type == TokType::Identifier) {
-            std::string iden = this->peek()->value;
+        if(peek()->type == TokType::Identifier) {
+            std::string iden = peek()->value;
 
             if(iden == "u" || iden == "l" || iden == "c" || iden == "s") {
                 NodeInt* _int = new NodeInt(BigInt(t->value));
-                this->next();
+                next();
 
                 if(iden == "u") _int->isUnsigned = true;
                 else if(iden == "l") _int->isMustBeLong = true;
@@ -558,7 +583,7 @@ Node* Parser::parseAtom(std::string f) {
                 }
                 else nfloat = new NodeFloat(std::stod(t->value));
 
-                this->next();
+                next();
 
                 if(iden == "f") nfloat->isMustBeFloat = true;
                 else if(iden == "d") nfloat->type = basicTypes[BasicType::Double];
@@ -577,13 +602,13 @@ Node* Parser::parseAtom(std::string f) {
 
         if(peek()->value == "e") {
             // Exponent
-            this->next();
+            next();
 
-            char sign = this->peek()->value[0];
-            this->next();
+            char sign = peek()->value[0];
+            next();
 
-            std::string exponent = this->peek()->value;
-            this->next();
+            std::string exponent = peek()->value;
+            next();
 
             if(sign == '-') expNumber = std::stoi(exponent) * -1;
             else expNumber = std::stoi(exponent);
@@ -594,9 +619,9 @@ Node* Parser::parseAtom(std::string f) {
         double number = std::stod(t->value);
         if(expNumber != 0) number = std::pow(10, expNumber) * number;
 
-        if(this->peek()->type == TokType::Identifier) {
-            std::string suffix = this->peek()->value;
-            this->next();
+        if(peek()->type == TokType::Identifier) {
+            std::string suffix = peek()->value;
+            next();
 
             if(suffix == "d") value = new NodeFloat(number, basicTypes[BasicType::Double]);
             else if(suffix == "f") {
@@ -625,121 +650,121 @@ Node* Parser::parseAtom(std::string f) {
     if(t->type == TokType::False) return new NodeBool(false);
 
     if(t->type == TokType::String) {
-        if(this->peek()->type == TokType::Identifier && this->peek()->value == "w") {
-            this->next();
-            return new NodeString(this->tokens[this->idx-2]->value, true);
+        if(peek()->type == TokType::Identifier && peek()->value == "w") {
+            next();
+            return new NodeString(tokens[idx-2]->value, true);
         }
         return new NodeString(t->value,false);
     }
 
     if(t->type == TokType::Char) {
-        if(this->peek()->type == TokType::Identifier && this->peek()->value == "w") {
-            this->next();
-            return new NodeChar(this->tokens[this->idx-2]->value, true);
+        if(peek()->type == TokType::Identifier && peek()->value == "w") {
+            next();
+            return new NodeChar(tokens[idx-2]->value, true);
         }
         return new NodeChar(t->value, false);
     }
 
-    if(this->peek()->type == TokType::Rbra) return parseConstantStructure(t->value);
+    if(peek()->type == TokType::Rbra) return parseConstantStructure(t->value);
 
     if(t->type == TokType::Identifier) {
         if(t->value == "null") return new NodeNull(nullptr, t->line);
         else if(t->value == "cast") {
-            if(this->peek()->type != TokType::Rpar) this->error("expected token '('!");
-            this->next();
-            Type* ty = this->parseType();
-            if(this->peek()->type != TokType::Lpar) this->error("expected token ')'!");
-            this->next();
-            Node* expr = this->parseExpr();
+            if(peek()->type != TokType::Rpar) error("expected token '('!");
+            next();
+            Type* ty = parseType();
+            if(peek()->type != TokType::Lpar) error("expected token ')'!");
+            next();
+            Node* expr = parseExpr();
             return new NodeCast(ty, expr, t->line);
         }
         else if(t->value == "sizeof") {
-            if(this->peek()->type != TokType::Rpar) this->error("expected token '('!");
-            this->next();
-            NodeType* val = new NodeType(this->parseType(), t->line);
-            if(this->peek()->type != TokType::Lpar) this->error("expected token ')'!");
-            this->next();
+            if(peek()->type != TokType::Rpar) error("expected token '('!");
+            next();
+            NodeType* val = new NodeType(parseType(), t->line);
+            if(peek()->type != TokType::Lpar) error("expected token ')'!");
+            next();
             return new NodeSizeof(val, t->line);
         }
         else if(t->value == "bitcast") {
-            if(this->peek()->type != TokType::Rpar) this->error("expected token '('!");
-            this->next();
-            Type* ty = this->parseType();
-            if(this->peek()->type != TokType::Lpar) this->error("expected token ')'!");
-            this->next();
-            Node* expr = this->parseExpr();
+            if(peek()->type != TokType::Rpar) error("expected token '('!");
+            next();
+            Type* ty = parseType();
+            if(peek()->type != TokType::Lpar) error("expected token ')'!");
+            next();
+            Node* expr = parseExpr();
             return new NodeBitcast(ty, expr, t->line);
         }
         else if(t->value == "itop") {
-            if(this->peek()->type != TokType::Rpar) this->error("expected token '('!");
-            this->next();
-            Type* type = this->parseType();
-            if(this->peek()->type != TokType::Comma) this->error("expected token ','!");
-            this->next();
-            Node* val = this->parseExpr();
-            if(this->peek()->type != TokType::Lpar) this->error("expected token ')'!");
-            this->next();
+            if(peek()->type != TokType::Rpar) error("expected token '('!");
+            next();
+            Type* type = parseType();
+            if(peek()->type != TokType::Comma) error("expected token ','!");
+            next();
+            Node* val = parseExpr();
+            if(peek()->type != TokType::Lpar) error("expected token ')'!");
+            next();
             return new NodeItop(val, type, t->line);
         }
         else if(t->value == "ptoi") {
-            if(this->peek()->type != TokType::Rpar) this->error("expected token '('!");
-            this->next();
-            Node* val = this->parseExpr();
-            if(this->peek()->type != TokType::Lpar) this->error("expected token ')'!");
-            this->next();
+            if(peek()->type != TokType::Rpar) error("expected token '('!");
+            next();
+            Node* val = parseExpr();
+            if(peek()->type != TokType::Lpar) error("expected token ')'!");
+            next();
             return new NodePtoi(val, t->line);
         }
         else if(t->value == "cmpxchg") return parseCmpXchg(f);
         else if(t->value == "asm") {
-            if(this->peek()->type != TokType::Rpar) this->error("expected token '('!");
-            this->next();
+            if(peek()->type != TokType::Rpar) error("expected token '('!");
+            next();
             Type* type = nullptr;
-            if(this->peek()->type != TokType::String) {
-                type = this->parseType();
-                if(this->peek()->type == TokType::Comma) this->next();
+            if(peek()->type != TokType::String) {
+                type = parseType();
+                if(peek()->type == TokType::Comma) next();
             }
             else type = typeVoid;
-            std::string line = this->peek()->value;
+            std::string line = peek()->value;
             std::string additions = "";
             std::vector<Node*> args;
-            this->next();
+            next();
 
-            if(this->peek()->type == TokType::Comma) {
-                this->next();
-                additions = this->peek()->value;
-                this->next();
+            if(peek()->type == TokType::Comma) {
+                next();
+                additions = peek()->value;
+                next();
             }
-            if(this->peek()->type == TokType::Comma) {
-                this->next();
-                while(this->peek()->type != TokType::Lpar) {
-                    args.push_back(this->parseExpr(f));
-                    if(this->peek()->type != TokType::Lpar) this->next();
+            if(peek()->type == TokType::Comma) {
+                next();
+                while(peek()->type != TokType::Lpar) {
+                    args.push_back(parseExpr(f));
+                    if(peek()->type != TokType::Lpar) next();
                 }
             }
-            if(this->peek()->type != TokType::Lpar) this->error("expected token ')'!");
-            this->next();
+            if(peek()->type != TokType::Lpar) error("expected token ')'!");
+            next();
             return new NodeAsm(line, true, type, additions, args, t->line);
         }
-        else if(this->peek()->type == TokType::Less) {
-            if(this->isTemplate()) {
-                this->next();
+        else if(peek()->type == TokType::Less) {
+            if(isTemplate()) {
+                next();
                 std::string all = t->value + "<";
                 int countOfL = 0;
 
                 while(countOfL != -1) {
-                    all += this->peek()->value;
-                    if(this->peek()->type == TokType::Less) countOfL += 1;
-                    else if(this->peek()->type == TokType::More) countOfL -= 1;
-                    this->next();
+                    all += peek()->value;
+                    if(peek()->type == TokType::Less) countOfL += 1;
+                    else if(peek()->type == TokType::More) countOfL -= 1;
+                    next();
                 }
 
-                if(this->peek()->type == TokType::More) this->next();
-                if(this->peek()->type == TokType::Rbra) return parseConstantStructure(all);
+                if(peek()->type == TokType::More) next();
+                if(peek()->type == TokType::Rbra) return parseConstantStructure(all);
                 
                 // Check for lambda
                 if(peek()->type == TokType::Rpar) {
                     int rpars = 0;
-                    long oldIdx = this->idx;
+                    long oldIdx = idx;
 
                     while(rpars != -1) {
                         idx += 1;
@@ -748,7 +773,7 @@ Node* Parser::parseAtom(std::string f) {
                         else if(peek()->type == TokType::Lpar) rpars -= 1;
                     }
 
-                    this->next();
+                    next();
 
                     if(peek()->type == TokType::ShortRet) {
                         idx = oldIdx;
@@ -759,17 +784,17 @@ Node* Parser::parseAtom(std::string f) {
                     else idx = oldIdx;
                 }
 
-                return this->parseCall(new NodeIden(all, this->peek()->line));
+                return parseCall(new NodeIden(all, peek()->line));
             }
         }
-        else if(this->peek()->type == TokType::Rpar) {
-            this->idx -= 1;
+        else if(peek()->type == TokType::Rpar) {
+            idx -= 1;
             if(isDefinedLambda()) return parseLambda();
-            else this->idx += 1;
+            else idx += 1;
         }
 
         if(isBasicType(t->value)) {
-            this->idx -= 1;
+            idx -= 1;
             return new NodeType(parseType(), t->line);
         }
         else {
@@ -777,106 +802,104 @@ Node* Parser::parseAtom(std::string f) {
             // TODO: Add support of arrays and structures
             if(peek()->type == TokType::Multiply) {
                 if(tokens[idx + 1]->type == TokType::Lpar || tokens[idx + 1]->type == TokType::Rarr) {
-                    this->idx -= 1;
+                    idx -= 1;
                     return new NodeType(parseType(), t->line);
                 }
             }
         }
 
-        return new NodeIden(t->value, this->peek()->line);
+        return new NodeIden(t->value, peek()->line);
     }
 
     if(t->type == TokType::Rpar) {
-        auto e = this->parseExpr();
-        if(this->peek()->type != TokType::Lpar) this->error("expected token ')'!");
-        this->next();
+        auto e = parseExpr();
+        if(peek()->type != TokType::Lpar) error("expected token ')'!");
+        next();
         return e;
     }
 
     if(t->type == TokType::Rarr) {
         std::vector<Node*> values;
-        while(this->peek()->type != TokType::Larr) {
-            values.push_back(this->parseExpr());
-            if(this->peek()->type == TokType::Comma) this->next();
-            else if(this->peek()->type != TokType::Larr) this->error("expected token ']'!");
+        while(peek()->type != TokType::Larr) {
+            values.push_back(parseExpr());
+            if(peek()->type == TokType::Comma) next();
+            else if(peek()->type != TokType::Larr) error("expected token ']'!");
         }
-        this->next();
+        next();
         return new NodeArray(t->line, values);
     }
 
     if(t->type == TokType::Builtin) {
         std::string name = t->value;
         std::vector<Node*> args;
-        if(this->peek()->type == TokType::Rpar) {
-            this->next();
-            while(this->peek()->type != TokType::Lpar) {
-                if(isBasicType(this->peek()->value) || this->tokens[this->idx+1]->value == "*") {
-                    Type* pType = this->parseType(true);
-                    if(this->peek()->type != TokType::Comma && this->peek()->type != TokType::Lpar) {
-                        char op= this->peek()->type;
+        if(peek()->type == TokType::Rpar) {
+            next();
+            while(peek()->type != TokType::Lpar) {
+                if(isBasicType(peek()->value) || tokens[idx+1]->value == "*") {
+                    Type* pType = parseType(true);
+                    if(peek()->type != TokType::Comma && peek()->type != TokType::Lpar) {
+                        char op= peek()->type;
                         Node* node;
-                        if(this->tokens[this->idx+1]->type == TokType::Builtin) node = this->parseAtom(f);
+                        if(tokens[idx+1]->type == TokType::Builtin) node = parseAtom(f);
                         else {
-                            this->next();
-                            node = new NodeType(this->parseType(true), this->peek()->line);
+                            next();
+                            node = new NodeType(parseType(true), peek()->line);
                         }
-                        args.push_back(new NodeBinary(op, new NodeType(pType, this->peek()->line), node, this->peek()->line));
+                        args.push_back(new NodeBinary(op, new NodeType(pType, peek()->line), node, peek()->line));
                     }
-                    else args.push_back(new NodeType(pType, this->peek()->line));
+                    else args.push_back(new NodeType(pType, peek()->line));
                 }
-                else args.push_back(this->parseExpr(f));
-                if(this->peek()->type == TokType::Comma) this->next();
+                else args.push_back(parseExpr(f));
+                if(peek()->type == TokType::Comma) next();
             }
-            this->next();
+            next();
         }
 
         NodeBlock* block;
-        if(this->peek()->type == TokType::Rbra) block = parseBlock(f);
+        if(peek()->type == TokType::Rbra) block = parseBlock(f);
         else block = new NodeBlock({});
-        if(this->peek()->type == TokType::Identifier && this->tokens[this->idx-1]->type != TokType::Lbra && this->tokens[this->idx-1]->type != TokType::Semicolon) {
-            std::string name = this->peek()->value;
+        if(peek()->type == TokType::Identifier && tokens[idx-1]->type != TokType::Lbra && tokens[idx-1]->type != TokType::Semicolon) {
+            std::string name = peek()->value;
             Node* value = nullptr;
-            this->next();
-            if(this->peek()->type == TokType::Equ) {
-                this->next();
-                value = this->parseExpr(f);
+            next();
+            if(peek()->type == TokType::Equ) {
+                next();
+                value = parseExpr(f);
             }
-            return new NodeVar(name, value, false, false, false, {}, this->peek()->line, new TypeBuiltin(name, args, block));
+            return new NodeVar(name, value, false, false, false, {}, peek()->line, new TypeBuiltin(name, args, block));
         }
         return new NodeBuiltin(name, args, t->line, block);
     }
-    if(t->type == TokType::Destructor) return new NodeUnary(t->line, TokType::Destructor, this->parseExpr());
-    this->error("expected a number, true/false, char, variable or expression. Got: \033[1m" + t->value + "\033[22m on \033[1m" + std::to_string(t->line) + "\033[22m line.");
+    if(t->type == TokType::Destructor) return new NodeUnary(t->line, TokType::Destructor, parseExpr());
+    error("expected a number, true/false, char, variable or expression. Got: \033[1m" + t->value + "\033[22m on \033[1m" + std::to_string(t->line) + "\033[22m line.");
     return nullptr;
 }
 
 Node* Parser::parseStruct(std::vector<DeclarMod> mods) {
-    int loc = this->peek()->line;
+    int loc = peek()->line;
 
-    this->next();
-    if(this->peek()->type != TokType::Identifier) this->error("a declaration name must be identifier!");
-    std::string name = this->peek()->value;
-    this->next();
+    std::string name = expect(TokType::Identifier, "a declaration name must be an identifier!")->value;
+    next();
 
     std::vector<std::string> templateNames;
-    if(this->peek()->type == TokType::Less) {
-        this->next();
-        while(this->peek()->type != TokType::More) {
-            templateNames.push_back(this->parseType()->toString());
-            if(this->peek()->type == TokType::Comma) this->next();
+    if(peek()->type == TokType::Less) {
+        next();
+        while(peek()->type != TokType::More) {
+            templateNames.push_back(parseType()->toString());
+            if(peek()->type == TokType::Comma) next();
         }
-        this->next();
+        next();
     }
 
     std::string _exs = "";
-    if(this->peek()->type == TokType::ValSel) {
+    if(peek()->type == TokType::ValSel) {
         next();
-        _exs = this->peek()->value;
+        _exs = peek()->value;
         next();
     }
 
-    if(this->peek()->type != TokType::Rbra) this->error("expected token '{'!");
-    this->next(); // skip {
+    if(peek()->type != TokType::Rbra) error("expected token '{'!");
+    next(); // skip {
     
     std::vector<Node*> nodes;
     std::vector<Node*> _nodes;
@@ -888,8 +911,8 @@ Node* Parser::parseStruct(std::vector<DeclarMod> mods) {
         parseTopLevel(_nodes, name);
     }
 
-    if(this->peek()->type != TokType::Lbra) this->error("expected token '}'!");
-    this->next(); // skip }
+    if(peek()->type != TokType::Lbra) error("expected token '}'!");
+    next(); // skip }
 
     return new NodeStruct(name, nodes, loc, _exs, templateNames, mods);
 }
@@ -916,19 +939,19 @@ std::string getGlobalFile(Parser* parser) {
 }
 
 Node* Parser::parseImport() {
-    int loc = this->peek()->line;
-    this->next();
+    int loc = peek()->line;
+    next();
     std::vector<ImportFile> files;
 
-    if(this->peek()->type != TokType::Less && this->peek()->type != TokType::String) this->error("expected token '<' or string!");
+    if(peek()->type != TokType::Less && peek()->type != TokType::String) error("expected token '<' or string!");
 
-    while(this->peek()->type == TokType::Less || this->peek()->type == TokType::String) {
-        if(this->peek()->type == TokType::Less) files.push_back(ImportFile{getGlobalFile(this) + ".rave", true});
-        else files.push_back(ImportFile{this->peek()->value + ".rave", false});
-        this->next();
+    while(peek()->type == TokType::Less || peek()->type == TokType::String) {
+        if(peek()->type == TokType::Less) files.push_back(ImportFile{getGlobalFile(this) + ".rave", true});
+        else files.push_back(ImportFile{peek()->value + ".rave", false});
+        next();
     }
 
-    if(this->peek()->type == TokType::Semicolon) this->next();
+    if(peek()->type == TokType::Semicolon) next();
 
     if(files.size() > 0) {
         std::vector<NodeImport*> imports;
@@ -936,135 +959,128 @@ Node* Parser::parseImport() {
         return new NodeImports(imports, loc);
     }
 
-    return new NodeImport(files[0], std::vector<std::string>(), this->peek()->line);
+    return new NodeImport(files[0], std::vector<std::string>(), peek()->line);
 }
 
 Node* Parser::parseAliasType() {
-    int loc = this->peek()->line;
+    int loc = peek()->line;
 
-    this->next();
-    if(this->peek()->type != TokType::Identifier) this->error("a type name must be identifier!");
-    std::string name = this->peek()->value;
-    this->next();
+    std::string name = expect(TokType::Identifier, "a type name must be an identifier!")->value;
+    expect(TokType::Equ, "expected token '='!");
+    next();
 
-    if(this->peek()->type != TokType::Equ) this->error("expected token '='!");
-    this->next();
+    Type* childType = parseType();
 
-    Type* childType = this->parseType();
-    if(this->peek()->type == TokType::Semicolon) this->next();
+    if(peek()->type == TokType::Semicolon) next();
     return new NodeAliasType(name, childType, loc);
 }
 
 Type* Parser::parseTypeAtom() {
-    if(this->peek()->type == TokType::Identifier) {
-        std::string id = this->peek()->value;
-        this->next();
+    if(peek()->type == TokType::Identifier) {
+        std::string id = peek()->value;
+        next();
 
         if(id == "void") return typeVoid;
         else if(id == "auto") return new TypeAuto();
         else if(id == "const") {
-            if(this->peek()->type == TokType::Rpar) this->next();
-            else this->error("expected token '('!");
-                Type* _t = this->parseType();
-            if(this->peek()->type == TokType::Lpar) this->next();
-            else this->error("expected token ')'!");
+            if(peek()->type == TokType::Rpar) next();
+            else error("expected token '('!");
+                Type* _t = parseType();
+            if(peek()->type == TokType::Lpar) next();
+            else error("expected token ')'!");
             return new TypeConst(_t); 
         }
         else return getTypeByName(id);
     }
-    else if(this->peek()->type == TokType::Builtin) {
+    else if(peek()->type == TokType::Builtin) {
         std::vector<Node*> args;
         NodeBlock* block;
-        Token* info = this->peek(); this->idx += 2;
-        while(this->peek()->type != TokType::Lpar) {
-            args.push_back(this->parseExpr());
-            if(this->peek()->type == TokType::Comma) this->next();
+        Token* info = peek(); idx += 2;
+        while(peek()->type != TokType::Lpar) {
+            args.push_back(parseExpr());
+            if(peek()->type == TokType::Comma) next();
         }
-        if(this->peek()->type == TokType::Rbra) return new TypeBuiltin(info->value, args, parseBlock(""));
+        if(peek()->type == TokType::Rbra) return new TypeBuiltin(info->value, args, parseBlock(""));
         return new TypeBuiltin(info->value, args, new NodeBlock({}));
     }
-    else this->error("expected a type name, not \033[1m" + this->peek()->value + "\033[22m!");
+    else error("expected a type name, not \033[1m" + peek()->value + "\033[22m!");
     return nullptr;
 }
 
 std::vector<TypeFuncArg*> Parser::parseFuncArgs() {
     std::vector<TypeFuncArg*> buffer;
-    if(this->peek()->type == TokType::Rpar) this->next();
-    else this->error("expected token '('!");
-    while(this->peek()->type != TokType::Lpar) {
-        Type* ty = this->parseType();
+    if(peek()->type == TokType::Rpar) next();
+    else error("expected token '('!");
+    while(peek()->type != TokType::Lpar) {
+        Type* ty = parseType();
         std::string name = "";
-        if(this->peek()->type == TokType::Identifier) {name = this->peek()->value; this->next();}
+        if(peek()->type == TokType::Identifier) {name = peek()->value; next();}
         buffer.push_back(new TypeFuncArg(ty,name));
 
-        if(this->peek()->type == TokType::Comma) this->next();
-        else if(this->peek()->type != TokType::Lpar) this->error("expected token ')'!");
-    } this->next();
+        if(peek()->type == TokType::Comma) next();
+        else if(peek()->type != TokType::Lpar) error("expected token ')'!");
+    } next();
     return buffer;
 }
 
 Type* Parser::parseType(bool cannotBeTemplate, bool isDeclaration) {
-    if(this->peek()->type == TokType::Builtin && this->peek()->value == "@value") {
+    if(peek()->type == TokType::Builtin && peek()->value == "@value") {
         // @value(type, name) is used for entering values right into structure template.
-        this->next();
-        if(this->peek()->type != TokType::Rpar) this->error("expected token '('!");
-        this->next();
+        expect(TokType::Rpar, "expected token '('!");
+        next();
 
-        Type* mainType = this->parseType();
-        if(this->peek()->type != TokType::Comma) this->error("expected token ','!");
-        this->next();
+        Type* mainType = parseType();
+        if(peek()->type != TokType::Comma) error("expected token ','!");
 
-        if(this->peek()->type != TokType::Identifier) this->error("expected identifier!");
-        std::string name = this->peek()->value;
-        this->next();
-
-        if(this->peek()->type != TokType::Lpar) this->error("expected token ')'!");
-        this->next();
+        std::string name = expect(TokType::Identifier, "expected identifier!")->value;
+        expect(TokType::Lpar, "expected token ')'!");
+        next();
 
         return new TypeTemplateMemberDefinition(mainType, name);
     }
 
-    Type* ty = this->parseTypeAtom();
+    Type* ty = parseTypeAtom();
     while(
-        this->peek()->type == TokType::Multiply || this->peek()->type == TokType::Rarr ||
-        this->peek()->type == TokType::Rpar || (this->peek()->type == TokType::Less && !cannotBeTemplate)
+        peek()->type == TokType::Multiply || peek()->type == TokType::Rarr ||
+        peek()->type == TokType::Rpar || (peek()->type == TokType::Less && !cannotBeTemplate)
     ) {
-        if(this->peek()->type == TokType::Multiply) {this->next(); ty = new TypePointer(ty);}
-        else if(this->peek()->type == TokType::Rarr) {
+        if(peek()->type == TokType::Multiply) {next(); ty = new TypePointer(ty);}
+        else if(peek()->type == TokType::Rarr) {
             Node* count = nullptr;
-            this->next();
+            next();
             if(peek()->type != TokType::Larr) count = parseExpr();
             
-            if(this->peek()->type != TokType::Larr) {
-                if(this->tokens[this->idx + 1]->type != TokType::Equ) this->error("expected token ']'!");
+            if(peek()->type != TokType::Larr) {
+                if(tokens[idx + 1]->type != TokType::Equ) error("expected token ']'!");
             }
-            else this->next();
+            else next();
 
             ty = new TypeArray(count, ty);
         }
-        else if(this->peek()->type == TokType::Rpar) ty = new TypeFunc(ty, this->parseFuncArgs(), false);
+        else if(peek()->type == TokType::Rpar) ty = new TypeFunc(ty, parseFuncArgs(), false);
         else {
             std::vector<Type*> tTypes;
             std::string tTypesString = "";
-            this->next();
 
-            while(this->peek()->type != TokType::More) {
-                if(this->peek()->type == TokType::Number || this->peek()->type == TokType::HexNumber || this->peek()->type == TokType::FloatNumber) {
-                    Node* number = this->parseAtom();
+            next();
+            while(peek()->type != TokType::More) {
+                if(peek()->type == TokType::Number || peek()->type == TokType::HexNumber || peek()->type == TokType::FloatNumber) {
+                    Node* number = parseAtom();
                     tTypes.push_back(new TypeTemplateMember(number->getType(), number));
                 }
-                else tTypes.push_back(this->parseType(cannotBeTemplate));
+                else tTypes.push_back(parseType(cannotBeTemplate));
 
-                if(this->peek()->type == TokType::Comma) this->next();
-                else if(this->peek()->type != TokType::More) this->error("expected token '>'!");
-            } this->next();
+                if(peek()->type == TokType::Comma) next();
+                else if(peek()->type != TokType::More) error("expected token '>'!");
+            }
+            next();
 
             for(int i=0; i<tTypes.size(); i++) tTypesString += tTypes[i]->toString() + ",";
             ty = new TypeStruct(ty->toString() + "<" + tTypesString.substr(0, tTypesString.size() - 1) + ">", tTypes);
 
-            if(this->peek()->type == TokType::Rpar) {
-                if(isDeclaration) ty = new TypeFunc(ty, this->parseFuncArgs(), false);
-                else ty = new TypeCall(((TypeStruct*)ty)->name, this->parseFuncCallArgs());
+            if(peek()->type == TokType::Rpar) {
+                if(isDeclaration) ty = new TypeFunc(ty, parseFuncArgs(), false);
+                else ty = new TypeCall(((TypeStruct*)ty)->name, parseFuncCallArgs());
             }
         }
     }
@@ -1072,77 +1088,83 @@ Type* Parser::parseType(bool cannotBeTemplate, bool isDeclaration) {
 }
 
 bool Parser::isSlice() {
-    int idx = this->idx;
-    this->next();
+    const int savedIdx = idx;
     int countOfRarr = 1;
-    while(countOfRarr != 0) {
-        if(this->peek()->type == TokType::Rarr) countOfRarr += 1;
-        else if(this->peek()->type == TokType::Larr) countOfRarr -= 1;
-        else if(this->peek()->type == TokType::SliceOper) {
-            this->idx = idx;
+
+    while(true) {
+        Token* tok = next();
+
+        if(tok->type == TokType::Eof) break;
+
+        if(tok->type == TokType::Rarr) countOfRarr++;
+        else if(tok->type == TokType::Larr) {
+            if(--countOfRarr == 0) break;
+        }
+        else if (tok->type == TokType::SliceOper) {
+            idx = savedIdx;
             return true;
         }
-        next();
     }
-    this->idx = idx;
+
+    idx = savedIdx;
     return false;
 }
 
 bool Parser::isTemplate() {
-    const int startIdx = this->idx;
-    const Token* nextToken = this->tokens[this->idx + 1];
+    const int startIdx = idx;
+    const Token* nextToken = tokens[idx + 1];
 
     if(nextToken->type == TokType::Number || nextToken->type == TokType::HexNumber ||
         nextToken->type == TokType::FloatNumber || nextToken->type == TokType::String ||
         nextToken->type == TokType::Rarr
     ) return false;
 
-    this->next();
-    char peekType = this->peek()->type;
+    next();
+    char peekType = peek()->type;
     if(peekType == TokType::Number || peekType == TokType::String ||
         peekType == TokType::HexNumber || peekType == TokType::FloatNumber) {
-        this->idx = startIdx;
+        idx = startIdx;
         return false;
     }
 
-    this->next();
-    peekType = this->peek()->type;
+    next();
+    peekType = peek()->type;
     if(peekType == TokType::Multiply || peekType == TokType::Comma ||
         peekType == TokType::Rarr || peekType == TokType::More || peekType == TokType::Less) {
         if(peekType == TokType::Multiply) {
-            this->next();
-            peekType = this->peek()->type;
+            next();
+            peekType = peek()->type;
             if(peekType == TokType::Multiply || peekType == TokType::Rarr ||
                 peekType == TokType::Less || peekType == TokType::More || peekType == TokType::Comma) {
-                this->idx = startIdx;
+                idx = startIdx;
                 return true;
             }
         }
         else if(peekType == TokType::Comma || peekType == TokType::More || peekType == TokType::Less) {
-            this->idx = startIdx;
+            idx = startIdx;
             return true;
         }
         else if(peekType == TokType::Rarr) {
-            while(this->peek()->type == TokType::Rarr) {
-                this->next();
+            while(peek()->type == TokType::Rarr) {
+                next();
                 // TODO: Alias support
-                if(this->peek()->type != TokType::Number) {
-                    this->idx = startIdx;
+                if(peek()->type != TokType::Number) {
+                    idx = startIdx;
                     return false;
                 }
-                this->next();
-                this->next();
+                next();
+                next();
             }
-            peekType = this->peek()->type;
+            peekType = peek()->type;
             if(peekType == TokType::Multiply || peekType == TokType::Less ||
                 peekType == TokType::More || peekType == TokType::Comma) {
-                this->idx = startIdx;
+                idx = startIdx;
                 return true;
             }
         }
     }
 
-    this->idx = startIdx;
+    idx = startIdx;
     return false;
 }
 
@@ -1154,72 +1176,72 @@ Node* Parser::parsePrefix(std::string f) {
         TokType::Ne,
     };
 
-    if(std::find(operators.begin(), operators.end(), this->peek()->type) != operators.end()) {
-        auto tok = this->peek();
-        this->next();
+    if(std::find(operators.begin(), operators.end(), peek()->type) != operators.end()) {
+        auto tok = peek();
+        next();
 
-        auto tok2 = this->peek();
-        this->next();
+        auto tok2 = peek();
+        next();
 
         if(tok2->value == "[" || tok2->value == ".") {
-            this->idx -= 1;
-            return new NodeUnary(tok->line, tok->type, this->parseSuffix(this->parseAtom(f), f));
+            idx -= 1;
+            return new NodeUnary(tok->line, tok->type, parseSuffix(parseAtom(f), f));
         }
-        else this->idx -= 1;
+        else idx -= 1;
 
-        return new NodeUnary(tok->line, tok->type, this->parseExpr(f));
+        return new NodeUnary(tok->line, tok->type, parseExpr(f));
     }
 
-    return this->parseAtom(f);
+    return parseAtom(f);
 }
 
 Node* Parser::parseSuffix(Node* base, std::string f) {
-    while(this->peek()->type == TokType::Rpar
-         || this->peek()->type == TokType::Rarr
-         || this->peek()->type == TokType::Dot
+    while(peek()->type == TokType::Rpar
+         || peek()->type == TokType::Rarr
+         || peek()->type == TokType::Dot
     ) {
-        if(this->peek()->type == TokType::Rpar) base = this->parseCall(base);
-        else if(this->peek()->type == TokType::Rarr) {
-            if(this->isSlice()) base = parseSlice(base, f);
+        if(peek()->type == TokType::Rpar) base = parseCall(base);
+        else if(peek()->type == TokType::Rarr) {
+            if(isSlice()) base = parseSlice(base, f);
             else {
-                base = this->parseIndex(base, f);
+                base = parseIndex(base, f);
             }
         }
-        else if(this->peek()->type == TokType::Dot) {
-            this->next();
+        else if(peek()->type == TokType::Dot) {
+            next();
 
-            bool isPtr = (this->peek()->type == TokType::Amp);
-            if(isPtr) this->next();
+            bool isPtr = (peek()->type == TokType::Amp);
+            if(isPtr) next();
 
-            std::string field = this->peek()->value;
-            this->next();
+            std::string field = peek()->value;
+            next();
 
-            if(this->peek()->type == TokType::Rpar) base = this->parseCall(new NodeGet(base, field, isPtr, this->peek()->line));
-            else if(isPtr && this->peek()->type == TokType::Rarr) {
-                base = new NodeGet(base, field, this->peek()->type == TokType::Equ || isPtr, this->peek()->line);
+            if(peek()->type == TokType::Rpar) base = parseCall(new NodeGet(base, field, isPtr, peek()->line));
+            else if(isPtr && peek()->type == TokType::Rarr) {
+                base = new NodeGet(base, field, peek()->type == TokType::Equ || isPtr, peek()->line);
                 ((NodeGet*)base)->isPtrForIndex = true;
             }
-            else if(this->peek()->type == TokType::Less) {
-                if(this->isTemplate()) {
+            else if(peek()->type == TokType::Less) {
+                if(isTemplate()) {
                     std::vector<Type*> types;
                     std::string sTypes = "<";
-                    this->next();
-                    while(this->peek()->type != TokType::More) {
-                        types.push_back(this->parseType());
+                    next();
+                    while(peek()->type != TokType::More) {
+                        types.push_back(parseType());
                         sTypes += types[types.size() - 1]->toString() + ",";
-                        if(this->peek()->type == TokType::Comma) this->next();
+                        if(peek()->type == TokType::Comma) next();
                     }
                     sTypes = sTypes.substr(0, sTypes.size() - 1) + ">";
-                    this->next();
-                    if(this->peek()->type == TokType::Rpar) base = this->parseCall(new NodeGet(base, field+sTypes, isPtr, this->peek()->line));
+                    next();
+                    if(peek()->type == TokType::Rpar) base = parseCall(new NodeGet(base, field+sTypes, isPtr, peek()->line));
                     else {
                         error("Assert into parseSuffix!");
                         return nullptr;
                     }
                 }
-                else base = new NodeGet(base, field, this->peek()->type == TokType::Equ || isPtr, this->peek()->line);
+                else base = new NodeGet(base, field, peek()->type == TokType::Equ || isPtr, peek()->line);
             }
-            else base = new NodeGet(base, field, this->peek()->type == TokType::Equ || isPtr, this->peek()->line);
+            else base = new NodeGet(base, field, peek()->type == TokType::Equ || isPtr, peek()->line);
         }
     }
     return base;
@@ -1239,12 +1261,12 @@ Node* Parser::parseIndex(Node* base, std::string f) {
 }
 
 Node* Parser::parseCall(Node* func) {
-    if(instanceof<NodeInt>(func)) this->error("a function name must be identifier!");
+    if(instanceof<NodeInt>(func)) error("a function name must be an identifier!");
 
-    return new NodeCall(this->peek()->line, func, this->parseFuncCallArgs());
+    return new NodeCall(peek()->line, func, parseFuncCallArgs());
 }
 
-Node* Parser::parseBasic(std::string f) {return this->parseSuffix(this->parsePrefix(f), f);}
+Node* Parser::parseBasic(std::string f) {return parseSuffix(parsePrefix(f), f);}
 
 Node* Parser::parseExpr(std::string f) {
     std::vector<Token*> operatorStack;
@@ -1268,7 +1290,7 @@ Node* Parser::parseExpr(std::string f) {
         }
 
         operatorStack.push_back(tok);
-        nodeStack.push_back(this->parseBasic(f));
+        nodeStack.push_back(parseBasic(f));
     }
 
     while(!operatorStack.empty()) {
@@ -1283,167 +1305,169 @@ Node* Parser::parseExpr(std::string f) {
 }
 
 Node* Parser::parseWhile(std::string f) {
-    int line = this->peek()->line;
-    this->next();
+    int line = peek()->line;
+    next();
 
     Node* cond = nullptr;
-    if(this->peek()->type == TokType::Rbra) cond = new NodeBool(true);
+    if(peek()->type == TokType::Rbra) cond = new NodeBool(true);
     else {
-        this->next();
-        cond = this->parseExpr(f);
-        if(this->peek()->type == TokType::Lpar) this->next();
+        next();
+        cond = parseExpr(f);
+        if(peek()->type == TokType::Lpar) next();
     }
 
     return new NodeWhile(cond, parseStmt(f), line);
 }
 
 Node* Parser::parseDefer(bool isFunctionScope, std::string f) {
-    int line = this->peek()->line;
-    this->next();
+    int line = peek()->line;
+    next();
     return new NodeDefer(parseStmt(f), line, isFunctionScope);
 }
 
 Node* Parser::parseFor(std::string f) {
-    int line = this->peek()->line;
-    this->idx += 2;
+    int line = peek()->line;
+    idx += 2;
 
     std::vector<Node*> presets;
     std::vector<Node*> afters;
     Node* cond;
     int curr = 0;
 
-    if(this->peek()->type == TokType::Semicolon && this->tokens[this->idx + 1]->type == TokType::Semicolon) {
+    if(peek()->type == TokType::Semicolon && tokens[idx + 1]->type == TokType::Semicolon) {
         // Infinite loop
-        this->idx += 3;
+        idx += 3;
 
-        Node* stmt = this->parseStmt(f);
+        Node* stmt = parseStmt(f);
         if(!instanceof<NodeBlock>(stmt)) stmt = new NodeBlock(std::vector<Node*>({stmt}));
         return new NodeWhile(new NodeBool(true), (NodeBlock*)stmt, line);
     }
 
-    while(this->peek()->type != TokType::Lpar) {
-        if(this->peek()->type == TokType::Semicolon) {
+    while(peek()->type != TokType::Lpar) {
+        if(peek()->type == TokType::Semicolon) {
             curr += 1;
-            this->next();
+            next();
         }
 
-        if(this->peek()->type == TokType::Comma) this->next();
+        if(peek()->type == TokType::Comma) next();
 
         if(curr == 0) {
-            if(this->tokens[this->idx + 1]->type == TokType::Equ) presets.push_back(this->parseExpr(f));
-            else if(this->tokens[this->idx + 1]->type == TokType::Semicolon) {curr += 1; this->next();}
+            if(tokens[idx + 1]->type == TokType::Equ) presets.push_back(parseExpr(f));
+            else if(tokens[idx + 1]->type == TokType::Semicolon) {curr += 1; next();}
             else {
-                Type* type = this->parseType();
-                std::string name = this->peek()->value;
-                this->next();
-                if(this->peek()->type == TokType::Equ) {
-                    this->next();
-                    Node* value = this->parseExpr(f);
-                    presets.push_back(new NodeVar(name, value, false, false, false, {}, this->peek()->line, type));
-                    if(this->peek()->type != TokType::Semicolon && this->peek()->type != TokType::Comma) curr += 1;
+                Type* type = parseType();
+                std::string name = peek()->value;
+                next();
+                if(peek()->type == TokType::Equ) {
+                    next();
+                    Node* value = parseExpr(f);
+                    presets.push_back(new NodeVar(name, value, false, false, false, {}, peek()->line, type));
+                    if(peek()->type != TokType::Semicolon && peek()->type != TokType::Comma) curr += 1;
                 }
-                else presets.push_back(new NodeVar(name, nullptr, false, false, false, {}, this->peek()->line, type));
+                else presets.push_back(new NodeVar(name, nullptr, false, false, false, {}, peek()->line, type));
             }
         }
-        else if(curr == 1) cond = this->parseExpr(f);
-        else afters.push_back(this->parseExpr(f));
+        else if(curr == 1) cond = parseExpr(f);
+        else afters.push_back(parseExpr(f));
     }
-    this->next();
+    next();
 
-    Node* stmt = this->parseStmt(f);
+    Node* stmt = parseStmt(f);
     if(!instanceof<NodeBlock>(stmt)) stmt = new NodeBlock(std::vector<Node*>({stmt}));
     return new NodeFor(presets, cond, afters, (NodeBlock*)stmt, line);
 }
 
 Node* Parser::parseForeach(std::string f) {
-    int line = this->peek()->line;
-    this->idx += 2;
+    int line = peek()->line;
+    next(2);
 
-    NodeIden* elName = new NodeIden(this->peek()->value, line);
-    this->idx += 1;
+    NodeIden* elName = new NodeIden(peek()->value, line);
+    next();
 
-    if(this->peek()->type != TokType::Semicolon) {
-        this->error("expected token ';'!");
+    if(peek()->type != TokType::Semicolon) {
+        error("expected token ';'!");
         return nullptr;
-    } this->idx += 1;
+    }
 
-    Node* dataVar = this->parseExpr(f);
+    next();
+
+    Node* dataVar = parseExpr(f);
     
-    if(this->peek()->type == TokType::Lpar) {
-        this->idx += 1;
-        Node* stmt = this->parseStmt(f);
+    if(peek()->type == TokType::Lpar) {
+        next();
+        Node* stmt = parseStmt(f);
         if(!instanceof<NodeBlock>(stmt)) stmt = new NodeBlock(std::vector<Node*>({stmt}));
         return new NodeForeach(elName, dataVar, nullptr, (NodeBlock*)stmt, line);
     }
 
-    if(this->peek()->type != TokType::Semicolon) {
-        this->error("expected token ';'!");
+    if(peek()->type != TokType::Semicolon) {
+        error("expected token ';'!");
         return nullptr;
-    } this->idx += 1;
+    }
+    
+    next();
+    Node* lengthVar = parseExpr(f);
+    next();
 
-    Node* lengthVar = this->parseExpr(f);
-
-    this->idx += 1;
-
-    Node* stmt = this->parseStmt(f);
+    Node* stmt = parseStmt(f);
     if(!instanceof<NodeBlock>(stmt)) stmt = new NodeBlock(std::vector<Node*>({stmt}));
     return new NodeForeach(elName, dataVar, lengthVar, (NodeBlock*)stmt, line);
 }
 
 bool Parser::isTemplateVariable() {
-    int oldIdx = this->idx;
+    int oldIdx = idx;
     int count = 1;
 
-    while(this->peek()->type != TokType::Less) this->next();
-    this->next();
+    while(peek()->type != TokType::Less) next();
+    next();
 
     while(count > 0) {
-        if(this->peek()->type == TokType::Less) count += 1;
-        else if(this->peek()->type == TokType::More) count -= 1;
+        if(peek()->type == TokType::Less) count += 1;
+        else if(peek()->type == TokType::More) count -= 1;
         
-        this->next();
+        next();
     }
 
-    if(this->peek()->type == TokType::Rpar) {
+    if(peek()->type == TokType::Rpar) {
         // Check for possible lambda
 
-        this->next();
+        next();
 
         count = 1;
 
         while(count > 0) {
-            if(this->peek()->type == TokType::Rpar) count += 1;
-            else if(this->peek()->type == TokType::Lpar) count -= 1;
+            if(peek()->type == TokType::Rpar) count += 1;
+            else if(peek()->type == TokType::Lpar) count -= 1;
 
-            this->next();
+            next();
         }
 
-        bool result = this->peek()->type == TokType::Identifier || this->peek()->type == TokType::Rarr || this->peek()->type == TokType::Multiply;
+        bool result = peek()->type == TokType::Identifier || peek()->type == TokType::Rarr || peek()->type == TokType::Multiply;
 
-        this->idx = oldIdx;
+        idx = oldIdx;
         return result;
     }
 
-    bool result = this->peek()->type == TokType::Identifier || this->peek()->type == TokType::Rarr || this->peek()->type == TokType::Multiply;
+    bool result = peek()->type == TokType::Identifier || peek()->type == TokType::Rarr || peek()->type == TokType::Multiply;
 
-    this->idx = oldIdx;
+    idx = oldIdx;
     return result;
 }
 
 Node* Parser::parseStmt(std::string f) {
-    if(this->peek()->type == TokType::Rbra) return this->parseBlock(f);
-    if(this->peek()->type == TokType::Semicolon) {this->next(); return this->parseStmt(f);}
-    if(this->peek()->type == TokType::Eof) return nullptr;
-    if(this->peek()->type == TokType::Identifier) {
-        std::string id = this->peek()->value;
+    if(peek()->type == TokType::Rbra) return parseBlock(f);
+    if(peek()->type == TokType::Semicolon) {next(); return parseStmt(f);}
+    if(peek()->type == TokType::Eof) return nullptr;
+    if(peek()->type == TokType::Identifier) {
+        std::string id = peek()->value;
 
-        if(this->tokens[this->idx + 1]->type == TokType::Less) {
+        if(tokens[idx + 1]->type == TokType::Less) {
             if(isTemplateVariable()) {
                 std::vector<Node*> decl;
                 parseDecl(decl, f);
                 return decl.size() > 1 ? new NodeBlock(decl) : decl[0];
             }
-            return this->parseExpr(f);
+            return parseExpr(f);
         }
 
         if(id == "extern" || id == "volatile" || id == "const") {
@@ -1451,130 +1475,130 @@ Node* Parser::parseStmt(std::string f) {
             parseDecl(decl, f);
             return decl.size() > 1 ? new NodeBlock(decl) : decl[0];
         }
-        if(id == "if") return this->parseIf(f, false);
-        if(id == "while") return this->parseWhile(f);
-        if(id == "for") return this->parseFor(f);
-        if(id == "foreach") return this->parseForeach(f);
-        if(id == "break") return this->parseBreak();
-        if(id == "continue") return this->parseContinue();
-        if(id == "switch") return this->parseSwitch(f);
-        if(id == "fdefer") return this->parseDefer(true, f);
-        if(id == "defer") return this->parseDefer(false, f);
+        if(id == "if") return parseIf(f, false);
+        if(id == "while") return parseWhile(f);
+        if(id == "for") return parseFor(f);
+        if(id == "foreach") return parseForeach(f);
+        if(id == "break") return parseBreak();
+        if(id == "continue") return parseContinue();
+        if(id == "switch") return parseSwitch(f);
+        if(id == "fdefer") return parseDefer(true, f);
+        if(id == "defer") return parseDefer(false, f);
 
-        if(this->tokens[this->idx+1]->type == TokType::Rarr && this->tokens[this->idx+4]->type != TokType::Equ
-           && !TokType::isParent(this->tokens[this->idx+4]->type) && !TokType::isCompoundAssigment(this->tokens[this->idx+4]->type)
-           && this->tokens[this->idx+4]->type != TokType::Rarr && this->tokens[this->idx+4]->type != TokType::Dot) {
-            if(this->tokens[this->idx+2]->type == TokType::Number && this->tokens[this->idx+3]->type == TokType::Larr) {
+        if(tokens[idx+1]->type == TokType::Rarr && tokens[idx+4]->type != TokType::Equ
+           && !TokType::isParent(tokens[idx+4]->type) && !TokType::isCompoundAssigment(tokens[idx+4]->type)
+           && tokens[idx+4]->type != TokType::Rarr && tokens[idx+4]->type != TokType::Dot) {
+            if(tokens[idx+2]->type == TokType::Number && tokens[idx+3]->type == TokType::Larr) {
                 std::vector<Node*> decl;
                 parseDecl(decl, f);
                 return decl.size() > 1 ? new NodeBlock(decl) : decl[0];
             }
         }
         
-        this->next();
+        next();
 
-        if(this->peek()->type != TokType::Identifier) {
-            if(this->peek()->type == TokType::Multiply) {
-                this->idx -= 1;
+        if(peek()->type != TokType::Identifier) {
+            if(peek()->type == TokType::Multiply) {
+                idx -= 1;
                 std::vector<Node*> decl;
                 parseDecl(decl, f);
                 return decl.size() > 1 ? new NodeBlock(decl) : decl[0];
             }
-            else if(this->peek()->type == TokType::Rarr || this->peek()->type == TokType::Rpar) {
+            else if(peek()->type == TokType::Rarr || peek()->type == TokType::Rpar) {
                 if(isBasicType(id)) {
-                    this->idx -= 1;
+                    idx -= 1;
                     std::vector<Node*> decl;
                     parseDecl(decl, f);
                     return decl.size() > 1 ? new NodeBlock(decl) : decl[0];
                 }
             }
 
-            this->idx -= 1;
+            idx -= 1;
 
-            if(this->peek()->type == TokType::Builtin) return this->parseBuiltin(f);
-            Node* expr = this->parseExpr(f);
+            if(peek()->type == TokType::Builtin) return parseBuiltin(f);
+            Node* expr = parseExpr(f);
 
-            if(this->peek()->type != TokType::Lbra) {
-                if(this->peek()->type != TokType::Semicolon) this->error("expected token ';'!");
-                this->next();
+            if(peek()->type != TokType::Lbra) {
+                if(peek()->type != TokType::Semicolon) error("expected token ';'!");
+                next();
             }
-            else this->next();
+            else next();
             return expr;
         }
-        this->idx -= 1;
+        idx -= 1;
 
         std::vector<Node*> decl;
         parseDecl(decl, f);
         return decl.size() > 1 ? new NodeBlock(decl) : decl[0];
     }
 
-    if(this->peek()->type == TokType::Rpar) {
+    if(peek()->type == TokType::Rpar) {
         std::vector<DeclarMod> mods;
-        this->next();
+        next();
 
-        while(this->peek()->type != TokType::Lpar) {
-            if(this->peek()->type != TokType::Identifier) {
+        while(peek()->type != TokType::Lpar) {
+            if(peek()->type != TokType::Identifier) {
                 // This is an expression
-                this->idx -= 1;
-                Node* expr = this->parseExpr(f);
-                this->next();
+                idx -= 1;
+                Node* expr = parseExpr(f);
+                next();
                 return expr;
             }
 
-            this->next();
+            next();
 
-            std::string name = this->peek()->value;
+            std::string name = peek()->value;
             Node* value = nullptr;
-            if(this->peek()->type == TokType::ValSel) {
-                this->next();
-                value = this->parseExpr();
+            if(peek()->type == TokType::ValSel) {
+                next();
+                value = parseExpr();
             }
 
             mods.push_back(DeclarMod{.name = name, .value = value});
 
-            if(this->peek()->type == TokType::Comma) this->next();
-            else if(this->peek()->type == TokType::Lpar) break;
+            if(peek()->type == TokType::Comma) next();
+            else if(peek()->type == TokType::Lpar) break;
         }
-        this->next();
+        next();
 
         std::vector<Node*> decl;
         parseDecl(decl, f);
         return decl.size() > 1 ? new NodeBlock(decl) : decl[0];
     }
 
-    if(this->peek()->type == TokType::Builtin) return this->parseBuiltin(f);
+    if(peek()->type == TokType::Builtin) return parseBuiltin(f);
 
-    Node* expr = this->parseExpr(f);
-    if(this->peek()->type == TokType::Lbra) this->next();
+    Node* expr = parseExpr(f);
+    if(peek()->type == TokType::Lbra) next();
     else {
-        if(this->peek()->type != TokType::Semicolon) this->error("expected token ';'!");
-        this->next();
+        if(peek()->type != TokType::Semicolon) error("expected token ';'!");
+        next();
     }
 
     return expr;
 }
 
 Node* Parser::parseBreak() {
-    this->next();
-    Node* nbreak = new NodeBreak(this->peek()->line);
-    this->next();
+    next();
+    Node* nbreak = new NodeBreak(peek()->line);
+    next();
     return nbreak;
 }
 
 Node* Parser::parseContinue() {
-    this->next();
-    Node* ncontinue = new NodeContinue(this->peek()->line);
-    this->next();
+    next();
+    Node* ncontinue = new NodeContinue(peek()->line);
+    next();
     return ncontinue;
 }
 
 Node* Parser::parseAnyLevelBlock(std::string f) {
     if(f != "") {
-        if(this->peek()->type != TokType::Rbra) return this->parseStmt(f);
-        return this->parseBlock(f);
+        if(peek()->type != TokType::Rbra) return parseStmt(f);
+        return parseBlock(f);
     }
 
-    if(this->peek()->type != TokType::Rbra) {
+    if(peek()->type != TokType::Rbra) {
         std::vector<Node*> decl;
         parseTopLevel(decl, f);
         return decl.size() > 1 ? new NodeBlock(decl) : decl[0];
@@ -1582,41 +1606,41 @@ Node* Parser::parseAnyLevelBlock(std::string f) {
 
     NodeBlock* block = new NodeBlock({});
     
-    this->next();
-    while(this->peek()->type != TokType::Lbra) parseTopLevel(block->nodes, f);
-    this->next();
+    next();
+    while(peek()->type != TokType::Lbra) parseTopLevel(block->nodes, f);
+    next();
 
     return block;
 }
 
 Node* Parser::parseIf(std::string f, bool isStatic) {
-    int line = this->peek()->line;
-    this->next();
+    int line = peek()->line;
+    next();
 
     bool isLikely = false;
     bool isUnlikely = false;
 
-    if(this->peek()->value == "likely") {isLikely = true; this->next();}
-    else if(this->peek()->value == "unlikely") {isUnlikely = true; this->next();}
+    if(peek()->value == "likely") {isLikely = true; next();}
+    else if(peek()->value == "unlikely") {isUnlikely = true; next();}
 
-    if(this->peek()->type != TokType::Rpar) this->error("expected token '('!");
+    if(peek()->type != TokType::Rpar) error("expected token '('!");
 
-    this->next();
-    Node* cond = this->parseExpr();
-    if(this->peek()->type != TokType::Lpar) this->error("expected token ')'!");
-    this->next();
+    next();
+    Node* cond = parseExpr();
+    if(peek()->type != TokType::Lpar) error("expected token ')'!");
+    next();
 
     NodeIf* _if = nullptr;
 
-    Node* body = this->parseAnyLevelBlock(f);
+    Node* body = parseAnyLevelBlock(f);
 
-    if(this->peek()->value == "else" || (isStatic && this->peek()->value == "@else")) {
-        this->next();
+    if(peek()->value == "else" || (isStatic && peek()->value == "@else")) {
+        next();
     
-        if(this->peek()->value == "likely") {isUnlikely = true; this->next();}
-        else if(this->peek()->value == "unlikely") {isLikely = true; this->next();}
+        if(peek()->value == "likely") {isUnlikely = true; next();}
+        else if(peek()->value == "unlikely") {isLikely = true; next();}
     
-        _if = new NodeIf(cond, body, this->parseAnyLevelBlock(f), line, isStatic);
+        _if = new NodeIf(cond, body, parseAnyLevelBlock(f), line, isStatic);
     }
     else _if = new NodeIf(cond, body, nullptr, line, isStatic);
 
@@ -1632,83 +1656,83 @@ std::pair<std::vector<Node*>, Node*> Parser::parseCase(std::string f) {
     std::vector<Node*> cases;
 
     while(peek()->value == "case") {
-        this->next();
-        if(this->peek()->type != TokType::Rpar) this->error("expected token '('!");
-        this->next();
+        expect(TokType::Rpar, "expected token '('!");
+        next();
 
-        Node* cond = this->parseExpr(f);
-        if(this->peek()->type != TokType::Lpar) this->error("expected token ')'!");
-        this->next();
+        Node* cond = parseExpr(f);
+
+        if(peek()->type != TokType::Lpar) error("expected token ')'!");
+        next();
 
         cases.push_back(cond);
     }
 
-    Node* block = this->parseStmt(f);
+    Node* block = parseStmt(f);
     return std::pair<std::vector<Node*>, Node*>(cases, block);
 }
 
 Node* Parser::parseSwitch(std::string f) {
-    int line = this->peek()->line;
-    this->next(); this->next();
-    Node* expr = this->parseExpr();
-    this->next();
+    int line = peek()->line;
+    next(); next();
+    Node* expr = parseExpr();
+    next();
 
     std::vector<std::pair<std::vector<Node*>, Node*>> statements;
     Node* _default = nullptr;
 
-    this->next();
+    next();
 
-    while(this->peek()->type != TokType::Lbra && this->peek()->type != TokType::Eof) {
-        if(this->peek()->value == "case") statements.push_back(this->parseCase(f));
-        else if(this->peek()->value == "default") {
-            this->next();
-            _default = this->parseStmt(f);
+    while(peek()->type != TokType::Lbra && peek()->type != TokType::Eof) {
+        if(peek()->value == "case") statements.push_back(parseCase(f));
+        else if(peek()->value == "default") {
+            next();
+            _default = parseStmt(f);
         }
-        while(this->peek()->type == TokType::Semicolon) this->next();
+        while(peek()->type == TokType::Semicolon) next();
     }
 
-    if(this->peek()->type != TokType::Eof) this->next();
+    if(peek()->type != TokType::Eof) next();
 
     return new NodeSwitch(expr, _default, statements, line);
 }
 
 NodeBlock* Parser::parseBlock(std::string s) {
     std::vector<Node*> nodes;
-    if(this->peek()->type == TokType::Rbra) this->next();
-    while(this->peek()->type != TokType::Lbra && this->peek()->type != TokType::Eof) {
-        nodes.push_back(this->parseStmt(s));
-        while(this->peek()->type == TokType::Semicolon) this->next();
+    if(peek()->type == TokType::Rbra) next();
+    while(peek()->type != TokType::Lbra && peek()->type != TokType::Eof) {
+        nodes.push_back(parseStmt(s));
+        while(peek()->type == TokType::Semicolon) next();
     }
-    if(this->peek()->type != TokType::Eof) this->next();
+    if(peek()->type != TokType::Eof) next();
     return new NodeBlock(nodes);
 }
 
 Node* Parser::parseSlice(Node* base, std::string f) {
     int loc = peek()->line;
-    this->next();
+    next();
     Node* start = parseExpr(f);
     if(peek()->type != TokType::SliceOper) error("expected token \"..\"!");
-    this->next();
+    next();
     Node* end = parseExpr(f);
     if(peek()->type != TokType::Larr) error("expected token ']'!");
-    this->next();
+    next();
     return new NodeSlice(base, start, end, loc);
 }
 
 bool Parser::isDefinedLambda(bool updateIdx) {
-    const auto& nextToken = this->tokens[this->idx + 1];
+    const auto& nextToken = tokens[idx + 1];
     if(nextToken->type != TokType::Rpar && nextToken->type != TokType::Multiply) return false;
 
-    int oldIdx = this->idx;
+    int oldIdx = idx;
     int cntOfRpars = 1;
 
-    for(int i=this->idx + 2; i<this->tokens.size(); i++) {
-        const auto& token = this->tokens[i];
+    for(int i=idx + 2; i<tokens.size(); i++) {
+        const auto& token = tokens[i];
         
         if(token->type == TokType::Lpar) {
             if(--cntOfRpars == 0) {
-                bool result = (i + 1 < this->tokens.size() && (this->tokens[i + 1]->type == TokType::Rbra || this->tokens[i + 1]->type == TokType::ShortRet));
-                if(!updateIdx) this->idx = i;
+                bool result = (i + 1 < tokens.size() && (tokens[i + 1]->type == TokType::Rbra || tokens[i + 1]->type == TokType::ShortRet));
+                if(!updateIdx) idx = i;
                 return result;
             }
         }
@@ -1720,7 +1744,7 @@ bool Parser::isDefinedLambda(bool updateIdx) {
 
 Node* Parser::parseLambda() {
     int loc = peek()->line;
-    Type* type = this->parseType(false, true);
+    Type* type = parseType(false, true);
     std::string name = "";
 
     if(peek()->type == TokType::Identifier) {
@@ -1729,15 +1753,15 @@ Node* Parser::parseLambda() {
     }
 
     if(peek()->type == TokType::ShortRet) {
-        this->next();
-        Node* value = this->parseExpr();
+        next();
+        Node* value = parseExpr();
         return new NodeLambda(loc, (TypeFunc*)type,new NodeBlock({new NodeRet(value, loc)}), name);
     }
 
-    NodeBlock* b = this->parseBlock("lambda");
+    NodeBlock* b = parseBlock("lambda");
     if(peek()->type == TokType::ShortRet) {
         next();
-        Node* value = this->parseExpr();
+        Node* value = parseExpr();
         b->nodes.push_back(new NodeRet(value, loc));
     }
     return new NodeLambda(loc, (TypeFunc*)type, b, name);
@@ -1745,16 +1769,16 @@ Node* Parser::parseLambda() {
 
 std::vector<Node*> Parser::parseFuncCallArgs() {
     std::vector<Node*> buffer;
-    if(this->peek()->type == TokType::Rpar) this->next();
-    else this->error("expected token '('!");
-    while(this->peek()->type != TokType::Lpar) {
-        if(this->peek()->type == TokType::Identifier) {
-            if(this->isDefinedLambda()) buffer.push_back(this->parseLambda());
-            else if(isBasicType(this->peek()->value)) buffer.push_back(new NodeType(this->parseType(), this->peek()->line));
-            else buffer.push_back(this->parseExpr());
+    if(peek()->type == TokType::Rpar) next();
+    else error("expected token '('!");
+    while(peek()->type != TokType::Lpar) {
+        if(peek()->type == TokType::Identifier) {
+            if(isDefinedLambda()) buffer.push_back(parseLambda());
+            else if(isBasicType(peek()->value)) buffer.push_back(new NodeType(parseType(), peek()->line));
+            else buffer.push_back(parseExpr());
         }
-        else buffer.push_back(this->parseExpr());
-        if(this->peek()->type == TokType::Comma) this->next();
-    } this->next();
+        else buffer.push_back(parseExpr());
+        if(peek()->type == TokType::Comma) next();
+    } next();
     return buffer;
 }

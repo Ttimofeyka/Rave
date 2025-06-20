@@ -34,8 +34,10 @@ public:
     void error(std::string msg, int line);
     void warning(std::string msg);
     void warning(std::string msg, int line);
+
     Token* peek();
-    Token* next();
+    Token* next(int add = 1);
+    Token* expect(int type, std::string errStr, int add = 1);
 
     Parser(std::vector<Token*> tokens, std::string file);
 
