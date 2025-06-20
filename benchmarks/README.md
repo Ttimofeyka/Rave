@@ -12,13 +12,15 @@ All tests were performed on Windows 10 (**WSL**), i5-12400f, 32GB DDR4 3200 Mhz.
 
 **LLVM** version: 18
 
+Enabled technologies: **SSE**, **SSE2**
+
 ### nqueen
 
 | Time | Rave | C (gcc) | C (clang) |
 | ---- | ---- | ------- | --------- |
-| Best Run | 2.664s | 2.884s | 2.687s |
-| Worst Run | 2.774s | 3.048s | 2.785s |
-| **Average** | <ins>**2.719s**</ins> | **2.966s** | **2.736s** |
+| Best Run | 2.658s | 2.884s | 2.687s |
+| Worst Run | 2.814s | 3.048s | 2.785s |
+| **Average** | <ins>**2.736s**</ins> | **2.966s** | <ins>**2.736s**</ins> |
 
 ### dirichlet
 
