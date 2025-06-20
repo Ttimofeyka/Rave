@@ -1,55 +1,51 @@
 #!/bin/bash
 
-# Check if benchmark name is provided
-if [ "$#" -ne 1 ]; then
-    echo "Usage: $0 <benchmark_name>"
+# Check if input file is provided
+if [ $# -ne 1 ]; then
+    echo "Usage: $0 INPUT_FILE"
     exit 1
 fi
 
-benchmark_name=$1
-benchmark_path="./benchmarks/$benchmark_name"
+input_file="$1"
+times=()
 
-# Check if the benchmark file exists and is executable
-if [ ! -x "$benchmark_path" ]; then
-    echo "Error: Benchmark file '$benchmark_path' does not exist or is not executable."
+# Check if file exists
+if [ ! -f "./benchmarks/$input_file" ]; then
+    echo "Error: ./benchmarks/$input_file does not exist"
     exit 1
 fi
 
-# Array to store the real times
-real_times=()
+echo "Running benchmark 10 times for ./benchmarks/$input_file..."
 
-# Run the command 10 times and capture the real time
-for ((i=1; i<=10; i++))
-do
-    # Run the command and capture the output
-    time_output=$({ time "$benchmark_path"; } 2>&1)
-
-    # Extract the real time using awk
-    real_time=$(echo "$time_output" | awk '/real/ {print $2}')
-
-    # Store the real time in the array
-    real_times+=("$real_time")
+for i in {1..10}; do
+    echo -n "Run $i: "
+    # Use 'time' in a subshell and capture its output
+    # We use the 'real' time, which is the wall clock time
+    time_output=$( { time -p ./benchmarks/"$input_file"; } 2>&1 )
+    # Extract the real time value (will be something like "real 1.23")
+    real_time=$(echo "$time_output" | grep -E '^real' | awk '{print $2}')
+    echo "$real_time seconds"
+    times+=("$real_time")
 done
 
-# Function to convert time in mm:ss format to seconds
-convert_to_seconds() {
-    local time=$1
-    local mm=$(echo "$time" | cut -d'm' -f1)
-    local ss=$(echo "$time" | cut -d'm' -f2 | cut -d's' -f1)
-    echo "$(bc <<< "$mm * 60 + $ss")"
-}
+# Initialize best and worst with first time
+best=${times[0]}
+worst=${times[0]}
 
-# Convert all times to seconds
-real_times_seconds=()
-for time in "${real_times[@]}"
-do
-    real_times_seconds+=($(convert_to_seconds "$time"))
+# Find best and worst times
+for time in "${times[@]}"; do
+    # Use bc for floating point comparison
+    if (( $(echo "$time < $best" | bc -l) )); then
+        best=$time
+    fi
+    if (( $(echo "$time > $worst" | bc -l) )); then
+        worst=$time
+    fi
 done
 
-# Find the best and worst times
-best_time=$(printf "%s\n" "${real_times_seconds[@]}" | sort -n | head -1)
-worst_time=$(printf "%s\n" "${real_times_seconds[@]}" | sort -n | tail -1)
+average=$(echo "scale=3; ($best + $worst) / 2" | bc -l)
 
-# Output the results
-echo "Best time: $best_time seconds"
-echo "Worst time: $worst_time seconds"
+echo "-----------------------------"
+printf "Best Time:  %.3f seconds\n" "$best"
+printf "Worst Time: %.3f seconds\n" "$worst"
+printf "Average: %.3f seconds\n" "$average"
