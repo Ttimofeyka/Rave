@@ -89,6 +89,11 @@ static bool instanceof(const T* ptr) {
     return dynamic_cast<const Base*>(ptr) != nullptr;
 }
 
+struct ShellResult {
+    std::string output;
+    int status;
+};
+
 #if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__)
     #define RAVE_OS "WINDOWS"
 #elif __linux__

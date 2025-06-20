@@ -62,15 +62,12 @@ double Compiler::genTime = 0.0;
 std::vector<std::string> Compiler::files;
 std::vector<std::string> Compiler::toImport;
 bool Compiler::debugMode;
+std::string Compiler::raveOs;
+std::string Compiler::ravePlatform;
 
 std::string getDirectory(std::string file) {
     return file.substr(0, file.find_last_of("/\\"));
 }
-
-struct ShellResult {
-    std::string output;
-    int status;
-};
 
 ShellResult exec(std::string cmd) {
     char buffer[256];
@@ -87,7 +84,7 @@ bool endsWith(const std::string &str, const std::string &suffix) {
 }
 
 void Compiler::error(std::string message) {
-    std::cout << "\033[0;31mError: "+message+"\033[0;0m\n";
+    std::cout << "\033[0;31mError: " + message + "\033[0;0m\n";
     std::exit(1);
 }
 
@@ -96,6 +93,75 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
     Compiler::outType = outType;
     Compiler::settings = settings;
     Compiler::files = files;
+
+    ravePlatform = "UNKNOWN";
+    raveOs = "UNKNOWN";
+
+    if(outType != "") {
+        if(outType.find("i686") != std::string::npos || outType.find("i386") != std::string::npos) ravePlatform = "X86";
+        else if(outType.find("aarch64") != std::string::npos || outType.find("arm64") != std::string::npos) ravePlatform = "AARCH64";
+        else if(outType.find("x86_64") != std::string::npos || outType.find("win64") != std::string::npos) ravePlatform = "X86_64";
+        else if(outType.find("x86") != std::string::npos) ravePlatform = "X86";
+        else if(outType.find("arm") != std::string::npos) ravePlatform = "ARM";
+        else if(outType.find("mips64") != std::string::npos) ravePlatform = "MIPS64";
+        else if(outType.find("mips") != std::string::npos) ravePlatform = "MIPS";
+        else if(outType.find("powerpc64") != std::string::npos) ravePlatform = "POWERPC64";
+        else if(outType.find("powerpc") != std::string::npos) ravePlatform = "POWERPC";
+        else if(outType.find("sparcv9") != std::string::npos) ravePlatform = "SPARCV9";
+        else if(outType.find("sparc") != std::string::npos) ravePlatform = "SPARC";
+        else if(outType.find("s390x") != std::string::npos) ravePlatform = "S390X";
+        else if(outType.find("wasm") != std::string::npos) ravePlatform = "WASM";
+        else if(outType.find("avr") != std::string::npos) {
+            ravePlatform = "AVR";
+            raveOs = "ARDUINO";
+        }
+
+        if(outType.find("win32") != std::string::npos) {
+            #ifndef _WIN32
+                Compiler::linkString += " --target=i686-pc-windows-gnu ";
+            #endif
+            raveOs = "WINDOWS";
+        }
+        else if(outType.find("win64") != std::string::npos || outType.find("windows") != std::string::npos) {
+            #ifndef _WIN32
+                Compiler::linkString += " --target=x86_64-pc-windows-gnu ";
+            #endif
+            raveOs = "WINDOWS";
+        }
+        else if(outType.find("linux") != std::string::npos) raveOs = "LINUX";
+        else if(outType.find("freebsd") != std::string::npos) raveOs = "FREEBSD";
+        else if(outType.find("darwin") != std::string::npos || outType.find("macos") != std::string::npos) raveOs = "DARWIN";
+        else if(outType.find("android") != std::string::npos) raveOs = "ANDROID";
+        else if(outType.find("ios") != std::string::npos) raveOs = "IOS";
+    }
+    else {
+        ravePlatform = RAVE_PLATFORM;
+        raveOs = RAVE_OS;
+    }
+
+    if(raveOs == "LINUX") {
+        if(ravePlatform == "X86_64") Compiler::outType = "linux-gnu-pc-x86_64";
+        else if(ravePlatform == "X86") Compiler::outType = "linux-gnu-pc-i686";
+        else if(ravePlatform == "AARCH64") Compiler::outType = "linux-gnu-aarch64";
+        else if(ravePlatform == "ARM") Compiler::outType = "linux-gnu-armv7";
+        else Compiler::outType = "linux-unknown";
+    }
+    else if(raveOs == "FREEBSD") {
+        if(ravePlatform == "X86_64") Compiler::outType = "freebsd-gnu-pc-x86_64";
+        else if(ravePlatform == "X86") Compiler::outType = "freebsd-gnu-pc-i686";
+        else if(ravePlatform == "AARCH64") Compiler::outType = "freebsd-gnu-aarch64";
+        else if(ravePlatform == "ARM") Compiler::outType = "freebsd-gnu-armv7";
+        else Compiler::outType = "freebsd-unknown";
+    }
+    else if(raveOs == "WINDOWS") {
+        if(ravePlatform == "X86_64") Compiler::outType = "x86_64-pc-windows-gnu";
+        else Compiler::outType = "i686-win32-gnu";
+    }
+    else if(raveOs == "ARDUINO") {
+        // TODO: Add switch with all possible Arduino platforms
+        Compiler::outType = "atmega328-avr";
+    }
+    else Compiler::outType = "unknown";
     
     if(access((exePath + "options.json").c_str(), 0) == 0) {
         // If file exists - read it
@@ -257,51 +323,6 @@ void Compiler::compile(std::string file) {
     char c;
     while(fContent.get(c)) content += c;
 
-    std::string ravePlatform = "UNKNOWN";
-    std::string raveOs = "UNKNOWN";
-
-    if(outType != "") {
-        if(outType.find("i686") != std::string::npos || outType.find("i386") != std::string::npos) ravePlatform = "X86";
-        else if(outType.find("aarch64") != std::string::npos || outType.find("arm64") != std::string::npos) ravePlatform = "AARCH64";
-        else if(outType.find("x86_64") != std::string::npos || outType.find("win64") != std::string::npos) ravePlatform = "X86_64";
-        else if(outType.find("x86") != std::string::npos) ravePlatform = "X86";
-        else if(outType.find("arm") != std::string::npos) ravePlatform = "ARM";
-        else if(outType.find("mips64") != std::string::npos) ravePlatform = "MIPS64";
-        else if(outType.find("mips") != std::string::npos) ravePlatform = "MIPS";
-        else if(outType.find("powerpc64") != std::string::npos) ravePlatform = "POWERPC64";
-        else if(outType.find("powerpc") != std::string::npos) ravePlatform = "POWERPC";
-        else if(outType.find("sparcv9") != std::string::npos) ravePlatform = "SPARCV9";
-        else if(outType.find("sparc") != std::string::npos) ravePlatform = "SPARC";
-        else if(outType.find("s390x") != std::string::npos) ravePlatform = "S390X";
-        else if(outType.find("wasm") != std::string::npos) ravePlatform = "WASM";
-        else if(outType.find("avr") != std::string::npos) {
-            ravePlatform = "AVR";
-            raveOs = "ARDUINO";
-        }
-
-        if(outType.find("win32") != std::string::npos) {
-            #ifndef _WIN32
-                Compiler::linkString += " --target=i686-pc-windows-gnu ";
-            #endif
-            raveOs = "WINDOWS";
-        }
-        else if(outType.find("win64") != std::string::npos || outType.find("windows") != std::string::npos) {
-            #ifndef _WIN32
-                Compiler::linkString += " --target=x86_64-pc-windows-gnu ";
-            #endif
-            raveOs = "WINDOWS";
-        }
-        else if(outType.find("linux") != std::string::npos) raveOs = "LINUX";
-        else if(outType.find("freebsd") != std::string::npos) raveOs = "FREEBSD";
-        else if(outType.find("darwin") != std::string::npos || outType.find("macos") != std::string::npos) raveOs = "DARWIN";
-        else if(outType.find("android") != std::string::npos) raveOs = "ANDROID";
-        else if(outType.find("ios") != std::string::npos) raveOs = "IOS";
-    }
-    else {
-        ravePlatform = RAVE_PLATFORM;
-        raveOs = RAVE_OS;
-    }
-
     bool littleEndian = true;
 
     // Note: PowerPC must be rechecked for endianness
@@ -449,33 +470,10 @@ void Compiler::compile(std::string file) {
     if(settings.outDebugInfo) debugInfo = new DebugGen(settings, file, generator->lModule);
     else debugInfo = nullptr;
 
-    if(raveOs == "LINUX") {
-        if(ravePlatform == "X86_64") Compiler::outType = "linux-gnu-pc-x86_64";
-        else if(ravePlatform == "X86") Compiler::outType = "linux-gnu-pc-i686";
-        else if(ravePlatform == "AARCH64") Compiler::outType = "linux-gnu-aarch64";
-        else if(ravePlatform == "ARM") Compiler::outType = "linux-gnu-armv7";
-        else Compiler::outType = "linux-unknown";
-    }
-    else if(raveOs == "FREEBSD") {
-        if(ravePlatform == "X86_64") Compiler::outType = "freebsd-gnu-pc-x86_64";
-        else if(ravePlatform == "X86") Compiler::outType = "freebsd-gnu-pc-i686";
-        else if(ravePlatform == "AARCH64") Compiler::outType = "freebsd-gnu-aarch64";
-        else if(ravePlatform == "ARM") Compiler::outType = "freebsd-gnu-armv7";
-        else Compiler::outType = "freebsd-unknown";
-    }
-    else if(raveOs == "WINDOWS") {
-        if(ravePlatform == "X86_64") Compiler::outType = "x86_64-pc-windows-gnu";
-        else Compiler::outType = "i686-win32-gnu";
-    }
-    else if(raveOs == "ARDUINO") {
-        // TODO: Add switch with all possible Arduino platforms
-        Compiler::outType = "atmega328-avr";
-    }
-    else Compiler::outType = "unknown";
-
     char* errors = nullptr;
     LLVMTargetRef target;
     char* triple = LLVMNormalizeTargetTriple(Compiler::outType.c_str());
+
     if(errors != nullptr) {
         Compiler::error("normalize target triple: " + std::string(errors));
         std::exit(1);
@@ -495,7 +493,7 @@ void Compiler::compile(std::string file) {
 		triple,
 		"generic",
 		Compiler::features.c_str(),
-		LLVMCodeGenLevelDefault,
+		(Compiler::settings.optLevel < 3 ? LLVMCodeGenLevelDefault : LLVMCodeGenLevelAggressive),
         (Compiler::settings.isPIC ? LLVMRelocPIC : LLVMRelocDynamicNoPic),
 	LLVMCodeModelDefault);
 
