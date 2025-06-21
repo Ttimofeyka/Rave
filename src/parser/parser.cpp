@@ -301,27 +301,28 @@ Node* Parser::parseBuiltin(std::string f) {
 
 Node* Parser::parseOperatorOverload(Type* type, std::string s) {
     next();
-    std::string name = s + "(" + peek()->value + ")";
     Token* _t = peek();
+    std::string name = s + "(" + _t->value;
     next();
 
+    // Build operator name
     if(peek()->type != TokType::Rpar) {
-        Token* _t2 = peek();
-        name = s + "(" + _t->value + _t2->value + ")";
+        name += peek()->value;
         next();
         if(peek()->type != TokType::Rpar) {
-            name = s + "(" + _t->value + _t2->value + peek()->value + ")";
+            name += peek()->value;
             next();
         }
     }
+    name += ")";
 
+    // Parse arguments
     std::vector<FuncArgSet> args;
-
     if(peek()->type == TokType::Rpar) {
         next();
         while(peek()->type != TokType::Lpar) {
-            Type* type = parseType();
-            args.push_back(FuncArgSet{.name = peek()->value, .type = type, .internalTypes = {type}});
+            Type* argType = parseType();
+            args.push_back(FuncArgSet{.name = peek()->value, .type = argType, .internalTypes = {argType}});
             next();
             if(peek()->type == TokType::Comma) next();
         }
@@ -329,16 +330,13 @@ Node* Parser::parseOperatorOverload(Type* type, std::string s) {
     }
 
     if(peek()->type == TokType::ShortRet) {
-        NodeBlock* nb = new NodeBlock({});
         next();
-        nb->nodes.push_back(new NodeRet(parseExpr("operator"), _t->line));
+        NodeBlock* nb = new NodeBlock({new NodeRet(parseExpr("operator"), _t->line)});
         if(peek()->type == TokType::Semicolon) next();
         return new NodeFunc(name, args, nb, false, {}, _t->line, type, {});
     }
 
-    next();
     NodeBlock* nb = parseBlock("operator");
-
     if(peek()->type == TokType::ShortRet) {
         next();
         nb->nodes.push_back(new NodeRet(parseExpr("operator"), _t->line));
@@ -1269,7 +1267,6 @@ Node* Parser::parseIndex(Node* base, std::string f) {
 
 Node* Parser::parseCall(Node* func) {
     if(instanceof<NodeInt>(func)) error("a function name must be an identifier!");
-
     return new NodeCall(peek()->line, func, parseFuncCallArgs());
 }
 
