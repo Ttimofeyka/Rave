@@ -22,7 +22,7 @@ NodeConstStruct::NodeConstStruct(std::string name, std::vector<Node*> values, in
 }
 
 NodeConstStruct::~NodeConstStruct() {
-    for(int i=0; i<values.size(); i++) if(values[i] != nullptr) delete values[i];
+    for(size_t i=0; i<values.size(); i++) if(values[i] != nullptr) delete values[i];
 }
 
 Type* NodeConstStruct::getType() {return new TypeStruct(structName);}
@@ -61,7 +61,7 @@ RaveValue NodeConstStruct::generate() {
 
     bool isConst = true;
 
-    for(int i=0; i<this->values.size(); i++) {
+    for(size_t i=0; i<this->values.size(); i++) {
         RaveValue generated = this->values[i]->generate();
 
         if(!LLVMIsConstant(generated.value)) isConst = false;
@@ -76,7 +76,7 @@ RaveValue NodeConstStruct::generate() {
 
     if(isConst) {
         std::vector<LLVMValueRef> __data;
-        for(int i=0; i<llvmValues.size(); i++) {
+        for(size_t i=0; i<llvmValues.size(); i++) {
             if(variables[i]->getType()->toString() != llvmValues[i].type->toString()) {
                 Type* varType = variables[i]->getType();
 
@@ -93,7 +93,7 @@ RaveValue NodeConstStruct::generate() {
         if(currScope == nullptr) generator->error("constant structure with dynamic values cannot be created outside a function!", loc);
         RaveValue temp = LLVM::alloc(new TypeStruct(this->structName), "constStruct_temp");
 
-        for(int i=0; i<this->values.size(); i++) {
+        for(size_t i=0; i<this->values.size(); i++) {
             if(variables[i]->getType()->toString() != llvmValues[i].type->toString()) {
                 Type* varType = variables[i]->getType();
 

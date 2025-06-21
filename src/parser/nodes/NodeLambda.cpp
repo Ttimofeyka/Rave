@@ -27,7 +27,7 @@ void NodeLambda::check() {isChecked = true;}
 
 std::vector<LLVMTypeRef> NodeLambda::generateTypes() {
     std::vector<LLVMTypeRef> buffer;
-    for(int i=0; i<this->tf->args.size(); i++) buffer.push_back(generator->genType(this->tf->args[i], this->loc));
+    for(size_t i=0; i<this->tf->args.size(); i++) buffer.push_back(generator->genType(this->tf->args[i], this->loc));
     return buffer;
 }
 

@@ -76,7 +76,7 @@ RaveValue NodeForeach::generate() {
         false, false, false, {}, this->loc, new TypeAuto())
     };
 
-    for(int i=0; i<oldBlock->nodes.size(); i++) this->block->nodes.push_back(oldBlock->nodes[i]);
+    for(size_t i=0; i<oldBlock->nodes.size(); i++) this->block->nodes.push_back(oldBlock->nodes[i]);
 
     this->block->nodes.push_back(new NodeBinary(TokType::PluEqu, new NodeIden("__RAVE_FOREACH_N" + std::to_string(this->loc), this->loc), new NodeInt(1), this->loc));
 

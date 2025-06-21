@@ -40,7 +40,7 @@ class TypeStruct;
 struct Loop;
 
 struct StructMember {
-    int number;
+    size_t number;
     NodeVar* var;
 };
 

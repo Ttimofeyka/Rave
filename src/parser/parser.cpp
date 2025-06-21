@@ -225,7 +225,7 @@ Node* Parser::parseNamespace(std::string s) {
     parseTopLevel(_nodes, s);
 
     while(_nodes.size() > 0) {
-        for(int i=0; i<_nodes.size(); i++) nNodes.push_back(_nodes[i]);
+        for(size_t i=0; i<_nodes.size(); i++) nNodes.push_back(_nodes[i]);
         _nodes.clear();
         parseTopLevel(_nodes, s);
     }
@@ -283,7 +283,7 @@ Node* Parser::parseBuiltin(std::string f) {
             parseTopLevel(_nodes, f);
 
             while(_nodes.size() > 0) {
-                for(int i=0; i<_nodes.size(); i++) block->nodes.push_back(_nodes[i]);
+                for(size_t i=0; i<_nodes.size(); i++) block->nodes.push_back(_nodes[i]);
                 _nodes.clear();
                 parseTopLevel(_nodes, f);
             }
@@ -583,7 +583,7 @@ Node* Parser::parseAtom(std::string f) {
                     }
                     else {
                         std::string number = t->value;
-                        for(int i=0; i<expNumber; i++) number += "0";
+                        for(size_t i=0; i<expNumber; i++) number += "0";
 
                         nfloat = new NodeFloat(std::stod(t->value + number));
                     }
@@ -913,7 +913,7 @@ Node* Parser::parseStruct(std::vector<DeclarMod> mods) {
     parseTopLevel(_nodes, name);
 
     while(_nodes.size() > 0) {
-        for(int i=0; i<_nodes.size(); i++) nodes.push_back(_nodes[i]);
+        for(size_t i=0; i<_nodes.size(); i++) nodes.push_back(_nodes[i]);
         _nodes.clear();
         parseTopLevel(_nodes, name);
     }
@@ -962,7 +962,7 @@ Node* Parser::parseImport() {
 
     if(files.size() > 0) {
         std::vector<NodeImport*> imports;
-        for(int i=0; i<files.size(); i++) imports.push_back(new NodeImport(files[i], std::vector<std::string>(), loc));
+        for(size_t i=0; i<files.size(); i++) imports.push_back(new NodeImport(files[i], std::vector<std::string>(), loc));
         return new NodeImports(imports, loc);
     }
 
@@ -1082,7 +1082,7 @@ Type* Parser::parseType(bool cannotBeTemplate, bool isDeclaration) {
             }
             next();
 
-            for(int i=0; i<tTypes.size(); i++) tTypesString += tTypes[i]->toString() + ",";
+            for(size_t i=0; i<tTypes.size(); i++) tTypesString += tTypes[i]->toString() + ",";
             ty = new TypeStruct(ty->toString() + "<" + tTypesString.substr(0, tTypesString.size() - 1) + ">", tTypes);
 
             if(peek()->type == TokType::Rpar) {

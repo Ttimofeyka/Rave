@@ -19,7 +19,7 @@ NodeBlock::NodeBlock(std::vector<Node*> nodes) {
 
 Node* NodeBlock::copy() {
     std::vector<Node*> newNodes;
-    for(int i=0; i<this->nodes.size(); i++) {
+    for(size_t i=0; i<this->nodes.size(); i++) {
         if(this->nodes[i] != nullptr) newNodes.push_back(this->nodes[i]->copy());
     }
     return new NodeBlock(newNodes);

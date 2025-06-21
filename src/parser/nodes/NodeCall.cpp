@@ -32,7 +32,7 @@ NodeCall::NodeCall(int loc, Node* func, std::vector<Node*> args) {
 
 NodeCall::~NodeCall() {
     if(func != nullptr) delete func;
-    for(int i=0; i<args.size(); i++) if(args[i] != nullptr) delete args[i];
+    for(size_t i=0; i<args.size(); i++) if(args[i] != nullptr) delete args[i];
 }
 
 inline void checkAndGenerate(std::string name) {
@@ -96,7 +96,7 @@ bool hasIdenticallyArgs(const std::vector<Type*>& one, const std::vector<FuncArg
 
 std::vector<FuncArgSet> tfaToFas(std::vector<TypeFuncArg*> tfa) {
     std::vector<FuncArgSet> fas;
-    for(int i=0; i<tfa.size(); i++) {
+    for(size_t i=0; i<tfa.size(); i++) {
         Type* type = tfa[i]->type;
         while(generator->toReplace.find(type->toString()) != generator->toReplace.end()) type = generator->toReplace[type->toString()];
 
@@ -140,7 +140,7 @@ Type* NodeCall::getType() {
 std::vector<Type*> Call::getTypes(std::vector<Node*>& arguments) {
     std::vector<Type*> array;
 
-    for(int i=0; i<arguments.size(); i++) {
+    for(size_t i=0; i<arguments.size(); i++) {
         Type* t = arguments[i]->getType();
         Types::replaceTemplates(&t);
         array.push_back(t);
@@ -151,7 +151,7 @@ std::vector<Type*> Call::getTypes(std::vector<Node*>& arguments) {
 
 std::vector<Type*> Call::getParamsTypes(std::vector<RaveValue>& params) {
     std::vector<Type*> array;
-    for(int i=0; i<params.size(); i++) array.push_back(params[i].type);
+    for(size_t i=0; i<params.size(); i++) array.push_back(params[i].type);
     return array;
 }
 
@@ -159,7 +159,7 @@ std::vector<RaveValue> Call::genParameters(std::vector<Node*>& arguments, std::v
     std::vector<RaveValue> params;
 
     if(arguments.size() != fas.size()) {
-        for(int i=0; i<arguments.size(); i++) {
+        for(size_t i=0; i<arguments.size(); i++) {
             // If this is a NodeIden/NodeIndex/NodeGet - set the 'isMustBePtr' to false
             if(instanceof<NodeIden>(arguments[i])) ((NodeIden*)arguments[i])->isMustBePtr = false;
             else if(instanceof<NodeIndex>(arguments[i])) ((NodeIndex*)arguments[i])->isMustBePtr = false;
@@ -170,7 +170,7 @@ std::vector<RaveValue> Call::genParameters(std::vector<Node*>& arguments, std::v
         return params;
     }
 
-    for(int i=0; i<arguments.size(); i++) {
+    for(size_t i=0; i<arguments.size(); i++) {
         if(instanceof<TypePointer>(fas[i].type) && instanceof<TypeStruct>(fas[i].type->getElType()) && !instanceof<TypePointer>(arguments[i]->getType())) {
             if(instanceof<NodeIden>(arguments[i])) ((NodeIden*)arguments[i])->isMustBePtr = true;
             else if(instanceof<NodeGet>(arguments[i])) ((NodeGet*)arguments[i])->isMustBePtr = true;
@@ -186,7 +186,7 @@ std::vector<RaveValue> Call::genParameters(std::vector<Node*>& arguments, std::v
         params.push_back(arguments[i]->generate());
     }
 
-    for(int i=0; i<params.size(); i++) {
+    for(size_t i=0; i<params.size(); i++) {
         if(instanceof<TypeStruct>(fas[i].type) && !instanceof<TypeStruct>(params[i].type)) {
             std::string name = fas[i].type->toString();
 
@@ -263,7 +263,7 @@ inline std::vector<RaveValue> Call::genParameters(std::vector<Node*>& arguments,
 
 std::string Template::fromTypes(std::vector<Type*>& types) {
     std::string sTypes = "<";
-    for(int i=0; i<types.size(); i++) sTypes += types[i]->toString() + ",";
+    for(size_t i=0; i<types.size(); i++) sTypes += types[i]->toString() + ",";
     sTypes.back() = '>';
     return sTypes;
 }
@@ -466,10 +466,10 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
                 if(tParser.peek()->type == TokType::Comma) tParser.next();
             }
 
-            for(int i=0; i<types.size(); i++) Types::replaceTemplates(&types[i]);
+            for(size_t i=0; i<types.size(); i++) Types::replaceTemplates(&types[i]);
 
             if(presenceInFt) {
-                for(int i=0; i<types.size(); i++) sTypes += types[i]->toString() + ",";
+                for(size_t i=0; i<types.size(); i++) sTypes += types[i]->toString() + ",";
 
                 sTypes = "<" + sTypes.substr(0, sTypes.length() - 1) + ">";
 
@@ -483,7 +483,7 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
             else {
                 sTypes = "<";
 
-                for(int i=0; i<types.size(); i++) sTypes += types[i]->toString() + ",";
+                for(size_t i=0; i<types.size(); i++) sTypes += types[i]->toString() + ",";
 
                 sTypes.back() = '>';
 

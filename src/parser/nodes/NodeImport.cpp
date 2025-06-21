@@ -173,12 +173,12 @@ Type* NodeImports::getType() {return typeVoid;}
 
 Node* NodeImports::copy() {
     std::vector<NodeImport*> buffer;
-    for(int i=0; i<this->imports.size(); i++) buffer.push_back((NodeImport*)(this->imports[i]->copy()));
+    for(size_t i=0; i<this->imports.size(); i++) buffer.push_back((NodeImport*)(this->imports[i]->copy()));
     return new NodeImports(buffer, this->loc);
 }
 
 RaveValue NodeImports::generate() {
-    for(int i=0; i<this->imports.size(); i++) {
+    for(size_t i=0; i<this->imports.size(); i++) {
         if(this->imports[i] != nullptr) this->imports[i]->generate();
     }
     return {};

@@ -34,7 +34,7 @@ RaveValue NodeString::generate() {
     else {
         std::u32string u32Str = utf8::utf8to32(value);
         std::vector<LLVMValueRef> values(u32Str.size());
-        for(int i=0; i<u32Str.size(); i++) values[i] = LLVMConstInt(elemType, u32Str[i], false);
+        for(size_t i=0; i<u32Str.size(); i++) values[i] = LLVMConstInt(elemType, u32Str[i], false);
         LLVMSetInitializer(globalStr, LLVMConstArray(elemType, values.data(), values.size()));
     }
 

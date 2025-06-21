@@ -23,7 +23,7 @@ NodeSwitch::~NodeSwitch() {
     if(expr != nullptr) delete expr;
     if(_default != nullptr) delete _default;
     
-    for(int i=0; i<statements.size(); i++) {
+    for(size_t i=0; i<statements.size(); i++) {
         for(int j=0; j<statements[i].first.size(); j++) {
             if(statements[i].first[j] != nullptr) delete statements[i].first[j];
         }
@@ -55,7 +55,7 @@ RaveValue NodeSwitch::generate() {
         ifVector.push_back(new NodeIf(_equal, statement.second, nullptr, loc, false));
     }
 
-    for(int i=0; i<ifVector.size() - 1; i++) ifVector[i]->_else = ifVector[i + 1];
+    for(size_t i=0; i<ifVector.size() - 1; i++) ifVector[i]->_else = ifVector[i + 1];
 
     ifVector.back()->_else = _default;
 

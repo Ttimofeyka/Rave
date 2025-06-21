@@ -51,7 +51,7 @@ NodeBuiltin::NodeBuiltin(std::string name, std::vector<Node*> args, int loc, Nod
 }
 
 NodeBuiltin::~NodeBuiltin() {
-    for(int i=0; i<args.size(); i++) if(args[i] != nullptr) delete args[i];
+    for(size_t i=0; i<args.size(); i++) if(args[i] != nullptr) delete args[i];
     if(block != nullptr) delete block;
     if(type != nullptr) delete type;
 }
@@ -380,7 +380,7 @@ RaveValue NodeBuiltin::generate() {
     }
     else if(this->name == "echo") {
         std::string buffer = "";
-        for(int i=0; i<this->args.size(); i++) buffer += this->asStringIden(i);
+        for(size_t i=0; i<this->args.size(); i++) buffer += this->asStringIden(i);
         std::cout << buffer << std::endl;
         return {};
     }
@@ -388,13 +388,13 @@ RaveValue NodeBuiltin::generate() {
         if(generator->settings.disableWarnings) return {};
 
         std::string buffer = "";
-        for(int i=0; i<this->args.size(); i++) buffer += this->asStringIden(i);
+        for(size_t i=0; i<this->args.size(); i++) buffer += this->asStringIden(i);
         generator->warning(buffer, this->loc);
         return {};
     }
     else if(this->name == "error") {
         std::string buffer = "";
-        for(int i=0; i<this->args.size(); i++) buffer += this->asStringIden(i);
+        for(size_t i=0; i<this->args.size(); i++) buffer += this->asStringIden(i);
         generator->error(buffer, this->loc);
         return {};
     }
@@ -552,7 +552,7 @@ RaveValue NodeBuiltin::generate() {
         RaveValue vector = LLVM::alloc(resultVectorType, "vFrom_buffer");
         RaveValue tempVector = LLVM::load(vector, "vFrom_loadedBuffer", loc);
 
-        for(int i=0; i<((TypeVector*)resultVectorType)->count; i++)
+        for(size_t i=0; i<((TypeVector*)resultVectorType)->count; i++)
             tempVector.value = LLVMBuildInsertElement(generator->builder, tempVector.value, value.value, LLVMConstInt(LLVMInt32TypeInContext(generator->context), i, false), "vFrom_ie");
 
         return tempVector;
@@ -577,7 +577,7 @@ RaveValue NodeBuiltin::generate() {
         if(((NodeInt*)tarray->count->comptime())->value.to_int() < 1) generator->error("the constant array cannot be empty!", this->loc);
 
         std::vector<LLVMValueRef> values;
-        for(int i=0; i<((NodeArray*)this->args[2])->values.size(); i++) values.push_back(((NodeArray*)this->args[2])->values[i]->generate().value);
+        for(size_t i=0; i<((NodeArray*)this->args[2])->values.size(); i++) values.push_back(((NodeArray*)this->args[2])->values[i]->generate().value);
 
         return {LLVMBuildShuffleVector(generator->builder, vector1.value, vector2.value, LLVMConstVector(values.data(), values.size()), "vShuffle"), vector1.type};
     }

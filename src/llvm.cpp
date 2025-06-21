@@ -41,11 +41,11 @@ RaveValue LLVM::call(RaveValue fn, LLVMValueRef* args, unsigned int argsCount, c
     TypeFunc* tfunc = instanceof<TypePointer>(fn.type) ? (TypeFunc*)fn.type->getElType() : (TypeFunc*)fn.type;
 
     std::vector<LLVMTypeRef> types;
-    for(int i=0; i<tfunc->args.size(); i++) types.push_back(generator->genType(tfunc->args[i]->type, -1));
+    for(size_t i=0; i<tfunc->args.size(); i++) types.push_back(generator->genType(tfunc->args[i]->type, -1));
 
     RaveValue result = {LLVMBuildCall2(generator->builder, LLVMFunctionType(generator->genType(tfunc->main, -1), types.data(), types.size(), tfunc->isVarArg), fn.value, args, argsCount, name), tfunc->main};
 
-    for(int i=0; i<byVals.size(); i++) LLVMAddCallSiteAttribute(result.value, byVals[i] + 1, LLVMCreateTypeAttribute(generator->context, LLVMGetEnumAttributeKindForName("byval", 5), types[byVals[i]]));
+    for(size_t i=0; i<byVals.size(); i++) LLVMAddCallSiteAttribute(result.value, byVals[i] + 1, LLVMCreateTypeAttribute(generator->context, LLVMGetEnumAttributeKindForName("byval", 5), types[byVals[i]]));
 
     return result;
 }
@@ -59,7 +59,7 @@ RaveValue LLVM::call(RaveValue fn, std::vector<RaveValue> args, const char* name
     std::vector<LLVMTypeRef> types(tfunc->args.size());
     std::map<int, LLVMTypeRef> byValStructures;
 
-    for(int i=0; i<tfunc->args.size(); i++) {
+    for(size_t i=0; i<tfunc->args.size(); i++) {
         Type* argType = tfunc->args[i]->type;
 
         if(instanceof<TypeStruct>(argType)) {
@@ -144,7 +144,7 @@ LLVMValueRef LLVM::makeInt(size_t n, unsigned long long value, bool isUnsigned) 
 // Wrapper for LLVMConstArray function.
 RaveValue LLVM::makeCArray(Type* ty, std::vector<RaveValue> values) {
     std::vector<LLVMValueRef> data;
-    for(int i=0; i<values.size(); i++) data.push_back(values[i].value);
+    for(size_t i=0; i<values.size(); i++) data.push_back(values[i].value);
     return {LLVMConstArray(generator->genType(ty, -1), data.data(), data.size()), new TypeArray(new NodeInt(data.size()), ty)};
 }
 

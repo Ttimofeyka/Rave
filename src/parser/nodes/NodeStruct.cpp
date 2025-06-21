@@ -40,14 +40,14 @@ NodeStruct::NodeStruct(std::string name, std::vector<Node*> elements, int loc, s
     this->dataVar = "";
     this->lengthVar = "";
 
-    for(int i=0; i<elements.size(); i++) {
+    for(size_t i=0; i<elements.size(); i++) {
         if(instanceof<NodeVar>(elements[i])) variables.push_back((NodeVar*)elements[i]);
     }
 }
 
 NodeStruct::~NodeStruct() {
-    for(int i=0; i<elements.size(); i++) if(elements[i] != nullptr) delete elements[i];
-    for(int i=0; i<oldElements.size(); i++) if(oldElements[i] != nullptr) delete oldElements[i];
+    for(size_t i=0; i<elements.size(); i++) if(elements[i] != nullptr) delete elements[i];
+    for(size_t i=0; i<oldElements.size(); i++) if(oldElements[i] != nullptr) delete oldElements[i];
     if(destructor != nullptr) delete destructor;
 }
 
@@ -55,7 +55,7 @@ Node* NodeStruct::comptime() {return this;}
 
 Node* NodeStruct::copy() {
     std::vector<Node*> cElements;
-    for(int i=0; i<this->elements.size(); i++) cElements.push_back(this->elements[i]->copy());
+    for(size_t i=0; i<this->elements.size(); i++) cElements.push_back(this->elements[i]->copy());
     return new NodeStruct(this->origname, cElements, this->loc, this->extends, this->templateNames, this->mods);
 }
 
@@ -82,7 +82,7 @@ Type* checkForTemplated(Type* type) {
             TypeStruct* ts = (TypeStruct*)loaded;
 
             if(ts->types.size() > 0) {
-                for(int i=0; i<ts->types.size(); i++) ts->types[i] = checkForTemplated(ts->types[i]);
+                for(size_t i=0; i<ts->types.size(); i++) ts->types[i] = checkForTemplated(ts->types[i]);
                 ts->updateByTypes();
             }
         }
@@ -104,7 +104,7 @@ Type* checkForTemplated(Type* type) {
 std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
     std::vector<LLVMTypeRef> values;
 
-    for(int i=0; i<this->elements.size(); i++) {
+    for(size_t i=0; i<this->elements.size(); i++) {
         if(instanceof<NodeVar>(this->elements[i])) {
             NodeVar* var = (NodeVar*)this->elements[i];
             var->isExtern = (var->isExtern || this->isImported);
@@ -145,7 +145,7 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 }
 
                 std::vector<Node*> toAdd;
-                for(int i=0; i<toAdd.size(); i++) func->block->nodes.insert(func->block->nodes.begin(), (toAdd[i]));
+                for(size_t i=0; i<toAdd.size(); i++) func->block->nodes.insert(func->block->nodes.begin(), (toAdd[i]));
                 func->check();
                 this->constructors.push_back(func);
             }
@@ -236,7 +236,7 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
 
 long NodeStruct::getSize() {
     long result = 0;
-    for(int i=0; i<this->elements.size(); i++) {
+    for(size_t i=0; i<this->elements.size(); i++) {
         if(instanceof<NodeVar>(this->elements[i])) result += ((NodeVar*)this->elements[i])->type->getSize();
     }
     return result;
@@ -282,7 +282,7 @@ void NodeStruct::check() {
 }
 
 bool NodeStruct::hasPredefines() {
-    for(int i=0; i<this->elements.size(); i++) {
+    for(size_t i=0; i<this->elements.size(); i++) {
         if(instanceof<NodeVar>(this->elements[i])) {
             if(instanceof<TypeStruct>(((NodeVar*)this->elements[i])->type)) {
                 return ((TypeStruct*)((NodeVar*)this->elements[i])->type)->name != this->name && AST::structTable[((TypeStruct*)((NodeVar*)this->elements[i])->type)->name]->hasPredefines();
@@ -295,7 +295,7 @@ bool NodeStruct::hasPredefines() {
 
 std::vector<Node*> NodeStruct::copyElements() {
     std::vector<Node*> buffer;
-    for(int i=0; i<this->elements.size(); i++) buffer.push_back(this->elements[i]->copy());
+    for(size_t i=0; i<this->elements.size(); i++) buffer.push_back(this->elements[i]->copy());
     return buffer;
 }
 
@@ -304,7 +304,7 @@ RaveValue NodeStruct::generate() {
 
     NodeArray* conditions = nullptr;
 
-    for(int i=0; i<this->mods.size(); i++) {
+    for(size_t i=0; i<this->mods.size(); i++) {
         while(AST::aliasTable.find(this->mods[i].name) != AST::aliasTable.end()) {
             if(instanceof<NodeArray>(AST::aliasTable[this->mods[i].name])) {
                 this->mods[i].name = ((NodeString*)(((NodeArray*)AST::aliasTable[this->mods[i].name])->values[0]))->value;
@@ -332,7 +332,7 @@ RaveValue NodeStruct::generate() {
     LLVMStructSetBody(generator->structures[this->name], params.data(), params.size(), this->isPacked);
 
     if(!this->constructors.empty()) {
-        for(int i=0; i<this->constructors.size(); i++) {
+        for(size_t i=0; i<this->constructors.size(); i++) {
             if(!this->constructors[i]->isChecked) this->constructors[i]->check();
             this->constructors[i]->generate();
         }
@@ -374,7 +374,7 @@ RaveValue NodeStruct::generate() {
         this->destructor->generate();
     }
 
-    for(int i=0; i<this->methods.size(); i++) {
+    for(size_t i=0; i<this->methods.size(); i++) {
         this->methods[i]->check();
         if(!isImported) this->methods[i]->generate();
     }
@@ -399,7 +399,7 @@ LLVMTypeRef NodeStruct::genWithTemplate(std::string sTypes, std::vector<Type*> t
         return nullptr;
     }
 
-    for(int i=0; i<types.size(); i++) {
+    for(size_t i=0; i<types.size(); i++) {
         if(instanceof<TypeStruct>(types[i])) {
             if(AST::structTable.find(((TypeStruct*)types[i])->name) == AST::structTable.end() && !((TypeStruct*)types[i])->types.empty()) generator->genType(types[i], this->loc);
         }

@@ -212,7 +212,7 @@ void NodeNamespace::check() {
 }
 
 RaveValue NodeNamespace::generate() {
-    for(int i=0; i<nodes.size(); i++) {
+    for(size_t i=0; i<nodes.size(); i++) {
         if(nodes[i] == nullptr) continue;
 
         if(instanceof<NodeFunc>(nodes[i])) {

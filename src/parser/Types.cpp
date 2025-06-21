@@ -162,14 +162,14 @@ TypeStruct::TypeStruct(std::string name, std::vector<Type*> types) {
 
 Type* TypeStruct::copy() {
     std::vector<Type*> typesCopy;
-    for(int i=0; i<this->types.size(); i++) typesCopy.push_back(this->types[i]->copy());
+    for(size_t i=0; i<this->types.size(); i++) typesCopy.push_back(this->types[i]->copy());
     return new TypeStruct(this->name, typesCopy);
 }
 
 void TypeStruct::updateByTypes() {
     if(this->name.find('<') != std::string::npos) {
         this->name = this->name.substr(0, this->name.find('<')) + "<";
-        for(int i=0; i<this->types.size(); i++) this->name += this->types[i]->toString() + ",";
+        for(size_t i=0; i<this->types.size(); i++) this->name += this->types[i]->toString() + ",";
         this->name = this->name.substr(0, this->name.size()-1) + ">";
     }
 }
@@ -187,7 +187,7 @@ int TypeStruct::getSize() {
             AST::structTable[ts->name]->genWithTemplate(ts->name.substr(ts->name.find('<')), ts->types);
         }
         int size = 0;
-        for(int i=0; i<AST::structTable[ts->name]->elements.size(); i++) {
+        for(size_t i=0; i<AST::structTable[ts->name]->elements.size(); i++) {
             if(AST::structTable[ts->name]->elements[i] != nullptr && instanceof<NodeVar>(AST::structTable[ts->name]->elements[i])) {
                 NodeVar* nvar = (NodeVar*)AST::structTable[ts->name]->elements[i];
                 size += nvar->type->getSize();
@@ -212,7 +212,7 @@ bool TypeStruct::isSimple() {
             AST::structTable[ts->name]->genWithTemplate(ts->name.substr(ts->name.find('<')), ts->types);
         }
 
-        for(int i=0; i<AST::structTable[ts->name]->elements.size(); i++) {
+        for(size_t i=0; i<AST::structTable[ts->name]->elements.size(); i++) {
             if(AST::structTable[ts->name]->elements[i] != nullptr && instanceof<NodeVar>(AST::structTable[ts->name]->elements[i])) {
                 NodeVar* nvar = (NodeVar*)AST::structTable[ts->name]->elements[i];
                 if(!instanceof<TypeBasic>(nvar->type)) return false;
@@ -239,7 +239,7 @@ int TypeStruct::getElCount() {
 
         int size = 0;
 
-        for(int i=0; i<AST::structTable[ts->name]->elements.size(); i++) {
+        for(size_t i=0; i<AST::structTable[ts->name]->elements.size(); i++) {
             if(AST::structTable[ts->name]->elements[i] != nullptr && instanceof<NodeVar>(AST::structTable[ts->name]->elements[i])) size += 1;
         }
 
@@ -361,7 +361,7 @@ int TypeFunc::getSize() {return 64;}
 Type* TypeFunc::copy() {
     std::vector<TypeFuncArg*> _copied;
 
-    for(int i=0; i<this->args.size(); i++) _copied.push_back((TypeFuncArg*)this->args[i]->copy());
+    for(size_t i=0; i<this->args.size(); i++) _copied.push_back((TypeFuncArg*)this->args[i]->copy());
     return new TypeFunc(this->main->copy(), _copied, isVarArg);
 }
 
@@ -372,7 +372,7 @@ Type* TypeFunc::getElType() {return this;}
 TypeFunc::~TypeFunc() {
     if(this->main != nullptr && !instanceof<TypeBasic>(this->main) && !instanceof<TypeVoid>(this->main)) delete this->main;
 
-    for(int i=0; i<this->args.size(); i++) if(this->args[i] != nullptr && !instanceof<TypeBasic>(this->args[i]) && !instanceof<TypeVoid>(this->args[i])) delete this->args[i];
+    for(size_t i=0; i<this->args.size(); i++) if(this->args[i] != nullptr && !instanceof<TypeBasic>(this->args[i]) && !instanceof<TypeVoid>(this->args[i])) delete this->args[i];
 }
 
 // TypeBuiltin
@@ -430,7 +430,7 @@ Type* TypeDivided::copy() {return new TypeDivided(mainType, divided);}
 
 int TypeDivided::getSize() {
     int sum = 0;
-    for(int i=0; i<divided.size(); i++) sum += divided[i]->getSize();
+    for(size_t i=0; i<divided.size(); i++) sum += divided[i]->getSize();
     return sum;
 }
 
@@ -517,7 +517,7 @@ bool Types::replaceTemplates(Type** _type) {
         }
 
         if(structure->types.size() > 0) {
-            for(int i=0; i<structure->types.size(); i++) {
+            for(size_t i=0; i<structure->types.size(); i++) {
                 bool isChangedType = Types::replaceTemplates(&structure->types[i]);
                 isChanged = isChanged || isChangedType;
             }

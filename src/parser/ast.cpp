@@ -59,7 +59,7 @@ std::vector<Type*> parametersToTypes(std::vector<RaveValue> params) {
     if(params.empty()) return {};
     std::vector<Type*> types;
 
-    for(int i=0; i<params.size(); i++) types.push_back(params[i].type);
+    for(size_t i=0; i<params.size(); i++) types.push_back(params[i].type);
     return types;
 }
 
@@ -357,7 +357,7 @@ LLVMMetadataRef DebugGen::genType(Type* type, int loc) {
         if(instanceof<TypeVoid>(tf->main)) tf->main = basicTypes[BasicType::Char];
 
         std::vector<LLVMMetadataRef> types;
-        for(int i=0; i<tf->args.size(); i++) types.push_back(genType(tf->args[i]->type, loc));
+        for(size_t i=0; i<tf->args.size(); i++) types.push_back(genType(tf->args[i]->type, loc));
 
         LLVMMetadataRef funcType = LLVMDIBuilderCreateSubroutineType(diBuilder, diFile, types.data(), types.size(), LLVMDIFlagZero);
         return genPointer(type->toString(), funcType, loc);
@@ -410,7 +410,7 @@ LLVMTypeRef LLVMGen::genType(Type* type, int loc) {
             if(s->name.find('<') != std::string::npos) {
                 TypeStruct* sCopy = (TypeStruct*)s->copy();
                 if(sCopy->types.size() > 0) {
-                    for(int i=0; i<sCopy->types.size(); i++) {
+                    for(size_t i=0; i<sCopy->types.size(); i++) {
                         Type* ty = sCopy->types[i];
 
                         while(instanceof<TypeConst>(ty) || instanceof<TypeByval>(ty) || instanceof<TypeArray>(ty) || instanceof<TypePointer>(ty)) ty = ty->getElType();
@@ -446,7 +446,7 @@ LLVMTypeRef LLVMGen::genType(Type* type, int loc) {
         TypeFunc* tf = (TypeFunc*)type;
         if(instanceof<TypeVoid>(tf->main)) tf->main = basicTypes[BasicType::Char];
         std::vector<LLVMTypeRef> types;
-        for(int i=0; i<tf->args.size(); i++) types.push_back(this->genType(tf->args[i]->type, loc));
+        for(size_t i=0; i<tf->args.size(); i++) types.push_back(this->genType(tf->args[i]->type, loc));
         return LLVMPointerType(LLVMFunctionType(this->genType(tf->main, loc), types.data(), types.size(), false), 0);
     }
     if(instanceof<TypeFuncArg>(type)) return this->genType(((TypeFuncArg*)type)->type, loc);

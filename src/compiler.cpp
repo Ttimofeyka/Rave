@@ -445,16 +445,16 @@ void Compiler::compile(std::string file) {
 
     AST::mainFile = Compiler::files[0];
 
-    Lexer* lexer = new Lexer(content, -1);
-    Parser* parser = new Parser(lexer->tokens, file);
+    Lexer lexer = Lexer(content, -1);
+    Parser parser = Parser(lexer.tokens, file);
 
     if(!Compiler::settings.noPrelude && !endsWith(file, "std/prelude.rave") && !endsWith(file, "std/memory.rave")) {
-        parser->nodes.push_back(new NodeImport(ImportFile{exePath + "std/prelude.rave", true}, {}, -1));
-        parser->nodes.push_back(new NodeImport(ImportFile{exePath + "std/memory.rave", true}, {}, -1));
+        parser.nodes.push_back(new NodeImport(ImportFile{exePath + "std/prelude.rave", true}, {}, -1));
+        parser.nodes.push_back(new NodeImport(ImportFile{exePath + "std/memory.rave", true}, {}, -1));
     }
 
-    parser->parseAll();
-    for(size_t i=0; i<parser->nodes.size(); i++) parser->nodes[i]->check();
+    parser.parseAll();
+    for(size_t i=0; i<parser.nodes.size(); i++) parser.nodes[i]->check();
 
     auto start = std::chrono::steady_clock::now();
 
@@ -493,7 +493,7 @@ void Compiler::compile(std::string file) {
     generator->targetData = LLVMCreateTargetDataLayout(machine);
     LLVMSetDataLayout(generator->lModule, LLVMCopyStringRepOfTargetData(generator->targetData));
 
-    for(int i=0; i<parser->nodes.size(); i++) parser->nodes[i]->generate();
+    for(size_t i=0; i<parser.nodes.size(); i++) parser.nodes[i]->generate();
 
     #if LLVM_VERSION < 17
     LLVMPassManagerRef pm = LLVMCreatePassManager();
@@ -566,7 +566,7 @@ void Compiler::compile(std::string file) {
     auto end = std::chrono::steady_clock::now();
     Compiler::genTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
-    for(int i=0; i<AST::importedFiles.size(); i++) {
+    for(size_t i=0; i<AST::importedFiles.size(); i++) {
         if(std::find(Compiler::toImport.begin(), Compiler::toImport.end(), AST::importedFiles[i]) == Compiler::toImport.end()) Compiler::toImport.push_back(AST::importedFiles[i]);
     }
 
@@ -577,7 +577,7 @@ void Compiler::compileAll() {
     AST::debugMode = Compiler::debugMode;
     std::vector<std::string> toRemove;
 
-    for(int i=0; i<Compiler::files.size(); i++) {
+    for(size_t i=0; i<Compiler::files.size(); i++) {
         if(access(Compiler::files[i].c_str(), 0) != 0) {
             Compiler::error("file \033[1m" + Compiler::files[i] + "\033[22m does not exist!");
             return;
@@ -598,14 +598,14 @@ void Compiler::compileAll() {
         }
     }
 
-    for(int i=0; i<AST::addToImport.size(); i++) {
+    for(size_t i=0; i<AST::addToImport.size(); i++) {
         std::string fname = replaceAll(AST::addToImport[i], ">", "");
         if(std::count(Compiler::toImport.begin(), Compiler::toImport.end(), fname) == 0 &&
            std::count(Compiler::files.begin(), Compiler::files.end(), fname) == 0
         ) Compiler::toImport.push_back(fname);
     }
 
-    for(int i=0; i<Compiler::toImport.size(); i++) {
+    for(size_t i=0; i<Compiler::toImport.size(); i++) {
         if(access(Compiler::toImport[i].c_str(), 0) != 0) {
             Compiler::error("file \033[1m" + Compiler::files[i] + "\033[22m does not exist!");
             return;
@@ -663,7 +663,7 @@ void Compiler::compileAll() {
             return;
         }
 
-        for(int i=0; i<toRemove.size(); i++) std::remove(toRemove[i].c_str());
+        for(size_t i=0; i<toRemove.size(); i++) std::remove(toRemove[i].c_str());
     }
 
     std::cout << "Time spent by lexer: " << std::to_string(Compiler::lexTime) << "ms\nTime spent by parser: " << std::to_string(Compiler::parseTime) << "ms\nTime spent by generator: " << std::to_string(Compiler::genTime) << "ms" << std::endl;

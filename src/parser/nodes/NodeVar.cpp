@@ -59,7 +59,7 @@ NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, boo
     this->noZeroInit = noZeroInit;
     this->isNoCopy = false;
 
-    for(int i=0; i<this->mods.size(); i++) {
+    for(size_t i=0; i<this->mods.size(); i++) {
         if(this->mods[i].name == "noCopy") this->isNoCopy = true;
     }
 
@@ -148,7 +148,7 @@ RaveValue NodeVar::generate() {
 
         bool noMangling = false;
 
-        for(int i=0; i<this->mods.size(); i++) {
+        for(size_t i=0; i<this->mods.size(); i++) {
             while(AST::aliasTable.find(this->mods[i].name) != AST::aliasTable.end()) {
                 if(instanceof<NodeArray>(AST::aliasTable[this->mods[i].name])) {
                     mods[i].name = ((NodeString*)((NodeArray*)AST::aliasTable[this->mods[i].name])->values[0])->value;
@@ -247,7 +247,7 @@ RaveValue NodeVar::generate() {
         return {};
     }
     else {
-        for(int i=0; i<this->mods.size(); i++) {
+        for(size_t i=0; i<this->mods.size(); i++) {
             if(mods[i].name == "volatile") isVolatile = true;
             else if(mods[i].name == "noOperators") isNoOperators = true;
             else if(mods[i].name == "nozeroinit") noZeroInit = true;
@@ -269,14 +269,14 @@ RaveValue NodeVar::generate() {
                             std::string sTypes = niden->name.substr(niden->name.find('<')+1, niden->name.find('>'));
                             sTypes.pop_back();
 
-                            Lexer* lexer = new Lexer(sTypes, 0);
-                            Parser* parser = new Parser(lexer->tokens, "(BUILTIN)");
+                            Lexer lexer = Lexer(sTypes, 0);
+                            Parser parser = Parser(lexer.tokens, "(BUILTIN)");
                             std::vector<Type*> types;
 
                             while(true) {
-                                if(parser->peek()->type == TokType::Comma) parser->next();
-                                else if(parser->peek()->type == TokType::Eof) break;
-                                types.push_back(parser->parseType());
+                                if(parser.peek()->type == TokType::Comma) parser.next();
+                                else if(parser.peek()->type == TokType::Eof) break;
+                                types.push_back(parser.parseType());
                             }
 
                             AST::structTable[niden->name.substr(0, niden->name.find('<'))]->genWithTemplate("<"+sTypes+">", types);
