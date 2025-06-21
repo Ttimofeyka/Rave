@@ -20,12 +20,14 @@ public:
     int32_t line = 0;
 
     inline char peek() {return text[idx];}
-    inline char next() {idx += 1; return text[idx];}
+    inline char next() {return text[++idx];}
+
     std::string replaceAllEscapes(std::string buffer, bool isChar = true);
     std::string getIdentifier();
     std::string getString();
     std::string getChar();
     std::string getDigit(char numType);
+
     Lexer(std::string text, int offset);
-    ~Lexer() {for(int i=0; i<this->tokens.size(); i++) delete this->tokens[i];}
+    ~Lexer() {for(size_t i=0; i<tokens.size(); i++) delete tokens[i];}
 };

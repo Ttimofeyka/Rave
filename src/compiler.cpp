@@ -445,12 +445,7 @@ void Compiler::compile(std::string file) {
 
     AST::mainFile = Compiler::files[0];
 
-    auto start = std::chrono::steady_clock::now();
     Lexer* lexer = new Lexer(content, -1);
-    auto end = std::chrono::steady_clock::now();
-    Compiler::lexTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
-    
-    start = end;
     Parser* parser = new Parser(lexer->tokens, file);
 
     if(!Compiler::settings.noPrelude && !endsWith(file, "std/prelude.rave") && !endsWith(file, "std/memory.rave")) {
@@ -459,12 +454,10 @@ void Compiler::compile(std::string file) {
     }
 
     parser->parseAll();
-    for(int i=0; i<parser->nodes.size(); i++) parser->nodes[i]->check();
-    end = std::chrono::steady_clock::now();
+    for(size_t i=0; i<parser->nodes.size(); i++) parser->nodes[i]->check();
 
-    Compiler::parseTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+    auto start = std::chrono::steady_clock::now();
 
-    start = end;
     generator = new LLVMGen(file, Compiler::settings, Compiler::options);
 
     if(settings.outDebugInfo) debugInfo = new DebugGen(settings, file, generator->lModule);
@@ -570,7 +563,7 @@ void Compiler::compile(std::string file) {
         std::exit(1);
     }
 
-    end = std::chrono::steady_clock::now();
+    auto end = std::chrono::steady_clock::now();
     Compiler::genTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
     for(int i=0; i<AST::importedFiles.size(); i++) {

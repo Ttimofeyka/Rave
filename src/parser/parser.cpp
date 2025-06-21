@@ -7,6 +7,7 @@ with this file, You can obtain one at htypep://mozilla.org/MPL/2.0/.
 #include <vector>
 #include <map>
 #include <string>
+#include "../include/compiler.hpp"
 #include "../include/parser/ast.hpp"
 #include "../include/parser/nodes/Node.hpp"
 #include "../include/parser/nodes/NodeBlock.hpp"
@@ -126,6 +127,8 @@ Token* Parser::expect(int type, std::string msg, int add) {
 }
 
 void Parser::parseAll() {
+    auto start = std::chrono::steady_clock::now();
+
     while(peek()->type != TokType::Eof) {
         std::vector<Node*> _nodes;
         parseTopLevel(_nodes);
@@ -134,6 +137,10 @@ void Parser::parseAll() {
             if(node != nullptr && !instanceof<NodeNone>(node)) nodes.push_back(node);
         }
     }
+
+    auto end = std::chrono::steady_clock::now();
+
+    Compiler::parseTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 }
 
 void Parser::parseTopLevel(std::vector<Node*>& list, std::string s) {

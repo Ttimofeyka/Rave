@@ -4,6 +4,8 @@ Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
+#include <chrono>
+#include "../include/compiler.hpp"
 #include "../include/lexer/tokens.hpp"
 #include "../include/lexer/lexer.hpp"
 #include "../include/utils.hpp"
@@ -97,6 +99,9 @@ std::string Lexer::getDigit(char numType) {
 Lexer::Lexer(std::string text, int offset) {
     this->text = text + " ";
     this->line = 0 - offset;
+
+    auto start = std::chrono::steady_clock::now();
+
     while(idx < this->text.size()) {
         while(peek() == '\n' || peek() == '\r' || peek() == ' ' || peek() == '\t') {
             if(peek() == '\n') line += 1;
@@ -226,7 +231,12 @@ Lexer::Lexer(std::string text, int offset) {
                 break;
         }
     }
+
     tokens.push_back(new Token(TokType::Eof, "EOF", -1));
+
+    auto end = std::chrono::steady_clock::now();
+
+    Compiler::lexTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 }
 
 std::string tokenToString(char type) {
