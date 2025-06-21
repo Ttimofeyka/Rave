@@ -14,6 +14,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeStruct.hpp"
 #include "../../include/parser/nodes/NodeAliasType.hpp"
 #include "../../include/parser/nodes/NodeComptime.hpp"
+#include "../../include/parser/nodes/NodeBool.hpp"
 #include "../../include/utils.hpp"
 #include <string>
 
@@ -33,8 +34,20 @@ void addNamespaceNames(Node* node, std::vector<std::string>& names, bool isImpor
     else if(instanceof<NodeIf>(node)) {
         NodeIf* _if = (NodeIf*)node;
 
-        if(_if->body != nullptr) addNamespaceNames(_if->body, names, isImported, isSetChecked);
-        if(_if->_else != nullptr) addNamespaceNames(_if->_else, names, isImported, isSetChecked);
+        if(_if->isStatic) {
+            _if->cond = _if->cond->comptime();
+
+            if(((NodeBool*)_if->cond)->value) {
+                if(_if->body != nullptr) addNamespaceNames(_if->body, names, isImported, isSetChecked);
+            }
+            else {
+                if(_if->_else != nullptr) addNamespaceNames(_if->_else, names, isImported, isSetChecked);
+            }
+        }
+        else {
+            if(_if->body != nullptr) addNamespaceNames(_if->body, names, isImported, isSetChecked);
+            if(_if->_else != nullptr) addNamespaceNames(_if->_else, names, isImported, isSetChecked);
+        }
 
         _if->check();
     }
