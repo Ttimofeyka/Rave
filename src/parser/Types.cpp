@@ -183,9 +183,9 @@ int TypeStruct::getSize() {
     if(instanceof<TypeStruct>(t)) {
         TypeStruct* ts = (TypeStruct*)t;
         if(AST::structTable.find(ts->name) == AST::structTable.end()) generator->error("undefined structure \033[1m" + ts->name + "\033[22m!", -1);
-        if(!ts->types.empty()) {
-            AST::structTable[ts->name]->genWithTemplate(ts->name.substr(ts->name.find('<')), ts->types);
-        }
+
+        if(!ts->types.empty()) AST::structTable[ts->name]->genWithTemplate(ts->name.substr(ts->name.find('<')), ts->types);
+
         int size = 0;
         for(size_t i=0; i<AST::structTable[ts->name]->elements.size(); i++) {
             if(AST::structTable[ts->name]->elements[i] != nullptr && instanceof<NodeVar>(AST::structTable[ts->name]->elements[i])) {
@@ -193,6 +193,7 @@ int TypeStruct::getSize() {
                 size += nvar->type->getSize();
             }
         }
+
         return size;
     }
 
@@ -202,8 +203,9 @@ int TypeStruct::getSize() {
 bool TypeStruct::isSimple() {
     Type* t = this;
 
-    while(generator->toReplace.find(t->toString()) != generator->toReplace.end()) t = generator->toReplace[t->toString()];
     while(AST::aliasTypes.find(t->toString()) != AST::aliasTypes.end()) t = AST::aliasTypes[t->toString()];
+
+    Types::replaceTemplates(&t);
 
     if(instanceof<TypeStruct>(t)) {
         TypeStruct* ts = (TypeStruct*)t;
