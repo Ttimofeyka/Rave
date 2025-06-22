@@ -476,6 +476,8 @@ Type* getTypeByName(std::string id) {
         {"double2", new TypeVector(basicTypes[BasicType::Double], 2)},
         {"double4", new TypeVector(basicTypes[BasicType::Double], 4)},
         {"short8", new TypeVector(basicTypes[BasicType::Short], 8)},
+        {"mask16", new TypeVector(basicTypes[BasicType::Char], 16)},
+        {"mask32", new TypeVector(basicTypes[BasicType::Char], 32)}
     };
 
     auto it = types.find(id);

@@ -295,6 +295,8 @@ Type* NodeBinary::getType() {
     switch(this->op) {
         case TokType::Equ: case TokType::PluEqu: case TokType::MinEqu: case TokType::DivEqu: case TokType::MulEqu: return typeVoid;
         case TokType::Equal: case TokType::Nequal: case TokType::More: case TokType::Less: case TokType::MoreEqual: case TokType::LessEqual:
+            if(instanceof<TypeVector>(first->getType())) return first->getType();
+            return basicTypes[BasicType::Bool];
         case TokType::And: case TokType::Or: case TokType::In: case TokType::NeIn: return basicTypes[BasicType::Bool];
         default:
             Type* firstType = first->getType();

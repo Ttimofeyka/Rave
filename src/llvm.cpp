@@ -210,7 +210,13 @@ void LLVM::cast(RaveValue& value, Type* type, int loc) {
         else if(instanceof<TypeStruct>(type)) generator->error("cannot cast a basic type to a struct!", loc);
     }
     else if(instanceof<TypeVector>(value.type)) {
-        if(instanceof<TypeVector>(type)) value = {LLVMBuildBitCast(generator->builder, value.value, generator->genType(type, loc), "LLVM_bitcast"), type};
+        if(instanceof<TypeVector>(type)) {
+            if(type->getElType()->getSize() > value.type->getElType()->getSize()) {
+                if(isFloatType(type) && isFloatType(value.type)) value = {LLVMBuildFPExt(generator->builder, value.value, generator->genType(type, loc), "LLVM_fvtofvcast"), type};
+                else value = {LLVMBuildSExt(generator->builder, value.value, generator->genType(type, loc), "LLVM_fvtofvcast"), type};
+            }
+            else value = {LLVMBuildBitCast(generator->builder, value.value, generator->genType(type, loc), "LLVM_bitcast"), type};
+        }
     }
 }
 
@@ -270,28 +276,36 @@ RaveValue LLVM::compare(RaveValue first, RaveValue second, char op) {
         LLVM::cast(second, basicTypes[BasicType::Long]);
     }
 
+    Type* returnType = basicTypes[BasicType::Bool];
+
+    if(instanceof<TypeVector>(first.type) && instanceof<TypeVector>(second.type)) returnType = new TypeVector(basicTypes[BasicType::Bool], ((TypeVector*)(first.type))->count);
+
+    RaveValue value = {nullptr, nullptr};
+
     if(isFloatType(first.type)) switch(op) {
-        case TokType::Equal: return {LLVMBuildFCmp(generator->builder, LLVMRealOEQ, first.value, second.value, "compareOEQ"), basicTypes[BasicType::Bool]};
-        case TokType::Nequal: return {LLVMBuildFCmp(generator->builder, LLVMRealUNE, first.value, second.value, "compareONE"), basicTypes[BasicType::Bool]};
-        case TokType::More: return {LLVMBuildFCmp(generator->builder, LLVMRealOGT, first.value, second.value, "compareOGT"), basicTypes[BasicType::Bool]};
-        case TokType::Less: return {LLVMBuildFCmp(generator->builder, LLVMRealOLT, first.value, second.value, "compareOLT"), basicTypes[BasicType::Bool]};
-        case TokType::MoreEqual: return {LLVMBuildFCmp(generator->builder, LLVMRealOGE, first.value, second.value, "compareOGE"), basicTypes[BasicType::Bool]};
-        case TokType::LessEqual: return {LLVMBuildFCmp(generator->builder, LLVMRealOLE, first.value, second.value, "compareOLE"), basicTypes[BasicType::Bool]};
-        default: return {nullptr, nullptr};
+        case TokType::Equal: value = {LLVMBuildFCmp(generator->builder, LLVMRealOEQ, first.value, second.value, "compareOEQ"), returnType}; break;
+        case TokType::Nequal: value = {LLVMBuildFCmp(generator->builder, LLVMRealUNE, first.value, second.value, "compareONE"), returnType}; break;
+        case TokType::More: value = {LLVMBuildFCmp(generator->builder, LLVMRealOGT, first.value, second.value, "compareOGT"), returnType}; break;
+        case TokType::Less: value = {LLVMBuildFCmp(generator->builder, LLVMRealOLT, first.value, second.value, "compareOLT"), returnType}; break;
+        case TokType::MoreEqual: value = {LLVMBuildFCmp(generator->builder, LLVMRealOGE, first.value, second.value, "compareOGE"), returnType}; break;
+        case TokType::LessEqual: value = {LLVMBuildFCmp(generator->builder, LLVMRealOLE, first.value, second.value, "compareOLE"), returnType}; break;
+    }
+    else {
+        bool isUnsigned = ((TypeBasic*)first.type->getElType())->isUnsigned();
+
+        switch(op) {
+            case TokType::Equal: value = {LLVMBuildICmp(generator->builder, LLVMIntEQ, first.value, second.value, "compareIEQ"), returnType}; break;
+            case TokType::Nequal: value = {LLVMBuildICmp(generator->builder, LLVMIntNE, first.value, second.value, "compareINEQ"), returnType}; break;
+            case TokType::More: value = {LLVMBuildICmp(generator->builder, isUnsigned ? LLVMIntUGT : LLVMIntSGT, first.value, second.value, "compareIMR"), returnType}; break;
+            case TokType::Less: value = {LLVMBuildICmp(generator->builder, isUnsigned ? LLVMIntULT : LLVMIntSLT, first.value, second.value, "compareILS"), returnType}; break;
+            case TokType::MoreEqual: value = {LLVMBuildICmp(generator->builder, isUnsigned ? LLVMIntUGE : LLVMIntSGE, first.value, second.value, "compareIME"), returnType}; break;
+            case TokType::LessEqual: value = {LLVMBuildICmp(generator->builder, isUnsigned ? LLVMIntULE : LLVMIntSLE, first.value, second.value, "compareILE"), returnType}; break;
+        }
     }
 
-    bool isUnsigned = ((TypeBasic*)first.type)->isUnsigned();
+    if(instanceof<TypeVector>(first.type) && instanceof<TypeVector>(second.type)) LLVM::cast(value, new TypeVector(first.type->getElType(), ((TypeVector*)(first.type))->count), -1);
 
-    switch(op) {
-        case TokType::Equal: return {LLVMBuildICmp(generator->builder, LLVMIntEQ, first.value, second.value, "compareIEQ"), basicTypes[BasicType::Bool]};
-        case TokType::Nequal: return {LLVMBuildICmp(generator->builder, LLVMIntNE, first.value, second.value, "compareINEQ"), basicTypes[BasicType::Bool]};
-        case TokType::More: return {LLVMBuildICmp(generator->builder, isUnsigned ? LLVMIntUGT : LLVMIntSGT, first.value, second.value, "compareIMR"), basicTypes[BasicType::Bool]};
-        case TokType::Less: return {LLVMBuildICmp(generator->builder, isUnsigned ? LLVMIntULT : LLVMIntSLT, first.value, second.value, "compareILS"), basicTypes[BasicType::Bool]};
-        case TokType::MoreEqual: return {LLVMBuildICmp(generator->builder, isUnsigned ? LLVMIntUGE : LLVMIntSGE, first.value, second.value, "compareIME"), basicTypes[BasicType::Bool]};
-        case TokType::LessEqual: return {LLVMBuildICmp(generator->builder, isUnsigned ? LLVMIntULE : LLVMIntSLE, first.value, second.value, "compareILE"), basicTypes[BasicType::Bool]};
-    }
-
-    return {nullptr, nullptr};
+    return value;
 }
 
 void LLVM::Builder::atEnd(LLVMBasicBlockRef block) {

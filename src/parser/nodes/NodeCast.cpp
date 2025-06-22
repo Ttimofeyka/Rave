@@ -123,6 +123,17 @@ RaveValue NodeCast::generate() {
         return this->generate();
     }
 
+    if(instanceof<TypeVector>(this->type)) {
+        if(instanceof<TypeVector>(result.type)) {
+            if(type->getSize() > result.type->getSize()) {
+                if(!isFloatType(type->getElType())) return {LLVMBuildSExt(generator->builder, result.value, generator->genType(type, loc), "NodeCast_castV"), type};
+                else return {LLVMBuildFPExt(generator->builder, result.value, generator->genType(type, loc), "NodeCast_castV"), type};
+            }
+
+            return {LLVMBuildBitCast(generator->builder, result.value, generator->genType(type, loc), "NodeCast_castV"), type};
+        }
+    }
+
     generator->error("NodeCast assert!", this->loc);
     return {};
 }

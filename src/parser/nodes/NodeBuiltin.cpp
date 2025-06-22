@@ -73,7 +73,7 @@ Type* NodeBuiltin::getType() {
     || this->name == "isStructure" || this->name == "hasMethod"
     || this->name == "hasDestructor" || this->name == "contains" || this->name == "isUnsigned") return basicTypes[BasicType::Bool];
     if(this->name == "sizeOf" || this->name == "argsLength" || this->name == "getCurrArgNumber"
-    || this->name == "vMoveMask128" || this->name == "cttz" || this->name == "ctlz") return basicTypes[BasicType::Int];
+    || this->name == "vMoveMask128" || this->name == "vMoveMask256" || this->name == "cttz" || this->name == "ctlz") return basicTypes[BasicType::Int];
     if(this->name == "vShuffle" || this->name == "vHAdd32x4" || this->name == "vHAdd16x8"
     || this->name == "__sqrtf4" || this->name == "__sqrtf8"|| this->name == "__sqrtd2"
     || this->name == "__sqrtd4") return asType(0)->type;
@@ -627,7 +627,6 @@ RaveValue NodeBuiltin::generate() {
         RaveValue value = this->args[0]->generate();
 
         if(instanceof<TypePointer>(value.type)) value = LLVM::load(value, "NodeBuiltin_vMoveMask_load_", this->loc);
-        if(!instanceof<TypeVector>(value.type)) generator->error("the value must have the vector type!", this->loc);
 
         if(generator->functions.find("llvm.x86.sse2.pmovmskb.128") == generator->functions.end()) {
             generator->functions["llvm.x86.sse2.pmovmskb.128"] = {LLVMAddFunction(generator->lModule, "llvm.x86.sse2.pmovmskb.128", LLVMFunctionType(
@@ -637,9 +636,26 @@ RaveValue NodeBuiltin::generate() {
             )), new TypeFunc(basicTypes[BasicType::Int], {new TypeFuncArg(new TypeVector(basicTypes[BasicType::Char], 16), "v")}, false)};
         }
 
-        if(((TypeVector*)value.type)->count != 16) LLVM::cast(value, new TypeVector(basicTypes[BasicType::Char], 16), this->loc);
-
         return LLVM::call(generator->functions["llvm.x86.sse2.pmovmskb.128"], std::vector<LLVMValueRef>({value.value}).data(), 1, "vMoveMask128");
+    }
+    else if(this->name == "vMoveMask256") {
+        if(Compiler::features.find("+avx2") == std::string::npos)  generator->error("your target does not support AVX2!", this->loc);
+
+        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
+
+        RaveValue value = this->args[0]->generate();
+
+        if(instanceof<TypePointer>(value.type)) value = LLVM::load(value, "NodeBuiltin_vMoveMask_load_", this->loc);
+
+        if(generator->functions.find("llvm.x86.avx2.pmovmskb") == generator->functions.end()) {
+            generator->functions["llvm.x86.avx2.pmovmskb"] = {LLVMAddFunction(generator->lModule, "llvm.x86.avx2.pmovmskb", LLVMFunctionType(
+                LLVMInt32TypeInContext(generator->context),
+                std::vector<LLVMTypeRef>({LLVMVectorType(LLVMInt8TypeInContext(generator->context), 32)}).data(),
+                1, false
+            )), new TypeFunc(basicTypes[BasicType::Int], {new TypeFuncArg(new TypeVector(basicTypes[BasicType::Char], 32), "v")}, false)};
+        }
+
+        return LLVM::call(generator->functions["llvm.x86.avx2.pmovmskb"], std::vector<LLVMValueRef>({value.value}).data(), 1, "vMoveMask256");
     }
     else if(this->name == "__sqrtf4") {
         if(Compiler::features.find("+sse") == std::string::npos)  generator->error("your target does not support SSE!", this->loc);

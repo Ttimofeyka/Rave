@@ -61,6 +61,8 @@ Examples:
 - float8
 - double2
 - double4
+- mask16
+- mask32
 
 # Creating new types
 
