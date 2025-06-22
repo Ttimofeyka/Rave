@@ -6,9 +6,38 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import <std/thread> <std/ascii>
 
-// TODO: Add more supported platforms
+@if(__RAVE_SSE2) {
+    namespace std {
+        namespace cstring {
+            usize strlen(char* str) {
+                isize align = ptoi(&str[return]) & 15;
 
-@if((__RAVE_PLATFORM == "X86_64") || (__RAVE_PLATFORM == "AARCH64") || (__RAVE_PLATFORM == "POWERPC64")) {
+                while(align != 0) {
+                    if(str[return] == '\0') @return();
+                    align -= 1;
+                    return += 1;
+                }
+
+                mask16 zero = @vFrom(mask16, 0c);
+                int4 data;
+                int mask = 0;
+
+                while(true) {
+                    data = @vLoad(int4, &str[return]);
+                    mask = @vMoveMask128((bitcast(mask16)data) == zero);
+
+                    if(mask != 0) {
+                        return += @cttz(mask, true);
+                        break;
+                    }
+
+                    return += 16;
+                }
+            }
+        }
+    }
+}
+@else @if((__RAVE_PLATFORM == "X86_64") || (__RAVE_PLATFORM == "AARCH64") || (__RAVE_PLATFORM == "POWERPC64")) {
     namespace std {
         namespace cstring {
             usize strlen(char* str) {
