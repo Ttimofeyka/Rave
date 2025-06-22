@@ -218,6 +218,12 @@ void NodeNamespace::check() {
         else if(instanceof<NodeAliasType>(nodes[i])) {
             NodeAliasType* naliastype = (NodeAliasType*)nodes[i];
 
+            if(isImported && naliastype->isChecked) {
+                naliastype->isChecked = false;
+                naliastype->name = naliastype->origName;
+                naliastype->namespacesNames.clear();
+            }
+
             for(size_t i=0; i<names.size(); i++) naliastype->namespacesNames.insert(naliastype->namespacesNames.begin(), names[i]);
             nodes[i]->check();
         }
