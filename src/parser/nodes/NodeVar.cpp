@@ -23,6 +23,10 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/parser.hpp"
 #include "../../include/llvm.hpp"
 
+#if LLVM_VERSION > 18
+#define LLVMDIBuilderInsertDeclareAtEnd LLVMDIBuilderInsertDeclareRecordAtEnd
+#endif
+
 NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, bool isGlobal, std::vector<DeclarMod> mods, int loc, Type* type, bool isVolatile) {
     this->name = name;
     this->origName = name;
