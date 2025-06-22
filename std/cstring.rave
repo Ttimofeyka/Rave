@@ -10,7 +10,7 @@ import <std/thread> <std/ascii>
     namespace std {
         namespace cstring {
             usize strlen(char* str) {
-                isize align = ptoi(&str[return]) & 15;
+                isize align = 16 - (ptoi(&str[return]) & 15);
 
                 while(align != 0) {
                     if(str[return] == '\0') @return();
@@ -41,7 +41,7 @@ import <std/thread> <std/ascii>
     namespace std {
         namespace cstring {
             usize strlen(char* str) {
-                ulong align = ptoi(&str[return]) & 7;
+                ulong align = 8 - (ptoi(&str[return]) & 7);
 
                 while(align != 0) {
                     if(str[return] == '\0') @return();
@@ -66,7 +66,7 @@ import <std/thread> <std/ascii>
     namespace std {
         namespace cstring {
             usize strlen(char* str) {
-                uint align = ptoi(&str[return]) & 3;
+                uint align = 4 - (ptoi(&str[return]) & 3);
 
                 while(align != 0) {
                     if(str[return] == '\0') @return();
