@@ -60,6 +60,7 @@ public:
     bool isArrayable = false;
     bool isNoCopy = false;
     bool isExplicit = false;
+    bool isForwardDeclaration = false;
 
     LLVMMetadataRef diFuncScope;
 

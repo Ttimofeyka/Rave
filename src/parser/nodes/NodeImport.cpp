@@ -129,7 +129,7 @@ RaveValue NodeImport::generate() {
     for(auto* node : buffer) {
         if(instanceof<NodeFunc>(node)) {
             auto* nodeFunc = static_cast<NodeFunc*>(node);
-            if(nodeFunc->isPrivate && !nodeFunc->isCtargs) continue;
+            if((nodeFunc->isPrivate && !nodeFunc->isCtargs) || nodeFunc->isForwardDeclaration) continue;
             nodeFunc->isExtern = true;
             continue;
         }

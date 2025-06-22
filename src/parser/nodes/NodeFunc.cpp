@@ -50,7 +50,7 @@ NodeFunc::NodeFunc(const std::string& name, std::vector<FuncArgSet> args, NodeBl
     this->origName = name;
     this->args = std::vector<FuncArgSet>(args);
     this->origArgs = std::vector<FuncArgSet>(args);
-    this->block = new NodeBlock(block->nodes);
+    this->block = block != nullptr ? new NodeBlock(block->nodes) : block;
     this->isExtern = isExtern;
     this->mods = mods;
     this->loc = loc;
@@ -100,16 +100,18 @@ void NodeFunc::check() {
     if(auto it = AST::funcTable.find(name); it != AST::funcTable.end()) {
         std::string argTypes = typesToString(args);
         if(typesToString(it->second->args) == argTypes) {
-            if (isCtargs || isCtargsPart || isTemplate) {
+            if(isCtargs || isCtargsPart || isTemplate) {
                 noCompile = true;
                 return;
             }
 
-            AST::checkError("a function with name \033[1m" + name + "\033[22m already exists on \033[1m" + std::to_string(it->second->loc) + "\033[22m line!", loc);
+            if(!it->second->isForwardDeclaration) AST::checkError("a function with name \033[1m" + name + "\033[22m already exists on \033[1m" + std::to_string(it->second->loc) + "\033[22m line!", loc);
+            AST::funcVersionsTable[name].push_back(this);
         }
-
-        AST::funcVersionsTable[name].push_back(this);
-        name += argTypes;
+        else {
+            AST::funcVersionsTable[name].push_back(this);
+            name += argTypes;
+        }
     }
     else AST::funcVersionsTable[name].push_back(this);
 
@@ -117,7 +119,12 @@ void NodeFunc::check() {
     AST::funcTable[name] = this;
 
     // Check block contents
-    for(auto node : block->nodes) node->check();
+    if(block == nullptr) {
+        if(!isExtern) isForwardDeclaration = true;
+    }
+    else {
+        for(auto node : block->nodes) node->check();
+    }
 }
 
 LLVMTypeRef* NodeFunc::getParameters(int callConv) {
@@ -169,10 +176,12 @@ LLVMTypeRef* NodeFunc::getParameters(int callConv) {
                     }
                 }
             }
-            else this->block->nodes.emplace(
-                this->block->nodes.begin(),
-                new NodeVar(oldName, new NodeIden(arg.name, this->loc), false, false, false, {}, this->loc, arg.type, false, false, false)
-            );
+            else {
+                if(block != nullptr) this->block->nodes.emplace(
+                    this->block->nodes.begin(),
+                    new NodeVar(oldName, new NodeIden(arg.name, this->loc), false, false, false, {}, this->loc, arg.type, false, false, false)
+                );
+            }
         }
 
         if(isCdecl64) for(int j=0; j<arg.internalTypes.size(); j++) {
@@ -357,6 +366,8 @@ RaveValue NodeFunc::generate() {
     }
 
     if(!this->isExtern) {
+        if(isForwardDeclaration) return {};
+
         int oldCurrentBuiltinArg = generator->currentBuiltinArg;
         if(this->isCtargsPart || this->isCtargs) generator->currentBuiltinArg = 0;
 
@@ -495,7 +506,7 @@ Node* NodeFunc::copy() {
     std::vector<FuncArgSet> args = this->args;
     for(size_t i=0; i<args.size(); i++) args[i].type = args[i].type->copy();
 
-    NodeFunc* fn = new NodeFunc(this->name, args, (NodeBlock*)this->block->copy(), this->isExtern, this->mods, this->loc, this->type->copy(), this->templateNames);
+    NodeFunc* fn = new NodeFunc(this->name, args, (block == nullptr ? nullptr : (NodeBlock*)this->block->copy()), this->isExtern, this->mods, this->loc, this->type->copy(), this->templateNames);
     fn->isExplicit = isExplicit;
     return fn;
 }

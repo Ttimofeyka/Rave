@@ -430,7 +430,7 @@ void Parser::parseDecl(std::vector<Node*>& list, std::string s, std::vector<Decl
         }
         else if(peek()->type == TokType::Semicolon) {
             next();
-            return list.push_back(new NodeFunc(name, args, new NodeBlock({}), isExtern, mods, loc, type, templates));
+            return list.push_back(new NodeFunc(name, args, nullptr, isExtern, mods, loc, type, templates));
         }
 
         NodeBlock* block = parseBlock(name);
@@ -442,6 +442,7 @@ void Parser::parseDecl(std::vector<Node*>& list, std::string s, std::vector<Decl
             if(instanceof<TypeVoid>(type)) block->nodes.push_back(n);
             else block->nodes.push_back(new NodeRet(n, loc));
         }
+
         return list.push_back(new NodeFunc(name, args, block, isExtern, mods, loc, type, templates));
     }
     else if(peek()->type == TokType::Rbra) {
