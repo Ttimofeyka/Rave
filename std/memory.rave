@@ -39,7 +39,7 @@ namespace std {
         @if(__RAVE_AVX2) {
             int8 value = @vFrom(int8, cast(int)c);
             
-            auto align = ptoi(dest) & 15;
+            auto align = 16 - (ptoi(dest) & 15);
             while((align > 0) && (idx < n)) {
                 dest[idx] = c;
                 align -= 1;
@@ -51,7 +51,7 @@ namespace std {
         @else @if(__RAVE_SSE2) {
             int4 value = @vFrom(int4, cast(int)c);
 
-            auto align = ptoi(dest) & 15;
+            auto align = 16 - (ptoi(dest) & 15);
             while((align > 0) && (idx < n)) {
                 dest[idx] = c;
                 align -= 1;
