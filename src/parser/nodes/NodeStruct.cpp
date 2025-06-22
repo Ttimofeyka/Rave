@@ -181,6 +181,10 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 else if(func->origName.find("(-)") != std::string::npos) {oper = TokType::Minus; func->name = this->name + "(-)";}
                 else if(func->origName.find("(*)") != std::string::npos) {oper = TokType::Multiply; func->name = this->name + "(*)";}
                 else if(func->origName.find("(/)") != std::string::npos) {oper = TokType::Divide; func->name = this->name + "(/)";}
+                else if(func->origName.find("(<)") != std::string::npos) {oper = TokType::Less; func->name = this->name + "(<)";}
+                else if(func->origName.find("(>)") != std::string::npos) {oper = TokType::More; func->name = this->name + "(>)";}
+                else if(func->origName.find("(<=)") != std::string::npos) {oper = TokType::LessEqual; func->name = this->name + "(<=)";}
+                else if(func->origName.find("(>=)") != std::string::npos) {oper = TokType::MoreEqual; func->name = this->name + "(>=)";}
                 else if(func->origName.find("(=)") != std::string::npos) {oper = TokType::Equ; func->name = this->name + "(=)";}
                 else if(func->origName.find("(==)") != std::string::npos) {oper = TokType::Equal; func->name = this->name + "(==)";}
                 else if(func->origName.find("(!=)") != std::string::npos) {oper = TokType::Nequal; func->name = this->name + "(!=)";}
