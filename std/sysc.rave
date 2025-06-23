@@ -437,6 +437,7 @@ the result of a call with the same parameters and the same number will be the sa
             alias FAccessAt = 489;
             alias GetDents64 = 272; // Unique structure
             alias MakeDirAt = 496;
+            alias Fork = 2;
 
             alias Exit = 1;
             alias Reboot = 55;

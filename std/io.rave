@@ -64,6 +64,12 @@ namespace std {
 }
 @else @if(__RAVE_OS == "WINDOWS") {
     namespace std {
+        struct securityAttributes {
+            uint nLength;
+            void* lpSecurityDescriptor;
+            int bInheritHandle;
+        }
+
         namespace file {
             extern(linkname: "MoveFileW") char __rename(ushort* oldpath, ushort* newpath);
             extern(linkname: "DeleteFileW") char __remove(ushort* path);
@@ -862,7 +868,7 @@ namespace std {
         alias fileAttributeDirectory = 16;
 
         extern(linkname: "GetFileAttributesW") int __GetFileAttributesW(ushort* name);
-        extern(linkname: "CreateDirectoryW") char __CreateDirectoryW(ushort* pathName, void* securityAttributes);
+        extern(linkname: "CreateDirectoryW") char __CreateDirectoryW(ushort* pathName, std::securityAttributes* securityAttributes);
 
         namespace directory {
             bool __exists(ushort* dname) {
