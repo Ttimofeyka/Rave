@@ -88,6 +88,13 @@ import <std/error>
             }
         }
     }
+    @else {
+        namespace std {
+            namespace process {
+                (inline) int fork => cast(int)std::syscall(std::sysctable::Fork);
+            }
+        }
+    }
 }
 @else @if(__RAVE_OS == "WINDOWS") {
     namespace std {
@@ -99,6 +106,7 @@ import <std/error>
             extern(linkname: "GetCurrentProcessId") int __GetCurrentProcessId();
             extern(linkname: "CloseHandle") char __CloseHandle(void* handle);
             extern(linkname: "TerminateProcess") char __TerminateProcess(void* handle, uint exitCode);
+            extern(linkname: "CreatePipe") int __CreatePipe(void** hReadPipe, void** hWritePipe, std::securityAttributes* lpPipeAttributes, uint nSize);
 
             int kill(int pid, int sig) {
                 void* handle = std::process::__OpenProcess(std::process::Terminate | std::process::SuspendAndResume, cast(char)false, pid);
