@@ -37,6 +37,7 @@ std::map<std::pair<std::string, std::string>, StructMember> AST::structsNumbers;
 std::vector<std::string> AST::importedFiles;
 std::map<std::string, std::vector<Node*>> AST::parsed;
 std::string AST::mainFile;
+std::string AST::currentFile;
 std::vector<std::string> AST::addToImport;
 bool AST::debugMode;
 
@@ -167,9 +168,9 @@ std::string typesToString(std::vector<FuncArgSet>& args) {
     return data + "]";
 }
 
-void AST::checkError(std::string message, int loc) {
-    std::cout << "\033[0;31mError on \033[1m" + std::to_string(loc) + "\033[22m line: " + message + "\033[0;0m\n";
-	exit(1);
+void AST::checkError(std::string message, int line) {
+    std::cout << "\033[0;31mError in \033[1m" + AST::mainFile + "\033[22m file at \033[1m" + std::to_string(line) + "\033[22m line: " + message + "\033[0;0m" << std::endl;
+    std::exit(1);
 }
 
 DebugGen::DebugGen(genSettings settings, std::string file, LLVMModuleRef module) {

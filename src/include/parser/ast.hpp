@@ -64,6 +64,7 @@ namespace AST {
     extern std::vector<std::string> addToImport;
     extern std::map<std::string, std::vector<Node*>> parsed;
     extern std::string mainFile;
+    extern std::string currentFile;
     extern bool debugMode;
 
     void checkError(std::string message, int loc);

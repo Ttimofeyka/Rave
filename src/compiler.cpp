@@ -444,6 +444,7 @@ void Compiler::compile(std::string file) {
     else pointerSize = 32;
 
     AST::mainFile = Compiler::files[0];
+    AST::currentFile = file;
 
     Lexer lexer = Lexer(content, -1);
     Parser parser = Parser(lexer.tokens, file);
