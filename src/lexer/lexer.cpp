@@ -232,7 +232,7 @@ Lexer::Lexer(std::string text, int offset) {
         }
     }
 
-    tokens.push_back(new Token(TokType::Eof, "EOF", -1));
+    tokens.push_back(new Token(TokType::Eof, "EOF", (tokens.size() > 0 ? tokens[tokens.size() - 1]->line : -1)));
 
     auto end = std::chrono::steady_clock::now();
 

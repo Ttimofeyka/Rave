@@ -26,14 +26,18 @@ struct DeclarMod {
 class Parser {
 public:
     std::vector<Token*> tokens;
-    long idx = 0;
+    int idx = 0;
     std::vector<Node*> nodes;
     std::string file;
+    bool haveErrors = false;
     
     void error(std::string msg);
     void error(std::string msg, int line);
     void warning(std::string msg);
     void warning(std::string msg, int line);
+
+    Token* skipStmt();
+    Token* skip(int openType, int closeType);
 
     Token* peek();
     Token* next(int add = 1);

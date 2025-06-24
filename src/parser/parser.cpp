@@ -93,36 +93,53 @@ Parser::Parser(std::vector<Token*> tokens, std::string file)
     };
 }
 
-void Parser::error(std::string msg) {
-    std::cout << "\033[0;31mError in \033[1m" + file + "\033[22m file at " 
-              << peek()->line << " line: " << msg << "\033[0;0m" << std::endl;
-    std::exit(1);
-}
-
 void Parser::error(std::string msg, int line) {
     std::cout << "\033[0;31mError in \033[1m" + file + "\033[22m file at " 
               << line << " line: " << msg << "\033[0;0m" << std::endl;
-    std::exit(1);
+
+    haveErrors = true;
 }
 
-void Parser::warning(std::string msg) {
-    std::cout << "\033[0;33mWarning in \033[1m" + file + "\033[22m file at " 
-              << peek()->line << " line: " << msg << "\033[0;0m" << std::endl;
-}
+void Parser::error(std::string msg) { error(msg, peek()->line); }
 
 void Parser::warning(std::string msg, int line) {
     std::cout << "\033[0;33mWarning in \033[1m" + file + "\033[22m file at " 
               << line << " line: " << msg << "\033[0;0m" << std::endl;
 }
 
-Token* Parser::peek() {return tokens[idx];}
+void Parser::warning(std::string msg) { warning(msg, peek()->line); }
 
-Token* Parser::next(int add) {idx += add; return tokens[idx];}
+Token* Parser::skipStmt() {
+    while(peek()->type != TokType::Eof && peek()->type != TokType::Semicolon) next();
+    return peek();
+}
+
+Token* Parser::skip(int openType, int closeType) {
+    int count = 1;
+
+    while(peek()->type != TokType::Eof) {
+        if(peek()->type == openType) count += 1;
+        else if(peek()->type == closeType) count -= 1;
+
+        if(count == 0) break;
+        next();
+    }
+
+    return peek();
+}
+
+Token* Parser::peek() { return tokens[idx]; }
+
+Token* Parser::next(int add) { idx += add; return tokens[idx]; }
 
 Token* Parser::expect(int type, std::string msg, int add) {
     Token* _next = next(add);
 
-    if(_next->type != type) error(msg);
+    if(_next->type != type) {
+        error(msg, _next->line);
+        return nullptr;
+    }
+
     return _next;
 }
 
@@ -141,6 +158,8 @@ void Parser::parseAll() {
     auto end = std::chrono::steady_clock::now();
 
     Compiler::parseTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
+
+    if(haveErrors) std::exit(1);
 }
 
 void Parser::parseTopLevel(std::vector<Node*>& list, std::string s) {
@@ -216,7 +235,11 @@ Node* Parser::parseNamespace(std::string s) {
 
     std::string name = peek()->value;
 
-    expect(TokType::Rbra, "expected token '{'!");
+    if(expect(TokType::Rbra, "expected token '{'!") == nullptr) {
+        skip(TokType::Rbra, TokType::Lbra);
+        return nullptr;
+    }
+
     next();
 
     std::vector<Node*> nNodes;
@@ -230,9 +253,12 @@ Node* Parser::parseNamespace(std::string s) {
         parseTopLevel(_nodes, s);
     }
 
-    expect(TokType::Lbra, "expected token '}'!", 0);
-    next();
+    if(expect(TokType::Lbra, "expected token '}'!", 0) == nullptr) {
+        next();
+        return nullptr;
+    }
 
+    next();
     return new NodeNamespace(name, nNodes, loc);
 }
 
@@ -244,6 +270,8 @@ std::vector<FuncArgSet> Parser::parseFuncArgSets() {
 
     while(peek()->type != TokType::Lpar) {
         Type* type = parseType();
+        if(type == nullptr) return args;
+
         std::string name = peek()->value;
 
         next();
@@ -375,6 +403,17 @@ void Parser::parseDecl(std::vector<Node*>& list, std::string s, std::vector<Decl
     int currIdx = idx;
     auto type = parseType(false, true);
 
+    if(type == nullptr) {
+        next(2);
+        if(peek()->type == TokType::Rpar) skip(TokType::Rpar, TokType::Lpar);
+
+        if(peek()->type == TokType::ShortRet) skipStmt();
+        else if(peek()->type == TokType::Rbra) skip(TokType::Rbra, TokType::Lbra);
+
+        if(peek()->type != TokType::Eof) next();
+        return;
+    }
+
     if(instanceof<TypeCall>(type)) {
         idx = currIdx;
         Node* n = parseAtom(s);
@@ -382,7 +421,27 @@ void Parser::parseDecl(std::vector<Node*>& list, std::string s, std::vector<Decl
         return list.push_back(n);
     }
 
-    expect(TokType::Identifier, "a declaration name must be an identifier!", 0);
+    if(expect(TokType::Identifier, "a declaration name must be an identifier!", 0) == nullptr) {
+        if(peek()->type == TokType::Semicolon) {
+            next();
+            return;
+        }
+        else if(peek()->type == TokType::Equ) {
+            skipStmt();
+            next();
+            return;
+        }
+
+        next();
+
+        if(peek()->type == TokType::Rpar) skip(TokType::Rpar, TokType::Lpar);
+
+        if(peek()->type == TokType::ShortRet) skipStmt();
+        else if(peek()->type == TokType::Rbra) skip(TokType::Rbra, TokType::Lbra);
+
+        if(peek()->type != TokType::Eof) next();
+        return;
+    }
 
     if(peek()->value == "operator") return list.push_back(parseOperatorOverload(type, s));
 
@@ -884,16 +943,33 @@ Node* Parser::parseAtom(std::string f) {
 Node* Parser::parseStruct(std::vector<DeclarMod> mods) {
     int loc = peek()->line;
 
-    std::string name = expect(TokType::Identifier, "a declaration name must be an identifier!")->value;
+    Token* __name = expect(TokType::Identifier, "a declaration name must be an identifier!");
+    if(__name == nullptr) {
+        next();
+
+        if(peek()->type == TokType::Less) skip(TokType::Less, TokType::More);
+        skip(TokType::Rbra, TokType::Lbra);
+
+        if(peek()->type == TokType::Lbra) next();
+    }
+
+    std::string name = __name->value;
     next();
 
     std::vector<std::string> templateNames;
     if(peek()->type == TokType::Less) {
         next();
         while(peek()->type != TokType::More) {
-            templateNames.push_back(parseType()->toString());
+            Type* _type = parseType();
+            if(_type == nullptr) {
+                skip(TokType::Less, TokType::More);
+                break;
+            }
+
+            templateNames.push_back(_type->toString());
             if(peek()->type == TokType::Comma) next();
         }
+
         next();
     }
 
@@ -904,8 +980,14 @@ Node* Parser::parseStruct(std::vector<DeclarMod> mods) {
         next();
     }
 
-    if(peek()->type != TokType::Rbra) error("expected token '{'!");
-    next(); // skip {
+    if(expect(TokType::Rbra, "expected token '{'!", 0) == nullptr) {
+        skip(TokType::Rbra, TokType::Lbra);
+        if(peek()->type == TokType::Lbra) next();
+
+        return nullptr;
+    }
+
+    next();
     
     std::vector<Node*> nodes;
     std::vector<Node*> _nodes;
@@ -917,8 +999,9 @@ Node* Parser::parseStruct(std::vector<DeclarMod> mods) {
         parseTopLevel(_nodes, name);
     }
 
-    if(peek()->type != TokType::Lbra) error("expected token '}'!");
-    next(); // skip }
+    if(expect(TokType::Lbra, "expected token '}'!", 0) == nullptr) return nullptr;
+
+    next();
 
     return new NodeStruct(name, nodes, loc, _exs, templateNames, mods);
 }
@@ -990,22 +1073,32 @@ Type* Parser::parseTypeAtom() {
         else if(id == "auto") return new TypeAuto();
         else if(id == "const") {
             if(peek()->type == TokType::Rpar) next();
-            else error("expected token '('!");
+            else {error("expected token '('!"); return nullptr;}
                 Type* _t = parseType();
             if(peek()->type == TokType::Lpar) next();
-            else error("expected token ')'!");
+            else {error("expected token ')'!"); return nullptr;}
             return new TypeConst(_t); 
         }
         else return getTypeByName(id);
     }
     else if(peek()->type == TokType::Builtin) {
+        if(peek()->value == "@") {
+            error("expected a type name, not \033[1m" + peek()->value + "\033[22m!");
+            next();
+
+            return nullptr;
+        }
+
         std::vector<Node*> args;
         NodeBlock* block;
-        Token* info = peek(); idx += 2;
+        Token* info = peek();
+        idx += 2;
+
         while(peek()->type != TokType::Lpar) {
             args.push_back(parseExpr());
             if(peek()->type == TokType::Comma) next();
         }
+
         if(peek()->type == TokType::Rbra) return new TypeBuiltin(info->value, args, parseBlock(""));
         return new TypeBuiltin(info->value, args, new NodeBlock({}));
     }
@@ -1024,8 +1117,12 @@ std::vector<TypeFuncArg*> Parser::parseFuncArgs() {
         buffer.push_back(new TypeFuncArg(ty,name));
 
         if(peek()->type == TokType::Comma) next();
-        else if(peek()->type != TokType::Lpar) error("expected token ')'!");
-    } next();
+        else if(peek()->type != TokType::Lpar) {
+            error("expected token ')'!");
+            return buffer;
+        }
+    }
+    next();
     return buffer;
 }
 
@@ -1046,10 +1143,14 @@ Type* Parser::parseType(bool cannotBeTemplate, bool isDeclaration) {
     }
 
     Type* ty = parseTypeAtom();
+    if(ty == nullptr) return nullptr;
+
     while(
-        peek()->type == TokType::Multiply || peek()->type == TokType::Rarr ||
-        peek()->type == TokType::Rpar || (peek()->type == TokType::Less && !cannotBeTemplate)
+        (peek()->type == TokType::Multiply || peek()->type == TokType::Rarr ||
+        peek()->type == TokType::Rpar || (peek()->type == TokType::Less && !cannotBeTemplate)) && peek()->type != TokType::Eof
     ) {
+        if(ty == nullptr) return nullptr;
+
         if(peek()->type == TokType::Multiply) {next(); ty = new TypePointer(ty);}
         else if(peek()->type == TokType::Rarr) {
             Node* count = nullptr;
