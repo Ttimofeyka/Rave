@@ -13,7 +13,7 @@ namespace std {
         (inline) bool isStart(char c) => ((c & 0xC0) != 0x80);
 
         usize utflen(uchar* str) {
-            int i = 0;
+            usize i = 0;
             while(str[i] != '\0') {
                 if(std::utf8::isStart(str[i])) return += 1;
                 i += 1;
