@@ -112,13 +112,15 @@ namespace std {
 
 namespace std {
     namespace file {
-        (inline) int rename(std::string oldpath, std::string newpath) => std::file::rename(oldpath.data, newpath.data);
+        (inline, explicit) int rename(std::cstring oldPath, std::cstring newPath) => std::file::rename(oldPath.data, newPath.data);
+        (inline, explicit) int rename(std::string oldPath, std::string newPath) => std::file::rename(oldPath.data, newPath.data);
 
-        (inline) int remove(std::string path) => std::file::remove(path.data);
+        (inline, explicit) int remove(std::cstring path) => std::file::remove(path.data);
+        (inline, explicit) int remove(std::string path) => std::file::remove(path.data);
 
         (inline) bool exists(char* fname) => (std::file::__access(fname, 0) == 0);
-
-        (inline) bool exists(std::string fname) => (std::file::__access(fname.data, 0) == 0);
+        (inline, explicit) bool exists(std::cstring fname) => (std::file::__access(fname.data, 0) == 0);
+        (inline, explicit) bool exists(std::string fname) => (std::file::__access(fname.data, 0) == 0);
     }
 }
 
@@ -172,13 +174,13 @@ namespace std {
                 if(std::cstring::strcmp(mode, "r")) fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, name, std::file::rdOnly | std::file::oCreate, 448);
                 else if(std::cstring::strcmp(mode, "w")) {
                     fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, name, std::file::wrOnly | std::file::oCreate, 448);
-                    buffer = std::malloc(bufferSize);
-                    this.bufferPos = 0;
+                    if(buffer == null) buffer = std::malloc(bufferSize);
+                    bufferPos = 0;
                 }
                 else if(std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr") || std::cstring::strcmp(mode, "r+") || std::cstring::strcmp(mode, "w+")) {
                     fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, name, std::file::rdWrOnly | std::file::oCreate, 448);
                     buffer = std::malloc(bufferSize);
-                    this.bufferPos = 0;
+                    bufferPos = 0;
                 }
                 else fd = -1;
             }
@@ -186,8 +188,8 @@ namespace std {
             void openFd(char* mode, int fd) {
                 this.fd = fd;
                 if(std::cstring::strcmp(mode, "w") || std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr") || std::cstring::strcmp(mode, "r+") || std::cstring::strcmp(mode, "w+")) {
-                    buffer = std::malloc(bufferSize);
-                    this.bufferPos = 0;
+                    if(buffer == null) buffer = std::malloc(bufferSize);
+                    bufferPos = 0;
                 }
             }
 
@@ -351,6 +353,8 @@ namespace std {
                         std::file::fileShareRead, null,
                         4, 0, null
                     );
+                    if(buffer == null) buffer = std::malloc(bufferSize);
+                    bufferPos = 0;
                 }
                 else if(std::cstring::strcmp(mode, "w")) {
                     fd = std::file::CreateFileW(
@@ -358,8 +362,8 @@ namespace std {
                         std::file::fileShareRead, null,
                         4, 0, null
                     );
-                    buffer = std::malloc(bufferSize);
-                    this.bufferPos = 0;
+                    if(buffer == null) buffer = std::malloc(bufferSize);
+                    bufferPos = 0;
                 }
                 else if(std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr") || std::cstring::strcmp(mode, "r+") || std::cstring::strcmp(mode, "w+")) {
                     fd = std::file::CreateFileW(
@@ -367,8 +371,8 @@ namespace std {
                         std::file::fileShareRead, null,
                         4, 0, null
                     );
-                    buffer = std::malloc(bufferSize);
-                    this.bufferPos = 0;
+                    if(buffer == null) buffer = std::malloc(bufferSize);
+                    bufferPos = 0;
                 }
                 else fd = null;
             }
@@ -535,8 +539,6 @@ namespace std {
                 this.isOpen = false;
             } => this;
 
-            void operator=(std::file* one, char* two) {one[0] = std::file(two);}
-
             void open(char* mode) {
                 this._file = libc::fopen(this.name, mode);
                 this.isOpen = (this._file != null);
@@ -563,8 +565,6 @@ namespace std {
                 std::file::rename(this.name, to);
                 this.name = to;
             }
-
-            (inline) void remove {std::file::remove(this.name);}
 
             int read(void* buffer, int size) => libc::fread(buffer, 1, size, this._file);
             int write(void* buffer, int size) => libc::fwrite(buffer, 1, size, this._file);
