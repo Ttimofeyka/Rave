@@ -380,7 +380,7 @@ namespace std {
             void openFd(char* mode, void* fd) {
                 this.fd = fd;
                 if(std::cstring::strcmp(mode, "w") || std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr") || std::cstring::strcmp(mode, "r+") || std::cstring::strcmp(mode, "w+")) {
-                    buffer = std::malloc(bufferSize);
+                    if(buffer == null) buffer = std::malloc(bufferSize);
                     this.bufferPos = 0;
                 }
             }
