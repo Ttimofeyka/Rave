@@ -39,7 +39,10 @@ namespace std {
             this.length = this.length + 1;
         }
 
-        STACK_T top => this.data[this.length - 1];
+        STACK_T top {
+            if(this.length == 0) @return(null);
+            return = this.data[this.length - 1];
+        }
 
         STACK_T pop {
             if(this.length == 0) @return(null);

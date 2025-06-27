@@ -50,7 +50,7 @@ namespace std {
         }
 
         (inline) void set(usize index, VECTOR_T value) {
-            @if(__RAVE_RUNTIME_CHECKS) if((index >= 0) && (index < this.length)) this.data[index] = value;
+            @if(__RAVE_RUNTIME_CHECKS) if(index < this.length) this.data[index] = value;
             @else this.data[index] = value;
         }
 
@@ -77,23 +77,23 @@ namespace std {
         } => buffer;
 
         (inline) VECTOR_T operator[](std::vector<VECTOR_T>* v, usize index) {
-            @if(__RAVE_RUNTIME_CHECKS) if((index >= 0) && (index < v.length)) return = v.data[index];
+            @if(__RAVE_RUNTIME_CHECKS) if(index < v.length) return = v.data[index];
             @else return = v.data[index];
         }
 
         (inline) void operator[]=(std::vector<VECTOR_T>* v, usize index, VECTOR_T value) {
-            @if(__RAVE_RUNTIME_CHECKS) if((index >= 0) && (index < v.length)) v.data[index] = value;
+            @if(__RAVE_RUNTIME_CHECKS) if(index < v.length) v.data[index] = value;
             @else v.data[index] = value;
         }
 
         (inline) VECTOR_T* operator[]&(std::vector<VECTOR_T>* v, usize index) {
-            @if(__RAVE_RUNTIME_CHECKS) if((index >= 0) && (index < v.length)) return = v.&data[index];
+            @if(__RAVE_RUNTIME_CHECKS) if(index < v.length) return = v.&data[index];
             @else return = v.&data[index];
         }
 
         (inline) void swap(usize first, usize second) {
             @if(__RAVE_RUNTIME_CHECKS) {
-                if(((first >= 0) && (first < this.length)) && ((second >= 0) && (second < this.length))) @return();
+                if((first < this.length) && (second < this.length)) @return();
             }
 
             (noOperators) VECTOR_T temp = this.data[first];
@@ -108,7 +108,7 @@ namespace std {
 
         void remove(usize index) {
             @if(__RAVE_RUNTIME_CHECKS) {
-                if((index >= 0) && (index < this.length)) @return();
+                if(index < this.length) @return();
             }
 
             for(usize i=index; i<this.length; i+=1) {

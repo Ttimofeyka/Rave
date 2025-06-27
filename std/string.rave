@@ -104,13 +104,13 @@ namespace std {
         }
 
         (inline) void set(usize index, char ch) {
-            @if(__RAVE_RUNTIME_CHECKS) if((index >= 0) && (index < this.length)) this.data[index] = ch;
+            @if(__RAVE_RUNTIME_CHECKS) if(index < this.length) this.data[index] = ch;
             @else this.data[index] = ch;
         }
 
         (inline) char at(usize index) {
             @if(__RAVE_RUNTIME_CHECKS) {
-                if((index >= 0) && (index < this.length)) return = this.data[index];
+                if(index < this.length) return = this.data[index];
                 else return = '\0';
             }
             @else return = this.data[index];
