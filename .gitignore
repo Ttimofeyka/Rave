@@ -11,15 +11,12 @@
 
 # Executables
 *.exe
-./examples/simple-calc
 
 # Code coverage
 *.lst
 
 /rave
 example
-llvm.bc
-source/old.ast.d
 
 *.out
 *.ll
@@ -27,7 +24,9 @@ source/old.ast.d
 *.be
 bin
 a
-./a
+
+# Examples
+
 examples/first
 examples/hello_world
 examples/io/test_input
@@ -50,6 +49,9 @@ benchmarks/c/nqueen
 benchmarks/rave/nqueen
 benchmarks/c/dirichlet
 benchmarks/rave/dirichlet
+
+# Tests
+tests/io
 
 std/*.o
 src/*.o

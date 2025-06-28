@@ -380,7 +380,7 @@ RaveValue NodeStruct::generate() {
 
     for(size_t i=0; i<this->methods.size(); i++) {
         this->methods[i]->check();
-        if(!isImported) this->methods[i]->generate();
+        if(!isImported && !this->methods[i]->isTemplate) this->methods[i]->generate();
     }
 
     return {};

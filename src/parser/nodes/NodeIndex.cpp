@@ -105,7 +105,7 @@ void checkForNull(RaveValue ptr, int loc) {
         if(assertFunc != AST::funcTable.end()) {
             Call::make(loc, new NodeIden(assertFunc->second->name, loc), {
                 new NodeBinary(TokType::Nequal, new NodeDone(ptr), new NodeNull(nullptr, loc), loc),
-                new NodeString("Assert in '" + generator->file + "' file in function '" + currScope->funcName + "' at '" + std::to_string(loc) + "' line: trying to get a value from a null pointer!\n", false)
+                new NodeString("Assert in '" + generator->file + "' file in function '" + currScope->funcName + "' at " + std::to_string(loc) + " line: trying to get a value from a null pointer!\n", false)
             });
         }
     }

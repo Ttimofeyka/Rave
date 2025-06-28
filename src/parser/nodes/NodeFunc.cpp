@@ -290,7 +290,7 @@ RaveValue NodeFunc::generate() {
         args[0].type = new TypePointer(new TypeStruct(name.substr(0, name.find('('))));
         tfunc->args.push_back(new TypeFuncArg(args[0].type, args[0].name));
 
-        for(int i=1; i<args.size(); i++) {
+        for(size_t i=1; i<args.size(); i++) {
             Type* cp = args[i].type;
             Types::replaceTemplates(&cp);
 
@@ -485,11 +485,14 @@ RaveValue NodeFunc::generateWithTemplate(std::vector<Type*>& types, const std::s
     auto currBB = generator->currBB;
     auto _scope = currScope;
 
-    NodeFunc* _f = new NodeFunc(all, this->args, (NodeBlock*)this->block->copy(), false, this->mods, this->loc, this->type->copy(), this->templateNames);
+    NodeFunc* _f = new NodeFunc(all, this->args, (NodeBlock*)this->block->copy(), isExtern, this->mods, this->loc, this->type->copy(), this->templateNames);
     _f->isTemplate = true;
+    _f->isMethod = isMethod;
     _f->check();
     _f->templateTypes = std::move(types);
     RaveValue v = _f->generate();
+
+    if(isMethod) AST::methodTable[std::pair<std::string, std::string>(args[0].type->toString(), origName)] = _f;
 
     generator->activeLoops = activeLoops;
     generator->builder = builder;

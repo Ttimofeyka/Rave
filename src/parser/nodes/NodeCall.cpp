@@ -269,6 +269,16 @@ std::string Template::fromTypes(std::vector<Type*>& types) {
 }
 
 std::map<std::pair<std::string, std::string>, NodeFunc*>::iterator Call::findMethod(std::string structName, std::string methodName, std::vector<Node*>& arguments, int loc) {
+    std::string templateTypes = "";
+
+    if(methodName.find('<') != std::string::npos) {
+        // Template method call
+        templateTypes = methodName.substr(methodName.find('<') + 1);
+        templateTypes.pop_back();
+
+        methodName = methodName.substr(0, methodName.find('<'));
+    }
+
     auto method = std::pair<std::string, std::string>(structName, methodName);
     auto methodf = AST::methodTable.find(method);
 
@@ -295,9 +305,46 @@ std::map<std::pair<std::string, std::string>, NodeFunc*>::iterator Call::findMet
         }
     }
 
-    if(methodf == AST::methodTable.end()) generator->error("undefined method \033[1m" + methodName + "\033[22m of the structure \033[1m" + structName + "\033[22m!", loc);
+    if(methodf == AST::methodTable.end()) {
+        generator->error("undefined method \033[1m" + methodName + "\033[22m of the structure \033[1m" + structName + "\033[22m!", loc);
+    }
 
-    if(generator->functions.find(methodf->second->name) == generator->functions.end()) methodf->second->generate();
+    if(templateTypes.length() > 0) {
+        if(generator->functions.find(methodf->second->name + "<" + templateTypes + ">") == generator->functions.end()) {
+            Lexer tLexer(templateTypes, 1);
+            Parser tParser(tLexer.tokens, "(builtin)");
+
+            std::vector<Type*> types;
+            templateTypes = "<";
+
+            while(tParser.peek()->type != TokType::Eof) {
+                switch(tParser.peek()->type) {
+                    case TokType::Number: case TokType::HexNumber: case TokType::FloatNumber: {
+                        Node* value = tParser.parseExpr();
+                        types.push_back(new TypeTemplateMember(value->getType(), value));
+                        break;
+                    }
+                    default:
+                        types.push_back(tParser.parseType(true));
+                        break;
+                }
+
+                if(tParser.peek()->type == TokType::Comma) tParser.next();
+            }
+
+            for(size_t i=0; i<types.size(); i++) {
+                Types::replaceTemplates(&types[i]);
+                templateTypes += types[i]->toString() + ",";
+            }
+
+            templateTypes.back() = '>';
+
+            methodf->second->generateWithTemplate(types, methodf->second->name + templateTypes);
+            methodf = AST::methodTable.find(std::pair<std::string, std::string>(methodf->first.first, methodName));
+            methodf->second->name = methodf->second->name + templateTypes;
+        }
+    }
+    else if(generator->functions.find(methodf->second->name) == generator->functions.end()) methodf->second->generate();
 
     return methodf;
 }
