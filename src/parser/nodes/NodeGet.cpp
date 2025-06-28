@@ -56,11 +56,16 @@ Type* NodeGet::getType() {
     Types::replaceTemplates((Type**)&ts);
 
     const std::string& structName = ts->name;
-    const auto memberKey = std::make_pair(structName, field);
+    auto memberKey = std::make_pair(structName, field);
 
     if(auto methodIt = AST::methodTable.find(memberKey); methodIt != AST::methodTable.end()) return methodIt->second->getType();
 
     if(auto structIt = AST::structsNumbers.find(memberKey); structIt != AST::structsNumbers.end()) return structIt->second.var->getType();
+
+    if(field.find('<') != std::string::npos) {
+        memberKey = std::make_pair(structName, field.substr(0, field.find('<')));
+        if(auto methodIt = AST::methodTable.find(memberKey); methodIt != AST::methodTable.end()) return methodIt->second->getType();
+    }
 
     generator->error("structure \033[1m" + structName + "\033[22m does not contain element \033[1m" + field + "\033[22m!", loc);
     return nullptr;
