@@ -18,13 +18,9 @@ std::json::Value bow;
 bow.makeInteger(1000);
 ```
 
-### asBoolean, asInt, asLong, asDouble, asCString, asString, asPointer
+### pointer
 
-These methods allow you to get the desired value from the JSON value in the format you need.
-
-**asPointer** returns a pointer for iteration (it can be useful if it is an object or an array).
-
-**asString** allocates a new `std::string`.
+Returns a pointer for iteration (it can be useful if it is an object or an array).
 
 Example:
 
@@ -32,11 +28,27 @@ Example:
 std::string buffer = "{\"foo\": 100, \"bow\": 200}"
 std::json::Value test = std::json::parse(buffer);
 
-std::json::Value* elements = test.asPointer(); // Pointer with access to all elements by index
+std::json::Value* elements = test.pointer(); // Pointer with access to all elements by index
 
 std::println("List of existing elements:");
 for(int i=0; i<test.length; i++) std::println("\t", elements[i].name);
 ```
+
+### as&lt;TYPE>
+
+This method allows you to get the desired value from the JSON value in the type you need.
+
+Supported types:
+- char, uchar;
+- short, ushort;
+- int, uint;
+- long, ulong;
+- cent, ucent;
+- half, bhalf;
+- float, double, real;
+- `char*`, `std::string`.
+
+NOTE: if you are using `std::string`, it makes new allocation.
 
 ### indexOf
 
@@ -58,7 +70,7 @@ Example:
 std::string buffer = "{\"foo\": 100, \"bow\": 200}"
 std::json::Value test = std::json::parse(buffer);
 
-std::println("foo: ", test.get("foo").asInt(), ", bow: ", test.get("bow").asInt());
+std::println("foo: ", test.get("foo").as<int>(), ", bow: ", test.get("bow").as<int>());
 ```
 
 ### set

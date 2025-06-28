@@ -14,11 +14,11 @@ void main {
     defer ~jvalue;
 
     // Checking
-    std::json::Value* jobject = jvalue.asPointer(); // Pointer with access to all elements by index
+    std::json::Value* jobject = jvalue.pointer(); // Pointer with access to all elements by index
     std::println("List of existing elements:");
     for(int i=0; i<jvalue.length; i++) std::println("\t", jobject[i].name);
 
     // Let's print a value of "compiler" variable!
     std::json::Value compiler = jvalue.get("compiler");
-    std::println("'compiler' is ", compiler.asCString(), "!"); // You can use .asString() method too
+    std::println("'compiler' is ", compiler.as<char*>(), "!"); // You can use .as<std::cstring>() or .as<std::string> too
 }
