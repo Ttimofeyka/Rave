@@ -1,0 +1,28 @@
+import <std/io>
+
+void main {
+    std::file foo = std::file("test.txt");
+
+    // Writing
+
+    foo.open("w");
+    std::assert(foo.isOpen(), "The file was not opened properly!\n");
+        std::fprintln(&foo, "1 2 3 4");
+    foo.close();
+
+    // Reading
+
+    foo.open("r");
+    std::assert(foo.isOpen(), "The file was not opened properly!\n");
+        char[7] buffer;
+        std::assert(foo.read(&buffer, 7) != -1, "The file was not read properly!\n");
+        std::assert((buffer[0] == '1') && (buffer[2] == '2') && (buffer[4] == '3') && (buffer[6] == '4'), "Bad data!\n");
+    foo.close();
+
+    // Deleting
+
+    ~foo;
+    std::assert(std::file::remove("test.txt") == 0, "The file was not deleted properly!\n");
+
+    std::println("Test passed!");
+}
