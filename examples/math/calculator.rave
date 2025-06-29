@@ -16,7 +16,6 @@ void main {
 
         std::println("Operator: ");
         std::input(&op);
-        std::input(&op); // For space, enter, etc.
 
         if(op != '+' && op != '-' && op != '*' && op != '/') {
             std::println("Undefined operator!");
