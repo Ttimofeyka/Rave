@@ -265,13 +265,13 @@ namespace std {
         }
 
         namespace parser {
-            std::json::Value parseObject(std::string* buffer, std::string data, usize* idx);
+            std::json::Value parseObject(std::string* buffer, std::cstring data, usize* idx);
 
-            void skip(std::string data, usize* idx) {
+            void skip(std::cstring data, usize* idx) {
                 while((idx[0] < data.length) && (std::ascii::isSpace(data.at(idx[0])))) idx[0] += 1;
             }
 
-            std::json::Value parseBoolean(std::string data, usize* idx) {
+            std::json::Value parseBoolean(std::cstring data, usize* idx) {
                 bool value = false;
 
                 if((idx[0] + 5) < data.length) {
@@ -285,7 +285,7 @@ namespace std {
                 return.makeBoolean(value);
             }
             
-            std::json::Value parseNumber(std::string* buffer, std::string data, usize* idx) {
+            std::json::Value parseNumber(std::string* buffer, std::cstring data, usize* idx) {
                 bool isFloat = false;
 
                 std::json::parser::skip(data, idx);
@@ -313,7 +313,7 @@ namespace std {
                 else return.makeInteger(buffer.toLong());
             }
 
-            std::json::Value parseString(std::string* buffer, std::string data, usize* idx) {
+            std::json::Value parseString(std::string* buffer, std::cstring data, usize* idx) {
                 std::json::parser::skip(data, idx);
                 buffer.length = 0;
 
@@ -343,7 +343,7 @@ namespace std {
                 return.makeString(sbuf, buffer.length);
             }
 
-            std::json::Value parseArray(std::string* buffer, std::string data, usize* idx) {
+            std::json::Value parseArray(std::string* buffer, std::cstring data, usize* idx) {
                 std::json::parser::skip(data, idx);
 
                 std::vector<std::json::Value> array = std::vector<std::json::Value>();
@@ -365,7 +365,7 @@ namespace std {
                 return.makeArray(array.data, array.length);
             }
 
-            char* parseVarName(std::string* buffer, std::string data, usize* idx) {
+            char* parseVarName(std::string* buffer, std::cstring data, usize* idx) {
                 // TODO: Add checks for possible " errors
                 buffer.length = 0;
                 
@@ -388,7 +388,7 @@ namespace std {
                 return[buffer.length] = '\0';
             }
 
-            std::json::Value parseObject(std::string* buffer, std::string data, usize* idx) {
+            std::json::Value parseObject(std::string* buffer, std::cstring data, usize* idx) {
                 std::json::parser::skip(data, idx);
 
                 std::vector<std::json::Value> object = std::vector<std::json::Value>();
@@ -426,16 +426,20 @@ namespace std {
             }
         }
 
-        std::json::Value parseBuffer(std::string* buffer, std::string data) {
+        std::json::Value parseBuffer(std::string* buffer, std::cstring data) {
             usize idx = 0;
 
             return = std::json::parser::parseObject(buffer, data, &idx);
         }
 
-        std::json::Value parse(std::string data) {
+        (explicit, inline) std::json::Value parseBuffer(std::string* buffer, std::string str) => std::json::parseBuffer(buffer, std::cstring(str.data, str.length));
+
+        std::json::Value parse(std::cstring str) {
             std::string buffer = "";
-            return = std::json::parseBuffer(&buffer, data);
+            return = std::json::parseBuffer(&buffer, str);
             ~buffer;
         }
+
+        (explicit, inline) std::json::Value parse(std::string str) => std::json::parse(std::cstring(str.data, str.length));
     }
 }
