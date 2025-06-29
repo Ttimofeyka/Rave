@@ -10,6 +10,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "./include/lexer/lexer.hpp"
 #include "./include/parser/parser.hpp"
 #include "./include/compiler.hpp"
+#include "./include/version.hpp"
 
 #define R128_IMPLEMENTATION
 #include "./include/r128.h"
@@ -20,12 +21,14 @@ std::vector<std::string> files;
 genSettings options;
 std::string exePath;
 bool helpCalled = false;
+bool versionCalled = false;
 
 // Analyzing command-line arguments.
 genSettings analyzeArguments(std::vector<std::string>& arguments) {
     genSettings settings;
     for(size_t i=0; i<arguments.size(); i++) {
-        if(arguments[i] == "-o" || arguments[i] == "--out") {outFile = arguments[i + 1]; i += 1;} // Output file
+        if(arguments[i] == "-v" || arguments[i] == "--version") {versionCalled = true; break;}
+        else if(arguments[i] == "-o" || arguments[i] == "--out") {outFile = arguments[i + 1]; i += 1;} // Output file
         else if(arguments[i] == "-np" || arguments[i] == "--noPrelude") settings.noPrelude = true; // Disables importing of std/prelude
         else if(arguments[i] == "-eml" || arguments[i] == "--emitLLVM" || arguments[i] == "-emit-llvm") settings.emitLLVM = true; // Enables output of .ll files
         else if(arguments[i] == "-l" || arguments[i] == "--link") {settings.linkParams += "-l" + arguments[i + 1] + " "; i += 1;} // Adds library to the linker
@@ -84,9 +87,15 @@ int main(int argc, char** argv) {
     for(int i=1; i<argc; i+=1) arguments.push_back(std::string(argv[i]));
     options = analyzeArguments(arguments);
 
+    if(versionCalled) {
+        std::cout << "v" << RAVE_VERSION << std::endl;
+        return 0;
+    }
+
     if(helpCalled) {
         std::string help = std::string("Usage: rave [files] [options]")
         + "\nOptions:"
+        + "\n\t--version (-v) - Output the current version."
         + "\n\t--out (-o) <file> - Place the output into <file>."
         + "\n\t-c - Do not create an output file (only object files)."
         + "\n\t--target (-t) <target> - Change the platform type to <target>."
