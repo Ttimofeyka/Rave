@@ -46,7 +46,7 @@ Supported types:
 - cent, ucent;
 - half, bhalf;
 - float, double, real;
-- `char*`, `std::string`.
+- `char*`, `std::cstring`, `std::string`.
 
 NOTE: if you are using `std::string`, it makes new allocation.
 
