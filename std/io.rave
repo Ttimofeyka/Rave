@@ -682,12 +682,12 @@ namespace std {
                 }
 
                 @if((@getCurrArgType() != cent*) && (@getCurrArgType() != ucent*)) {
-                    @if(@isUnsigned(@baseType(@getCurrArgType()))) pointer[0] = std::cstring::stoul(&buffer, idx);
-                    @else pointer[0] = std::cstring::stol(&buffer, idx);
+                    @if(@isUnsigned(@baseType(@getCurrArgType()))) pointer[0] = std::cstring::stoul(std::cstring(&buffer, idx));
+                    @else pointer[0] = std::cstring::stol(std::cstring(&buffer, idx));
                 }
                 @else {
-                    @if(@isUnsigned(@baseType(@getCurrArgType()))) pointer[0] = std::cstring::stouc(&buffer, idx);
-                    @else pointer[0] = std::cstring::stoc(&buffer, idx);
+                    @if(@isUnsigned(@baseType(@getCurrArgType()))) pointer[0] = std::cstring::stouc(std::cstring(&buffer, idx));
+                    @else pointer[0] = std::cstring::stoc(std::cstring(&buffer, idx));
                 }
             }
             @else @if((@getCurrArgType() == half*) || (@getCurrArgType() == bhalf*) || (@getCurrArgType() == float*) || (@getCurrArgType() == double*) || (@getCurrArgType() == real*)) {
