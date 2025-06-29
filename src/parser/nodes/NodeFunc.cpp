@@ -492,7 +492,10 @@ RaveValue NodeFunc::generateWithTemplate(std::vector<Type*>& types, const std::s
     _f->templateTypes = std::move(types);
     RaveValue v = _f->generate();
 
-    if(isMethod) AST::methodTable[std::pair<std::string, std::string>(args[0].type->toString(), origName)] = _f;
+    if(isMethod) {
+        Type* structType = instanceof<TypePointer>(args[0].type) ? args[0].type->getElType() : args[0].type;
+        AST::methodTable[std::pair<std::string, std::string>(structType->toString(), all)] = _f;
+    }
 
     generator->activeLoops = activeLoops;
     generator->builder = builder;

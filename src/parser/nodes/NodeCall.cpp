@@ -106,6 +106,36 @@ std::vector<FuncArgSet> tfaToFas(std::vector<TypeFuncArg*> tfa) {
     return fas;
 }
 
+RaveValue checkThis(int loc, const std::string& ifName, std::vector<Node*> arguments, std::vector<int> byVals) {
+    NodeVar* _this = currScope->getVar("this", loc);
+    if(instanceof<TypeStruct>(_this->type->getElType())) {
+        TypeStruct* _struct = (TypeStruct*)_this->type->getElType();
+
+        if(AST::structTable.find(_struct->name) != AST::structTable.end()) {
+            for(auto& it : AST::structTable[_struct->name]->variables) {
+                if(it->name == ifName && instanceof<TypeFunc>(it->type)) {
+                    std::vector<FuncArgSet> fas = tfaToFas(((TypeFunc*)it->type)->args);
+                    std::vector<RaveValue> params = Call::genParameters(arguments, byVals, fas, CallSettings{false, ((TypeFunc*)it->type)->isVarArg, loc});
+                    return LLVM::call(currScope->getWithoutLoad(it->name), params, (instanceof<TypeVoid>(it->type) ? "" : "callFunc"), byVals);
+                }
+            }
+        }
+
+        arguments.insert(arguments.begin(), new NodeIden("this", loc));
+
+        auto methodf = Call::findMethod(_struct->name, ifName, arguments, loc);
+
+        std::vector<Type*> types = Call::getTypes(arguments);
+
+        std::vector<RaveValue> params = Call::genParameters(arguments, byVals, methodf->second, loc);
+        if(instanceof<TypePointer>(params[0].type->getElType())) params[0] = LLVM::load(params[0], "NodeCall_load", loc);
+
+        return LLVM::call(generator->functions[methodf->second->name], params, (instanceof<TypeVoid>(methodf->second->type) ? "" : "callFunc"), byVals);
+    }
+
+    return {nullptr, nullptr};
+}
+
 Type* NodeCall::__getType(Node* _fn) {
     if(instanceof<NodeIden>(_fn)) {
         NodeIden* niden = (NodeIden*)_fn;
@@ -339,9 +369,9 @@ std::map<std::pair<std::string, std::string>, NodeFunc*>::iterator Call::findMet
 
             templateTypes.back() = '>';
 
-            methodf->second->generateWithTemplate(types, methodf->second->name + templateTypes);
-            methodf = AST::methodTable.find(std::pair<std::string, std::string>(methodf->first.first, methodName));
-            methodf->second->name = methodf->second->name + templateTypes;
+            methodf->second->generateWithTemplate(types, methodName + templateTypes);
+
+            methodf = AST::methodTable.find(std::pair<std::string, std::string>(methodf->first.first, methodName + templateTypes));
         }
     }
     else if(generator->functions.find(methodf->second->name) == generator->functions.end()) methodf->second->generate();
@@ -538,8 +568,11 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
                 mainName = ifName.substr(0, ifName.find('<'));
 
                 if(AST::funcTable.find(mainName) == AST::funcTable.end()) {
-                    // Not working... maybe generate structure?
                     if(AST::structTable.find(mainName) != AST::structTable.end()) AST::structTable[mainName]->genWithTemplate(sTypes, types);
+                    else if(currScope->has("this")) {
+                        RaveValue result = checkThis(loc, ifName, arguments, byVals);
+                        if(result.type != nullptr && result.value != nullptr) return result;
+                    }
                     else generator->error("undefined structure \033[1m" + ifName + "\033[22m!", loc);
                 }
 
@@ -550,31 +583,8 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
         }
 
         if(currScope->has("this")) {
-            NodeVar* _this = currScope->getVar("this", loc);
-            if(instanceof<TypeStruct>(_this->type->getElType())) {
-                TypeStruct* _struct = (TypeStruct*)_this->type->getElType();
-
-                if(AST::structTable.find(_struct->name) != AST::structTable.end()) {
-                    for(auto& it : AST::structTable[_struct->name]->variables) {
-                        if(it->name == ifName && instanceof<TypeFunc>(it->type)) {
-                            std::vector<FuncArgSet> fas = tfaToFas(((TypeFunc*)it->type)->args);
-                            std::vector<RaveValue> params = Call::genParameters(arguments, byVals, fas, CallSettings{false, ((TypeFunc*)it->type)->isVarArg, loc});
-                            return LLVM::call(currScope->getWithoutLoad(it->name), params, (instanceof<TypeVoid>(it->type) ? "" : "callFunc"), byVals);
-                        }
-                    }
-                }
-
-                arguments.insert(arguments.begin(), new NodeIden("this", loc));
-
-                auto methodf = Call::findMethod(_struct->name, ifName, arguments, loc);
-
-                std::vector<Type*> types = Call::getTypes(arguments);
-
-                std::vector<RaveValue> params = Call::genParameters(arguments, byVals, methodf->second, loc);
-                if(instanceof<TypePointer>(params[0].type->getElType())) params[0] = LLVM::load(params[0], "NodeCall_load", loc);
-
-                return LLVM::call(generator->functions[methodf->second->name], params, (instanceof<TypeVoid>(methodf->second->type) ? "" : "callFunc"), byVals);
-            }
+            RaveValue result = checkThis(loc, ifName, arguments, byVals);
+            if(result.type != nullptr && result.value != nullptr) return result;
         }
 
         generator->error("undefined function \033[1m" + ifName + "\033[22m!", loc);
@@ -679,6 +689,8 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
         ((NodeUnary*)function)->base = new NodeDone(Call::make(loc, ((NodeUnary*)function)->base, arguments));
         return ((NodeUnary*)function)->generate();
     }
+
+    if(instanceof<NodeFunc>(function)) return Call::make(loc, new NodeIden(((NodeFunc*)function)->name, loc), arguments);
 
     generator->error("a call of this kind is unavailable!", loc);
     return {};
