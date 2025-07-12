@@ -19,6 +19,9 @@ namespace std {
     alias SigStop = 19;
     alias SigBreak = 21;
     alias SigAbort = 22; // SigAbrt
+
+    alias SigDefault = cast(void(int))0; // SigDfl
+    alias SigIgnore = cast(void(int))1; // SigIgn
 }
 
 @if(__RAVE_OS == "LINUX") {
