@@ -57,9 +57,9 @@ namespace AST {
     extern std::map<std::string, NodeFunc*> funcTable;
     extern std::map<std::string, std::vector<NodeFunc*>> funcVersionsTable;
     extern std::map<std::string, NodeStruct*> structTable;
+    extern std::map<std::pair<std::string, std::string>, StructMember> structMembersTable;
     extern std::map<std::string, NodeLambda*> lambdaTable;
     extern std::map<std::pair<std::string, std::string>, NodeFunc*> methodTable;
-    extern std::map<std::pair<std::string, std::string>, StructMember> structsNumbers;
     extern std::vector<std::string> importedFiles;
     extern std::vector<std::string> addToImport;
     extern std::map<std::string, std::vector<Node*>> parsed;
@@ -67,7 +67,7 @@ namespace AST {
     extern std::string currentFile;
     extern bool debugMode;
 
-    void checkError(std::string message, int loc);
+    extern void checkError(std::string message, int loc);
 }
 
 extern std::string typesToString(std::vector<FuncArgSet>& args);
@@ -101,7 +101,7 @@ public:
     std::string file;
     genSettings settings;
     nlohmann::json options;
-    
+
     std::map<std::string, RaveValue> globals;
     std::map<std::string, RaveValue> functions;
     std::map<std::string, LLVMTypeRef> structures;

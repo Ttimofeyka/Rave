@@ -33,7 +33,7 @@ std::map<std::string, std::vector<NodeFunc*>> AST::funcVersionsTable;
 std::map<std::string, NodeLambda*> AST::lambdaTable;
 std::map<std::string, NodeStruct*> AST::structTable;
 std::map<std::pair<std::string, std::string>, NodeFunc*> AST::methodTable;
-std::map<std::pair<std::string, std::string>, StructMember> AST::structsNumbers;
+std::map<std::pair<std::string, std::string>, StructMember> AST::structMembersTable;
 std::vector<std::string> AST::importedFiles;
 std::map<std::string, std::vector<Node*>> AST::parsed;
 std::string AST::mainFile;
@@ -558,7 +558,7 @@ RaveValue Scope::get(std::string name, int loc) {
         if(instanceof<TypeStruct>(nv->type)) ts = (TypeStruct*)nv->type;
         else if(instanceof<TypePointer>(nv->type) && instanceof<TypeStruct>(((TypePointer*)nv->type)->instance)) ts = (TypeStruct*)(((TypePointer*)nv->type)->instance);
         if(ts != nullptr && AST::structTable.find(ts->toString()) != AST::structTable.end() &&
-           AST::structsNumbers.find({ts->toString(), name}) != AST::structsNumbers.end()) {
+           AST::structMembersTable.find({ts->toString(), name}) != AST::structMembersTable.end()) {
             NodeGet* nget = new NodeGet(new NodeIden("this", loc), name, true, loc);
             value = nget->generate();
         }
@@ -586,7 +586,7 @@ RaveValue Scope::getWithoutLoad(std::string name, int loc) {
         if(instanceof<TypeStruct>(nv->type)) ts = (TypeStruct*)nv->type;
         else if(instanceof<TypePointer>(nv->type) && instanceof<TypeStruct>(((TypePointer*)nv->type)->instance)) ts = (TypeStruct*)(((TypePointer*)nv->type)->instance);
         if(ts != nullptr && AST::structTable.find(ts->toString()) != AST::structTable.end() &&
-           AST::structsNumbers.find({ts->toString(), name}) != AST::structsNumbers.end()) {
+           AST::structMembersTable.find({ts->toString(), name}) != AST::structMembersTable.end()) {
             NodeGet* nget = new NodeGet(new NodeIden("this", loc), name, true, loc);
             return nget->generate();
         }
@@ -609,7 +609,7 @@ bool Scope::hasAtThis(std::string name) {
         TypeStruct* ts = nullptr;
         if(instanceof<TypeStruct>(nv->type)) ts = (TypeStruct*)nv->type;
         else if(instanceof<TypePointer>(nv->type) && instanceof<TypeStruct>(((TypePointer*)nv->type)->instance)) ts = (TypeStruct*)(((TypePointer*)nv->type)->instance);
-        return(ts != nullptr && AST::structTable.find(ts->toString()) != AST::structTable.end() && AST::structsNumbers.find({ts->toString(), name}) != AST::structsNumbers.end());
+        return(ts != nullptr && AST::structTable.find(ts->toString()) != AST::structTable.end() && AST::structMembersTable.find({ts->toString(), name}) != AST::structMembersTable.end());
     }
     return false;
 }
@@ -638,8 +638,8 @@ NodeVar* Scope::getVar(std::string name, int loc) {
         else if(instanceof<TypePointer>(nv->type) && instanceof<TypeStruct>(nv->type->getElType())) ts = (TypeStruct*)(nv->type->getElType());
 
         if(ts != nullptr && AST::structTable.find(ts->toString()) != AST::structTable.end() &&
-           AST::structsNumbers.find({ts->toString(), name}) != AST::structsNumbers.end()) {
-            return AST::structsNumbers[{ts->toString(), name}].var;
+           AST::structMembersTable.find({ts->toString(), name}) != AST::structMembersTable.end()) {
+            return AST::structMembersTable[{ts->toString(), name}].var;
         }
     }
     generator->error("undefined variable \033[1m" + name + "\033[22m!", loc);

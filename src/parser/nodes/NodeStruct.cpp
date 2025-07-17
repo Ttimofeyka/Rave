@@ -109,7 +109,7 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
             NodeVar* var = (NodeVar*)this->elements[i];
             var->isExtern = (var->isExtern || this->isImported);
             var->isComdat = this->isComdat;
-            AST::structsNumbers[std::pair<std::string, std::string>(this->name, var->name)] = StructMember{.number = i, .var = var};
+            AST::structMembersTable[std::pair<std::string, std::string>(this->name, var->name)] = StructMember{.number = i, .var = var};
 
             Types::replaceTemplates(&var->type);
 

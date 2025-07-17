@@ -304,7 +304,7 @@ void Compiler::clearAll() {
     AST::funcVersionsTable.clear();
     AST::aliasTable.clear();
     AST::structTable.clear();
-    AST::structsNumbers.clear();
+    AST::structMembersTable.clear();
     AST::methodTable.clear();
     AST::importedFiles.clear();
     AST::aliasTypes.clear();

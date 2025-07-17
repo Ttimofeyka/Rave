@@ -60,7 +60,7 @@ Type* NodeGet::getType() {
 
     if(auto methodIt = AST::methodTable.find(memberKey); methodIt != AST::methodTable.end()) return methodIt->second->getType();
 
-    if(auto structIt = AST::structsNumbers.find(memberKey); structIt != AST::structsNumbers.end()) return structIt->second.var->getType();
+    if(auto structIt = AST::structMembersTable.find(memberKey); structIt != AST::structMembersTable.end()) return structIt->second.var->getType();
 
     if(field.find('<') != std::string::npos) {
         memberKey = std::make_pair(structName, field.substr(0, field.find('<')));
@@ -105,7 +105,7 @@ RaveValue NodeGet::checkIn(std::string structure) {
 
     const auto memberKey = std::make_pair(structure, field);
 
-    if(auto numberIt = AST::structsNumbers.find(memberKey); numberIt != AST::structsNumbers.end()) {
+    if(auto numberIt = AST::structMembersTable.find(memberKey); numberIt != AST::structMembersTable.end()) {
         elementIsConst = instanceof<TypeConst>(numberIt->second.var->type);
         return {nullptr, nullptr};
     } 
@@ -159,7 +159,7 @@ RaveValue NodeGet::generate() {
     if(RaveValue f = checkIn(structName); f.value) return f;
 
     // Generate struct member access
-    const int fieldNumber = AST::structsNumbers[std::make_pair(structName, field)].number;
+    const int fieldNumber = AST::structMembersTable[std::make_pair(structName, field)].number;
     RaveValue memberPtr = LLVM::structGep(ptr, fieldNumber, "NodeGet_generate_ptr");
 
     return isMustBePtr ? memberPtr : LLVM::load(memberPtr, "NodeGet_generate_load", loc);
