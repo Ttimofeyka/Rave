@@ -197,16 +197,6 @@ void main {
 }
 ```
 
-**@tEquals(type1, type2)** - Compare the two types with each other.
-
-Example:
-
-```d
-@if(@tEquals(int, char)) {
-    int a = 0;
-};
-```
-
 **@isNumeric, @isStructure, @isPointer, @isVector, @isArray (type)** - Check whether the type is numerical, pointer, SIMD vector, array or structure.
 
 Example:
@@ -370,7 +360,7 @@ Example:
 
 ```d
 (ctargs) int bow {
-    @if(@tEquals(@getCurrArgType(), int)) @echo("Integer");
+    @if(@getCurrArgType() == int) @echo("Integer");
 }
 ```
 
