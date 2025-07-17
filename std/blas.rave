@@ -11,29 +11,106 @@ ALL input/output pointers assumes to have 16-byte alignment.
 
 import <std/math>
 
+namespace std {
+    namespace blas {
+        (conditions: [@isNumeric(VABS_T)]) void abs<VABS_T>(usize n, VABS_T* x) {
+            usize i = 0;
+
+            @if(__RAVE_AVX2) {
+                @if(VABS_T == int) {
+                    for(; (i + 7) <n; i+=8) @vStore(@vAbs(int8, @vLoad(int8, &x[i])), &x[i]);
+                }
+            }
+            @else @if(__RAVE_SSSE3) {
+                @if(VABS_T == short) {
+                    for(; (i + 7) < n; i+=8) @vStore(@vAbs(short8, @vLoad(short8, &x[i])), &x[i]);
+                }
+                @else @if(VABS_T == int) {
+                    for(; (i + 3) < n; i+=4) @vStore(@vAbs(int4, @vLoad(int4, &x[i])), &x[i]);
+                }
+            }
+
+            for(; i<n; i++) x[i] = std::math::abs<VABS_T>(x[i]);
+        }
+
+        (conditions: [@isNumeric(SQRT_T)]) void sqrt<SQRT_T>(usize n, SQRT_T* x) {
+            usize i;
+
+            @if(__RAVE_AVX) {
+                @if(SQRT_T == float) {
+                    for(; (i + 7) < n; i+=8) @vStore(@vSqrt(float8, @vLoad(float4, &x[i])), &x[i]);
+                }
+                @else @if(SQRT_T == double) {
+                    for(; (i + 3) < n; i+=4) @vStore(@vSqrt(double4, @vLoad(double4, &x[i])), &x[i]);
+                }
+            }
+            @else @if(__RAVE_SSE) {
+                @if(__RAVE_SSE2 && (SQRT_T == double)) {
+                    for(; (i + 1) < n; i+=2) @vStore(@vSqrt(double2, @vLoad(double2, &x[i])), &x[i]);
+                }
+                @else @if(SQRT_T == float) {
+                    for(; (i + 3) < n; i+=4) @vStore(@vSqrt(float4, @vLoad(float4, &x[i])), &x[i]);
+                }
+            }
+
+            for(; i<n; i++) x[i] = std::math::sqrt(x[i]);
+        }
+
+        // TODO: Optimize it using SIMD
+        // Vector sum of absolute values: result += abs(x[i])
+        (conditions: [@isNumeric(ASUM_T)]) ASUM_T asum<ASUM_T>(usize n, ASUM_T* x) {
+            for(usize i=0; i<n; i++) return += std::math::abs<ASUM_T>(x[i]);
+        }
+
+        // Vector addition: y[i] += (alpha * x[i])
+        (conditions: [@isNumeric(AXPY_T)]) void axpy<AXPY_T>(usize n, AXPY_T alpha, AXPY_T* x, AXPY_T* y) {
+            usize i = 0;
+
+            @if(__RAVE_SSE) {
+                @if(AXPY_T == float) {
+                    float4 chunkAlpha = @vFrom(float4, alpha);
+
+                    for(; (i + 3) < n; i+=4) @vStore(@vLoad(float4, &y[i]) + (@vLoad(float4, &x[i]) * chunkAlpha), &y[i]);
+                }
+                @else @if(AXPY_T == int) {
+                    int4 chunkAlpha = @vFrom(int4, alpha);
+
+                    for(; (i + 3) < n; i+=4) @vStore(@vLoad(int4, &y[i]) + (@vLoad(int4, &x[i]) * chunkAlpha), &y[i]);
+                }
+                @else @if(__RAVE_SSE2 && (AXPY_T == double)) {
+                    double2 chunkAlpha = @vFrom(double2, alpha);
+
+                    for(; (i + 1) < n; i+=2) @vStore(@vLoad(double2, &y[i]) + (@vLoad(double2, &x[i]) * chunkAlpha), &y[i]);
+                }
+            }
+            @else @if(__RAVE_AVX) {
+                @if(AXPY_T == float) {
+                    float8 chunkAlpha = @vFrom(float8, alpha);
+
+                    for(; (i + 7) < n; i+=8) @vStore(@vLoad(float8, &y[i]) + (@vLoad(float8, &x[i]) * chunkAlpha), &y[i]);
+                }
+                @else @if(AXPY_T == int) {
+                    int8 chunkAlpha = @vFrom(int8, alpha);
+
+                    for(; (i + 3) < n; i+=8) @vStore(@vLoad(int8, &y[i]) + (@vLoad(int8, &x[i]) * chunkAlpha), &y[i]);
+                }
+                @else @if(AXPY_T == double) {
+                    double4 chunkAlpha = @vFrom(double4, alpha);
+
+                    for(; (i + 3) < n; i+=4) @vStore(@vLoad(double4, &y[i]) + (@vLoad(double4, &x[i]) * chunkAlpha), &y[i]);
+                }
+            }
+
+            for(; i<n; i++) y[i] += (alpha * x[i]);
+        }
+    }
+}
+
 @if((!__RAVE_SSE2) && (!__RAVE_AVX2)) {
     // Using naive methods (slowly, but works)
 
     namespace std {
         namespace blas {
-            (conditions: [@isNumeric(VABS_T)]) void abs<VABS_T>(usize n, VABS_T* x) {
-                for(usize i=0; i<n; i++) x[i] = std::math::abs<VABS_T>(x[i]);
-            }
-
-            (conditions: [@isNumeric(SQRT_T)]) void sqrt<SQRT_T>(usize n, SQRT_T* x) {
-                for(usize i=0; i<n; i++) x[i] = std::math::sqrt(x[i]);
-            }
-
-            // Vector sum of absolute values: result += abs(x[i])
-            (conditions: [@isNumeric(ASUM_T)]) ASUM_T asum<ASUM_T>(usize n, ASUM_T* x) {
-                for(usize i=0; i<n; i++) return += std::math::abs<ASUM_T>(x[i]);
-            }
-
-            // Vector addition: y[i] += (alpha * x[i])
-            (conditions: [@isNumeric(AXPY_T)]) void axpy<AXPY_T>(usize n, AXPY_T alpha, AXPY_T* x, AXPY_T* y) {
-                for(usize i=0; i<n; i++) y[i] += (alpha * x[i]);
-            }
-
             // Scales two vectors, adds them to one another and stores result in the vector
             (conditions: [@isNumeric(AXPBY_T)]) void axpby<AXPBY_T>(usize n, AXPBY_T alpha, AXPBY_T* x, APXBY_T beta, AXPBY_T* y) {
                 for(usize i=0; i<n; i++) y[i] = (alpha * x[i]) + (beta * y[i]);
@@ -110,60 +187,6 @@ import <std/math>
 
     namespace std {
         namespace blas {
-            (conditions: [@isNumeric(VABS_T)]) void abs<VABS_T>(usize n, VABS_T* x) {
-                for(usize i=0; i<n; i++) x[i] = std::math::abs<VABS_T>(x[i]);
-            }
-
-            (conditions: [@isNumeric(SQRT_T)]) void sqrt<SQRT_T>(usize n, SQRT_T* x) {
-                usize i;
-
-                @if(SQRT_T == float) {
-                    for(; (i + 3) < n; i+=4) @vStore(@__sqrtf4(@vLoad(float4, &x[i])), &x[i]);
-                }
-                @else @if(SQRT_T == double) {
-                    for(; (i + 1) < n; i+=2) @vStore(@__sqrtd2(@vLoad(double2, &x[i])), &x[i]);
-                }
-
-                for(; i<n; i++) x[i] = std::math::sqrt(x[i]);
-            }
-
-            // Vector sum of absolute values: result += abs(x[i])
-            (conditions: [@isNumeric(ASUM_T)]) ASUM_T asum<ASUM_T>(usize n, ASUM_T* x) {
-                for(usize i=0; i<n; i++) return += std::math::abs<VABS_T>(x[i]);
-            }
-
-            // Vector addition: y[i] += (alpha * x[i])
-            (conditions: [@isNumeric(AXPY_T)]) void axpy<AXPY_T>(usize n, AXPY_T alpha, AXPY_T* x, AXPY_T* y) {
-                usize i = 0;
-
-                @if(AXPY_T == float) {
-                    float4 chunkAlpha = @vFrom(float4, alpha);
-                    
-                    for(; (i + 3) < n; i+=4) {
-                        float4 chunkY = @vLoad(float4, &y[i]);
-                        @vStore(chunkY + (@vLoad(float4, &x[i]) * chunkAlpha), &y[i]);
-                    }
-                }
-                @else @if(AXPY_T == int) {
-                    int4 chunkAlpha = @vFrom(int4, alpha);
-                    
-                    for(; (i + 3) < n; i+=4) {
-                        int4 chunkY = @vLoad(int4, &y[i]);
-                        @vStore(chunkY + (@vLoad(int4, &x[i]) * chunkAlpha), &y[i]);
-                    }
-                }
-                @else @if(AXPY_T == double) {
-                    double2 chunkAlpha = @vFrom(double2, alpha);
-                    
-                    for(; (i + 1) < n; i+=2) {
-                        double2 chunkY = @vLoad(double2, &y[i]);
-                        @vStore(chunkY + (@vLoad(double2, &x[i]) * chunkAlpha), &y[i]);
-                    }
-                }
-
-                for(; i<n; i++) y[i] += (alpha * x[i]);
-            }
-
             // Scales two vectors, adds them to one another and stores result in the vector
             (conditions: [@isNumeric(AXPBY_T)]) void axpby<AXPBY_T>(usize n, AXPBY_T alpha, AXPBY_T* x, AXPBY_T beta, AXPBY_T* y) {
                 usize i = 0;
@@ -468,60 +491,6 @@ import <std/math>
 
     namespace std {
         namespace blas {
-            (conditions: [@isNumeric(VABS_T)]) void abs<VABS_T>(usize n, VABS_T* x) {
-                for(usize i=0; i<n; i++) x[i] = std::math::abs<VABS_T>(x[i]);
-            }
-
-            (conditions: [@isNumeric(SQRT_T)]) void sqrt<SQRT_T>(usize n, SQRT_T* x) {
-                usize i;
-
-                @if(SQRT_T == float) {
-                    for(; (i + 7) < n; i+=8) @vStore(@__sqrtf8(@vLoad(float8, &x[i])), &x[i]);
-                }
-                @else @if(SQRT_T == double) {
-                    for(; (i + 3) < n; i+=4) @vStore(@__sqrtd4(@vLoad(double4, &x[i])), &x[i]);
-                }
-
-                for(; i<n; i++) x[i] = std::math::sqrt(x[i]);
-            }
-
-            // Vector sum of absolute values: result += abs(x[i])
-            (conditions: [@isNumeric(ASUM_T)]) ASUM_T asum<ASUM_T>(usize n, ASUM_T* x) {
-                for(usize i=0; i<n; i++) return += std::math::abs<VABS_T>(x[i]);
-            }
-
-            // Vector addition: y[i] += (alpha * x[i])
-            (conditions: [@isNumeric(AXPY_T)]) void axpy<AXPY_T>(usize n, AXPY_T alpha, AXPY_T* x, AXPY_T* y) {
-                usize i = 0;
-
-                @if(AXPY_T == float) {
-                    float8 chunkAlpha = @vFrom(float8, alpha);
-                    
-                    for(; (i + 7) < n; i+=8) {
-                        float8 chunkY = @vLoad(float8, &y[i]);
-                        @vStore(chunkY + (@vLoad(float8, &x[i]) * chunkAlpha), &y[i]);
-                    }
-                }
-                @else @if(AXPY_T == int) {
-                    int8 chunkAlpha = @vFrom(int8, alpha);
-                    
-                    for(; (i + 7) < n; i+=8) {
-                        int8 chunkY = @vLoad(int8, &y[i]);
-                        @vStore(chunkY + (@vLoad(int8, &x[i]) * chunkAlpha), &y[i]);
-                    }
-                }
-                @else @if(AXPY_T == double) {
-                    double4 chunkAlpha = @vFrom(double4, alpha);
-                    
-                    for(; (i + 3) < n; i+=4) {
-                        double4 chunkY = @vLoad(double4, &y[i]);
-                        @vStore(chunkY + (@vLoad(double4, &x[i]) * chunkAlpha), &y[i]);
-                    }
-                }
-
-                for(; i<n; i++) y[i] += (alpha * x[i]);
-            }
-
             // Scales two vectors, adds them to one another and stores result in the vector
             (conditions: [@isNumeric(AXPBY_T)]) void axpby<AXPBY_T>(usize n, AXPBY_T alpha, AXPBY_T* x, AXPBY_T beta, AXPBY_T* y) {
                 usize i = 0;
