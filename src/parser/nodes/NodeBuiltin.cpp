@@ -69,14 +69,13 @@ Type* NodeBuiltin::getType() {
     if(name == "fmodf") return asType(0)->type;
     if(name == "getCurrArg") return asType(0)->type;
     if(name == "isNumeric" || name == "isVector" || name == "isPointer"
-    || name == "isArray" || name == "aliasExists" || name == "tEquals"
-    || name == "isStructure" || name == "hasMethod"
-    || name == "hasDestructor" || name == "contains" || name == "isUnsigned") return basicTypes[BasicType::Bool];
+    || name == "isArray" || name == "aliasExists" || name == "isStructure"
+    || name == "isFloat" || name == "hasMethod" || name == "hasDestructor"
+    || name == "contains" || name == "isUnsigned") return basicTypes[BasicType::Bool];
     if(name == "sizeOf" || name == "argsLength" || name == "getCurrArgNumber"
     || name == "vMoveMask128" || name == "vMoveMask256" || name == "cttz" || name == "ctlz") return basicTypes[BasicType::Int];
     if(name == "vShuffle" || name == "vHAdd32x4" || name == "vHAdd16x8"
-    || name == "__sqrtf4" || name == "__sqrtf8"|| name == "__sqrtd2"
-    || name == "__sqrtd4" || name == "vLoad") return asType(0)->type;
+    || name == "vSqrt" || name == "vAbs" || name == "vLoad") return asType(0)->type;
     if(name == "typeToString") return new TypePointer(basicTypes[BasicType::Char]);
     if(name == "minOf" || name == "maxOf") return basicTypes[BasicType::Ulong];
     return typeVoid;
@@ -371,6 +370,12 @@ RaveValue NodeBuiltin::generate() {
         if(instanceof<TypeBasic>(asType(0)->type)) return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
         return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
     }
+    else if(name == "isFloat") {
+        if(args.size() < 1) generator->error("at least one argument is required!", loc);
+
+        if(isFloatType(asType(0)->type)) return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
+        return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
+    }
     else if(name == "isUnsigned") {
         if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
 
@@ -656,85 +661,77 @@ RaveValue NodeBuiltin::generate() {
 
         return LLVM::call(generator->functions["llvm.x86.avx2.pmovmskb"], std::vector<LLVMValueRef>({value.value}).data(), 1, "vMoveMask256");
     }
-    else if(name == "__sqrtf4") {
-        if(Compiler::features.find("+sse") == std::string::npos)  generator->error("your target does not support SSE!", this->loc);
-
+    else if(name == "vSqrt") {
         if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
 
         RaveValue value = this->args[0]->generate();
 
-        if(instanceof<TypePointer>(value.type)) value = LLVM::load(value, "NodeBuiltin_sqrtf4_load_", this->loc);
+        if(instanceof<TypePointer>(value.type)) value = LLVM::load(value, "NodeBuiltin_vSqrt_load_", this->loc);
         if(!instanceof<TypeVector>(value.type)) generator->error("the value must have the vector type!", this->loc);
 
-        if(generator->functions.find("llvm.sqrt.v4f32") == generator->functions.end()) {
-            generator->functions["llvm.sqrt.v4f32"] = {LLVMAddFunction(generator->lModule, "llvm.sqrt.v4f32", LLVMFunctionType(
-                LLVMVectorType(LLVMFloatTypeInContext(generator->context), 4),
-                std::vector<LLVMTypeRef>({LLVMVectorType(LLVMFloatTypeInContext(generator->context), 4)}).data(),
+        TypeBasic* vectorType = (TypeBasic*)value.type->getElType();
+
+        if(vectorType->type == BasicType::Float) {
+            if(((TypeVector*)value.type)->count == 4) {
+                if(Compiler::features.find("+sse") == std::string::npos)  generator->error("your target does not support SSE!", this->loc);
+            }
+            else if(Compiler::features.find("+avx") == std::string::npos)  generator->error("your target does not support AVX!", this->loc);
+        }
+        else if(vectorType->type == BasicType::Double) {
+            if(((TypeVector*)value.type)->count == 2) {
+                if(Compiler::features.find("+sse2") == std::string::npos)  generator->error("your target does not support SSE2!", this->loc);
+            }
+            else if(Compiler::features.find("+avx") == std::string::npos)  generator->error("your target does not support AVX!", this->loc);
+        }
+        else generator->error("unsupported type!", this->loc);
+
+        std::string vecFuncName = "llvm.sqrt.v" + std::to_string(((TypeVector*)value.type)->count) + (vectorType->type == BasicType::Float ? "f32" : "f64");
+
+        if(generator->functions.find(vecFuncName) == generator->functions.end()) {
+            generator->functions[vecFuncName] = {LLVMAddFunction(generator->lModule, vecFuncName.c_str(), LLVMFunctionType(
+                generator->genType(value.type, loc),
+                std::vector<LLVMTypeRef>({generator->genType(value.type, loc)}).data(),
                 1, false
-            )), new TypeFunc(new TypeVector(basicTypes[BasicType::Float], 4), {new TypeFuncArg(new TypeVector(basicTypes[BasicType::Float], 4), "v")}, false)};
+            )), new TypeFunc(value.type, {new TypeFuncArg(value.type, "v")}, false)};
         }
 
-        return LLVM::call(generator->functions["llvm.sqrt.v4f32"], std::vector<LLVMValueRef>({value.value}).data(), 1, "sqrtf4");
+        return LLVM::call(generator->functions[vecFuncName], std::vector<LLVMValueRef>({value.value}).data(), 1, "vSqrt");
     }
-    else if(name == "__sqrtf8") {
-        if(Compiler::features.find("+avx") == std::string::npos)  generator->error("your target does not support AVX!", this->loc);
-
+    else if(name == "vAbs") {
         if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
 
         RaveValue value = this->args[0]->generate();
 
-        if(instanceof<TypePointer>(value.type)) value = LLVM::load(value, "NodeBuiltin_sqrtf8_load_", this->loc);
+        if(instanceof<TypePointer>(value.type)) value = LLVM::load(value, "NodeBuiltin_vAbs_load_", this->loc);
         if(!instanceof<TypeVector>(value.type)) generator->error("the value must have the vector type!", this->loc);
 
-        if(generator->functions.find("llvm.sqrt.v8f32") == generator->functions.end()) {
-            generator->functions["llvm.sqrt.v8f32"] = {LLVMAddFunction(generator->lModule, "llvm.sqrt.v8f32", LLVMFunctionType(
-                LLVMVectorType(LLVMFloatTypeInContext(generator->context), 8),
-                std::vector<LLVMTypeRef>({LLVMVectorType(LLVMFloatTypeInContext(generator->context), 8)}).data(),
+        TypeBasic* vectorType = (TypeBasic*)value.type->getElType();
+
+        if(vectorType->type == BasicType::Short) {
+            if(((TypeVector*)value.type)->count == 8) {
+                if(Compiler::features.find("+ssse3") == std::string::npos)  generator->error("your target does not support SSSE3!", this->loc);
+            }
+            else generator->error("unsupported type!", this->loc);
+        }
+        else if(vectorType->type == BasicType::Int) {
+            if(((TypeVector*)value.type)->count == 4) {
+                if(Compiler::features.find("+ssse3") == std::string::npos)  generator->error("your target does not support SSSE3!", this->loc);
+            }
+            else if(Compiler::features.find("+avx2") == std::string::npos)  generator->error("your target does not support AVX2!", this->loc);
+        }
+        else generator->error("unsupported type!", this->loc);
+
+        std::string vecFuncName = "llvm.abs.v" + std::to_string(((TypeVector*)value.type)->count) + (vectorType->type == BasicType::Short ? "i16" : "i32");
+
+        if(generator->functions.find(vecFuncName) == generator->functions.end()) {
+            generator->functions[vecFuncName] = {LLVMAddFunction(generator->lModule, vecFuncName.c_str(), LLVMFunctionType(
+                generator->genType(value.type, loc),
+                std::vector<LLVMTypeRef>({generator->genType(value.type, loc)}).data(),
                 1, false
-            )), new TypeFunc(new TypeVector(basicTypes[BasicType::Float], 8), {new TypeFuncArg(new TypeVector(basicTypes[BasicType::Float], 8), "v")}, false)};
+            )), new TypeFunc(value.type, {new TypeFuncArg(value.type, "v"), new TypeFuncArg(basicTypes[BasicType::Bool], "poison")}, false)};
         }
 
-        return LLVM::call(generator->functions["llvm.sqrt.v8f32"], std::vector<LLVMValueRef>({value.value}).data(), 1, "sqrtf8");
-    }
-    else if(name == "__sqrtd2") {
-        if(Compiler::features.find("+sse2") == std::string::npos)  generator->error("your target does not support SSE2!", this->loc);
-
-        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
-
-        RaveValue value = this->args[0]->generate();
-
-        if(instanceof<TypePointer>(value.type)) value = LLVM::load(value, "NodeBuiltin_sqrtd2_load_", this->loc);
-        if(!instanceof<TypeVector>(value.type)) generator->error("the value must have the vector type!", this->loc);
-
-        if(generator->functions.find("llvm.sqrt.v2f64") == generator->functions.end()) {
-            generator->functions["llvm.sqrt.v2f64"] = {LLVMAddFunction(generator->lModule, "llvm.sqrt.v2f64", LLVMFunctionType(
-                LLVMVectorType(LLVMDoubleTypeInContext(generator->context), 2),
-                std::vector<LLVMTypeRef>({LLVMVectorType(LLVMDoubleTypeInContext(generator->context), 2)}).data(),
-                1, false
-            )), new TypeFunc(new TypeVector(basicTypes[BasicType::Double], 2), {new TypeFuncArg(new TypeVector(basicTypes[BasicType::Double], 2), "v")}, false)};
-        }
-
-        return LLVM::call(generator->functions["llvm.sqrt.v2f64"], std::vector<LLVMValueRef>({value.value}).data(), 1, "sqrtd2");
-    }
-    else if(name == "__sqrtd4") {
-        if(Compiler::features.find("+avx") == std::string::npos)  generator->error("your target does not support AVX!", this->loc);
-
-        if(this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
-
-        RaveValue value = this->args[0]->generate();
-
-        if(instanceof<TypePointer>(value.type)) value = LLVM::load(value, "NodeBuiltin_sqrtd4_load_", this->loc);
-        if(!instanceof<TypeVector>(value.type)) generator->error("the value must have the vector type!", this->loc);
-
-        if(generator->functions.find("llvm.sqrt.v4f64") == generator->functions.end()) {
-            generator->functions["llvm.sqrt.v4f64"] = {LLVMAddFunction(generator->lModule, "llvm.sqrt.v4f64", LLVMFunctionType(
-                LLVMVectorType(LLVMDoubleTypeInContext(generator->context), 4),
-                std::vector<LLVMTypeRef>({LLVMVectorType(LLVMDoubleTypeInContext(generator->context), 4)}).data(),
-                1, false
-            )), new TypeFunc(new TypeVector(basicTypes[BasicType::Double], 4), {new TypeFuncArg(new TypeVector(basicTypes[BasicType::Double], 4), "v")}, false)};
-        }
-
-        return LLVM::call(generator->functions["llvm.sqrt.v4f64"], std::vector<LLVMValueRef>({value.value}).data(), 1, "sqrtd4");
+        return LLVM::call(generator->functions[vecFuncName], std::vector<LLVMValueRef>({value.value, LLVM::makeInt(1, 0, false)}).data(), 2, "vSqrt");
     }
     else if(name == "cttz") {
         if(this->args.size() < 2) generator->error("at least two arguments are required!", this->loc);
@@ -858,6 +855,7 @@ Node* NodeBuiltin::comptime() {
     else if(name == "tEquals") return new NodeBool(asType(0)->type->toString() == asType(1)->type->toString());
     else if(name == "isStructure") return new NodeBool(instanceof<TypeStruct>(asType(0)->type));
     else if(name == "isNumeric") return new NodeBool(instanceof<TypeBasic>(asType(0)->type));
+    else if(name == "isFloat") return new NodeBool(isFloatType(asType(0)->type));
     else if(name == "isUnsigned") {
         Type* _type = asType(0)->type;
         if(!instanceof<TypeBasic>(_type)) return new NodeBool(false);
