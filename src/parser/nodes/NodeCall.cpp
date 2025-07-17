@@ -391,7 +391,7 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
 
         if(AST::aliasTable.find(ifName) != AST::aliasTable.end()) return Call::make(loc, AST::aliasTable[ifName], arguments);
         else if(currScope != nullptr && currScope->aliasTable.find(ifName) != currScope->aliasTable.end()) return Call::make(loc, currScope->aliasTable[ifName], arguments);
-
+        
         if(AST::funcTable.find(ifName) != AST::funcTable.end()) {
             checkAndGenerate(ifName);
 
@@ -589,6 +589,13 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
         if(currScope->has("this")) {
             RaveValue result = checkThis(loc, ifName, arguments, byVals);
             if(result.type != nullptr && result.value != nullptr) return result;
+        }
+
+        if(AST::structTable.find(ifName) != AST::structTable.end()) {
+            AST::structTable[ifName]->generate();
+
+            if(AST::funcTable.find(ifName) == AST::funcTable.end()) generator->error("undefined function \033[1m" + ifName + "\033[22m!", loc);
+            return Call::make(loc, function, arguments);
         }
 
         generator->error("undefined function \033[1m" + ifName + "\033[22m!", loc);
