@@ -57,11 +57,6 @@ Node* NodeIden::comptime() {
 RaveValue NodeIden::generate() {
     if(AST::aliasTable.find(this->name) != AST::aliasTable.end()) return AST::aliasTable[this->name]->generate();
 
-    if(generator->functions.find(this->name) != generator->functions.end()) {
-        generator->addAttr("noinline", LLVMAttributeFunctionIndex, generator->functions[this->name].value, loc);
-        return generator->functions[this->name];
-    }
-
     if(generator->globals.find(name) != generator->globals.end()) {
         AST::varTable[name]->isUsed = true;
 
@@ -76,6 +71,13 @@ RaveValue NodeIden::generate() {
             if(isMustBePtr) return currScope->getWithoutLoad(this->name, loc);
             return currScope->get(this->name, loc);
         }
+    }
+
+    if(AST::funcTable.find(name) != AST::funcTable.end()) {
+        if(generator->functions.find(name) == generator->functions.end()) AST::funcTable[name]->generate();
+
+        generator->addAttr("noinline", LLVMAttributeFunctionIndex, generator->functions[this->name].value, loc);
+        return generator->functions[this->name];
     }
     
     generator->error("unknown identifier \033[1m" + this->name + "\033[22m!", loc);

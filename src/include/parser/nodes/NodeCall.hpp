@@ -27,7 +27,8 @@ namespace Call {
     extern std::vector<Type*> getTypes(std::vector<Node*>& arguments);
     extern std::vector<RaveValue> genParameters(std::vector<Node*>& arguments, std::vector<int>& byVals, std::vector<FuncArgSet>& fas, CallSettings settings);
     extern std::vector<RaveValue> genParameters(std::vector<Node*>& arguments, std::vector<int>& byVals, NodeFunc* function, int loc);
-    extern std::map<std::pair<std::string, std::string>, NodeFunc *>::iterator findMethod(std::string structName, std::string methodName, std::vector<Node*>& arguments, int loc);
+    extern NodeVar* findVarFunction(std::string structName, std::string variable);
+    extern std::map<std::pair<std::string, std::string>, NodeFunc*>::iterator findMethod(std::string structName, std::string methodName, std::vector<Node*>& arguments, int loc);
     extern RaveValue make(int loc, Node* function, std::vector<Node*> arguments);
 }
 

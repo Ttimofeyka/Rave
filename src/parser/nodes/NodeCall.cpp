@@ -298,6 +298,11 @@ std::string Template::fromTypes(std::vector<Type*>& types) {
     return sTypes;
 }
 
+NodeVar* Call::findVarFunction(std::string structName, std::string varName) {
+    auto var = std::pair<std::string, std::string>(structName, varName);
+    return (AST::structMembersTable.find(var) != AST::structMembersTable.end()) ? AST::structMembersTable[var].var : nullptr;
+}
+
 std::map<std::pair<std::string, std::string>, NodeFunc*>::iterator Call::findMethod(std::string structName, std::string methodName, std::vector<Node*>& arguments, int loc) {
     std::string templateTypes = "";
 
@@ -335,9 +340,8 @@ std::map<std::pair<std::string, std::string>, NodeFunc*>::iterator Call::findMet
         }
     }
 
-    if(methodf == AST::methodTable.end()) {
+    if(methodf == AST::methodTable.end())
         generator->error("undefined method \033[1m" + methodName + "\033[22m of the structure \033[1m" + structName + "\033[22m!", loc);
-    }
 
     if(templateTypes.length() > 0) {
         if(generator->functions.find(methodf->second->name + "<" + templateTypes + ">") == generator->functions.end()) {
@@ -608,12 +612,11 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
             else generator->error("type of the variable \033[1m" + ifName + "\033[22m is not a structure!", loc);
 
             if(AST::structTable.find(structure->name) != AST::structTable.end()) {
-                for(auto& it : AST::structTable[structure->name]->variables) {
-                    if(it->name == ifName && instanceof<TypeFunc>(it->type)) {
-                        std::vector<FuncArgSet> fas = tfaToFas(((TypeFunc*)it->type)->args);
-                        std::vector<RaveValue> params = Call::genParameters(arguments, byVals, fas, CallSettings{false, ((TypeFunc*)it->type)->isVarArg, loc});
-                        return LLVM::call(currScope->getWithoutLoad(it->name), params, (instanceof<TypeVoid>(it->type) ? "" : "callFunc"), byVals);
-                    }
+                NodeVar* var = Call::findVarFunction(structure->name, getFunc->field);
+                if(var != nullptr) {
+                    std::vector<FuncArgSet> fas = tfaToFas(((TypeFunc*)var->type)->args);
+                    std::vector<RaveValue> params = Call::genParameters(arguments, byVals, fas, CallSettings{false, ((TypeFunc*)var->type)->isVarArg, loc});
+                    return LLVM::call((new NodeGet(getFunc->base, var->name, false, loc))->generate(), params, (instanceof<TypeVoid>(var->type->getElType()) ? "" : "callFunc"), byVals);
                 }
 
                 arguments.insert(arguments.begin(), getFunc->base);
