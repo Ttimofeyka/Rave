@@ -217,6 +217,35 @@ namespace std {
 
             for(; i<n; i++) x[i] = x[i] * alpha; 
         }
+
+        // TODO: Optimize it using SIMD
+        // Vector norm: sqrt(return += ||x[i]||^2)
+        (conditions: [@isNumeric(NRM2_T)]) NRM2_T norm<NRM2_T>(usize n, NRM2_T* x) {
+            for(usize i=0; i<n; i++) {
+                NRM2_T xi = std::math::abs<NRM2_T>(x[i]);
+                return += xi * xi;
+            }
+
+            return = std::math::sqrt(return);
+        }
+
+        // Index of the maximum absolute value element in the vector
+        (conditions: [@isNumeric(AMAX_T)]) usize max<AMAX_T>(usize n, AMAX_T* x) {
+            if(n > 0) return = 0;
+
+            for(usize i=1; i<n; i++) {
+                if(x[i] > x[return]) return = i;
+            }
+        }
+
+        // Index of the minimum absolute value element in the vector
+        (conditions: [@isNumeric(AMIN_T)]) usize min<AMIN_T>(usize n, AMIN_T* x) {
+            if(n > 0) return = 0;
+
+            for(usize i=1; i<n; i++) {
+                if(x[i] < x[return]) return = i;
+            }
+        }
     }
 }
 
@@ -225,34 +254,6 @@ namespace std {
 
     namespace std {
         namespace blas {
-            // Vector norm: sqrt(return += ||x[i]||^2)
-            (conditions: [@isNumeric(NRM2_T)]) NRM2_T norm<NRM2_T>(usize n, NRM2_T* x) {
-                for(usize i=0; i<n; i++) {
-                    NRM2_T xi = std::math::abs<NRM2_T>(x[i]);
-                    return += xi * xi;
-                }
-
-                return = std::math::sqrt(return);
-            }
-
-            // Index of the maximum value element of a vector
-            (conditions: [@isNumeric(AMAX_T)]) AMAX_T max<AMAX_T>(usize n, AMAX_T* x) {
-                if(n > 0) return = x[0];
-
-                for(usize i=1; i<n; i++) {
-                    if(x[i] > return) return = x[i];
-                }
-            }
-
-            // Index of the minimum value element of a vector
-            (conditions: [@isNumeric(AMIN_T)]) AMIN_T min<AMIN_T>(usize n, AMIN_T* x) {
-                if(n > 0) return = x[0];
-
-                for(usize i=1; i<n; i++) {
-                    if(x[i] < return) return = x[i];
-                }
-            }
-
             // Matrix/vector multiplication
             (conditions: [@isNumeric(VECMATMUL_T)]) void vecmatmul<VECMATMUL_T>(usize rows, usize columns, VECMATMUL_T* vector, VECMATMUL_T* matrix, VECMATMUL_T* result) {
                 for(usize column=0; column<columns; column++) {
@@ -286,34 +287,6 @@ namespace std {
 
     namespace std {
         namespace blas {
-            // Vector norm: sqrt(return += ||x[i]||^2)
-            (conditions: [@isNumeric(NRM2_T)]) NRM2_T norm<NRM2_T>(usize n, NRM2_T* x) {
-                for(usize i = 0; i<n; i++) {
-                    NRM2_T xi = std::math::abs<NRM2_T>(x[i]);
-                    return += xi * xi;
-                }
-
-                return = std::math::sqrt(return);
-            }
-
-            // Index of the maximum absolute value element of a vector
-            (conditions: [@isNumeric(AMAX_T)]) AMAX_T max<AMAX_T>(usize n, AMAX_T* x) {
-                if(n > 0) return = x[0];
-
-                for(usize i=1; i<n; i++) {
-                    if(x[i] > return) return = x[i];
-                }
-            }
-
-            // Index of the minimum absolute value element of a vector
-            (conditions: [@isNumeric(AMIN_T)]) AMIN_T min<AMIN_T>(usize n, AMIN_T* x) {
-                if(n > 0) return = x[0];
-
-                for(usize i=1; i<n; i++) {
-                    if(x[i] < return) return = x[i];
-                }
-            }
-
             // Matrix/vector multiplication
             (conditions: [@isNumeric(VECMATMUL_T)]) void vecmatmul<VECMATMUL_T>(usize rows, usize columns, VECMATMUL_T* vector, VECMATMUL_T* matrix, VECMATMUL_T* result) {
                 usize column = 0;
@@ -512,34 +485,6 @@ namespace std {
 
     namespace std {
         namespace blas {
-            // Vector norm: sqrt(return += ||x[i]||^2)
-            (conditions: [@isNumeric(NRM2_T)]) NRM2_T norm<NRM2_T>(usize n, NRM2_T* x) {
-                for(usize i = 0; i<n; i++) {
-                    NRM2_T xi = std::math::abs<NRM2_T>(x[i]);
-                    return += xi * xi;
-                }
-
-                return = std::math::sqrt(return);
-            }
-
-            // Index of the maximum absolute value element of a vector
-            (conditions: [@isNumeric(AMAX_T)]) AMAX_T max<AMAX_T>(usize n, AMAX_T* x) {
-                if(n > 0) return = x[0];
-
-                for(usize i=1; i<n; i++) {
-                    if(x[i] > return) return = x[i];
-                }
-            }
-
-            // Index of the minimum absolute value element of a vector
-            (conditions: [@isNumeric(AMIN_T)]) AMIN_T min<AMIN_T>(usize n, AMIN_T* x) {
-                if(n > 0) return = x[0];
-
-                for(usize i=1; i<n; i++) {
-                    if(x[i] < return) return = x[i];
-                }
-            }
-
             // Matrix/vector multiplication
             (conditions: [@isNumeric(VECMATMUL_T)]) void vecmatmul<VECMATMUL_T>(usize rows, usize columns, VECMATMUL_T* vector, VECMATMUL_T* matrix, VECMATMUL_T* result) {
                 usize column = 0;
