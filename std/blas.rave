@@ -66,24 +66,7 @@ namespace std {
         (conditions: [@isNumeric(AXPY_T)]) void axpy<AXPY_T>(usize n, AXPY_T alpha, AXPY_T* x, AXPY_T* y) {
             usize i = 0;
 
-            @if(__RAVE_SSE) {
-                @if(AXPY_T == float) {
-                    float4 chunkAlpha = @vFrom(float4, alpha);
-
-                    for(; (i + 3) < n; i+=4) @vStore(@vLoad(float4, &y[i]) + (@vLoad(float4, &x[i]) * chunkAlpha), &y[i]);
-                }
-                @else @if(AXPY_T == int) {
-                    int4 chunkAlpha = @vFrom(int4, alpha);
-
-                    for(; (i + 3) < n; i+=4) @vStore(@vLoad(int4, &y[i]) + (@vLoad(int4, &x[i]) * chunkAlpha), &y[i]);
-                }
-                @else @if(__RAVE_SSE2 && (AXPY_T == double)) {
-                    double2 chunkAlpha = @vFrom(double2, alpha);
-
-                    for(; (i + 1) < n; i+=2) @vStore(@vLoad(double2, &y[i]) + (@vLoad(double2, &x[i]) * chunkAlpha), &y[i]);
-                }
-            }
-            @else @if(__RAVE_AVX) {
+            @if(__RAVE_AVX) {
                 @if(AXPY_T == float) {
                     float8 chunkAlpha = @vFrom(float8, alpha);
 
@@ -100,8 +83,61 @@ namespace std {
                     for(; (i + 3) < n; i+=4) @vStore(@vLoad(double4, &y[i]) + (@vLoad(double4, &x[i]) * chunkAlpha), &y[i]);
                 }
             }
+            @else @if(__RAVE_SSE) {
+                @if(AXPY_T == float) {
+                    float4 chunkAlpha = @vFrom(float4, alpha);
+
+                    for(; (i + 3) < n; i+=4) @vStore(@vLoad(float4, &y[i]) + (@vLoad(float4, &x[i]) * chunkAlpha), &y[i]);
+                }
+                @else @if(AXPY_T == int) {
+                    int4 chunkAlpha = @vFrom(int4, alpha);
+
+                    for(; (i + 3) < n; i+=4) @vStore(@vLoad(int4, &y[i]) + (@vLoad(int4, &x[i]) * chunkAlpha), &y[i]);
+                }
+                @else @if(__RAVE_SSE2 && (AXPY_T == double)) {
+                    double2 chunkAlpha = @vFrom(double2, alpha);
+
+                    for(; (i + 1) < n; i+=2) @vStore(@vLoad(double2, &y[i]) + (@vLoad(double2, &x[i]) * chunkAlpha), &y[i]);
+                }
+            }
 
             for(; i<n; i++) y[i] += (alpha * x[i]);
+        }
+
+        // Scales two vectors, add them to one another and stores result in the vector
+        (conditions: [@isNumeric(AXPBY_T)]) void axpby<AXPBY_T>(usize n, AXPBY_T alpha, AXPBY_T* x, AXPBY_T beta, AXPBY_T* y) {
+            usize i = 0;
+
+            @if(__RAVE_AVX) {
+                @if(AXPBY_T == float) {
+                    float8 chunkAlpha = @vFrom(float8, alpha), chunkBeta = @vFrom(float8, beta);
+                    for(; (i + 7) < n; i+=8) @vStore((chunkAlpha * @vLoad(float8, &x[i])) + (chunkBeta * @vLoad(float8, &y[i])), &y[i]);
+                }
+                @else @if(AXPBY_T == int) {
+                    int8 chunkAlpha = @vFrom(int8, alpha), chunkBeta = @vFrom(int8, beta);
+                    for(; (i + 7) < n; i+=8) @vStore((chunkAlpha * @vLoad(int8, &x[i])) + (chunkBeta * @vLoad(int8, &y[i])), &y[i]);
+                }
+                @else @if(AXPBY_T == double) {
+                    double4 chunkAlpha = @vFrom(double4, alpha), chunkBeta = @vFrom(double4, beta);
+                    for(; (i + 3) < n; i+=4) @vStore((chunkAlpha * @vLoad(double4, &x[i])) + (chunkBeta * @vLoad(double4, &y[i])), &y[i]);
+                }
+            }
+            @else @if(__RAVE_SSE) {
+                @if(AXPBY_T == float) {
+                    float4 chunkAlpha = @vFrom(float4, alpha), chunkBeta = @vFrom(float4, beta);
+                    for(; (i + 3) < n; i+=4) @vStore((chunkAlpha * @vLoad(float4, &x[i])) + (chunkBeta * @vLoad(float4, &y[i])), &y[i]);
+                }
+                @else @if(AXPBY_T == int) {
+                    int4 chunkAlpha = @vFrom(int4, alpha), chunkBeta = @vFrom(int4, beta);
+                    for(; (i + 3) < n; i+=4) @vStore((chunkAlpha * @vLoad(int4, &x[i])) + (chunkBeta * @vLoad(int4, &y[i])), &y[i]);
+                }
+                @else @if(__RAVE_SSE2 && (AXPBY_T == double)) {
+                    double2 chunkAlpha = @vFrom(double2, alpha), chunkBeta = @vFrom(double2, beta);
+                    for(; (i + 1) < n; i+=2) @vStore((chunkAlpha * @vLoad(double2, &x[i])) + (chunkBeta * @vLoad(double2, &y[i])), &y[i]);
+                }
+            }
+
+            for(; i<n; i++) y[i] = (alpha * x[i]) + (beta * y[i]);
         }
     }
 }
@@ -111,11 +147,6 @@ namespace std {
 
     namespace std {
         namespace blas {
-            // Scales two vectors, adds them to one another and stores result in the vector
-            (conditions: [@isNumeric(AXPBY_T)]) void axpby<AXPBY_T>(usize n, AXPBY_T alpha, AXPBY_T* x, APXBY_T beta, AXPBY_T* y) {
-                for(usize i=0; i<n; i++) y[i] = (alpha * x[i]) + (beta * y[i]);
-            }
-
             // Dot product: result += x[i] * y[i]
             (conditions: [@isNumeric(DOT_T)]) DOT_T dot<DOT_T>(usize n, DOT_T* x, DOT_T* y) {
                 for(usize i=0; i<n; i++) return += x[i] * y[i];
@@ -187,38 +218,6 @@ namespace std {
 
     namespace std {
         namespace blas {
-            // Scales two vectors, adds them to one another and stores result in the vector
-            (conditions: [@isNumeric(AXPBY_T)]) void axpby<AXPBY_T>(usize n, AXPBY_T alpha, AXPBY_T* x, AXPBY_T beta, AXPBY_T* y) {
-                usize i = 0;
-
-                @if(AXPBY_T == float) {
-                    float4 chunkAlpha = @vFrom(float4, alpha), chunkBeta = @vFrom(float4, beta);
-
-                    for(; (i + 3) < n; i+=4) {
-                        float4 chunkY = @vLoad(float4, &y[i]);
-                        @vStore((chunkAlpha * @vLoad(float4, &x[i])) + (chunkBeta * chunkY), &y[i]);
-                    }
-                }
-                @else @if(AXPBY_T == int) {
-                    int4 chunkAlpha = @vFrom(int4, alpha), chunkBeta = @vFrom(int4, beta);
-
-                    for(; (i + 3) < n; i+=4) {
-                        int4 chunkY = @vLoad(int4, &y[i]);
-                        @vStore((chunkAlpha * @vLoad(int4, &x[i])) + (chunkBeta * chunkY), &y[i]);
-                    }
-                }
-                @else @if(AXPBY_T == double) {
-                    double2 chunkAlpha = @vFrom(double2, alpha), chunkBeta = @vFrom(double2, beta);
-
-                    for(; (i + 1) < n; i+=2) {
-                        double2 chunkY = @vLoad(double2, &y[i]);
-                        @vStore((chunkAlpha * @vLoad(double2, &x[i])) + (chunkBeta * chunkY), &y[i]);
-                    }
-                }
-
-                for(; i<n; i++) y[i] = (alpha * x[i]) + (beta * y[i]);
-            }
-
             // Dot product: result += x[i] * y[i]
             (conditions: [@isNumeric(DOT_T)]) DOT_T dot<DOT_T>(usize n, DOT_T* x, DOT_T* y) {
                 usize i = 0;
@@ -491,38 +490,6 @@ namespace std {
 
     namespace std {
         namespace blas {
-            // Scales two vectors, adds them to one another and stores result in the vector
-            (conditions: [@isNumeric(AXPBY_T)]) void axpby<AXPBY_T>(usize n, AXPBY_T alpha, AXPBY_T* x, AXPBY_T beta, AXPBY_T* y) {
-                usize i = 0;
-
-                @if(AXPBY_T == float) {
-                    float8 chunkAlpha = @vFrom(float8, alpha), chunkBeta = @vFrom(float8, beta);
-
-                    for(; (i + 7) < n; i+=8) {
-                        float8 chunkY = @vLoad(float8, &y[i]);
-                        @vStore((chunkAlpha * @vLoad(float8, &x[i])) + (chunkBeta * chunkY), &y[i]);
-                    }
-                }
-                @else @if(AXPBY_T == int) {
-                    int8 chunkAlpha = @vFrom(int8, alpha), chunkBeta = @vFrom(int8, beta);
-
-                    for(; (i + 7) < n; i+=8) {
-                        int8 chunkY = @vLoad(int8, &y[i]);
-                        @vStore((chunkAlpha * @vLoad(int8, &x[i])) + (chunkBeta * chunkY), &y[i]);
-                    }
-                }
-                @else @if(AXPBY_T == double) {
-                    double4 chunkAlpha = @vFrom(double4, alpha), chunkBeta = @vFrom(double4, beta);
-
-                    for(; (i + 3) < n; i+=4) {
-                        double4 chunkY = @vLoad(double4, &y[i]);
-                        @vStore((chunkAlpha * @vLoad(double4, &x[i])) + (chunkBeta * chunkY), &y[i]);
-                    }
-                }
-
-                for(; i<n; i++) y[i] = (alpha * x[i]) + (beta * y[i]);
-            }
-
             // Dot product: result += x[i] * y[i]
             (conditions: [@isNumeric(DOT_T)]) DOT_T dot<DOT_T>(usize n, DOT_T* x, DOT_T* y) {
                 usize i = 0;
