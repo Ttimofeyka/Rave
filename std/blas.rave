@@ -139,6 +139,84 @@ namespace std {
 
             for(; i<n; i++) y[i] = (alpha * x[i]) + (beta * y[i]);
         }
+
+        // Dot product: result += x[i] * y[i]
+        (conditions: [@isNumeric(DOT_T)]) DOT_T dot<DOT_T>(usize n, DOT_T* x, DOT_T* y) {
+            usize i = 0;
+
+            @if(__RAVE_AVX) {
+                @if(DOT_T == float) {
+                    float8 result;
+                    for(; (i + 7) < n; i+=8) result += @vLoad(float8, &x[i]) * @vLoad(float8, &y[i]);
+                    return = result[0] + result[1] + result[2] + result[3] + result[4] + result[5] + result[6] + result[7];
+                }
+                @else @if(DOT_T == int) {
+                    int8 result;
+                    for(; (i + 7) < n; i+=8) result += @vLoad(int8, &x[i]) * @vLoad(int8, &y[i]);
+                    return = result[0] + result[1] + result[2] + result[3] + result[4] + result[5] + result[6] + result[7];
+                }
+                @else @if(DOT_T == double) {
+                    double4 result;
+                    for(; (i + 3) < n; i+=4) result += @vLoad(double4, &x[i]) * @vLoad(double4, &y[i]);
+                    return = result[0] + result[1] + result[2] + result[3];
+                }
+            }
+            @else @if(__RAVE_SSE) {
+                @if(DOT_T == float) {
+                    float4 result;
+                    for(; (i + 3) < n; i+=4) result += @vLoad(float4, &x[i]) * @vLoad(float4, &y[i]);
+                    return = result[0] + result[1] + result[2] + result[3];
+                }
+                @else @if(DOT_T == int) {
+                    int4 result;
+                    for(; (i + 3) < n; i+=4) result += @vLoad(int4, &x[i]) * @vLoad(int4, &y[i]);
+                    return = result[0] + result[1] + result[2] + result[3];
+                }
+                @else @if(__RAVE_SSE2 && (DOT_T == double)) {
+                    double2 result;
+                    for(; (i + 1) < n; i+=2) result += @vLoad(double2, &x[i]) * @vLoad(double2, &y[i]);
+                    return = result[0] + result[1];
+                }
+            }
+
+            for(; i<n; i++) return += x[i] * y[i];
+        }
+
+        // Scalar multiplication: x[i] = alpha * x[i]
+        (conditions: [@isNumeric(SCAL_T)]) void scale<SCAL_T>(usize n, SCAL_T* x, SCAL_T alpha) {
+            usize i = 0;
+
+            @if(__RAVE_AVX) {
+                @if(DOT_T == float) {
+                    float8 chunkAlpha = @vFrom(float8, alpha);
+                    for(; (i + 7) < n; i+=8) @vStore(@vLoad(float8, &x[i]) * chunkAlpha, &x[i]);
+                }
+                @else @if(DOT_T == int) {
+                    int8 chunkAlpha = @vFrom(int8, alpha);
+                    for(; (i + 7) < n; i+=8) @vStore(@vLoad(int8, &x[i]) * chunkAlpha, &x[i]);
+                }
+                @else @if(DOT_T == double) {
+                    double4 chunkAlpha = @vFrom(double4, alpha);
+                    for(; (i + 3) < n; i+=4) @vStore(@vLoad(double4, &x[i]) * chunkAlpha, &x[i]);
+                }
+            }
+            @else @if(__RAVE_SSE) {
+                @if(DOT_T == float) {
+                    float4 chunkAlpha = @vFrom(float4, alpha);
+                    for(; (i + 3) < n; i+=4) @vStore(@vLoad(float4, &x[i]) * chunkAlpha, &x[i]);
+                }
+                @else @if(DOT_T == int) {
+                    int4 chunkAlpha = @vFrom(int4, alpha);
+                    for(; (i + 3) < n; i+=4) @vStore(@vLoad(int4, &x[i]) * chunkAlpha, &x[i]);
+                }
+                @else @if(__RAVE_SSE2 && (DOT_T == double)) {
+                    double2 chunkAlpha = @vFrom(double2, alpha);
+                    for(; (i + 1) < n; i+=2) @vStore(@vLoad(double2, &x[i]) * chunkAlpha, &x[i]);
+                }
+            }
+
+            for(; i<n; i++) x[i] = x[i] * alpha; 
+        }
     }
 }
 
@@ -147,16 +225,6 @@ namespace std {
 
     namespace std {
         namespace blas {
-            // Dot product: result += x[i] * y[i]
-            (conditions: [@isNumeric(DOT_T)]) DOT_T dot<DOT_T>(usize n, DOT_T* x, DOT_T* y) {
-                for(usize i=0; i<n; i++) return += x[i] * y[i];
-            }
-
-            // Scalar multiplication: x[i] = alpha * x[i]
-            (conditions: [@isNumeric(SCAL_T)]) void scale<SCAL_T>(usize n, SCAL_T* x, SCAL_T alpha) {
-                for(usize i=0; i<n; i++) x[i] = x[i] * alpha; 
-            }
-
             // Vector norm: sqrt(return += ||x[i]||^2)
             (conditions: [@isNumeric(NRM2_T)]) NRM2_T norm<NRM2_T>(usize n, NRM2_T* x) {
                 for(usize i=0; i<n; i++) {
@@ -218,52 +286,6 @@ namespace std {
 
     namespace std {
         namespace blas {
-            // Dot product: result += x[i] * y[i]
-            (conditions: [@isNumeric(DOT_T)]) DOT_T dot<DOT_T>(usize n, DOT_T* x, DOT_T* y) {
-                usize i = 0;
-
-                @if(DOT_T == float) {
-                    float4 result;
-                    for(; (i + 3) < n; i+=4) result += @vLoad(float4, &x[i]) * @vLoad(float4, &y[i]);
-                    return = result[0] + result[1] + result[2] + result[3];
-                }
-                @else @if(DOT_T == int) {
-                    int4 result;
-                    for(; (i + 3) < n; i+=4) result += @vLoad(int4, &x[i]) * @vLoad(int4, &y[i]);
-                    return = result[0] + result[1] + result[2] + result[3];
-                }
-                @else @if(DOT_T == double) {
-                    double2 result;
-                    for(; (i + 1) < n; i+=2) result += @vLoad(double2, &x[i]) * @vLoad(double2, &y[i]);
-                    return = result[0] + result[1];
-                }
-
-                for(; i<n; i++) return += x[i] * y[i];
-            }
-
-            // Scalar multiplication: x[i] = alpha * x[i]
-            (conditions: [@isNumeric(SCAL_T)]) void scale<SCAL_T>(usize n, SCAL_T* x, SCAL_T alpha) {
-                usize i = 0;
-
-                @if(DOT_T == float) {
-                    float4 chunkAlpha = @vFrom(float4, alpha);
-
-                    for(; (i + 3) < n; i+=4) @vStore(@vLoad(float4, &x[i]) * chunkAlpha, &x[i]);
-                }
-                @else @if(DOT_T == int) {
-                    int4 chunkAlpha = @vFrom(int4, alpha);
-
-                    for(; (i + 3) < n; i+=4) @vStore(@vLoad(int4, &x[i]) * chunkAlpha, &x[i]);
-                }
-                @else @if(DOT_T == double) {
-                    double2 chunkAlpha = @vFrom(double2, alpha);
-
-                    for(; (i + 1) < n; i+=2) @vStore(@vLoad(double2, &x[i]) * chunkAlpha, &x[i]);
-                }
-
-                for(; i<n; i++) x[i] = x[i] * alpha; 
-            }
-
             // Vector norm: sqrt(return += ||x[i]||^2)
             (conditions: [@isNumeric(NRM2_T)]) NRM2_T norm<NRM2_T>(usize n, NRM2_T* x) {
                 for(usize i = 0; i<n; i++) {
@@ -490,52 +512,6 @@ namespace std {
 
     namespace std {
         namespace blas {
-            // Dot product: result += x[i] * y[i]
-            (conditions: [@isNumeric(DOT_T)]) DOT_T dot<DOT_T>(usize n, DOT_T* x, DOT_T* y) {
-                usize i = 0;
-
-                @if(DOT_T == float) {
-                    float8 result;
-                    for(; (i + 7) < n; i+=8) result += @vLoad(float8, &x[i]) * @vLoad(float8, &y[i]);
-                    return = result[0] + result[1] + result[2] + result[3] + result[4] + result[5] + result[6] + result[7];
-                }
-                @else @if(DOT_T == int) {
-                    int8 result;
-                    for(; (i + 7) < n; i+=8) result += @vLoad(int8, &x[i]) * @vLoad(int8, &y[i]);
-                    return = result[0] + result[1] + result[2] + result[3] + result[4] + result[5] + result[6] + result[7];
-                }
-                @else @if(DOT_T == double) {
-                    double4 result;
-                    for(; (i + 3) < n; i+=4) result += @vLoad(double4, &x[i]) * @vLoad(double4, &y[i]);
-                    return = result[0] + result[1] + result[2] + result[3];
-                }
-
-                for(; i<n; i++) return += x[i] * y[i];
-            }
-
-            // Scalar multiplication: x[i] = alpha * x[i]
-            (conditions: [@isNumeric(SCAL_T)]) void scale<SCAL_T>(usize n, SCAL_T* x, SCAL_T alpha) {
-                usize i = 0;
-
-                @if(DOT_T == float) {
-                    float8 chunkAlpha = @vFrom(float8, alpha);
-
-                    for(; (i + 7) < n; i+=8) @vStore(@vLoad(float8, &x[i]) * chunkAlpha, &x[i]);
-                }
-                @else @if(DOT_T == int) {
-                    int8 chunkAlpha = @vFrom(int8, alpha);
-
-                    for(; (i + 7) < n; i+=8) @vStore(@vLoad(int8, &x[i]) * chunkAlpha, &x[i]);
-                }
-                @else @if(DOT_T == double) {
-                    double4 chunkAlpha = @vFrom(double4, alpha);
-
-                    for(; (i + 3) < n; i+=4) @vStore(@vLoad(double4, &x[i]) * chunkAlpha, &x[i]);
-                }
-
-                for(; i<n; i++) x[i] = x[i] * alpha; 
-            }
-
             // Vector norm: sqrt(return += ||x[i]||^2)
             (conditions: [@isNumeric(NRM2_T)]) NRM2_T norm<NRM2_T>(usize n, NRM2_T* x) {
                 for(usize i = 0; i<n; i++) {
