@@ -246,6 +246,63 @@ namespace std {
                 if(x[i] < x[return]) return = i;
             }
         }
+
+        // Matrix/vector multiplication
+        (conditions: [@isNumeric(VECMATMUL_T)]) void vecmatmul<VECMATMUL_T>(usize rows, usize columns, VECMATMUL_T* vector, VECMATMUL_T* matrix, VECMATMUL_T* result) {
+            usize column = 0;
+
+            @if(__RAVE_AVX) {
+                @if(VECMATMUL_T == float) {
+                    if(rows & 7 == 0) for(; (column + 7) < columns; column+=8) {
+                        float8 chunkResult = @vFrom(float8, 0f);
+                        for(usize row=0; row<rows; row+=8) chunkResult += @vLoad(float8, &vector[row]) * @vLoad(float8, &matrix[row * columns + column]);
+                        @vStore(chunkResult, &result[column]);
+                    }
+                }
+                @else @if(VECMATMUL_T == int) {
+                    if(rows & 7 == 0) for(; (column + 7) < columns; column+=8) {
+                        int8 chunkResult = @vFrom(int8, 0);
+                        for(usize row=0; row<rows; row+=8) chunkResult += @vLoad(int8, &vector[row]) * @vLoad(int8, &matrix[row * columns + column]);
+                        @vStore(chunkResult, &result[column]);
+                    }
+                }
+                @else @if(VECMATMUL_T == double) {
+                    if(rows & 3 == 0) for(; (column + 3) < columns; column+=4) {
+                        double4 chunkResult = @vFrom(double4, 0d);
+                        for(usize row=0; row<rows; row+=4) chunkResult += @vLoad(double4, &vector[row]) * @vLoad(double4, &matrix[column * rows + row]);
+                        @vStore(chunkResult, &result[column]);
+                    }
+                }
+            }
+            @else @if(__RAVE_SSE) {
+                @if(VECMATMUL_T == float) {
+                    if(rows & 3 == 0) for(; (column + 3) < columns; column+=4) {
+                        float4 chunkResult = @vFrom(float4, 0f);
+                        for(usize row=0; row<rows; row+=4) chunkResult += @vLoad(float4, &vector[row]) * @vLoad(float4, &matrix[row * columns + column]);
+                        @vStore(chunkResult, &result[column]);
+                    }
+                }
+                @else @if(VECMATMUL_T == int) {
+                    if(rows & 3 == 0) for(; (column + 3) < columns; column+=4) {
+                        int4 chunkResult = @vFrom(int4, 0);
+                        for(usize row=0; row<rows; row+=4) chunkResult += @vLoad(int4, &vector[row]) * @vLoad(int4, &matrix[row * columns + column]);
+                        @vStore(chunkResult, &result[column]);
+                    }
+                }
+                @else @if(__RAVE_SSE2 && (VECMATMUL_T == double)) {
+                    if(rows & 1 == 0) for(; (column + 1) < columns; column+=2) {
+                        double2 chunkResult = @vFrom(double2, 0d);
+                        for(usize row=0; row<rows; row+=2) chunkResult += @vLoad(double2, &vector[row]) * @vLoad(double2, &matrix[column * rows + row]);
+                        @vStore(chunkResult, &result[column]);
+                    }
+                }
+            }
+
+            for(; column<columns; column++) {
+                result[column] = cast(VECMATMUL_T)0;
+                for(usize row=0; row<rows; row++) result[column] += vector[row] * matrix[column * rows + row];
+            }
+        }
     }
 }
 
@@ -254,15 +311,6 @@ namespace std {
 
     namespace std {
         namespace blas {
-            // Matrix/vector multiplication
-            (conditions: [@isNumeric(VECMATMUL_T)]) void vecmatmul<VECMATMUL_T>(usize rows, usize columns, VECMATMUL_T* vector, VECMATMUL_T* matrix, VECMATMUL_T* result) {
-                for(usize column=0; column<columns; column++) {
-                    result[column] = cast(VECMATMUL_T)0;
-
-                    for(usize row=0; row<rows; row++) result[column] += vector[row] * matrix[column * rows + row];
-                }
-            }
-
             // Matrix transpose
             (conditions: [@isNumeric(TRANSMAT_T)]) void transpose<TRANSMAT_T>(usize rows, usize columns, TRANSMAT_T* matrix, TRANSMAT_T* target) {
                 for(usize i=0; i<rows; i++) {
@@ -287,45 +335,6 @@ namespace std {
 
     namespace std {
         namespace blas {
-            // Matrix/vector multiplication
-            (conditions: [@isNumeric(VECMATMUL_T)]) void vecmatmul<VECMATMUL_T>(usize rows, usize columns, VECMATMUL_T* vector, VECMATMUL_T* matrix, VECMATMUL_T* result) {
-                usize column = 0;
-
-                @if(VECMATMUL_T == float) {
-                    if(rows % 4 == 0) for(; (column + 3) < columns; column+=4) {
-                        float4 chunkResult = @vFrom(float4, 0f);
-
-                        for(usize row=0; row<rows; row+=4) chunkResult += @vLoad(float4, &vector[row]) * @vLoad(float4, &matrix[row * columns + column]);
-
-                        @vStore(chunkResult, &result[column]);
-                    }
-                }
-                @else @if(VECMATMUL_T == int) {
-                    if(rows % 4 == 0) for(; (column + 3) < columns; column+=4) {
-                        int4 chunkResult = @vFrom(int4, 0);
-
-                        for(usize row=0; row<rows; row+=4) chunkResult += @vLoad(int4, &vector[row]) * @vLoad(int4, &matrix[row * columns + column]);
-
-                        @vStore(chunkResult, &result[column]);
-                    }
-                }
-                @else @if(VECMATMUL_T == double) {
-                    if(rows % 2 == 0) for(; (column + 1) < columns; column+=2) {
-                        double2 chunkResult = @vFrom(double2, 0d);
-
-                        for(usize row=0; row<rows; row+=2) chunkResult += @vLoad(double2, &vector[row]) * @vLoad(double2, &matrix[column * rows + row]);
-
-                        @vStore(chunkResult, &result[column]);
-                    }
-                }
-
-                for(; column<columns; column++) {
-                    result[column] = cast(VECMATMUL_T)0;
-
-                    for(usize row=0; row<rows; row++) result[column] += vector[row] * matrix[column * rows + row];
-                }
-            }
-
             (conditions: [@isNumeric(TRANSMAT_T)]) void transpose<TRANSMAT_T>(usize rows, usize columns, TRANSMAT_T* matrix, TRANSMAT_T* target) {
                 usize i = 0;
                 usize j = 0;
@@ -485,45 +494,6 @@ namespace std {
 
     namespace std {
         namespace blas {
-            // Matrix/vector multiplication
-            (conditions: [@isNumeric(VECMATMUL_T)]) void vecmatmul<VECMATMUL_T>(usize rows, usize columns, VECMATMUL_T* vector, VECMATMUL_T* matrix, VECMATMUL_T* result) {
-                usize column = 0;
-
-                @if(VECMATMUL_T == float) {
-                    if(rows % 8 == 0) for(; (column + 7) < columns; column+=8) {
-                        float8 chunkResult = @vFrom(float8, 0f);
-
-                        for(usize row=0; row<rows; row+=8) chunkResult += @vLoad(float8, &vector[row]) * @vLoad(float8, &matrix[row * columns + column]);
-
-                        @vStore(chunkResult, &result[column]);
-                    }
-                }
-                @else @if(VECMATMUL_T == int) {
-                    if(rows % 8 == 0) for(; (column + 7) < columns; column+=8) {
-                        int4 chunkResult = @vFrom(int8, 0);
-
-                        for(usize row=0; row<rows; row+=8) chunkResult += @vLoad(int8, &vector[row]) * @vLoad(int8, &matrix[row * columns + column]);
-
-                        @vStore(chunkResult, &result[column]);
-                    }
-                }
-                @else @if(VECMATMUL_T == double) {
-                    if(rows % 4 == 0) for(; (column + 3) < columns; column+=4) {
-                        double4 chunkResult = @vFrom(double4, 0d);
-
-                        for(usize row=0; row<rows; row+=4) chunkResult += @vLoad(double4, &vector[row]) * @vLoad(double4, &matrix[column * rows + row]);
-
-                        @vStore(chunkResult, &result[column]);
-                    }
-                }
-
-                for(; column<columns; column++) {
-                    result[column] = cast(VECMATMUL_T)0;
-
-                    for(usize row=0; row<rows; row++) result[column] += vector[row] * matrix[column * rows + row];
-                }
-            }
-
             (conditions: [@isNumeric(TRANSMAT_T)]) void transpose<TRANSMAT_T>(usize rows, usize columns, TRANSMAT_T* matrix, TRANSMAT_T* target) {
                 usize i = 0;
                 usize j = 0;
