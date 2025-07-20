@@ -98,6 +98,12 @@ import <std/error>
 }
 @else @if(__RAVE_OS == "WINDOWS") {
     namespace std {
+        struct securityAttributes {
+            uint nLength;
+            void* lpSecurityDescriptor;
+            int bInheritHandle;
+        }
+
         namespace process {
             alias Terminate = 1;
             alias SuspendAndResume = 2048;
