@@ -53,7 +53,7 @@ namespace std {
                 this.name = null;
             }
 
-            void makeString(char* cstring, uint len) {
+            void makeString(char* cstring, usize len) {
                 this.type = std::json::ValueType::String;
                 this.value = cstring;
                 this.length = len;

@@ -177,6 +177,8 @@ namespace std {
             this.data[this.length] = '\0';
         }
 
+        (inline, explicit) void appendC(std::cstring cstr) => this.appendC(cstr.data, cstr.length);
+
         (inline) void appendC(char* cstr) => this.appendC(cstr, std::cstring::strlen(cstr));
 
         (inline) void append(std::string str) => this.appendC(str.data, str.length);
