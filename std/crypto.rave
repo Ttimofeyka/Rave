@@ -142,7 +142,7 @@ namespace std {
             }
         }
 
-        (inline) void encode(std::string* buffer, std::string str) => std::base64::encode(buffer, std::cstring(str.data, str.length));
+        (inline, explicit) void encode(std::string* buffer, std::string str) => std::base64::encode(buffer, std::cstring(str.data, str.length));
 
         // Decode
 
@@ -167,6 +167,6 @@ namespace std {
             }
         }
 
-        (inline) void decode(std::string* buffer, std::string str) => std::base64::decode(buffer, std::cstring(str.data, str.length));
+        (inline, explicit) void decode(std::string* buffer, std::string str) => std::base64::decode(buffer, std::cstring(str.data, str.length));
     }
 }
