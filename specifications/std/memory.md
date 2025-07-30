@@ -78,7 +78,7 @@ for(int i=0; i<7; i++) ptr2[i] = '1';
 
 std::memcpy(ptr1, ptr2, 2); // ptr1: 1 1 0 0
 
-if(std::memcmp(ptr1, ptr2, 2)) {
+if (std::memcmp(ptr1, ptr2, 2)) {
     // True (1 1 with 1 1)
     std::memset(ptr2, 0, 7); // ptr2: 0 0 0 0 0 0 0
 }

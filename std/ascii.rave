@@ -15,12 +15,12 @@ namespace std {
 
         (inline) char toLower(char c) {
             return = c;
-            if(std::ascii::isUpper(c)) return = (return + 32);
+            if (std::ascii::isUpper(c)) return = (return + 32);
         }
 
         (inline) char toUpper(char c) {
             return = c;
-            if(std::ascii::isLower(c)) return = (return - 32); 
+            if (std::ascii::isLower(c)) return = (return - 32); 
         }
     }
 }

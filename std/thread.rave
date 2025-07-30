@@ -6,7 +6,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import <std/process> <std/map>
 
-@if(__RAVE_OS != "WINDOWS") {
+@if (__RAVE_OS != "WINDOWS") {
     import <std/pthread>
 
     namespace std {
@@ -64,7 +64,7 @@ import <std/process> <std/map>
     }
 };
 
-@if(__RAVE_OS == "LINUX") {
+@if (__RAVE_OS == "LINUX") {
     namespace std {
         namespace thread {
             alias cloneVM = 256;
@@ -88,8 +88,8 @@ namespace std {
     namespace thread {
         namespace spinlock {
             (inline) void lock(int* sl) {
-                while(@atomicTAS(sl, 1) == 1) {
-                    @if((__RAVE_PLATFORM == "X86") || (__RAVE_PLATFORM == "X86_64")) asm("pause");
+                while (@atomicTAS(sl, 1) == 1) {
+                    @if ((__RAVE_PLATFORM == "X86") || (__RAVE_PLATFORM == "X86_64")) asm("pause");
                 }
             }
 

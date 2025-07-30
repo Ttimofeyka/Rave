@@ -24,7 +24,7 @@ namespace std {
     alias SigIgnore = cast(void(int))1; // SigIgn
 }
 
-@if(__RAVE_OS == "LINUX") {
+@if (__RAVE_OS == "LINUX") {
     namespace std {
         struct sigaction {
             void(int) handler;
@@ -48,7 +48,7 @@ namespace std {
         }
     }
 }
-@else @if(__RAVE_OS == "WINDOWS") {
+@else @if (__RAVE_OS == "WINDOWS") {
     namespace std {
         extern(linkname: "SetConsoleCtrlHandler") char SetConsoleCtrlHandler(char(int) handler, char add);
 
@@ -56,7 +56,7 @@ namespace std {
             // Windows does not have a direct equivalent to the POSIX signal function,
             // but we can use the SetConsoleCtrlHandler function to handle some signals.
 
-            if((flag == std::SigInt) || (flag == std::SigTerm)) std::SetConsoleCtrlHandler(cast(char(int))catcher, 1c);
+            if ((flag == std::SigInt) || (flag == std::SigTerm)) std::SetConsoleCtrlHandler(cast(char(int))catcher, 1c);
         }
     }
 }

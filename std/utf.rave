@@ -14,8 +14,8 @@ namespace std {
 
         usize utflen(uchar* str) {
             usize i = 0;
-            while(str[i] != '\0') {
-                if(std::utf8::isStart(str[i])) return += 1;
+            while (str[i] != '\0') {
+                if (std::utf8::isStart(str[i])) return += 1;
                 i += 1;
             }
         }
@@ -26,34 +26,34 @@ namespace std {
 
         usize next(uchar* str) {
             return += 1;
-            while((str[return] != '\0') && (!(std::utf8::isStart(str[return])))) return += 1;
+            while ((str[return] != '\0') && (!(std::utf8::isStart(str[return])))) return += 1;
         }
 
         uint toCodepoint(uchar* str, usize at) {
-            if((str[at] & 0x80) == 0) return = cast(uint)str[at];
-            else if((str[at] & 0xE0) == 0xC0) {
+            if ((str[at] & 0x80) == 0) return = cast(uint)str[at];
+            else if ((str[at] & 0xE0) == 0xC0) {
                 return = (str[at] & 0x1F) <. 6;
                 return = return | (str[at + 1] & 0x3F);
             }
-            else if((str[at] & 0xF0) == 0xE0) {
+            else if ((str[at] & 0xF0) == 0xE0) {
                 return = (str[at] & 0xF) <. 12;
                 return = return | (str[at + 1] & 0x3F) <. 6;
                 return = return | (str[at + 2] & 0x3F);
             }
-            else if((str[at] & 0xF8) == 0xF0) {
+            else if ((str[at] & 0xF8) == 0xF0) {
                 return = (str[at] & 0x7) <. 18;
                 return = return | (str[at + 1] & 0x3F) <. 12;
                 return = return | (str[at + 2] & 0x3F) <. 6;
                 return = return | (str[at + 3] & 0x3F);
             }
-            else if((str[at] & 0xFC) == 0xF8) {
+            else if ((str[at] & 0xFC) == 0xF8) {
                 return = (str[at] & 0x3) <. 24;
                 return = return | (str[at] & 0x3F) <. 18;
                 return = return | (str[at] & 0x3F) <. 12;
                 return = return | (str[at] & 0x3F) <. 6;
                 return = return | (str[at] & 0x3F);
             }
-            else if((str[at] & 0xFE) == 0xFC) {
+            else if ((str[at] & 0xFE) == 0xFC) {
                 return = (str[at] & 0x1) <. 30;
                 return = return | (str[at] & 0x3F) <. 24;
                 return = return | (str[at] & 0x3F) <. 18;
@@ -71,16 +71,16 @@ namespace std {
         alias bmpEnd = 0xFFFF;
 
         (nochecks) int strlen(ushort* wstr) {
-            while(wstr[return] != 0s) return += 1;
+            while (wstr[return] != 0s) return += 1;
         }
 
         (nochecks) int utflen(ushort* wstr) {
             int bytes = std::utf16::strlen(wstr);
             int pos = 0;
 
-            while(pos < bytes) {
+            while (pos < bytes) {
                 return += 1;
-                if((wstr[pos] >= 0xD800) && (wstr[pos] <= 0xDBFF)) pos += 2;
+                if ((wstr[pos] >= 0xD800) && (wstr[pos] <= 0xDBFF)) pos += 2;
                 else pos += 1;
             }
         }
@@ -89,28 +89,28 @@ namespace std {
             usize i = 0;
             bool isWrite = buffer != null;
 
-            while(i < u16Length) {
+            while (i < u16Length) {
                 uint codepoint = cast(uint)(u16[i]);
 
-                if((codepoint >= 0xD800) && (codepoint <= 0xDBFF)) {
+                if ((codepoint >= 0xD800) && (codepoint <= 0xDBFF)) {
                     ushort highSurrogate = codepoint;
                     ushort lowSurrogate = u16[i + 1];
 
-                    if((lowSurrogate < 0xDC00) || (lowSurrogate > 0xDFFF)) @return(-1);
+                    if ((lowSurrogate < 0xDC00) || (lowSurrogate > 0xDFFF)) @return(-1);
                     codepoint = 0x10000 + ((highSurrogate - 0xD800) <. 10) + (lowSurrogate - 0xDC00);
                     i += 1;
                 }
 
                 usize len = 0;
 
-                if(codepoint <= 0x7F) len = 1;
-                else if(codepoint <= 0x7FF) len = 2;
-                else if(codepoint <= 0xFFFF) len = 3;
-                else if(codepoint <= 0x10FFFF) len = 4;
+                if (codepoint <= 0x7F) len = 1;
+                else if (codepoint <= 0x7FF) len = 2;
+                else if (codepoint <= 0xFFFF) len = 3;
+                else if (codepoint <= 0x10FFFF) len = 4;
                 else @return(-1);
 
-                if(isWrite) {
-                    if((return + len) >= bufferSize) @return();
+                if (isWrite) {
+                    if ((return + len) >= bufferSize) @return();
 
                     switch(len) {
                         case(1) buffer[return] = cast(uchar)codepoint;
@@ -136,7 +136,7 @@ namespace std {
                 i += 1;
             }
 
-            if(isWrite && (return < bufferSize)) buffer[return] = '\0';
+            if (isWrite && (return < bufferSize)) buffer[return] = '\0';
         }
 
         (inline) usize toUTF8Buffer(ushort* u16, char* buffer, usize bufferSize) => std::utf16::toUTF8Buffer(u16, std::utf16::strlen(u16), buffer, bufferSize);
@@ -162,18 +162,18 @@ namespace std {
             usize i = 0;
             bool isWrite = buffer != null;
 
-            while(i < u8Length) {
+            while (i < u8Length) {
                 usize len = std::utf8::charlen(u8[i]);
-                if(len == 0) @return(0);
+                if (len == 0) @return(0);
 
                 uint codepoint = std::utf8::toCodepoint(u8, i);
 
-                if(codepoint < std::utf16::bmpEnd) {
-                    if(isWrite && (return < bufferSize)) buffer[return] = cast(ushort)codepoint;
+                if (codepoint < std::utf16::bmpEnd) {
+                    if (isWrite && (return < bufferSize)) buffer[return] = cast(ushort)codepoint;
                     return += 1;
                 }
                 else {
-                    if(isWrite && ((return + 1) < bufferSize)) {
+                    if (isWrite && ((return + 1) < bufferSize)) {
                         buffer[return] = cast(ushort)(0xD800 | ((codepoint - 0x10000) >. 10));
                         buffer[return + 1] = cast(ushort)(0xDC00 | (codepoint - 0x10000) & 0x3FF);
                     }
@@ -183,7 +183,7 @@ namespace std {
                 i += len;
             }
 
-            if(isWrite && (return < bufferSize)) buffer[return] = 0s;
+            if (isWrite && (return < bufferSize)) buffer[return] = 0s;
         }
 
         (inline) usize toUTF16Buffer(char* u8, ushort* buffer, usize bufferSize) => std::utf8::toUTF16Buffer(u8, std::cstring::strlen(u8), buffer, bufferSize);

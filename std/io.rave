@@ -40,7 +40,7 @@ namespace std {
     }
 }
 
-@if((__RAVE_OS == "LINUX") || (__RAVE_OS == "FREEBSD")) {
+@if ((__RAVE_OS == "LINUX") || (__RAVE_OS == "FREEBSD")) {
     namespace std {
         namespace file {
             alias atFdCwd = -100;
@@ -62,7 +62,7 @@ namespace std {
         }
     }
 }
-@else @if(__RAVE_OS == "WINDOWS") {
+@else @if (__RAVE_OS == "WINDOWS") {
     namespace std {
         struct securityAttributes {
             uint nLength;
@@ -100,7 +100,7 @@ namespace std {
 
             int __access(char* fname, int flag) {
                 libc::File* f = libc::fopen(fname, "r");
-                if(f == null) return = -1;
+                if (f == null) return = -1;
                 else {
                     libc::fclose(f);
                     return = 0;
@@ -124,7 +124,7 @@ namespace std {
     }
 }
 
-@if((__RAVE_OS == "LINUX") || (__RAVE_OS == "FREEBSD")) {
+@if ((__RAVE_OS == "LINUX") || (__RAVE_OS == "FREEBSD")) {
     namespace std {
         struct file {
             int fd;
@@ -171,13 +171,13 @@ namespace std {
             } => this;
 
             void open(char* mode) {
-                if(std::cstring::strcmp(mode, "r")) fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, name, std::file::rdOnly | std::file::oCreate, 448);
-                else if(std::cstring::strcmp(mode, "w")) {
+                if (std::cstring::strcmp(mode, "r")) fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, name, std::file::rdOnly | std::file::oCreate, 448);
+                else if (std::cstring::strcmp(mode, "w")) {
                     fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, name, std::file::wrOnly | std::file::oCreate, 448);
-                    if(buffer == null) buffer = std::malloc(bufferSize);
+                    if (buffer == null) buffer = std::malloc(bufferSize);
                     bufferPos = 0;
                 }
-                else if(std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr") || std::cstring::strcmp(mode, "r+") || std::cstring::strcmp(mode, "w+")) {
+                else if (std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr") || std::cstring::strcmp(mode, "r+") || std::cstring::strcmp(mode, "w+")) {
                     fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, name, std::file::rdWrOnly | std::file::oCreate, 448);
                     buffer = std::malloc(bufferSize);
                     bufferPos = 0;
@@ -187,8 +187,8 @@ namespace std {
 
             void openFd(char* mode, int fd) {
                 this.fd = fd;
-                if(std::cstring::strcmp(mode, "w") || std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr") || std::cstring::strcmp(mode, "r+") || std::cstring::strcmp(mode, "w+")) {
-                    if(buffer == null) buffer = std::malloc(bufferSize);
+                if (std::cstring::strcmp(mode, "w") || std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr") || std::cstring::strcmp(mode, "r+") || std::cstring::strcmp(mode, "w+")) {
+                    if (buffer == null) buffer = std::malloc(bufferSize);
                     bufferPos = 0;
                 }
             }
@@ -201,31 +201,31 @@ namespace std {
             }
 
             bool exists {
-                if(fd == -1) return = std::file::exists(this.name);
+                if (fd == -1) return = std::file::exists(this.name);
                 else return = true;
             }
 
             int seek(int flag, long offset) => cast(int)std::syscall(std::sysctable::LSeek, fd, flag, offset);
 
             void flush {
-                if((fd != -1) && (bufferPos > 0) && (buffer != null)) {
+                if ((fd != -1) && (bufferPos > 0) && (buffer != null)) {
                     std::syscall(std::sysctable::Write, fd, buffer, bufferPos);
                     bufferPos = 0;
                 }
             }
 
             isize read(char* buffer, usize bytes) {
-                if(fd != -1) return = cast(isize)std::syscall(std::sysctable::Read, fd, buffer, bytes);
+                if (fd != -1) return = cast(isize)std::syscall(std::sysctable::Read, fd, buffer, bytes);
                 else return = -1;
             }
 
             isize write(char* buf, usize bytes) {
-                if(fd != -1) {
-                    if(bytes < bufferSize) {
+                if (fd != -1) {
+                    if (bytes < bufferSize) {
                         for(usize i=0; i<bytes; i++) {
                             buffer[bufferPos] = buf[i];
                             bufferPos += 1;
-                            if((bufferPos == bufferSize) || (buffer[bufferPos - 1] == flushBufferSymbol)) this.flush();
+                            if ((bufferPos == bufferSize) || (buffer[bufferPos - 1] == flushBufferSymbol)) this.flush();
                         }
                     }
                     else {
@@ -240,10 +240,10 @@ namespace std {
             (inline) isize putc(char c) => this.write(&c, 1);
 
             void close {
-                if(fd != -1) {
+                if (fd != -1) {
                     this.flush();
                     std::syscall(std::sysctable::Close, fd);
-                    if(buffer != null) {
+                    if (buffer != null) {
                         std::free(buffer);
                         buffer = null;
                     }
@@ -253,7 +253,7 @@ namespace std {
 
             void readLineBuffer(std::string* buffer) {
                 char ch = this.getc();
-                while((ch != '\n') && (ch != 0)) {
+                while ((ch != '\n') && (ch != 0)) {
                     buffer.add(ch);
                     ch = this.getc();
                 }
@@ -263,7 +263,7 @@ namespace std {
 
             void readAllBuffer(std::string* buffer) {
                 char ch = this.getc();
-                while(ch != 0) {
+                while (ch != 0) {
                     buffer.add(ch);
                     ch = this.getc();
                 }
@@ -272,8 +272,8 @@ namespace std {
             (inline) std::string readAll {return = ""; readAllBuffer(&return);}
 
             void ~this {
-                if(this.fd != -1) {
-                    if(this.bufferPos > 0) {
+                if (this.fd != -1) {
+                    if (this.bufferPos > 0) {
                         std::syscall(std::sysctable::Write, this.fd, this.buffer, this.bufferPos);
                         this.bufferPos = 0;
                     }
@@ -281,7 +281,7 @@ namespace std {
                     this.fd = -1;
                 }
 
-                if(this.buffer != null) {
+                if (this.buffer != null) {
                     std::free(this.buffer);
                     this.buffer = null;
                 }
@@ -291,7 +291,7 @@ namespace std {
         }
     }
 }
-@else @if(__RAVE_OS == "WINDOWS") {
+@else @if (__RAVE_OS == "WINDOWS") {
     namespace std {
         namespace file {
             alias stdOutputHandle = -11;
@@ -345,33 +345,33 @@ namespace std {
             } => this;
 
             void open(char* mode) {
-                if(__name == null) __name = std::utf8::toUTF16(name);
+                if (__name == null) __name = std::utf8::toUTF16(name);
 
-                if(std::cstring::strcmp(mode, "r")) {
+                if (std::cstring::strcmp(mode, "r")) {
                     fd = std::file::CreateFileW(
                         __name, std::file::genericRead,
                         std::file::fileShareRead, null,
                         4, 0, null
                     );
-                    if(buffer == null) buffer = std::malloc(bufferSize);
+                    if (buffer == null) buffer = std::malloc(bufferSize);
                     bufferPos = 0;
                 }
-                else if(std::cstring::strcmp(mode, "w")) {
+                else if (std::cstring::strcmp(mode, "w")) {
                     fd = std::file::CreateFileW(
                         __name, std::file::genericWrite,
                         std::file::fileShareRead, null,
                         4, 0, null
                     );
-                    if(buffer == null) buffer = std::malloc(bufferSize);
+                    if (buffer == null) buffer = std::malloc(bufferSize);
                     bufferPos = 0;
                 }
-                else if(std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr") || std::cstring::strcmp(mode, "r+") || std::cstring::strcmp(mode, "w+")) {
+                else if (std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr") || std::cstring::strcmp(mode, "r+") || std::cstring::strcmp(mode, "w+")) {
                     fd = std::file::CreateFileW(
                         __name, std::file::genericRead | std::file::genericWrite,
                         std::file::fileShareRead, null,
                         4, 0, null
                     );
-                    if(buffer == null) buffer = std::malloc(bufferSize);
+                    if (buffer == null) buffer = std::malloc(bufferSize);
                     bufferPos = 0;
                 }
                 else fd = null;
@@ -379,8 +379,8 @@ namespace std {
 
             void openFd(char* mode, void* fd) {
                 this.fd = fd;
-                if(std::cstring::strcmp(mode, "w") || std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr") || std::cstring::strcmp(mode, "r+") || std::cstring::strcmp(mode, "w+")) {
-                    if(buffer == null) buffer = std::malloc(bufferSize);
+                if (std::cstring::strcmp(mode, "w") || std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr") || std::cstring::strcmp(mode, "r+") || std::cstring::strcmp(mode, "w+")) {
+                    if (buffer == null) buffer = std::malloc(bufferSize);
                     this.bufferPos = 0;
                 }
             }
@@ -390,7 +390,7 @@ namespace std {
             void rename(char* to) {
                 ushort* __to = std::utf8::toUTF16(to);
 
-                if(__name == null) __name = std::utf8::toUTF16(name);
+                if (__name == null) __name = std::utf8::toUTF16(name);
 
                 std::file::__rename(__name, __to);
                 name = to;
@@ -400,14 +400,14 @@ namespace std {
             }
 
             bool exists {
-                if(fd == null) return = std::file::exists(this.name);
+                if (fd == null) return = std::file::exists(this.name);
                 else return = true;
             }
 
             int seek(int flag, long offset) => std::file::SetFilePointerEx(fd, offset, cast(long*)null, flag);
 
             void flush {
-                if((fd != null) && (bufferPos > 0) && (buffer != null)) {
+                if ((fd != null) && (bufferPos > 0) && (buffer != null)) {
                     std::file::WriteFile(fd, buffer, bufferPos, cast(int*)null, null);
                     bufferPos = 0;
                 }
@@ -415,20 +415,20 @@ namespace std {
 
             int read(char* buffer, uint bytes) {
                 uint bytesCnt = 0;
-                if(fd != null) {
+                if (fd != null) {
                     std::file::ReadFile(fd, buffer, bufferPos, &return, &bytesCnt);
-                    if((bytesCnt == 0) && (return > 0)) return = -1;
+                    if ((bytesCnt == 0) && (return > 0)) return = -1;
                 }
                 else return = -1;
             }
 
             int write(char* buf, uint bytes) {
-                if(fd != null) {
-                    if(bytes < bufferSize) {
+                if (fd != null) {
+                    if (bytes < bufferSize) {
                         for(uint i=0; i<bytes; i++) {
                             buffer[bufferPos] = buf[i];
                             bufferPos += 1;
-                            if((bufferPos == bufferSize) || (buffer[bufferPos - 1] == flushBufferSymbol)) this.flush();
+                            if ((bufferPos == bufferSize) || (buffer[bufferPos - 1] == flushBufferSymbol)) this.flush();
                         }
                     }
                     else {
@@ -443,15 +443,15 @@ namespace std {
             (inline) int putc(char c) => this.write(&c, 1);
 
             void close {
-                if(__name != null) {
+                if (__name != null) {
                     __name = null;
                     std::free(__name);
                 }
 
-                if(fd != null) {
+                if (fd != null) {
                     this.flush();
-                    if(!__isStdHandle) std::process::__CloseHandle(fd);
-                    if(buffer != null) {
+                    if (!__isStdHandle) std::process::__CloseHandle(fd);
+                    if (buffer != null) {
                         std::free(buffer);
                         buffer = null;
                     }
@@ -461,7 +461,7 @@ namespace std {
 
             void readLineBuffer(std::string* buffer) {
                 char ch = this.getc();
-                while((ch != '\n') && (ch != 0)) {
+                while ((ch != '\n') && (ch != 0)) {
                     buffer.add(ch);
                     ch = this.getc();
                 }
@@ -471,7 +471,7 @@ namespace std {
 
             void readAllBuffer(std::string* buffer) {
                 char ch = this.getc();
-                while(ch != 0) {
+                while (ch != 0) {
                     buffer.add(ch);
                     ch = this.getc();
                 }
@@ -480,13 +480,13 @@ namespace std {
             (inline) std::string readAll {return = ""; readAllBuffer(&return);}
 
             void ~this {
-                if(this.__name != null) {
+                if (this.__name != null) {
                     std::free(cast(void*)(this.__name));
                     this.__name = null;
                 }
 
-                if(this.fd != null) {
-                    if(this.bufferPos > 0) {
+                if (this.fd != null) {
+                    if (this.bufferPos > 0) {
                         std::file::WriteFile(this.fd, this.buffer, this.bufferPos, cast(int*)null, null);
                         this.bufferPos = 0;
                     }
@@ -494,7 +494,7 @@ namespace std {
                     this.fd = null;
                 }
 
-                if(this.buffer != null) {
+                if (this.buffer != null) {
                     std::free(this.buffer);
                     this.buffer = null;
                 }
@@ -545,15 +545,15 @@ namespace std {
             }
 
             void close {
-                if(this.isOpen) {
+                if (this.isOpen) {
                     libc::fclose(this._file);
                     this.isOpen = false;
                 }
             }
 
             void ~this {
-                if(this._file != null) {
-                    if(this.isOpen) {
+                if (this._file != null) {
+                    if (this.isOpen) {
                         libc::fclose(this._file);
                         this.isOpen = false;
                     }
@@ -575,7 +575,7 @@ namespace std {
 
             void readLineBuffer(std::string* buffer) {
                 char ch = this.getc();
-                while((ch != '\n') && (ch != -1)) {
+                while ((ch != '\n') && (ch != -1)) {
                     buffer.add(ch);
                     ch = this.getc();
                 }
@@ -585,7 +585,7 @@ namespace std {
 
             void readAllBuffer(std::string* buffer) {
                 char ch = this.getc();
-                while(ch != -1) {
+                while (ch != -1) {
                     buffer.add(ch);
                     ch = this.getc();
                 }
@@ -594,7 +594,7 @@ namespace std {
             (inline) std::string readAll {return = ""; readAllBuffer(&return);}
 
             bool exists {
-                if(this.isOpen == false) return = std::file::exists(this.name);
+                if (this.isOpen == false) return = std::file::exists(this.name);
                 else return = true;
             }
 
@@ -653,13 +653,13 @@ namespace std {
         char sign;
 
         @foreachArgs() {
-            @if(@getCurrArgType() == char*) {
+            @if (@getCurrArgType() == char*) {
                 char* pointer = @getCurrArg(char*);
                 char c = std::getchar();
-                while(std::ascii::isSpace(c)) c = std::getchar();
+                while (std::ascii::isSpace(c)) c = std::getchar();
                 pointer[0] = c;
             }
-            @else @if(
+            @else @if (
                 (@getCurrArgType() == short*) || (@getCurrArgType() == int*) || (@getCurrArgType() == long*) || (@getCurrArgType() == cent*) ||
                 (@getCurrArgType() == ushort*) || (@getCurrArgType() == uint*) || (@getCurrArgType() == ulong*) || (@getCurrArgType() == ucent*)
             ) {
@@ -667,77 +667,77 @@ namespace std {
                 idx = 0;
                 char c = std::getchar();
 
-                while(std::ascii::isSpace(c)) c = std::getchar();
+                while (std::ascii::isSpace(c)) c = std::getchar();
 
-                if(!std::ascii::isDigit(c)) {
-                    if(c == '-') {buffer[0] = '-'; idx += 1;}
+                if (!std::ascii::isDigit(c)) {
+                    if (c == '-') {buffer[0] = '-'; idx += 1;}
                     c = std::getchar();
                 }
 
-                while(std::ascii::isDigit(c)) {
-                    if(idx >= 41) break;
+                while (std::ascii::isDigit(c)) {
+                    if (idx >= 41) break;
                     buffer[idx] = c;
                     idx += 1;
                     c = std::getchar();
                 }
 
-                @if((@getCurrArgType() != cent*) && (@getCurrArgType() != ucent*)) {
-                    @if(@isUnsigned(@baseType(@getCurrArgType()))) pointer[0] = std::cstring::stoul(std::cstring(&buffer, idx));
+                @if ((@getCurrArgType() != cent*) && (@getCurrArgType() != ucent*)) {
+                    @if (@isUnsigned(@baseType(@getCurrArgType()))) pointer[0] = std::cstring::stoul(std::cstring(&buffer, idx));
                     @else pointer[0] = std::cstring::stol(std::cstring(&buffer, idx));
                 }
                 @else {
-                    @if(@isUnsigned(@baseType(@getCurrArgType()))) pointer[0] = std::cstring::stouc(std::cstring(&buffer, idx));
+                    @if (@isUnsigned(@baseType(@getCurrArgType()))) pointer[0] = std::cstring::stouc(std::cstring(&buffer, idx));
                     @else pointer[0] = std::cstring::stoc(std::cstring(&buffer, idx));
                 }
             }
-            @else @if((@getCurrArgType() == half*) || (@getCurrArgType() == bhalf*) || (@getCurrArgType() == float*) || (@getCurrArgType() == double*) || (@getCurrArgType() == real*)) {
+            @else @if ((@getCurrArgType() == half*) || (@getCurrArgType() == bhalf*) || (@getCurrArgType() == float*) || (@getCurrArgType() == double*) || (@getCurrArgType() == real*)) {
                 auto pointer = @getCurrArg(@getCurrArgType());
                 idx = 0;
                 char c = std::getchar();
 
-                while(std::ascii::isSpace(c)) c = std::getchar();
+                while (std::ascii::isSpace(c)) c = std::getchar();
 
-                if(!std::ascii::isDigit(c)) {
-                    if(c == '-') {buffer[0] = '-'; idx += 1;}
+                if (!std::ascii::isDigit(c)) {
+                    if (c == '-') {buffer[0] = '-'; idx += 1;}
                     c = std::getchar();
                 }
 
                 // First part
-                while(std::ascii::isDigit(c)) {
-                    if(idx >= 41) break;
+                while (std::ascii::isDigit(c)) {
+                    if (idx >= 41) break;
                     buffer[idx] = c;
                     idx += 1;
                     c = std::getchar();
                 }
 
-                if((idx < 41) && (c == '.')) {
+                if ((idx < 41) && (c == '.')) {
                     buffer[idx] = '.';
                     idx += 1;
 
                     // Second part
-                    while(std::ascii::isDigit(c)) {
-                        if(idx >= 41) break;
+                    while (std::ascii::isDigit(c)) {
+                        if (idx >= 41) break;
                         buffer[idx] = c;
                         idx += 1;
                         c = std::getchar();
                     }
                 }
                 
-                @if(@getCurrArgType() != real*) pointer[0] = std::cstring::stod(&buffer, idx);
+                @if (@getCurrArgType() != real*) pointer[0] = std::cstring::stod(&buffer, idx);
                 @else pointer[0] = std::cstring::stor(&buffer, idx);
             }
-            @else @if(@getCurrArgType() == std::string*) {
+            @else @if (@getCurrArgType() == std::string*) {
                 auto buffer = @getCurrArg(@getCurrArgType());
                 char c = std::getchar();
 
-                if(buffer.data == null) buffer = "";
+                if (buffer.data == null) buffer = "";
                 else {
                     buffer.length = 0;
                     buffer.data[0] = '\0';
                 }
 
-                while(std::ascii::isSpace(c)) c = std::getchar();
-                while(!std::ascii::isSpace(c)) {
+                while (std::ascii::isSpace(c)) c = std::getchar();
+                while (!std::ascii::isSpace(c)) {
                     buffer.add(c);
                     c = std::getchar();
                 }
@@ -747,7 +747,7 @@ namespace std {
 
     void readLineBuffer(std::string* buffer) {
         char ch = std::getchar();
-        while((ch != '\n') && (ch != -1)) {
+        while ((ch != '\n') && (ch != -1)) {
             buffer.add(ch);
             ch = std::getchar();
         }
@@ -770,7 +770,7 @@ namespace std {
 
 // Experimental!
 
-@if(__RAVE_OS == "LINUX") {
+@if (__RAVE_OS == "LINUX") {
     namespace std {
         struct __dirent64 {
             ulong inode;
@@ -793,7 +793,7 @@ namespace std {
             (inline) bool exists(char* dname) {
                 int fd = cast(int)std::syscall(std::sysctable::OpenAt, std::file::atFdCwd, dname, std::file::rdOnly | std::file::oDirectory, 448);
 
-                if(fd != -1) {return = true; std::syscall(std::sysctable::Close, fd);}
+                if (fd != -1) {return = true; std::syscall(std::sysctable::Close, fd);}
                 else return = false;
             }
 
@@ -833,17 +833,17 @@ namespace std {
                 char[256] buffer;
                 char* bufferPtr = &buffer;
 
-                while(true) {
+                while (true) {
                     int n = cast(int)std::syscall(std::sysctable::GetDents64, fd, &buffer, 256);
 
-                    if(n <= 0) break;
+                    if (n <= 0) break;
 
                     // Processing
 
                     std::__dirent64* value;
 
                     int i = 0;
-                    while(i < n) {
+                    while (i < n) {
                         value = itop(std::__dirent64*, ptoi(bufferPtr) + i);
 
                         list.add(std::string(itop(char*, ptoi(value.&type) + 1)));
@@ -856,13 +856,13 @@ namespace std {
             (inline) std::vector<std::string> readEntries {return = std::vector<std::string>(); readEntriesBuffer(&return);}
 
             (inline) bool exists {
-                if(fd != -1) return = true;
+                if (fd != -1) return = true;
                 else return = std::directory::exists(path);
             }
         }
     }
 }
-@else @if(__RAVE_OS == "WINDOWS") {
+@else @if (__RAVE_OS == "WINDOWS") {
     namespace std {
         alias invalidFileAttributes = -1;
         alias fileAttributeDirectory = 16;
@@ -956,8 +956,8 @@ namespace std {
 
                 void* handle = std::FindFirstFileW(__pathSearch, data);
 
-                if(handle != null) {
-                    while(true) {
+                if (handle != null) {
+                    while (true) {
                         usize length = std::utf16::strlen(data.&cFileName);
                         usize u8Length = std::utf16::toUTF8Buffer(data.&cFileName, length, null, 0);
                         std::string str = std::string(u8Length);
@@ -965,7 +965,7 @@ namespace std {
                         std::utf16::toUTF8Buffer(data.&cFileName, length, str.data, u8Length + 1);
                         list.add(str);
 
-                        if(std::FindNextFileW(handle, data) == 0c) break;
+                        if (std::FindNextFileW(handle, data) == 0c) break;
                     }
                 }
             }
@@ -973,12 +973,12 @@ namespace std {
             (inline) std::vector<std::string> readEntries {return = std::vector<std::string>(); readEntriesBuffer(&return);}
             
             void close {
-                if(__path != null) {
+                if (__path != null) {
                     std::free(__path);
                     __path = null;
                 }
 
-                if(__pathSearch != null) {
+                if (__pathSearch != null) {
                     std::free(__pathSearch);
                     __pathSearch = null;
                 }

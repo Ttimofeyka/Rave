@@ -31,17 +31,17 @@ NodeIf::NodeIf(Node* cond, Node* body, Node* _else, int loc, bool isStatic) {
 Type* NodeIf::getType() {return typeVoid;}
 
 void NodeIf::check() {
-    if(!isChecked && !isStatic) {
+    if (!isChecked && !isStatic) {
         isChecked = true;
 
         cond->check();
-        if(body) body->check();
-        if(_else) _else->check();
+        if (body) body->check();
+        if (_else) _else->check();
     }
 }
 
 RaveValue NodeIf::generate() {
-    if(isStatic) {
+    if (isStatic) {
         this->comptime();
         return {};
     }
@@ -56,8 +56,8 @@ RaveValue NodeIf::generate() {
 
     RaveValue condValue = cond->generate();
 
-    if(isLikely || isUnlikely) {
-        if(generator->functions.find("llvm.expect.i1") == generator->functions.end()) {
+    if (isLikely || isUnlikely) {
+        if (generator->functions.find("llvm.expect.i1") == generator->functions.end()) {
             generator->functions["llvm.expect.i1"] = {LLVMAddFunction(generator->lModule, "llvm.expect.i1", LLVMFunctionType(
             LLVMInt1TypeInContext(generator->context),
             std::vector<LLVMTypeRef>({LLVMInt1TypeInContext(generator->context), LLVMInt1TypeInContext(generator->context)}).data(),
@@ -77,8 +77,8 @@ RaveValue NodeIf::generate() {
 
     currScope = copyScope(origScope);
 
-    if(this->body != nullptr) this->body->generate();
-    if(!generator->activeLoops[selfNum].hasEnd) LLVMBuildBr(generator->builder, endBlock);
+    if (this->body != nullptr) this->body->generate();
+    if (!generator->activeLoops[selfNum].hasEnd) LLVMBuildBr(generator->builder, endBlock);
 
     bool hasEnd1 = generator->activeLoops[selfNum].hasEnd;
 
@@ -88,9 +88,9 @@ RaveValue NodeIf::generate() {
     currScope = copyScope(origScope);
 
     LLVM::Builder::atEnd(elseBlock);
-    if(this->_else != nullptr) this->_else->generate();
+    if (this->_else != nullptr) this->_else->generate();
 
-    if(!generator->activeLoops[selfNum].hasEnd) LLVMBuildBr(generator->builder, endBlock);
+    if (!generator->activeLoops[selfNum].hasEnd) LLVMBuildBr(generator->builder, endBlock);
 
     bool hasEnd2 = generator->activeLoops[selfNum].hasEnd;
 
@@ -100,54 +100,54 @@ RaveValue NodeIf::generate() {
     generator->activeLoops.erase(selfNum);
 
     LLVMValueRef lastInstr = LLVMGetLastInstruction(endBlock);
-    if(lastInstr != nullptr && LLVMGetInstructionOpcode(lastInstr) == LLVMBr) LLVMInstructionEraseFromParent(lastInstr);
+    if (lastInstr != nullptr && LLVMGetInstructionOpcode(lastInstr) == LLVMBr) LLVMInstructionEraseFromParent(lastInstr);
 
     lastInstr = LLVMGetLastInstruction(thenBlock);
-    if(lastInstr != nullptr && LLVMGetInstructionOpcode(lastInstr) == LLVMBr &&
+    if (lastInstr != nullptr && LLVMGetInstructionOpcode(lastInstr) == LLVMBr &&
        LLVMGetPreviousInstruction(lastInstr) != nullptr &&
        LLVMGetInstructionOpcode(LLVMGetPreviousInstruction(lastInstr)) == LLVMBr) LLVMInstructionEraseFromParent(lastInstr);
 
-    if(hasEnd1 && hasEnd2 && generator->activeLoops.size() == 0) LLVMBuildRet(generator->builder, LLVMConstNull(generator->genType(AST::funcTable[currScope->funcName]->type, this->loc)));
+    if (hasEnd1 && hasEnd2 && generator->activeLoops.size() == 0) LLVMBuildRet(generator->builder, LLVMConstNull(generator->genType(AST::funcTable[currScope->funcName]->type, this->loc)));
     
     return {};
 }
 
 void NodeIf::optimize() {
-    if(body != nullptr) body->optimize();
-    if(_else != nullptr) _else->optimize();
+    if (body != nullptr) body->optimize();
+    if (_else != nullptr) _else->optimize();
 }
 
 Node* NodeIf::comptime() {
     NodeBool* val = (NodeBool*)cond->comptime();
 
-    if(this->body == nullptr) return this;
+    if (this->body == nullptr) return this;
 
     Node* node = body;
 
-    if(!val->value) {
-        if(this->_else != nullptr) node = this->_else;
+    if (!val->value) {
+        if (this->_else != nullptr) node = this->_else;
         else return this;
     }
 
-    if(this->isImported) {
-        if(instanceof<NodeIf>(node)) ((NodeIf*)node)->isImported = true;
-        else if(instanceof<NodeFunc>(node)) ((NodeFunc*)node)->isExtern = true;
-        else if(instanceof<NodeComptime>(node)) ((NodeComptime*)node)->isImported = true;
-        else if(instanceof<NodeVar>(node)) ((NodeVar*)node)->isExtern = true;
-        else if(instanceof<NodeNamespace>(node)) ((NodeNamespace*)node)->isImported = true;
-        else if(instanceof<NodeBuiltin>(node)) ((NodeBuiltin*)node)->isImport = true;
-        else if(instanceof<NodeStruct>(node)) ((NodeStruct*)node)->isImported = true;
-        else if(instanceof<NodeBlock>(node)) {
+    if (this->isImported) {
+        if (instanceof<NodeIf>(node)) ((NodeIf*)node)->isImported = true;
+        else if (instanceof<NodeFunc>(node)) ((NodeFunc*)node)->isExtern = true;
+        else if (instanceof<NodeComptime>(node)) ((NodeComptime*)node)->isImported = true;
+        else if (instanceof<NodeVar>(node)) ((NodeVar*)node)->isExtern = true;
+        else if (instanceof<NodeNamespace>(node)) ((NodeNamespace*)node)->isImported = true;
+        else if (instanceof<NodeBuiltin>(node)) ((NodeBuiltin*)node)->isImport = true;
+        else if (instanceof<NodeStruct>(node)) ((NodeStruct*)node)->isImported = true;
+        else if (instanceof<NodeBlock>(node)) {
             NodeBlock* block = (NodeBlock*)node;
 
             for(Node* nd: block->nodes) {
-                if(instanceof<NodeIf>(nd)) ((NodeIf*)nd)->isImported = true;
-                else if(instanceof<NodeFunc>(nd)) ((NodeFunc*)nd)->isExtern = true;
-                else if(instanceof<NodeComptime>(nd)) ((NodeComptime*)nd)->isImported = true;
-                else if(instanceof<NodeVar>(nd)) ((NodeVar*)nd)->isExtern = true;
-                else if(instanceof<NodeNamespace>(nd)) ((NodeNamespace*)nd)->isImported = true;
-                else if(instanceof<NodeBuiltin>(nd)) ((NodeBuiltin*)nd)->isImport = true;
-                else if(instanceof<NodeStruct>(nd)) ((NodeStruct*)nd)->isImported = true;
+                if (instanceof<NodeIf>(nd)) ((NodeIf*)nd)->isImported = true;
+                else if (instanceof<NodeFunc>(nd)) ((NodeFunc*)nd)->isExtern = true;
+                else if (instanceof<NodeComptime>(nd)) ((NodeComptime*)nd)->isImported = true;
+                else if (instanceof<NodeVar>(nd)) ((NodeVar*)nd)->isExtern = true;
+                else if (instanceof<NodeNamespace>(nd)) ((NodeNamespace*)nd)->isImported = true;
+                else if (instanceof<NodeBuiltin>(nd)) ((NodeBuiltin*)nd)->isImport = true;
+                else if (instanceof<NodeStruct>(nd)) ((NodeStruct*)nd)->isImported = true;
             }
         }
     }
@@ -166,7 +166,7 @@ Node* NodeIf::copy() {
 }
 
 NodeIf::~NodeIf() {
-    if(this->cond != nullptr) delete this->cond;
-    if(this->body != nullptr) delete this->body;
-    if(this->_else != nullptr) delete this->_else;
+    if (this->cond != nullptr) delete this->cond;
+    if (this->body != nullptr) delete this->body;
+    if (this->_else != nullptr) delete this->_else;
 }

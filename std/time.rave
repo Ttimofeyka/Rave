@@ -53,7 +53,7 @@ namespace std {
     }
 }
 
-@if(__RAVE_OS == "WINDOWS") {
+@if (__RAVE_OS == "WINDOWS") {
     namespace std {
         struct __systemTime {
             short wYear;
@@ -94,7 +94,7 @@ namespace std {
         (inline) void sleep(int milliseconds) => std::__Sleep(milliseconds);
     }
 }
-@else @if((__RAVE_OS == "LINUX") || (__RAVE_OS == "FREEBSD")) {
+@else @if ((__RAVE_OS == "LINUX") || (__RAVE_OS == "FREEBSD")) {
     namespace std {
         (inline) int __gettimeofday(std::timeVal* tv) => cast(int)std::syscall(std::sysctable::GetTimeOfDay, tv, null);
         (inline) int __clock_gettime(int flag, std::__time* tc) => cast(int)std::syscall(std::sysctable::ClockGetTime, flag, tc);

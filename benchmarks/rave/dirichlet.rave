@@ -17,7 +17,7 @@ void main {
     spf[1] = 0;
     
     for(ulong i=2; i<=N; i++) {
-        if(spf[i] == 0) {
+        if (spf[i] == 0) {
             spf[i] = i;
             d[i] = 2;
             e[i] = 1;
@@ -27,7 +27,7 @@ void main {
         else {
             int p = spf[i];
             int j = i / p;
-            if(spf[j] == p) {
+            if (spf[j] == p) {
                 e[i] = e[j] + 1;
                 d[i] = d[j] * (e[i] + 1) / (e[j] + 1);
             }
@@ -39,7 +39,7 @@ void main {
 
         for(ulong j_index = 0; j_index < pcount; j_index++) {
             int p = primes[j_index];
-            if((p > spf[i]) || (cast(long)p) * i > N) break;
+            if ((p > spf[i]) || (cast(long)p) * i > N) break;
             spf[p * i] = p;
         }
     }

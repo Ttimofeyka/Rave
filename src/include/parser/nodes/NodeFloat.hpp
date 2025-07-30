@@ -24,7 +24,7 @@ public:
     NodeFloat(double value, bool isDouble);
     NodeFloat(double value, TypeBasic* type);
     NodeFloat(std::string value, TypeBasic* type);
-    ~NodeFloat() {if(this->type != nullptr) delete this->type;}
+    ~NodeFloat() {if (this->type != nullptr) delete this->type;}
     Type* getType() override;
     
     RaveValue generate() override;

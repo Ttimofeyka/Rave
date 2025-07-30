@@ -21,7 +21,7 @@ Node* NodeItop::comptime() {return this;}
 Node* NodeItop::copy() {return new NodeItop(this->value->copy(), this->type->copy(), this->loc);}
 
 void NodeItop::check() {
-    if(isChecked) return;
+    if (isChecked) return;
     isChecked = true;
 
     value->check();
@@ -33,6 +33,6 @@ RaveValue NodeItop::generate() {
 }
 
 NodeItop::~NodeItop() {
-    if(this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
-    if(this->value != nullptr) delete this->value;
+    if (this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
+    if (this->value != nullptr) delete this->value;
 }

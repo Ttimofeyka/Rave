@@ -29,38 +29,38 @@ Type* NodeRet::getType() {return this->value->getType();}
 Node* NodeRet::comptime() {return this;}
 
 NodeRet::~NodeRet() {
-    if(this->value != nullptr) delete this->value;
+    if (this->value != nullptr) delete this->value;
 }
 
 void NodeRet::check() {isChecked = true;}
 
 Loop NodeRet::getParentBlock(int n) {
-    if(generator->activeLoops.size() == 0) return Loop{.isActive = false, .start = nullptr, .end = nullptr, .hasEnd = false, .isIf = false, .loopRets = std::vector<LoopReturn>()};
+    if (generator->activeLoops.size() == 0) return Loop{.isActive = false, .start = nullptr, .end = nullptr, .hasEnd = false, .isIf = false, .loopRets = std::vector<LoopReturn>()};
     return generator->activeLoops[generator->activeLoops.size()-1];
 }
 
 void NodeRet::setParentBlock(Loop value, int n) {
-    if(generator->activeLoops.size() > 0) {
-        if(n == -1) generator->activeLoops[generator->activeLoops.size()-1] = value;
+    if (generator->activeLoops.size() > 0) {
+        if (n == -1) generator->activeLoops[generator->activeLoops.size()-1] = value;
         else generator->activeLoops[n] = value;
     }
 }
 
 RaveValue NodeRet::generate() {
-    if(currScope == nullptr || !currScope->has("return")) {
+    if (currScope == nullptr || !currScope->has("return")) {
         value->generate();
         return {};
     }
 
-    if(this->value == nullptr) this->value = new NodeNull(currScope->getVar("return", loc)->getType(), this->loc);
+    if (this->value == nullptr) this->value = new NodeNull(currScope->getVar("return", loc)->getType(), this->loc);
     
     RaveValue generated = value->generate();
 
-    if(instanceof<TypeVoid>(generated.type)) generator->error("cannot return a \033[1mvoid\033[22m value in a non-void function!", loc);
+    if (instanceof<TypeVoid>(generated.type)) generator->error("cannot return a \033[1mvoid\033[22m value in a non-void function!", loc);
 
     RaveValue ptr = currScope->getWithoutLoad("return", loc);
 
-    if(generated.type->toString() == ptr.type->toString()) generated = LLVM::load(generated, "NodeRet_load", loc);
+    if (generated.type->toString() == ptr.type->toString()) generated = LLVM::load(generated, "NodeRet_load", loc);
 
     LLVMBuildStore(generator->builder, generated.value, ptr.value);
 

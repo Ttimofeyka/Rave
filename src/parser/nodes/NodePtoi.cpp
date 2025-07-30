@@ -17,7 +17,7 @@ Node* NodePtoi::comptime() {return this;}
 Node* NodePtoi::copy() {return new NodePtoi(this->value->copy(), this->loc);}
 
 void NodePtoi::check() {
-    if(isChecked) return;
+    if (isChecked) return;
     isChecked = true;
 
     value->check();
@@ -26,13 +26,13 @@ void NodePtoi::check() {
 RaveValue NodePtoi::generate() {
     LLVMTypeRef pointerType = nullptr;
 
-    if(pointerSize == 64) pointerType = LLVMInt64TypeInContext(generator->context);
-    else if(pointerSize == 32) pointerType = LLVMInt32TypeInContext(generator->context);
+    if (pointerSize == 64) pointerType = LLVMInt64TypeInContext(generator->context);
+    else if (pointerSize == 32) pointerType = LLVMInt32TypeInContext(generator->context);
     else pointerType == LLVMInt16TypeInContext(generator->context);
 
     return {LLVMBuildPtrToInt(generator->builder, this->value->generate().value, pointerType, "ptoi"), basicTypes[pointerSize == 64 ? BasicType::Long : pointerSize == 32 ? BasicType::Int : BasicType::Short]};
 }
 
 NodePtoi::~NodePtoi() {
-    if(this->value != nullptr) delete this->value;
+    if (this->value != nullptr) delete this->value;
 }

@@ -6,14 +6,14 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import <std/thread> <std/ascii>
 
-@if(__RAVE_SSE2) {
+@if (__RAVE_SSE2) {
     namespace std {
         namespace cstring {
             usize strlen(char* str) {
                 isize align = 16 - (ptoi(str) & 15);
 
-                while(align != 0) {
-                    if(str[return] == '\0') @return();
+                while (align != 0) {
+                    if (str[return] == '\0') @return();
                     align -= 1;
                     return += 1;
                 }
@@ -22,11 +22,11 @@ import <std/thread> <std/ascii>
                 int4 data;
                 int mask = 0;
 
-                while(true) {
+                while (true) {
                     data = @vLoad(int4, &str[return]);
                     mask = @vMoveMask128((bitcast(mask16)data) == zero);
 
-                    if(mask != 0) {
+                    if (mask != 0) {
                         return += @cttz(mask, true);
                         break;
                     }
@@ -37,52 +37,52 @@ import <std/thread> <std/ascii>
         }
     }
 }
-@else @if((__RAVE_PLATFORM == "X86_64") || (__RAVE_PLATFORM == "AARCH64") || (__RAVE_PLATFORM == "POWERPC64")) {
+@else @if ((__RAVE_PLATFORM == "X86_64") || (__RAVE_PLATFORM == "AARCH64") || (__RAVE_PLATFORM == "POWERPC64")) {
     namespace std {
         namespace cstring {
             usize strlen(char* str) {
                 ulong align = 8 - (ptoi(str) & 7);
 
-                while(align != 0) {
-                    if(str[return] == '\0') @return();
+                while (align != 0) {
+                    if (str[return] == '\0') @return();
                     align -= 1;
                     return += 1;
                 }
 
-                while(true) {
+                while (true) {
                     ulong chunk = ((cast(ulong*)&str[return])[0]);
 
-                    if(((chunk - 0x0101010101010101) & (!chunk) & 0x8080808080808080) != 0) break;
+                    if (((chunk - 0x0101010101010101) & (!chunk) & 0x8080808080808080) != 0) break;
 
                     return += 8;
                 }
 
-                while(str[return] != '\0') return += 1;
+                while (str[return] != '\0') return += 1;
             }
         }
     }
 }
-@else @if((__RAVE_PLATFORM == "X86") || (__RAVE_PLATFORM == "ARM") || (__RAVE_PLATFORM == "POWERPC")) {
+@else @if ((__RAVE_PLATFORM == "X86") || (__RAVE_PLATFORM == "ARM") || (__RAVE_PLATFORM == "POWERPC")) {
     namespace std {
         namespace cstring {
             usize strlen(char* str) {
                 uint align = 4 - (ptoi(str) & 3);
 
-                while(align != 0) {
-                    if(str[return] == '\0') @return();
+                while (align != 0) {
+                    if (str[return] == '\0') @return();
                     align -= 1;
                     return += 1;
                 }
 
-                while(true) {
+                while (true) {
                     uint chunk = ((cast(uint*)&str[return])[0]);
 
-                    if(((chunk - 0x01010101) & (!chunk) & 0x80808080) != 0) break;
+                    if (((chunk - 0x01010101) & (!chunk) & 0x80808080) != 0) break;
 
                     return += 4;
                 }
 
-                while(str[return] != '\0') return += 1;
+                while (str[return] != '\0') return += 1;
             }
         }
     }
@@ -91,7 +91,7 @@ import <std/thread> <std/ascii>
     namespace std {
         namespace cstring {
             usize strlen(char* str) {
-                while(str[return] != '\0') return += 1;
+                while (str[return] != '\0') return += 1;
             }
         }
     }
@@ -113,24 +113,24 @@ namespace std {
             std::cstring this;
 
             this.data = data;
-            if(data == null) this.length = 0;
+            if (data == null) this.length = 0;
             else this.length = std::cstring::strlen(data);
         } => this;
 
         (nochecks) void operator=(std::cstring* one, char* two) {
             one.data = two;
-            if(two == null) one.length = 0;
+            if (two == null) one.length = 0;
             else one.length = std::cstring::strlen(two);
         }
 
         (inline) void set(usize index, char ch) {
-            @if(__RAVE_RUNTIME_CHECKS) if(index < this.length) this.data[index] = ch;
+            @if (__RAVE_RUNTIME_CHECKS) if (index < this.length) this.data[index] = ch;
             @else this.data[index] = ch;
         }
 
         (inline) char at(usize index) {
-            @if(__RAVE_RUNTIME_CHECKS) {
-                if(index < this.length) return = this.data[index];
+            @if (__RAVE_RUNTIME_CHECKS) {
+                if (index < this.length) return = this.data[index];
                 else return = '\0';
             }
             @else return = this.data[index];
@@ -140,23 +140,23 @@ namespace std {
     namespace cstring {
         (inline) const(char)* fromBool(bool b) {
             return = "false";
-            if(b) return = "true";
+            if (b) return = "true";
         }
 
         (inline) bool strncmp(const(char)* s1, const(char)* s2, usize n) {
             usize i = 0;
             return = true;
 
-            while(i < n) {
-                if((s1[i] == '\0') || (s2[i] == '\0')) @return(false);
-                if(s1[i] != s2[i]) @return(false);
+            while (i < n) {
+                if ((s1[i] == '\0') || (s2[i] == '\0')) @return(false);
+                if (s1[i] != s2[i]) @return(false);
 
                 i += 1;
             }
         }
 
         (inline, nochecks) bool strcmp(std::cstring s1, std::cstring s2) {
-            if(s1.length != s2.length) return = false;
+            if (s1.length != s2.length) return = false;
             else return = std::memcmp(s1.data, s2.data, s1.length);
         }
 
@@ -164,8 +164,8 @@ namespace std {
             usize i = 0;
             return = null;
 
-            while(chars[i] != '\0') {
-                if(chars[i] == c) {
+            while (chars[i] != '\0') {
+                if (chars[i] == c) {
                     return = &chars[i];
                     break;
                 }
@@ -179,8 +179,8 @@ namespace std {
             return = str;
             bool done = false;
 
-            while(return[i] != '\0') {
-                if(std::cstring::strncmp(return, substr.data, substr.length)) {
+            while (return[i] != '\0') {
+                if (std::cstring::strncmp(return, substr.data, substr.length)) {
                     done = true;
                     break;
                 }
@@ -188,41 +188,41 @@ namespace std {
                 return = itop(char*, ptoi(return) + 1);
             }
 
-            if(!done) return = null;
+            if (!done) return = null;
         }
 
         (nochecks) usize indexOf(const(char)* str, char ch) {
-            while((str[return] != '\0') && (str[return] != ch)) return += 1;
-            if(str[return] == '\0') return = -1;
+            while ((str[return] != '\0') && (str[return] != ch)) return += 1;
+            if (str[return] == '\0') return = -1;
         }
 
         (nochecks, explicit) usize indexOf(std::cstring str, char ch) {
-            while((return != str.length) && (str.data[return] != ch)) return += 1;
+            while ((return != str.length) && (str.data[return] != ch)) return += 1;
         }
 
         char* ltos(long number, char* endBuffer) {
             char[24] ltosBuffer;
 
-            if(number == 0) {
+            if (number == 0) {
                 endBuffer[0] = '0';
                 endBuffer[1] = '\0';
                 @return(endBuffer);
             }
 
             bool isNegative = false;
-            if(number < 0) {
+            if (number < 0) {
                 isNegative = true;
                 number = -number;
             }
 
             usize index = 0;
-            while(number > 0) {
+            while (number > 0) {
                 ltosBuffer[index] = ((number % 10l) + '0');
                 number = number / 10l;
                 index += 1;
             }
 
-            if(isNegative) {
+            if (isNegative) {
                 ltosBuffer[index] = '-';
                 index += 1;
             }
@@ -239,14 +239,14 @@ namespace std {
         char* ultos(ulong number, char* endBuffer) {
             char[24] ltosBuffer;
 
-            if(number == 0) {
+            if (number == 0) {
                 endBuffer[0] = '0';
                 endBuffer[1] = '\0';
                 @return(endBuffer);
             }
 
             usize index = 0;
-            while(number > 0) {
+            while (number > 0) {
                 ltosBuffer[index] = ((number % 10) + '0');
                 number = number / 10;
                 index += 1;
@@ -264,26 +264,26 @@ namespace std {
         char* ctos(cent number, char* endBuffer) {
             char[48] ctosBuffer;
 
-            if(number == 0) {
+            if (number == 0) {
                 endBuffer[0] = '0';
                 endBuffer[1] = '\0';
                 @return(endBuffer);
             }
 
             bool isNegative = false;
-            if(number < 0) {
+            if (number < 0) {
                 isNegative = true;
                 number = -number;
             }
 
             usize index = 0;
-            while(number > 0) {
+            while (number > 0) {
                 ctosBuffer[index] = ((number % cast(cent)10) + '0');
                 number = number / 10;
                 index += 1;
             }
 
-            if(isNegative) {
+            if (isNegative) {
                 ctosBuffer[index] = '-';
                 index += 1;
             }
@@ -310,7 +310,7 @@ namespace std {
             for(outpos = 0; true; outpos++) {
                 pos -= 1;
                 endBuffer[outpos] = uctBuffer[pos];
-                if(pos == 0) break;
+                if (pos == 0) break;
             }
 
             endBuffer[outpos + 1] = '\0';
@@ -325,7 +325,7 @@ namespace std {
             int decimals;
 
             bool isNegative = false;
-            if(number < 0.0d) {
+            if (number < 0.0d) {
                 isNegative = true;
                 number = -number;
                 buffer[0] = '-';
@@ -336,7 +336,7 @@ namespace std {
             std::cstring::ltos(lPart, &temp);
             len = std::cstring::strlen(&temp);
 
-            while(tI < len) {
+            while (tI < len) {
                 buffer[i] = temp[tI];
                 i += 1;
                 tI += 1;
@@ -347,7 +347,7 @@ namespace std {
             i += 1;
             decimals = 0;
 
-            while(decimals < precision) {
+            while (decimals < precision) {
                 number = number * 10;
                 lPart = cast(long)number;
                 buffer[i] = lPart + '0';
@@ -356,9 +356,9 @@ namespace std {
                 number = number - cast(double)lPart;
             }
 
-            while(buffer[i - 1] == '0') i -= 1;
+            while (buffer[i - 1] == '0') i -= 1;
 
-            if(buffer[i - 1] == '.') i -= 1;
+            if (buffer[i - 1] == '.') i -= 1;
 
             buffer[i] = '\0';
         } => buffer;
@@ -369,16 +369,16 @@ namespace std {
             long coeff = 1;
 
             for(usize i=str.length; i>=1; i--) {
-                if(str.data[i - 1] == '-') {
+                if (str.data[i - 1] == '-') {
                     isNegative = true;
                     break;
                 }
-                else if((str.data[i - 1] < '0') || (str.data[i - 1] > '9')) break;
+                else if ((str.data[i - 1] < '0') || (str.data[i - 1] > '9')) break;
                 return += (cast(long)(str.data[i - 1] - '0') * coeff);
                 coeff *= 10;
             }
 
-            if(isNegative) return = -return;
+            if (isNegative) return = -return;
         }
 
         ulong stoul(std::cstring str) {
@@ -386,7 +386,7 @@ namespace std {
             ulong coeff = 1;
 
             for(usize i=str.length; i>=1; i--) {
-                if((str.data[i - 1] < '0') || (str.data[i - 1] > '9')) break;
+                if ((str.data[i - 1] < '0') || (str.data[i - 1] > '9')) break;
                 return += (cast(ulong)(str.data[i - 1] - '0') * coeff);
                 coeff *= 10;
             }
@@ -398,17 +398,17 @@ namespace std {
             cent coeff = 1;
 
             for(usize i=str.length; i>=1; i--) {
-                if(str.data[i - 1] == '-') {
+                if (str.data[i - 1] == '-') {
                     isNegative = true;
                     break;
                 }
-                else if((str.data[i - 1] < '0') || (str.data[i - 1] > '9')) break;
+                else if ((str.data[i - 1] < '0') || (str.data[i - 1] > '9')) break;
 
                 return += (cast(cent)(str.data[i - 1] - '0') * coeff);
                 coeff *= 10;
             }
 
-            if(isNegative) return = -return;
+            if (isNegative) return = -return;
         }
 
         ucent stouc(std::cstring str) {
@@ -416,7 +416,7 @@ namespace std {
             ucent coeff = 1;
 
             for(usize i=str.length; i>=1; i--) {
-                if((str.data[i - 1] < '0') || (str.data[i - 1] > '9')) break;
+                if ((str.data[i - 1] < '0') || (str.data[i - 1] > '9')) break;
                 return += (cast(ucent)(str.data[i - 1] - '0') * coeff);
                 coeff *= 10;
             }
@@ -429,22 +429,22 @@ namespace std {
             int decimalPoint = -1;
 
             // Handle optional leading whitespace
-            while((i < str.length) && (std::ascii::isSpace(str.data[i]))) i += 1;
+            while ((i < str.length) && (std::ascii::isSpace(str.data[i]))) i += 1;
 
             // Handle optional sign
-            if((i < str.length) && ((str.data[i] == '-') || (str.data[i] == '+'))) {
-                if(str.data[i] == '-') isNegative = true;
+            if ((i < str.length) && ((str.data[i] == '-') || (str.data[i] == '+'))) {
+                if (str.data[i] == '-') isNegative = true;
                 i += 1;
             }
 
             // Process digits before the decimal point
-            while((i < str.length) && (std::ascii::isDigit(str.data[i]))) {
+            while ((i < str.length) && (std::ascii::isDigit(str.data[i]))) {
                 return = return * 10 + (str.data[i] - '0');
                 i += 1;
             }
 
             // Process the decimal point
-            if((i < str.length) && (str.data[i] == '.')) {
+            if ((i < str.length) && (str.data[i] == '.')) {
                 decimalPoint = i;
                 i += 1;
             }
@@ -452,15 +452,15 @@ namespace std {
             // Process digits after the decimal point
             double fraction = 0.0d;
             double fractionScale = 1.0d;
-            while((i < str.length) && (std::ascii::isDigit(str.data[i]))) {
+            while ((i < str.length) && (std::ascii::isDigit(str.data[i]))) {
                 fraction = fraction * 10 + (str.data[i] - '0');
                 fractionScale *= 10;
                 i += 1;
             }
 
             // Combine the integer and fractional parts
-            if(decimalPoint != -1) return += fraction / fractionScale;
-            if(isNegative) return = -return;
+            if (decimalPoint != -1) return += fraction / fractionScale;
+            if (isNegative) return = -return;
         }
 
         real stor(std::cstring str) {
@@ -470,22 +470,22 @@ namespace std {
             int decimalPoint = -1;
 
             // Handle optional leading whitespace
-            while((i < str.length) && (std::ascii::isSpace(str.data[i]))) i += 1;
+            while ((i < str.length) && (std::ascii::isSpace(str.data[i]))) i += 1;
 
             // Handle optional sign
-            if((i < str.length) && ((str.data[i] == '-') || (str.data[i] == '+'))) {
-                if(str.data[i] == '-') isNegative = true;
+            if ((i < str.length) && ((str.data[i] == '-') || (str.data[i] == '+'))) {
+                if (str.data[i] == '-') isNegative = true;
                 i += 1;
             }
 
             // Process digits before the decimal point
-            while((i < str.length) && (std::ascii::isDigit(str.data[i]))) {
+            while ((i < str.length) && (std::ascii::isDigit(str.data[i]))) {
                 return = return * 10 + (str.data[i] - '0');
                 i += 1;
             }
 
             // Process the decimal point
-            if((i < str.length) && (str.data[i] == '.')) {
+            if ((i < str.length) && (str.data[i] == '.')) {
                 decimalPoint = i;
                 i += 1;
             }
@@ -493,15 +493,15 @@ namespace std {
             // Process digits after the decimal point
             real fraction = 0.0r;
             real fractionScale = 1.0r;
-            while((i < str.length) && (std::ascii::isDigit(str.data[i]))) {
+            while ((i < str.length) && (std::ascii::isDigit(str.data[i]))) {
                 fraction = fraction * 10r + (str.data[i] - '0');
                 fractionScale *= 10r;
                 i += 1;
             }
 
             // Combine the integer and fractional parts
-            if(decimalPoint != -1) return += fraction / fractionScale;
-            if(isNegative) return = -return;
+            if (decimalPoint != -1) return += fraction / fractionScale;
+            if (isNegative) return = -return;
         }
     }
 }

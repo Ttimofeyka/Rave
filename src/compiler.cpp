@@ -73,13 +73,13 @@ ShellResult exec(std::string cmd) {
     char buffer[256];
     std::string result = "";
     FILE* pipe = popen(cmd.c_str(), "r");
-    if(!pipe) throw std::runtime_error("popen() failed!");
-    while(fgets(buffer, 255, pipe) != NULL) result += buffer;
+    if (!pipe) throw std::runtime_error("popen() failed!");
+    while (fgets(buffer, 255, pipe) != NULL) result += buffer;
     return ShellResult{.output = result, .status = WEXITSTATUS(pclose(pipe))};
 }
 
 bool endsWith(const std::string &str, const std::string &suffix) {
-    if(str.size() < suffix.size()) return false;
+    if (str.size() < suffix.size()) return false;
     return str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
 }
 
@@ -97,78 +97,78 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
     ravePlatform = "UNKNOWN";
     raveOs = "UNKNOWN";
 
-    if(outType != "") {
-        if(outType.find("i686") != std::string::npos || outType.find("i386") != std::string::npos) ravePlatform = "X86";
-        else if(outType.find("aarch64") != std::string::npos || outType.find("arm64") != std::string::npos) ravePlatform = "AARCH64";
-        else if(outType.find("x86_64") != std::string::npos || outType.find("win64") != std::string::npos) ravePlatform = "X86_64";
-        else if(outType.find("x86") != std::string::npos) ravePlatform = "X86";
-        else if(outType.find("arm") != std::string::npos) ravePlatform = "ARM";
-        else if(outType.find("mips64") != std::string::npos) ravePlatform = "MIPS64";
-        else if(outType.find("mips") != std::string::npos) ravePlatform = "MIPS";
-        else if(outType.find("powerpc64") != std::string::npos) ravePlatform = "POWERPC64";
-        else if(outType.find("powerpc") != std::string::npos) ravePlatform = "POWERPC";
-        else if(outType.find("sparcv9") != std::string::npos) ravePlatform = "SPARCV9";
-        else if(outType.find("sparc") != std::string::npos) ravePlatform = "SPARC";
-        else if(outType.find("s390x") != std::string::npos) ravePlatform = "S390X";
-        else if(outType.find("wasm") != std::string::npos) ravePlatform = "WASM";
-        else if(outType.find("avr") != std::string::npos) {
+    if (outType != "") {
+        if (outType.find("i686") != std::string::npos || outType.find("i386") != std::string::npos) ravePlatform = "X86";
+        else if (outType.find("aarch64") != std::string::npos || outType.find("arm64") != std::string::npos) ravePlatform = "AARCH64";
+        else if (outType.find("x86_64") != std::string::npos || outType.find("win64") != std::string::npos) ravePlatform = "X86_64";
+        else if (outType.find("x86") != std::string::npos) ravePlatform = "X86";
+        else if (outType.find("arm") != std::string::npos) ravePlatform = "ARM";
+        else if (outType.find("mips64") != std::string::npos) ravePlatform = "MIPS64";
+        else if (outType.find("mips") != std::string::npos) ravePlatform = "MIPS";
+        else if (outType.find("powerpc64") != std::string::npos) ravePlatform = "POWERPC64";
+        else if (outType.find("powerpc") != std::string::npos) ravePlatform = "POWERPC";
+        else if (outType.find("sparcv9") != std::string::npos) ravePlatform = "SPARCV9";
+        else if (outType.find("sparc") != std::string::npos) ravePlatform = "SPARC";
+        else if (outType.find("s390x") != std::string::npos) ravePlatform = "S390X";
+        else if (outType.find("wasm") != std::string::npos) ravePlatform = "WASM";
+        else if (outType.find("avr") != std::string::npos) {
             ravePlatform = "AVR";
             raveOs = "ARDUINO";
         }
 
-        if(outType.find("win32") != std::string::npos) {
+        if (outType.find("win32") != std::string::npos) {
             #ifndef _WIN32
                 Compiler::linkString += " --target=i686-pc-windows-gnu ";
             #endif
             raveOs = "WINDOWS";
         }
-        else if(outType.find("win64") != std::string::npos || outType.find("windows") != std::string::npos) {
+        else if (outType.find("win64") != std::string::npos || outType.find("windows") != std::string::npos) {
             #ifndef _WIN32
                 Compiler::linkString += " --target=x86_64-pc-windows-gnu ";
             #endif
             raveOs = "WINDOWS";
         }
-        else if(outType.find("linux") != std::string::npos) raveOs = "LINUX";
-        else if(outType.find("freebsd") != std::string::npos) raveOs = "FREEBSD";
-        else if(outType.find("darwin") != std::string::npos || outType.find("macos") != std::string::npos) raveOs = "DARWIN";
-        else if(outType.find("android") != std::string::npos) raveOs = "ANDROID";
-        else if(outType.find("ios") != std::string::npos) raveOs = "IOS";
+        else if (outType.find("linux") != std::string::npos) raveOs = "LINUX";
+        else if (outType.find("freebsd") != std::string::npos) raveOs = "FREEBSD";
+        else if (outType.find("darwin") != std::string::npos || outType.find("macos") != std::string::npos) raveOs = "DARWIN";
+        else if (outType.find("android") != std::string::npos) raveOs = "ANDROID";
+        else if (outType.find("ios") != std::string::npos) raveOs = "IOS";
     }
     else {
         ravePlatform = RAVE_PLATFORM;
         raveOs = RAVE_OS;
     }
 
-    if(raveOs == "LINUX") {
-        if(ravePlatform == "X86_64") Compiler::outType = "linux-gnu-pc-x86_64";
-        else if(ravePlatform == "X86") Compiler::outType = "linux-gnu-pc-i686";
-        else if(ravePlatform == "AARCH64") Compiler::outType = "linux-gnu-aarch64";
-        else if(ravePlatform == "ARM") Compiler::outType = "linux-gnu-armv7";
+    if (raveOs == "LINUX") {
+        if (ravePlatform == "X86_64") Compiler::outType = "linux-gnu-pc-x86_64";
+        else if (ravePlatform == "X86") Compiler::outType = "linux-gnu-pc-i686";
+        else if (ravePlatform == "AARCH64") Compiler::outType = "linux-gnu-aarch64";
+        else if (ravePlatform == "ARM") Compiler::outType = "linux-gnu-armv7";
         else Compiler::outType = "linux-unknown";
     }
-    else if(raveOs == "FREEBSD") {
-        if(ravePlatform == "X86_64") Compiler::outType = "freebsd-gnu-pc-x86_64";
-        else if(ravePlatform == "X86") Compiler::outType = "freebsd-gnu-pc-i686";
-        else if(ravePlatform == "AARCH64") Compiler::outType = "freebsd-gnu-aarch64";
-        else if(ravePlatform == "ARM") Compiler::outType = "freebsd-gnu-armv7";
+    else if (raveOs == "FREEBSD") {
+        if (ravePlatform == "X86_64") Compiler::outType = "freebsd-gnu-pc-x86_64";
+        else if (ravePlatform == "X86") Compiler::outType = "freebsd-gnu-pc-i686";
+        else if (ravePlatform == "AARCH64") Compiler::outType = "freebsd-gnu-aarch64";
+        else if (ravePlatform == "ARM") Compiler::outType = "freebsd-gnu-armv7";
         else Compiler::outType = "freebsd-unknown";
     }
-    else if(raveOs == "WINDOWS") {
-        if(ravePlatform == "X86_64") Compiler::outType = "x86_64-pc-windows-gnu";
+    else if (raveOs == "WINDOWS") {
+        if (ravePlatform == "X86_64") Compiler::outType = "x86_64-pc-windows-gnu";
         else Compiler::outType = "i686-win32-gnu";
     }
-    else if(raveOs == "ARDUINO") {
+    else if (raveOs == "ARDUINO") {
         // TODO: Add switch with all possible Arduino platforms
         Compiler::outType = "atmega328-avr";
     }
     else Compiler::outType = "unknown";
     
-    if(access((exePath + "options.json").c_str(), 0) == 0) {
+    if (access((exePath + "options.json").c_str(), 0) == 0) {
         // If file exists - read it
 
         std::ifstream fOptions(exePath + "options.json");
         Compiler::options = nlohmann::json::parse(fOptions);
-        if(fOptions.is_open()) fOptions.close();
+        if (fOptions.is_open()) fOptions.close();
     }
     else {
         // If file does not exist - create it with default settings
@@ -180,7 +180,7 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
         #else
             std::string compiler = "clang";
             ShellResult result = exec("which clang");
-            if(result.status != 0) compiler = "gcc";
+            if (result.status != 0) compiler = "gcc";
         #endif
 
         fOptions << "{\n\t\"compiler\": \"" << compiler << "\",\n\t"
@@ -226,18 +226,18 @@ void Compiler::initialize(std::string outFile, std::string outType, genSettings 
             "}\n"
         "}" << std::endl;
 
-        if(fOptions.is_open()) fOptions.close();
+        if (fOptions.is_open()) fOptions.close();
 
         std::ifstream rfOptions(exePath + "options.json");
         Compiler::options = nlohmann::json::parse(rfOptions);
-        if(rfOptions.is_open()) rfOptions.close();
+        if (rfOptions.is_open()) rfOptions.close();
     }
 
     Compiler::linkString = Compiler::options["compiler"].template get<std::string>() + " ";
 
-    if(Compiler::settings.isPIE) linkString += "-fPIE ";
-    if(Compiler::settings.noStd) linkString += "-nostdlib ";
-    if(Compiler::settings.noEntry) linkString += "--no-entry ";
+    if (Compiler::settings.isPIE) linkString += "-fPIE ";
+    if (Compiler::settings.noStd) linkString += "-nostdlib ";
+    if (Compiler::settings.noEntry) linkString += "--no-entry ";
 
     // Begin of LLVM initializing
 
@@ -321,13 +321,13 @@ void Compiler::compile(std::string file) {
     std::string content = "";
 
     char c;
-    while(fContent.get(c)) content += c;
+    while (fContent.get(c)) content += c;
 
     bool littleEndian = true;
 
     // Note: PowerPC must be rechecked for endianness
 
-    if(ravePlatform == "MIPS64" || ravePlatform == "MIPS") littleEndian = false;
+    if (ravePlatform == "MIPS64" || ravePlatform == "MIPS") littleEndian = false;
 
     bool isX86 = ravePlatform == "X86_64" || ravePlatform == "X86";
     bool isAARCH64 = ravePlatform == "AARCH64";
@@ -354,7 +354,7 @@ void Compiler::compile(std::string file) {
 
     bool half = settings.half && isARM;
 
-    if(isX86) {
+    if (isX86) {
         popcnt = popcnt && Compiler::options["platforms"][ravePlatform]["POPCNT"].template get<bool>();
         fma = fma && Compiler::options["platforms"][ravePlatform]["FMA"].template get<bool>();
         f16c = f16c && Compiler::options["platforms"][ravePlatform]["F16C"].template get<bool>();
@@ -368,45 +368,45 @@ void Compiler::compile(std::string file) {
         avx = avx && Compiler::options["platforms"][ravePlatform]["AVX"].template get<bool>();
         avx2 = avx2 && Compiler::options["platforms"][ravePlatform]["AVX2"].template get<bool>();
 
-        if(ravePlatform == "X86_64") avx512 = avx512 && Compiler::options["platforms"][ravePlatform]["AVX512"].template get<bool>();
+        if (ravePlatform == "X86_64") avx512 = avx512 && Compiler::options["platforms"][ravePlatform]["AVX512"].template get<bool>();
     }
-    else if(isAARCH64) {
+    else if (isAARCH64) {
         asimd = asimd && Compiler::options["platforms"]["AARCH64"]["ASIMD"].template get<bool>();
         fp = fp && Compiler::options["platforms"]["AARCH64"]["FP"].template get<bool>();
         sve = sve && Compiler::options["platforms"]["AARCH64"]["SVE"].template get<bool>();
         sve2 = sve2 && Compiler::options["platforms"]["AARCH64"]["SVE2"].template get<bool>();
     }
-    else if(isARM) {
+    else if (isARM) {
         half = half && Compiler::options["platforms"]["ARM"]["HALF"].template get<bool>();
     }
 
-    if(!settings.isNative) {
+    if (!settings.isNative) {
         Compiler::features = "";
 
-        if(popcnt) Compiler::features += "+popcnt,";
-        if(fma) Compiler::features += "+fma,";
-        if(f16c) Compiler::features += "+f16c,";
-        if(sse) Compiler::features += "+sse,";
-        if(sse2) Compiler::features += "+sse2,";
-        if(sse3) Compiler::features += "+sse3,";
-        if(ssse3) Compiler::features += "+ssse3,";
-        if(sse4a) Compiler::features += "+sse4a,";
-        if(sse4_1) Compiler::features += "+sse4.1,";
-        if(sse4_2) Compiler::features += "+sse4.2,";
-        if(avx) Compiler::features += "+avx,";
-        if(avx2) Compiler::features += "+avx2,";
-        if(avx512) Compiler::features += "+avx512,";
+        if (popcnt) Compiler::features += "+popcnt,";
+        if (fma) Compiler::features += "+fma,";
+        if (f16c) Compiler::features += "+f16c,";
+        if (sse) Compiler::features += "+sse,";
+        if (sse2) Compiler::features += "+sse2,";
+        if (sse3) Compiler::features += "+sse3,";
+        if (ssse3) Compiler::features += "+ssse3,";
+        if (sse4a) Compiler::features += "+sse4a,";
+        if (sse4_1) Compiler::features += "+sse4.1,";
+        if (sse4_2) Compiler::features += "+sse4.2,";
+        if (avx) Compiler::features += "+avx,";
+        if (avx2) Compiler::features += "+avx2,";
+        if (avx512) Compiler::features += "+avx512,";
 
-        if(asimd) Compiler::features += "+neon,";
-        if(fp) Compiler::features += "+fp-armv8,";
-        if(sve) Compiler::features += "+sve,";
-        if(sve2) Compiler::features += "+sve2,";
+        if (asimd) Compiler::features += "+neon,";
+        if (fp) Compiler::features += "+fp-armv8,";
+        if (sve) Compiler::features += "+sve,";
+        if (sve2) Compiler::features += "+sve2,";
 
-        if(half) Compiler::features += "+fp16,";
+        if (half) Compiler::features += "+fp16,";
         
-        if(ravePlatform == "X86_64") Compiler::features += "+64bit,";
+        if (ravePlatform == "X86_64") Compiler::features += "+64bit,";
 
-        if(Compiler::features.length() > 0) Compiler::features = Compiler::features.substr(0, Compiler::features.length() - 1);
+        if (Compiler::features.length() > 0) Compiler::features = Compiler::features.substr(0, Compiler::features.length() - 1);
     }
     else Compiler::features = std::string(LLVMGetHostCPUFeatures());
 
@@ -439,8 +439,8 @@ void Compiler::compile(std::string file) {
     AST::aliasTable["__RAVE_LITTLE_ENDIAN"] = new NodeBool(littleEndian);
     AST::aliasTable["__RAVE_BIG_ENDIAN"] = new NodeBool(!littleEndian);
 
-    if(ravePlatform == "X86_64" || ravePlatform == "AARCH64" || ravePlatform == "POWERPC64" || ravePlatform == "MIPS64") pointerSize = 64;
-    else if(ravePlatform == "AVR") pointerSize = 16;
+    if (ravePlatform == "X86_64" || ravePlatform == "AARCH64" || ravePlatform == "POWERPC64" || ravePlatform == "MIPS64") pointerSize = 64;
+    else if (ravePlatform == "AVR") pointerSize = 16;
     else pointerSize = 32;
 
     AST::mainFile = Compiler::files[0];
@@ -449,7 +449,7 @@ void Compiler::compile(std::string file) {
     Lexer lexer = Lexer(content, -1);
     Parser parser = Parser(lexer.tokens, file);
 
-    if(!Compiler::settings.noPrelude && !endsWith(file, "std/prelude.rave") && !endsWith(file, "std/memory.rave")) {
+    if (!Compiler::settings.noPrelude && !endsWith(file, "std/prelude.rave") && !endsWith(file, "std/memory.rave")) {
         parser.nodes.push_back(new NodeImport(ImportFile{exePath + "std/prelude.rave", true}, {}, -1));
         parser.nodes.push_back(new NodeImport(ImportFile{exePath + "std/memory.rave", true}, {}, -1));
     }
@@ -461,14 +461,14 @@ void Compiler::compile(std::string file) {
 
     generator = new LLVMGen(file, Compiler::settings, Compiler::options);
 
-    if(settings.outDebugInfo) debugInfo = new DebugGen(settings, file, generator->lModule);
+    if (settings.outDebugInfo) debugInfo = new DebugGen(settings, file, generator->lModule);
     else debugInfo = nullptr;
 
     char* errors = nullptr;
     LLVMTargetRef target;
     char* triple = LLVMNormalizeTargetTriple(Compiler::outType.c_str());
 
-    if(errors != nullptr) {
+    if (errors != nullptr) {
         Compiler::error("normalize target triple: " + std::string(errors));
         std::exit(1);
     }
@@ -476,7 +476,7 @@ void Compiler::compile(std::string file) {
     LLVMSetTarget(generator->lModule, triple);
 
     LLVMGetTargetFromTriple(triple, &target, &errors);
-    if(errors != nullptr) {
+    if (errors != nullptr) {
         Compiler::error("target from triple \"" + std::string(triple) + "\": " + std::string(errors));
         std::exit(1);
     }
@@ -499,11 +499,11 @@ void Compiler::compile(std::string file) {
     #if LLVM_VERSION < 17
     LLVMPassManagerRef pm = LLVMCreatePassManager();
 
-    if(Compiler::settings.optLevel > 0) {
+    if (Compiler::settings.optLevel > 0) {
         LLVMAddInstructionCombiningPass(pm);
         LLVMAddStripDeadPrototypesPass(pm);
 
-        if(Compiler::settings.optLevel >= 2) {
+        if (Compiler::settings.optLevel >= 2) {
             LLVMAddCFGSimplificationPass(pm);
 	        LLVMAddJumpThreadingPass(pm);
 	        LLVMAddSimplifyLibCallsPass(pm);
@@ -551,15 +551,15 @@ void Compiler::compile(std::string file) {
     #else
     LLVMPassBuilderOptionsRef pbOptions = LLVMCreatePassBuilderOptions();
 
-    if(Compiler::settings.optLevel == 1) LLVMRunPasses(generator->lModule, "default<O1>", machine, pbOptions);
-    else if(Compiler::settings.optLevel == 2) LLVMRunPasses(generator->lModule, "default<O2>", machine, pbOptions);
-    else if(Compiler::settings.optLevel == 3) LLVMRunPasses(generator->lModule, "default<O3>", machine, pbOptions);
+    if (Compiler::settings.optLevel == 1) LLVMRunPasses(generator->lModule, "default<O1>", machine, pbOptions);
+    else if (Compiler::settings.optLevel == 2) LLVMRunPasses(generator->lModule, "default<O2>", machine, pbOptions);
+    else if (Compiler::settings.optLevel == 3) LLVMRunPasses(generator->lModule, "default<O3>", machine, pbOptions);
 
     LLVMDisposePassBuilderOptions(pbOptions);
     #endif
 
     LLVMTargetMachineEmitToFile(machine, generator->lModule, (char*)(std::regex_replace(file, std::regex("\\.rave"), ".o")).c_str(), LLVMObjectFile, &errors);
-    if(errors != nullptr) {
+    if (errors != nullptr) {
         Compiler::error("target machine emit to file: " + std::string(errors));
         std::exit(1);
     }
@@ -568,7 +568,7 @@ void Compiler::compile(std::string file) {
     Compiler::genTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
 
     for(size_t i=0; i<AST::importedFiles.size(); i++) {
-        if(std::find(Compiler::toImport.begin(), Compiler::toImport.end(), AST::importedFiles[i]) == Compiler::toImport.end()) Compiler::toImport.push_back(AST::importedFiles[i]);
+        if (std::find(Compiler::toImport.begin(), Compiler::toImport.end(), AST::importedFiles[i]) == Compiler::toImport.end()) Compiler::toImport.push_back(AST::importedFiles[i]);
     }
 
     Compiler::clearAll();
@@ -579,50 +579,50 @@ void Compiler::compileAll() {
     std::vector<std::string> toRemove;
 
     for(size_t i=0; i<Compiler::files.size(); i++) {
-        if(access(Compiler::files[i].c_str(), 0) != 0) {
+        if (access(Compiler::files[i].c_str(), 0) != 0) {
             Compiler::error("file \033[1m" + Compiler::files[i] + "\033[22m does not exist!");
             return;
         }
 
-        if(Compiler::files[i].size() > 2 && (endsWith(Compiler::files[i], ".a") || endsWith(Compiler::files[i], ".o") || endsWith(Compiler::files[i], ".lib")))
+        if (Compiler::files[i].size() > 2 && (endsWith(Compiler::files[i], ".a") || endsWith(Compiler::files[i], ".o") || endsWith(Compiler::files[i], ".lib")))
             Compiler::linkString += Compiler::files[i] + " ";
         else {
             Compiler::compile(Compiler::files[i]);
-            if(Compiler::settings.emitLLVM) {
+            if (Compiler::settings.emitLLVM) {
                 char* err;
                 LLVMPrintModuleToFile(generator->lModule, (Compiler::files[i]+".ll").c_str(), &err);
             }
 
             std::string compiledFile = std::regex_replace(Compiler::files[i], std::regex("\\.rave"), ".o");
             Compiler::linkString += compiledFile + " ";
-            if(!Compiler::settings.saveObjectFiles && !Compiler::settings.onlyObject) toRemove.push_back(compiledFile);
+            if (!Compiler::settings.saveObjectFiles && !Compiler::settings.onlyObject) toRemove.push_back(compiledFile);
         }
     }
 
     for(size_t i=0; i<AST::addToImport.size(); i++) {
         std::string fname = replaceAll(AST::addToImport[i], ">", "");
-        if(std::count(Compiler::toImport.begin(), Compiler::toImport.end(), fname) == 0 &&
+        if (std::count(Compiler::toImport.begin(), Compiler::toImport.end(), fname) == 0 &&
            std::count(Compiler::files.begin(), Compiler::files.end(), fname) == 0
         ) Compiler::toImport.push_back(fname);
     }
 
     for(size_t i=0; i<Compiler::toImport.size(); i++) {
-        if(access(Compiler::toImport[i].c_str(), 0) != 0) {
+        if (access(Compiler::toImport[i].c_str(), 0) != 0) {
             Compiler::error("file \033[1m" + Compiler::files[i] + "\033[22m does not exist!");
             return;
         }
 
-        if(Compiler::toImport[i].size() > 2 && (endsWith(Compiler::toImport[i], ".a") || endsWith(Compiler::toImport[i], ".o") || endsWith(Compiler::toImport[i], ".lib")))
+        if (Compiler::toImport[i].size() > 2 && (endsWith(Compiler::toImport[i], ".a") || endsWith(Compiler::toImport[i], ".o") || endsWith(Compiler::toImport[i], ".lib")))
             Compiler::linkString += Compiler::toImport[i] + " ";
         else {
-            if(
+            if (
                 Compiler::toImport[i].find(exePath + "std/") != std::string::npos && !Compiler::settings.recompileStd &&
                 access(std::regex_replace(Compiler::toImport[i], std::regex("\\.rave"), std::string(".") + Compiler::outType + ".o").c_str(), 0) != -1
             ) linkString += std::regex_replace(Compiler::toImport[i], std::regex("\\.rave"), std::string(".") + Compiler::outType + ".o") + " ";
             else {
                 compile(Compiler::toImport[i]);
 
-                if(Compiler::settings.emitLLVM) {
+                if (Compiler::settings.emitLLVM) {
                     char* err;
                     LLVMPrintModuleToFile(generator->lModule, (Compiler::toImport[i] + ".ll").c_str(), &err);
                 }
@@ -630,7 +630,7 @@ void Compiler::compileAll() {
                 std::string compiledFile = std::regex_replace(Compiler::toImport[i], std::regex("\\.rave"), ".o");
                 linkString += compiledFile + " ";
 
-                if(Compiler::toImport[i].find(exePath + "std/") != std::string::npos) {
+                if (Compiler::toImport[i].find(exePath + "std/") != std::string::npos) {
                     std::ifstream src(compiledFile, std::ios::binary);
                     std::ofstream dst(std::regex_replace(compiledFile, std::regex("\\.o"), std::string(".") + Compiler::outType + ".o"), std::ios::binary);
                     dst << src.rdbuf();
@@ -641,24 +641,24 @@ void Compiler::compileAll() {
         }
     }
 
-    if(Compiler::outFile == "") Compiler::outFile = "a";
+    if (Compiler::outFile == "") Compiler::outFile = "a";
 
     Compiler::linkString += " -Wl,--no-relax ";
 
     // TODO: Add support of linking on AVR, improve settings.onlyObject handling
 
-    if(!Compiler::settings.onlyObject) {
-        if(Compiler::settings.isStatic) Compiler::linkString += "-static ";
-        if(Compiler::settings.isPIC) Compiler::linkString += "-no-pie ";
+    if (!Compiler::settings.onlyObject) {
+        if (Compiler::settings.isStatic) Compiler::linkString += "-static ";
+        if (Compiler::settings.isPIC) Compiler::linkString += "-no-pie ";
 
         Compiler::linkString += " " + Compiler::settings.linkParams + " -Wno-unused-command-line-argument ";
 
         #ifdef _WIN32
-            if(Compiler::options["compiler"].template get<std::string>().find("clang") != std::string::npos) Compiler::linkString += " -fuse-ld=ld ";
+            if (Compiler::options["compiler"].template get<std::string>().find("clang") != std::string::npos) Compiler::linkString += " -fuse-ld=ld ";
         #endif
 
         ShellResult result = exec(Compiler::linkString + " -o " + Compiler::outFile);
-        if(result.status != 0) {
+        if (result.status != 0) {
             Compiler::error("error when linking!\nLinking string: '" + Compiler::linkString + " -o " + Compiler::outFile + "'");
             std::exit(result.status);
             return;

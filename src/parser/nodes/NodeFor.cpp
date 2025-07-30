@@ -26,10 +26,10 @@ NodeFor::NodeFor(std::vector<Node*> presets, Node* cond, std::vector<Node*> afte
 }
 
 NodeFor::~NodeFor() {
-    for(size_t i=0; i<presets.size(); i++) if(presets[i] != nullptr) delete presets[i];
-    if(cond != nullptr) delete cond;
-    if(block != nullptr) delete block;
-    for(size_t i=0; i<afters.size(); i++) if(afters[i] != nullptr) delete afters[i];
+    for(size_t i=0; i<presets.size(); i++) if (presets[i] != nullptr) delete presets[i];
+    if (cond != nullptr) delete cond;
+    if (block != nullptr) delete block;
+    for(size_t i=0; i<afters.size(); i++) if (afters[i] != nullptr) delete afters[i];
 }
 
 Node* NodeFor::copy() {
@@ -57,7 +57,7 @@ RaveValue NodeFor::generate() {
     RaveValue result = nwhile->generate();
 
     for(size_t i=0; i<this->presets.size(); i++) {
-        if(instanceof<NodeVar>(this->presets[i])) {
+        if (instanceof<NodeVar>(this->presets[i])) {
             NodeVar* nvar = (NodeVar*)this->presets[i];
             currScope->remove(nvar->name);
         }

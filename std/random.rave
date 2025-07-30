@@ -11,7 +11,7 @@ namespace std {
     long rseed2 = 0;
 
     (inline) void __randomGen {
-        if(std::rseed1 == 0) {
+        if (std::rseed1 == 0) {
             std::time ts;
             std::getCurrentTime(&ts);
             std::rseed1 = ts.microseconds;
@@ -52,7 +52,7 @@ namespace std {
         char n = 0;
         for(int i=0; i<length; i++) {
             buffer[i] = (cast(char*)std::rseed1)[n];
-            if(n == 8c) std::__randomGen();
+            if (n == 8c) std::__randomGen();
             n += 1c;
         }
     }
@@ -63,31 +63,31 @@ namespace std {
 
     char randomChar(char min, char max) {
         return = std::randomChar();
-        if(return < 0) return = -return;
+        if (return < 0) return = -return;
         return = (return % ((max + 1c) - min)) + min;
     }
 
     short randomShort(short min, short max) {
         return = std::randomShort();
-        if(return < 0) return = -return;
+        if (return < 0) return = -return;
         return = (return % ((max + 1s) - min)) + min;
     }
 
     int randomInt(int min, int max) {
         return = std::randomInt();
-        if(return < 0) return = -return;
+        if (return < 0) return = -return;
         return = (return % ((max + 1) - min)) + min;
     }
 
     long randomLong(long min, long max) {
         return = std::randomLong();
-        if(return < 0) return = -return;
+        if (return < 0) return = -return;
         return = (return % ((max + 1l) - min)) + min;
     }
 
     cent randomCent(cent min, cent max) {
         return = std::randomCent();
-        if(return < 0) return = -return;
+        if (return < 0) return = -return;
         return = (return % ((max + 1) - min)) + min;
     }
 }

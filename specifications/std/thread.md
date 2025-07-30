@@ -30,11 +30,11 @@ int data1 = 2;
 int data2 = 2;
 
 int foo(void* arg) {
-    while(data1 != 64) data1 *= 2;
+    while (data1 != 64) data1 *= 2;
 }
 
 int bow(void* arg) {
-    while(data2 != 64) data2 *= 2;
+    while (data2 != 64) data2 *= 2;
 }
 
 void main {

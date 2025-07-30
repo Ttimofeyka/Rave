@@ -60,26 +60,26 @@ namespace std {
             hx = hx & 0x7fffffff; // high word of |x|
 
             // filter out non-finite argument
-            if(hx >= 0x40862E42) { // if |x|>=709.78...
-                if(hx >= 0x7ff00000) {
-                    if(0 != (
+            if (hx >= 0x40862E42) { // if |x|>=709.78...
+                if (hx >= 0x7ff00000) {
+                    if (0 != (
                         (hx & 0xfffff) | xp[BE]
                     )) return = x + x; // NaN
 
-                    if(xsb == 0) return = x;
+                    if (xsb == 0) return = x;
                     else return = 0.0d; // exp(+-inf)={inf,0}
 
                     @return();
                 }
-                if(x > std::math::exp::o_threshold)
+                if (x > std::math::exp::o_threshold)
                     @return(std::math::exp::huge * std::math::exp::huge); // overflow
-                if(x < std::math::exp::u_threshold)
+                if (x < std::math::exp::u_threshold)
                     @return(std::math::exp::twom1000 * std::math::exp::twom1000); // underflow
             }
 
             /* argument reduction */
-            if(hx > 0x3fd62e42) { // if  |x| > 0.5 ln2
-                if(hx < 0x3FF0A2B2) { // and |x| < 1.5 ln2
+            if (hx > 0x3fd62e42) { // if  |x| > 0.5 ln2
+                if (hx < 0x3FF0A2B2) { // and |x| < 1.5 ln2
                     hi = x - std::math::exp::ln2HI[xsb];
                     lo = std::math::exp::ln2LO[xsb];
                     k = 1 - xsb - xsb;
@@ -92,8 +92,8 @@ namespace std {
                 }
                 x = hi - lo;
             }
-            else if(hx < 0x3e300000) {    // when |x|<2**-28
-                if(std::math::exp::huge + x > std::math::exp::one)
+            else if (hx < 0x3e300000) {    // when |x|<2**-28
+                if (std::math::exp::huge + x > std::math::exp::one)
                     @return(std::math::exp::one + x); // trigger inexact
             }
             else k = 0;
@@ -110,11 +110,11 @@ namespace std {
                 )
             );
 
-            if(k == 0) @return(std::math::exp::one - ((x * c) / (c - 2d) - x));
+            if (k == 0) @return(std::math::exp::one - ((x * c) / (c - 2d) - x));
             y = std::math::exp::one - ((lo - (x * c) / (2d - c)) - hi);
 
             uint* yp = cast(uint*)&y;
-            if(k >= -1021) {
+            if (k >= -1021) {
                 yp[LE] += (k <. 20); // add k to y's exponent
                 return = y;
             }
@@ -175,7 +175,7 @@ namespace std {
         long factorial(int n) {
             return = 1;
             int i = 1;
-            while(i <= n) {
+            while (i <= n) {
                 return = return * i;
                 i += 1;
             }
@@ -183,12 +183,12 @@ namespace std {
 
         ABS_T abs<ABS_T>(ABS_T value) {
             return = value;
-            if(value < cast(ABS_T)null) return = -return;
+            if (value < cast(ABS_T)null) return = -return;
         }
 
         char getSign<GETSIGN_T>(GETSIGN_T value) {
             return = 1;
-            if(value < cast(GETSIGN_T)null) return = -1;
+            if (value < cast(GETSIGN_T)null) return = -1;
         }
 
         // TODO: specialize for floats and avoid extra multiplying
@@ -196,17 +196,17 @@ namespace std {
 
         double floor(double f) {
             return = (cast(double)(cast(long)f));
-            if((return < 0) && (return != f)) return = return - 1d;
+            if ((return < 0) && (return != f)) return = return - 1d;
         }
 
         float floor(float f) {
             return = (cast(float)(cast(long)f));
-            if((return < 0) && (return != f)) return = return - 1f;
+            if ((return < 0) && (return != f)) return = return - 1f;
         }
 
         half floor(half f) {
             return = (cast(half)(cast(int)f));
-            if((return < 0) && (return != f)) return = return - 1h;
+            if ((return < 0) && (return != f)) return = return - 1h;
         }
 
         double ceil(double d) => -(std::math::floor(-d));
@@ -214,14 +214,14 @@ namespace std {
         half ceil(half h) => -(std::math::floor(-h));
 
         double loge(double x) {
-            if(x <= 0) return = 0d;
+            if (x <= 0) return = 0d;
             else {
                 int powAdj = 0;
-                while(x > 1.0) {
+                while (x > 1.0) {
                     x = x / 2.718281828459045235;
                     powAdj += 1;
                 }
-                while(x < 0.25) {
+                while (x < 0.25) {
                     x = x * 2.718281828459045235;
                     powAdj -= 1;
                 }
@@ -241,14 +241,14 @@ namespace std {
         }
 
         float loge(float x) {
-            if(x <= 0) return = 0f;
+            if (x <= 0) return = 0f;
             else {
                 int powAdj = 0;
-                while(x > 1.0) {
+                while (x > 1.0) {
                     x = x / 2.718281828459045235;
                     powAdj += 1;
                 }
-                while(x < 0.25) {
+                while (x < 0.25) {
                     x = x * 2.718281828459045235;
                     powAdj -= 1;
                 }
@@ -365,62 +365,62 @@ namespace std {
         } => std::math::getSign(x) * y;
 
         double pow(double f, double f2) {
-            if(f2 < 0) return = 1 / std::math::pow(f, -f2);
-            else if((f2 > 0.0) && (f2 < 1.0)) return = std::math::exp(f2 * std::math::loge(f));
+            if (f2 < 0) return = 1 / std::math::pow(f, -f2);
+            else if ((f2 > 0.0) && (f2 < 1.0)) return = std::math::exp(f2 * std::math::loge(f));
             else {
-                if(std::math::floor(f2) != f2) {
-                    if(f < 0d) return = 0d;
+                if (std::math::floor(f2) != f2) {
+                    if (f < 0d) return = 0d;
                     else return = std::math::exp(f2 * std::math::loge(f));
                 }
                 else {
                     double r = 1.0;
-                    while(f2 > 0) {
+                    while (f2 > 0) {
                         r = r * f;
                         f2 = f2 - 1;
                     }
-                    if(f2 > 0) r = r * f * f2;
+                    if (f2 > 0) r = r * f * f2;
                     return = r;
                 }
             }
 
-            if((f < 0d) && (return > 0d)) return = -return;
+            if ((f < 0d) && (return > 0d)) return = -return;
         }
 
         float pow(float f, float f2) {
-            if(f2 < 0) return = 1 / std::math::pow(f, -f2);
-            else if((f2 > 0.0) && (f2 < 1.0)) return = std::math::exp(f2 * std::math::loge(f));
+            if (f2 < 0) return = 1 / std::math::pow(f, -f2);
+            else if ((f2 > 0.0) && (f2 < 1.0)) return = std::math::exp(f2 * std::math::loge(f));
             else {
-                if(std::math::floor(f2) != f2) {
-                    if(f < 0f) return = 0f;
+                if (std::math::floor(f2) != f2) {
+                    if (f < 0f) return = 0f;
                     else return = std::math::exp(f2 * std::math::loge(f));
                 }
                 else {
                     float r = 1.0;
-                    while(f2 > 0) {
+                    while (f2 > 0) {
                         r = r * f;
                         f2 = f2 - 1;
                     }
-                    if(f2 > 0) r = r * f * f2;
+                    if (f2 > 0) r = r * f * f2;
                     return = r;
                 }
             }
 
-            if((f < 0f) && (return > 0f)) return = -return;
+            if ((f < 0f) && (return > 0f)) return = -return;
         }
 
         double cbrt(double d) {
-            if(d < 0.0d) return = (-1.0d * std::math::pow(-1.0d * d, 1.0d / 3.0d));
+            if (d < 0.0d) return = (-1.0d * std::math::pow(-1.0d * d, 1.0d / 3.0d));
             else return = std::math::pow(d, 1.0d / 3.0d);
         }
 
         float cbrt(float f) {
-            if(f < 0.0f) return = (-1.0f * std::math::pow(-1.0f * f, 1.0f / 3.0f));
+            if (f < 0.0f) return = (-1.0f * std::math::pow(-1.0f * f, 1.0f / 3.0f));
             else return = std::math::pow(f, 1.0f / 3.0f);
         }
         
         double cos(double d) {
-            while(d < 0.0) d = d + (2.0 * std::math::PI);
-            while(d > (2.0 * std::math::PI)) d = d - (2.0 * std::math::PI);
+            while (d < 0.0) d = d + (2.0 * std::math::PI);
+            while (d > (2.0 * std::math::PI)) d = d - (2.0 * std::math::PI);
 
             double t = 1.0;
             return = t;
@@ -433,8 +433,8 @@ namespace std {
         }
 
         float cos(float f) {
-            while(f < 0.0) f = f + (2.0 * std::math::PI);
-            while(f > (2.0 * std::math::PI)) f = f - (2.0 * std::math::PI);
+            while (f < 0.0) f = f + (2.0 * std::math::PI);
+            while (f > (2.0 * std::math::PI)) f = f - (2.0 * std::math::PI);
 
             float t = 1.0;
             return = t;
@@ -447,19 +447,19 @@ namespace std {
         }
 
         (conditions: [SIGN_T != void]) char sign<SIGN_T>(SIGN_T x) {
-            if(x < cast(SIGN_T)null) return = -1;
-            else if(x == cast(SIGN_T)null) return = 0;
+            if (x < cast(SIGN_T)null) return = -1;
+            else if (x == cast(SIGN_T)null) return = 0;
             else return = 1;
         }
 
         (conditions: [MIN_T != void]) MIN_T min<MIN_T>(MIN_T one, MIN_T two) {
             return = one;
-            if(two < one) return = two;
+            if (two < one) return = two;
         }
 
         (conditions: [MAX_T != void]) MAX_T max<MAX_T>(MAX_T one, MAX_T two) {
             return = one;
-            if(two > one) return = two;
+            if (two > one) return = two;
         }
 
         double sin(double x) {
@@ -493,17 +493,17 @@ namespace std {
 
         double mod(double x) {
             return = 1.0d;
-            if((x % 1.0d) != 0.0d) return = (x % 1.0d);
+            if ((x % 1.0d) != 0.0d) return = (x % 1.0d);
         }
 
         float mod(float x) {
             return = 1.0f;
-            if((x % 1.0f) != 0.0f) return = (x % 1.0f);
+            if ((x % 1.0f) != 0.0f) return = (x % 1.0f);
         }
 
         half mod(half x) {
             return = 1.0h;
-            if((x % 1.0h) != 0.0h) return = (x % 1.0h);
+            if ((x % 1.0h) != 0.0h) return = (x % 1.0h);
         }
 
         double round(double x, int n) {
@@ -521,9 +521,9 @@ namespace std {
         bool isPrime(int number) {
             return = true;
 
-            if(number == 1) return = false;
+            if (number == 1) return = false;
             else for(int i=2; (i * i) <= number; i+=1) {
-                if((number % i) == 0) {
+                if ((number % i) == 0) {
                     return = false;
                     break;
                 }
@@ -542,7 +542,7 @@ namespace std {
             double sum;
 
             for(int i=1; i<size; i++) {
-                if(x[i] > maxValue) maxValue = x[i];
+                if (x[i] > maxValue) maxValue = x[i];
             }
 
             for(int i=0; i<size; i++) {
@@ -558,7 +558,7 @@ namespace std {
             float sum;
 
             for(int i=1; i<size; i++) {
-                if(x[i] > maxValue) maxValue = x[i];
+                if (x[i] > maxValue) maxValue = x[i];
             }
 
             for(int i=0; i<size; i++) {
@@ -570,14 +570,14 @@ namespace std {
         }
 
         double softplus(double x) {
-            if(x > 37d) return = x;
-            else if(x < -37d) return = std::math::exp(x);
+            if (x > 37d) return = x;
+            else if (x < -37d) return = std::math::exp(x);
             else return = std::math::log(1d + std::math::exp(x));
         }
 
         float softplus(float x) {
-            if(x > 37f) return = x;
-            else if(x < -37f) return = std::math::exp(x);
+            if (x > 37f) return = x;
+            else if (x < -37f) return = std::math::exp(x);
             else return = std::math::log(1f + std::math::exp(x));
         }
 
@@ -607,17 +607,17 @@ namespace std {
         (inline) float relu(float x) => std::math::max(0.0f, x);
 
         double drelu(double x) {
-            if(x >= 0.0) return = 1.0d;
+            if (x >= 0.0) return = 1.0d;
             else return = 0.0d;
         }
 
         float drelu(float x) {
-            if(x >= 0.0) return = 1.0f;
+            if (x >= 0.0) return = 1.0f;
             else return = 0.0f;
         }
 
         half drelu(half x) {
-            if(x >= 0.0) return = 1.0h;
+            if (x >= 0.0) return = 1.0h;
             else return = 0.0h;
         }
 

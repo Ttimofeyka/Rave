@@ -41,7 +41,7 @@ NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, boo
     this->isVolatile = isVolatile;
     this->isChanged = false;
 
-    if(value != nullptr && instanceof<TypeArray>(type) && ((TypeArray*)type)->count == 0) {
+    if (value != nullptr && instanceof<TypeArray>(type) && ((TypeArray*)type)->count == 0) {
         // Set the count of array elements to the count of values
         ((TypeArray*)this->type)->count = new NodeInt(((NodeArray*)this->value)->values.size());
     }
@@ -64,18 +64,18 @@ NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, boo
     this->isNoCopy = false;
 
     for(size_t i=0; i<this->mods.size(); i++) {
-        if(this->mods[i].name == "noCopy") this->isNoCopy = true;
+        if (this->mods[i].name == "noCopy") this->isNoCopy = true;
     }
 
-    if(value != nullptr && instanceof<TypeArray>(type) && ((TypeArray*)type)->count == nullptr) {
+    if (value != nullptr && instanceof<TypeArray>(type) && ((TypeArray*)type)->count == nullptr) {
         // Set the count of array elements to the count of values
         ((TypeArray*)this->type)->count = new NodeInt(((NodeArray*)this->value)->values.size());
     }
 }
 
 NodeVar::~NodeVar() {
-    if(value != nullptr) delete value;
-    if(type != nullptr && !instanceof<TypeBasic>(type) && !instanceof<TypeVoid>(type)) delete type;
+    if (value != nullptr) delete value;
+    if (type != nullptr && !instanceof<TypeBasic>(type) && !instanceof<TypeVoid>(type)) delete type;
 }
 
 Type* NodeVar::getType() {return this->type->copy();}
@@ -90,99 +90,99 @@ Node* NodeVar::copy() {
 }
 
 void NodeVar::check() {
-    if(isChecked) return;
+    if (isChecked) return;
     isChecked = true;
 
-    if(namespacesNames.size() > 0) name = namespacesToString(namespacesNames, name);
-    if(isGlobal) AST::varTable[this->name] = this;
+    if (namespacesNames.size() > 0) name = namespacesToString(namespacesNames, name);
+    if (isGlobal) AST::varTable[this->name] = this;
 
     Types::replaceTemplates(&type);
 
-    if(instanceof<TypeBasic>(type) && !AST::aliasTypes.empty()) {
+    if (instanceof<TypeBasic>(type) && !AST::aliasTypes.empty()) {
         Type* _type = type->check(nullptr);
-        if(_type != nullptr) type = _type;
+        if (_type != nullptr) type = _type;
     }
 }
 
 void Predefines::handle(Type* type, Node* node, int loc) {
-    if(AST::structTable[((TypeStruct*)type)->name]->predefines.size() > 0) {
+    if (AST::structTable[((TypeStruct*)type)->name]->predefines.size() > 0) {
         NodeGet* getter = new NodeGet(node, "", true, loc);
 
         for(auto& predefine : AST::structTable[((TypeStruct*)type)->name]->predefines) {
             getter->field = predefine.first;
 
-            if(predefine.second.isStruct) Predefines::handle(getter->getType(), getter, loc);
-            else if(predefine.second.value != nullptr) Binary::operation(TokType::Equ, getter, predefine.second.value, loc);
+            if (predefine.second.isStruct) Predefines::handle(getter->getType(), getter, loc);
+            else if (predefine.second.value != nullptr) Binary::operation(TokType::Equ, getter, predefine.second.value, loc);
         }
     }
 }
 
 RaveValue NodeVar::generate() {
-    while(AST::aliasTypes.find(type->toString()) != AST::aliasTypes.end()) type = AST::aliasTypes[type->toString()];
+    while (AST::aliasTypes.find(type->toString()) != AST::aliasTypes.end()) type = AST::aliasTypes[type->toString()];
 
     Types::replaceTemplates(&type);
     Types::replaceComptime(type);
 
-    if(instanceof<TypeVoid>(type)) {
+    if (instanceof<TypeVoid>(type)) {
         // error: variable cannot be void
         generator->error("using \033[1mvoid\033[22m as a variable type is prohibited!", loc);
         return {};
     }
 
-    if(instanceof<TypeAlias>(type)) {
-        if(currScope != nullptr) currScope->aliasTable[name] = value;
+    if (instanceof<TypeAlias>(type)) {
+        if (currScope != nullptr) currScope->aliasTable[name] = value;
         else AST::aliasTable[name] = value;
 
         return {};
     }
 
-    if(instanceof<TypeAuto>(this->type) && value == nullptr) {
+    if (instanceof<TypeAuto>(this->type) && value == nullptr) {
         generator->error("using \033[1mauto\033[22m without an explicit value is prohibited!", loc);
         return {};
     }
 
-    if(type != nullptr) checkForTemplated(type);
+    if (type != nullptr) checkForTemplated(type);
 
     linkName = this->name;
 
     int alignment = -1;
  
-    if(currScope == nullptr) {
+    if (currScope == nullptr) {
         this->isUsed = true; // Maybe rework it?
 
         bool noMangling = false;
 
         for(size_t i=0; i<this->mods.size(); i++) {
-            while(AST::aliasTable.find(this->mods[i].name) != AST::aliasTable.end()) {
-                if(instanceof<NodeArray>(AST::aliasTable[this->mods[i].name])) {
+            while (AST::aliasTable.find(this->mods[i].name) != AST::aliasTable.end()) {
+                if (instanceof<NodeArray>(AST::aliasTable[this->mods[i].name])) {
                     mods[i].name = ((NodeString*)((NodeArray*)AST::aliasTable[this->mods[i].name])->values[0])->value;
                     mods[i].value = ((NodeArray*)AST::aliasTable[this->mods[i].name])->values[1];
                 }
                 else mods[i].name = ((NodeString*)AST::aliasTable[this->mods[i].name])->value;
             }
-            if(mods[i].name == "C") noMangling = true;
-            else if(mods[i].name == "volatile") isVolatile = true;
-            else if(mods[i].name == "linkname") {
+            if (mods[i].name == "C") noMangling = true;
+            else if (mods[i].name == "volatile") isVolatile = true;
+            else if (mods[i].name == "linkname") {
                 Node* newLinkName = mods[i].value->comptime();
-                if(!instanceof<NodeString>(newLinkName)) generator->error("value type of \033[1mlinkname\033[22m must be a string!", loc);
+                if (!instanceof<NodeString>(newLinkName)) generator->error("value type of \033[1mlinkname\033[22m must be a string!", loc);
                 linkName = ((NodeString*)newLinkName)->value;
             }
-            else if(mods[i].name == "noOperators") isNoOperators = true;
-            else if(mods[i].name == "align") {
+            else if (mods[i].name == "noOperators") isNoOperators = true;
+            else if (mods[i].name == "align") {
                 Node* newAlignment = mods[i].value->comptime();
-                if(!instanceof<NodeInt>(newAlignment)) generator->error("value type of \033[1malign\033[22m must be an integer!", loc);
+                if (!instanceof<NodeInt>(newAlignment)) generator->error("value type of \033[1malign\033[22m must be an integer!", loc);
                 alignment = ((NodeInt*)(mods[i].value))->value.to_int();
             }
-            else if(mods[i].name == "nozeroinit") noZeroInit = true;
+            else if (mods[i].name == "nozeroinit") noZeroInit = true;
         }
 
-        if(!instanceof<TypeAuto>(this->type)) {
-            if(instanceof<NodeInt>(this->value)) ((NodeInt*)this->value)->isVarVal = this->type;
+        if (!instanceof<TypeAuto>(this->type)) {
+            if (instanceof<NodeInt>(this->value)) ((NodeInt*)this->value)->isVarVal = this->type;
             linkName = ((linkName == this->name && !noMangling) ? generator->mangle(name, false, false) : linkName);
 
             LLVMTypeRef globalType = generator->genType(this->type, loc);
 
-            if(generator->globals.find(this->name) != generator->globals.end() && LLVMGetLinkage(generator->globals[this->name].value) == LLVMExternalLinkage) {
+            if (generator->globals.find(this->name) != generator->globals.end() && LLVMGetLinkage(generator->globals[this->name].value) == LLVMExternalLinkage) {
                 return {};
             }
 
@@ -192,18 +192,18 @@ RaveValue NodeVar::generate() {
                 linkName.c_str()
             ), (instanceof<TypeConst>(type) ? new TypePointer(((TypeConst*)type)->instance) : new TypePointer(this->type))};
 
-            if(!isExtern) {
-                if(value != nullptr) LLVMSetInitializer(generator->globals[name].value, this->value->generate().value);
-                else if(!noZeroInit) LLVMSetInitializer(generator->globals[name].value, LLVMConstNull(globalType));
+            if (!isExtern) {
+                if (value != nullptr) LLVMSetInitializer(generator->globals[name].value, this->value->generate().value);
+                else if (!noZeroInit) LLVMSetInitializer(generator->globals[name].value, LLVMConstNull(globalType));
 
                 LLVMSetGlobalConstant(generator->globals[this->name].value, this->isConst);
-                if(alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
+                if (alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
             }
             else LLVMSetLinkage(generator->globals[this->name].value, LLVMExternalLinkage);
         }
         else {
             RaveValue val;
-            if(instanceof<NodeUnary>(this->value)) val = ((NodeUnary*)this->value)->generateConst();
+            if (instanceof<NodeUnary>(this->value)) val = ((NodeUnary*)this->value)->generateConst();
             else val = this->value->generate();
 
             linkName = ((linkName == this->name && !noMangling) ? generator->mangle(name,false,false) : linkName);
@@ -217,32 +217,32 @@ RaveValue NodeVar::generate() {
 
             LLVMSetInitializer(generator->globals[this->name].value, val.value);
 
-            if(alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
-            else if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(generator->globals[this->name].value, generator->getAlignment(this->type));
+            if (alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
+            else if (!instanceof<TypeVector>(this->type)) LLVMSetAlignment(generator->globals[this->name].value, generator->getAlignment(this->type));
 
-            if(isVolatile) LLVMSetVolatile(generator->globals[name].value, true);
+            if (isVolatile) LLVMSetVolatile(generator->globals[name].value, true);
 
             return {};
         }
 
-        if(this->isComdat) {
+        if (this->isComdat) {
             LLVMComdatRef comdat = LLVMGetOrInsertComdat(generator->lModule, linkName.c_str());
             LLVMSetComdatSelectionKind(comdat, LLVMAnyComdatSelectionKind);
             LLVMSetComdat(generator->globals[this->name].value, comdat);
             LLVMSetLinkage(generator->globals[this->name].value, LLVMLinkOnceODRLinkage);
         }
-        else if(isExtern) LLVMSetLinkage(generator->globals[this->name].value, LLVMExternalLinkage);
+        else if (isExtern) LLVMSetLinkage(generator->globals[this->name].value, LLVMExternalLinkage);
 
-        if(isVolatile) LLVMSetVolatile(generator->globals[this->name].value, true);
+        if (isVolatile) LLVMSetVolatile(generator->globals[this->name].value, true);
 
-        if(alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
-        else if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(generator->globals[this->name].value, generator->getAlignment(this->type));
+        if (alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
+        else if (!instanceof<TypeVector>(this->type)) LLVMSetAlignment(generator->globals[this->name].value, generator->getAlignment(this->type));
 
-        if(!isExtern) {
-            if(value == nullptr) LLVMSetInitializer(generator->globals[this->name].value, LLVMConstNull(generator->genType(this->type, this->loc)));
+        if (!isExtern) {
+            if (value == nullptr) LLVMSetInitializer(generator->globals[this->name].value, LLVMConstNull(generator->genType(this->type, this->loc)));
             else {
                 RaveValue val;
-                if(instanceof<NodeUnary>(this->value)) val = ((NodeUnary*)this->value)->generateConst();
+                if (instanceof<NodeUnary>(this->value)) val = ((NodeUnary*)this->value)->generateConst();
                 else val = this->value->generate();
                 LLVMSetInitializer(generator->globals[this->name].value, val.value);
             }
@@ -252,22 +252,22 @@ RaveValue NodeVar::generate() {
     }
     else {
         for(size_t i=0; i<this->mods.size(); i++) {
-            if(mods[i].name == "volatile") isVolatile = true;
-            else if(mods[i].name == "noOperators") isNoOperators = true;
-            else if(mods[i].name == "nozeroinit") noZeroInit = true;
+            if (mods[i].name == "volatile") isVolatile = true;
+            else if (mods[i].name == "noOperators") isNoOperators = true;
+            else if (mods[i].name == "nozeroinit") noZeroInit = true;
         }
 
         currScope->localVars[this->name] = this;
 
-        if(instanceof<TypeAuto>(this->type)) {
-            if(instanceof<NodeCall>(this->value)) {
+        if (instanceof<TypeAuto>(this->type)) {
+            if (instanceof<NodeCall>(this->value)) {
                 // Constructor?
                 NodeCall* ncall = (NodeCall*)this->value;
-                if(instanceof<NodeIden>(ncall->func)) {
+                if (instanceof<NodeIden>(ncall->func)) {
                     NodeIden* niden = (NodeIden*)ncall->func;
-                    if(niden->name.find('<') != std::string::npos && AST::structTable.find(niden->name.substr(0, niden->name.find('<'))) != AST::structTable.end()) {
+                    if (niden->name.find('<') != std::string::npos && AST::structTable.find(niden->name.substr(0, niden->name.find('<'))) != AST::structTable.end()) {
                         // Excellent!
-                        if(AST::structTable.find(niden->name) != AST::structTable.end()) this->type = new TypeStruct(niden->name);
+                        if (AST::structTable.find(niden->name) != AST::structTable.end()) this->type = new TypeStruct(niden->name);
                         else {
                             // Generate structure with template
                             std::string sTypes = niden->name.substr(niden->name.find('<')+1, niden->name.find('>'));
@@ -277,9 +277,9 @@ RaveValue NodeVar::generate() {
                             Parser parser = Parser(lexer.tokens, "(BUILTIN)");
                             std::vector<Type*> types;
 
-                            while(true) {
-                                if(parser.peek()->type == TokType::Comma) parser.next();
-                                else if(parser.peek()->type == TokType::Eof) break;
+                            while (true) {
+                                if (parser.peek()->type == TokType::Comma) parser.next();
+                                else if (parser.peek()->type == TokType::Eof) break;
                                 types.push_back(parser.parseType());
                             }
 
@@ -292,9 +292,9 @@ RaveValue NodeVar::generate() {
                         currScope->localScope[this->name] = LLVM::alloc(val.type, name.c_str());
                         this->type = value->getType();
 
-                        if(isVolatile) LLVMSetVolatile(currScope->localScope[this->name].value, true);
+                        if (isVolatile) LLVMSetVolatile(currScope->localScope[this->name].value, true);
 
-                        if(generator->settings.outDebugInfo) {
+                        if (generator->settings.outDebugInfo) {
                             auto debugLoc = LLVMDIBuilderCreateDebugLocation(generator->context, loc, 0, AST::funcTable[currScope->funcName]->diFuncScope, nullptr);
     
                             auto varType = debugInfo->genType(type, loc);
@@ -313,8 +313,8 @@ RaveValue NodeVar::generate() {
                             );
                         }
 
-                        if(alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
-                        else if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->localScope[this->name].value, generator->getAlignment(this->type));
+                        if (alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
+                        else if (!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->localScope[this->name].value, generator->getAlignment(this->type));
                         
                         LLVMBuildStore(generator->builder, val.value, currScope->localScope[this->name].value);
 
@@ -326,9 +326,9 @@ RaveValue NodeVar::generate() {
                     currScope->localScope[this->name] = LLVM::alloc(val.type, name.c_str());
                     this->type = value->getType();
 
-                    if(isVolatile) LLVMSetVolatile(currScope->localScope[this->name].value, true);
+                    if (isVolatile) LLVMSetVolatile(currScope->localScope[this->name].value, true);
 
-                    if(generator->settings.outDebugInfo) {
+                    if (generator->settings.outDebugInfo) {
                         auto debugLoc = LLVMDIBuilderCreateDebugLocation(generator->context, loc, 0, AST::funcTable[currScope->funcName]->diFuncScope, nullptr);
 
                         auto varType = debugInfo->genType(type, loc);
@@ -347,8 +347,8 @@ RaveValue NodeVar::generate() {
                         );
                     }
 
-                    if(alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
-                    else if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->localScope[this->name].value, generator->getAlignment(this->type));
+                    if (alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
+                    else if (!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->localScope[this->name].value, generator->getAlignment(this->type));
 
                     LLVMBuildStore(generator->builder, val.value, currScope->localScope[this->name].value);
 
@@ -360,9 +360,9 @@ RaveValue NodeVar::generate() {
                 currScope->localScope[this->name] = LLVM::alloc(val.type, name.c_str());
                 this->type = value->getType();
 
-                if(isVolatile) LLVMSetVolatile(currScope->localScope[this->name].value, true);
+                if (isVolatile) LLVMSetVolatile(currScope->localScope[this->name].value, true);
 
-                if(generator->settings.outDebugInfo) {
+                if (generator->settings.outDebugInfo) {
                     auto debugLoc = LLVMDIBuilderCreateDebugLocation(generator->context, loc, 0, AST::funcTable[currScope->funcName]->diFuncScope, nullptr);
 
                     auto varType = debugInfo->genType(type, loc);
@@ -381,20 +381,20 @@ RaveValue NodeVar::generate() {
                     );
                 }
 
-                if(alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
-                else if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->localScope[this->name].value, generator->getAlignment(this->type));
+                if (alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
+                else if (!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->localScope[this->name].value, generator->getAlignment(this->type));
 
                 LLVMBuildStore(generator->builder, val.value, currScope->localScope[this->name].value);
                 return currScope->localScope[this->name];
             }
         }
 
-        if(instanceof<NodeInt>(this->value) && !isFloatType(this->type)) ((NodeInt*)this->value)->isVarVal = this->type;
+        if (instanceof<NodeInt>(this->value) && !isFloatType(this->type)) ((NodeInt*)this->value)->isVarVal = this->type;
 
         LLVMTypeRef gT = generator->genType(this->type, this->loc);
         currScope->localScope[this->name] = LLVM::alloc(this->type, name.c_str());
 
-        if(generator->settings.outDebugInfo) {
+        if (generator->settings.outDebugInfo) {
             auto debugLoc = LLVMDIBuilderCreateDebugLocation(generator->context, loc, 0, AST::funcTable[currScope->funcName]->diFuncScope, nullptr);
 
             auto varType = debugInfo->genType(type, loc);
@@ -413,14 +413,14 @@ RaveValue NodeVar::generate() {
             );
         }
 
-        if(isVolatile) LLVMSetVolatile(currScope->localScope[this->name].value, true);
-        if(alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
-        else if(!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->getWithoutLoad(this->name, this->loc).value, generator->getAlignment(this->type));
+        if (isVolatile) LLVMSetVolatile(currScope->localScope[this->name].value, true);
+        if (alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
+        else if (!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->getWithoutLoad(this->name, this->loc).value, generator->getAlignment(this->type));
 
-        if(instanceof<TypeStruct>(type)) Predefines::handle(type, new NodeIden(name, loc), loc);
+        if (instanceof<TypeStruct>(type)) Predefines::handle(type, new NodeIden(name, loc), loc);
 
-        if(this->value != nullptr) Binary::operation(TokType::Equ, new NodeIden(name, loc), value, loc);
-        else if((instanceof<TypeBasic>(type) || instanceof<TypePointer>(type)) && !noZeroInit) LLVMBuildStore(generator->builder, LLVMConstNull(gT), currScope->localScope[this->name].value);
+        if (this->value != nullptr) Binary::operation(TokType::Equ, new NodeIden(name, loc), value, loc);
+        else if ((instanceof<TypeBasic>(type) || instanceof<TypePointer>(type)) && !noZeroInit) LLVMBuildStore(generator->builder, LLVMConstNull(gT), currScope->localScope[this->name].value);
 
         return currScope->localScope[this->name];
     }

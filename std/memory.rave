@@ -36,11 +36,11 @@ namespace std {
     (nochecks) void memset(void* dest, char c, usize n) {
         usize idx = 0;
 
-        @if(__RAVE_AVX2) {
+        @if (__RAVE_AVX2) {
             int8 value = @vFrom(int8, cast(int)c);
             
             auto align = 16 - (ptoi(dest) & 15);
-            while((align > 0) && (idx < n)) {
+            while ((align > 0) && (idx < n)) {
                 dest[idx] = c;
                 align -= 1;
                 idx += 1;
@@ -48,11 +48,11 @@ namespace std {
 
             for(; (idx + 31) < n; idx+=32) @vStore(value, &dest[idx]);
         }
-        @else @if(__RAVE_SSE2) {
+        @else @if (__RAVE_SSE2) {
             int4 value = @vFrom(int4, cast(int)c);
 
             auto align = 16 - (ptoi(dest) & 15);
-            while((align > 0) && (idx < n)) {
+            while ((align > 0) && (idx < n)) {
                 dest[idx] = c;
                 align -= 1;
                 idx += 1;
@@ -70,7 +70,7 @@ namespace std {
 
         usize i = 0;
 
-        @if(__RAVE_SSE2) {
+        @if (__RAVE_SSE2) {
             int4 left, right;
 
             for(; (i + 15) < n; i+=16) {
@@ -78,14 +78,14 @@ namespace std {
                 right = @vLoad(int4, &two[i], false);
 
                 bool[4] result = left != right;
-                if(result[0] || result[1] || result[2] || result[3]) @return(false);
+                if (result[0] || result[1] || result[2] || result[3]) @return(false);
 
                 i += 16;
             }
         }
 
         for(; i<n; i+=1) {
-            if(one[i] != two[i]) @return(false);
+            if (one[i] != two[i]) @return(false);
         }
     }
 

@@ -20,17 +20,17 @@ NodeSwitch::NodeSwitch(Node* expr, Node* _default, std::vector<std::pair<std::ve
 }
 
 NodeSwitch::~NodeSwitch() {
-    if(expr != nullptr) delete expr;
-    if(_default != nullptr) delete _default;
+    if (expr != nullptr) delete expr;
+    if (_default != nullptr) delete _default;
     
     for(size_t i=0; i<statements.size(); i++) {
         for(int j=0; j<statements[i].first.size(); j++) {
-            if(statements[i].first[j] != nullptr) delete statements[i].first[j];
+            if (statements[i].first[j] != nullptr) delete statements[i].first[j];
         }
 
         statements[i].first.clear();
 
-        if(statements[i].second != nullptr) delete statements[i].second;
+        if (statements[i].second != nullptr) delete statements[i].second;
     }
 }
 
@@ -39,7 +39,7 @@ Type* NodeSwitch::getType() {return typeVoid;}
 void NodeSwitch::check() {isChecked = true;}
 
 RaveValue NodeSwitch::generate() {
-    if(statements.empty()) {
+    if (statements.empty()) {
         generator->error("at least 1 case is required in switch!", loc);
         return {};
     }

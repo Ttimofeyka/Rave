@@ -41,14 +41,14 @@ NodeStruct::NodeStruct(std::string name, std::vector<Node*> elements, int loc, s
     this->lengthVar = "";
 
     for(size_t i=0; i<elements.size(); i++) {
-        if(instanceof<NodeVar>(elements[i])) variables.push_back((NodeVar*)elements[i]);
+        if (instanceof<NodeVar>(elements[i])) variables.push_back((NodeVar*)elements[i]);
     }
 }
 
 NodeStruct::~NodeStruct() {
-    for(size_t i=0; i<elements.size(); i++) if(elements[i] != nullptr) delete elements[i];
-    for(size_t i=0; i<oldElements.size(); i++) if(oldElements[i] != nullptr) delete oldElements[i];
-    if(destructor != nullptr) delete destructor;
+    for(size_t i=0; i<elements.size(); i++) if (elements[i] != nullptr) delete elements[i];
+    for(size_t i=0; i<oldElements.size(); i++) if (oldElements[i] != nullptr) delete oldElements[i];
+    if (destructor != nullptr) delete destructor;
 }
 
 Node* NodeStruct::comptime() {return this;}
@@ -70,27 +70,27 @@ Type* checkForTemplated(Type* type) {
     Type* loaded = type;
     Type* parent = nullptr;
 
-    while(instanceof<TypeConst>(loaded) || instanceof<TypePointer>(loaded) || instanceof<TypeArray>(loaded)) {
+    while (instanceof<TypeConst>(loaded) || instanceof<TypePointer>(loaded) || instanceof<TypeArray>(loaded)) {
         parent = loaded;
         loaded = loaded->getElType();
     }
 
-    if(instanceof<TypeStruct>(loaded)) {
-        if(generator->toReplace.find(loaded->toString()) != generator->toReplace.end()) loaded = generator->toReplace[loaded->toString()];
+    if (instanceof<TypeStruct>(loaded)) {
+        if (generator->toReplace.find(loaded->toString()) != generator->toReplace.end()) loaded = generator->toReplace[loaded->toString()];
 
-        if(instanceof<TypeStruct>(loaded)) {
+        if (instanceof<TypeStruct>(loaded)) {
             TypeStruct* ts = (TypeStruct*)loaded;
 
-            if(ts->types.size() > 0) {
+            if (ts->types.size() > 0) {
                 for(size_t i=0; i<ts->types.size(); i++) ts->types[i] = checkForTemplated(ts->types[i]);
                 ts->updateByTypes();
             }
         }
 
-        if(parent != nullptr) {
-            if(instanceof<TypePointer>(parent)) ((TypePointer*)parent)->instance = loaded;
-            else if(instanceof<TypeArray>(parent)) ((TypeArray*)parent)->element = loaded;
-            else if(instanceof<TypeConst>(parent)) ((TypeConst*)parent)->instance = loaded;
+        if (parent != nullptr) {
+            if (instanceof<TypePointer>(parent)) ((TypePointer*)parent)->instance = loaded;
+            else if (instanceof<TypeArray>(parent)) ((TypeArray*)parent)->element = loaded;
+            else if (instanceof<TypeConst>(parent)) ((TypeConst*)parent)->instance = loaded;
 
             return type;
         }
@@ -105,7 +105,7 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
     std::vector<LLVMTypeRef> values;
 
     for(size_t i=0; i<this->elements.size(); i++) {
-        if(instanceof<NodeVar>(this->elements[i])) {
+        if (instanceof<NodeVar>(this->elements[i])) {
             NodeVar* var = (NodeVar*)this->elements[i];
             var->isExtern = (var->isExtern || this->isImported);
             var->isComdat = this->isComdat;
@@ -113,10 +113,10 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
 
             Types::replaceTemplates(&var->type);
 
-            if(var->value != nullptr && !instanceof<NodeNone>(var->value)) this->predefines[var->name] = StructPredefined{.element = i, .value = var->value, .isStruct = false, .name = var->name};
-            else if(instanceof<TypeStruct>(var->type)) {
+            if (var->value != nullptr && !instanceof<NodeNone>(var->value)) this->predefines[var->name] = StructPredefined{.element = i, .value = var->value, .isStruct = false, .name = var->name};
+            else if (instanceof<TypeStruct>(var->type)) {
                 TypeStruct* ts = (TypeStruct*)var->type;
-                if(AST::structTable.find(ts->name) != AST::structTable.end() && AST::structTable[ts->name]->hasPredefines()) {
+                if (AST::structTable.find(ts->name) != AST::structTable.end() && AST::structTable[ts->name]->hasPredefines()) {
                     this->predefines[var->name] = StructPredefined{.element = i, .value = nullptr, .isStruct = true, .name = var->name};
                 }
             }
@@ -125,9 +125,9 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
         }
         else {
             NodeFunc* func = (NodeFunc*)this->elements[i];
-            if(func->isCtargs) continue;
-            if(func->origName == "this") {
-                if(func->isChecked) {
+            if (func->isCtargs) continue;
+            if (func->origName == "this") {
+                if (func->isChecked) {
                     func->isMethod = false;
                     func->isChecked = false;
                 }
@@ -137,7 +137,7 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 func->isTemplatePart = this->isLinkOnce;
                 func->isComdat = this->isComdat;
 
-                if(this->isImported) {
+                if (this->isImported) {
                     func->isExtern = true;
                     func->check();
                     this->constructors.push_back(func);
@@ -149,7 +149,7 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 func->check();
                 this->constructors.push_back(func);
             }
-            else if(func->origName == "~this") {
+            else if (func->origName == "~this") {
                 this->destructor = func;
                 func->name = "~" + this->origname;
                 func->namespacesNames = std::vector<std::string>(this->namespacesNames);
@@ -158,11 +158,11 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 func->isChecked = false;
 
                 Type* outType = (!this->constructors.empty() ? this->constructors[0]->type : new TypePointer(new TypeStruct(this->name)));
-                if(instanceof<TypeStruct>(outType)) outType = new TypePointer(outType);
+                if (instanceof<TypeStruct>(outType)) outType = new TypePointer(outType);
 
                 this->destructor->args = std::vector<FuncArgSet>({FuncArgSet{.name = "this", .type = outType, .internalTypes = {outType}}});
 
-                if(isImported) {
+                if (isImported) {
                     func->isExtern = true;
                     func->check();
                     continue;
@@ -170,33 +170,33 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
 
                 func->check();
             }
-            else if(func->origName.find('(') != std::string::npos) {
+            else if (func->origName.find('(') != std::string::npos) {
                 func->isTemplatePart = isLinkOnce;
                 func->isComdat = isComdat;
                 func->isChecked = false;
-                if(isImported) func->isExtern = true;
+                if (isImported) func->isExtern = true;
 
                 char oper;
-                if(func->origName.find("(+)") != std::string::npos) {oper = TokType::Plus; func->name = this->name + "(+)";}
-                else if(func->origName.find("(-)") != std::string::npos) {oper = TokType::Minus; func->name = this->name + "(-)";}
-                else if(func->origName.find("(*)") != std::string::npos) {oper = TokType::Multiply; func->name = this->name + "(*)";}
-                else if(func->origName.find("(/)") != std::string::npos) {oper = TokType::Divide; func->name = this->name + "(/)";}
-                else if(func->origName.find("(<)") != std::string::npos) {oper = TokType::Less; func->name = this->name + "(<)";}
-                else if(func->origName.find("(>)") != std::string::npos) {oper = TokType::More; func->name = this->name + "(>)";}
-                else if(func->origName.find("(<=)") != std::string::npos) {oper = TokType::LessEqual; func->name = this->name + "(<=)";}
-                else if(func->origName.find("(>=)") != std::string::npos) {oper = TokType::MoreEqual; func->name = this->name + "(>=)";}
-                else if(func->origName.find("(=)") != std::string::npos) {oper = TokType::Equ; func->name = this->name + "(=)";}
-                else if(func->origName.find("(==)") != std::string::npos) {oper = TokType::Equal; func->name = this->name + "(==)";}
-                else if(func->origName.find("(!=)") != std::string::npos) {oper = TokType::Nequal; func->name = this->name + "(!=)";}
-                else if(func->origName.find("([])") != std::string::npos) {oper = TokType::Rbra; func->name = this->name + "([])";}
-                else if((func->origName.find("([]=)") != std::string::npos) || (func->origName.find("(=[])") != std::string::npos)) {oper = TokType::Lbra; func->name = this->name + "([]=)";}
-                else if((func->origName.find("([]&)") != std::string::npos) || (func->origName.find("(&[])") != std::string::npos)) {oper = TokType::Amp; func->name = this->name + "([]&)";}
-                else if(func->origName.find("(in)") != std::string::npos) {oper = TokType::In; func->name = this->name + "(in)";}
+                if (func->origName.find("(+)") != std::string::npos) {oper = TokType::Plus; func->name = this->name + "(+)";}
+                else if (func->origName.find("(-)") != std::string::npos) {oper = TokType::Minus; func->name = this->name + "(-)";}
+                else if (func->origName.find("(*)") != std::string::npos) {oper = TokType::Multiply; func->name = this->name + "(*)";}
+                else if (func->origName.find("(/)") != std::string::npos) {oper = TokType::Divide; func->name = this->name + "(/)";}
+                else if (func->origName.find("(<)") != std::string::npos) {oper = TokType::Less; func->name = this->name + "(<)";}
+                else if (func->origName.find("(>)") != std::string::npos) {oper = TokType::More; func->name = this->name + "(>)";}
+                else if (func->origName.find("(<=)") != std::string::npos) {oper = TokType::LessEqual; func->name = this->name + "(<=)";}
+                else if (func->origName.find("(>=)") != std::string::npos) {oper = TokType::MoreEqual; func->name = this->name + "(>=)";}
+                else if (func->origName.find("(=)") != std::string::npos) {oper = TokType::Equ; func->name = this->name + "(=)";}
+                else if (func->origName.find("(==)") != std::string::npos) {oper = TokType::Equal; func->name = this->name + "(==)";}
+                else if (func->origName.find("(!=)") != std::string::npos) {oper = TokType::Nequal; func->name = this->name + "(!=)";}
+                else if (func->origName.find("([])") != std::string::npos) {oper = TokType::Rbra; func->name = this->name + "([])";}
+                else if ((func->origName.find("([]=)") != std::string::npos) || (func->origName.find("(=[])") != std::string::npos)) {oper = TokType::Lbra; func->name = this->name + "([]=)";}
+                else if ((func->origName.find("([]&)") != std::string::npos) || (func->origName.find("(&[])") != std::string::npos)) {oper = TokType::Amp; func->name = this->name + "([]&)";}
+                else if (func->origName.find("(in)") != std::string::npos) {oper = TokType::In; func->name = this->name + "(in)";}
 
                 Types::replaceTemplates(&func->type);
                 for(size_t i=0; i<func->args.size(); i++) Types::replaceTemplates(&func->args[i].type);
 
-                if(oper != TokType::Rbra) func->name = func->name + typesToString(func->args);
+                if (oper != TokType::Rbra) func->name = func->name + typesToString(func->args);
                 this->operators[oper][(oper != TokType::Rbra ? typesToString(func->args) : "")] = func;
                 this->methods.push_back(func);
                 func->check();
@@ -204,13 +204,13 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
             else {
                 Type* outType = nullptr;
 
-                if(!this->constructors.empty()) {
+                if (!this->constructors.empty()) {
                     outType = this->constructors[0]->type;
-                    if(instanceof<TypeStruct>(outType)) outType = new TypePointer(outType);
+                    if (instanceof<TypeStruct>(outType)) outType = new TypePointer(outType);
                 }
                 else outType = new TypePointer(new TypeStruct(this->name));
 
-                if((func->args.size() > 0 && func->args[0].name != "this") || func->args.size() == 0) func->args.insert(func->args.begin(), FuncArgSet{.name = "this", .type = outType, .internalTypes = {outType}});
+                if ((func->args.size() > 0 && func->args[0].name != "this") || func->args.size() == 0) func->args.insert(func->args.begin(), FuncArgSet{.name = "this", .type = outType, .internalTypes = {outType}});
 
                 func->isTemplatePart = this->isLinkOnce;
                 func->name = this->name + "." + func->origName;
@@ -221,10 +221,10 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 Types::replaceTemplates(&func->type);
                 for(size_t i=0; i<func->args.size(); i++) Types::replaceTemplates(&func->args[i].type);
 
-                if(AST::methodTable.find(std::pair<std::string, std::string>(this->name, func->origName)) != AST::methodTable.end()) {
+                if (AST::methodTable.find(std::pair<std::string, std::string>(this->name, func->origName)) != AST::methodTable.end()) {
                     std::string sTypes = typesToString(AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)]->args);
                     std::string types = typesToString(func->args);
-                    if(sTypes != types) {
+                    if (sTypes != types) {
                         func->origName += types;
                         AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)] = func;
                     }
@@ -241,25 +241,25 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
 long NodeStruct::getSize() {
     long result = 0;
     for(size_t i=0; i<this->elements.size(); i++) {
-        if(instanceof<NodeVar>(this->elements[i])) result += ((NodeVar*)this->elements[i])->type->getSize();
+        if (instanceof<NodeVar>(this->elements[i])) result += ((NodeVar*)this->elements[i])->type->getSize();
     }
     return result;
 }
 
 void NodeStruct::check() {
-    if(isChecked) return;
+    if (isChecked) return;
     isChecked = true;
 
-    if(!namespacesNames.empty()) name = namespacesToString(namespacesNames, name);
+    if (!namespacesNames.empty()) name = namespacesToString(namespacesNames, name);
 
-    if(AST::structTable.find(name) != AST::structTable.end()) {
+    if (AST::structTable.find(name) != AST::structTable.end()) {
         noCompile = true;
         return;
     }
 
-    if(!extends.empty()) {
+    if (!extends.empty()) {
         auto extendedIt = AST::structTable.find(extends);
-        if(extendedIt == AST::structTable.end()) {
+        if (extendedIt == AST::structTable.end()) {
             generator->error("extended struct \033[1m" + extends + "\033[22m not found!", loc);
             return;
         }
@@ -267,8 +267,8 @@ void NodeStruct::check() {
         NodeStruct* extended = extendedIt->second;
 
         for(const auto& element : extended->elements) {
-            if(instanceof<NodeVar>(element)) {
-                if(!static_cast<NodeVar*>(element)->isNoCopy) elements.push_back(element);
+            if (instanceof<NodeVar>(element)) {
+                if (!static_cast<NodeVar*>(element)->isNoCopy) elements.push_back(element);
             }
             else elements.push_back(element);
         }
@@ -276,7 +276,7 @@ void NodeStruct::check() {
         methods.reserve(methods.size() + extended->methods.size());
 
         for(const auto& method : extended->methods) {
-            if(!method->isNoCopy) methods.push_back(method);
+            if (!method->isNoCopy) methods.push_back(method);
         }
 
         // this->predefines.insert(this->predefines.end(), extended->predefines.begin(), extended->predefines.end());
@@ -287,8 +287,8 @@ void NodeStruct::check() {
 
 bool NodeStruct::hasPredefines() {
     for(size_t i=0; i<this->elements.size(); i++) {
-        if(instanceof<NodeVar>(this->elements[i])) {
-            if(instanceof<TypeStruct>(((NodeVar*)this->elements[i])->type)) {
+        if (instanceof<NodeVar>(this->elements[i])) {
+            if (instanceof<TypeStruct>(((NodeVar*)this->elements[i])->type)) {
                 return ((TypeStruct*)((NodeVar*)this->elements[i])->type)->name != this->name && AST::structTable[((TypeStruct*)((NodeVar*)this->elements[i])->type)->name]->hasPredefines();
             }
             else return ((NodeVar*)this->elements[i])->value != nullptr;
@@ -304,27 +304,27 @@ std::vector<Node*> NodeStruct::copyElements() {
 }
 
 RaveValue NodeStruct::generate() {
-    if(this->templateNames.size() > 0 || this->noCompile) return {};
+    if (this->templateNames.size() > 0 || this->noCompile) return {};
 
     NodeArray* conditions = nullptr;
 
     for(size_t i=0; i<this->mods.size(); i++) {
-        while(AST::aliasTable.find(this->mods[i].name) != AST::aliasTable.end()) {
-            if(instanceof<NodeArray>(AST::aliasTable[this->mods[i].name])) {
+        while (AST::aliasTable.find(this->mods[i].name) != AST::aliasTable.end()) {
+            if (instanceof<NodeArray>(AST::aliasTable[this->mods[i].name])) {
                 this->mods[i].name = ((NodeString*)(((NodeArray*)AST::aliasTable[this->mods[i].name])->values[0]))->value;
                 this->mods[i].value = ((NodeString*)(((NodeArray*)AST::aliasTable[this->mods[i].name])->values[1]));
             }
             else this->mods[i].name = ((NodeString*)((NodeArray*)AST::aliasTable[this->mods[i].name]))->value;
         }
-        if(this->mods[i].name == "packed") this->isPacked = true;
-        else if(this->mods[i].name == "data") this->dataVar = ((NodeString*)this->mods[i].value->comptime())->value;
-        else if(this->mods[i].name == "length") this->lengthVar = ((NodeString*)this->mods[i].value->comptime())->value;
-        else if(this->mods[i].name == "conditions") conditions = (NodeArray*)this->mods[i].value;
+        if (this->mods[i].name == "packed") this->isPacked = true;
+        else if (this->mods[i].name == "data") this->dataVar = ((NodeString*)this->mods[i].value->comptime())->value;
+        else if (this->mods[i].name == "length") this->lengthVar = ((NodeString*)this->mods[i].value->comptime())->value;
+        else if (this->mods[i].name == "conditions") conditions = (NodeArray*)this->mods[i].value;
     }
 
-    if(conditions != nullptr) for(Node* n : conditions->values) {
+    if (conditions != nullptr) for(Node* n : conditions->values) {
         Node* result = n->comptime();
-        if(instanceof<NodeBool>(result) && !((NodeBool*)result)->value) {
+        if (instanceof<NodeBool>(result) && !((NodeBool*)result)->value) {
             generator->error("The conditions were failed when generating the structure \033[1m" + this->name + "\033[22m!", this->loc);
             return {};
         }
@@ -335,14 +335,14 @@ RaveValue NodeStruct::generate() {
     std::vector<LLVMTypeRef> params = this->getParameters(this->isTemplated);
     LLVMStructSetBody(generator->structures[this->name], params.data(), params.size(), this->isPacked);
 
-    if(!this->constructors.empty()) {
+    if (!this->constructors.empty()) {
         for(size_t i=0; i<this->constructors.size(); i++) {
-            if(!this->constructors[i]->isChecked) this->constructors[i]->check();
+            if (!this->constructors[i]->isChecked) this->constructors[i]->check();
             this->constructors[i]->generate();
         }
     }
 
-    if(this->destructor == nullptr) {
+    if (this->destructor == nullptr) {
         // Creating default (empty) destructor
         this->destructor = new NodeFunc(
             "~" + this->origname, std::vector<FuncArgSet>(),
@@ -352,8 +352,8 @@ RaveValue NodeStruct::generate() {
         this->destructor->namespacesNames = std::vector<std::string>(this->namespacesNames);
         this->destructor->isComdat = this->isComdat;
 
-        if(this->constructors.size() > 0 && instanceof<TypePointer>(this->constructors[0]->type)) {
-            if(isImported) {
+        if (this->constructors.size() > 0 && instanceof<TypePointer>(this->constructors[0]->type)) {
+            if (isImported) {
                 this->destructor->isExtern = true;
                 this->destructor->check();
             }
@@ -366,7 +366,7 @@ RaveValue NodeStruct::generate() {
         }
     }
     else {
-        if(isImported) {
+        if (isImported) {
             this->destructor->isExtern = true;
             this->destructor->check();
         }
@@ -380,14 +380,14 @@ RaveValue NodeStruct::generate() {
 
     for(size_t i=0; i<this->methods.size(); i++) {
         this->methods[i]->check();
-        if(!isImported && !this->methods[i]->isTemplate) this->methods[i]->generate();
+        if (!isImported && !this->methods[i]->isTemplate) this->methods[i]->generate();
     }
 
     return {};
 }
 
 LLVMTypeRef NodeStruct::genWithTemplate(std::string sTypes, std::vector<Type*> types) {
-    if(templateNames.size() == 0) return nullptr;
+    if (templateNames.size() == 0) return nullptr;
 
     std::map<int32_t, Loop> activeLoops = std::map<int32_t, Loop>(generator->activeLoops);
     LLVMBuilderRef builder = generator->builder;
@@ -398,17 +398,17 @@ LLVMTypeRef NodeStruct::genWithTemplate(std::string sTypes, std::vector<Type*> t
 
     std::string _fn = "<";
 
-    if(types.size() != this->templateNames.size()) {
+    if (types.size() != this->templateNames.size()) {
         generator->error("the count of template types is not equal!", this->loc);
         return nullptr;
     }
 
     for(size_t i=0; i<types.size(); i++) {
-        if(instanceof<TypeStruct>(types[i])) {
-            if(AST::structTable.find(((TypeStruct*)types[i])->name) == AST::structTable.end() && !((TypeStruct*)types[i])->types.empty()) generator->genType(types[i], this->loc);
+        if (instanceof<TypeStruct>(types[i])) {
+            if (AST::structTable.find(((TypeStruct*)types[i])->name) == AST::structTable.end() && !((TypeStruct*)types[i])->types.empty()) generator->genType(types[i], this->loc);
         }
 
-        if(instanceof<TypeTemplateMember>(types[i])) {
+        if (instanceof<TypeTemplateMember>(types[i])) {
             // Value instead type
             generator->toReplaceValues[templateNames[i]] = ((TypeTemplateMember*)types[i])->value;
             generator->toReplace[templateNames[i] + "@"] = types[i];

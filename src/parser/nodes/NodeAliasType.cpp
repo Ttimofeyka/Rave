@@ -23,15 +23,15 @@ Node* NodeAliasType::comptime() {return new NodeType(this->value, this->loc);}
 Node* NodeAliasType::copy() {return new NodeAliasType(this->name, this->value->copy(), this->loc);}
 
 void NodeAliasType::check() {
-    if(isChecked) return;
+    if (isChecked) return;
     isChecked = true;
 
-    while(AST::aliasTable.find(name) != AST::aliasTable.end()) name = ((NodeIden*)AST::aliasTable[name])->name;
+    while (AST::aliasTable.find(name) != AST::aliasTable.end()) name = ((NodeIden*)AST::aliasTable[name])->name;
 
-    if(namespacesNames.size() > 0) name = namespacesToString(namespacesNames, name);
+    if (namespacesNames.size() > 0) name = namespacesToString(namespacesNames, name);
     AST::aliasTypes[name] = value;
 }
 
 NodeAliasType::~NodeAliasType() {
-    if(this->value != nullptr && !instanceof<TypeBasic>(this->value) && !instanceof<TypeVoid>(this->value)) delete this->value;
+    if (this->value != nullptr && !instanceof<TypeBasic>(this->value) && !instanceof<TypeVoid>(this->value)) delete this->value;
 }

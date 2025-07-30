@@ -29,10 +29,10 @@ std::string Lexer::getIdentifier() {
 
     std::string buffer = "";
 
-    while(specialChars.find(peek()) == specialChars.end()) {
+    while (specialChars.find(peek()) == specialChars.end()) {
         buffer += peek();
         idx += 1;
-        if(peek() == ':' && this->text[this->idx + 1] == ':') {
+        if (peek() == ':' && this->text[this->idx + 1] == ':') {
             buffer += "::";
             idx += 2;
         }
@@ -44,16 +44,16 @@ std::string Lexer::getIdentifier() {
 std::string Lexer::getString() {
     idx += 1;
     std::string buffer;
-    while(peek() != '"') {
-        if(peek() == '\\') {
+    while (peek() != '"') {
+        if (peek() == '\\') {
             idx += 1;
-            if(peek() == '"') buffer += "\"";
-            else if(peek() == 'n') buffer += "\n";
-            else if(peek() == 'r') buffer += "\r";
-            else if(peek() == 't') buffer += "\t";
-            else if(isdigit(peek())) {
+            if (peek() == '"') buffer += "\"";
+            else if (peek() == 'n') buffer += "\n";
+            else if (peek() == 'r') buffer += "\r";
+            else if (peek() == 't') buffer += "\t";
+            else if (isdigit(peek())) {
                 std::string buffer2;
-                while(isdigit(peek())) {buffer2 += peek(); idx += 1;}
+                while (isdigit(peek())) {buffer2 += peek(); idx += 1;}
                 buffer += replaceAllEscapes(buffer2);
             }
             else buffer += peek();
@@ -61,22 +61,22 @@ std::string Lexer::getString() {
         else buffer += peek();
         idx += 1;
     }
-    if(peek() == '"') this->idx += 1;
+    if (peek() == '"') this->idx += 1;
     return replaceAllEscapes(buffer, false);
 }
 
 std::string Lexer::getChar() {
     idx += 1;
     std::string buffer = "", buffer2 = "";
-    while(peek() != '\'') {
-        if(peek() == '\\' && text[idx + 1] == '\'') {buffer += "'"; idx += 2;}
-        else if(peek() == '\\' && isdigit(text[idx + 1])) {
+    while (peek() != '\'') {
+        if (peek() == '\\' && text[idx + 1] == '\'') {buffer += "'"; idx += 2;}
+        else if (peek() == '\\' && isdigit(text[idx + 1])) {
             buffer2 += peek(); idx += 1;
-            while(isdigit(peek())) {buffer2 += peek(); idx += 1;}
+            while (isdigit(peek())) {buffer2 += peek(); idx += 1;}
             buffer += replaceAllEscapes(buffer2);
             buffer2 = "";
         }
-        else if(peek() == '\\' && text[idx + 1] == '\\') {buffer += "\\"; idx += 2;}
+        else if (peek() == '\\' && text[idx + 1] == '\\') {buffer += "\\"; idx += 2;}
         else {buffer += peek(); idx += 1;}
     }
     next();
@@ -88,8 +88,8 @@ std::string Lexer::getDigit(char numType) {
     bool isHexadecimal = (numType == TokType::HexNumber);
     char currentChar;
 
-    if(isHexadecimal) idx += 2;
-    while((currentChar = peek()) != '\0' && (isdigit(currentChar) || (isHexadecimal && isxdigit(currentChar)))) {
+    if (isHexadecimal) idx += 2;
+    while ((currentChar = peek()) != '\0' && (isdigit(currentChar) || (isHexadecimal && isxdigit(currentChar)))) {
         buffer += currentChar;
         idx += 1;
     }
@@ -102,36 +102,36 @@ Lexer::Lexer(std::string text, int offset) {
 
     auto start = std::chrono::steady_clock::now();
 
-    while(idx < this->text.size()) {
-        while(peek() == '\n' || peek() == '\r' || peek() == ' ' || peek() == '\t') {
-            if(peek() == '\n') line += 1;
+    while (idx < this->text.size()) {
+        while (peek() == '\n' || peek() == '\r' || peek() == ' ' || peek() == '\t') {
+            if (peek() == '\n') line += 1;
             idx += 1;
         }
-        if(peek() == '\0' || peek() == 0 || peek() == EOF) break;
+        if (peek() == '\0' || peek() == 0 || peek() == EOF) break;
         switch(peek()) {
             case '+':
-                if(next() == '=') {tokens.push_back(new Token(TokType::PluEqu, "+=", line)); idx += 1;}
-                else if(peek() == '+') {tokens.push_back(new Token(TokType::PluEqu)); tokens.push_back(new Token(TokType::Number, "1")); idx += 1;}
+                if (next() == '=') {tokens.push_back(new Token(TokType::PluEqu, "+=", line)); idx += 1;}
+                else if (peek() == '+') {tokens.push_back(new Token(TokType::PluEqu)); tokens.push_back(new Token(TokType::Number, "1")); idx += 1;}
                 else tokens.push_back(new Token(TokType::Plus, "+", line));
                 break;
             case '-':
-                if(next() == '=') {tokens.push_back(new Token(TokType::MinEqu, "-=", line)); idx += 1;}
-                else if(peek() == '-') {tokens.push_back(new Token(TokType::MinEqu)); tokens.push_back(new Token(TokType::Number, "1")); idx += 1;}
+                if (next() == '=') {tokens.push_back(new Token(TokType::MinEqu, "-=", line)); idx += 1;}
+                else if (peek() == '-') {tokens.push_back(new Token(TokType::MinEqu)); tokens.push_back(new Token(TokType::Number, "1")); idx += 1;}
                 else tokens.push_back(new Token(TokType::Minus, "-", line));
                 break;
             case '*':
-                if(next() == '=') {tokens.push_back(new Token(TokType::MulEqu, "*=", line)); idx += 1;}
+                if (next() == '=') {tokens.push_back(new Token(TokType::MulEqu, "*=", line)); idx += 1;}
                 else tokens.push_back(new Token(TokType::Multiply, "*", line));
                 break;
             case '/':
                 next();
-                if(peek() == '=') {tokens.push_back(new Token(TokType::DivEqu, "/=", line)); idx += 1;}
-                else if(peek() == '/') {while(peek() != '\n') idx += 1;}
-                else if(peek() == '*') {
+                if (peek() == '=') {tokens.push_back(new Token(TokType::DivEqu, "/=", line)); idx += 1;}
+                else if (peek() == '/') {while (peek() != '\n') idx += 1;}
+                else if (peek() == '*') {
                     idx += 1;
-                    while(peek() != '*' || this->text[this->idx+1] != '/') {
-                        if(peek() == '\n') line += 1;
-                        if(idx+1 >= text.size()) break;
+                    while (peek() != '*' || this->text[this->idx+1] != '/') {
+                        if (peek() == '\n') line += 1;
+                        if (idx+1 >= text.size()) break;
                         this->next();
                     }
                     this->idx += 2;
@@ -139,11 +139,11 @@ Lexer::Lexer(std::string text, int offset) {
                 else tokens.push_back(new Token(TokType::Divide, "/", line));
                 break;
             case '&':
-                if(next() == '&') {tokens.push_back(new Token(TokType::And, "&&", line)); idx += 1;}
+                if (next() == '&') {tokens.push_back(new Token(TokType::And, "&&", line)); idx += 1;}
                 else tokens.push_back(new Token(TokType::Amp, "&", line));
                 break;
             case '|':
-                if(next() == '|') {tokens.push_back(new Token(TokType::Or, "||", line)); idx += 1;}
+                if (next() == '|') {tokens.push_back(new Token(TokType::Or, "||", line)); idx += 1;}
                 else tokens.push_back(new Token(TokType::BitOr, "|", line));
                 break;
             case '(': tokens.push_back(new Token(TokType::Rpar,"(",line)); idx += 1; break;
@@ -160,14 +160,14 @@ Lexer::Lexer(std::string text, int offset) {
             case '"': tokens.push_back(new Token(TokType::String,getString(),line)); break;
             case '\'': tokens.push_back(new Token(TokType::Char,getChar(),line)); break;
             case '.':
-                if(next() == '.') {tokens.push_back(new Token(TokType::SliceOper, "..", line)); idx += 1;}
+                if (next() == '.') {tokens.push_back(new Token(TokType::SliceOper, "..", line)); idx += 1;}
                 else tokens.push_back(new Token(TokType::Dot, ".", line));
                 break;
             case '~':
-                if((idx + 5) < this->text.size()) {
+                if ((idx + 5) < this->text.size()) {
                     int oldIdx = idx;
-                    if(next() == 't' && next() == 'h' && next() == 'i' && next() == 's') {
-                        if(next() != '.') {tokens.push_back(new Token(TokType::Identifier, "~this", line)); idx += 1;}
+                    if (next() == 't' && next() == 'h' && next() == 'i' && next() == 's') {
+                        if (next() != '.') {tokens.push_back(new Token(TokType::Identifier, "~this", line)); idx += 1;}
                         else {tokens.push_back(new Token(TokType::Destructor, "~", line)); idx = oldIdx + 1;}
                     }
                     else {tokens.push_back(new Token(TokType::Destructor, "~", line)); idx = oldIdx + 1;}
@@ -175,39 +175,39 @@ Lexer::Lexer(std::string text, int offset) {
                 else {tokens.push_back(new Token(TokType::Destructor, "~", line)); idx += 1;}
                 break;
             case '>':
-                if(next() == '=') {tokens.push_back(new Token(TokType::MoreEqual, ">=", line)); idx += 1;}
-                else if(peek() == '.') {tokens.push_back(new Token(TokType::BitRight, ">>", line)); idx += 1;}
+                if (next() == '=') {tokens.push_back(new Token(TokType::MoreEqual, ">=", line)); idx += 1;}
+                else if (peek() == '.') {tokens.push_back(new Token(TokType::BitRight, ">>", line)); idx += 1;}
                 else tokens.push_back(new Token(TokType::More, ">", line));
                 break;
             case '<':
-                if(next() == '=') {tokens.push_back(new Token(TokType::LessEqual, "<=", line)); idx += 1;}
-                else if(peek() == '.') {tokens.push_back(new Token(TokType::BitLeft, "<.", line)); idx += 1;}
+                if (next() == '=') {tokens.push_back(new Token(TokType::LessEqual, "<=", line)); idx += 1;}
+                else if (peek() == '.') {tokens.push_back(new Token(TokType::BitLeft, "<.", line)); idx += 1;}
                 else tokens.push_back(new Token(TokType::Less, "<", line));
                 break;
             case '=':
-                if(next() == '=') {tokens.push_back(new Token(TokType::Equal, "==", line)); idx += 1;}
-                else if(peek() == '>') {tokens.push_back(new Token(TokType::ShortRet, "=>", line)); idx += 1;}
+                if (next() == '=') {tokens.push_back(new Token(TokType::Equal, "==", line)); idx += 1;}
+                else if (peek() == '>') {tokens.push_back(new Token(TokType::ShortRet, "=>", line)); idx += 1;}
                 else tokens.push_back(new Token(TokType::Equ, "=", line));
                 break;
             case '!':
-                if(next() == '=') {tokens.push_back(new Token(TokType::Nequal, "!=", line)); idx += 1;}
-                else if(peek() == '!') {tokens.push_back(new Token(TokType::BitXor, "!!", line)); idx += 1;}
-                else if(peek() == 'i' && text[idx + 1] == 'n' && (text[idx + 2] == ' ' || text[idx + 2] == '\n' || text[idx + 2] == '\t')) {
+                if (next() == '=') {tokens.push_back(new Token(TokType::Nequal, "!=", line)); idx += 1;}
+                else if (peek() == '!') {tokens.push_back(new Token(TokType::BitXor, "!!", line)); idx += 1;}
+                else if (peek() == 'i' && text[idx + 1] == 'n' && (text[idx + 2] == ' ' || text[idx + 2] == '\n' || text[idx + 2] == '\t')) {
                     idx += 3;
                     tokens.push_back(new Token(TokType::NeIn, "!in", line));
                 }
                 else tokens.push_back(new Token(TokType::Ne, "!", line));
                 break;
             default:
-                if(isdigit(peek())) {
+                if (isdigit(peek())) {
                     idx += 1;
-                    if(peek() != 'x') {
+                    if (peek() != 'x') {
                         bool isFloat = false;
                         std::string buffer = "";
                         idx -= 1;
 
-                        while(isdigit(this->peek()) || (this->peek() == '.' && this->text[this->idx + 1] != '.')) {
-                            if(this->peek() == '.') {
+                        while (isdigit(this->peek()) || (this->peek() == '.' && this->text[this->idx + 1] != '.')) {
+                            if (this->peek() == '.') {
                                 isFloat = true;
                                 buffer += ".";
                                 this->idx += 1;
@@ -223,9 +223,9 @@ Lexer::Lexer(std::string text, int offset) {
                 }
                 else {
                     std::string identifier = getIdentifier();
-                    if(identifier == "true") tokens.push_back(new Token(TokType::True, "true", line));
-                    else if(identifier == "false") tokens.push_back(new Token(TokType::False, "false", line));
-                    else if(identifier == "in") tokens.push_back(new Token(TokType::In, "in", line));
+                    if (identifier == "true") tokens.push_back(new Token(TokType::True, "true", line));
+                    else if (identifier == "false") tokens.push_back(new Token(TokType::False, "false", line));
+                    else if (identifier == "in") tokens.push_back(new Token(TokType::In, "in", line));
                     else tokens.push_back(new Token(TokType::Identifier, identifier, line));
                 }
                 break;

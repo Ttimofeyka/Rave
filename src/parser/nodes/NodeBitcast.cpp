@@ -16,15 +16,15 @@ NodeBitcast::NodeBitcast(Type* type, Node* value, int loc) {
 }
 
 void NodeBitcast::check() {
-    if(isChecked) return;
+    if (isChecked) return;
     isChecked = true;
 
     value->check();
 }
 
 NodeBitcast::~NodeBitcast() {
-    if(this->value != nullptr) delete this->value;
-    if(this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
+    if (this->value != nullptr) delete this->value;
+    if (this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
 }
 
 Type* NodeBitcast::getType() {return this->type->copy();}

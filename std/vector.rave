@@ -37,7 +37,7 @@ namespace std {
         (inline) VECTOR_T* ptr => this.data;
 
         void add(VECTOR_T value) {
-            if((this.length * sizeof(VECTOR_T)) == this.capacity) {
+            if ((this.length * sizeof(VECTOR_T)) == this.capacity) {
                 this.data = cast(VECTOR_T*)std::realloc(cast(void*)this.data, this.capacity * 2);
                 this.capacity = this.capacity * 2;
             }
@@ -50,7 +50,7 @@ namespace std {
         }
 
         (inline) void set(usize index, VECTOR_T value) {
-            @if(__RAVE_RUNTIME_CHECKS) if(index < this.length) this.data[index] = value;
+            @if (__RAVE_RUNTIME_CHECKS) if (index < this.length) this.data[index] = value;
             @else this.data[index] = value;
         }
 
@@ -59,7 +59,7 @@ namespace std {
         }
 
         void clear {
-            if(capacity > ((sizeof(VECTOR_T) * 4))) {
+            if (capacity > ((sizeof(VECTOR_T) * 4))) {
                 std::free(this.data);
                 this.data = cast(VECTOR_T*)std::malloc(sizeof(VECTOR_T));
                 this.capacity = sizeof(VECTOR_T);
@@ -77,23 +77,23 @@ namespace std {
         } => buffer;
 
         (inline) VECTOR_T operator[](std::vector<VECTOR_T>* v, usize index) {
-            @if(__RAVE_RUNTIME_CHECKS) if(index < v.length) return = v.data[index];
+            @if (__RAVE_RUNTIME_CHECKS) if (index < v.length) return = v.data[index];
             @else return = v.data[index];
         }
 
         (inline) void operator[]=(std::vector<VECTOR_T>* v, usize index, VECTOR_T value) {
-            @if(__RAVE_RUNTIME_CHECKS) if(index < v.length) v.data[index] = value;
+            @if (__RAVE_RUNTIME_CHECKS) if (index < v.length) v.data[index] = value;
             @else v.data[index] = value;
         }
 
         (inline) VECTOR_T* operator[]&(std::vector<VECTOR_T>* v, usize index) {
-            @if(__RAVE_RUNTIME_CHECKS) if(index < v.length) return = v.&data[index];
+            @if (__RAVE_RUNTIME_CHECKS) if (index < v.length) return = v.&data[index];
             @else return = v.&data[index];
         }
 
         (inline) void swap(usize first, usize second) {
-            @if(__RAVE_RUNTIME_CHECKS) {
-                if((first < this.length) && (second < this.length)) @return();
+            @if (__RAVE_RUNTIME_CHECKS) {
+                if ((first < this.length) && (second < this.length)) @return();
             }
 
             (noOperators) VECTOR_T temp = this.data[first];
@@ -107,23 +107,23 @@ namespace std {
         } => cp;
 
         void remove(usize index) {
-            @if(__RAVE_RUNTIME_CHECKS) {
-                if(index < this.length) @return();
+            @if (__RAVE_RUNTIME_CHECKS) {
+                if (index < this.length) @return();
             }
 
             for(usize i=index; i<this.length; i+=1) {
-                if((i + 1) < this.length) this.data[i] = this.data[i + 1];
+                if ((i + 1) < this.length) this.data[i] = this.data[i + 1];
             }
 
             this.length -= 1;
         }
 
         (inline) void removeLast {
-            if(this.length > 0) this.remove(this.length - 1);
+            if (this.length > 0) this.remove(this.length - 1);
         }
 
         void ~this {
-            if(this.data != null) {
+            if (this.data != null) {
                 std::free(cast(void*)this.data);
                 this.data = null;
                 this.length = 0;

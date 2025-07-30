@@ -16,12 +16,12 @@ NodeArray::NodeArray(int loc, std::vector<Node*> values) {
 }
 
 Type* NodeArray::getType() {
-    if(values.size() > 0) return new TypeArray(new NodeInt(values.size()), values[0]->getType());
+    if (values.size() > 0) return new TypeArray(new NodeInt(values.size()), values[0]->getType());
     return typeVoid;
 }
 
 NodeArray::~NodeArray() {
-    for(size_t i=0; i<values.size(); i++) if(values[i] != nullptr) delete values[i];
+    for(size_t i=0; i<values.size(); i++) if (values[i] != nullptr) delete values[i];
 }
 
 std::vector<RaveValue> NodeArray::getValues() {
@@ -31,7 +31,7 @@ std::vector<RaveValue> NodeArray::getValues() {
 
     for(size_t i=0; i<values.size(); i++) {
         buffer.push_back(values[i]->generate());
-        if(!LLVMIsConstant(buffer[buffer.size() - 1].value)) isConst = false;
+        if (!LLVMIsConstant(buffer[buffer.size() - 1].value)) isConst = false;
     }
 
     return buffer;
@@ -41,7 +41,7 @@ RaveValue NodeArray::generate() {
     std::vector<RaveValue> genValues = getValues();
 
     // If this is a constant array - just return LLVM constant array with provided values
-    if(isConst) return LLVM::makeCArray(type, genValues);
+    if (isConst) return LLVM::makeCArray(type, genValues);
 
     RaveValue arr = LLVM::alloc(new TypeArray(new NodeInt(values.size()), type), "NodeArray");
 

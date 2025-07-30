@@ -76,7 +76,7 @@ Type* TypePointer::copy() {
 }
 
 Type* TypePointer::check(Type* parent) {
-    if(!instanceof<TypeBasic>(this->instance)) this->instance->check(this);
+    if (!instanceof<TypeBasic>(this->instance)) this->instance->check(this);
     return nullptr; 
 }
 
@@ -86,12 +86,12 @@ int TypePointer::getSize() {
 
 std::string TypePointer::toString() {return instance->toString() + "*";}
 Type* TypePointer::getElType() {
-    while(instanceof<TypeConst>(instance)) instance = instance->getElType();
+    while (instanceof<TypeConst>(instance)) instance = instance->getElType();
     return instanceof<TypeVoid>(instance) ? new TypeBasic(BasicType::Char) : instance;
 }
 
 TypePointer::~TypePointer() {
-    if(this->instance != nullptr && !instanceof<TypeBasic>(this->instance) && !instanceof<TypeVoid>(this->instance)) delete this->instance;
+    if (this->instance != nullptr && !instanceof<TypeBasic>(this->instance) && !instanceof<TypeVoid>(this->instance)) delete this->instance;
 }
 
 // TypeArray
@@ -105,14 +105,14 @@ Type* TypeArray::copy() {
 }
 
 Type* TypeArray::check(Type* parent) {
-    if(!instanceof<TypeBasic>(this->element)) this->element->check(this);
+    if (!instanceof<TypeBasic>(this->element)) this->element->check(this);
     return nullptr;
 }
 
 int TypeArray::getSize() {return ((NodeInt*)this->count->comptime())->value.to_int() * this->element->getSize();}
 
 std::string TypeArray::toString() {
-    if(instanceof<NodeInt>(count)) return element->toString() + "[" + std::to_string(((NodeInt*)this->count->comptime())->value.to_int()) + "]";
+    if (instanceof<NodeInt>(count)) return element->toString() + "[" + std::to_string(((NodeInt*)this->count->comptime())->value.to_int()) + "]";
 
     return element->toString() + "[" + typeid(*count).name() + "]";
 }
@@ -120,7 +120,7 @@ std::string TypeArray::toString() {
 Type* TypeArray::getElType() {return element;}
 
 TypeArray::~TypeArray() {
-    if(this->element != nullptr && !instanceof<TypeBasic>(this->element) && !instanceof<TypeVoid>(this->element)) delete this->element;
+    if (this->element != nullptr && !instanceof<TypeBasic>(this->element) && !instanceof<TypeVoid>(this->element)) delete this->element;
 }
 
 // TypeAlias
@@ -147,7 +147,7 @@ int TypeConst::getSize() {return this->instance->getSize();}
 std::string TypeConst::toString() {return this->instance->toString();}
 Type* TypeConst::getElType() {return this->instance;}
 TypeConst::~TypeConst() {
-    if(this->instance != nullptr && !instanceof<TypeBasic>(this->instance) && !instanceof<TypeVoid>(this->instance)) delete this->instance;
+    if (this->instance != nullptr && !instanceof<TypeBasic>(this->instance) && !instanceof<TypeVoid>(this->instance)) delete this->instance;
 }
 
 // TypeStruct
@@ -167,7 +167,7 @@ Type* TypeStruct::copy() {
 }
 
 void TypeStruct::updateByTypes() {
-    if(this->name.find('<') != std::string::npos) {
+    if (this->name.find('<') != std::string::npos) {
         this->name = this->name.substr(0, this->name.find('<')) + "<";
         for(size_t i=0; i<this->types.size(); i++) this->name += this->types[i]->toString() + ",";
         this->name = this->name.substr(0, this->name.size()-1) + ">";
@@ -177,18 +177,18 @@ void TypeStruct::updateByTypes() {
 int TypeStruct::getSize() {
     Type* t = this;
 
-    while(generator->toReplace.find(t->toString()) != generator->toReplace.end()) t = generator->toReplace[t->toString()];
-    while(AST::aliasTypes.find(t->toString()) != AST::aliasTypes.end()) t = AST::aliasTypes[t->toString()];
+    while (generator->toReplace.find(t->toString()) != generator->toReplace.end()) t = generator->toReplace[t->toString()];
+    while (AST::aliasTypes.find(t->toString()) != AST::aliasTypes.end()) t = AST::aliasTypes[t->toString()];
 
-    if(instanceof<TypeStruct>(t)) {
+    if (instanceof<TypeStruct>(t)) {
         TypeStruct* ts = (TypeStruct*)t;
-        if(AST::structTable.find(ts->name) == AST::structTable.end()) generator->error("undefined structure \033[1m" + ts->name + "\033[22m!", -1);
+        if (AST::structTable.find(ts->name) == AST::structTable.end()) generator->error("undefined structure \033[1m" + ts->name + "\033[22m!", -1);
 
-        if(!ts->types.empty()) AST::structTable[ts->name]->genWithTemplate(ts->name.substr(ts->name.find('<')), ts->types);
+        if (!ts->types.empty()) AST::structTable[ts->name]->genWithTemplate(ts->name.substr(ts->name.find('<')), ts->types);
 
         int size = 0;
         for(size_t i=0; i<AST::structTable[ts->name]->elements.size(); i++) {
-            if(AST::structTable[ts->name]->elements[i] != nullptr && instanceof<NodeVar>(AST::structTable[ts->name]->elements[i])) {
+            if (AST::structTable[ts->name]->elements[i] != nullptr && instanceof<NodeVar>(AST::structTable[ts->name]->elements[i])) {
                 NodeVar* nvar = (NodeVar*)AST::structTable[ts->name]->elements[i];
                 size += nvar->type->getSize();
             }
@@ -203,21 +203,21 @@ int TypeStruct::getSize() {
 bool TypeStruct::isSimple() {
     Type* t = this;
 
-    while(AST::aliasTypes.find(t->toString()) != AST::aliasTypes.end()) t = AST::aliasTypes[t->toString()];
+    while (AST::aliasTypes.find(t->toString()) != AST::aliasTypes.end()) t = AST::aliasTypes[t->toString()];
 
     Types::replaceTemplates(&t);
 
-    if(instanceof<TypeStruct>(t)) {
+    if (instanceof<TypeStruct>(t)) {
         TypeStruct* ts = (TypeStruct*)t;
-        if(AST::structTable.find(ts->name) == AST::structTable.end()) generator->error("undefined structure \033[1m" + ts->name + "\033[22m!", -1);
-        if(!ts->types.empty()) {
+        if (AST::structTable.find(ts->name) == AST::structTable.end()) generator->error("undefined structure \033[1m" + ts->name + "\033[22m!", -1);
+        if (!ts->types.empty()) {
             AST::structTable[ts->name]->genWithTemplate(ts->name.substr(ts->name.find('<')), ts->types);
         }
 
         for(size_t i=0; i<AST::structTable[ts->name]->elements.size(); i++) {
-            if(AST::structTable[ts->name]->elements[i] != nullptr && instanceof<NodeVar>(AST::structTable[ts->name]->elements[i])) {
+            if (AST::structTable[ts->name]->elements[i] != nullptr && instanceof<NodeVar>(AST::structTable[ts->name]->elements[i])) {
                 NodeVar* nvar = (NodeVar*)AST::structTable[ts->name]->elements[i];
-                if(!instanceof<TypeBasic>(nvar->type)) return false;
+                if (!instanceof<TypeBasic>(nvar->type)) return false;
             }
         }
 
@@ -229,20 +229,20 @@ bool TypeStruct::isSimple() {
 int TypeStruct::getElCount() {
     Type* t = this;
 
-    while(generator->toReplace.find(t->toString()) != generator->toReplace.end()) t = generator->toReplace[t->toString()];
-    while(AST::aliasTypes.find(t->toString()) != AST::aliasTypes.end()) t = AST::aliasTypes[t->toString()];
+    while (generator->toReplace.find(t->toString()) != generator->toReplace.end()) t = generator->toReplace[t->toString()];
+    while (AST::aliasTypes.find(t->toString()) != AST::aliasTypes.end()) t = AST::aliasTypes[t->toString()];
 
-    if(instanceof<TypeStruct>(t)) {
+    if (instanceof<TypeStruct>(t)) {
         TypeStruct* ts = (TypeStruct*)t;
-        if(AST::structTable.find(ts->name) == AST::structTable.end()) generator->error("undefined structure \033[1m" + ts->name + "\033[22m!", -1);
-        if(!ts->types.empty()) {
+        if (AST::structTable.find(ts->name) == AST::structTable.end()) generator->error("undefined structure \033[1m" + ts->name + "\033[22m!", -1);
+        if (!ts->types.empty()) {
             AST::structTable[ts->name]->genWithTemplate(ts->name.substr(ts->name.find('<')), ts->types);
         }
 
         int size = 0;
 
         for(size_t i=0; i<AST::structTable[ts->name]->elements.size(); i++) {
-            if(AST::structTable[ts->name]->elements[i] != nullptr && instanceof<NodeVar>(AST::structTable[ts->name]->elements[i])) size += 1;
+            if (AST::structTable[ts->name]->elements[i] != nullptr && instanceof<NodeVar>(AST::structTable[ts->name]->elements[i])) size += 1;
         }
 
         return size;
@@ -252,23 +252,23 @@ int TypeStruct::getElCount() {
 }
 
 Type* TypeStruct::check(Type* parent) {
-    if(AST::aliasTypes.find(this->name) != AST::aliasTypes.end()) {
+    if (AST::aliasTypes.find(this->name) != AST::aliasTypes.end()) {
         Type* _t = AST::aliasTypes[name];
-        while(AST::aliasTypes.find(_t->toString()) != AST::aliasTypes.end()) {
+        while (AST::aliasTypes.find(_t->toString()) != AST::aliasTypes.end()) {
             _t = AST::aliasTypes[_t->toString()];
         }
             
-        if(parent == nullptr) return _t;
+        if (parent == nullptr) return _t;
 
-        if(instanceof<TypePointer>(parent)) {
+        if (instanceof<TypePointer>(parent)) {
             TypePointer* tp = (TypePointer*) parent;
             tp->instance = _t;
         }
-        else if(instanceof<TypeArray>(parent)) {
+        else if (instanceof<TypeArray>(parent)) {
             TypeArray* ta = (TypeArray*) parent;
             ta->element = _t;
         }
-        else if(instanceof<TypeConst>(parent)) {
+        else if (instanceof<TypeConst>(parent)) {
             TypeConst* tc = (TypeConst*) parent;
             tc->instance = _t;
         }
@@ -306,9 +306,9 @@ Type* TypeTemplateMember::copy() {return new TypeTemplateMember(this->type->copy
 Type* TypeTemplateMember::check(Type* parent) {return nullptr;}
 
 std::string TypeTemplateMember::toString() {
-    if(instanceof<NodeInt>(value)) return "@" + type->toString() + ((NodeInt*)value)->value.to_string();
-    else if(instanceof<NodeFloat>(value)) return "@" + type->toString() + ((NodeFloat*)value)->value;
-    else if(instanceof<NodeString>(value)) return "@" + type->toString() + "\"" + ((NodeString*)value)->value + "\"";
+    if (instanceof<NodeInt>(value)) return "@" + type->toString() + ((NodeInt*)value)->value.to_string();
+    else if (instanceof<NodeFloat>(value)) return "@" + type->toString() + ((NodeFloat*)value)->value;
+    else if (instanceof<NodeString>(value)) return "@" + type->toString() + "\"" + ((NodeString*)value)->value + "\"";
     return "@" + type->toString();
 }
 
@@ -316,7 +316,7 @@ int TypeTemplateMember::getSize() {return this->type->getSize();}
 Type* TypeTemplateMember::getElType() {return this->type->getElType();}
 
 TypeTemplateMember::~TypeTemplateMember() {
-    if(this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
+    if (this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
 }
 
 // TypeTemplateMemberDefinition
@@ -332,7 +332,7 @@ int TypeTemplateMemberDefinition::getSize() {return this->type->getSize();}
 Type* TypeTemplateMemberDefinition::getElType() {return this->type->getElType();}
 
 TypeTemplateMemberDefinition::~TypeTemplateMemberDefinition() {
-    if(this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
+    if (this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
 }
 
 // TypeFuncArg
@@ -348,7 +348,7 @@ int TypeFuncArg::getSize() {return this->type->getSize();}
 Type* TypeFuncArg::getElType() {return this->type->getElType();}
 
 TypeFuncArg::~TypeFuncArg() {
-    if(this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
+    if (this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
 }
 
 // TypeFunc
@@ -372,9 +372,9 @@ Type* TypeFunc::check(Type* parent) {return nullptr;}
 Type* TypeFunc::getElType() {return this;}
 
 TypeFunc::~TypeFunc() {
-    if(this->main != nullptr && !instanceof<TypeBasic>(this->main) && !instanceof<TypeVoid>(this->main)) delete this->main;
+    if (this->main != nullptr && !instanceof<TypeBasic>(this->main) && !instanceof<TypeVoid>(this->main)) delete this->main;
 
-    for(size_t i=0; i<this->args.size(); i++) if(this->args[i] != nullptr && !instanceof<TypeBasic>(this->args[i]) && !instanceof<TypeVoid>(this->args[i])) delete this->args[i];
+    for(size_t i=0; i<this->args.size(); i++) if (this->args[i] != nullptr && !instanceof<TypeBasic>(this->args[i]) && !instanceof<TypeVoid>(this->args[i])) delete this->args[i];
 }
 
 // TypeBuiltin
@@ -481,7 +481,7 @@ Type* getTypeByName(std::string id) {
     };
 
     auto it = types.find(id);
-    if(it != types.end()) return it->second;
+    if (it != types.end()) return it->second;
     else return new TypeStruct(id);
 }
 
@@ -495,38 +495,38 @@ bool isBytePointer(Type* type) {
 }
 
 bool Types::replaceTemplates(Type** _type) {
-    if(generator == nullptr) return false;
+    if (generator == nullptr) return false;
 
     Type* type = _type[0];
     Type* parent = nullptr;
     bool isChanged = false;
 
-    while(instanceof<TypeConst>(type) || instanceof<TypePointer>(type) || instanceof<TypeArray>(type)) {
+    while (instanceof<TypeConst>(type) || instanceof<TypePointer>(type) || instanceof<TypeArray>(type)) {
         parent = type;
         type = type->getElType();
     }
 
-    if(instanceof<TypeStruct>(type)) {
+    if (instanceof<TypeStruct>(type)) {
         TypeStruct* structure = (TypeStruct*)type;
 
-        if(generator->toReplace.find(structure->name) != generator->toReplace.end()) {
+        if (generator->toReplace.find(structure->name) != generator->toReplace.end()) {
             isChanged = true;
 
-            if(parent == nullptr) _type[0] = generator->toReplace[structure->name]->copy();
+            if (parent == nullptr) _type[0] = generator->toReplace[structure->name]->copy();
             else {
-                if(instanceof<TypePointer>(parent)) ((TypePointer*)parent)->instance = generator->toReplace[structure->name]->copy();
-                else if(instanceof<TypeArray>(parent)) ((TypeArray*)parent)->element = generator->toReplace[structure->name]->copy();
-                else if(instanceof<TypeConst>(parent)) ((TypeConst*)parent)->instance = generator->toReplace[structure->name]->copy();
+                if (instanceof<TypePointer>(parent)) ((TypePointer*)parent)->instance = generator->toReplace[structure->name]->copy();
+                else if (instanceof<TypeArray>(parent)) ((TypeArray*)parent)->element = generator->toReplace[structure->name]->copy();
+                else if (instanceof<TypeConst>(parent)) ((TypeConst*)parent)->instance = generator->toReplace[structure->name]->copy();
             }
         }
 
-        if(structure->types.size() > 0) {
+        if (structure->types.size() > 0) {
             for(size_t i=0; i<structure->types.size(); i++) {
                 bool isChangedType = Types::replaceTemplates(&structure->types[i]);
                 isChanged = isChanged || isChangedType;
             }
 
-            if(isChanged) structure->updateByTypes();
+            if (isChanged) structure->updateByTypes();
         }
     }
 
@@ -536,14 +536,14 @@ bool Types::replaceTemplates(Type** _type) {
 void Types::replaceComptime(Type* _type) {
     Type* type = _type;
 
-    while(instanceof<TypeConst>(type) || instanceof<TypePointer>(type)) type = type->getElType();
+    while (instanceof<TypeConst>(type) || instanceof<TypePointer>(type)) type = type->getElType();
 
-    if(instanceof<TypeArray>(type)) {
+    if (instanceof<TypeArray>(type)) {
         TypeArray* array = (TypeArray*)type;
 
         // TODO: error handling?
 
-        while(!instanceof<NodeInt>(array->count)) array->count = array->count->comptime();
+        while (!instanceof<NodeInt>(array->count)) array->count = array->count->comptime();
 
         Types::replaceComptime(array->element);
     }

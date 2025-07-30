@@ -88,11 +88,11 @@ struct Jam {
 void main {
     Jam foo = Jam();
 
-    if(10 in [10, 20, 30]) std::println("TRUE"); // TRUE
+    if (10 in [10, 20, 30]) std::println("TRUE"); // TRUE
 
-    if(20 in foo) std::println("TRUE2"); // Nothing
-    else if(200 in foo) std::println("TRUE3"); // TRUE3
+    if (20 in foo) std::println("TRUE2"); // Nothing
+    else if (200 in foo) std::println("TRUE3"); // TRUE3
 
-    if(20 !in foo) std::println("FALSE"); // FALSE
+    if (20 !in foo) std::println("FALSE"); // FALSE
 }
 ```

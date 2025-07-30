@@ -40,16 +40,16 @@ static std::vector<std::string> filesInDirectory(std::string path) {
     char fullpath[MAX_PATH];
     GetFullPathNameA(path.c_str(), MAX_PATH, fullpath, 0);
     std::string fp(fullpath);
-    if(GetFileAttributesA(fp.c_str()) != FILE_ATTRIBUTE_DIRECTORY) return files;
+    if (GetFileAttributesA(fp.c_str()) != FILE_ATTRIBUTE_DIRECTORY) return files;
 
     // Get file names
     WIN32_FIND_DATAA findfiledata;
     HANDLE hFind = FindFirstFileA((LPCSTR)(fp + "\\*").c_str(), &findfiledata);
-    if(hFind != INVALID_HANDLE_VALUE) {
+    if (hFind != INVALID_HANDLE_VALUE) {
         do {
             files.push_back(findfiledata.cFileName);
         } 
-        while(FindNextFileA(hFind, &findfiledata));
+        while (FindNextFileA(hFind, &findfiledata));
         FindClose(hFind);
     }
 
@@ -69,10 +69,10 @@ static std::vector<std::string> filesInDirectory(std::string directory) {
 
     DIR *dir;
     dir = opendir(directory.c_str());
-    if(dir == NULL) return files;
+    if (dir == NULL) return files;
 
     struct dirent *ent;
-    while((ent = readdir(dir)) != NULL) files.push_back(ent->d_name);
+    while ((ent = readdir(dir)) != NULL) files.push_back(ent->d_name);
     closedir(dir);
 
     // delete current and parent directories
@@ -171,7 +171,7 @@ typedef struct genSettings {
 
 // Trim from the start (in place)
 static inline std::string ltrim(std::string s) {
-    s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) {
+    s.erase(s.begin(), std::find_if (s.begin(), s.end(), [](unsigned char ch) {
         return !std::isspace(ch);
     }));
     return s;
@@ -179,7 +179,7 @@ static inline std::string ltrim(std::string s) {
 
 // Trim from the end (in place)
 static inline std::string rtrim(std::string s) {
-    s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) {
+    s.erase(std::find_if (s.rbegin(), s.rend(), [](unsigned char ch) {
         return !std::isspace(ch);
     }).base(), s.end());
     return s;

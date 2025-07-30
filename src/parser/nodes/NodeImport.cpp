@@ -55,17 +55,17 @@ Node* NodeImport::copy() {return new NodeImport(this->file, this->functions, thi
 void NodeImport::check() {this->isChecked = true;}
 
 RaveValue NodeImport::generate() {
-    if(!file.isGlobal) {
+    if (!file.isGlobal) {
         file.isGlobal = true;
         file.file = generator->file.substr(0, generator->file.find_last_of("/\\")) + "/" + file.file;
     }
 
-    if(std::find(AST::importedFiles.begin(), AST::importedFiles.end(), file.file) != AST::importedFiles.end() || file.file == generator->file) return {};
+    if (std::find(AST::importedFiles.begin(), AST::importedFiles.end(), file.file) != AST::importedFiles.end() || file.file == generator->file) return {};
 
-    if(file.file.find("/.rave") != std::string::npos) {
+    if (file.file.find("/.rave") != std::string::npos) {
         std::string dirPath = file.file.substr(0, file.file.size() - 5);
         for(const auto& entry : fs::directory_iterator(dirPath)) {
-            if(entry.path().extension() == ".rave") {
+            if (entry.path().extension() == ".rave") {
                 NodeImport* imp = new NodeImport({}, functions, loc);
                 imp->file.file = entry.path().string();
                 imp->generate();
@@ -75,8 +75,8 @@ RaveValue NodeImport::generate() {
         return {};
     }
 
-    if(AST::parsed.find(file.file) == AST::parsed.end()) {
-        if(!fs::exists(file.file)) {
+    if (AST::parsed.find(file.file) == AST::parsed.end()) {
+        if (!fs::exists(file.file)) {
             generator->error("file \033[1m" + file.file + "\033[22m does not exist!", this->loc);
             return {};
         }
@@ -103,17 +103,17 @@ RaveValue NodeImport::generate() {
     std::vector<Node*> buffer;
     for(const auto& node : AST::parsed[file.file]) buffer.push_back(node->copy());
 
-    if(instanceof<NodeVar>(buffer[0])) {
+    if (instanceof<NodeVar>(buffer[0])) {
         auto* nodeVar = static_cast<NodeVar*>(buffer[0]);
-        if(nodeVar->name == "__RAVE_IMPORTED_FROM") nodeVar->value = new NodeString(generator->file, false);
+        if (nodeVar->name == "__RAVE_IMPORTED_FROM") nodeVar->value = new NodeString(generator->file, false);
     }
 
     for(auto* node : buffer) {
-        if(instanceof<NodeFunc>(node)) {
+        if (instanceof<NodeFunc>(node)) {
             auto* nodeFunc = static_cast<NodeFunc*>(node);
-            if(!nodeFunc->isPrivate || nodeFunc->isCtargs) node->check();
+            if (!nodeFunc->isPrivate || nodeFunc->isCtargs) node->check();
         }
-        else if(instanceof<NodeNamespace>(node)) {
+        else if (instanceof<NodeNamespace>(node)) {
             auto* nodeNamespace = static_cast<NodeNamespace*>(node);
             nodeNamespace->hidePrivated = true;
             nodeNamespace->isImported = true;
@@ -127,27 +127,27 @@ RaveValue NodeImport::generate() {
     auto start = std::chrono::steady_clock::now();
 
     for(auto* node : buffer) {
-        if(instanceof<NodeFunc>(node)) {
+        if (instanceof<NodeFunc>(node)) {
             auto* nodeFunc = static_cast<NodeFunc*>(node);
-            if((nodeFunc->isPrivate && !nodeFunc->isCtargs) || nodeFunc->isForwardDeclaration) continue;
+            if ((nodeFunc->isPrivate && !nodeFunc->isCtargs) || nodeFunc->isForwardDeclaration) continue;
             nodeFunc->isExtern = true;
             continue;
         }
-        else if(instanceof<NodeVar>(node)) {
+        else if (instanceof<NodeVar>(node)) {
             auto* nodeVar = static_cast<NodeVar*>(node);
-            if(nodeVar->isPrivate) continue;
+            if (nodeVar->isPrivate) continue;
             nodeVar->isExtern = true;
         }
-        else if(instanceof<NodeStruct>(node)) {
+        else if (instanceof<NodeStruct>(node)) {
             auto* nodeStruct = static_cast<NodeStruct*>(node);
             nodeStruct->isImported = true;
             continue;
         }
-        else if(instanceof<NodeBuiltin>(node)) {
+        else if (instanceof<NodeBuiltin>(node)) {
             auto* nodeBuiltin = static_cast<NodeBuiltin*>(node);
             nodeBuiltin->isImport = true;
         }
-        else if(instanceof<NodeComptime>(node)) {
+        else if (instanceof<NodeComptime>(node)) {
             auto* nodeComptime = static_cast<NodeComptime*>(node);
             nodeComptime->isImported = true;
         }
@@ -179,7 +179,7 @@ Node* NodeImports::copy() {
 
 RaveValue NodeImports::generate() {
     for(size_t i=0; i<this->imports.size(); i++) {
-        if(this->imports[i] != nullptr) this->imports[i]->generate();
+        if (this->imports[i] != nullptr) this->imports[i]->generate();
     }
     return {};
 }

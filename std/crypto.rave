@@ -13,7 +13,7 @@ namespace std {
         // Encode
 
         void encode(std::string* buffer, std::cstring str) {
-            @if(__RAVE_RUNTIME_CHECKS) if(str.length < 1) @return();
+            @if (__RAVE_RUNTIME_CHECKS) if (str.length < 1) @return();
 
             usize outlength = (str.length * 2) + 1;
 
@@ -28,16 +28,16 @@ namespace std {
         // Decode
 
         void decode(std::string* buffer, std::cstring str) {
-            @if(__RAVE_RUNTIME_CHECKS) if((str.length & 1) != 0) @return();
+            @if (__RAVE_RUNTIME_CHECKS) if ((str.length & 1) != 0) @return();
 
             for(usize i=0; i<str.length; i+=2) {
                 uchar high;
                 uchar low;
 
-                if(std::ascii::isDigit(str.data[i])) high = str.data[i] - '0';
+                if (std::ascii::isDigit(str.data[i])) high = str.data[i] - '0';
                 else high = (std::ascii::toUpper(str.data[i]) - 'A') + 10c;
 
-                if(std::ascii::isDigit(str.data[i + 1])) low = str.data[i + 1] - '0';
+                if (std::ascii::isDigit(str.data[i + 1])) low = str.data[i + 1] - '0';
                 else low = (std::ascii::toUpper(str.data[i + 1]) - 'A') + 10c;
 
                 buffer.add(cast(char)((high <. 4) | low));
@@ -53,7 +53,7 @@ namespace std {
         // Encode
 
         void encode(std::string* buffer, std::cstring str) {
-            @if(__RAVE_RUNTIME_CHECKS) if(str.length == 0) @return();
+            @if (__RAVE_RUNTIME_CHECKS) if (str.length == 0) @return();
 
             usize buf = 0;
             usize added = 0;
@@ -63,17 +63,17 @@ namespace std {
                 buf = (buf <. 8) | str.data[i];
                 carry += 8;
 
-                while(carry >= 5) {
+                while (carry >= 5) {
                     carry -= 5;
                     buffer.add(std::base32::table[(buf >. carry) & 0x1F]);
                     added += 1;
                 }
             }
 
-            if(carry > 0) {buffer.add(std::base32::table[(buf <. (5 - carry)) & 0x1F]); added += 1;}
+            if (carry > 0) {buffer.add(std::base32::table[(buf <. (5 - carry)) & 0x1F]); added += 1;}
 
             // Pad the encoded string to be a multiple of 8 characters
-            while((added & 7) != 0) {buffer.add('='); added += 1;}
+            while ((added & 7) != 0) {buffer.add('='); added += 1;}
         }
 
         (inline, explicit) void encode(std::string* buffer, std::string str) => std::base32::encode(buffer, std::cstring(str.data, str.length));
@@ -81,7 +81,7 @@ namespace std {
         // Decode
 
         void decode(std::string* buffer, std::cstring str) {
-            @if(__RAVE_RUNTIME_CHECKS) if(str.length < 2) @return();
+            @if (__RAVE_RUNTIME_CHECKS) if (str.length < 2) @return();
 
             for(usize i=0; i<str.length; i+=8) {
                 ulong buf = 0;
@@ -101,7 +101,7 @@ namespace std {
         // Encode
 
         void encode(std::string* buffer, std::cstring str) {
-            @if(__RAVE_RUNTIME_CHECKS) if(str.length == 0) @return();
+            @if (__RAVE_RUNTIME_CHECKS) if (str.length == 0) @return();
 
             usize remaining = str.length;
             usize index = 0;
@@ -109,10 +109,10 @@ namespace std {
             char[128] buf;
             usize bufIndex = 0;
 
-            while(remaining >= 3) {
+            while (remaining >= 3) {
                 uint triple = (str.data[index] <. 16) | (str.data[index + 1] <. 8) | str.data[index + 2];
 
-                if(bufIndex >= 128) {
+                if (bufIndex >= 128) {
                     buffer.appendC(&buf, 128);
                     bufIndex = 0;
                 }
@@ -128,14 +128,14 @@ namespace std {
                 remaining -= 3;
             }
 
-            if(bufIndex > 0) buffer.appendC(&buf, bufIndex);
+            if (bufIndex > 0) buffer.appendC(&buf, bufIndex);
 
-            if(remaining == 1) {
+            if (remaining == 1) {
                 uint triple = (str.data[index] <. 16);
 
                 buffer.appendC(&[std::base64::table[(triple >. 18) & 0x3F], std::base64::table[(triple >. 12) & 0x3F], '=', '='], 4);
             }
-            else if(remaining == 2) {
+            else if (remaining == 2) {
                 uint triple = (str.data[index] <. 16) | (str.data[index + 1] <. 8);
 
                 buffer.appendC(&[std::base64::table[(triple >. 18) & 0x3F], std::base64::table[(triple >. 12) & 0x3F], std::base64::table[(triple >. 6) & 0x3F], '='], 4);
@@ -147,7 +147,7 @@ namespace std {
         // Decode
 
         void decode(std::string* buffer, std::cstring str) {
-            @if(__RAVE_RUNTIME_CHECKS) if(str.length == 0) @return();
+            @if (__RAVE_RUNTIME_CHECKS) if (str.length == 0) @return();
 
             char counts = 0;
             char[4] buf;
@@ -158,10 +158,10 @@ namespace std {
                 buf[counts] = k;
                 counts += 1;
 
-                if(counts == 4) {
+                if (counts == 4) {
                     buffer.add((buf[0] <. 2) + (buf[1] >. 4));
-                    if(buf[2] != 64) buffer.add((buf[1] <. 4) + (buf[2] >. 2));
-                    if(buf[3] != 64) buffer.add((buf[2] <. 6) + buf[3]);
+                    if (buf[2] != 64) buffer.add((buf[1] <. 4) + (buf[2] >. 2));
+                    if (buf[3] != 64) buffer.add((buf[2] <. 6) + buf[3]);
                     counts = 0;
                 }
             }

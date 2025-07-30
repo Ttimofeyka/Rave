@@ -7,9 +7,9 @@
 Example:
 ```d
 int i = 0;
-while(i < 100) {
-    if(i == 40) continue;
-    else if(i == 67) break;
+while (i < 100) {
+    if (i == 40) continue;
+    else if (i == 67) break;
     i += 1;
 }
 ```
@@ -29,12 +29,12 @@ import "specifications"
 
 ## Inside-Of-Functions
 
-**while(cond) [body/{body}]** - A block of code executed every time the conditions are true.
+**while (cond) [body/{body}]** - A block of code executed every time the conditions are true.
 
 Example:
 ```d
 int i = 0;
-while(i < 10) {i += 1;}
+while (i < 10) {i += 1;}
 ```
 
 **[if/else] [likely/unlikely] (cond) [body/{body}]** - A block of code executed if the conditions are true.
@@ -42,7 +42,7 @@ while(i < 10) {i += 1;}
 Examples:
 
 ```d
-if(A == B) A = C;
+if (A == B) A = C;
 else {
     A = B;
 }
@@ -75,7 +75,7 @@ Also, you can use a **for(;;)** expression for the infinite loop.
 Example:
 
 ```d
-while(true) {
+while (true) {
 
 }
 
@@ -146,7 +146,7 @@ Example:
 int x;
 std::input(&x);
 
-if(x == 0) {
+if (x == 0) {
     void* ptr = std::malloc(32);
     defer std::free(ptr);
 
@@ -204,23 +204,23 @@ Example:
 ```d
 struct A {}
 
-@if(@isNumeric(int)) {
+@if (@isNumeric(int)) {
     // ...
 }
 
-@if(@isPointer(int*)) {
+@if (@isPointer(int*)) {
     // ...
 }
 
-@if(@isArray(int[1])) {
+@if (@isArray(int[1])) {
     // ...
 }
 
-@if(@isVector(float4)) {
+@if (@isVector(float4)) {
     // ...
 }
 
-@if(@isStructure(A)) {
+@if (@isStructure(A)) {
     // ...
 }
 ```
@@ -231,11 +231,11 @@ Example:
 
 ```d
 // Similar to std/prelude.rave
-@if(@aliasExists(__RAVE_IMPORTED_FROM)) {
-    @if(!(@contains(__RAVE_IMPORTED_FROM, "std/sysc.rave"))) import <std/sysc>  
+@if (@aliasExists(__RAVE_IMPORTED_FROM)) {
+    @if (!(@contains(__RAVE_IMPORTED_FROM, "std/sysc.rave"))) import <std/sysc>  
 }
 
-@if(!@aliasExists(__RAVE_IMPORTED_FROM)) import <std/sysc>
+@if (!@aliasExists(__RAVE_IMPORTED_FROM)) import <std/sysc>
 ```
 
 **@compileAndLink(strings)** - Compile and add files to the linker without importing them.
@@ -252,7 +252,7 @@ Example:
 Example:
 
 ```d
-@if(@typeToString(int) == "int") {}
+@if (@typeToString(int) == "int") {}
 ```
 
 **@aliasExists(name)** - Check if there is an alias with this name.
@@ -301,14 +301,14 @@ struct Example {
 void main {
     auto ex = Example();
 
-    @if(@hasMethod(Example, foo)) {
-        if(@hasMethod(Example, bow)) {
+    @if (@hasMethod(Example, foo)) {
+        if (@hasMethod(Example, bow)) {
             // Has foo and bow
-            if(@hasDestructor(Example)) {
+            if (@hasDestructor(Example)) {
                 // Has destructor
             }
 
-            if(!@hasDestructor(Example)) {
+            if (!@hasDestructor(Example)) {
                 // Do not has destructor
             }
         }
@@ -360,7 +360,7 @@ Example:
 
 ```d
 (ctargs) int bow {
-    @if(@getCurrArgType() == int) @echo("Integer");
+    @if (@getCurrArgType() == int) @echo("Integer");
 }
 ```
 
@@ -384,7 +384,7 @@ Example:
 
 ```d
 (ctargs) int sum2 {
-    @if(@tNequals(@getArgType(0), @getArgType(1))) @error("Different types!");
+    @if (@tNequals(@getArgType(0), @getArgType(1))) @error("Different types!");
 } => @getArg(0, int) + @getArg(1, int);
 ```
 
@@ -394,9 +394,9 @@ Example:
 
 ```d
 (ctargs) int sum0to2 {
-    @if(@argsLength() == 0) return = 0;
-    @else @if(@argsLength() == 1) return = @getArg(int, 0);
-    @else @if(@argsLength() == 2) return = @getArg(int, 0) + @getArg(int, 1);
+    @if (@argsLength() == 0) return = 0;
+    @else @if (@argsLength() == 1) return = @getArg(int, 0);
+    @else @if (@argsLength() == 2) return = @getArg(int, 0) + @getArg(int, 1);
 }
 ```
 

@@ -22,7 +22,7 @@ NodeConstStruct::NodeConstStruct(std::string name, std::vector<Node*> values, in
 }
 
 NodeConstStruct::~NodeConstStruct() {
-    for(size_t i=0; i<values.size(); i++) if(values[i] != nullptr) delete values[i];
+    for(size_t i=0; i<values.size(); i++) if (values[i] != nullptr) delete values[i];
 }
 
 Type* NodeConstStruct::getType() {return new TypeStruct(structName);}
@@ -31,14 +31,14 @@ Node* NodeConstStruct::copy() {return new NodeConstStruct(this->structName, this
 void NodeConstStruct::check() {isChecked = true;}
 
 RaveValue NodeConstStruct::generate() {
-    if(structName.find('<') != std::string::npos && AST::structTable.find(structName) == AST::structTable.end()) {
+    if (structName.find('<') != std::string::npos && AST::structTable.find(structName) == AST::structTable.end()) {
         std::string sTypes = structName.substr(structName.find('<') + 1, structName.find('>') - structName.find('<') - 1);
 
         Lexer tLexer(sTypes, 1);
         Parser tParser(tLexer.tokens, "(builtin)");
         std::vector<Type*> types;
 
-        while(tParser.peek()->type != TokType::Eof) {
+        while (tParser.peek()->type != TokType::Eof) {
             switch(tParser.peek()->type) {
                 case TokType::Number: case TokType::HexNumber: case TokType::FloatNumber: {
                     Node* value = tParser.parseExpr();
@@ -50,7 +50,7 @@ RaveValue NodeConstStruct::generate() {
                     break;
             }
 
-            if(tParser.peek()->type == TokType::Comma) tParser.next();
+            if (tParser.peek()->type == TokType::Comma) tParser.next();
         }
 
         AST::structTable[structName.substr(0, structName.find('<'))]->genWithTemplate("<" + sTypes + ">", types);
@@ -64,23 +64,23 @@ RaveValue NodeConstStruct::generate() {
     for(size_t i=0; i<this->values.size(); i++) {
         RaveValue generated = this->values[i]->generate();
 
-        if(!LLVMIsConstant(generated.value)) isConst = false;
+        if (!LLVMIsConstant(generated.value)) isConst = false;
 
         llvmValues.push_back(generated);
     }
 
-    if(AST::structTable.find(structName) == AST::structTable.end()) generator->error("structure \033[1m" + structName + "\033[22m does not exist!", loc);
+    if (AST::structTable.find(structName) == AST::structTable.end()) generator->error("structure \033[1m" + structName + "\033[22m does not exist!", loc);
 
     NodeStruct* structNode = AST::structTable[structName];
     std::vector<NodeVar*>& variables = structNode->variables;
 
-    if(isConst) {
+    if (isConst) {
         std::vector<LLVMValueRef> __data;
         for(size_t i=0; i<llvmValues.size(); i++) {
-            if(variables[i]->getType()->toString() != llvmValues[i].type->toString()) {
+            if (variables[i]->getType()->toString() != llvmValues[i].type->toString()) {
                 Type* varType = variables[i]->getType();
 
-                if(instanceof<TypeBasic>(varType) && instanceof<TypeBasic>(llvmValues[i].type)) LLVM::cast(llvmValues[i], varType, loc);
+                if (instanceof<TypeBasic>(varType) && instanceof<TypeBasic>(llvmValues[i].type)) LLVM::cast(llvmValues[i], varType, loc);
                 else generator->error("incompatible types in constant structure: value of type \033[1m" + llvmValues[i].type->toString() + "\033[22m trying to be assigned to variable named \033[1m" + variables[i]->name + "\033[22m of type \033[1m" + varType->toString() + "\033[22m!", loc);
             }
 
@@ -90,14 +90,14 @@ RaveValue NodeConstStruct::generate() {
         return {LLVMConstNamedStruct(constStructType, __data.data(), __data.size()), this->getType()};
     }
     else {
-        if(currScope == nullptr) generator->error("constant structure with dynamic values cannot be created outside a function!", loc);
+        if (currScope == nullptr) generator->error("constant structure with dynamic values cannot be created outside a function!", loc);
         RaveValue temp = LLVM::alloc(new TypeStruct(this->structName), "constStruct_temp");
 
         for(size_t i=0; i<this->values.size(); i++) {
-            if(variables[i]->getType()->toString() != llvmValues[i].type->toString()) {
+            if (variables[i]->getType()->toString() != llvmValues[i].type->toString()) {
                 Type* varType = variables[i]->getType();
 
-                if(instanceof<TypeBasic>(varType) && instanceof<TypeBasic>(llvmValues[i].type)) LLVM::cast(llvmValues[i], varType, loc);
+                if (instanceof<TypeBasic>(varType) && instanceof<TypeBasic>(llvmValues[i].type)) LLVM::cast(llvmValues[i], varType, loc);
                 else generator->error("incompatible types in constant structure: value of type \033[1m" + llvmValues[i].type->toString() + "\033[22m trying to be assigned to variable named \033[1m" + variables[i]->name + "\033[22m of type \033[1m" + varType->toString() + "\033[22m!", loc);
             }
 

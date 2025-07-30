@@ -30,7 +30,7 @@ RaveValue NodeString::generate() {
     LLVMSetLinkage(globalStr, LLVMPrivateLinkage);
     LLVMSetAlignment(globalStr, isWide ? 4 : 1);
 
-    if(!isWide) LLVMSetInitializer(globalStr, LLVMConstStringInContext(generator->context, value.c_str(), value.size(), false));
+    if (!isWide) LLVMSetInitializer(globalStr, LLVMConstStringInContext(generator->context, value.c_str(), value.size(), false));
     else {
         std::u32string u32Str = utf8::utf8to32(value);
         std::vector<LLVMValueRef> values(u32Str.size());

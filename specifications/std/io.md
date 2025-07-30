@@ -91,7 +91,7 @@ Example:
 
 ```d
 std::file f = std::file("test.txt");
-if(f.exists()) {
+if (f.exists()) {
     // ...
 }
 ```

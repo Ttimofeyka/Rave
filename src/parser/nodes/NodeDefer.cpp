@@ -23,12 +23,12 @@ Node* NodeDefer::comptime() {return this;}
 Node* NodeDefer::copy() {return new NodeDefer(this->instruction->copy(), this->loc, this->isFunctionScope);}
 
 NodeDefer::~NodeDefer() {
-    if(this->instruction != nullptr) delete this->instruction;
+    if (this->instruction != nullptr) delete this->instruction;
 }
 
 RaveValue NodeDefer::generate() {
-    if(!isFunctionScope) {
-        if(generator->activeLoops.size() > 0) {
+    if (!isFunctionScope) {
+        if (generator->activeLoops.size() > 0) {
             Loop loop = generator->activeLoops[generator->activeLoops.size() - 1];
             LLVMBasicBlockRef oldBB = generator->currBB;
 
@@ -47,7 +47,7 @@ RaveValue NodeDefer::generate() {
         }
     }
 
-    if(currScope->fnEnd != nullptr) {
+    if (currScope->fnEnd != nullptr) {
         LLVMBasicBlockRef oldBB = generator->currBB;
         LLVM::Builder::atEnd(currScope->fnEnd);
 

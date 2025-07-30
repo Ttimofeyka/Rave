@@ -5,7 +5,7 @@ void main {
     int second;
     char op;
 
-    while(true) {
+    while (true) {
         std::println("- - - - - - - - - - - - - -");
 
         std::println("First number: ");
@@ -17,7 +17,7 @@ void main {
         std::println("Operator: ");
         std::input(&op);
 
-        if(op != '+' && op != '-' && op != '*' && op != '/') {
+        if (op != '+' && op != '-' && op != '*' && op != '/') {
             std::println("Undefined operator!");
             std::println("- - - - - - - - - - - - - -");
             break;

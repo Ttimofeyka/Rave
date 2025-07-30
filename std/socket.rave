@@ -44,29 +44,29 @@ namespace std {
         }
 
         (inline) uint htonl(uint hostlong) {
-            @if(__RAVE_LITTLE_ENDIAN) return = ((hostlong <. 24) & 0xFF000000) | ((hostlong <. 8) & 0x00FF0000) | ((hostlong >. 8) & 0x0000FF00) | ((hostlong >. 24) & 0x000000FF);
+            @if (__RAVE_LITTLE_ENDIAN) return = ((hostlong <. 24) & 0xFF000000) | ((hostlong <. 8) & 0x00FF0000) | ((hostlong >. 8) & 0x0000FF00) | ((hostlong >. 24) & 0x000000FF);
             @else return = hostlong;
         }
 
         (inline) ushort htons(ushort hostshort) {
-            @if(__RAVE_LITTLE_ENDIAN) return = (hostshort <. 8) | (hostshort >. 8);
+            @if (__RAVE_LITTLE_ENDIAN) return = (hostshort <. 8) | (hostshort >. 8);
             @else return = hostshort;
         }
 
         (inline) uint ntohl(uint netlong) {
-            @if(__RAVE_LITTLE_ENDIAN) return = ((netlong <. 24) & 0xFF000000) | ((netlong <. 8) & 0x00FF0000) | ((netlong >. 8) & 0x0000FF00) | ((netlong >. 24) & 0x000000FF);
+            @if (__RAVE_LITTLE_ENDIAN) return = ((netlong <. 24) & 0xFF000000) | ((netlong <. 8) & 0x00FF0000) | ((netlong >. 8) & 0x0000FF00) | ((netlong >. 24) & 0x000000FF);
             @else return = netlong;
         }
 
         (inline) ushort ntohs(ushort netshort) {
-            @if(__RAVE_LITTLE_ENDIAN) return = (netshort <. 8) | (netshort >. 8);
+            @if (__RAVE_LITTLE_ENDIAN) return = (netshort <. 8) | (netshort >. 8);
             @else return = netshort;
         }
     }
 }
 
 
-@if((__RAVE_OS == "LINUX") || (__RAVE_OS == "FREEBSD")) {
+@if ((__RAVE_OS == "LINUX") || (__RAVE_OS == "FREEBSD")) {
     namespace std {
         namespace socket {
             alias SomAxConn = 128;
@@ -174,7 +174,7 @@ namespace std {
             int open(char* ip, int port, long flag) {
                 this.fd = std::socket::socket(std::socket::AfInet, std::socket::SockStream, 0);
 
-                if(this.fd < 0) return = -1;
+                if (this.fd < 0) return = -1;
                 else {
                     this.addressLength = sizeof(std::socket::sockaddr_in);
                     this.address.sin_family = std::socket::AfInet;
@@ -187,7 +187,7 @@ namespace std {
             int openAny(int port) {
                 this.fd = std::socket::socket(std::socket::AfInet, std::socket::SockStream, 0);
 
-                if(this.fd < 0) return = -1;
+                if (this.fd < 0) return = -1;
                 else {
                     this.addressLength = sizeof(std::socket::sockaddr_in);
                     this.address.sin_family = std::socket::AfInet;
@@ -219,7 +219,7 @@ namespace std {
             }
 
             void ~this {
-                if(this.fd != -1) {
+                if (this.fd != -1) {
                     std::socket::close(this.fd);
                     this.fd = -1;
                 }
@@ -230,7 +230,7 @@ namespace std {
         }
     }
 }
-@else @if(__RAVE_OS == "WINDOWS") {
+@else @if (__RAVE_OS == "WINDOWS") {
     namespace std {
         namespace socket {
             alias SomAxConn = 5;
@@ -344,7 +344,7 @@ namespace std {
             int open(char* ip, int port, long flag) {
                 this.fd = std::socket::socket(std::socket::AfInet, std::socket::SockStream, 0);
 
-                if(this.fd == cast(uint*)-1) return = -1;
+                if (this.fd == cast(uint*)-1) return = -1;
                 else {
                     this.addressLength = sizeof(std::socket::sockaddr_in);
                     this.address.sin_family = std::socket::AfInet;
@@ -357,7 +357,7 @@ namespace std {
             int openAny(int port) {
                 this.fd = std::socket::socket(std::socket::AfInet, std::socket::SockStream, 0);
 
-                if(this.fd == cast(uint*)-1) return = -1;
+                if (this.fd == cast(uint*)-1) return = -1;
                 else {
                     this.addressLength = sizeof(std::socket::sockaddr_in);
                     this.address.sin_family = std::socket::AfInet;
@@ -389,7 +389,7 @@ namespace std {
             }
 
             void ~this {
-                if(this.fd != -1) {
+                if (this.fd != -1) {
                     std::socket::close(this.fd);
                     this.fd = cast(uint*)-1;
                 }

@@ -48,7 +48,7 @@ struct A {
     * @noimpl This is a stub that has no implementation
     */
     void ~this {
-        if(this.ptr != null) std::free(this.ptr);
+        if (this.ptr != null) std::free(this.ptr);
     }
 }
 ```

@@ -3,7 +3,7 @@ import <std/io> <std/http>
 // Add -lWSock32 -lws2_32 as your compiler flags if you are using Windows.
 
 void main {
-    @if(__RAVE_OS == "WINDOWS") {
+    @if (__RAVE_OS == "WINDOWS") {
         std::socket::WSAData data;
         std::socket::startup(514, &data);
     }
@@ -11,9 +11,9 @@ void main {
     std::http::Server server = std::http::Server();
 
     int openStatus = server.open("127.0.0.1", 80);
-    if(openStatus < 0) std::exit(-openStatus);
+    if (openStatus < 0) std::exit(-openStatus);
 
-    while(true) {
+    while (true) {
         std::http::Connection conn = server.accept();
         defer ~conn;
 
@@ -22,7 +22,7 @@ void main {
 
         std::println("Method: ", req.method, ", URL: ", req.url);
 
-        if(req.url == "/") {
+        if (req.url == "/") {
             std::http::Response res = std::http::Response();
             defer ~res;
 
@@ -38,5 +38,5 @@ void main {
 
     server.close();
 
-    @if(__RAVE_OS == "WINDOWS") std::socket::cleanup();
+    @if (__RAVE_OS == "WINDOWS") std::socket::cleanup();
 }

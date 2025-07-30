@@ -26,19 +26,19 @@ Node* NodeInt::comptime() {return this;}
 void NodeInt::check() {isChecked = true;}
 
 Type* NodeInt::getType() {
-    if(this->isMustBeLong) return basicTypes[BasicType::Long];
-    if(this->isMustBeShort) return basicTypes[BasicType::Short];
-    if(this->isMustBeChar) return basicTypes[BasicType::Char];
+    if (this->isMustBeLong) return basicTypes[BasicType::Long];
+    if (this->isMustBeShort) return basicTypes[BasicType::Short];
+    if (this->isMustBeChar) return basicTypes[BasicType::Char];
 
     char baseType;
-    if(this->isVarVal != nullptr && instanceof<TypeBasic>(this->isVarVal)) baseType = (((TypeBasic*)this->isVarVal)->type);
+    if (this->isVarVal != nullptr && instanceof<TypeBasic>(this->isVarVal)) baseType = (((TypeBasic*)this->isVarVal)->type);
     else {
-        if(this->value >= INT32_MIN && this->value <= INT32_MAX) baseType = BasicType::Int;
-        else if(this->value >= INT64_MIN && this->value <= INT64_MAX) baseType = BasicType::Long;
+        if (this->value >= INT32_MIN && this->value <= INT32_MAX) baseType = BasicType::Int;
+        else if (this->value >= INT64_MIN && this->value <= INT64_MAX) baseType = BasicType::Long;
         else baseType = BasicType::Cent;
     }
 
-    if(!isUnsigned) return basicTypes[baseType];
+    if (!isUnsigned) return basicTypes[baseType];
 
     constexpr char unsignedTypes[] = {
         BasicType::Uchar, BasicType::Ushort, BasicType::Uint,
@@ -52,28 +52,28 @@ RaveValue NodeInt::generate() {
     LLVMTypeRef intType = nullptr;
     char baseType = BasicType::Int;
 
-    if(isMustBeLong) {
+    if (isMustBeLong) {
         baseType = BasicType::Long;
         intType = LLVMInt64TypeInContext(generator->context);
     }
-    else if(isMustBeShort) {
+    else if (isMustBeShort) {
         baseType = BasicType::Short;
         intType = LLVMInt16TypeInContext(generator->context);
     }
-    else if(isMustBeChar) {
+    else if (isMustBeChar) {
         baseType = BasicType::Char;
         intType = LLVMInt8TypeInContext(generator->context);
     }
-    else if(this->isVarVal != nullptr && instanceof<TypeBasic>(this->isVarVal)) {
+    else if (this->isVarVal != nullptr && instanceof<TypeBasic>(this->isVarVal)) {
         baseType = ((TypeBasic*)this->isVarVal)->type;
         intType = getTypeForBasicType(baseType);
     }
     else {
-        if(value >= INT32_MIN && value <= INT32_MAX) {
+        if (value >= INT32_MIN && value <= INT32_MAX) {
             baseType = BasicType::Int;
             intType = LLVMInt32TypeInContext(generator->context);
         }
-        else if(value >= INT64_MIN && value <= INT64_MAX) {
+        else if (value >= INT64_MIN && value <= INT64_MAX) {
             baseType = BasicType::Long;
             intType = LLVMInt64TypeInContext(generator->context);
         }

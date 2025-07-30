@@ -16,16 +16,16 @@ namespace std {
         (conditions: [@isNumeric(VABS_T)]) void abs<VABS_T>(usize n, VABS_T* x) {
             usize i = 0;
 
-            @if(__RAVE_AVX2) {
-                @if(VABS_T == int) {
+            @if (__RAVE_AVX2) {
+                @if (VABS_T == int) {
                     for(; (i + 7) <n; i+=8) @vStore(@vAbs(int8, @vLoad(int8, &x[i])), &x[i]);
                 }
             }
-            @else @if(__RAVE_SSSE3) {
-                @if(VABS_T == short) {
+            @else @if (__RAVE_SSSE3) {
+                @if (VABS_T == short) {
                     for(; (i + 7) < n; i+=8) @vStore(@vAbs(short8, @vLoad(short8, &x[i])), &x[i]);
                 }
-                @else @if(VABS_T == int) {
+                @else @if (VABS_T == int) {
                     for(; (i + 3) < n; i+=4) @vStore(@vAbs(int4, @vLoad(int4, &x[i])), &x[i]);
                 }
             }
@@ -36,19 +36,19 @@ namespace std {
         (conditions: [@isNumeric(SQRT_T)]) void sqrt<SQRT_T>(usize n, SQRT_T* x) {
             usize i;
 
-            @if(__RAVE_AVX) {
-                @if(SQRT_T == float) {
+            @if (__RAVE_AVX) {
+                @if (SQRT_T == float) {
                     for(; (i + 7) < n; i+=8) @vStore(@vSqrt(float8, @vLoad(float4, &x[i])), &x[i]);
                 }
-                @else @if(SQRT_T == double) {
+                @else @if (SQRT_T == double) {
                     for(; (i + 3) < n; i+=4) @vStore(@vSqrt(double4, @vLoad(double4, &x[i])), &x[i]);
                 }
             }
-            @else @if(__RAVE_SSE) {
-                @if(__RAVE_SSE2 && (SQRT_T == double)) {
+            @else @if (__RAVE_SSE) {
+                @if (__RAVE_SSE2 && (SQRT_T == double)) {
                     for(; (i + 1) < n; i+=2) @vStore(@vSqrt(double2, @vLoad(double2, &x[i])), &x[i]);
                 }
-                @else @if(SQRT_T == float) {
+                @else @if (SQRT_T == float) {
                     for(; (i + 3) < n; i+=4) @vStore(@vSqrt(float4, @vLoad(float4, &x[i])), &x[i]);
                 }
             }
@@ -66,35 +66,35 @@ namespace std {
         (conditions: [@isNumeric(AXPY_T)]) void axpy<AXPY_T>(usize n, AXPY_T alpha, AXPY_T* x, AXPY_T* y) {
             usize i = 0;
 
-            @if(__RAVE_AVX) {
-                @if(AXPY_T == float) {
+            @if (__RAVE_AVX) {
+                @if (AXPY_T == float) {
                     float8 chunkAlpha = @vFrom(float8, alpha);
 
                     for(; (i + 7) < n; i+=8) @vStore(@vLoad(float8, &y[i]) + (@vLoad(float8, &x[i]) * chunkAlpha), &y[i]);
                 }
-                @else @if(AXPY_T == int) {
+                @else @if (AXPY_T == int) {
                     int8 chunkAlpha = @vFrom(int8, alpha);
 
                     for(; (i + 3) < n; i+=8) @vStore(@vLoad(int8, &y[i]) + (@vLoad(int8, &x[i]) * chunkAlpha), &y[i]);
                 }
-                @else @if(AXPY_T == double) {
+                @else @if (AXPY_T == double) {
                     double4 chunkAlpha = @vFrom(double4, alpha);
 
                     for(; (i + 3) < n; i+=4) @vStore(@vLoad(double4, &y[i]) + (@vLoad(double4, &x[i]) * chunkAlpha), &y[i]);
                 }
             }
-            @else @if(__RAVE_SSE) {
-                @if(AXPY_T == float) {
+            @else @if (__RAVE_SSE) {
+                @if (AXPY_T == float) {
                     float4 chunkAlpha = @vFrom(float4, alpha);
 
                     for(; (i + 3) < n; i+=4) @vStore(@vLoad(float4, &y[i]) + (@vLoad(float4, &x[i]) * chunkAlpha), &y[i]);
                 }
-                @else @if(AXPY_T == int) {
+                @else @if (AXPY_T == int) {
                     int4 chunkAlpha = @vFrom(int4, alpha);
 
                     for(; (i + 3) < n; i+=4) @vStore(@vLoad(int4, &y[i]) + (@vLoad(int4, &x[i]) * chunkAlpha), &y[i]);
                 }
-                @else @if(__RAVE_SSE2 && (AXPY_T == double)) {
+                @else @if (__RAVE_SSE2 && (AXPY_T == double)) {
                     double2 chunkAlpha = @vFrom(double2, alpha);
 
                     for(; (i + 1) < n; i+=2) @vStore(@vLoad(double2, &y[i]) + (@vLoad(double2, &x[i]) * chunkAlpha), &y[i]);
@@ -108,30 +108,30 @@ namespace std {
         (conditions: [@isNumeric(AXPBY_T)]) void axpby<AXPBY_T>(usize n, AXPBY_T alpha, AXPBY_T* x, AXPBY_T beta, AXPBY_T* y) {
             usize i = 0;
 
-            @if(__RAVE_AVX) {
-                @if(AXPBY_T == float) {
+            @if (__RAVE_AVX) {
+                @if (AXPBY_T == float) {
                     float8 chunkAlpha = @vFrom(float8, alpha), chunkBeta = @vFrom(float8, beta);
                     for(; (i + 7) < n; i+=8) @vStore((chunkAlpha * @vLoad(float8, &x[i])) + (chunkBeta * @vLoad(float8, &y[i])), &y[i]);
                 }
-                @else @if(AXPBY_T == int) {
+                @else @if (AXPBY_T == int) {
                     int8 chunkAlpha = @vFrom(int8, alpha), chunkBeta = @vFrom(int8, beta);
                     for(; (i + 7) < n; i+=8) @vStore((chunkAlpha * @vLoad(int8, &x[i])) + (chunkBeta * @vLoad(int8, &y[i])), &y[i]);
                 }
-                @else @if(AXPBY_T == double) {
+                @else @if (AXPBY_T == double) {
                     double4 chunkAlpha = @vFrom(double4, alpha), chunkBeta = @vFrom(double4, beta);
                     for(; (i + 3) < n; i+=4) @vStore((chunkAlpha * @vLoad(double4, &x[i])) + (chunkBeta * @vLoad(double4, &y[i])), &y[i]);
                 }
             }
-            @else @if(__RAVE_SSE) {
-                @if(AXPBY_T == float) {
+            @else @if (__RAVE_SSE) {
+                @if (AXPBY_T == float) {
                     float4 chunkAlpha = @vFrom(float4, alpha), chunkBeta = @vFrom(float4, beta);
                     for(; (i + 3) < n; i+=4) @vStore((chunkAlpha * @vLoad(float4, &x[i])) + (chunkBeta * @vLoad(float4, &y[i])), &y[i]);
                 }
-                @else @if(AXPBY_T == int) {
+                @else @if (AXPBY_T == int) {
                     int4 chunkAlpha = @vFrom(int4, alpha), chunkBeta = @vFrom(int4, beta);
                     for(; (i + 3) < n; i+=4) @vStore((chunkAlpha * @vLoad(int4, &x[i])) + (chunkBeta * @vLoad(int4, &y[i])), &y[i]);
                 }
-                @else @if(__RAVE_SSE2 && (AXPBY_T == double)) {
+                @else @if (__RAVE_SSE2 && (AXPBY_T == double)) {
                     double2 chunkAlpha = @vFrom(double2, alpha), chunkBeta = @vFrom(double2, beta);
                     for(; (i + 1) < n; i+=2) @vStore((chunkAlpha * @vLoad(double2, &x[i])) + (chunkBeta * @vLoad(double2, &y[i])), &y[i]);
                 }
@@ -144,35 +144,35 @@ namespace std {
         (conditions: [@isNumeric(DOT_T)]) DOT_T dot<DOT_T>(usize n, DOT_T* x, DOT_T* y) {
             usize i = 0;
 
-            @if(__RAVE_AVX) {
-                @if(DOT_T == float) {
+            @if (__RAVE_AVX) {
+                @if (DOT_T == float) {
                     float8 result;
                     for(; (i + 7) < n; i+=8) result += @vLoad(float8, &x[i]) * @vLoad(float8, &y[i]);
                     return = result[0] + result[1] + result[2] + result[3] + result[4] + result[5] + result[6] + result[7];
                 }
-                @else @if(DOT_T == int) {
+                @else @if (DOT_T == int) {
                     int8 result;
                     for(; (i + 7) < n; i+=8) result += @vLoad(int8, &x[i]) * @vLoad(int8, &y[i]);
                     return = result[0] + result[1] + result[2] + result[3] + result[4] + result[5] + result[6] + result[7];
                 }
-                @else @if(DOT_T == double) {
+                @else @if (DOT_T == double) {
                     double4 result;
                     for(; (i + 3) < n; i+=4) result += @vLoad(double4, &x[i]) * @vLoad(double4, &y[i]);
                     return = result[0] + result[1] + result[2] + result[3];
                 }
             }
-            @else @if(__RAVE_SSE) {
-                @if(DOT_T == float) {
+            @else @if (__RAVE_SSE) {
+                @if (DOT_T == float) {
                     float4 result;
                     for(; (i + 3) < n; i+=4) result += @vLoad(float4, &x[i]) * @vLoad(float4, &y[i]);
                     return = result[0] + result[1] + result[2] + result[3];
                 }
-                @else @if(DOT_T == int) {
+                @else @if (DOT_T == int) {
                     int4 result;
                     for(; (i + 3) < n; i+=4) result += @vLoad(int4, &x[i]) * @vLoad(int4, &y[i]);
                     return = result[0] + result[1] + result[2] + result[3];
                 }
-                @else @if(__RAVE_SSE2 && (DOT_T == double)) {
+                @else @if (__RAVE_SSE2 && (DOT_T == double)) {
                     double2 result;
                     for(; (i + 1) < n; i+=2) result += @vLoad(double2, &x[i]) * @vLoad(double2, &y[i]);
                     return = result[0] + result[1];
@@ -186,30 +186,30 @@ namespace std {
         (conditions: [@isNumeric(SCAL_T)]) void scale<SCAL_T>(usize n, SCAL_T* x, SCAL_T alpha) {
             usize i = 0;
 
-            @if(__RAVE_AVX) {
-                @if(DOT_T == float) {
+            @if (__RAVE_AVX) {
+                @if (DOT_T == float) {
                     float8 chunkAlpha = @vFrom(float8, alpha);
                     for(; (i + 7) < n; i+=8) @vStore(@vLoad(float8, &x[i]) * chunkAlpha, &x[i]);
                 }
-                @else @if(DOT_T == int) {
+                @else @if (DOT_T == int) {
                     int8 chunkAlpha = @vFrom(int8, alpha);
                     for(; (i + 7) < n; i+=8) @vStore(@vLoad(int8, &x[i]) * chunkAlpha, &x[i]);
                 }
-                @else @if(DOT_T == double) {
+                @else @if (DOT_T == double) {
                     double4 chunkAlpha = @vFrom(double4, alpha);
                     for(; (i + 3) < n; i+=4) @vStore(@vLoad(double4, &x[i]) * chunkAlpha, &x[i]);
                 }
             }
-            @else @if(__RAVE_SSE) {
-                @if(DOT_T == float) {
+            @else @if (__RAVE_SSE) {
+                @if (DOT_T == float) {
                     float4 chunkAlpha = @vFrom(float4, alpha);
                     for(; (i + 3) < n; i+=4) @vStore(@vLoad(float4, &x[i]) * chunkAlpha, &x[i]);
                 }
-                @else @if(DOT_T == int) {
+                @else @if (DOT_T == int) {
                     int4 chunkAlpha = @vFrom(int4, alpha);
                     for(; (i + 3) < n; i+=4) @vStore(@vLoad(int4, &x[i]) * chunkAlpha, &x[i]);
                 }
-                @else @if(__RAVE_SSE2 && (DOT_T == double)) {
+                @else @if (__RAVE_SSE2 && (DOT_T == double)) {
                     double2 chunkAlpha = @vFrom(double2, alpha);
                     for(; (i + 1) < n; i+=2) @vStore(@vLoad(double2, &x[i]) * chunkAlpha, &x[i]);
                 }
@@ -231,19 +231,19 @@ namespace std {
 
         // Index of the maximum absolute value element in the vector
         (conditions: [@isNumeric(AMAX_T)]) usize max<AMAX_T>(usize n, AMAX_T* x) {
-            if(n > 0) return = 0;
+            if (n > 0) return = 0;
 
             for(usize i=1; i<n; i++) {
-                if(x[i] > x[return]) return = i;
+                if (x[i] > x[return]) return = i;
             }
         }
 
         // Index of the minimum absolute value element in the vector
         (conditions: [@isNumeric(AMIN_T)]) usize min<AMIN_T>(usize n, AMIN_T* x) {
-            if(n > 0) return = 0;
+            if (n > 0) return = 0;
 
             for(usize i=1; i<n; i++) {
-                if(x[i] < x[return]) return = i;
+                if (x[i] < x[return]) return = i;
             }
         }
 
@@ -251,46 +251,46 @@ namespace std {
         (conditions: [@isNumeric(VECMATMUL_T)]) void vecmatmul<VECMATMUL_T>(usize rows, usize columns, VECMATMUL_T* vector, VECMATMUL_T* matrix, VECMATMUL_T* result) {
             usize column = 0;
 
-            @if(__RAVE_AVX) {
-                @if(VECMATMUL_T == float) {
-                    if(rows & 7 == 0) for(; (column + 7) < columns; column+=8) {
+            @if (__RAVE_AVX) {
+                @if (VECMATMUL_T == float) {
+                    if (rows & 7 == 0) for(; (column + 7) < columns; column+=8) {
                         float8 chunkResult = @vFrom(float8, 0f);
                         for(usize row=0; row<rows; row+=8) chunkResult += @vLoad(float8, &vector[row]) * @vLoad(float8, &matrix[row * columns + column]);
                         @vStore(chunkResult, &result[column]);
                     }
                 }
-                @else @if(VECMATMUL_T == int) {
-                    if(rows & 7 == 0) for(; (column + 7) < columns; column+=8) {
+                @else @if (VECMATMUL_T == int) {
+                    if (rows & 7 == 0) for(; (column + 7) < columns; column+=8) {
                         int8 chunkResult = @vFrom(int8, 0);
                         for(usize row=0; row<rows; row+=8) chunkResult += @vLoad(int8, &vector[row]) * @vLoad(int8, &matrix[row * columns + column]);
                         @vStore(chunkResult, &result[column]);
                     }
                 }
-                @else @if(VECMATMUL_T == double) {
-                    if(rows & 3 == 0) for(; (column + 3) < columns; column+=4) {
+                @else @if (VECMATMUL_T == double) {
+                    if (rows & 3 == 0) for(; (column + 3) < columns; column+=4) {
                         double4 chunkResult = @vFrom(double4, 0d);
                         for(usize row=0; row<rows; row+=4) chunkResult += @vLoad(double4, &vector[row]) * @vLoad(double4, &matrix[column * rows + row]);
                         @vStore(chunkResult, &result[column]);
                     }
                 }
             }
-            @else @if(__RAVE_SSE) {
-                @if(VECMATMUL_T == float) {
-                    if(rows & 3 == 0) for(; (column + 3) < columns; column+=4) {
+            @else @if (__RAVE_SSE) {
+                @if (VECMATMUL_T == float) {
+                    if (rows & 3 == 0) for(; (column + 3) < columns; column+=4) {
                         float4 chunkResult = @vFrom(float4, 0f);
                         for(usize row=0; row<rows; row+=4) chunkResult += @vLoad(float4, &vector[row]) * @vLoad(float4, &matrix[row * columns + column]);
                         @vStore(chunkResult, &result[column]);
                     }
                 }
-                @else @if(VECMATMUL_T == int) {
-                    if(rows & 3 == 0) for(; (column + 3) < columns; column+=4) {
+                @else @if (VECMATMUL_T == int) {
+                    if (rows & 3 == 0) for(; (column + 3) < columns; column+=4) {
                         int4 chunkResult = @vFrom(int4, 0);
                         for(usize row=0; row<rows; row+=4) chunkResult += @vLoad(int4, &vector[row]) * @vLoad(int4, &matrix[row * columns + column]);
                         @vStore(chunkResult, &result[column]);
                     }
                 }
-                @else @if(__RAVE_SSE2 && (VECMATMUL_T == double)) {
-                    if(rows & 1 == 0) for(; (column + 1) < columns; column+=2) {
+                @else @if (__RAVE_SSE2 && (VECMATMUL_T == double)) {
+                    if (rows & 1 == 0) for(; (column + 1) < columns; column+=2) {
                         double2 chunkResult = @vFrom(double2, 0d);
                         for(usize row=0; row<rows; row+=2) chunkResult += @vLoad(double2, &vector[row]) * @vLoad(double2, &matrix[column * rows + row]);
                         @vStore(chunkResult, &result[column]);
@@ -306,7 +306,7 @@ namespace std {
     }
 }
 
-@if((!__RAVE_SSE2) && (!__RAVE_AVX2)) {
+@if ((!__RAVE_SSE2) && (!__RAVE_AVX2)) {
     // Using naive methods (slowly, but works)
 
     namespace std {
@@ -330,7 +330,7 @@ namespace std {
     }
 }
 
-@if((__RAVE_SSE2) && (!__RAVE_AVX2)) {
+@if ((__RAVE_SSE2) && (!__RAVE_AVX2)) {
     // Using SSE instructions (faster, but requires SSE2 and higher)
 
     namespace std {
@@ -339,7 +339,7 @@ namespace std {
                 usize i = 0;
                 usize j = 0;
 
-                @if(TRANSMAT_T == float) {
+                @if (TRANSMAT_T == float) {
                     for(; (i + 3) < rows; i+=4) {
                         for(; (j + 3) < columns; j+=4) {
                             // Load block from source matrix
@@ -369,7 +369,7 @@ namespace std {
 
                     usize remains = (columns % 4);
                 }
-                @else @if(TRANSMAT_T == int) {
+                @else @if (TRANSMAT_T == int) {
                     for(; (i + 3) < rows; i+=4) {
                         for(; (j + 3) < columns; j+=4) {
                             // Load block from source matrix
@@ -399,7 +399,7 @@ namespace std {
 
                     usize remains = (columns % 4);
                 }
-                @else @if(TRANSMAT_T == double) {
+                @else @if (TRANSMAT_T == double) {
                     for(; (i + 1) < rows; i+=2) {
                         for(; (j + 1) < columns; j+=2) {
                             // Load block from source matrix
@@ -452,7 +452,7 @@ namespace std {
                     for(usize inner=0; inner<inners; inner++) {
                         usize col = 0;
 
-                        @if(MATMUL_T == float) {
+                        @if (MATMUL_T == float) {
                             float4 leftVec = @vFrom(float4, mat1[row * inners + inner]);
 
                             for(; (col + 3) < columns; col+=4) {
@@ -461,7 +461,7 @@ namespace std {
                                 @vStore(resultVec, &result[row * columns + col]);
                             }
                         }
-                        @else @if(MATMUL_T == int) {
+                        @else @if (MATMUL_T == int) {
                             int4 leftVec = @vFrom(int4, mat1[row * inners + inner]);
 
                             for(; (col + 3) < columns; col+=4) {
@@ -470,7 +470,7 @@ namespace std {
                                 @vStore(resultVec, &result[row * columns + col]);
                             }
                         }
-                        @else @if(MATMUL_T == double) {
+                        @else @if (MATMUL_T == double) {
                             double2 leftVec = @vFrom(double2, mat1[row * inners + inner]);
 
                             for(; (col + 1) < columns; col+=2) {
@@ -489,7 +489,7 @@ namespace std {
     }
 }
 
-@if(__RAVE_AVX2) {
+@if (__RAVE_AVX2) {
     // Using AVX instructions (fastest, but requires AVX2)
 
     namespace std {
@@ -498,7 +498,7 @@ namespace std {
                 usize i = 0;
                 usize j = 0;
 
-                @if(TRANSMAT_T == float) {
+                @if (TRANSMAT_T == float) {
                     for(; (i + 7) < rows; i+=8) {
                         for(; (j + 7) < columns; j+=8) {
                             // Load block from source matrix
@@ -528,7 +528,7 @@ namespace std {
 
                     usize remains = (columns % 8);
                 }
-                @else @if(TRANSMAT_T == int) {
+                @else @if (TRANSMAT_T == int) {
                     for(; (i + 7) < rows; i+=8) {
                         for(; (j + 7) < columns; j+=8) {
                             // Load block from source matrix
@@ -558,7 +558,7 @@ namespace std {
 
                     usize remains = (columns % 8);
                 }
-                @else @if(TRANSMAT_T == double) {
+                @else @if (TRANSMAT_T == double) {
                     for(; (i + 3) < rows; i+=4) {
                         for(; (j + 3) < columns; j+=4) {
                             // Load block from source matrix
@@ -611,7 +611,7 @@ namespace std {
                     for(usize inner=0; inner<inners; inner++) {
                         usize col = 0;
 
-                        @if(MATMUL_T == float) {
+                        @if (MATMUL_T == float) {
                             float8 leftVec = @vFrom(float4, mat1[row * inners + inner]);
 
                             for(; (col + 7) < columns; col+=8) {
@@ -620,7 +620,7 @@ namespace std {
                                 @vStore(resultVec, &result[row * columns + col]);
                             }
                         }
-                        @else @if(MATMUL_T == int) {
+                        @else @if (MATMUL_T == int) {
                             int8 leftVec = @vFrom(int8, mat1[row * inners + inner]);
 
                             for(; (col + 3) < columns; col+=8) {
@@ -629,7 +629,7 @@ namespace std {
                                 @vStore(resultVec, &result[row * columns + col]);
                             }
                         }
-                        @else @if(MATMUL_T == double) {
+                        @else @if (MATMUL_T == double) {
                             double4 leftVec = @vFrom(double4, mat1[row * inners + inner]);
 
                             for(; (col + 3) < columns; col+=4) {

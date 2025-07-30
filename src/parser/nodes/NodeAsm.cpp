@@ -56,7 +56,7 @@ RaveValue NodeAsm::generate() {
 }
 
 NodeAsm::~NodeAsm() {
-    if(this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
+    if (this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
     
-    for(size_t i=0; i<this->values.size(); i++) if(this->values[i] != nullptr) delete this->values[i];
+    for(size_t i=0; i<this->values.size(); i++) if (this->values[i] != nullptr) delete this->values[i];
 }

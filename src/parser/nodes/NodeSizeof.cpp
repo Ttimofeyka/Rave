@@ -20,10 +20,10 @@ Node* NodeSizeof::copy() {return new NodeSizeof(this->value->copy(), this->loc);
 void NodeSizeof::check() {isChecked = true;}
 
 RaveValue NodeSizeof::generate() {
-    if(instanceof<NodeType>(this->value)) {
+    if (instanceof<NodeType>(this->value)) {
         Type* tp = ((NodeType*)this->value)->getType();
-        while(generator->toReplace.find(tp->toString()) != generator->toReplace.end()) tp = generator->toReplace[tp->toString()];
-        if(instanceof<TypeBasic>(tp)) {
+        while (generator->toReplace.find(tp->toString()) != generator->toReplace.end()) tp = generator->toReplace[tp->toString()];
+        if (instanceof<TypeBasic>(tp)) {
             switch(((TypeBasic*)tp)->type) {
                 case BasicType::Uchar: case BasicType::Char: case BasicType::Bool: return {LLVMConstInt(LLVMInt32TypeInContext(generator->context), 1, false), basicTypes[BasicType::Int]};
                 case BasicType::Ushort: case BasicType::Short: case BasicType::Half: case BasicType::Bhalf: return {LLVMConstInt(LLVMInt32TypeInContext(generator->context), 2, false), basicTypes[BasicType::Int]};
@@ -41,5 +41,5 @@ RaveValue NodeSizeof::generate() {
 }
 
 NodeSizeof::~NodeSizeof() {
-    if(this->value != nullptr) delete this->value;
+    if (this->value != nullptr) delete this->value;
 }

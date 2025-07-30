@@ -4,7 +4,7 @@ Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-@if(__RAVE_PLATFORM == "X86_64") {
+@if (__RAVE_PLATFORM == "X86_64") {
     struct va_list {
         int gp_offset;
         int fp_offset;
@@ -12,7 +12,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
         void* reg_save_area;
     }
 }
-@if(
+@if (
     (__RAVE_PLATFORM == "X86") || (__RAVE_PLATFORM == "POWERPC64") || (__RAVE_PLATFORM == "MIPS") || (__RAVE_PLATFORM == "MIPS64") ||
     (__RAVE_PLATFORM == "AVR") || (__RAVE_PLATFORM == "WASM") || (__RAVE_PLATFORM == "UNKNOWN")
 ) {
@@ -21,7 +21,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
     }
 }
 
-@if(__RAVE_PLATFORM == "AARCH64") {
+@if (__RAVE_PLATFORM == "AARCH64") {
     struct va_list {
         void* __stack;
         void* __gr_top;
@@ -31,7 +31,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
     }
 }
 
-@if(__RAVE_PLATFORM == "POWERPC") {
+@if (__RAVE_PLATFORM == "POWERPC") {
     struct va_list {
         char f;
         char s;
@@ -41,7 +41,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
     }
 }
 
-@if(__RAVE_PLATFORM == "S390X") {
+@if (__RAVE_PLATFORM == "S390X") {
     struct va_list {
         long f;
         long s;

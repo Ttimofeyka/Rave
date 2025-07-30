@@ -23,8 +23,8 @@ NodeWhile::NodeWhile(Node* cond, Node* body, int loc) {
 }
 
 NodeWhile::~NodeWhile() {
-    if(cond != nullptr) delete cond;
-    if(body != nullptr) delete body;
+    if (cond != nullptr) delete cond;
+    if (body != nullptr) delete body;
 }
 
 Type* NodeWhile::getType() {return typeVoid;}
@@ -58,7 +58,7 @@ RaveValue NodeWhile::generate() {
     generator->currBB = whileBlock;
     this->body->generate();
     
-    if(!generator->activeLoops[selfNumber].hasEnd) LLVMBuildBr(generator->builder, condBlock);
+    if (!generator->activeLoops[selfNumber].hasEnd) LLVMBuildBr(generator->builder, condBlock);
 
     LLVMPositionBuilderAtEnd(generator->builder, generator->activeLoops[selfNumber].end);
     generator->currBB = generator->activeLoops[selfNumber].end;
@@ -71,6 +71,6 @@ RaveValue NodeWhile::generate() {
 }
 
 void NodeWhile::optimize() {
-    if(body != nullptr)
+    if (body != nullptr)
         body->optimize();
 }

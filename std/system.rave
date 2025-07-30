@@ -10,7 +10,7 @@ namespace std {
     extern(linkname: "system") int system(char* cmd);
 }
 
-@if((__RAVE_OS == "LINUX") || (__RAVE_OS == "FREEBSD")) {
+@if ((__RAVE_OS == "LINUX") || (__RAVE_OS == "FREEBSD")) {
     import <std/sysc>
 
     namespace std {
@@ -20,7 +20,7 @@ namespace std {
         }
     }
 }
-@else @if(__RAVE_OS == "WINDOWS") {
+@else @if (__RAVE_OS == "WINDOWS") {
     namespace std {
         namespace system {
             extern(linkname: "GetCurrentDirectoryW") int __getCurrentDirectory(int size, ushort* buffer);
@@ -33,7 +33,7 @@ namespace std {
 
                 std::system::__getCurrentDirectory(bufferSize, buffer);
 
-                if(cbuffer == null) return = std::utf16::toUTF8(buffer);
+                if (cbuffer == null) return = std::utf16::toUTF8(buffer);
                 else {
                     std::utf16::toUTF8Buffer(buffer, cbuffer, size);
                     return = cbuffer;

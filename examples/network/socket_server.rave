@@ -3,24 +3,24 @@ import <std/io> <std/socket>
 // Add -lWSock32 as a compiler flag if you are using Windows.
 
 void main {
-    @if(__RAVE_OS == "WINDOWS") {
+    @if (__RAVE_OS == "WINDOWS") {
         std::socket::WSAData wsadata;
         std::socket::startup(514, &wsadata);
     }
 
     std::socket server = std::socket();
 
-    if(server.open("127.0.0.1", 80, std::socket::InAddrAny) == -1) std::println("Open");
-    if(server.bind() == -1) std::println("Bind");
-    if(server.listen() == -1) std::println("Listen");
+    if (server.open("127.0.0.1", 80, std::socket::InAddrAny) == -1) std::println("Open");
+    if (server.bind() == -1) std::println("Bind");
+    if (server.listen() == -1) std::println("Listen");
 
     std::socket accepted;
 
-    while(true) {
+    while (true) {
         server.accept(&accepted);
             accepted.write("HTTP/1.1 200 OK\r\nServer: webserver-rave\r\nContent-Type: text/html\r\nContent-Length: 37\r\n\r\n<html>Hello from Rave backend!</html>\r\n");
         accepted.close();
     }
 
-    @if(__RAVE_OS == "WINDOWS") std::socket::cleanup();
+    @if (__RAVE_OS == "WINDOWS") std::socket::cleanup();
 }

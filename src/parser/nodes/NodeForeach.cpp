@@ -30,10 +30,10 @@ NodeForeach::NodeForeach(NodeIden* elName, Node* varData, Node* varLength, NodeB
 }
 
 NodeForeach::~NodeForeach() {
-    if(elName != nullptr) delete elName;
-    if(varData != nullptr) delete varData;
-    if(varLength != nullptr) delete varLength;
-    if(block != nullptr) delete block;
+    if (elName != nullptr) delete elName;
+    if (varData != nullptr) delete varData;
+    if (varLength != nullptr) delete varLength;
+    if (block != nullptr) delete block;
 }
 
 Node* NodeForeach::copy() {
@@ -45,14 +45,14 @@ void NodeForeach::check() {isChecked = true;}
 Type* NodeForeach::getType() {return typeVoid;}
 
 RaveValue NodeForeach::generate() {
-    if(this->varLength == nullptr) {
-        if(instanceof<NodeIden>(varData)) {
+    if (this->varLength == nullptr) {
+        if (instanceof<NodeIden>(varData)) {
             NodeIden* niVarData = (NodeIden*)varData;
-            if(instanceof<TypeStruct>(niVarData->getType())) {
+            if (instanceof<TypeStruct>(niVarData->getType())) {
                 TypeStruct* ts = (TypeStruct*)niVarData->getType();
-                if(AST::structTable.find(ts->name) != AST::structTable.end()) {
+                if (AST::structTable.find(ts->name) != AST::structTable.end()) {
                     NodeStruct* ns = (NodeStruct*)AST::structTable[ts->name];
-                    if(ns->dataVar == "" || ns->lengthVar == "") {
+                    if (ns->dataVar == "" || ns->lengthVar == "") {
                         generator->error("structure \033[1m" + ts->name + "\033[22m does not contain the parameters data or length!", this->loc);
                         return {};
                     }
@@ -91,7 +91,7 @@ RaveValue NodeForeach::generate() {
 
 void NodeForeach::optimize() {
     for(Node *nd: block->nodes) {
-        if(instanceof<NodeVar>(nd) && !((NodeVar*)nd)->isGlobal && !((NodeVar*)nd)->isUsed) generator->warning("unused variable \033[1m" + ((NodeVar*)nd)->name + "\033[22m!", loc);
+        if (instanceof<NodeVar>(nd) && !((NodeVar*)nd)->isGlobal && !((NodeVar*)nd)->isUsed) generator->warning("unused variable \033[1m" + ((NodeVar*)nd)->name + "\033[22m!", loc);
         else nd->optimize();
     }
 }

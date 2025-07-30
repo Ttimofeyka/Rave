@@ -14,7 +14,7 @@ NodeNull::NodeNull(Type* type, int loc) {this->type = type; this->loc = loc;}
 Type* NodeNull::getType() {return (this->type == nullptr ? new TypePointer(typeVoid) : this->type);}
 
 RaveValue NodeNull::generate() {
-    if(this->type != nullptr) return {LLVMConstNull(generator->genType(this->type, this->loc)), this->type};
+    if (this->type != nullptr) return {LLVMConstNull(generator->genType(this->type, this->loc)), this->type};
     return {LLVMConstNull(LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0)), new TypePointer(typeVoid)};
 }
 
@@ -23,5 +23,5 @@ Node* NodeNull::comptime() {return this;}
 Node* NodeNull::copy() {return new NodeNull(this->type, this->loc);}
 
 NodeNull::~NodeNull() {
-    if(this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
+    if (this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
 }

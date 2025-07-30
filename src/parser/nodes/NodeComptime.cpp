@@ -31,25 +31,25 @@ Type* NodeComptime::getType() {
 }
 
 Node* NodeComptime::comptime() {
-    if(this->isImported) {
-        if(instanceof<NodeIf>(this->node)) ((NodeIf*)this->node)->isImported = true;
-        else if(instanceof<NodeFunc>(this->node)) ((NodeFunc*)this->node)->isExtern = true;
-        else if(instanceof<NodeComptime>(this->node)) ((NodeComptime*)this->node)->isImported = true;
-        else if(instanceof<NodeVar>(this->node)) ((NodeVar*)this->node)->isExtern = true;
-        else if(instanceof<NodeNamespace>(this->node)) ((NodeNamespace*)this->node)->isImported = true;
-        else if(instanceof<NodeBuiltin>(this->node)) ((NodeBuiltin*)this->node)->isImport = true;
-        else if(instanceof<NodeStruct>(this->node)) ((NodeStruct*)this->node)->isImported = true;
-        else if(instanceof<NodeBlock>(this->node)) {
+    if (this->isImported) {
+        if (instanceof<NodeIf>(this->node)) ((NodeIf*)this->node)->isImported = true;
+        else if (instanceof<NodeFunc>(this->node)) ((NodeFunc*)this->node)->isExtern = true;
+        else if (instanceof<NodeComptime>(this->node)) ((NodeComptime*)this->node)->isImported = true;
+        else if (instanceof<NodeVar>(this->node)) ((NodeVar*)this->node)->isExtern = true;
+        else if (instanceof<NodeNamespace>(this->node)) ((NodeNamespace*)this->node)->isImported = true;
+        else if (instanceof<NodeBuiltin>(this->node)) ((NodeBuiltin*)this->node)->isImport = true;
+        else if (instanceof<NodeStruct>(this->node)) ((NodeStruct*)this->node)->isImported = true;
+        else if (instanceof<NodeBlock>(this->node)) {
             NodeBlock* block = (NodeBlock*)this->node;
 
             for(Node* nd: block->nodes) {
-                if(instanceof<NodeIf>(nd)) ((NodeIf*)nd)->isImported = true;
-                else if(instanceof<NodeFunc>(nd)) ((NodeFunc*)nd)->isExtern = true;
-                else if(instanceof<NodeComptime>(nd)) ((NodeComptime*)nd)->isImported = true;
-                else if(instanceof<NodeVar>(nd)) ((NodeVar*)nd)->isExtern = true;
-                else if(instanceof<NodeNamespace>(nd)) ((NodeNamespace*)nd)->isImported = true;
-                else if(instanceof<NodeBuiltin>(nd)) ((NodeBuiltin*)nd)->isImport = true;
-                else if(instanceof<NodeStruct>(nd)) ((NodeStruct*)nd)->isImported = true;
+                if (instanceof<NodeIf>(nd)) ((NodeIf*)nd)->isImported = true;
+                else if (instanceof<NodeFunc>(nd)) ((NodeFunc*)nd)->isExtern = true;
+                else if (instanceof<NodeComptime>(nd)) ((NodeComptime*)nd)->isImported = true;
+                else if (instanceof<NodeVar>(nd)) ((NodeVar*)nd)->isExtern = true;
+                else if (instanceof<NodeNamespace>(nd)) ((NodeNamespace*)nd)->isImported = true;
+                else if (instanceof<NodeBuiltin>(nd)) ((NodeBuiltin*)nd)->isImport = true;
+                else if (instanceof<NodeStruct>(nd)) ((NodeStruct*)nd)->isImported = true;
             }
         }
     }
@@ -63,5 +63,5 @@ RaveValue NodeComptime::generate() {
 }
 
 NodeComptime::~NodeComptime() {
-    if(this->node != nullptr) delete this->node;
+    if (this->node != nullptr) delete this->node;
 }

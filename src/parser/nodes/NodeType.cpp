@@ -18,5 +18,5 @@ Node* NodeType::comptime() {return this;}
 Node* NodeType::copy() {return new NodeType(this->type->copy(), this->loc);}
 
 NodeType::~NodeType() {
-    if(this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
+    if (this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
 }

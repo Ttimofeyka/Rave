@@ -38,10 +38,10 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/llvm.hpp"
 
 Type* getTypeBySize(int size) {
-    if(size == 8) return basicTypes[BasicType::Char];
-    else if(size == 16) return basicTypes[BasicType::Short];
-    else if(size == 32) return basicTypes[BasicType::Int];
-    else if(size == 64) return basicTypes[BasicType::Long];
+    if (size == 8) return basicTypes[BasicType::Char];
+    else if (size == 16) return basicTypes[BasicType::Short];
+    else if (size == 32) return basicTypes[BasicType::Int];
+    else if (size == 64) return basicTypes[BasicType::Long];
     else return basicTypes[BasicType::Cent];
 }
 
@@ -62,20 +62,20 @@ NodeFunc::NodeFunc(const std::string& name, std::vector<FuncArgSet> args, NodeBl
     this->isExplicit = false;
 
     for(size_t i=0; i<mods.size(); i++) {
-        if(mods[i].name == "private") this->isPrivate = true;
-        else if(mods[i].name == "noCopy") this->isNoCopy = true;
-        else if(this->mods[i].name == "ctargs") this->isCtargs = true;
+        if (mods[i].name == "private") this->isPrivate = true;
+        else if (mods[i].name == "noCopy") this->isNoCopy = true;
+        else if (this->mods[i].name == "ctargs") this->isCtargs = true;
     }
 }
 
 NodeFunc::~NodeFunc() {
-    if(block != nullptr) delete block;
-    if(type != nullptr && !instanceof<TypeVoid>(type) && !instanceof<TypeBasic>(type)) {delete type; type = nullptr;}
-    for(size_t i=0; i<args.size(); i++) if(args[i].type != nullptr && !instanceof<TypeVoid>(args[i].type) && !instanceof<TypeBasic>(args[i].type)) delete args[i].type;
+    if (block != nullptr) delete block;
+    if (type != nullptr && !instanceof<TypeVoid>(type) && !instanceof<TypeBasic>(type)) {delete type; type = nullptr;}
+    for(size_t i=0; i<args.size(); i++) if (args[i].type != nullptr && !instanceof<TypeVoid>(args[i].type) && !instanceof<TypeBasic>(args[i].type)) delete args[i].type;
 }
 
 void NodeFunc::check() {
-    if(isChecked) return;
+    if (isChecked) return;
     isChecked = true;
 
     // Handle possible templates and void
@@ -84,28 +84,28 @@ void NodeFunc::check() {
     for(auto& arg : args) {
         Types::replaceTemplates(&arg.type);
 
-        if(instanceof<TypeVoid>(arg.type)) AST::checkError("using \033[1mvoid\033[22m as a variable type is prohibited!", loc);
+        if (instanceof<TypeVoid>(arg.type)) AST::checkError("using \033[1mvoid\033[22m as a variable type is prohibited!", loc);
     }
 
     // Process modifiers
     for(const auto& mod : mods) {
-        if(mod.name == "method") name = "{" + args[0].type->toString() + "}" + name;
+        if (mod.name == "method") name = "{" + args[0].type->toString() + "}" + name;
         else if (mod.name == "noNamespaces") isNoNamespaces = true;
     }
 
     // Handle namespaces
-    if(!namespacesNames.empty() && !isNoNamespaces) name = namespacesToString(namespacesNames, name);
+    if (!namespacesNames.empty() && !isNoNamespaces) name = namespacesToString(namespacesNames, name);
 
     // Check for existing function
-    if(auto it = AST::funcTable.find(name); it != AST::funcTable.end()) {
+    if (auto it = AST::funcTable.find(name); it != AST::funcTable.end()) {
         std::string argTypes = typesToString(args);
-        if(typesToString(it->second->args) == argTypes) {
-            if(isCtargs || isCtargsPart || isTemplate) {
+        if (typesToString(it->second->args) == argTypes) {
+            if (isCtargs || isCtargsPart || isTemplate) {
                 noCompile = true;
                 return;
             }
 
-            if(!it->second->isForwardDeclaration) AST::checkError("a function with name \033[1m" + name + "\033[22m already exists on \033[1m" + std::to_string(it->second->loc) + "\033[22m line!", loc);
+            if (!it->second->isForwardDeclaration) AST::checkError("a function with name \033[1m" + name + "\033[22m already exists on \033[1m" + std::to_string(it->second->loc) + "\033[22m line!", loc);
             AST::funcVersionsTable[name].push_back(this);
         }
         else {
@@ -119,8 +119,8 @@ void NodeFunc::check() {
     AST::funcTable[name] = this;
 
     // Check block contents
-    if(block == nullptr) {
-        if(!isExtern) isForwardDeclaration = true;
+    if (block == nullptr) {
+        if (!isExtern) isForwardDeclaration = true;
     }
     else {
         for(auto node : block->nodes) node->check();
@@ -133,59 +133,59 @@ LLVMTypeRef* NodeFunc::getParameters(int callConv) {
     for(size_t i=0; i<args.size(); i++) {
         FuncArgSet arg = args[i];
 
-        while(instanceof<TypeConst>(arg.type)) arg.type = ((TypeConst*)arg.type)->instance;
+        while (instanceof<TypeConst>(arg.type)) arg.type = ((TypeConst*)arg.type)->instance;
 
-        if(instanceof<TypeStruct>(arg.type) || instanceof<TypeBasic>(arg.type)) {
+        if (instanceof<TypeStruct>(arg.type) || instanceof<TypeBasic>(arg.type)) {
             std::string oldName = arg.name;
             arg.name = "_RaveArgument" + arg.name;
 
-            if(isCdecl64 || isWin64) {
-                if(instanceof<TypeStruct>(arg.type)) {
+            if (isCdecl64 || isWin64) {
+                if (instanceof<TypeStruct>(arg.type)) {
                     int tSize = arg.type->getSize();
 
-                    if(((TypeStruct*)arg.type)->isSimple()) {
+                    if (((TypeStruct*)arg.type)->isSimple()) {
                         TypeBasic* tArgType = (TypeBasic*)AST::structTable[arg.type->toString()]->variables[0]->type;
                         int tElCount = ((TypeStruct*)arg.type)->getElCount();
 
-                        if(tElCount == 2) {
-                            if(tArgType->isFloat()) {
-                                if(isCdecl64)
+                        if (tElCount == 2) {
+                            if (tArgType->isFloat()) {
+                                if (isCdecl64)
                                     arg.internalTypes[0] = new TypeDivided(new TypeVector(basicTypes[BasicType::Float], 2), {basicTypes[BasicType::Float], basicTypes[BasicType::Float]});
                                 else
                                     arg.internalTypes[0] = new TypeDivided(basicTypes[BasicType::Long], {basicTypes[BasicType::Float], basicTypes[BasicType::Float]});
                             }
                             else arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize), {getTypeBySize(tSize / 2), getTypeBySize(tSize / 2)});
                         }
-                        else if(tElCount == 3) {
-                            if(isWin64 && tSize >= 96) arg.type = new TypePointer(arg.type);
+                        else if (tElCount == 3) {
+                            if (isWin64 && tSize >= 96) arg.type = new TypePointer(arg.type);
                             else arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize), {getTypeBySize(tSize / 3), getTypeBySize(tSize / 3), getTypeBySize(tSize / 3)});
                         }
-                        else if(tElCount == 4) {
-                            if(isWin64 && tSize >= 96) arg.type = new TypePointer(arg.type);
+                        else if (tElCount == 4) {
+                            if (isWin64 && tSize >= 96) arg.type = new TypePointer(arg.type);
                             else arg.internalTypes[0] = new TypeDivided(getTypeBySize(tSize), {getTypeBySize(tSize / 4), getTypeBySize(tSize / 4), getTypeBySize(tSize / 4), getTypeBySize(tSize / 4)});
                         }
-                        else if((tSize >= 128) || (tSize >= 96 && isWin64)) {
-                            if(isCdecl64) arg.internalTypes[0] = new TypeByval(arg.type);
+                        else if ((tSize >= 128) || (tSize >= 96 && isWin64)) {
+                            if (isCdecl64) arg.internalTypes[0] = new TypeByval(arg.type);
                             else arg.type = new TypePointer(arg.type);
                         }
                     }
-                    else if(tSize >= 128) {
+                    else if (tSize >= 128) {
                         // 'byval' pointer
-                        if(isCdecl64) arg.internalTypes[0] = new TypeByval(arg.type);
+                        if (isCdecl64) arg.internalTypes[0] = new TypeByval(arg.type);
                         else arg.type = new TypePointer(arg.type);
                     }
                 }
             }
             else {
-                if(block != nullptr) this->block->nodes.emplace(
+                if (block != nullptr) this->block->nodes.emplace(
                     this->block->nodes.begin(),
                     new NodeVar(oldName, new NodeIden(arg.name, this->loc), false, false, false, {}, this->loc, arg.type, false, false, false)
                 );
             }
         }
 
-        if(isCdecl64) for(int j=0; j<arg.internalTypes.size(); j++) {
-            if(instanceof<TypeDivided>(arg.internalTypes[j])) buffer.push_back(generator->genType(((TypeDivided*)arg.internalTypes[j])->mainType, loc));
+        if (isCdecl64) for(int j=0; j<arg.internalTypes.size(); j++) {
+            if (instanceof<TypeDivided>(arg.internalTypes[j])) buffer.push_back(generator->genType(((TypeDivided*)arg.internalTypes[j])->mainType, loc));
             else buffer.push_back(generator->genType(arg.internalTypes[j], loc));
         }
         else buffer.push_back(generator->genType(arg.type, loc));
@@ -198,8 +198,8 @@ LLVMTypeRef* NodeFunc::getParameters(int callConv) {
 }
 
 RaveValue NodeFunc::generate() {
-    if(this->noCompile) return {};
-    if(!this->templateNames.empty() && !this->isTemplate) {
+    if (this->noCompile) return {};
+    if (!this->templateNames.empty() && !this->isTemplate) {
         this->isExtern = false;
         return {};
     }
@@ -212,14 +212,14 @@ RaveValue NodeFunc::generate() {
     int callConv = LLVMCCallConv;
     NodeArray* conditions = nullptr;
 
-    if(this->name == "main") {
+    if (this->name == "main") {
         linkName = "main";
-        if(instanceof<TypeVoid>(this->type)) this->type = basicTypes[BasicType::Int];
+        if (instanceof<TypeVoid>(this->type)) this->type = basicTypes[BasicType::Int];
     }
 
     for(size_t i=0; i<mods.size(); i++) {
-        while(AST::aliasTable.find(mods[i].name) != AST::aliasTable.end()) {
-            if(instanceof<NodeArray>(AST::aliasTable[mods[i].name])) {
+        while (AST::aliasTable.find(mods[i].name) != AST::aliasTable.end()) {
+            if (instanceof<NodeArray>(AST::aliasTable[mods[i].name])) {
                 NodeArray* array = (NodeArray*)AST::aliasTable[mods[i].name];
                 mods[i].name = ((NodeString*)array->values[0])->value;
                 mods[i].value = array->values[1];
@@ -227,40 +227,40 @@ RaveValue NodeFunc::generate() {
             else mods[i].name = ((NodeString*)AST::aliasTable[mods[i].name])->value;
         }
 
-        if(mods[i].name == "C") linkName = name;
-        else if(mods[i].name == "vararg") isVararg = true;
-        else if(mods[i].name == "fastcc") callConv = LLVMFastCallConv;
-        else if(mods[i].name == "coldcc") callConv = LLVMColdCallConv;
-        else if(mods[i].name == "stdcc") callConv = LLVMX86StdcallCallConv;
-        else if(mods[i].name == "armapcs") callConv = LLVMARMAPCSCallConv;
-        else if(mods[i].name == "armaapcs") callConv = LLVMARMAAPCSCallConv;
-        else if(mods[i].name == "cdecl64") {callConv = LLVMCCallConv; isCdecl64 = true;}
-        else if(mods[i].name == "win64") {callConv = LLVMCCallConv; isWin64 = true;}
-        else if(mods[i].name == "inline") isInline = true;
-        else if(mods[i].name == "linkname") {
+        if (mods[i].name == "C") linkName = name;
+        else if (mods[i].name == "vararg") isVararg = true;
+        else if (mods[i].name == "fastcc") callConv = LLVMFastCallConv;
+        else if (mods[i].name == "coldcc") callConv = LLVMColdCallConv;
+        else if (mods[i].name == "stdcc") callConv = LLVMX86StdcallCallConv;
+        else if (mods[i].name == "armapcs") callConv = LLVMARMAPCSCallConv;
+        else if (mods[i].name == "armaapcs") callConv = LLVMARMAAPCSCallConv;
+        else if (mods[i].name == "cdecl64") {callConv = LLVMCCallConv; isCdecl64 = true;}
+        else if (mods[i].name == "win64") {callConv = LLVMCCallConv; isWin64 = true;}
+        else if (mods[i].name == "inline") isInline = true;
+        else if (mods[i].name == "linkname") {
             Node* newLinkName = mods[i].value->comptime();
-            if(!instanceof<NodeString>(newLinkName)) generator->error("value type of \033[1mlinkname\033[22m must be a string!", loc);
+            if (!instanceof<NodeString>(newLinkName)) generator->error("value type of \033[1mlinkname\033[22m must be a string!", loc);
             linkName = ((NodeString*)newLinkName)->value;
         }
-        else if(mods[i].name == "comdat") isComdat = true;
-        else if(mods[i].name == "nochecks") isNoChecks = true;
-        else if(mods[i].name == "noOptimize") isNoOpt = true;
-        else if(mods[i].name == "arrayable") isArrayable = true;
-        else if(mods[i].name == "conditions") conditions = (NodeArray*)mods[i].value;
-        else if(mods[i].name == "explicit") isExplicit = true;
+        else if (mods[i].name == "comdat") isComdat = true;
+        else if (mods[i].name == "nochecks") isNoChecks = true;
+        else if (mods[i].name == "noOptimize") isNoOpt = true;
+        else if (mods[i].name == "arrayable") isArrayable = true;
+        else if (mods[i].name == "conditions") conditions = (NodeArray*)mods[i].value;
+        else if (mods[i].name == "explicit") isExplicit = true;
     }
 
-    if(!this->isTemplate && this->isCtargs) return {};
+    if (!this->isTemplate && this->isCtargs) return {};
 
     std::map<std::string, Type*> oldReplace = std::map<std::string, Type*>(generator->toReplace);
-    if(this->isTemplate) {
+    if (this->isTemplate) {
         generator->toReplace.clear();
         for(size_t i=0; i<this->templateNames.size(); i++) generator->toReplace[this->templateNames[i]] = this->templateTypes[i];
     }
 
-    if(conditions != nullptr) for(Node* node : conditions->values) {
+    if (conditions != nullptr) for(Node* node : conditions->values) {
         Node* result = node->comptime();
-        if(instanceof<NodeBool>(result) && !((NodeBool*)result)->value) {
+        if (instanceof<NodeBool>(result) && !((NodeBool*)result)->value) {
             generator->error("The conditions were failed when generating the function \033[1m" + this->name + "\033[22m!", this->loc);
             return {};
         }
@@ -273,20 +273,20 @@ RaveValue NodeFunc::generate() {
     Type* parent = nullptr;
     Type* ty = type;
 
-    while(instanceof<TypePointer>(ty) || instanceof<TypeArray>(ty)) {
+    while (instanceof<TypePointer>(ty) || instanceof<TypeArray>(ty)) {
         parent = ty;
         ty = ty->getElType();
     }
 
-    if(instanceof<TypeStruct>(ty)) {
-        if(generator->toReplace.find(ty->toString()) != generator->toReplace.end()) {
-            if(parent == nullptr) this->type = generator->toReplace[ty->toString()];
-            else if(instanceof<TypePointer>(parent)) ((TypePointer*)parent)->instance = generator->toReplace[ty->toString()];
+    if (instanceof<TypeStruct>(ty)) {
+        if (generator->toReplace.find(ty->toString()) != generator->toReplace.end()) {
+            if (parent == nullptr) this->type = generator->toReplace[ty->toString()];
+            else if (instanceof<TypePointer>(parent)) ((TypePointer*)parent)->instance = generator->toReplace[ty->toString()];
             else ((TypeArray*)parent)->element = generator->toReplace[ty->toString()];
         }
     }
 
-    if(name.find('<') != std::string::npos && name.find("([]") != std::string::npos) {
+    if (name.find('<') != std::string::npos && name.find("([]") != std::string::npos) {
         args[0].type = new TypePointer(new TypeStruct(name.substr(0, name.find('('))));
         tfunc->args.push_back(new TypeFuncArg(args[0].type, args[0].name));
 
@@ -298,7 +298,7 @@ RaveValue NodeFunc::generate() {
         }
     }
     else for(size_t i=0; i<args.size(); i++) {
-        if(!args[i].internalTypes.empty() && instanceof<TypeDivided>(args[i].internalTypes[0])) {
+        if (!args[i].internalTypes.empty() && instanceof<TypeDivided>(args[i].internalTypes[0])) {
             tfunc->args.push_back(new TypeFuncArg(((TypeDivided*)args[i].internalTypes[0])->mainType, args[i].name));
             continue;
         }
@@ -312,18 +312,18 @@ RaveValue NodeFunc::generate() {
     tfunc->main = this->type;
 
     LLVMValueRef fn = LLVMGetNamedFunction(generator->lModule, linkName.c_str());
-    if(fn != nullptr) return {};
+    if (fn != nullptr) return {};
 
     generator->functions[this->name] = {LLVMAddFunction(
         generator->lModule, linkName.c_str(),
         LLVMFunctionType(generator->genType(this->type, loc), this->genTypes.data(), this->genTypes.size(), this->isVararg)
     ), tfunc};
 
-    if(isPrivate && !isExtern) {
+    if (isPrivate && !isExtern) {
         LLVMSetLinkage(generator->functions[this->name].value, LLVMInternalLinkage);
 
         // Inlining of private functions
-        if(generator->settings.optLevel > 2 && generator->settings.noPrivateInlining) this->isInline = true;
+        if (generator->settings.optLevel > 2 && generator->settings.noPrivateInlining) this->isInline = true;
     }
 
     LLVMSetFunctionCallConv(generator->functions[this->name].value, callConv);
@@ -331,9 +331,9 @@ RaveValue NodeFunc::generate() {
     int inTCount = 0;
 
     for(size_t i=0; i<args.size(); i++) {
-        if(!(args[i].internalTypes.empty())) for(int j=0; j<args[i].internalTypes.size(); j++) {
+        if (!(args[i].internalTypes.empty())) for(int j=0; j<args[i].internalTypes.size(); j++) {
             inTCount += 1;
-            if(!(args[i].internalTypes.empty()) && instanceof<TypeByval>(args[i].internalTypes[0])) {
+            if (!(args[i].internalTypes.empty()) && instanceof<TypeByval>(args[i].internalTypes[0])) {
                 generator->addTypeAttr("byval", inTCount, generator->functions[this->name].value, this->loc, generator->genType(args[i].type, loc));
                 generator->addAttr("align", inTCount, generator->functions[this->name].value, this->loc, 8);
             }
@@ -341,13 +341,13 @@ RaveValue NodeFunc::generate() {
         else inTCount += 1;
     }
 
-    if(this->isInline) generator->addAttr("alwaysinline", LLVMAttributeFunctionIndex, generator->functions[this->name].value, this->loc);
-    else if(this->isNoOpt) {
+    if (this->isInline) generator->addAttr("alwaysinline", LLVMAttributeFunctionIndex, generator->functions[this->name].value, this->loc);
+    else if (this->isNoOpt) {
         generator->addAttr("noinline", LLVMAttributeFunctionIndex, generator->functions[this->name].value, this->loc);
         generator->addAttr("optnone", LLVMAttributeFunctionIndex, generator->functions[this->name].value, this->loc);
     }
 
-    if(this->isTemplatePart || this->isTemplate || this->isCtargsPart || this->isComdat) {
+    if (this->isTemplatePart || this->isTemplate || this->isCtargsPart || this->isComdat) {
         LLVMComdatRef comdat = LLVMGetOrInsertComdat(generator->lModule, linkName.c_str());
         LLVMSetComdatSelectionKind(comdat, LLVMAnyComdatSelectionKind);
         LLVMSetComdat(generator->functions[this->name].value, comdat);
@@ -355,7 +355,7 @@ RaveValue NodeFunc::generate() {
         this->isExtern = false;
     }
 
-    if(generator->settings.outDebugInfo) {
+    if (generator->settings.outDebugInfo) {
         std::vector<LLVMMetadataRef> mTypes;
         for(size_t i=0; i<args.size(); i++) mTypes.push_back(debugInfo->genType(args[i].type, loc));
 
@@ -365,11 +365,11 @@ RaveValue NodeFunc::generate() {
             loc, funcType, isPrivate, !isExtern, loc, LLVMDIFlagZero, generator->settings.optLevel > 0);
     }
 
-    if(!this->isExtern) {
-        if(isForwardDeclaration) return {};
+    if (!this->isExtern) {
+        if (isForwardDeclaration) return {};
 
         int oldCurrentBuiltinArg = generator->currentBuiltinArg;
-        if(this->isCtargsPart || this->isCtargs) generator->currentBuiltinArg = 0;
+        if (this->isCtargsPart || this->isCtargs) generator->currentBuiltinArg = 0;
 
         LLVMBasicBlockRef entry = LLVM::makeBlock("entry", name);
         this->exitBlock = LLVM::makeBlock("exit", name);
@@ -381,7 +381,7 @@ RaveValue NodeFunc::generate() {
         LLVMBasicBlockRef oldCurrBB = generator->currBB;
         LLVM::Builder::atEnd(entry);
 
-        if(!Compiler::settings.noFastMath) LLVM::setFastMath(generator->builder, true, false, true, true);
+        if (!Compiler::settings.noFastMath) LLVM::setFastMath(generator->builder, true, false, true, true);
 
         std::map<std::string, int> indexes;
         std::map<std::string, NodeVar*> vars;
@@ -396,18 +396,18 @@ RaveValue NodeFunc::generate() {
         generator->currBB = entry;
         currScope->fnEnd = this->exitBlock;
 
-        if(!instanceof<TypeVoid>(this->type)) {
+        if (!instanceof<TypeVoid>(this->type)) {
             this->block->nodes.insert(this->block->nodes.begin(), new NodeVar("return", new NodeNull(this->type, this->loc), false, false, false, {}, this->loc, this->type, false));
             ((NodeVar*)this->block->nodes[0])->isUsed = true;
         }
 
         this->block->generate();
 
-        if(!this->isCtargs && !this->isCtargsPart && !Compiler::settings.disableWarnings) block->optimize();
+        if (!this->isCtargs && !this->isCtargsPart && !Compiler::settings.disableWarnings) block->optimize();
 
         currScope->fnEnd = this->exitBlock;
 
-        if(!currScope->funcHasRet) LLVMBuildBr(generator->builder, this->exitBlock);
+        if (!currScope->funcHasRet) LLVMBuildBr(generator->builder, this->exitBlock);
 
         LLVMMoveBasicBlockAfter(this->exitBlock, LLVMGetLastBasicBlock(generator->functions[this->name].value));
 
@@ -415,7 +415,7 @@ RaveValue NodeFunc::generate() {
         LLVMBasicBlockRef* basicBlocks = (LLVMBasicBlockRef*)malloc(sizeof(LLVMBasicBlockRef) * bbLength);
         LLVMGetBasicBlocks(generator->functions[currScope->funcName].value, basicBlocks);
             for(size_t i=0; i<bbLength; i++) {
-                if(basicBlocks[i] != nullptr && std::string(LLVMGetBasicBlockName(basicBlocks[i])) != "exit" && LLVMGetBasicBlockTerminator(basicBlocks[i]) == nullptr) {
+                if (basicBlocks[i] != nullptr && std::string(LLVMGetBasicBlockName(basicBlocks[i])) != "exit" && LLVMGetBasicBlockTerminator(basicBlocks[i]) == nullptr) {
                     LLVM::Builder::atEnd(basicBlocks[i]);
                     LLVMBuildBr(generator->builder, this->exitBlock);
                 }
@@ -424,7 +424,7 @@ RaveValue NodeFunc::generate() {
 
         LLVM::Builder::atEnd(exitBlock);
 
-        if(!instanceof<TypeVoid>(this->type)) LLVMBuildRet(generator->builder, currScope->get("return", this->loc).value);
+        if (!instanceof<TypeVoid>(this->type)) LLVMBuildRet(generator->builder, currScope->get("return", this->loc).value);
         else LLVMBuildRetVoid(generator->builder);
 
         generator->builder = oldBuilder;
@@ -434,13 +434,13 @@ RaveValue NodeFunc::generate() {
         generator->currentBuiltinArg = oldCurrentBuiltinArg;
     }
 
-    if(this->isTemplate) generator->toReplace = std::map<std::string, Type*>(oldReplace);
+    if (this->isTemplate) generator->toReplace = std::map<std::string, Type*>(oldReplace);
 
-    if(generator->settings.outDebugInfo) LLVMDIBuilderFinalizeSubprogram(debugInfo->diBuilder, diFuncScope);
+    if (generator->settings.outDebugInfo) LLVMDIBuilderFinalizeSubprogram(debugInfo->diBuilder, diFuncScope);
 
-    if(LLVMVerifyFunction(generator->functions[this->name].value, LLVMPrintMessageAction)) {
+    if (LLVMVerifyFunction(generator->functions[this->name].value, LLVMPrintMessageAction)) {
         std::string content = LLVMPrintValueToString(generator->functions[this->name].value);
-        if(content.length() > 12000) content = content.substr(0, 12000) + "...";
+        if (content.length() > 12000) content = content.substr(0, 12000) + "...";
         generator->error("LLVM errors into the function \033[1m" + this->name + "\033[22m! Content:\n" + content, this->loc);
     }
 
@@ -451,7 +451,7 @@ std::string NodeFunc::generateWithCtargs(std::vector<Type*> args) {
     std::vector<FuncArgSet> newArgs;
     for(size_t i=0; i<args.size(); i++) {
         Type* newType = args[i];
-        if(instanceof<TypePointer>(newType) && instanceof<TypeArray>(newType->getElType())) newType = new TypePointer(newType->getElType()->getElType());
+        if (instanceof<TypePointer>(newType) && instanceof<TypeArray>(newType->getElType())) newType = new TypePointer(newType->getElType()->getElType());
     
         newArgs.push_back(FuncArgSet{.name = "_RaveArg" + std::to_string(i), .type = newType, .internalTypes = {newType}});
     }
@@ -462,7 +462,7 @@ std::string NodeFunc::generateWithCtargs(std::vector<Type*> args) {
     auto _scope = currScope;
 
     std::vector<DeclarMod> _mods;
-    for(size_t i=0; i<mods.size(); i++) if(mods[i].name != "ctargs") _mods.push_back(mods[i]);
+    for(size_t i=0; i<mods.size(); i++) if (mods[i].name != "ctargs") _mods.push_back(mods[i]);
 
     NodeFunc* _f = new NodeFunc(name + typesToString(newArgs), newArgs, (NodeBlock*)this->block->copy(), false, _mods, this->loc, this->type->copy(), {});
     _f->args = std::vector<FuncArgSet>(newArgs);
@@ -492,7 +492,7 @@ RaveValue NodeFunc::generateWithTemplate(std::vector<Type*>& types, const std::s
     _f->templateTypes = std::move(types);
     RaveValue v = _f->generate();
 
-    if(isMethod) {
+    if (isMethod) {
         Type* structType = instanceof<TypePointer>(args[0].type) ? args[0].type->getElType() : args[0].type;
         AST::methodTable[std::pair<std::string, std::string>(structType->toString(), all)] = _f;
     }
@@ -524,7 +524,7 @@ Type* NodeFunc::getInternalArgType(LLVMValueRef value) {
 
     for(size_t i=0; i<args.size(); i++) {
         for(int j=0; j<args[i].internalTypes.size(); j++) {
-            if(nArg == n) return args[i].internalTypes[j];
+            if (nArg == n) return args[i].internalTypes[j];
             nArg += 1;
         }
     }
@@ -538,7 +538,7 @@ Type* NodeFunc::getArgType(int n) {
 
 Type* NodeFunc::getArgType(std::string name) {
     for(size_t i=0; i<args.size(); i++) {
-        if(args[i].name == name) return args[i].type;
+        if (args[i].name == name) return args[i].type;
     }
     return nullptr;
 }

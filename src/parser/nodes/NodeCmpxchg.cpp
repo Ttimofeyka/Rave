@@ -16,9 +16,9 @@ NodeCmpxchg::NodeCmpxchg(Node* ptr, Node* value1, Node* value2, int loc) {
 }
 
 NodeCmpxchg::~NodeCmpxchg() {
-    if(ptr != nullptr) delete ptr;
-    if(value1 != nullptr) delete value1;
-    if(value2 != nullptr) delete value2;
+    if (ptr != nullptr) delete ptr;
+    if (value1 != nullptr) delete value1;
+    if (value2 != nullptr) delete value2;
 }
 
 Node* NodeCmpxchg::copy() {return new NodeCmpxchg(this->ptr->copy(), this->value1->copy(), this->value2->copy(), this->loc);}

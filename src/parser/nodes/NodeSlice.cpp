@@ -28,10 +28,10 @@ NodeSlice::NodeSlice(Node* base, Node* start, Node* end, int loc) {
 }
 
 Type* NodeSlice::getType() {
-    if(!instanceof<NodeInt>(start) || !instanceof<NodeInt>(end)) return new TypePointer(base->getType());
+    if (!instanceof<NodeInt>(start) || !instanceof<NodeInt>(end)) return new TypePointer(base->getType());
     BigInt one = ((NodeInt*)start)->value;
     BigInt two = ((NodeInt*)end)->value;
-    if((two <= one) || (one < 0) || (instanceof<TypeArray>(base->getType()) && ((NodeInt*)((TypeArray*)base->getType())->count->comptime())->value.to_int() < two.to_int())) generator->error("incorrect slice values!", loc);
+    if ((two <= one) || (one < 0) || (instanceof<TypeArray>(base->getType()) && ((NodeInt*)((TypeArray*)base->getType())->count->comptime())->value.to_int() < two.to_int())) generator->error("incorrect slice values!", loc);
     return new TypeArray(new NodeInt(two.to_int() - one.to_int()), base->getType());
 }
 
@@ -40,17 +40,17 @@ Node* NodeSlice::copy() {return new NodeSlice(this->base, this->start, this->end
 void NodeSlice::check() {isChecked = true;}
 
 NodeSlice::~NodeSlice() {
-    if(this->base != nullptr) delete this->base;
-    if(this->start != nullptr) delete this->start;
-    if(this->end != nullptr) delete this->end;
+    if (this->base != nullptr) delete this->base;
+    if (this->start != nullptr) delete this->start;
+    if (this->end != nullptr) delete this->end;
 }
 
 RaveValue NodeSlice::generate() {
-    if(instanceof<NodeIden>(base)) ((NodeIden*)base)->isMustBePtr = false;
-    else if(instanceof<NodeGet>(base)) ((NodeGet*)base)->isMustBePtr = false;
-    else if(instanceof<NodeIndex>(base)) ((NodeIndex*)base)->isMustBePtr = false;
+    if (instanceof<NodeIden>(base)) ((NodeIden*)base)->isMustBePtr = false;
+    else if (instanceof<NodeGet>(base)) ((NodeGet*)base)->isMustBePtr = false;
+    else if (instanceof<NodeIndex>(base)) ((NodeIndex*)base)->isMustBePtr = false;
 
-    if(!instanceof<NodeInt>(start) || !instanceof<NodeInt>(end)) {
+    if (!instanceof<NodeInt>(start) || !instanceof<NodeInt>(end)) {
         RaveValue lStart = start->generate();
         RaveValue lEnd = end->generate();
         RaveValue sliceSize = LLVM::sub(lEnd, lStart);
@@ -58,12 +58,12 @@ RaveValue NodeSlice::generate() {
         Node* equNode = nullptr;
         Type* elType = nullptr;
 
-        if(instanceof<TypeStruct>(base->getType())) {
+        if (instanceof<TypeStruct>(base->getType())) {
             std::string _struct = base->getType()->toString();
     
-            if(AST::structTable.find(_struct) != AST::structTable.end()) {
+            if (AST::structTable.find(_struct) != AST::structTable.end()) {
                 NodeStruct* _structPtr = AST::structTable[_struct];
-                if(_structPtr->operators.find(TokType::Rbra) != _structPtr->operators.end()) {
+                if (_structPtr->operators.find(TokType::Rbra) != _structPtr->operators.end()) {
                     equNode = new NodeCall(
                         this->loc, new NodeIden(AST::structTable[_struct]->operators[TokType::Rbra][_structPtr->operators[TokType::Rbra].begin()->first]->name, this->loc),
                         std::vector<Node*>({base, new NodeInt(0)})
@@ -82,7 +82,7 @@ RaveValue NodeSlice::generate() {
 
         int typeSize = elType->getSize();
 
-        if(typeSize < 8) typeSize = 8;
+        if (typeSize < 8) typeSize = 8;
 
         RaveValue sizeOf = (new NodeInt(typeSize / 8))->generate();
 
@@ -111,16 +111,16 @@ RaveValue NodeSlice::generate() {
 
     int one = ((NodeInt*)start)->value.to_int();
     int two = ((NodeInt*)end)->value.to_int();
-    if((two <= one) || (one < 0) || (instanceof<TypeArray>(base->getType()) && ((NodeInt*)((TypeArray*)base->getType())->count->comptime())->value.to_int() < two)) generator->error("incorrect slice values!", loc);
+    if ((two <= one) || (one < 0) || (instanceof<TypeArray>(base->getType()) && ((NodeInt*)((TypeArray*)base->getType())->count->comptime())->value.to_int() < two)) generator->error("incorrect slice values!", loc);
 
     RaveValue lBase = base->generate();
 
-    if(instanceof<TypeStruct>(lBase.type)) {
+    if (instanceof<TypeStruct>(lBase.type)) {
         std::string _struct = lBase.type->toString();
 
-        if(AST::structTable.find(_struct) != AST::structTable.end()) {
+        if (AST::structTable.find(_struct) != AST::structTable.end()) {
             NodeStruct* _structPtr = AST::structTable[_struct];
-            if(_structPtr->operators.find(TokType::Rbra) != _structPtr->operators.end()) {
+            if (_structPtr->operators.find(TokType::Rbra) != _structPtr->operators.end()) {
                 NodeCall* call = new NodeCall(
                     this->loc, new NodeIden(AST::structTable[_struct]->operators[TokType::Rbra][_structPtr->operators[TokType::Rbra].begin()->first]->name, this->loc),
                     std::vector<Node*>({base, new NodeInt(0)})
@@ -142,7 +142,7 @@ RaveValue NodeSlice::generate() {
     RaveValue buffer = LLVM::alloc(new TypeArray(new NodeInt(two - one), lBase.type->getElType()), "NodeSlice_buffer");
     RaveValue tempBuffer = LLVM::load(buffer, "load", loc);
 
-    if(instanceof<TypeArray>(lBase.type)) for(int i=one, j=0; i<two; i++, j++) {
+    if (instanceof<TypeArray>(lBase.type)) for(int i=one, j=0; i<two; i++, j++) {
         tempBuffer.value = LLVMBuildInsertValue(generator->builder, tempBuffer.value, LLVMBuildExtractValue(generator->builder, lBase.value, j, "extract"), j, "insert");
     }
 

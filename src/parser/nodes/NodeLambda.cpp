@@ -16,8 +16,8 @@ NodeLambda::NodeLambda(int loc, TypeFunc* tf, NodeBlock* block, std::string name
 }
 
 NodeLambda::~NodeLambda() {
-    if(tf != nullptr) delete tf;
-    if(block != nullptr) delete block;
+    if (tf != nullptr) delete tf;
+    if (block != nullptr) delete block;
 }
 
 Type* NodeLambda::getType() {return (Type*)this->tf;}

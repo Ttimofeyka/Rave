@@ -6,7 +6,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 import <std/error>
 
-@if((__RAVE_OS == "LINUX") || (__RAVE_OS == "FREEBSD")) {
+@if ((__RAVE_OS == "LINUX") || (__RAVE_OS == "FREEBSD")) {
     import <std/sysc> <std/time>
 
     namespace std {
@@ -54,7 +54,7 @@ import <std/error>
                 uint count = @argsLength();
 
                 char** argv = cast(char**)std::malloc(count * sizeof(char*));
-                if(count > 0) defer std::free(argv);
+                if (count > 0) defer std::free(argv);
 
                 @foreachArgs() {
                     argv[@getCurrArgNumber()] = @getCurrArg(char*);
@@ -65,7 +65,7 @@ import <std/error>
         }
     }
 
-    @if(__RAVE_OS == "LINUX") {
+    @if (__RAVE_OS == "LINUX") {
         namespace std {
             namespace process {
                 alias cloneVM = 0x00000100;
@@ -96,7 +96,7 @@ import <std/error>
         }
     }
 }
-@else @if(__RAVE_OS == "WINDOWS") {
+@else @if (__RAVE_OS == "WINDOWS") {
     namespace std {
         struct securityAttributes {
             uint nLength;
@@ -116,7 +116,7 @@ import <std/error>
 
             int kill(int pid, int sig) {
                 void* handle = std::process::__OpenProcess(std::process::Terminate | std::process::SuspendAndResume, cast(char)false, pid);
-                if(handle != null) {   
+                if (handle != null) {   
                     switch(sig) {
                         case(std::SigTerm) return = (std::process::__TerminateProcess(handle, 1) != 0c);
                         case(std::SigKill) return = (std::process::__TerminateProcess(handle, 1) != 0c);
