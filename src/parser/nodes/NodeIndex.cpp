@@ -34,7 +34,7 @@ NodeIndex::NodeIndex(Node* element, std::vector<Node*> indexes, int loc) {
 
 NodeIndex::~NodeIndex() {
     if (element != nullptr) delete element;
-    for(size_t i=0; i<indexes.size(); i++) if (indexes[i] != nullptr) delete indexes[i];
+    for (size_t i=0; i<indexes.size(); i++) if (indexes[i] != nullptr) delete indexes[i];
 }
 
 Type* NodeIndex::getType() {
@@ -82,7 +82,7 @@ std::vector<LLVMValueRef> NodeIndex::generateIndexes() {
     std::vector<LLVMValueRef> buffer;
     buffer.reserve(indexes.size());  // Pre-allocate for performance
 
-    for(auto index : indexes) buffer.push_back(index->generate().value);
+    for (auto index : indexes) buffer.push_back(index->generate().value);
     return buffer;
 }
 

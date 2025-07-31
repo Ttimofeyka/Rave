@@ -13,14 +13,14 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <vector>
 
 static std::string replaceAll(std::string str, std::string substr1, std::string substr2) {
-    for(size_t index = str.find(substr1, 0); index != std::string::npos && substr1.length(); index = str.find(substr1, index + substr2.length()))
+    for (size_t index = str.find(substr1, 0); index != std::string::npos && substr1.length(); index = str.find(substr1, index + substr2.length()))
         str.replace(index, substr1.length(), substr2);
     return str;
 }
 
 static std::string namespacesToString(std::vector<std::string>& namespacesNames, std::string n) {
     std::string ret = n;
-    for(size_t i=0; i<namespacesNames.size(); i++) ret = namespacesNames[i] + "::" + ret;
+    for (size_t i=0; i<namespacesNames.size(); i++) ret = namespacesNames[i] + "::" + ret;
     return ret;
 }
 

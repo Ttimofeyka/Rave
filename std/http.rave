@@ -126,7 +126,7 @@ namespace std {
                     std::socket::addrinfo* res;
                     std::socket::getAddrInfo(host.data, port, cast(std::socket::addrinfo*)0, &res);
 
-                    for(std::socket::addrinfo* i = res; i != cast(std::socket::addrinfo*)0; i=i.ai_next) {
+                    for (std::socket::addrinfo* i = res; i != cast(std::socket::addrinfo*)0; i=i.ai_next) {
                         if (i.ai_addr.sa_family == std::socket::AfInet) {
                             std::socket::sockaddr_in* p = cast(std::socket::sockaddr_in*)i.ai_addr;
                             std::socket::inetNtop(std::socket::AfInet, p.&sin_addr, &hostBuffer, 46);
@@ -229,7 +229,7 @@ namespace std {
                             char* cl = "content-length";
                             bool isEqual = true;
 
-                            for(usize i=0; i<14; i++) {
+                            for (usize i=0; i<14; i++) {
                                 if (std::ascii::toLower(headerName.data[i]) != cl[i]) {isEqual = false; break;}
                             }
 

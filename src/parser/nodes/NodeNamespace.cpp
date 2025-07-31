@@ -26,7 +26,7 @@ void addNamespaceNames(Node* node, std::vector<std::string>& names, bool isImpor
     if (instanceof<NodeBlock>(node)) {
         NodeBlock* block = (NodeBlock*)node;
 
-        for(size_t i=0; i<block->nodes.size(); i++) {
+        for (size_t i=0; i<block->nodes.size(); i++) {
             addNamespaceNames(block->nodes[i], names, isImported, isSetChecked);
             block->nodes[i]->check();
         }
@@ -67,7 +67,7 @@ void addNamespaceNames(Node* node, std::vector<std::string>& names, bool isImpor
         variable->origName = variable->name;
         variable->isExtern = variable->isExtern || isImported;
 
-        for(size_t i=0; i<names.size(); i++) variable->namespacesNames.insert(variable->namespacesNames.begin(), names[i]);
+        for (size_t i=0; i<names.size(); i++) variable->namespacesNames.insert(variable->namespacesNames.begin(), names[i]);
         variable->check();
     }
     else if (instanceof<NodeFunc>(node)) {
@@ -82,7 +82,7 @@ void addNamespaceNames(Node* node, std::vector<std::string>& names, bool isImpor
         function->origName = function->name;
         function->isExtern = function->isExtern || isImported;
 
-        for(size_t i=0; i<names.size(); i++) function->namespacesNames.insert(function->namespacesNames.begin(), names[i]);
+        for (size_t i=0; i<names.size(); i++) function->namespacesNames.insert(function->namespacesNames.begin(), names[i]);
         function->check();
     }
     else if (instanceof<NodeStruct>(node)) {
@@ -97,7 +97,7 @@ void addNamespaceNames(Node* node, std::vector<std::string>& names, bool isImpor
         structure->origname = structure->name;
         structure->isImported = structure->isImported || isImported;
 
-        for(size_t i=0; i<names.size(); i++) structure->namespacesNames.insert(structure->namespacesNames.begin(), names[i]);
+        for (size_t i=0; i<names.size(); i++) structure->namespacesNames.insert(structure->namespacesNames.begin(), names[i]);
         structure->check();
     }
     else if (instanceof<NodeAliasType>(node)) {
@@ -109,7 +109,7 @@ void addNamespaceNames(Node* node, std::vector<std::string>& names, bool isImpor
             alias->namespacesNames.clear();
         }
 
-        for(size_t i=0; i<names.size(); i++) alias->namespacesNames.insert(alias->namespacesNames.begin(), names[i]);
+        for (size_t i=0; i<names.size(); i++) alias->namespacesNames.insert(alias->namespacesNames.begin(), names[i]);
         alias->check();
     }
     else if (instanceof<NodeNamespace>(node)) {
@@ -118,7 +118,7 @@ void addNamespaceNames(Node* node, std::vector<std::string>& names, bool isImpor
 
         if (isSetChecked) nNamespace->isChecked = false;
 
-        for(size_t i=0; i<names.size(); i++) nNamespace->names.insert(nNamespace->names.begin() + i, names[i]);
+        for (size_t i=0; i<names.size(); i++) nNamespace->names.insert(nNamespace->names.begin() + i, names[i]);
         nNamespace->check();
     }
 }
@@ -134,16 +134,16 @@ NodeNamespace::NodeNamespace(std::vector<std::string> names, std::vector<Node*> 
     this->loc = loc;
     this->nodes = std::vector<Node*>(nodes);
     this->names = std::vector<std::string>();
-    for(size_t i=0; i<names.size(); i++) this->names.push_back(names[i]);
+    for (size_t i=0; i<names.size(); i++) this->names.push_back(names[i]);
 }
 
 NodeNamespace::~NodeNamespace() {
-    for(size_t i=0; i<nodes.size(); i++) if (nodes[i] != nullptr) delete nodes[i];
+    for (size_t i=0; i<nodes.size(); i++) if (nodes[i] != nullptr) delete nodes[i];
 }
 
 Node* NodeNamespace::copy() {
     std::vector<Node*> cNodes;
-    for(size_t i=0; i<nodes.size(); i++) cNodes.push_back(nodes[i]);
+    for (size_t i=0; i<nodes.size(); i++) cNodes.push_back(nodes[i]);
     return new NodeNamespace(std::vector<std::string>(names), cNodes, loc);
 }
 
@@ -154,7 +154,7 @@ void NodeNamespace::check() {
     if (isChecked) return;
     isChecked = true;
 
-    for(size_t i=0; i<nodes.size(); i++) {
+    for (size_t i=0; i<nodes.size(); i++) {
         if (nodes[i] == nullptr) continue;
 
         if (instanceof<NodeFunc>(nodes[i])) {
@@ -169,7 +169,7 @@ void NodeNamespace::check() {
                 }
             }
 
-            for(size_t i=0; i<names.size(); i++) nfunc->namespacesNames.insert(nfunc->namespacesNames.begin(), names[i]);
+            for (size_t i=0; i<names.size(); i++) nfunc->namespacesNames.insert(nfunc->namespacesNames.begin(), names[i]);
             nodes[i]->check();
         }
         else if (instanceof<NodeNamespace>(nodes[i])) {
@@ -179,7 +179,7 @@ void NodeNamespace::check() {
                 nnamespace->isChecked = false;
                 // nnamespace->names.erase(nnamespace->names.begin());
             }
-            else for(size_t i=0; i<names.size(); i++) nnamespace->names.insert(nnamespace->names.begin() + i, names[i]);
+            else for (size_t i=0; i<names.size(); i++) nnamespace->names.insert(nnamespace->names.begin() + i, names[i]);
 
             nnamespace->isImported = (nnamespace->isImported || isImported);
             nodes[i]->check();
@@ -200,7 +200,7 @@ void NodeNamespace::check() {
                 nvar->namespacesNames.clear();
             }
 
-            for(size_t i=0; i<names.size(); i++) nvar->namespacesNames.insert(nvar->namespacesNames.begin(), names[i]);
+            for (size_t i=0; i<names.size(); i++) nvar->namespacesNames.insert(nvar->namespacesNames.begin(), names[i]);
             nodes[i]->check();
         }
         else if (instanceof<NodeStruct>(nodes[i])) {
@@ -212,7 +212,7 @@ void NodeNamespace::check() {
                 structure->namespacesNames.clear();
             }
 
-            for(size_t i=0; i<names.size(); i++) structure->namespacesNames.insert(structure->namespacesNames.begin(), names[i]);
+            for (size_t i=0; i<names.size(); i++) structure->namespacesNames.insert(structure->namespacesNames.begin(), names[i]);
             nodes[i]->check();
         }
         else if (instanceof<NodeAliasType>(nodes[i])) {
@@ -224,14 +224,14 @@ void NodeNamespace::check() {
                 naliastype->namespacesNames.clear();
             }
 
-            for(size_t i=0; i<names.size(); i++) naliastype->namespacesNames.insert(naliastype->namespacesNames.begin(), names[i]);
+            for (size_t i=0; i<names.size(); i++) naliastype->namespacesNames.insert(naliastype->namespacesNames.begin(), names[i]);
             nodes[i]->check();
         }
     }
 }
 
 RaveValue NodeNamespace::generate() {
-    for(size_t i=0; i<nodes.size(); i++) {
+    for (size_t i=0; i<nodes.size(); i++) {
         if (nodes[i] == nullptr) continue;
 
         if (instanceof<NodeFunc>(nodes[i])) {
@@ -239,7 +239,7 @@ RaveValue NodeNamespace::generate() {
 
             if ((hidePrivated && nfunc->isPrivate && !nfunc->isCtargs) || nfunc->isForwardDeclaration) continue;
             if (!nfunc->isChecked) {
-                for(size_t i=0; i<names.size(); i++) nfunc->namespacesNames.insert(nfunc->namespacesNames.begin(), names[i]);
+                for (size_t i=0; i<names.size(); i++) nfunc->namespacesNames.insert(nfunc->namespacesNames.begin(), names[i]);
                 nfunc->check();
             }
 
@@ -250,7 +250,7 @@ RaveValue NodeNamespace::generate() {
             NodeNamespace* nnamespace = (NodeNamespace*)nodes[i];
 
             if (!nnamespace->isChecked) {
-                for(size_t i=0; i<names.size(); i++) nnamespace->names.insert(nnamespace->names.begin(), names[i]);
+                for (size_t i=0; i<names.size(); i++) nnamespace->names.insert(nnamespace->names.begin(), names[i]);
                 nnamespace->check();
             }
 
@@ -270,7 +270,7 @@ RaveValue NodeNamespace::generate() {
 
             if (hidePrivated && nvar->isPrivate) continue;
             if (!nvar->isChanged) {
-                for(size_t i=0; i<names.size(); i++) nvar->namespacesNames.insert(nvar->namespacesNames.begin(), names[i]);
+                for (size_t i=0; i<names.size(); i++) nvar->namespacesNames.insert(nvar->namespacesNames.begin(), names[i]);
                 nvar->check();
             }
 
@@ -281,7 +281,7 @@ RaveValue NodeNamespace::generate() {
             NodeStruct* nstruct = (NodeStruct*)nodes[i];
 
             if (!nstruct->isChecked) {
-                for(size_t i=0; i<names.size(); i++) nstruct->namespacesNames.insert(nstruct->namespacesNames.begin(), names[i]);
+                for (size_t i=0; i<names.size(); i++) nstruct->namespacesNames.insert(nstruct->namespacesNames.begin(), names[i]);
                 nstruct->check();
             }
 
@@ -290,7 +290,7 @@ RaveValue NodeNamespace::generate() {
         }
         else if (instanceof<NodeAliasType>(nodes[i])) {
             if (!nodes[i]->isChecked) {
-                for(size_t i=0; i<names.size(); i++) ((NodeAliasType*)nodes[i])->namespacesNames.push_back(names[i]);
+                for (size_t i=0; i<names.size(); i++) ((NodeAliasType*)nodes[i])->namespacesNames.push_back(names[i]);
                 nodes[i]->check();
             }
 

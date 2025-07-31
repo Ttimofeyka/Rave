@@ -21,7 +21,7 @@ Type* NodeArray::getType() {
 }
 
 NodeArray::~NodeArray() {
-    for(size_t i=0; i<values.size(); i++) if (values[i] != nullptr) delete values[i];
+    for (size_t i=0; i<values.size(); i++) if (values[i] != nullptr) delete values[i];
 }
 
 std::vector<RaveValue> NodeArray::getValues() {
@@ -29,7 +29,7 @@ std::vector<RaveValue> NodeArray::getValues() {
 
     type = values[0]->getType();
 
-    for(size_t i=0; i<values.size(); i++) {
+    for (size_t i=0; i<values.size(); i++) {
         buffer.push_back(values[i]->generate());
         if (!LLVMIsConstant(buffer[buffer.size() - 1].value)) isConst = false;
     }
@@ -45,7 +45,7 @@ RaveValue NodeArray::generate() {
 
     RaveValue arr = LLVM::alloc(new TypeArray(new NodeInt(values.size()), type), "NodeArray");
 
-    for(size_t i=0; i<values.size(); i++)
+    for (size_t i=0; i<values.size(); i++)
         LLVMBuildStore(generator->builder, genValues[i].value, generator->byIndex(arr, std::vector<LLVMValueRef>({LLVM::makeInt(pointerSize, i, true)})).value);
 
     return LLVM::load(arr, "loadNodeArray", loc);

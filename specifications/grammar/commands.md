@@ -53,24 +53,24 @@ if likely(A == B) A = C;
 else A = B;
 ```
 
-**for(var; cond; expr) [body/{body}]** - The for loop is like in C, creating a local variable and executing the expression after the block and the block itself if the condition is met.
+**for (var; cond; expr) [body/{body}]** - The for loop is like in C, creating a local variable and executing the expression after the block and the block itself if the condition is met.
 
 Example:
 ```d
-for(int i=0; i<100; i++) {
+for (int i=0; i<100; i++) {
     // ...
 }
 
-for(int j=100; j>0; j--) {
+for (int j=100; j>0; j--) {
     // ...
 }
 
-for(short z=0; z<20; z+=2) {
+for (short z=0; z<20; z+=2) {
     // ...
 }
 ```
 
-Also, you can use a **for(;;)** expression for the infinite loop.
+Also, you can use a **for (;;)** expression for the infinite loop.
 
 Example:
 
@@ -81,7 +81,7 @@ while (true) {
 
 // Or
 
-for(;;) {
+for (;;) {
     
 }
 ```

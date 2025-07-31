@@ -230,7 +230,7 @@ namespace std {
             endBuffer[index] = '\0';
 
             usize endI = 0;
-            for(usize i=index; i>=1; i--) {
+            for (usize i=index; i>=1; i--) {
                 endBuffer[endI] = ltosBuffer[i - 1];
                 endI += 1;
             }
@@ -255,7 +255,7 @@ namespace std {
             endBuffer[index] = '\0';
 
             usize endI = 0;
-            for(usize i=index; i>=1; i--) {
+            for (usize i=index; i>=1; i--) {
                 endBuffer[endI] = ltosBuffer[i - 1];
                 endI += 1;
             }
@@ -291,7 +291,7 @@ namespace std {
             endBuffer[index] = '\0';
 
             usize endI = 0;
-            for(usize i=index; i>=1; i--) {
+            for (usize i=index; i>=1; i--) {
                 endBuffer[endI] = ctosBuffer[i - 1];
                 endI += 1;
             }
@@ -301,13 +301,13 @@ namespace std {
             char[48] uctBuffer;
             usize pos;
 
-            for(pos = 0; number != 0u; pos++) {
+            for (pos = 0; number != 0u; pos++) {
                 uctBuffer[pos] = (number % 10) + '0';
                 number /= 10;
             }
 
             usize outpos;
-            for(outpos = 0; true; outpos++) {
+            for (outpos = 0; true; outpos++) {
                 pos -= 1;
                 endBuffer[outpos] = uctBuffer[pos];
                 if (pos == 0) break;
@@ -368,7 +368,7 @@ namespace std {
             bool isNegative = false;
             long coeff = 1;
 
-            for(usize i=str.length; i>=1; i--) {
+            for (usize i=str.length; i>=1; i--) {
                 if (str.data[i - 1] == '-') {
                     isNegative = true;
                     break;
@@ -385,7 +385,7 @@ namespace std {
             return = 0;
             ulong coeff = 1;
 
-            for(usize i=str.length; i>=1; i--) {
+            for (usize i=str.length; i>=1; i--) {
                 if ((str.data[i - 1] < '0') || (str.data[i - 1] > '9')) break;
                 return += (cast(ulong)(str.data[i - 1] - '0') * coeff);
                 coeff *= 10;
@@ -397,7 +397,7 @@ namespace std {
             bool isNegative = false;
             cent coeff = 1;
 
-            for(usize i=str.length; i>=1; i--) {
+            for (usize i=str.length; i>=1; i--) {
                 if (str.data[i - 1] == '-') {
                     isNegative = true;
                     break;
@@ -415,7 +415,7 @@ namespace std {
             return = 0;
             ucent coeff = 1;
 
-            for(usize i=str.length; i>=1; i--) {
+            for (usize i=str.length; i>=1; i--) {
                 if ((str.data[i - 1] < '0') || (str.data[i - 1] > '9')) break;
                 return += (cast(ucent)(str.data[i - 1] - '0') * coeff);
                 coeff *= 10;

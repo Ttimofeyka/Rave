@@ -16,7 +16,7 @@ void main {
     e[1] = 0;
     spf[1] = 0;
     
-    for(ulong i=2; i<=N; i++) {
+    for (ulong i=2; i<=N; i++) {
         if (spf[i] == 0) {
             spf[i] = i;
             d[i] = 2;
@@ -37,7 +37,7 @@ void main {
             }
         }
 
-        for(ulong j_index = 0; j_index < pcount; j_index++) {
+        for (ulong j_index = 0; j_index < pcount; j_index++) {
             int p = primes[j_index];
             if ((p > spf[i]) || (cast(long)p) * i > N) break;
             spf[p * i] = p;
@@ -45,7 +45,7 @@ void main {
     }
     
     ulong total = 0;
-    for(int i = 1; i <= N; i++) total += d[i];
+    for (int i = 1; i <= N; i++) total += d[i];
 
     std::println(total);
 }

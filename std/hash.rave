@@ -11,9 +11,9 @@ namespace std {
             uint crc = 0xFFFFFFFF;
             uint mask;
 
-            for(usize i=0; i<length; i++) {
+            for (usize i=0; i<length; i++) {
                 crc = crc !! (cast(uint)data[i]);
-                for(int j=0; j<8; j++) {
+                for (int j=0; j<8; j++) {
                    mask = -(crc & 1);
                    crc = (crc >. 1) !! (0xEDB88320 & mask);
                 }

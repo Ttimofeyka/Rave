@@ -150,7 +150,7 @@ void Parser::parseAll() {
         std::vector<Node*> _nodes;
         parseTopLevel(_nodes);
 
-        for(auto node : _nodes) {
+        for (auto node : _nodes) {
             if (node != nullptr && !instanceof<NodeNone>(node)) nodes.push_back(node);
         }
     }
@@ -248,7 +248,7 @@ Node* Parser::parseNamespace(std::string s) {
     parseTopLevel(_nodes, s);
 
     while (_nodes.size() > 0) {
-        for(size_t i=0; i<_nodes.size(); i++) nNodes.push_back(_nodes[i]);
+        for (size_t i=0; i<_nodes.size(); i++) nNodes.push_back(_nodes[i]);
         _nodes.clear();
         parseTopLevel(_nodes, s);
     }
@@ -311,7 +311,7 @@ Node* Parser::parseBuiltin(std::string f) {
             parseTopLevel(_nodes, f);
 
             while (_nodes.size() > 0) {
-                for(size_t i=0; i<_nodes.size(); i++) block->nodes.push_back(_nodes[i]);
+                for (size_t i=0; i<_nodes.size(); i++) block->nodes.push_back(_nodes[i]);
                 _nodes.clear();
                 parseTopLevel(_nodes, f);
             }
@@ -635,13 +635,13 @@ Node* Parser::parseAtom(std::string f) {
                     if (expNumber < 0) {
                         expNumber *= -1;
                         std::string number = "0.";
-                        for(int i=1; i<expNumber; i++) number += "0";
+                        for (int i=1; i<expNumber; i++) number += "0";
 
                         nfloat = new NodeFloat(std::stod(number + t->value));
                     }
                     else {
                         std::string number = t->value;
-                        for(size_t i=0; i<expNumber; i++) number += "0";
+                        for (size_t i=0; i<expNumber; i++) number += "0";
 
                         nfloat = new NodeFloat(std::stod(t->value + number));
                     }
@@ -994,7 +994,7 @@ Node* Parser::parseStruct(std::vector<DeclarMod> mods) {
     parseTopLevel(_nodes, name);
 
     while (_nodes.size() > 0) {
-        for(size_t i=0; i<_nodes.size(); i++) nodes.push_back(_nodes[i]);
+        for (size_t i=0; i<_nodes.size(); i++) nodes.push_back(_nodes[i]);
         _nodes.clear();
         parseTopLevel(_nodes, name);
     }
@@ -1044,7 +1044,7 @@ Node* Parser::parseImport() {
 
     if (files.size() > 0) {
         std::vector<NodeImport*> imports;
-        for(size_t i=0; i<files.size(); i++) imports.push_back(new NodeImport(files[i], std::vector<std::string>(), loc));
+        for (size_t i=0; i<files.size(); i++) imports.push_back(new NodeImport(files[i], std::vector<std::string>(), loc));
         return new NodeImports(imports, loc);
     }
 
@@ -1182,7 +1182,7 @@ Type* Parser::parseType(bool cannotBeTemplate, bool isDeclaration) {
             }
             next();
 
-            for(size_t i=0; i<tTypes.size(); i++) tTypesString += tTypes[i]->toString() + ",";
+            for (size_t i=0; i<tTypes.size(); i++) tTypesString += tTypes[i]->toString() + ",";
             ty = new TypeStruct(ty->toString() + "<" + tTypesString.substr(0, tTypesString.size() - 1) + ">", tTypes);
 
             if (peek()->type == TokType::Rpar) {
@@ -1832,7 +1832,7 @@ bool Parser::isDefinedLambda(bool updateIdx) {
     int oldIdx = idx;
     int cntOfRpars = 1;
 
-    for(int i=idx + 2; i<tokens.size(); i++) {
+    for (int i=idx + 2; i<tokens.size(); i++) {
         const auto& token = tokens[i];
         
         if (token->type == TokType::Lpar) {

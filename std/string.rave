@@ -169,7 +169,7 @@ namespace std {
                 this.capacity = targetCap;
             }
 
-            for(usize i=0; i<cstrlen; i++) {
+            for (usize i=0; i<cstrlen; i++) {
                 this.data[this.length] = cstr[i];
                 this.length += 1;
             }
@@ -202,7 +202,7 @@ namespace std {
             usize i = 0;
             while (i < this.length) {
                 if (length <= (i + fromLen)) {
-                    for(usize j=i; j<this.length; j++) return.add(this.data[j]);
+                    for (usize j=i; j<this.length; j++) return.add(this.data[j]);
                     break;
                 }
 
@@ -245,7 +245,7 @@ namespace std {
             return = true;
             if (one.length != two.length) return = false;
             else {
-                for(usize i=0; i<one.length; i+=1) {
+                for (usize i=0; i<one.length; i+=1) {
                     if (one.data[i] != two.data[i]) {
                         return = false;
                         break;
@@ -256,7 +256,7 @@ namespace std {
 
         bool operator==(std::string one, char* two) {
             return = true;
-            for(usize i=0; i<one.length; i+=1) {
+            for (usize i=0; i<one.length; i+=1) {
                 if (one.data[i] != two[i]) {
                     return = false;
                     break;

@@ -63,7 +63,7 @@ NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, boo
     this->noZeroInit = noZeroInit;
     this->isNoCopy = false;
 
-    for(size_t i=0; i<this->mods.size(); i++) {
+    for (size_t i=0; i<this->mods.size(); i++) {
         if (this->mods[i].name == "noCopy") this->isNoCopy = true;
     }
 
@@ -108,7 +108,7 @@ void Predefines::handle(Type* type, Node* node, int loc) {
     if (AST::structTable[((TypeStruct*)type)->name]->predefines.size() > 0) {
         NodeGet* getter = new NodeGet(node, "", true, loc);
 
-        for(auto& predefine : AST::structTable[((TypeStruct*)type)->name]->predefines) {
+        for (auto& predefine : AST::structTable[((TypeStruct*)type)->name]->predefines) {
             getter->field = predefine.first;
 
             if (predefine.second.isStruct) Predefines::handle(getter->getType(), getter, loc);
@@ -152,7 +152,7 @@ RaveValue NodeVar::generate() {
 
         bool noMangling = false;
 
-        for(size_t i=0; i<this->mods.size(); i++) {
+        for (size_t i=0; i<this->mods.size(); i++) {
             while (AST::aliasTable.find(this->mods[i].name) != AST::aliasTable.end()) {
                 if (instanceof<NodeArray>(AST::aliasTable[this->mods[i].name])) {
                     mods[i].name = ((NodeString*)((NodeArray*)AST::aliasTable[this->mods[i].name])->values[0])->value;
@@ -251,7 +251,7 @@ RaveValue NodeVar::generate() {
         return {};
     }
     else {
-        for(size_t i=0; i<this->mods.size(); i++) {
+        for (size_t i=0; i<this->mods.size(); i++) {
             if (mods[i].name == "volatile") isVolatile = true;
             else if (mods[i].name == "noOperators") isNoOperators = true;
             else if (mods[i].name == "nozeroinit") noZeroInit = true;

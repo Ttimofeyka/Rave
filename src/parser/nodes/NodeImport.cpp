@@ -64,7 +64,7 @@ RaveValue NodeImport::generate() {
 
     if (file.file.find("/.rave") != std::string::npos) {
         std::string dirPath = file.file.substr(0, file.file.size() - 5);
-        for(const auto& entry : fs::directory_iterator(dirPath)) {
+        for (const auto& entry : fs::directory_iterator(dirPath)) {
             if (entry.path().extension() == ".rave") {
                 NodeImport* imp = new NodeImport({}, functions, loc);
                 imp->file.file = entry.path().string();
@@ -101,14 +101,14 @@ RaveValue NodeImport::generate() {
     }
 
     std::vector<Node*> buffer;
-    for(const auto& node : AST::parsed[file.file]) buffer.push_back(node->copy());
+    for (const auto& node : AST::parsed[file.file]) buffer.push_back(node->copy());
 
     if (instanceof<NodeVar>(buffer[0])) {
         auto* nodeVar = static_cast<NodeVar*>(buffer[0]);
         if (nodeVar->name == "__RAVE_IMPORTED_FROM") nodeVar->value = new NodeString(generator->file, false);
     }
 
-    for(auto* node : buffer) {
+    for (auto* node : buffer) {
         if (instanceof<NodeFunc>(node)) {
             auto* nodeFunc = static_cast<NodeFunc*>(node);
             if (!nodeFunc->isPrivate || nodeFunc->isCtargs) node->check();
@@ -126,7 +126,7 @@ RaveValue NodeImport::generate() {
     generator->file = file.file;
     auto start = std::chrono::steady_clock::now();
 
-    for(auto* node : buffer) {
+    for (auto* node : buffer) {
         if (instanceof<NodeFunc>(node)) {
             auto* nodeFunc = static_cast<NodeFunc*>(node);
             if ((nodeFunc->isPrivate && !nodeFunc->isCtargs) || nodeFunc->isForwardDeclaration) continue;
@@ -173,12 +173,12 @@ Type* NodeImports::getType() {return typeVoid;}
 
 Node* NodeImports::copy() {
     std::vector<NodeImport*> buffer;
-    for(size_t i=0; i<this->imports.size(); i++) buffer.push_back((NodeImport*)(this->imports[i]->copy()));
+    for (size_t i=0; i<this->imports.size(); i++) buffer.push_back((NodeImport*)(this->imports[i]->copy()));
     return new NodeImports(buffer, this->loc);
 }
 
 RaveValue NodeImports::generate() {
-    for(size_t i=0; i<this->imports.size(); i++) {
+    for (size_t i=0; i<this->imports.size(); i++) {
         if (this->imports[i] != nullptr) this->imports[i]->generate();
     }
     return {};

@@ -26,7 +26,7 @@ bool versionCalled = false;
 // Analyzing command-line arguments.
 genSettings analyzeArguments(std::vector<std::string>& arguments) {
     genSettings settings;
-    for(size_t i=0; i<arguments.size(); i++) {
+    for (size_t i=0; i<arguments.size(); i++) {
         if (arguments[i] == "-v" || arguments[i] == "--version") {versionCalled = true; break;}
         else if (arguments[i] == "-o" || arguments[i] == "--out") {outFile = arguments[i + 1]; i += 1;} // Output file
         else if (arguments[i] == "-np" || arguments[i] == "--noPrelude") settings.noPrelude = true; // Disables importing of std/prelude
@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
     exePath = getExePath();
     Compiler::debugMode = false;
 
-    for(int i=1; i<argc; i+=1) arguments.push_back(std::string(argv[i]));
+    for (int i=1; i<argc; i+=1) arguments.push_back(std::string(argv[i]));
     options = analyzeArguments(arguments);
 
     if (versionCalled) {
@@ -128,7 +128,7 @@ int main(int argc, char** argv) {
         if (options.recompileStd) {
             Compiler::initialize(outFile, outType, options, {""});
             auto stdFiles = filesInDirectory(exePath + "std");
-            for(size_t i=0; i<stdFiles.size(); i++) {
+            for (size_t i=0; i<stdFiles.size(); i++) {
                 if (stdFiles[i].find(".ll") == std::string::npos && stdFiles[i].find(".rave") != std::string::npos) {
                     std::string compiledFile = std::regex_replace(exePath + "std/" + stdFiles[i], std::regex("\\.rave"), ".o");
                     Compiler::compile(exePath + "std/" + stdFiles[i]);

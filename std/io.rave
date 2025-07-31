@@ -222,7 +222,7 @@ namespace std {
             isize write(char* buf, usize bytes) {
                 if (fd != -1) {
                     if (bytes < bufferSize) {
-                        for(usize i=0; i<bytes; i++) {
+                        for (usize i=0; i<bytes; i++) {
                             buffer[bufferPos] = buf[i];
                             bufferPos += 1;
                             if ((bufferPos == bufferSize) || (buffer[bufferPos - 1] == flushBufferSymbol)) this.flush();
@@ -425,7 +425,7 @@ namespace std {
             int write(char* buf, uint bytes) {
                 if (fd != null) {
                     if (bytes < bufferSize) {
-                        for(uint i=0; i<bytes; i++) {
+                        for (uint i=0; i<bytes; i++) {
                             buffer[bufferPos] = buf[i];
                             bufferPos += 1;
                             if ((bufferPos == bufferSize) || (buffer[bufferPos - 1] == flushBufferSymbol)) this.flush();
@@ -611,7 +611,7 @@ namespace std {
     std::spinlock __putsSL;
     void puts(char* s) {
         std::__putsSL.lock();
-            for(int i=0; s[i] != '\0'; i+=1) std::putchar(s[i]);
+            for (int i=0; s[i] != '\0'; i+=1) std::putchar(s[i]);
             std::putchar('\n');
         std::__putsSL.unlock();
     }
@@ -619,7 +619,7 @@ namespace std {
     std::spinlock __putswnlSL;
     void putswnl(char* s) {
         std::__putswnlSL.lock();
-            for(int i=0; s[i] != '\0'; i+=1) std::putchar(s[i]);
+            for (int i=0; s[i] != '\0'; i+=1) std::putchar(s[i]);
         std::__putswnlSL.unlock();
     }
 
@@ -944,7 +944,7 @@ namespace std {
                 std::utf8::toUTF16Buffer(path, pathLen, __path, length);
 
                 usize i = 0;
-                for(; i<length; i++) __pathSearch[i] = __path[i];
+                for (; i<length; i++) __pathSearch[i] = __path[i];
                 __pathSearch[i] = cast(ushort)('\\');
                 __pathSearch[i + 1] = cast(ushort)('*');
                 __pathSearch[i + 2] = 0s;

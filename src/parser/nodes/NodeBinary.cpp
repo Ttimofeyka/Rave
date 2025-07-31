@@ -530,7 +530,7 @@ RaveValue Binary::operation(char op, Node* first, Node* second, int loc) {
 
         NodeBinary* out = new NodeBinary(exprOp, first, new NodeDone({LLVMBuildExtractValue(generator->builder, vSecond.value, 0, "NodeBinary_extract"), arrayType}), loc);
 
-        for(int i=1; i<length; i++)
+        for (int i=1; i<length; i++)
             out = new NodeBinary(connect, out, new NodeBinary(exprOp, first, new NodeDone({LLVMBuildExtractValue(generator->builder, vSecond.value, i, "NodeBinary_extract"), arrayType}), loc), loc);
 
         return (out->generate());

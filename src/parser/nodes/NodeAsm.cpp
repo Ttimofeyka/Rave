@@ -20,7 +20,7 @@ NodeAsm::NodeAsm(std::string line, bool isVolatile, Type* type, std::string addi
 
 Node* NodeAsm::copy() {
     std::vector<Node*> buffer;
-    for(size_t i=0; i<this->values.size(); i++) buffer.push_back(this->values[i]->copy());
+    for (size_t i=0; i<this->values.size(); i++) buffer.push_back(this->values[i]->copy());
     return new NodeAsm(this->line, this->isVolatile, this->type->copy(), this->additions, buffer, this->loc);
 }
 
@@ -34,7 +34,7 @@ RaveValue NodeAsm::generate() {
 
     TypeFunc* tfunc = new TypeFunc(this->type, {}, false);
 
-    for(size_t i=0; i<this->values.size(); i++) {
+    for (size_t i=0; i<this->values.size(); i++) {
         RaveValue value = this->values[i]->generate();
         tfunc->args.push_back(new TypeFuncArg(value.type, "i" + std::to_string(i)));
 
@@ -58,5 +58,5 @@ RaveValue NodeAsm::generate() {
 NodeAsm::~NodeAsm() {
     if (this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
     
-    for(size_t i=0; i<this->values.size(); i++) if (this->values[i] != nullptr) delete this->values[i];
+    for (size_t i=0; i<this->values.size(); i++) if (this->values[i] != nullptr) delete this->values[i];
 }

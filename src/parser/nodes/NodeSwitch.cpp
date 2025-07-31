@@ -23,8 +23,8 @@ NodeSwitch::~NodeSwitch() {
     if (expr != nullptr) delete expr;
     if (_default != nullptr) delete _default;
     
-    for(size_t i=0; i<statements.size(); i++) {
-        for(int j=0; j<statements[i].first.size(); j++) {
+    for (size_t i=0; i<statements.size(); i++) {
+        for (int j=0; j<statements[i].first.size(); j++) {
             if (statements[i].first[j] != nullptr) delete statements[i].first[j];
         }
 
@@ -47,15 +47,15 @@ RaveValue NodeSwitch::generate() {
     std::vector<NodeIf*> ifVector;
     ifVector.reserve(statements.size());
 
-    for(const auto& statement : statements) {
+    for (const auto& statement : statements) {
         NodeBinary* _equal = new NodeBinary(TokType::Equal, expr, statement.first[0], loc);
 
-        for(int i=1; i<statement.first.size(); i++) _equal = new NodeBinary(TokType::Or, _equal, new NodeBinary(TokType::Equal, expr, statement.first[i], loc), loc);
+        for (int i=1; i<statement.first.size(); i++) _equal = new NodeBinary(TokType::Or, _equal, new NodeBinary(TokType::Equal, expr, statement.first[i], loc), loc);
 
         ifVector.push_back(new NodeIf(_equal, statement.second, nullptr, loc, false));
     }
 
-    for(size_t i=0; i<ifVector.size() - 1; i++) ifVector[i]->_else = ifVector[i + 1];
+    for (size_t i=0; i<ifVector.size() - 1; i++) ifVector[i]->_else = ifVector[i + 1];
 
     ifVector.back()->_else = _default;
 

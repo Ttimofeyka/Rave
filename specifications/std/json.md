@@ -31,7 +31,7 @@ std::json::Value test = std::json::parse(buffer);
 std::json::Value* elements = test.pointer(); // Pointer with access to all elements by index
 
 std::println("List of existing elements:");
-for(int i=0; i<test.length; i++) std::println("\t", elements[i].name);
+for (usize i=0; i<test.length; i++) std::println("\t", elements[i].name);
 ```
 
 ### as&lt;TYPE>

@@ -19,7 +19,7 @@ NodeBlock::NodeBlock(std::vector<Node*> nodes) {
 
 Node* NodeBlock::copy() {
     std::vector<Node*> newNodes;
-    for(size_t i=0; i<this->nodes.size(); i++) {
+    for (size_t i=0; i<this->nodes.size(); i++) {
         if (this->nodes[i] != nullptr) newNodes.push_back(this->nodes[i]->copy());
     }
     return new NodeBlock(newNodes);
@@ -29,13 +29,13 @@ void NodeBlock::check() {
     if (isChecked) return;
     isChecked = true;
 
-    for(size_t i=0; i<nodes.size(); i++) {
+    for (size_t i=0; i<nodes.size(); i++) {
         if (nodes[i] != nullptr) nodes[i]->check();
     }
 }
 
 void NodeBlock::optimize() {
-    for(Node* nd: this->nodes) {
+    for (Node* nd: this->nodes) {
         NodeVar *ndvar = dynamic_cast<NodeVar*>(nd);
         if (ndvar == nullptr) nd->optimize();
         else if (!ndvar->isGlobal && !ndvar->isUsed) generator->warning("unused variable \033[1m" + ndvar->name + "\033[22m!", ndvar->loc);
@@ -46,10 +46,10 @@ Node* NodeBlock::comptime() {return this;}
 Type* NodeBlock::getType() {return typeVoid;}
 
 RaveValue NodeBlock::generate() {
-    for(Node* nd: this->nodes) if (nd != nullptr) nd->generate();
+    for (Node* nd: this->nodes) if (nd != nullptr) nd->generate();
     return {};
 }
 
 NodeBlock::~NodeBlock() {
-    for(Node* nd: this->nodes) if (nd != nullptr) delete nd;
+    for (Node* nd: this->nodes) if (nd != nullptr) delete nd;
 }

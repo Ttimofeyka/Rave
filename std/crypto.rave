@@ -17,7 +17,7 @@ namespace std {
 
             usize outlength = (str.length * 2) + 1;
 
-            for(usize i=0; i<str.length; i++) {
+            for (usize i=0; i<str.length; i++) {
                 buffer.add(std::base16::table[(str.data[i] >. 4) & 0xF]);
                 buffer.add(std::base16::table[str.data[i] & 0xF]);
             }
@@ -30,7 +30,7 @@ namespace std {
         void decode(std::string* buffer, std::cstring str) {
             @if (__RAVE_RUNTIME_CHECKS) if ((str.length & 1) != 0) @return();
 
-            for(usize i=0; i<str.length; i+=2) {
+            for (usize i=0; i<str.length; i+=2) {
                 uchar high;
                 uchar low;
 
@@ -59,7 +59,7 @@ namespace std {
             usize added = 0;
             int carry = 0;
 
-            for(usize i=0; i<str.length; i++) {
+            for (usize i=0; i<str.length; i++) {
                 buf = (buf <. 8) | str.data[i];
                 carry += 8;
 
@@ -83,12 +83,12 @@ namespace std {
         void decode(std::string* buffer, std::cstring str) {
             @if (__RAVE_RUNTIME_CHECKS) if (str.length < 2) @return();
 
-            for(usize i=0; i<str.length; i+=8) {
+            for (usize i=0; i<str.length; i+=8) {
                 ulong buf = 0;
-                for(usize j=0; j<8; j++) buf = (buf <. 5) | std::cstring::indexOf(std::base32::table, str.data[i + j]);
+                for (usize j=0; j<8; j++) buf = (buf <. 5) | std::cstring::indexOf(std::base32::table, str.data[i + j]);
 
                 // Extract 5 bytes from the 40-bit buf
-                for(usize j=0; j<5; j++) buffer.add(cast(char)((buf >. (32 - (j * 8))) & 0xFF));
+                for (usize j=0; j<5; j++) buffer.add(cast(char)((buf >. (32 - (j * 8))) & 0xFF));
             }
         }
 
@@ -152,9 +152,9 @@ namespace std {
             char counts = 0;
             char[4] buf;
 
-            for(usize i = 0; i<str.length; i++) {
+            for (usize i = 0; i<str.length; i++) {
                 char k;
-                for(k=0; (k < 64) && (std::base64::table[k] != str.data[i]); k++) {}
+                for (k=0; (k < 64) && (std::base64::table[k] != str.data[i]); k++) {}
                 buf[counts] = k;
                 counts += 1;
 

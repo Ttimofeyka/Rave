@@ -14,7 +14,7 @@ alias NQ_MAX = 31;
     uint[NQ_MAX] c;
     uint[NQ_MAX] r;
 
-    for(k=0; k<n; k++) {
+    for (k=0; k<n; k++) {
         a[k] = -1;
         l[k] = 0;
         c[k] = 0;

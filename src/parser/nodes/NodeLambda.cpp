@@ -27,7 +27,7 @@ void NodeLambda::check() {isChecked = true;}
 
 std::vector<LLVMTypeRef> NodeLambda::generateTypes() {
     std::vector<LLVMTypeRef> buffer;
-    for(size_t i=0; i<this->tf->args.size(); i++) buffer.push_back(generator->genType(this->tf->args[i], this->loc));
+    for (size_t i=0; i<this->tf->args.size(); i++) buffer.push_back(generator->genType(this->tf->args[i], this->loc));
     return buffer;
 }
 
@@ -44,7 +44,7 @@ RaveValue NodeLambda::generate() {
     std::vector<FuncArgSet> fas;
     fas.reserve(_args.size());
 
-    for(const auto& arg : _args) fas.emplace_back(FuncArgSet{.name = arg->name, .type = arg->type});
+    for (const auto& arg : _args) fas.emplace_back(FuncArgSet{.name = arg->name, .type = arg->type});
 
     const auto lambdaId = generator->lambdas++;
     AST::lambdaTable["lambda" + std::to_string(lambdaId)] = this;

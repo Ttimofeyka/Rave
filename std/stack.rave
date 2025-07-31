@@ -48,7 +48,7 @@ namespace std {
             if (this.length == 0) @return(null);
             return = this.top();
 
-            for(usize i=(this.length - 1); i<this.length; i++) {
+            for (usize i=(this.length - 1); i<this.length; i++) {
                 if ((i + 1) < this.length) this.data[i] = this.data[i + 1];
             }
 
@@ -56,7 +56,7 @@ namespace std {
         }
 
         (inline) void assign(std::stack<STACK_T> of) {
-            for(usize i=0; i<of.length; i+=1) {this.push(of.data[i]);}
+            for (usize i=0; i<of.length; i+=1) {this.push(of.data[i]);}
         }
 
         std::stack<STACK_T> copy {
@@ -65,7 +65,7 @@ namespace std {
             buffer.capacity = this.capacity;
             buffer.length = this.length;
 
-            for(usize i=0; i<this.length; i+=1) buffer.data[i] = this.data[i];
+            for (usize i=0; i<this.length; i+=1) buffer.data[i] = this.data[i];
         } => buffer;
 
         std::stack<STACK_T> operator+(std::stack<STACK_T> one, std::stack<STACK_T> two) {
@@ -93,7 +93,7 @@ namespace std {
 
         uint hash {
             return = this.length + (this.capacity * sizeof(STACK_T));
-            for(usize i=0; i<this.length; i++) return = return * i + 5213 + (return <. 6) + (return >. 2);
+            for (usize i=0; i<this.length; i++) return = return * i + 5213 + (return <. 6) + (return >. 2);
         }
     }
 }

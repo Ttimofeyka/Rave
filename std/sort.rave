@@ -13,7 +13,7 @@ namespace std {
             SORT_T pivot = ptr[length - 1];
             usize iLargest = 0;
 
-            for(usize i=0; i < length - 1; i++) {
+            for (usize i=0; i < length - 1; i++) {
                 if (ptr[i] < pivot) {
                     std::swap(&ptr[iLargest], &ptr[i], sizeof(SORT_T));
                     iLargest += 1;

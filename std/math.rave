@@ -230,7 +230,7 @@ namespace std {
                 double t = 0.0;
                 double s = 1.0;
                 double z = x;
-                for(int k=1; k<=50; k+=1) {
+                for (int k=1; k<=50; k+=1) {
                     t = t + (z * s) / k;
                     z = z * x;
                     s = -s;
@@ -257,7 +257,7 @@ namespace std {
                 float t = 0.0;
                 float s = 1.0;
                 float z = x;
-                for(int k=1; k<=50; k+=1) {
+                for (int k=1; k<=50; k+=1) {
                     t = t + (z * s) / k;
                     z = z * x;
                     s = -s;
@@ -272,7 +272,7 @@ namespace std {
 
         double sqrt(double d) {
             return = 1.0;
-            for(int i=0; i<=10; i+=1) return = return - (((return * return) - d) / (2d * return));
+            for (int i=0; i<=10; i+=1) return = return - (((return * return) - d) / (2d * return));
         }
 
         float sqrt(float f) => cast(float)std::math::sqrt(cast(double)f);
@@ -313,7 +313,7 @@ namespace std {
             double c = 1.0d;
             double f = 1.0d;
             double xp = 1.0d;
-            for(int i=1; i<n; i+=1) {
+            for (int i=1; i<n; i+=1) {
                 f = f * ((2 * i - 1) * (2 * i));
                 xp = xp * (d * d);
                 c += xp / f;
@@ -324,7 +324,7 @@ namespace std {
             float c = 1.0f;
             float f = 1.0f;
             float xp = 1.0f;
-            for(int i=1; i<n; i+=1) {
+            for (int i=1; i<n; i+=1) {
                 f = f * ((2 * i - 1) * (2 * i));
                 xp = xp * (d * d);
                 c += xp / f;
@@ -425,7 +425,7 @@ namespace std {
             double t = 1.0;
             return = t;
 
-            for(int i=1; i<40; i+=1) {
+            for (int i=1; i<40; i+=1) {
                 double mult = (-d) * (d / ((2*i)*(2*i-1)));
                 t = t * mult;
                 return += t;
@@ -439,7 +439,7 @@ namespace std {
             float t = 1.0;
             return = t;
 
-            for(int i=1; i<40; i+=1) {
+            for (int i=1; i<40; i+=1) {
                 float mult = (-f) * (f / ((2*i)*(2*i-1)));
                 t = t * mult;
                 return += t;
@@ -466,7 +466,7 @@ namespace std {
             double t = x;
             double sine = t;
             
-            for(int i=1; i<=20; i+=1) {
+            for (int i=1; i<=20; i+=1) {
                 double mult = (-x) * (x / ((2*i+1)*(2*i)));
                 t = t * mult;
                 sine = sine + t;
@@ -477,7 +477,7 @@ namespace std {
             float t = x;
             float sine = t;
             
-            for(int i=1; i<=20; i+=1) {
+            for (int i=1; i<=20; i+=1) {
                 float mult = (-x) * (x / ((2*i+1)*(2*i)));
                 t = t * mult;
                 sine = sine + t;
@@ -522,7 +522,7 @@ namespace std {
             return = true;
 
             if (number == 1) return = false;
-            else for(int i=2; (i * i) <= number; i+=1) {
+            else for (int i=2; (i * i) <= number; i+=1) {
                 if ((number % i) == 0) {
                     return = false;
                     break;
@@ -541,32 +541,32 @@ namespace std {
             double maxValue = x[0];
             double sum;
 
-            for(int i=1; i<size; i++) {
+            for (int i=1; i<size; i++) {
                 if (x[i] > maxValue) maxValue = x[i];
             }
 
-            for(int i=0; i<size; i++) {
+            for (int i=0; i<size; i++) {
                 x[i] = std::math::exp(x[i] - maxValue);
                 sum += x[i];
             }
 
-            for(int i=0; i<size; i++) x[i] /= sum;
+            for (int i=0; i<size; i++) x[i] /= sum;
         }
 
         void softmax(float* x, int size) {
             float maxValue = x[0];
             float sum;
 
-            for(int i=1; i<size; i++) {
+            for (int i=1; i<size; i++) {
                 if (x[i] > maxValue) maxValue = x[i];
             }
 
-            for(int i=0; i<size; i++) {
+            for (int i=0; i<size; i++) {
                 x[i] = std::math::exp(x[i] - maxValue);
                 sum += x[i];
             }
 
-            for(int i=0; i<size; i++) x[i] /= sum;
+            for (int i=0; i<size; i++) x[i] /= sum;
         }
 
         double softplus(double x) {
@@ -584,23 +584,23 @@ namespace std {
         void rmsnorm(double* out, double* x, double* weight, int size) {
             double ss;
 
-            for(int i=0; i<size; i++) ss += x[i] * x[i];
+            for (int i=0; i<size; i++) ss += x[i] * x[i];
             ss /= cast(double)size;
             ss += 0.00001d;
             ss = 1d / std::math::sqrt(ss);
 
-            for(int i=0; i<size; i++) out[i] = weight[i] * (ss * x[i]);
+            for (int i=0; i<size; i++) out[i] = weight[i] * (ss * x[i]);
         }
 
         void rmsnorm(float* out, float* x, float* weight, int size) {
             float ss;
 
-            for(int i=0; i<size; i++) ss += x[i] * x[i];
+            for (int i=0; i<size; i++) ss += x[i] * x[i];
             ss /= cast(float)size;
             ss += 0.00001f;
             ss = 1f / std::math::sqrt(ss);
 
-            for(int i=0; i<size; i++) out[i] = weight[i] * (ss * x[i]);
+            for (int i=0; i<size; i++) out[i] = weight[i] * (ss * x[i]);
         }
 
         (inline) double relu(double x) => std::math::max(0.0d, x);
@@ -626,11 +626,11 @@ namespace std {
         half gelu(half x) => 0.5h * x * (1h + (std::math::tanh(0.7978845608f * (x + (0.044715h * x * x * x)))));
 
         void geglu(double* input, double* output, int size) {
-            for(int i=0; i<size; i+=2) output[i / 2] = input[i] * std::math::gelu(input[i + 1]);
+            for (int i=0; i<size; i+=2) output[i / 2] = input[i] * std::math::gelu(input[i + 1]);
         }
 
         void geglu(float* input, float* output, int size) {
-            for(int i=0; i<size; i+=2) output[i / 2] = input[i] * std::math::gelu(input[i + 1]);
+            for (int i=0; i<size; i+=2) output[i / 2] = input[i] * std::math::gelu(input[i + 1]);
         }
     }
 }

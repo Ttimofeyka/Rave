@@ -30,7 +30,7 @@ namespace std {
             this.mapSize = 128;
             this.length = 0;
             this.table = cast(std::hashmap::entry<K, V>**)std::malloc(sizeof(std::hashmap::entry<K, V>*) * this.mapSize);
-            for(usize i=0; i<this.mapSize; i++) this.table[i] = null;
+            for (usize i=0; i<this.mapSize; i++) this.table[i] = null;
         } => this;
 
         std::hashmap<K, V> this(usize mapSize) {
@@ -38,7 +38,7 @@ namespace std {
             this.mapSize = mapSize;
             this.length = 0;
             this.table = cast(std::hashmap::entry<K, V>**)std::malloc(sizeof(std::hashmap::entry<K, V>*) * mapSize);
-            for(usize i=0; i<mapSize; i++) this.table[i] = null;
+            for (usize i=0; i<mapSize; i++) this.table[i] = null;
         } => this;
 
         void set(K key, V value) {
@@ -49,9 +49,9 @@ namespace std {
                 mapSize = mapSize * 2;
 
                 std::hashmap::entry<K, V>** newTable = cast(std::hashmap::entry<K, V>**)std::malloc(sizeof(std::hashmap::entry<K, V>*) * mapSize);
-                for(usize i=0; i<mapSize; i++) newTable[i] = null;
+                for (usize i=0; i<mapSize; i++) newTable[i] = null;
 
-                for(usize i=0; i<oldMapSize; i++) {
+                for (usize i=0; i<oldMapSize; i++) {
                     std::hashmap::entry<K, V>* current = table[i];
 
                     while (current != null) {
@@ -180,7 +180,7 @@ namespace std {
         }
 
         void clear {
-            for(usize i=0; i<mapSize; i++) {
+            for (usize i=0; i<mapSize; i++) {
                 std::hashmap::entry<K, V>* entry = table[i];
                 std::hashmap::entry<K, V>* old = null;
 
@@ -199,7 +199,7 @@ namespace std {
         void next(std::hashmap::iterator<K, V>* iterator) {
             if (length > 0) {
                 if (iterator.current == null) {
-                    for(usize i=0; i<mapSize; i++) {
+                    for (usize i=0; i<mapSize; i++) {
                         if (table[i] != null) {
                             iterator.current = table[i];
                             iterator.currentHighest = i;
@@ -219,7 +219,7 @@ namespace std {
                         else {
                             bool isSetted = false;
 
-                            for(usize i=iterator.currentHighest; i<mapSize; i++) {
+                            for (usize i=iterator.currentHighest; i<mapSize; i++) {
                                 if (table[i] != null) {
                                     iterator.current = table[i];
                                     iterator.currentHighest = i;
@@ -241,7 +241,7 @@ namespace std {
         void ~this {
             if (this.table != null) {
                 defer std::free(cast(void*)(this.table));
-                for(int i=0; i<this.mapSize; i++) {
+                for (int i=0; i<this.mapSize; i++) {
                     std::hashmap::entry<K, V>* entry = this.table[i];
                     std::hashmap::entry<K, V>* old = null;
 

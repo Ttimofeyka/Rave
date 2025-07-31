@@ -15,18 +15,18 @@ namespace std {
 
 namespace std {
     (nochecks) void* memcpy(void* dest, void* src, usize n) {
-        for(usize i=0; i<n; i+=1) dest[i] = src[i];
+        for (usize i=0; i<n; i+=1) dest[i] = src[i];
     } => dest;
 
     (nochecks) void* memmove(void* dest, void* src, usize n) {
         void* temp = std::malloc(n);
-        for(usize i=0; i<n; i++) temp[i] = src[i];
-        for(usize i=0; i<n; i++) dest[i] = temp[i];
+        for (usize i=0; i<n; i++) temp[i] = src[i];
+        for (usize i=0; i<n; i++) dest[i] = temp[i];
         std::free(temp);
     } => dest;
 
     (nochecks) void swap(void* one, void* two, usize size) {
-        for(usize i=0; i<size; i++) {
+        for (usize i=0; i<size; i++) {
             char old = one[i];
             one[i] = two[i];
             two[i] = old;
@@ -46,7 +46,7 @@ namespace std {
                 idx += 1;
             }
 
-            for(; (idx + 31) < n; idx+=32) @vStore(value, &dest[idx]);
+            for (; (idx + 31) < n; idx+=32) @vStore(value, &dest[idx]);
         }
         @else @if (__RAVE_SSE2) {
             int4 value = @vFrom(int4, cast(int)c);
@@ -58,10 +58,10 @@ namespace std {
                 idx += 1;
             }
 
-            for(; (idx + 15) < n; idx+=16) @vStore(value, &dest[idx]);
+            for (; (idx + 15) < n; idx+=16) @vStore(value, &dest[idx]);
         }
 
-        for(; idx<n; idx++) dest[idx] = c;
+        for (; idx<n; idx++) dest[idx] = c;
     }
 
     // TODO: Remake for libc compability
@@ -73,7 +73,7 @@ namespace std {
         @if (__RAVE_SSE2) {
             int4 left, right;
 
-            for(; (i + 15) < n; i+=16) {
+            for (; (i + 15) < n; i+=16) {
                 left = @vLoad(int4, &one[i], false);
                 right = @vLoad(int4, &two[i], false);
 
@@ -84,7 +84,7 @@ namespace std {
             }
         }
 
-        for(; i<n; i+=1) {
+        for (; i<n; i+=1) {
             if (one[i] != two[i]) @return(false);
         }
     }
@@ -111,8 +111,8 @@ namespace std {
             char* pFirst = cast(char*)(this.&first);
             char* pSecond = cast(char*)(this.&second);
             
-            for(usize i=0; i<sizeof(P1); i++) return = return * pFirst[i] + 7588 + (return <. 6) + (return >. 2);
-            for(usize i=0; i<sizeof(P2); i++) return = return * pSecond[i] + 7588 + (return <. 6) + (return >. 2);
+            for (usize i=0; i<sizeof(P1); i++) return = return * pFirst[i] + 7588 + (return <. 6) + (return >. 2);
+            for (usize i=0; i<sizeof(P2); i++) return = return * pSecond[i] + 7588 + (return <. 6) + (return >. 2);
         }
     }
 }

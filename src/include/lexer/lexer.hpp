@@ -29,5 +29,5 @@ public:
     std::string getDigit(char numType);
 
     Lexer(std::string text, int offset);
-    ~Lexer() {for(size_t i=0; i<tokens.size(); i++) delete tokens[i];}
+    ~Lexer() {for (size_t i=0; i<tokens.size(); i++) delete tokens[i];}
 };

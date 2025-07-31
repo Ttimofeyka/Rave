@@ -48,7 +48,7 @@ LLVMTargetDataRef dataLayout;
 
 TypeFunc* callToTFunc(NodeCall* call) {
     std::vector<TypeFuncArg*> argTypes;
-    for(Node* nd: call->args) {
+    for (Node* nd: call->args) {
         if (instanceof<NodeCall>(nd)) argTypes.push_back(new TypeFuncArg(callToTFunc((NodeCall*)nd), ""));
         else if (instanceof<NodeIden>(nd)) argTypes.push_back(new TypeFuncArg(getTypeByName(((NodeIden*)nd)->name), ""));
         else if (instanceof<NodeType>(nd)) argTypes.push_back(new TypeFuncArg(((NodeType*)nd)->type, ""));
@@ -60,7 +60,7 @@ std::vector<Type*> parametersToTypes(std::vector<RaveValue> params) {
     if (params.empty()) return {};
     std::vector<Type*> types;
 
-    for(size_t i=0; i<params.size(); i++) types.push_back(params[i].type);
+    for (size_t i=0; i<params.size(); i++) types.push_back(params[i].type);
     return types;
 }
 
@@ -155,7 +155,7 @@ std::string typeToString(Type* arg) {
 std::string typesToString(std::vector<Type*>& args) {
     std::string data = "[";
 
-    for(size_t i=0; i<args.size(); i++) data += "_" + typeToString(args[i]);
+    for (size_t i=0; i<args.size(); i++) data += "_" + typeToString(args[i]);
 
     return data + "]";
 }
@@ -163,7 +163,7 @@ std::string typesToString(std::vector<Type*>& args) {
 std::string typesToString(std::vector<FuncArgSet>& args) {
     std::string data = "[";
 
-    for(size_t i=0; i<args.size(); i++) data += "_" + typeToString(args[i].type);
+    for (size_t i=0; i<args.size(); i++) data += "_" + typeToString(args[i].type);
 
     return data + "]";
 }
@@ -289,7 +289,7 @@ Type* LLVMGen::setByTypeList(std::vector<Type*> list) {
         return buffer[0];
     }
     if (instanceof<TypeStruct>(buffer[buffer.size()-1])) buffer[buffer.size()-1] = getTrueStructType((TypeStruct*)buffer[buffer.size()-1]);
-    for(int i=buffer.size()-1; i>0; i--) {
+    for (int i=buffer.size()-1; i>0; i--) {
         if (instanceof<TypePointer>(buffer[i-1])) ((TypePointer*)buffer[i-1])->instance = buffer[i];
         else if (instanceof<TypeArray>(buffer[i-1])) ((TypeArray*)buffer[i-1])->element = buffer[i];
     }
@@ -358,7 +358,7 @@ LLVMMetadataRef DebugGen::genType(Type* type, int loc) {
         if (instanceof<TypeVoid>(tf->main)) tf->main = basicTypes[BasicType::Char];
 
         std::vector<LLVMMetadataRef> types;
-        for(size_t i=0; i<tf->args.size(); i++) types.push_back(genType(tf->args[i]->type, loc));
+        for (size_t i=0; i<tf->args.size(); i++) types.push_back(genType(tf->args[i]->type, loc));
 
         LLVMMetadataRef funcType = LLVMDIBuilderCreateSubroutineType(diBuilder, diFile, types.data(), types.size(), LLVMDIFlagZero);
         return genPointer(type->toString(), funcType, loc);
@@ -411,7 +411,7 @@ LLVMTypeRef LLVMGen::genType(Type* type, int loc) {
             if (s->name.find('<') != std::string::npos) {
                 TypeStruct* sCopy = (TypeStruct*)s->copy();
                 if (sCopy->types.size() > 0) {
-                    for(size_t i=0; i<sCopy->types.size(); i++) {
+                    for (size_t i=0; i<sCopy->types.size(); i++) {
                         Type* ty = sCopy->types[i];
 
                         while (instanceof<TypeConst>(ty) || instanceof<TypeByval>(ty) || instanceof<TypeArray>(ty) || instanceof<TypePointer>(ty)) ty = ty->getElType();
@@ -447,7 +447,7 @@ LLVMTypeRef LLVMGen::genType(Type* type, int loc) {
         TypeFunc* tf = (TypeFunc*)type;
         if (instanceof<TypeVoid>(tf->main)) tf->main = basicTypes[BasicType::Char];
         std::vector<LLVMTypeRef> types;
-        for(size_t i=0; i<tf->args.size(); i++) types.push_back(this->genType(tf->args[i]->type, loc));
+        for (size_t i=0; i<tf->args.size(); i++) types.push_back(this->genType(tf->args[i]->type, loc));
         return LLVMPointerType(LLVMFunctionType(this->genType(tf->main, loc), types.data(), types.size(), false), 0);
     }
     if (instanceof<TypeFuncArg>(type)) return this->genType(((TypeFuncArg*)type)->type, loc);

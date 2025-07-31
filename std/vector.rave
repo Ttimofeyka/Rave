@@ -46,7 +46,7 @@ namespace std {
         }
 
         (inline) void assign(std::vector<VECTOR_T> of) {
-            for(usize i=0; i<of.length; i+=1) {this.add(of.data[i]);}
+            for (usize i=0; i<of.length; i+=1) {this.add(of.data[i]);}
         }
 
         (inline) void set(usize index, VECTOR_T value) {
@@ -55,7 +55,7 @@ namespace std {
         }
 
         void zero {
-            for(usize i=0; i<this.length; i++) this.data[i] = cast(VECTOR_T)null;
+            for (usize i=0; i<this.length; i++) this.data[i] = cast(VECTOR_T)null;
         }
 
         void clear {
@@ -73,7 +73,7 @@ namespace std {
             buffer.capacity = this.capacity;
             buffer.length = this.length;
 
-            for(usize i=0; i<this.length; i+=1) buffer.set(i, this.data[i]);
+            for (usize i=0; i<this.length; i+=1) buffer.set(i, this.data[i]);
         } => buffer;
 
         (inline) VECTOR_T operator[](std::vector<VECTOR_T>* v, usize index) {
@@ -111,7 +111,7 @@ namespace std {
                 if (index < this.length) @return();
             }
 
-            for(usize i=index; i<this.length; i+=1) {
+            for (usize i=index; i<this.length; i+=1) {
                 if ((i + 1) < this.length) this.data[i] = this.data[i + 1];
             }
 
@@ -132,12 +132,12 @@ namespace std {
         }
 
         void transform(VECTOR_T(VECTOR_T) fn) {
-            for(usize i=0; i<this.length; i++) this.data[i] = fn(this.data[i]);
+            for (usize i=0; i<this.length; i++) this.data[i] = fn(this.data[i]);
         }
 
         uint hash {
             return = this.length;
-            for(usize i=0; i<this.length; i++) return = return * i + 7588 + (return <. 6) + (return >. 2);
+            for (usize i=0; i<this.length; i++) return = return * i + 7588 + (return <. 6) + (return >. 2);
         }
     }
 }

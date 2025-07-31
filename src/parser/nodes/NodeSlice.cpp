@@ -129,7 +129,7 @@ RaveValue NodeSlice::generate() {
                 RaveValue buffer = LLVM::alloc(new TypeArray(new NodeInt(two - one), call->getType()), "NodeSlice_buffer");
                 RaveValue tempBuffer = LLVM::load(buffer, "load", loc);
 
-                for(int i=one, j=0; i<two; i++, j++) {
+                for (int i=one, j=0; i<two; i++, j++) {
                     tempBuffer.value = LLVMBuildInsertValue(generator->builder, tempBuffer.value, call->generate().value, j, "insert");
                     ((NodeInt*)call->args[1])->value += 1;
                 }
@@ -142,7 +142,7 @@ RaveValue NodeSlice::generate() {
     RaveValue buffer = LLVM::alloc(new TypeArray(new NodeInt(two - one), lBase.type->getElType()), "NodeSlice_buffer");
     RaveValue tempBuffer = LLVM::load(buffer, "load", loc);
 
-    if (instanceof<TypeArray>(lBase.type)) for(int i=one, j=0; i<two; i++, j++) {
+    if (instanceof<TypeArray>(lBase.type)) for (int i=one, j=0; i<two; i++, j++) {
         tempBuffer.value = LLVMBuildInsertValue(generator->builder, tempBuffer.value, LLVMBuildExtractValue(generator->builder, lBase.value, j, "extract"), j, "insert");
     }
 

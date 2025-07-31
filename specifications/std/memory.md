@@ -70,8 +70,8 @@ Example:
 void* ptr1 = std::malloc(4);
 void* ptr2 = std::malloc(7);
 
-for(int i=0; i<4; i++) ptr1[i] = '0';
-for(int i=0; i<7; i++) ptr2[i] = '1';
+for (int i=0; i<4; i++) ptr1[i] = '0';
+for (int i=0; i<7; i++) ptr2[i] = '1';
 
 // ptr1: 0 0 0 0
 // ptr2: 1 1 1 1 1 1 1
@@ -94,7 +94,7 @@ Example:
 void* ptr1 = std::malloc(2);
 void* ptr2 = std::malloc(2);
 
-for(int i=0; i<2; i++) {
+for (int i=0; i<2; i++) {
     ptr1[i] = 'A';
     ptr2[i] = 'B';
 }
