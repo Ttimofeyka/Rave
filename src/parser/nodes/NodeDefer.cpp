@@ -8,25 +8,7 @@ with this file, You can obtain one at htypep://mozilla.org/MPL/2.0/.
 #include <llvm-c/Core.h>
 #include "../../include/parser/nodes/NodeRet.hpp"
 
-NodeDefer::NodeDefer(Node* instruction, int loc, bool isFunctionScope) {
-    this->instruction = instruction;
-    this->loc = loc;
-    this->isFunctionScope = isFunctionScope;
-}
-
-Type* NodeDefer::getType() {return typeVoid;}
-
-void NodeDefer::check() {isChecked = true;}
-
-Node* NodeDefer::comptime() {return this;}
-
-Node* NodeDefer::copy() {return new NodeDefer(this->instruction->copy(), this->loc, this->isFunctionScope);}
-
-NodeDefer::~NodeDefer() {
-    if (this->instruction != nullptr) delete this->instruction;
-}
-
-RaveValue NodeDefer::generate() {
+void Defer::make(int loc, Node* value, bool isFunctionScope) {
     if (!isFunctionScope) {
         if (generator->activeLoops.size() > 0) {
             Loop loop = generator->activeLoops[generator->activeLoops.size() - 1];
@@ -37,13 +19,13 @@ RaveValue NodeDefer::generate() {
             auto oldScope = currScope;
             currScope = copyScope(oldScope);
 
-            instruction->generate();
+            value->generate();
 
             LLVM::Builder::atEnd(oldBB);
 
             delete currScope;
             currScope = oldScope;
-            return {};
+            return;
         }
     }
 
@@ -54,12 +36,30 @@ RaveValue NodeDefer::generate() {
         auto oldScope = currScope;
         currScope = copyScope(oldScope);
 
-        instruction->generate();
+        value->generate();
 
         LLVM::Builder::atEnd(oldBB);
         delete currScope;
         currScope = oldScope;
     }
-
-    return {};
 }
+
+NodeDefer::NodeDefer(int loc, Node* instruction, bool isFunctionScope) {
+    this->instruction = instruction;
+    this->loc = loc;
+    this->isFunctionScope = isFunctionScope;
+}
+
+Type* NodeDefer::getType() { return typeVoid; }
+
+void NodeDefer::check() { isChecked = true; }
+
+Node* NodeDefer::comptime() { return this; }
+
+Node* NodeDefer::copy() { return new NodeDefer(loc, instruction->copy(), isFunctionScope); }
+
+NodeDefer::~NodeDefer() {
+    if (instruction != nullptr) delete instruction;
+}
+
+RaveValue NodeDefer::generate() { Defer::make(loc, instruction, isFunctionScope); return {}; }

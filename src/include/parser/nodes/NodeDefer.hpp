@@ -18,13 +18,17 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <vector>
 #include <string>
 
+namespace Defer {
+    extern void make(int loc, Node* value, bool isFunctionScope);
+}
+
 class NodeDefer : public Node {
 public:
     Node* instruction;
     int loc;
     bool isFunctionScope;
 
-    NodeDefer(Node* instruction, int loc, bool isFunctionScope);
+    NodeDefer(int loc, Node* instruction, bool isFunctionScope);
     Type* getType() override;
     
     void check() override;

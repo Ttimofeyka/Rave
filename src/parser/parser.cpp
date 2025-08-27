@@ -1428,7 +1428,7 @@ Node* Parser::parseWhile(std::string f) {
 Node* Parser::parseDefer(bool isFunctionScope, std::string f) {
     int line = peek()->line;
     next();
-    return new NodeDefer(parseStmt(f), line, isFunctionScope);
+    return new NodeDefer(line, parseStmt(f), isFunctionScope);
 }
 
 Node* Parser::parseFor(std::string f) {
