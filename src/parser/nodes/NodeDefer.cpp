@@ -8,7 +8,7 @@ with this file, You can obtain one at htypep://mozilla.org/MPL/2.0/.
 #include <llvm-c/Core.h>
 #include "../../include/parser/nodes/NodeRet.hpp"
 
-void Defer::make(int loc, Node* value, bool isFunctionScope) {
+void Defer::make(Node* value, bool isFunctionScope) {
     if (!isFunctionScope) {
         if (generator->activeLoops.size() > 0) {
             Loop loop = generator->activeLoops[generator->activeLoops.size() - 1];
@@ -58,8 +58,6 @@ Node* NodeDefer::comptime() { return this; }
 
 Node* NodeDefer::copy() { return new NodeDefer(loc, instruction->copy(), isFunctionScope); }
 
-NodeDefer::~NodeDefer() {
-    if (instruction != nullptr) delete instruction;
-}
+NodeDefer::~NodeDefer() { if (instruction != nullptr) delete instruction; }
 
-RaveValue NodeDefer::generate() { Defer::make(loc, instruction, isFunctionScope); return {}; }
+RaveValue NodeDefer::generate() { Defer::make(instruction, isFunctionScope); return {}; }
