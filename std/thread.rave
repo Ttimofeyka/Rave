@@ -93,7 +93,7 @@ namespace std {
                 }
             }
 
-            (inline) void unlock(int* sl) {@atomicClear(sl);}
+            (inline) void unlock(int* sl) => @atomicClear(sl);
         }
     }
 
