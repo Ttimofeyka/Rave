@@ -4,11 +4,6 @@ Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-/*
-Rave guarantees that on all supported platforms, 
-the result of a call with the same parameters and the same number will be the same.
-*/
-
 // NOTE: syscall implementation was deleted because of unstability with LLVM 17+.
 // It will be implemented again when we will get know how to fix it.
 
