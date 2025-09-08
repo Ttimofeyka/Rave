@@ -3,9 +3,7 @@
         {
             "name": "Linux",
             "includePath": [
-                "${workspaceFolder}/**",
-                "/usr/lib/llvm-18/include",
-                "/usr/lib/llvm-16/include"
+                "${workspaceFolder}/**"
             ],
             "defines": [],
             "cStandard": "c17",
