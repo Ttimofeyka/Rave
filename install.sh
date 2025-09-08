@@ -22,6 +22,13 @@ if [ -f "/etc/debian_version" ]; then
     exit 0
 fi
 
+if [ -f "/etc/fedora-release" ] || [ -f "/etc/redhat-release" ]; then
+    echo Fedora/RHEL-based detected.
+    $SUDO dnf install llvm llvm-devel clang clang-devel
+    echo Done.
+    exit 0
+fi
+
 
 if [ ! -z "$(command -v xbps-install)" ]; then
     echo Void Linux detected.
