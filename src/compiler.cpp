@@ -369,6 +369,7 @@ void Compiler::compile(std::string file) {
         avx2 = avx2 && Compiler::options["platforms"][ravePlatform]["AVX2"].template get<bool>();
 
         if (ravePlatform == "X86_64") avx512 = avx512 && Compiler::options["platforms"][ravePlatform]["AVX512"].template get<bool>();
+        else avx512 = false;
     }
     else if (isAARCH64) {
         asimd = asimd && Compiler::options["platforms"]["AARCH64"]["ASIMD"].template get<bool>();

@@ -272,8 +272,10 @@ public:
 };
 
 extern Type* getTypeByName(std::string id);
+
 extern bool isFloatType(Type* type);
 extern bool isBytePointer(Type* type);
+
 extern TypeVoid* typeVoid;
 extern int pointerSize;
 
