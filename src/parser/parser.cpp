@@ -378,10 +378,8 @@ void Parser::parseDecl(std::vector<Node*>& list, std::string s, std::vector<Decl
     int loc = 0;
     std::string name = "";
     bool isExtern = false;
-    bool isVolatile = false;
 
     if (peek()->value == "extern") {isExtern = true; next();}
-    if (peek()->value == "volatile") {isVolatile = true; next();}
 
     if (peek()->type == TokType::Rpar) {
         next();
@@ -528,10 +526,10 @@ void Parser::parseDecl(std::vector<Node*>& list, std::string s, std::vector<Decl
     }
     else if (peek()->type == TokType::Semicolon) {
         next();
-        return list.push_back(new NodeVar(name, nullptr, isExtern, instanceof<TypeConst>(type), (s == ""), mods, loc, type, isVolatile));
+        return list.push_back(new NodeVar(name, nullptr, isExtern, instanceof<TypeConst>(type), (s == ""), mods, loc, type, false));
     }
     else if (peek()->type == TokType::Comma || peek()->type == TokType::Semicolon || peek()->type == TokType::Equ) {
-        NodeVar* variable = new NodeVar(name, nullptr, isExtern, instanceof<TypeConst>(type), (s == ""), mods, loc, type, isVolatile);
+        NodeVar* variable = new NodeVar(name, nullptr, isExtern, instanceof<TypeConst>(type), (s == ""), mods, loc, type, false);
 
         if (peek()->type == TokType::Equ) {
             next();
@@ -553,7 +551,7 @@ void Parser::parseDecl(std::vector<Node*>& list, std::string s, std::vector<Decl
             }
 
             if (peek()->type == TokType::Comma) next();
-            list.push_back(new NodeVar(varName, varValue, isExtern, instanceof<TypeConst>(type), (s == ""), mods, loc, type, isVolatile));
+            list.push_back(new NodeVar(varName, varValue, isExtern, instanceof<TypeConst>(type), (s == ""), mods, loc, type, false));
         }
 
         next();
