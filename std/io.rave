@@ -604,7 +604,6 @@ namespace std {
 }
 
 namespace std {
-    extern(vararg, linkname: "scanf") int scanf(char* fmt);
     extern(linkname: "getchar") char getchar();
     extern(linkname: "putchar") int putchar(char c);
 

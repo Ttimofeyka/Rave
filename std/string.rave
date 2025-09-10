@@ -4,12 +4,9 @@ Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-import <std/vector> <std/cstring> <std/ascii> <std/utf>
-import <std/thread> <std/map> <std/hash> <std/math>
+import <std/vector> <std/cstring> <std/ascii> <std/utf> <std/thread> <std/hash>
 
 namespace std {
-    extern(private, linkname: "sscanf") int format(char* buff, char* fmt);
-
     (data: "data", length: "length") struct string {
         char* data = null;
         usize length;

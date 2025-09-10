@@ -4,7 +4,7 @@ Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-import <std/memory> <std/map>
+import <std/memory>
 
 namespace std {
     (conditions: [STACK_T != void]) struct stack<STACK_T> {

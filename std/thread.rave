@@ -4,7 +4,7 @@ Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-import <std/process> <std/map>
+import <std/process>
 
 @if (__RAVE_OS != "WINDOWS") {
     import <std/pthread>
