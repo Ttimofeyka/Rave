@@ -39,6 +39,9 @@ Node* NodeCast::copy() {return new NodeCast(this->type->copy(), this->value->cop
 Node* NodeCast::comptime() {return nullptr;}
 
 RaveValue NodeCast::generate() {
+    // TODO: Allow constant expressions
+    if (currScope == nullptr) generator->error("cannot use \033[1mcast\033[22m outside the function!", loc);
+
     RaveValue result = {nullptr, nullptr};
 
     checkForTemplated(this->type);

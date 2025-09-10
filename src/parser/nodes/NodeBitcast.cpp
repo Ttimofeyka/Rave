@@ -32,6 +32,9 @@ Node* NodeBitcast::copy() {return new NodeBitcast(this->type->copy(), this->valu
 Node* NodeBitcast::comptime() {return nullptr;}
 
 RaveValue NodeBitcast::generate() {
+    // TODO: Allow constant expressions
+    if (currScope == nullptr) generator->error("cannot use \033[1mbitcast\033[22m outside the function!", loc);
+
     RaveValue result = this->value->generate();
     Types::replaceTemplates(&this->type);
     
