@@ -500,8 +500,8 @@ RaveValue NodeFunc::generateWithTemplate(std::vector<Type*>& types, const std::s
     return v;
 }
 
-Node* NodeFunc::comptime() {return this;}
-Type* NodeFunc::getType() {return type;}
+Node* NodeFunc::comptime() { return this; }
+Type* NodeFunc::getType() { return type; }
 
 Node* NodeFunc::copy() {
     std::vector<FuncArgSet> args = this->args;
@@ -527,9 +527,7 @@ Type* NodeFunc::getInternalArgType(LLVMValueRef value) {
     return nullptr;
 }
 
-Type* NodeFunc::getArgType(int n) {
-    return args[n].type;;
-}
+Type* NodeFunc::getArgType(int n) { return args[n].type; }
 
 Type* NodeFunc::getArgType(std::string name) {
     for (size_t i=0; i<args.size(); i++) {

@@ -120,16 +120,16 @@ void NodeIf::optimize() {
 Node* NodeIf::comptime() {
     NodeBool* val = (NodeBool*)cond->comptime();
 
-    if (this->body == nullptr) return this;
+    if (body == nullptr) return this;
 
     Node* node = body;
 
     if (!val->value) {
-        if (this->_else != nullptr) node = this->_else;
+        if (_else != nullptr) node = _else;
         else return this;
     }
 
-    if (this->isImported) {
+    if (isImported) {
         if (instanceof<NodeIf>(node)) ((NodeIf*)node)->isImported = true;
         else if (instanceof<NodeFunc>(node)) ((NodeFunc*)node)->isExtern = true;
         else if (instanceof<NodeComptime>(node)) ((NodeComptime*)node)->isImported = true;
@@ -159,14 +159,14 @@ Node* NodeIf::comptime() {
 }
 
 Node* NodeIf::copy() {
-    NodeIf* _if = new NodeIf(this->cond->copy(), (this->body == nullptr ? nullptr : this->body->copy()), (this->_else == nullptr ? nullptr : this->_else->copy()), this->loc, this->isStatic);
-    _if->isLikely = this->isLikely;
-    _if->isUnlikely = this->isUnlikely;
+    NodeIf* _if = new NodeIf(cond->copy(), (body == nullptr ? nullptr : body->copy()), (_else == nullptr ? nullptr : _else->copy()), loc, isStatic);
+    _if->isLikely = isLikely;
+    _if->isUnlikely = isUnlikely;
     return _if;
 }
 
 NodeIf::~NodeIf() {
-    if (this->cond != nullptr) delete this->cond;
-    if (this->body != nullptr) delete this->body;
-    if (this->_else != nullptr) delete this->_else;
+    if (cond != nullptr) delete cond;
+    if (body != nullptr) delete body;
+    if (_else != nullptr) delete _else;
 }

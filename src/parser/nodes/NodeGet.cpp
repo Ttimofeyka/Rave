@@ -165,7 +165,7 @@ RaveValue NodeGet::generate() {
     return isMustBePtr ? memberPtr : LLVM::load(memberPtr, "NodeGet_generate_load", loc);
 }
 
-void NodeGet::check() {isChecked = true;}
+void NodeGet::check() { isChecked = true; }
 
 Node* NodeGet::copy() {
     NodeGet* nget = new NodeGet(this->base->copy(), this->field, this->isMustBePtr, this->loc);
@@ -173,4 +173,4 @@ Node* NodeGet::copy() {
     return nget;
 }
 
-Node* NodeGet::comptime() {return this;}
+Node* NodeGet::comptime() { return this; }

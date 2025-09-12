@@ -37,15 +37,17 @@ NodeForeach::~NodeForeach() {
 }
 
 Node* NodeForeach::copy() {
-    return new NodeForeach((NodeIden*)this->elName->copy(), this->varData->copy(), (varLength != nullptr ? this->varLength->copy() : nullptr), (NodeBlock*)this->block->copy(), this->loc);
+    return new NodeForeach((NodeIden*)elName->copy(), varData->copy(), (varLength != nullptr ? varLength->copy() : nullptr), (NodeBlock*)block->copy(), loc);
 }
 
-Node* NodeForeach::comptime() {return nullptr;}
-void NodeForeach::check() {isChecked = true;}
-Type* NodeForeach::getType() {return typeVoid;}
+Node* NodeForeach::comptime() { return nullptr; }
+
+void NodeForeach::check() { isChecked = true; }
+
+Type* NodeForeach::getType() { return typeVoid; }
 
 RaveValue NodeForeach::generate() {
-    if (this->varLength == nullptr) {
+    if (varLength == nullptr) {
         if (instanceof<NodeIden>(varData)) {
             NodeIden* niVarData = (NodeIden*)varData;
             if (instanceof<TypeStruct>(niVarData->getType())) {
@@ -53,38 +55,38 @@ RaveValue NodeForeach::generate() {
                 if (AST::structTable.find(ts->name) != AST::structTable.end()) {
                     NodeStruct* ns = (NodeStruct*)AST::structTable[ts->name];
                     if (ns->dataVar == "" || ns->lengthVar == "") {
-                        generator->error("structure \033[1m" + ts->name + "\033[22m does not contain the parameters data or length!", this->loc);
+                        generator->error("structure \033[1m" + ts->name + "\033[22m does not contain the parameters data or length!", loc);
                         return {};
                     }
-                    this->varLength = new NodeGet(niVarData, ns->lengthVar, false, this->loc);
-                    this->varData = new NodeGet(niVarData, ns->dataVar, false, this->loc);
+                    varLength = new NodeGet(niVarData, ns->lengthVar, false, loc);
+                    varData = new NodeGet(niVarData, ns->dataVar, false, loc);
                 }
             }
         }
     }
 
-    NodeVar* nv = new NodeVar("__RAVE_FOREACH_N" + std::to_string(this->loc), new NodeInt(0), false, false, false, {}, this->loc, basicTypes[BasicType::Int], false);
+    NodeVar* nv = new NodeVar("__RAVE_FOREACH_N" + std::to_string(loc), new NodeInt(0), false, false, false, {}, loc, basicTypes[BasicType::Int], false);
     nv->check();
     nv->generate();
 
-    NodeBlock* oldBlock = (NodeBlock*)this->block->copy();
-    this->block->nodes = {
+    NodeBlock* oldBlock = (NodeBlock*)block->copy();
+    block->nodes = {
         new NodeVar(
             elName->name, new NodeIndex(varData,
-                {new NodeIden("__RAVE_FOREACH_N" + std::to_string(this->loc), this->loc)
-            }, this->loc),
-        false, false, false, {}, this->loc, new TypeAuto())
+                {new NodeIden("__RAVE_FOREACH_N" + std::to_string(loc), loc)
+            }, loc),
+        false, false, false, {}, loc, new TypeAuto())
     };
 
-    for (size_t i=0; i<oldBlock->nodes.size(); i++) this->block->nodes.push_back(oldBlock->nodes[i]);
+    for (size_t i=0; i<oldBlock->nodes.size(); i++) block->nodes.push_back(oldBlock->nodes[i]);
 
-    this->block->nodes.push_back(new NodeBinary(TokType::PluEqu, new NodeIden("__RAVE_FOREACH_N" + std::to_string(this->loc), this->loc), new NodeInt(1), this->loc));
+    block->nodes.push_back(new NodeBinary(TokType::PluEqu, new NodeIden("__RAVE_FOREACH_N" + std::to_string(loc), loc), new NodeInt(1), loc));
 
-    NodeWhile* nwhile = new NodeWhile(new NodeBinary(TokType::Less, new NodeIden("__RAVE_FOREACH_N" + std::to_string(this->loc), this->loc), varLength, this->loc), this->block, this->loc);
+    NodeWhile* nwhile = new NodeWhile(new NodeBinary(TokType::Less, new NodeIden("__RAVE_FOREACH_N" + std::to_string(loc), loc), varLength, loc), block, loc);
     nwhile->check();
     RaveValue result = nwhile->generate();
 
-    currScope->remove("__RAVE_FOREACH_N" + std::to_string(this->loc));
+    currScope->remove("__RAVE_FOREACH_N" + std::to_string(loc));
 
     return {};
 }

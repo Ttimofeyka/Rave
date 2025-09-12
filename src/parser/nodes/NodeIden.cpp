@@ -22,9 +22,9 @@ NodeIden::NodeIden(std::string name, int loc, bool isMustBePtr) {
     this->isMustBePtr = isMustBePtr;
 }
 
-Node* NodeIden::copy() {return new NodeIden(this->name, this->loc, this->isMustBePtr);}
+Node* NodeIden::copy() { return new NodeIden(name, loc, isMustBePtr); }
 
-void NodeIden::check() {isChecked = true;}
+void NodeIden::check() { isChecked = true; }
 
 Type* getIdenType(std::string idenName, int loc) {
     if (AST::aliasTable.find(idenName) != AST::aliasTable.end()) return AST::aliasTable[idenName]->getType();
@@ -46,16 +46,16 @@ Type* NodeIden::getType() {
 Node* NodeIden::comptime() {
     if (generator != nullptr && generator->toReplaceValues.find(name) != generator->toReplaceValues.end()) return generator->toReplaceValues[name]->comptime();
 
-    if (AST::aliasTable.find(this->name) == AST::aliasTable.end()) {
+    if (AST::aliasTable.find(name) == AST::aliasTable.end()) {
         generator->error("unknown alias \033[1m" + name + "\033[22m!", loc);
         return nullptr;
     }
 
-    return AST::aliasTable[this->name];
+    return AST::aliasTable[name];
 }
 
 RaveValue NodeIden::generate() {
-    if (AST::aliasTable.find(this->name) != AST::aliasTable.end()) return AST::aliasTable[this->name]->generate();
+    if (AST::aliasTable.find(name) != AST::aliasTable.end()) return AST::aliasTable[name]->generate();
 
     if (generator->globals.find(name) != generator->globals.end()) {
         AST::varTable[name]->isUsed = true;
@@ -65,21 +65,21 @@ RaveValue NodeIden::generate() {
     }
 
     if (currScope != nullptr) {
-        if (currScope->has(this->name) || currScope->hasAtThis(this->name)) {
+        if (currScope->has(name) || currScope->hasAtThis(name)) {
             if (currScope->localVars.find(name) != currScope->localVars.end()) currScope->localVars[name]->isUsed = true;
 
-            if (isMustBePtr) return currScope->getWithoutLoad(this->name, loc);
-            return currScope->get(this->name, loc);
+            if (isMustBePtr) return currScope->getWithoutLoad(name, loc);
+            return currScope->get(name, loc);
         }
     }
 
     if (AST::funcTable.find(name) != AST::funcTable.end()) {
         if (generator->functions.find(name) == generator->functions.end()) AST::funcTable[name]->generate();
 
-        generator->addAttr("noinline", LLVMAttributeFunctionIndex, generator->functions[this->name].value, loc);
-        return generator->functions[this->name];
+        generator->addAttr("noinline", LLVMAttributeFunctionIndex, generator->functions[name].value, loc);
+        return generator->functions[name];
     }
     
-    generator->error("unknown identifier \033[1m" + this->name + "\033[22m!", loc);
+    generator->error("unknown identifier \033[1m" + name + "\033[22m!", loc);
     return {};
 }
