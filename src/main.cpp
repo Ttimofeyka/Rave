@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
         + "\n\t-c - Do not create an output file (only object files)."
         + "\n\t--target (-t) <target> - Change the platform type to <target>."
         + "\n\t--emitLLVM, -emit-llvm (-eml) - Create output files with LLVM IR."
-        + "\n\t--recompileStd (-rcs) - Recompile the standart library with flags and replacing the cache version (if available)."
+        + "\n\t--recompileStd (-rcs) - Recompile the standard library with flags and replacing the cache version (if available)."
         + "\n\t-O0, -O1, -O2, -O3, -Ofast - Optimization levels (in ascending order of output program speed)."
         + "\n\t--link (-l) <library> - Add the <library> library to the linker."
         + "\n\t--noStd (-ns) - Do not link with standart library."
