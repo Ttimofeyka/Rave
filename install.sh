@@ -17,7 +17,7 @@ fi
 
 if [ -f "/etc/debian_version" ]; then
     echo Debian-based detected.
-    $SUDO apt install llvm-16 llvm-16-dev clang-16
+    $SUDO apt install llvm-18 llvm-18-dev clang-18
     echo Done.
     exit 0
 fi
@@ -32,7 +32,7 @@ fi
 
 if [ ! -z "$(command -v xbps-install)" ]; then
     echo Void Linux detected.
-    $SUDO xbps-install -S clang llvm15
+    $SUDO xbps-install -S clang llvm18
     echo Done.
     exit 0
 fi
