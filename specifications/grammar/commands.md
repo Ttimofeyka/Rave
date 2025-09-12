@@ -86,7 +86,7 @@ for (;;) {
 }
 ```
 
-**foreach(varElement; var) [body/{body}]** or **foreach(varElement; varWithData; varWithLength) [body/{body}]** - the for version, created as a result of new trends in reducing unnecessary constructions.
+**foreach (varElement; var) [body/{body}]** or **foreach (varElement; varWithData; varWithLength) [body/{body}]** - the for version, created as a result of new trends in reducing unnecessary constructions.
 
 Example:
 ```d
@@ -96,21 +96,21 @@ vint.add(10);
 vint.add(20);
 vint.add(30);
 
-foreach(number; vint) std::println(number);
+foreach (number; vint) std::println(number);
 
 // Or
 
-foreach(number; vint.data; vint.length) std::println(number);
+foreach (number; vint.data; vint.length) std::println(number);
 ```
 
-**switch(expr) {case(expr) {} default {}}** - It works like a switch in C, except for one thing - break and continue are prohibited in switch.
+**switch (expr) {case(expr) {} default {}}** - It works like a switch in C, except for one thing - break and continue are prohibited in switch.
 
 Example:
 ```d
 int n;
 std::input(&n);
 
-switch(n) {
+switch (n) {
     case(10) std::println("10");
     case(20) {
         std::println("20!");

@@ -116,7 +116,7 @@ Node* NodeBinary::comptime() {
         Types::replaceTemplates(&firstType);
         Types::replaceTemplates(&secondType);
 
-        switch(this->op) {
+        switch (this->op) {
             case TokType::Equal: return new NodeBool(firstType->toString() == secondType->toString());
             case TokType::Nequal: return new NodeBool(firstType->toString() != secondType->toString());
             default: return new NodeBool(false);
@@ -125,7 +125,7 @@ Node* NodeBinary::comptime() {
 
     NodeBool* eqNeqResult = nullptr;
 
-    switch(this->op) {
+    switch (this->op) {
         case TokType::Equal: case TokType::Nequal:
             eqNeqResult = new NodeBool(true);
 
@@ -249,7 +249,7 @@ Node* NodeBinary::comptime() {
                     r128FromString(&r128_2, ((NodeFloat*)second)->value.c_str(), nullptr);
 
                     R128 r128_result;
-                    switch(op) {
+                    switch (op) {
                         case TokType::Plus: r128_result = r128_1 + r128_2; break;
                         case TokType::Minus: r128_result = r128_1 - r128_2; break;
                         case TokType::Multiply: r128_result = r128_1 * r128_2; break;
@@ -272,7 +272,7 @@ Node* NodeBinary::comptime() {
                 else if (instanceof<NodeFloat>(second)) r128FromString(&r128_2, ((NodeFloat*)second)->value.c_str(), nullptr);
 
                 R128 r128_result;
-                switch(op) {
+                switch (op) {
                     case TokType::Plus: r128_result = r128_1 + r128_2; break;
                     case TokType::Minus: r128_result = r128_1 - r128_2; break;
                     case TokType::Multiply: r128_result = r128_1 * r128_2; break;
@@ -292,7 +292,7 @@ Node* NodeBinary::comptime() {
 }
 
 Type* NodeBinary::getType() {
-    switch(this->op) {
+    switch (this->op) {
         case TokType::Equ: case TokType::PluEqu: case TokType::MinEqu: case TokType::DivEqu: case TokType::MulEqu: return typeVoid;
         case TokType::Equal: case TokType::Nequal: case TokType::More: case TokType::Less: case TokType::MoreEqual: case TokType::LessEqual:
             if (instanceof<TypeVector>(first->getType())) return first->getType();
@@ -559,7 +559,7 @@ RaveValue Binary::operation(char op, Node* first, Node* second, int loc) {
         }
     }
 
-    switch(op) {
+    switch (op) {
         case TokType::Plus: return LLVM::sum(vFirst, vSecond);
         case TokType::Minus: return LLVM::sub(vFirst, vSecond);
         case TokType::Multiply: return LLVM::mul(vFirst, vSecond);

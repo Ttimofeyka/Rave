@@ -24,7 +24,7 @@ RaveValue NodeSizeof::generate() {
         Type* tp = ((NodeType*)this->value)->getType();
         while (generator->toReplace.find(tp->toString()) != generator->toReplace.end()) tp = generator->toReplace[tp->toString()];
         if (instanceof<TypeBasic>(tp)) {
-            switch(((TypeBasic*)tp)->type) {
+            switch (((TypeBasic*)tp)->type) {
                 case BasicType::Uchar: case BasicType::Char: case BasicType::Bool: return {LLVMConstInt(LLVMInt32TypeInContext(generator->context), 1, false), basicTypes[BasicType::Int]};
                 case BasicType::Ushort: case BasicType::Short: case BasicType::Half: case BasicType::Bhalf: return {LLVMConstInt(LLVMInt32TypeInContext(generator->context), 2, false), basicTypes[BasicType::Int]};
                 case BasicType::Uint: case BasicType::Int:

@@ -88,7 +88,7 @@ RaveValue NodeInt::generate() {
 }
 
 LLVMTypeRef NodeInt::getTypeForBasicType(char type) {
-    switch(type) {
+    switch (type) {
         case BasicType::Bool: return LLVMInt1TypeInContext(generator->context);
         case BasicType::Uchar:
         case BasicType::Char: return LLVMInt8TypeInContext(generator->context);

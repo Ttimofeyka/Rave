@@ -39,7 +39,7 @@ RaveValue NodeConstStruct::generate() {
         std::vector<Type*> types;
 
         while (tParser.peek()->type != TokType::Eof) {
-            switch(tParser.peek()->type) {
+            switch (tParser.peek()->type) {
                 case TokType::Number: case TokType::HexNumber: case TokType::FloatNumber: {
                     Node* value = tParser.parseExpr();
                     types.push_back(new TypeTemplateMember(value->getType(), value));

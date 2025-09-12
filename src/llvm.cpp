@@ -282,7 +282,7 @@ RaveValue LLVM::compare(RaveValue first, RaveValue second, char op) {
 
     RaveValue value = {nullptr, nullptr};
 
-    if (isFloatType(first.type)) switch(op) {
+    if (isFloatType(first.type)) switch (op) {
         case TokType::Equal: value = {LLVMBuildFCmp(generator->builder, LLVMRealOEQ, first.value, second.value, "compareOEQ"), returnType}; break;
         case TokType::Nequal: value = {LLVMBuildFCmp(generator->builder, LLVMRealUNE, first.value, second.value, "compareONE"), returnType}; break;
         case TokType::More: value = {LLVMBuildFCmp(generator->builder, LLVMRealOGT, first.value, second.value, "compareOGT"), returnType}; break;
@@ -293,7 +293,7 @@ RaveValue LLVM::compare(RaveValue first, RaveValue second, char op) {
     else {
         bool isUnsigned = ((TypeBasic*)first.type->getElType())->isUnsigned();
 
-        switch(op) {
+        switch (op) {
             case TokType::Equal: value = {LLVMBuildICmp(generator->builder, LLVMIntEQ, first.value, second.value, "compareIEQ"), returnType}; break;
             case TokType::Nequal: value = {LLVMBuildICmp(generator->builder, LLVMIntNE, first.value, second.value, "compareINEQ"), returnType}; break;
             case TokType::More: value = {LLVMBuildICmp(generator->builder, isUnsigned ? LLVMIntUGT : LLVMIntSGT, first.value, second.value, "compareIMR"), returnType}; break;

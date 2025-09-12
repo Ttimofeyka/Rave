@@ -23,7 +23,7 @@ void main {
             break;
         }
 
-        switch(op) {
+        switch (op) {
             case('+') first += second;
             case('-') first -= second;
             case('*') first *= second;

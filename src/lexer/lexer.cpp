@@ -108,7 +108,7 @@ Lexer::Lexer(std::string text, int offset) {
             idx += 1;
         }
         if (peek() == '\0' || peek() == 0 || peek() == EOF) break;
-        switch(peek()) {
+        switch (peek()) {
             case '+':
                 if (next() == '=') {tokens.push_back(new Token(TokType::PluEqu, "+=", line)); idx += 1;}
                 else if (peek() == '+') {tokens.push_back(new Token(TokType::PluEqu)); tokens.push_back(new Token(TokType::Number, "1")); idx += 1;}
@@ -240,7 +240,7 @@ Lexer::Lexer(std::string text, int offset) {
 }
 
 std::string tokenToString(char type) {
-    switch(type) {
+    switch (type) {
         case TokType::More: return "'>'";
         case TokType::MoreEqual: return "'>='";
         case TokType::Less: return "'<'";

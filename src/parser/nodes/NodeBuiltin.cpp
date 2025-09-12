@@ -795,7 +795,7 @@ RaveValue NodeBuiltin::generate() {
         if (instanceof<TypeVoid>(type)) return {LLVM::makeInt(64, 0, false), basicTypes[BasicType::Long]};
         else {
             TypeBasic* btype = (TypeBasic*)type;
-            switch(btype->type) {
+            switch (btype->type) {
                 case BasicType::Bool: case BasicType::Uchar: case BasicType::Ushort:
                 case BasicType::Uint: case BasicType::Ulong: case BasicType::Ucent: return {LLVM::makeInt(64, 0, false), basicTypes[BasicType::Long]};
                 case BasicType::Char: return {LLVM::makeInt(64, -128, false), basicTypes[BasicType::Long]};
@@ -815,7 +815,7 @@ RaveValue NodeBuiltin::generate() {
         if (instanceof<TypeVoid>(type)) return {LLVM::makeInt(64, 0, false), basicTypes[BasicType::Long]};
         else {
             TypeBasic* btype = (TypeBasic*)type;
-            switch(btype->type) {
+            switch (btype->type) {
                 case BasicType::Bool: return {LLVM::makeInt(64, 1, false), basicTypes[BasicType::Long]};
                 case BasicType::Char: return {LLVM::makeInt(64, 127, false), basicTypes[BasicType::Long]};
                 case BasicType::Uchar: return {LLVM::makeInt(64, 255, false), basicTypes[BasicType::Long]};
@@ -935,7 +935,7 @@ Node* NodeBuiltin::comptime() {
         if (instanceof<TypeVoid>(type)) return new NodeInt(0);
         else {
             TypeBasic* btype = (TypeBasic*)type;
-            switch(btype->type) {
+            switch (btype->type) {
                 case BasicType::Bool: case BasicType::Uchar: case BasicType::Ushort:
                 case BasicType::Uint: case BasicType::Ulong: case BasicType::Ucent: return new NodeInt(0);
                 case BasicType::Char: return new NodeInt(-128);
@@ -955,7 +955,7 @@ Node* NodeBuiltin::comptime() {
         if (instanceof<TypeVoid>(type)) return new NodeInt(0);
         else {
             TypeBasic* btype = (TypeBasic*)type;
-            switch(btype->type) {
+            switch (btype->type) {
                 case BasicType::Bool: return new NodeInt(1);
                 case BasicType::Char: return new NodeInt(127);
                 case BasicType::Uchar: return new NodeInt(255);

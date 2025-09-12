@@ -66,7 +66,7 @@ std::vector<Type*> parametersToTypes(std::vector<RaveValue> params) {
 
 std::string typeToString(Type* arg) {
     if (instanceof<TypeBasic>(arg)) {
-        switch(((TypeBasic*)arg)->type) {
+        switch (((TypeBasic*)arg)->type) {
             case BasicType::Half: return "hf";
             case BasicType::Bhalf: return "bf";
             case BasicType::Float: return "f";
@@ -297,7 +297,7 @@ Type* LLVMGen::setByTypeList(std::vector<Type*> list) {
 }
 
 LLVMMetadataRef DebugGen::genBasicType(TypeBasic* type, int loc) {
-    switch(type->type) {
+    switch (type->type) {
         case BasicType::Bool: return LLVMDIBuilderCreateBasicType(diBuilder, "bool", 4, 1, 0, LLVMDIFlagZero);
         case BasicType::Char: return LLVMDIBuilderCreateBasicType(diBuilder, "char", 4, 8, 0, LLVMDIFlagZero);
         case BasicType::Uchar: return LLVMDIBuilderCreateBasicType(diBuilder, "uchar", 5, 8, 0, LLVMDIFlagZero);
@@ -518,7 +518,7 @@ void LLVMGen::addStrAttr(std::string name, LLVMAttributeIndex index, LLVMValueRe
 
 int LLVMGen::getAlignment(Type* type) {
     if (instanceof<TypeBasic>(type)) {
-        switch(((TypeBasic*)type)->type) {
+        switch (((TypeBasic*)type)->type) {
             case BasicType::Bool: case BasicType::Char: case BasicType::Uchar: return 1;
             case BasicType::Short: case BasicType::Ushort: case BasicType::Half: case BasicType::Bhalf: return 2;
             case BasicType::Int: case BasicType::Uint: case BasicType::Float: return 4;

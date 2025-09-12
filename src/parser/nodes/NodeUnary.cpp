@@ -150,7 +150,7 @@ NodeUnary::~NodeUnary() {
 }
 
 Type* NodeUnary::getType() {
-    switch(this->type) {
+    switch (this->type) {
         case TokType::Amp:
             if (instanceof<TypeArray>(this->base->getType())) return new TypePointer(this->base->getType()->getElType());
             return new TypePointer(this->base->getType());
@@ -185,7 +185,7 @@ RaveValue NodeUnary::generate() {
 Node* NodeUnary::comptime() {
     Node* comptimed = this->base->comptime();
 
-    switch(this->type) {
+    switch (this->type) {
         case TokType::Minus:
             if (instanceof<NodeInt>(comptimed)) return new NodeInt(-((NodeInt*)comptimed)->value);
             else if (instanceof<NodeFloat>(comptimed)) {

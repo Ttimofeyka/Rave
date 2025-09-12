@@ -352,7 +352,7 @@ std::map<std::pair<std::string, std::string>, NodeFunc*>::iterator Call::findMet
             templateTypes = "<";
 
             while (tParser.peek()->type != TokType::Eof) {
-                switch(tParser.peek()->type) {
+                switch (tParser.peek()->type) {
                     case TokType::Number: case TokType::HexNumber: case TokType::FloatNumber: {
                         Node* value = tParser.parseExpr();
                         types.push_back(new TypeTemplateMember(value->getType(), value));
@@ -533,7 +533,7 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
             sTypes = "";
 
             while (tParser.peek()->type != TokType::Eof) {
-                switch(tParser.peek()->type) {
+                switch (tParser.peek()->type) {
                     case TokType::Number: case TokType::HexNumber: case TokType::FloatNumber: {
                         Node* value = tParser.parseExpr();
                         types.push_back(new TypeTemplateMember(value->getType(), value));

@@ -112,7 +112,7 @@ namespace std {
                 if (isWrite) {
                     if ((return + len) >= bufferSize) @return();
 
-                    switch(len) {
+                    switch (len) {
                         case(1) buffer[return] = cast(uchar)codepoint;
                         case(2) {
                             buffer[return] = cast(uchar)(0xC0 | ((codepoint >. 6) & 0x1F));

@@ -117,7 +117,7 @@ import <std/error>
             int kill(int pid, int sig) {
                 void* handle = std::process::__OpenProcess(std::process::Terminate | std::process::SuspendAndResume, cast(char)false, pid);
                 if (handle != null) {   
-                    switch(sig) {
+                    switch (sig) {
                         case(std::SigTerm) return = (std::process::__TerminateProcess(handle, 1) != 0c);
                         case(std::SigKill) return = (std::process::__TerminateProcess(handle, 1) != 0c);
                         default return = (std::process::__TerminateProcess(handle, 0) != 0c);

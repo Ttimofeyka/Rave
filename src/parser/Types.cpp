@@ -30,7 +30,7 @@ Type* TypeBasic::copy() {
 }
 
 int TypeBasic::getSize() {
-    switch(this->type) {
+    switch (this->type) {
         case BasicType::Bool: return 1;
         case BasicType::Char: case BasicType::Uchar: return 8;
         case BasicType::Short: case BasicType::Ushort: case BasicType::Half:case BasicType::Bhalf: return 16;
@@ -46,7 +46,7 @@ bool TypeBasic::isFloat() {return (this->type == BasicType::Float) || (this->typ
 bool TypeBasic::isUnsigned() {return (this->type == BasicType::Uchar) || (this->type == BasicType::Ushort) || (this->type == BasicType::Uint) || (this->type == BasicType::Ulong) || (this->type == BasicType::Ucent);}
 
 std::string TypeBasic::toString() {
-    switch(this->type) {
+    switch (this->type) {
         case BasicType::Bool: return "bool";
         case BasicType::Char: return "char"; case BasicType::Uchar: return "uchar";
         case BasicType::Short: return "short"; case BasicType::Ushort: return "ushort";
