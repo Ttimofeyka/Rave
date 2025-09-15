@@ -24,15 +24,12 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/lexer/lexer.hpp"
 #include "../../include/llvm.hpp"
 
-NodeCall::NodeCall(int loc, Node* func, std::vector<Node*> args) {
-    this->loc = loc;
-    this->func = func;
-    this->args = std::vector<Node*>(args);
-}
+NodeCall::NodeCall(int loc, Node* func, std::vector<Node*> args) 
+    : loc(loc), func(func), args(args) {}
 
 NodeCall::~NodeCall() {
-    if (func != nullptr) delete func;
-    for (size_t i=0; i<args.size(); i++) if (args[i] != nullptr) delete args[i];
+    delete func;
+    for (Node* arg : args) delete arg;
 }
 
 inline void checkAndGenerate(std::string name) {
@@ -96,13 +93,12 @@ bool hasIdenticallyArgs(const std::vector<Type*>& one, const std::vector<FuncArg
 
 std::vector<FuncArgSet> tfaToFas(std::vector<TypeFuncArg*> tfa) {
     std::vector<FuncArgSet> fas;
-    for (size_t i=0; i<tfa.size(); i++) {
-        Type* type = tfa[i]->type;
-        while (generator->toReplace.find(type->toString()) != generator->toReplace.end()) type = generator->toReplace[type->toString()];
-
-        fas.push_back(FuncArgSet{.name = tfa[i]->name, .type = type});
+    for (auto* arg : tfa) {
+        Type* type = arg->type;
+        while (generator->toReplace.find(type->toString()) != generator->toReplace.end()) 
+            type = generator->toReplace[type->toString()];
+        fas.push_back(FuncArgSet{.name = arg->name, .type = type});
     }
-
     return fas;
 }
 
@@ -212,7 +208,7 @@ std::vector<RaveValue> Call::genParameters(std::vector<Node*>& arguments, std::v
             else if (instanceof<NodeGet>(arguments[i])) ((NodeGet*)arguments[i])->isMustBePtr = false;
             else if (instanceof<NodeIndex>(arguments[i])) ((NodeIndex*)arguments[i])->isMustBePtr = false;
         }
-        
+
         params.push_back(arguments[i]->generate());
     }
 
@@ -244,9 +240,8 @@ std::vector<RaveValue> Call::genParameters(std::vector<Node*>& arguments, std::v
             else if (isBytePointer(fas[i].type) && fas[i].type->toString() != params[i].type->toString()) LLVM::cast(params[i], new TypePointer(basicTypes[BasicType::Char]));
         }
         else {
-            while (instanceof<TypePointer>(params[i].type)) {
+            while (instanceof<TypePointer>(params[i].type))
                 params[i] = LLVM::load(params[i], "genParameters_load", settings.loc);
-            }
 
             if (instanceof<TypeBasic>(fas[i].type)) {
                 if (instanceof<TypeBasic>(params[i].type) && ((TypeBasic*)fas[i].type) != ((TypeBasic*)params[i].type)) LLVM::cast(params[i], fas[i].type);
@@ -659,7 +654,7 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
 
         if (instanceof<NodeCall>(getFunc->base)) {
             NodeCall* ncall = (NodeCall*)getFunc->base;
-            
+
             return Call::make(loc, new NodeGet(new NodeDone(ncall->generate()), getFunc->field, getFunc->isMustBePtr, loc), arguments);
         }
 
