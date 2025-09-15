@@ -361,20 +361,17 @@ RaveValue NodeBuiltin::generate() {
     else if (name == "isStructure") {
         if (this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
 
-        if (instanceof<TypeStruct>(asType(0)->type)) return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
-        return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
+        return {LLVM::makeInt(1, (int)instanceof<TypeStruct>(asType(0)->type), false), basicTypes[BasicType::Bool]};
     }
     else if (name == "isNumeric") {
         if (this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
 
-        if (instanceof<TypeBasic>(asType(0)->type)) return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
-        return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
+        return {LLVM::makeInt(1, (int)instanceof<TypeBasic>(asType(0)->type), false), basicTypes[BasicType::Bool]};
     }
     else if (name == "isFloat") {
         if (args.size() < 1) generator->error("at least one argument is required!", loc);
 
-        if (isFloatType(asType(0)->type)) return {LLVM::makeInt(1, 1, false), basicTypes[BasicType::Bool]};
-        return {LLVM::makeInt(1, 0, false), basicTypes[BasicType::Bool]};
+        return {LLVM::makeInt(1, (int)isFloatType(asType(0)->type), false), basicTypes[BasicType::Bool]};
     }
     else if (name == "isUnsigned") {
         if (this->args.size() < 1) generator->error("at least one argument is required!", this->loc);
