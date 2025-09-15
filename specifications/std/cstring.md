@@ -113,6 +113,4 @@ Convert a string to a double (`std::cstring::stod`) or a real (`std::cstring::st
 Example:
 ```d
 double d1 = std::cstring::stod("10");
-// Or
-double d2 = std::cstring::stod("76.5", 4); // Number of symbols
 ```

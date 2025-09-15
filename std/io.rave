@@ -722,8 +722,8 @@ namespace std {
                     }
                 }
                 
-                @if (@getCurrArgType() != real*) pointer[0] = std::cstring::stod(&buffer, idx);
-                @else pointer[0] = std::cstring::stor(&buffer, idx);
+                @if (@getCurrArgType() != real*) pointer[0] = std::cstring::stod(std::cstring(&buffer, idx));
+                @else pointer[0] = std::cstring::stor(std::cstring(&buffer, idx));
             }
             @else @if (@getCurrArgType() == std::string*) {
                 auto buffer = @getCurrArg(@getCurrArgType());
