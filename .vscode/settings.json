@@ -104,7 +104,10 @@
         "ios": "cpp",
         "locale": "cpp",
         "queue": "cpp",
-        "*.inc": "cpp"
+        "*.inc": "cpp",
+        "format": "cpp",
+        "stack": "cpp",
+        "text_encoding": "cpp"
     },
     "C_Cpp.default.compilerPath": "/usr/bin/clang++"
 }

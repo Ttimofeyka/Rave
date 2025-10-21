@@ -22,7 +22,7 @@ public:
     inline char peek() {return text[idx];}
     inline char next() {return text[++idx];}
 
-    std::string replaceAllEscapes(std::string buffer, bool isChar = true);
+    std::string unescape(const std::string& str);
     std::string getIdentifier();
     std::string getString();
     std::string getChar();

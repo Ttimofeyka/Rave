@@ -16,9 +16,35 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <regex>
 #include <unordered_set>
 
-std::string Lexer::replaceAllEscapes(std::string buffer, bool isChar) {
-    std::string str = replaceAll(replaceAll(replaceAll(replaceAll(replaceAll(buffer, "\\r", "\r"), "\\n", "\n"), "\\'", "\'"), "\\\"", "\""), "\\t", "\t");
-    return str;
+std::string Lexer::unescape(const std::string& str) {
+    static const std::unordered_map<std::string, char> escapes = {
+        {"\\r", '\r'},
+        {"\\n", '\n'},
+        {"\\t", '\t'},
+        {"\\'", '\''},
+        {"\\\"", '\"'},
+        {"\\\\", '\\'}
+    };
+
+    std::string result;
+    result.reserve(str.size());
+
+    for (size_t i = 0; i < str.size(); ++i) {
+        if (str[i] == '\\' && i + 1 < str.size()) {
+            std::string candidate = str.substr(i, 2);
+            auto it = escapes.find(candidate);
+
+            if (it != escapes.end()) {
+                result += it->second;
+                i++;
+                continue;
+            }
+        }
+
+        result += str[i];
+    }
+
+    return result;
 }
 
 std::string Lexer::getIdentifier() {
@@ -53,16 +79,17 @@ std::string Lexer::getString() {
             else if (peek() == 't') buffer += "\t";
             else if (isdigit(peek())) {
                 std::string buffer2;
-                while (isdigit(peek())) {buffer2 += peek(); idx += 1;}
-                buffer += replaceAllEscapes(buffer2);
+                for (; isdigit(peek()); idx++) buffer2 += peek();
+                buffer += unescape(buffer2);
             }
             else buffer += peek();
         }
         else buffer += peek();
         idx += 1;
     }
-    if (peek() == '"') this->idx += 1;
-    return replaceAllEscapes(buffer, false);
+
+    if (peek() == '"') idx += 1;
+    return unescape(buffer);
 }
 
 std::string Lexer::getChar() {
@@ -71,16 +98,18 @@ std::string Lexer::getChar() {
     while (peek() != '\'') {
         if (peek() == '\\' && text[idx + 1] == '\'') {buffer += "'"; idx += 2;}
         else if (peek() == '\\' && isdigit(text[idx + 1])) {
-            buffer2 += peek(); idx += 1;
-            while (isdigit(peek())) {buffer2 += peek(); idx += 1;}
-            buffer += replaceAllEscapes(buffer2);
+            buffer2 += peek();
+            idx += 1;
+            for (; isdigit(peek()); idx++) buffer2 += peek();
+            buffer += unescape(buffer2);
             buffer2 = "";
         }
         else if (peek() == '\\' && text[idx + 1] == '\\') {buffer += "\\"; idx += 2;}
         else {buffer += peek(); idx += 1;}
     }
+
     next();
-    return replaceAllEscapes(buffer);
+    return unescape(buffer);
 }
 
 std::string Lexer::getDigit(char numType) {
@@ -93,6 +122,7 @@ std::string Lexer::getDigit(char numType) {
         buffer += currentChar;
         idx += 1;
     }
+
     return buffer;
 }
 
@@ -107,7 +137,9 @@ Lexer::Lexer(std::string text, int offset) {
             if (peek() == '\n') line += 1;
             idx += 1;
         }
+
         if (peek() == '\0' || peek() == 0 || peek() == EOF) break;
+
         switch (peek()) {
             case '+':
                 if (next() == '=') {tokens.push_back(new Token(TokType::PluEqu, "+=", line)); idx += 1;}
@@ -129,12 +161,12 @@ Lexer::Lexer(std::string text, int offset) {
                 else if (peek() == '/') {while (peek() != '\n') idx += 1;}
                 else if (peek() == '*') {
                     idx += 1;
-                    while (peek() != '*' || this->text[this->idx+1] != '/') {
+                    while (peek() != '*' || this->text[idx + 1] != '/') {
                         if (peek() == '\n') line += 1;
                         if (idx+1 >= text.size()) break;
-                        this->next();
+                        next();
                     }
-                    this->idx += 2;
+                    idx += 2;
                 }
                 else tokens.push_back(new Token(TokType::Divide, "/", line));
                 break;
@@ -206,20 +238,24 @@ Lexer::Lexer(std::string text, int offset) {
                         std::string buffer = "";
                         idx -= 1;
 
-                        while (isdigit(this->peek()) || (this->peek() == '.' && this->text[this->idx + 1] != '.')) {
-                            if (this->peek() == '.') {
+                        while (isdigit(peek()) || (peek() == '.' && this->text[idx + 1] != '.')) {
+                            if (peek() == '.') {
                                 isFloat = true;
                                 buffer += ".";
-                                this->idx += 1;
+                                idx += 1;
                                 continue;
                             }
+
                             buffer += peek();
-                            this->idx += 1;
+                            idx += 1;
                         }
 
-                        this->tokens.push_back(new Token(isFloat ? TokType::FloatNumber : TokType::Number, buffer, line));
+                        tokens.push_back(new Token(isFloat ? TokType::FloatNumber : TokType::Number, buffer, line));
                     }
-                    else {idx -= 1; tokens.push_back(new Token(TokType::HexNumber, getDigit(TokType::HexNumber), line));}
+                    else {
+                        idx -= 1;
+                        tokens.push_back(new Token(TokType::HexNumber, getDigit(TokType::HexNumber), line));
+                    }
                 }
                 else {
                     std::string identifier = getIdentifier();
@@ -265,5 +301,6 @@ std::string tokenToString(char type) {
         case TokType::Char: return "char";
         case TokType::Identifier: return "identifier";
     }
+
     return "type " + std::to_string(type);
 }
