@@ -300,6 +300,32 @@ std::string tokenToString(char type) {
         case TokType::String: return "string";
         case TokType::Char: return "char";
         case TokType::Identifier: return "identifier";
+        case TokType::True: return "true";
+        case TokType::False: return "false";
+        case TokType::Eof: return "EOF";
+        case TokType::ValSel: return "':'";
+        case TokType::Dot: return "'.'";
+        case TokType::PluEqu: return "'+='";
+        case TokType::MinEqu: return "'-='";
+        case TokType::MulEqu: return "'*='";
+        case TokType::DivEqu: return "'/='";
+        case TokType::And: return "'&&'";
+        case TokType::Or: return "'||'";
+        case TokType::Amp: return "'&'";
+        case TokType::VarArg: return "'...'";
+        case TokType::SliceOper: return "'..'";
+        case TokType::Rem: return "'%'";
+        case TokType::BitLeft: return "'<<'";
+        case TokType::BitRight: return "'>>'";
+        case TokType::BitXor: return "'!!'";
+        case TokType::BitNot: return "'~'";
+        case TokType::Builtin: return "builtin";
+        case TokType::Destructor: return "'~'";
+        case TokType::BitOr: return "'|'";
+        case TokType::In: return "'in'";
+        case TokType::NeIn: return "'!in'";
+        case TokType::None: return "none";
+        case TokType::ShortRet: return "'=>'";
     }
 
     return "type " + std::to_string(type);
