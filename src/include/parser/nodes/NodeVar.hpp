@@ -46,6 +46,19 @@ public:
     Node* comptime() override;
     Node* copy() override;
     void check() override;
+
+private:
+    void prepareType();
+    void processGlobalModifiers(int& alignment, bool& noMangling);
+    void processLocalModifiers();
+    void applyAlignment(LLVMValueRef llvmValue, int alignment);
+    void generateDebugInfo(LLVMValueRef llvmValue);
+    void createLLVMGlobal(int alignment, bool noMangling);
+    void handleGlobalInitialization(int alignment);
+    RaveValue generateAutoTypeGlobal();
+    RaveValue generateAutoTypeLocal();
+    RaveValue generateGlobalVariable();
+    RaveValue generateLocalVariable();
 };
 
 namespace Predefines {
