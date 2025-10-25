@@ -27,30 +27,6 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #define LLVMDIBuilderInsertDeclareAtEnd LLVMDIBuilderInsertDeclareRecordAtEnd
 #endif
 
-NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, bool isGlobal, std::vector<DeclarMod> mods, int loc, Type* type, bool isVolatile) {
-    this->name = name;
-    this->origName = name;
-    this->linkName = this->name;
-    this->value = value;
-    this->isExtern = isExtern;
-    this->isConst = isConst;
-    this->isGlobal = isGlobal;
-    this->mods = std::vector<DeclarMod>(mods);
-    this->loc = loc;
-    this->type = type;
-    this->isVolatile = isVolatile;
-    this->isChanged = false;
-
-    for (size_t i=0; i<mods.size(); i++) {
-        if (mods[i].name == "noCopy") { this->isNoCopy = true; break; }
-    }
-
-    if (value != nullptr && instanceof<TypeArray>(type) && ((TypeArray*)type)->count == 0) {
-        // Set the count of array elements to the count of values
-        ((TypeArray*)this->type)->count = new NodeInt(((NodeArray*)this->value)->values.size());
-    }
-}
-
 NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, bool isGlobal, std::vector<DeclarMod> mods, int loc, Type* type, bool isVolatile, bool isChanged, bool noZeroInit) {
     this->name = name;
     this->origName = name;
@@ -72,7 +48,6 @@ NodeVar::NodeVar(std::string name, Node* value, bool isExtern, bool isConst, boo
     }
 
     if (value != nullptr && instanceof<TypeArray>(type) && ((TypeArray*)type)->count == nullptr) {
-        // Set the count of array elements to the count of values
         ((TypeArray*)this->type)->count = new NodeInt(((NodeArray*)this->value)->values.size());
     }
 }
@@ -201,7 +176,6 @@ RaveValue NodeVar::generate() {
                 else if (!noZeroInit) LLVMSetInitializer(generator->globals[name].value, LLVMConstNull(globalType));
 
                 LLVMSetGlobalConstant(generator->globals[this->name].value, this->isConst);
-                if (alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
             }
             else LLVMSetLinkage(generator->globals[this->name].value, LLVMExternalLinkage);
         }
@@ -239,128 +213,57 @@ RaveValue NodeVar::generate() {
 
         if (isVolatile) LLVMSetVolatile(generator->globals[this->name].value, true);
 
+        if (!isExtern) {
+            RaveValue val = (value == nullptr) ? RaveValue{LLVMConstNull(generator->genType(this->type, this->loc)), this->type} : 
+                            (instanceof<NodeUnary>(this->value) ? ((NodeUnary*)this->value)->generateConst() : this->value->generate());
+            LLVMSetInitializer(generator->globals[this->name].value, val.value);
+        }
+
         if (alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
         else if (!instanceof<TypeVector>(this->type)) LLVMSetAlignment(generator->globals[this->name].value, generator->getAlignment(this->type));
-
-        if (!isExtern) {
-            if (value == nullptr) LLVMSetInitializer(generator->globals[this->name].value, LLVMConstNull(generator->genType(this->type, this->loc)));
-            else {
-                RaveValue val;
-                if (instanceof<NodeUnary>(this->value)) val = ((NodeUnary*)this->value)->generateConst();
-                else val = this->value->generate();
-                LLVMSetInitializer(generator->globals[this->name].value, val.value);
-            }
-        }
 
         return {};
     }
     else {
+        currScope->localVars[this->name] = this;
+
         for (size_t i=0; i<this->mods.size(); i++) {
             if (mods[i].name == "volatile") isVolatile = true;
             else if (mods[i].name == "noOperators") isNoOperators = true;
             else if (mods[i].name == "nozeroinit") noZeroInit = true;
         }
 
-        currScope->localVars[this->name] = this;
-
         if (instanceof<TypeAuto>(this->type)) {
-            if (instanceof<NodeCall>(this->value)) {
-                // Constructor?
-                NodeCall* ncall = (NodeCall*)this->value;
-                if (instanceof<NodeIden>(ncall->func)) {
-                    NodeIden* niden = (NodeIden*)ncall->func;
-                    if (niden->name.find('<') != std::string::npos && AST::structTable.find(niden->name.substr(0, niden->name.find('<'))) != AST::structTable.end()) {
-                        // Excellent!
-                        if (AST::structTable.find(niden->name) != AST::structTable.end()) this->type = new TypeStruct(niden->name);
-                        else {
-                            // Generate structure with template
-                            std::string sTypes = niden->name.substr(niden->name.find('<')+1, niden->name.find('>'));
-                            sTypes.pop_back();
-
-                            Lexer lexer = Lexer(sTypes, 0);
-                            Parser parser = Parser(lexer.tokens, "(BUILTIN)");
-                            std::vector<Type*> types;
-
-                            while (true) {
-                                if (parser.peek()->type == TokType::Comma) parser.next();
-                                else if (parser.peek()->type == TokType::Eof) break;
-                                types.push_back(parser.parseType());
-                            }
-
-                            AST::structTable[niden->name.substr(0, niden->name.find('<'))]->genWithTemplate("<"+sTypes+">", types);
-                            this->type = new TypeStruct(niden->name);
-                        }
-                    }
+            RaveValue val;
+            bool isStructConstructor = false;
+            
+            if (instanceof<NodeCall>(this->value) && instanceof<NodeIden>(((NodeCall*)this->value)->func)) {
+                NodeIden* niden = (NodeIden*)((NodeCall*)this->value)->func;
+                if (niden->name.find('<') != std::string::npos && AST::structTable.find(niden->name.substr(0, niden->name.find('<'))) != AST::structTable.end()) {
+                    isStructConstructor = true;
+                    if (AST::structTable.find(niden->name) != AST::structTable.end()) this->type = new TypeStruct(niden->name);
                     else {
-                        RaveValue val = this->value->generate();
-                        currScope->localScope[this->name] = LLVM::alloc(val.type, name.c_str());
-                        this->type = value->getType();
+                        std::string sTypes = niden->name.substr(niden->name.find('<')+  1, niden->name.find('>'));
+                        sTypes.pop_back();
 
-                        if (isVolatile) LLVMSetVolatile(currScope->localScope[this->name].value, true);
+                        Lexer lexer = Lexer(sTypes, 0);
+                        Parser parser = Parser(lexer.tokens, "(BUILTIN)");
+                        std::vector<Type*> types;
 
-                        if (generator->settings.outDebugInfo) {
-                            auto debugLoc = LLVMDIBuilderCreateDebugLocation(generator->context, loc, 0, AST::funcTable[currScope->funcName]->diFuncScope, nullptr);
-    
-                            auto varType = debugInfo->genType(type, loc);
-    
-                            LLVMMetadataRef emptyExpr = LLVMDIBuilderCreateExpression(debugInfo->diBuilder, nullptr, 0);
-    
-                            auto varInfo = LLVMDIBuilderCreateAutoVariable(
-                                debugInfo->diBuilder, AST::funcTable[currScope->funcName]->diFuncScope, name.c_str(), name.length(),
-                                debugInfo->diFile, loc, varType, true,
-                                LLVMDIFlagZero, alignment > 0 ? alignment : 0
-                            );
-    
-                            LLVMDIBuilderInsertDeclareAtEnd(
-                                debugInfo->diBuilder, currScope->localScope[this->name].value,
-                                varInfo, emptyExpr, debugLoc, generator->currBB
-                            );
+                        while (true) {
+                            if (parser.peek()->type == TokType::Comma) parser.next();
+                            else if (parser.peek()->type == TokType::Eof) break;
+                            types.push_back(parser.parseType());
                         }
 
-                        if (alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
-                        else if (!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->localScope[this->name].value, generator->getAlignment(this->type));
-                        
-                        LLVMBuildStore(generator->builder, val.value, currScope->localScope[this->name].value);
-
-                        return currScope->localScope[this->name];
+                        AST::structTable[niden->name.substr(0, niden->name.find('<'))]->genWithTemplate("<" + sTypes + ">", types);
+                        this->type = new TypeStruct(niden->name);
                     }
-                }
-                else {
-                    RaveValue val = this->value->generate();
-                    currScope->localScope[this->name] = LLVM::alloc(val.type, name.c_str());
-                    this->type = value->getType();
-
-                    if (isVolatile) LLVMSetVolatile(currScope->localScope[this->name].value, true);
-
-                    if (generator->settings.outDebugInfo) {
-                        auto debugLoc = LLVMDIBuilderCreateDebugLocation(generator->context, loc, 0, AST::funcTable[currScope->funcName]->diFuncScope, nullptr);
-
-                        auto varType = debugInfo->genType(type, loc);
-
-                        LLVMMetadataRef emptyExpr = LLVMDIBuilderCreateExpression(debugInfo->diBuilder, nullptr, 0);
-
-                        auto varInfo = LLVMDIBuilderCreateAutoVariable(
-                            debugInfo->diBuilder, AST::funcTable[currScope->funcName]->diFuncScope, name.c_str(), name.length(),
-                            debugInfo->diFile, loc, varType, true,
-                            LLVMDIFlagZero, alignment > 0 ? alignment : 0
-                        );
-
-                        LLVMDIBuilderInsertDeclareAtEnd(
-                            debugInfo->diBuilder, currScope->localScope[this->name].value,
-                            varInfo, emptyExpr, debugLoc, generator->currBB
-                        );
-                    }
-
-                    if (alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
-                    else if (!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->localScope[this->name].value, generator->getAlignment(this->type));
-
-                    LLVMBuildStore(generator->builder, val.value, currScope->localScope[this->name].value);
-
-                    return currScope->localScope[this->name];
                 }
             }
-            else {
-                RaveValue val = this->value->generate();
+            
+            if (!isStructConstructor) {
+                val = this->value->generate();
                 currScope->localScope[this->name] = LLVM::alloc(val.type, name.c_str());
                 this->type = value->getType();
 
@@ -368,9 +271,7 @@ RaveValue NodeVar::generate() {
 
                 if (generator->settings.outDebugInfo) {
                     auto debugLoc = LLVMDIBuilderCreateDebugLocation(generator->context, loc, 0, AST::funcTable[currScope->funcName]->diFuncScope, nullptr);
-
                     auto varType = debugInfo->genType(type, loc);
-
                     LLVMMetadataRef emptyExpr = LLVMDIBuilderCreateExpression(debugInfo->diBuilder, nullptr, 0);
 
                     auto varInfo = LLVMDIBuilderCreateAutoVariable(
@@ -385,7 +286,7 @@ RaveValue NodeVar::generate() {
                     );
                 }
 
-                if (alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
+                if (alignment != -1) LLVMSetAlignment(currScope->localScope[this->name].value, alignment);
                 else if (!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->localScope[this->name].value, generator->getAlignment(this->type));
 
                 LLVMBuildStore(generator->builder, val.value, currScope->localScope[this->name].value);
@@ -400,9 +301,7 @@ RaveValue NodeVar::generate() {
 
         if (generator->settings.outDebugInfo) {
             auto debugLoc = LLVMDIBuilderCreateDebugLocation(generator->context, loc, 0, AST::funcTable[currScope->funcName]->diFuncScope, nullptr);
-
             auto varType = debugInfo->genType(type, loc);
-
             LLVMMetadataRef emptyExpr = LLVMDIBuilderCreateExpression(debugInfo->diBuilder, nullptr, 0);
 
             auto varInfo = LLVMDIBuilderCreateAutoVariable(
@@ -418,8 +317,8 @@ RaveValue NodeVar::generate() {
         }
 
         if (isVolatile) LLVMSetVolatile(currScope->localScope[this->name].value, true);
-        if (alignment != -1) LLVMSetAlignment(generator->globals[this->name].value, alignment);
-        else if (!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->getWithoutLoad(this->name, this->loc).value, generator->getAlignment(this->type));
+        if (alignment != -1) LLVMSetAlignment(currScope->localScope[this->name].value, alignment);
+        else if (!instanceof<TypeVector>(this->type)) LLVMSetAlignment(currScope->localScope[this->name].value, generator->getAlignment(this->type));
 
         if (instanceof<TypeStruct>(type)) Predefines::handle(type, new NodeIden(name, loc), loc);
 

@@ -526,10 +526,10 @@ void Parser::parseDecl(std::vector<Node*>& list, std::string s, std::vector<Decl
     }
     else if (peek()->type == TokType::Semicolon) {
         next();
-        return list.push_back(new NodeVar(name, nullptr, isExtern, instanceof<TypeConst>(type), (s == ""), mods, loc, type, false));
+        return list.push_back(new NodeVar(name, nullptr, isExtern, instanceof<TypeConst>(type), (s == ""), mods, loc, type, false, false, false));
     }
     else if (peek()->type == TokType::Comma || peek()->type == TokType::Semicolon || peek()->type == TokType::Equ) {
-        NodeVar* variable = new NodeVar(name, nullptr, isExtern, instanceof<TypeConst>(type), (s == ""), mods, loc, type, false);
+        NodeVar* variable = new NodeVar(name, nullptr, isExtern, instanceof<TypeConst>(type), (s == ""), mods, loc, type, false, false, false);
 
         if (peek()->type == TokType::Equ) {
             next();
@@ -551,7 +551,7 @@ void Parser::parseDecl(std::vector<Node*>& list, std::string s, std::vector<Decl
             }
 
             if (peek()->type == TokType::Comma) next();
-            list.push_back(new NodeVar(varName, varValue, isExtern, instanceof<TypeConst>(type), (s == ""), mods, loc, type, false));
+            list.push_back(new NodeVar(varName, varValue, isExtern, instanceof<TypeConst>(type), (s == ""), mods, loc, type, false, false, false));
         }
 
         next();
@@ -929,7 +929,7 @@ Node* Parser::parseAtom(std::string f) {
                 next();
                 value = parseExpr(f);
             }
-            return new NodeVar(name, value, false, false, false, {}, peek()->line, new TypeBuiltin(name, args, block));
+            return new NodeVar(name, value, false, false, false, {}, peek()->line, new TypeBuiltin(name, args, block), false, false, false);
         }
         return new NodeBuiltin(name, args, t->line, block);
     }
@@ -1465,10 +1465,10 @@ Node* Parser::parseFor(std::string f) {
                 if (peek()->type == TokType::Equ) {
                     next();
                     Node* value = parseExpr(f);
-                    presets.push_back(new NodeVar(name, value, false, false, false, {}, peek()->line, type));
+                    presets.push_back(new NodeVar(name, value, false, false, false, {}, peek()->line, type, false, false, false));
                     if (peek()->type != TokType::Semicolon && peek()->type != TokType::Comma) curr += 1;
                 }
-                else presets.push_back(new NodeVar(name, nullptr, false, false, false, {}, peek()->line, type));
+                else presets.push_back(new NodeVar(name, nullptr, false, false, false, {}, peek()->line, type, false, false, false));
             }
         }
         else if (curr == 1) cond = parseExpr(f);

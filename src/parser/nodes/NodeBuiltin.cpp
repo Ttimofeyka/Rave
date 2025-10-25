@@ -494,8 +494,8 @@ RaveValue NodeBuiltin::generate() {
 
         std::string sName = "__rave_vLoad_" + resultVectorType->toString();
         if (AST::structTable.find(sName) == AST::structTable.end()) {
-            AST::structTable[sName] = new NodeStruct(sName, {new NodeVar("v1", nullptr, false, false, false, {}, loc, resultVectorType)}, loc, "", {}, {});
-            
+            AST::structTable[sName] = new NodeStruct(sName, {new NodeVar("v1", nullptr, false, false, false, {}, loc, resultVectorType, false, false, false)}, loc, "", {}, {});
+
             if (generator->structures.find(sName) == generator->structures.end()) AST::structTable[sName]->generate();
         }
 
@@ -524,8 +524,8 @@ RaveValue NodeBuiltin::generate() {
 
         std::string sName = "__rave_vStore_" + vector.type->toString();
         if (AST::structTable.find(sName) == AST::structTable.end()) {
-            AST::structTable[sName] = new NodeStruct(sName, {new NodeVar("v1", nullptr, false, false, false, {}, loc, vector.type)}, loc, "", {}, {});
-            
+            AST::structTable[sName] = new NodeStruct(sName, {new NodeVar("v1", nullptr, false, false, false, {}, loc, vector.type, false, false, false)}, loc, "", {}, {});
+
             if (generator->structures.find(sName) == generator->structures.end()) AST::structTable[sName]->generate();
         }
 

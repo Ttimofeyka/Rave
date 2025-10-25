@@ -646,7 +646,7 @@ NodeVar* Scope::getVar(std::string name, int loc) {
         this->argVars[name]->isUsed = true;
         return this->argVars[name];
     }
-    if (this->aliasTable.find(name) != this->aliasTable.end()) return (new NodeVar(name, this->aliasTable[name]->copy(), false, false, false, {}, loc, this->aliasTable[name]->getType()));
+    if (this->aliasTable.find(name) != this->aliasTable.end()) return (new NodeVar(name, this->aliasTable[name]->copy(), false, false, false, {}, loc, this->aliasTable[name]->getType(), false, false, false));
     if (this->has("this") && (AST::funcTable.find(this->funcName) != AST::funcTable.end() && AST::funcTable[this->funcName]->isMethod)) {
         NodeVar* nv = this->getVar("this", loc);
         TypeStruct* ts = nullptr;

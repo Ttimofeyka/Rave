@@ -382,7 +382,7 @@ RaveValue NodeFunc::generate() {
         std::map<std::string, NodeVar*> vars;
         for (size_t i=0; i<args.size(); i++) {
             indexes.insert({args[i].name, i});
-            vars.insert({args[i].name, new NodeVar(args[i].name, nullptr, false, true, false, {}, loc, args[i].type)});
+            vars.insert({args[i].name, new NodeVar(args[i].name, nullptr, false, true, false, {}, loc, args[i].type, false, false, false)});
         }
 
         Scope* oldScope = currScope;
@@ -392,7 +392,7 @@ RaveValue NodeFunc::generate() {
         currScope->fnEnd = exitBlock;
 
         if (!instanceof<TypeVoid>(type)) {
-            block->nodes.insert(block->nodes.begin(), new NodeVar("return", new NodeNull(type, loc), false, false, false, {}, loc, type, false));
+            block->nodes.insert(block->nodes.begin(), new NodeVar("return", new NodeNull(type, loc), false, false, false, {}, loc, type, false, false, false));
             ((NodeVar*)block->nodes[0])->isUsed = true;
         }
 

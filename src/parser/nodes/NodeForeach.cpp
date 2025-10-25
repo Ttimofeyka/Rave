@@ -65,7 +65,7 @@ RaveValue NodeForeach::generate() {
         }
     }
 
-    NodeVar* nv = new NodeVar("__RAVE_FOREACH_N" + std::to_string(loc), new NodeInt(0), false, false, false, {}, loc, basicTypes[BasicType::Int], false);
+    NodeVar* nv = new NodeVar("__RAVE_FOREACH_N" + std::to_string(loc), new NodeInt(0), false, false, false, {}, loc, basicTypes[BasicType::Int], false, false, false);
     nv->check();
     nv->generate();
 
@@ -75,7 +75,7 @@ RaveValue NodeForeach::generate() {
             elName->name, new NodeIndex(varData,
                 {new NodeIden("__RAVE_FOREACH_N" + std::to_string(loc), loc)
             }, loc),
-        false, false, false, {}, loc, new TypeAuto())
+        false, false, false, {}, loc, new TypeAuto(), false, false, false)
     };
 
     for (size_t i=0; i<oldBlock->nodes.size(); i++) block->nodes.push_back(oldBlock->nodes[i]);
