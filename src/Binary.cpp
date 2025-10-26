@@ -30,18 +30,40 @@ namespace {
     RaveValue handleBinaryAssignment(Node* first, Node* second, char op, int loc) {
         if ((instanceof<NodeCast>(second)) && instanceof<TypeVoid>(second->getType())) generator->error("an attempt to store a \033[1mvoid\033[22m value to the variable!", loc);
 
+        // Lambda for common operator overload handling
+        auto handleOperatorOverload = [&](Node* firstNode, Node* secondNode, RaveValue firstVal, RaveValue secondVal, Type* firstType) -> RaveValue {
+            if (!(instanceof<TypeStruct>(firstType) || (instanceof<TypePointer>(firstType) && instanceof<TypeStruct>(firstType->getElType()))))
+                return {};
+
+            if (instanceof<TypeStruct>(secondNode->getType()) || (instanceof<TypePointer>(secondNode->getType()) && instanceof<TypeStruct>(secondNode->getType()->getElType())))
+                return {};
+
+            auto opOverload = Binary::isOperatorOverload(firstNode, secondNode, firstVal, secondVal, op);
+            if (opOverload.first.empty()) return {};
+            else if (instanceof<TypeBasic>(second->getType())) generator->error("an attempt to change value of the structure without overloading!", loc);
+
+            bool isNegative = opOverload.first[0] == '!';
+            
+            NodeCall* overloadedCall = new NodeCall(loc,
+                new NodeIden(AST::structTable[isNegative ? opOverload.first.substr(1) : opOverload.first]->operators[op][opOverload.second]->name, loc),
+                std::vector<Node*>({new NodeDone(firstVal), new NodeDone(secondVal)})
+            );
+
+            return isNegative ? Unary::make(loc, TokType::Ne, overloadedCall) : overloadedCall->generate();
+        };
+
         if (instanceof<NodeIden>(first)) {
-            NodeIden* id = ((NodeIden*)first);
+            NodeIden* id = (NodeIden*)first;
 
             if (AST::aliasTable.find(id->name) != AST::aliasTable.end()) {
                 AST::aliasTable[id->name] = second->copy();
                 return {};
             }
 
-            if (currScope->locatedAtThis(id->name)) return Binary::operation(TokType::Equ, new NodeGet(new NodeIden("this", loc), id->name, true, id->loc), second, loc);
+            if (currScope->locatedAtThis(id->name)) 
+                return Binary::operation(TokType::Equ, new NodeGet(new NodeIden("this", loc), id->name, true, id->loc), second, loc);
 
             NodeVar* nvar = currScope->getVar(id->name, loc);
-
             if (nvar->isConst && nvar->isChanged && id->name != "this") generator->error("an attempt to change the value of a constant variable!", loc);
             else if (!nvar->isChanged) currScope->hasChanged(id->name);
 
@@ -52,26 +74,12 @@ namespace {
 
             if (instanceof<NodeNull>(second)) ((NodeNull*)second)->type = vFirst.type->getElType();
 
-            if (instanceof<TypeStruct>(nvar->type) || (instanceof<TypePointer>(nvar->type) && instanceof<TypeStruct>(nvar->type->getElType()))
-               && !instanceof<TypeStruct>(second->getType()) || (instanceof<TypePointer>(second->getType()) && instanceof<TypeStruct>(second->getType()->getElType()))
-            ) {
-                std::pair<std::string, std::string> opOverload = Binary::isOperatorOverload(first, second, vFirst, vSecond, op);
+            if (auto overloadResult = handleOperatorOverload(first, second, vFirst, vSecond, nvar->type); overloadResult.value) return overloadResult;
 
-                if (opOverload.first != "") {
-                    NodeCall* _overloadedCall = new NodeCall(loc,
-                        new NodeIden(AST::structTable[opOverload.first[0] == '!' ? opOverload.first.substr(1) : opOverload.first]->operators[op][opOverload.second]->name, loc),
-                        std::vector<Node*>({new NodeDone(vFirst), new NodeDone(vSecond)})
-                    );
+            if (vSecond.type && vSecond.type->toString() == vFirst.type->toString()) vSecond = LLVM::load(vSecond, "Binary_NodeIden_load", loc);
 
-                    return opOverload.first[0] == '!' ? Unary::make(loc, TokType::Ne, _overloadedCall) : _overloadedCall->generate();
-                }
-                else if (instanceof<TypeBasic>(second->getType()))
-                    generator->error("an attempt to change value of the structure as the variable \033[1m" + id->name + "\033[22m without overloading!", loc);
-            }
-
-            if (vSecond.type && vSecond.type->toString() == vFirst.type->toString()) vSecond = LLVM::load(vSecond, "NodeBinary_NodeIden_load", loc);
-
-            if (instanceof<TypeArray>(vFirst.type->getElType()) && instanceof<TypePointer>(vSecond.type)) generator->error("cannot store a value of type \033[1m" + vSecond.type->toString() + "\033[22m into a variable of type \033[1m" + vFirst.type->getElType()->toString() + "\033[22m!", loc);
+            if (instanceof<TypeArray>(vFirst.type->getElType()) && instanceof<TypePointer>(vSecond.type)) 
+                generator->error("cannot store a value of type \033[1m" + vSecond.type->toString() + "\033[22m into a variable of type \033[1m" + vFirst.type->getElType()->toString() + "\033[22m!", loc);
 
             Binary::store(vFirst, vSecond, loc);
             return {};
@@ -81,24 +89,10 @@ namespace {
             if (nget->elementIsConst) generator->error("An attempt to change the constant element!", loc);
 
             nget->isMustBePtr = true;
-
             RaveValue ptr = nget->generate();
             RaveValue value = second->generate();
 
-            if (instanceof<TypeStruct>(first->getType()) || (instanceof<TypePointer>(first->getType()) && instanceof<TypeStruct>(first->getType()->getElType()))
-               && !instanceof<TypeStruct>(second->getType()) || (instanceof<TypePointer>(second->getType()) && instanceof<TypeStruct>(second->getType()->getElType()))
-            ) {
-                std::pair<std::string, std::string> opOverload = Binary::isOperatorOverload(first, second, ptr, value, op);
-
-                if (opOverload.first != "") {
-                    NodeCall* _overloadedCall = new NodeCall(loc,
-                        new NodeIden(AST::structTable[opOverload.first[0] == '!' ? opOverload.first.substr(1) : opOverload.first]->operators[op][opOverload.second]->name, loc),
-                        std::vector<Node*>({new NodeDone(ptr), new NodeDone(value)})
-                    );
-
-                    return opOverload.first[0] == '!' ? Unary::make(loc, TokType::Ne, _overloadedCall) : _overloadedCall->generate();
-                }
-            }
+            if (auto overloadResult = handleOperatorOverload(first, second, ptr, value, first->getType()); overloadResult.value) return overloadResult;
 
             Binary::store(ptr, value, loc);
             return {};
@@ -112,25 +106,27 @@ namespace {
                 return Binary::operation(op, first, second, loc);
             }
 
-            RaveValue value = {nullptr, nullptr};
-
             RaveValue ptr = ind->generate();
             if (ind->elementIsConst) generator->error("An attempt to change the constant element!", loc);
 
-            // Check for TypeVector
+            RaveValue value;
             if (instanceof<TypeVector>(ind->element->getType())) {
                 Type* elType = ((TypeVector*)ind->element->getType())->getElType();
-                RaveValue number = second->generate();
+                value = second->generate();
 
-                if (instanceof<TypeBasic>(number.type) && ((TypeBasic*)number.type)->type != ((TypeBasic*)elType)->type) LLVM::cast(number, elType, loc);
+                if (instanceof<TypeBasic>(value.type) && ((TypeBasic*)value.type)->type != ((TypeBasic*)elType)->type) LLVM::cast(value, elType, loc);
 
-                if (number.type->toString() != elType->toString()) generator->error("cannot store a value of type \033[1m" + number.type->toString() + "\033[22m into a value of type \033[1m" + elType->toString() + "\033[22m!", loc);
+                if (value.type->toString() != elType->toString()) 
+                    generator->error("cannot store a value of type \033[1m" + value.type->toString() + "\033[22m into a value of type \033[1m" + elType->toString() + "\033[22m!", loc);
 
                 if (instanceof<TypePointer>(ptr.type)) {
                     value = LLVM::load(ptr, "NodeBinary_TypeVector_load", loc);
-                    value.value = LLVMBuildInsertElement(generator->builder, value.value, number.value, ind->indexes[0]->generate().value, "NodeBinary_TypeVector_insert");
+                    value.value = LLVMBuildInsertElement(generator->builder, value.value, value.value, ind->indexes[0]->generate().value, "NodeBinary_TypeVector_insert");
                 }
-                else value = {LLVMBuildInsertElement(generator->builder, value.value, number.value, ind->indexes[0]->generate().value, "NodeBinary_TypeVector_insert"), ptr.type};
+                else {
+                    value.value = LLVMBuildInsertElement(generator->builder, value.value, value.value, ind->indexes[0]->generate().value, "NodeBinary_TypeVector_insert");
+                    value.type = ptr.type;
+                }
             }
             else value = second->generate();
 
