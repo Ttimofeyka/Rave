@@ -15,6 +15,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <string>
 
 class NodeRet;
+class NodeArray;
 struct RetGenStmt;
 
 class NodeFunc : public Node {
@@ -77,4 +78,7 @@ public:
     Type* getInternalArgType(LLVMValueRef value);
     std::string generateWithCtargs(std::vector<Type*> args);
     RaveValue generateWithTemplate(std::vector<Type*>& types, const std::string& all);
+
+private:
+    void processModifiers(int& callConv, NodeArray*& conditions);
 };

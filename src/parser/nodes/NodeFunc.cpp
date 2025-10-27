@@ -45,6 +45,41 @@ Type* getTypeBySize(int size) {
     else return basicTypes[BasicType::Cent];
 }
 
+void NodeFunc::processModifiers(int& callConv, NodeArray*& conditions) {
+    for (size_t i=0; i<mods.size(); i++) {
+        while (AST::aliasTable.find(mods[i].name) != AST::aliasTable.end()) {
+            if (instanceof<NodeArray>(AST::aliasTable[mods[i].name])) {
+                NodeArray* array = (NodeArray*)AST::aliasTable[mods[i].name];
+                mods[i].name = ((NodeString*)array->values[0])->value;
+                mods[i].value = array->values[1];
+            }
+            else mods[i].name = ((NodeString*)AST::aliasTable[mods[i].name])->value;
+        }
+
+        if (mods[i].name == "C") linkName = name;
+        else if (mods[i].name == "vararg") isVararg = true;
+        else if (mods[i].name == "fastcc") callConv = LLVMFastCallConv;
+        else if (mods[i].name == "coldcc") callConv = LLVMColdCallConv;
+        else if (mods[i].name == "stdcc") callConv = LLVMX86StdcallCallConv;
+        else if (mods[i].name == "armapcs") callConv = LLVMARMAPCSCallConv;
+        else if (mods[i].name == "armaapcs") callConv = LLVMARMAAPCSCallConv;
+        else if (mods[i].name == "cdecl64") { callConv = LLVMCCallConv; isCdecl64 = true; }
+        else if (mods[i].name == "win64") { callConv = LLVMCCallConv; isWin64 = true; }
+        else if (mods[i].name == "inline") isInline = true;
+        else if (mods[i].name == "linkname") {
+            Node* newLinkName = mods[i].value->comptime();
+            if (!instanceof<NodeString>(newLinkName)) generator->error("value type of \033[1mlinkname\033[22m must be a string!", loc);
+            linkName = ((NodeString*)newLinkName)->value;
+        }
+        else if (mods[i].name == "comdat") isComdat = true;
+        else if (mods[i].name == "nochecks") isNoChecks = true;
+        else if (mods[i].name == "noOptimize") isNoOpt = true;
+        else if (mods[i].name == "arrayable") isArrayable = true;
+        else if (mods[i].name == "conditions") conditions = (NodeArray*)mods[i].value;
+        else if (mods[i].name == "explicit") isExplicit = true;
+    }
+}
+
 NodeFunc::NodeFunc(const std::string& name, std::vector<FuncArgSet> args, NodeBlock* block, bool isExtern, std::vector<DeclarMod> mods, int loc, Type* type, std::vector<std::string> templateNames) {
     this->name = name;
     this->origName = name;
@@ -212,38 +247,7 @@ RaveValue NodeFunc::generate() {
         if (instanceof<TypeVoid>(type)) type = basicTypes[BasicType::Int];
     }
 
-    for (size_t i=0; i<mods.size(); i++) {
-        while (AST::aliasTable.find(mods[i].name) != AST::aliasTable.end()) {
-            if (instanceof<NodeArray>(AST::aliasTable[mods[i].name])) {
-                NodeArray* array = (NodeArray*)AST::aliasTable[mods[i].name];
-                mods[i].name = ((NodeString*)array->values[0])->value;
-                mods[i].value = array->values[1];
-            }
-            else mods[i].name = ((NodeString*)AST::aliasTable[mods[i].name])->value;
-        }
-
-        if (mods[i].name == "C") linkName = name;
-        else if (mods[i].name == "vararg") isVararg = true;
-        else if (mods[i].name == "fastcc") callConv = LLVMFastCallConv;
-        else if (mods[i].name == "coldcc") callConv = LLVMColdCallConv;
-        else if (mods[i].name == "stdcc") callConv = LLVMX86StdcallCallConv;
-        else if (mods[i].name == "armapcs") callConv = LLVMARMAPCSCallConv;
-        else if (mods[i].name == "armaapcs") callConv = LLVMARMAAPCSCallConv;
-        else if (mods[i].name == "cdecl64") {callConv = LLVMCCallConv; isCdecl64 = true;}
-        else if (mods[i].name == "win64") {callConv = LLVMCCallConv; isWin64 = true;}
-        else if (mods[i].name == "inline") isInline = true;
-        else if (mods[i].name == "linkname") {
-            Node* newLinkName = mods[i].value->comptime();
-            if (!instanceof<NodeString>(newLinkName)) generator->error("value type of \033[1mlinkname\033[22m must be a string!", loc);
-            linkName = ((NodeString*)newLinkName)->value;
-        }
-        else if (mods[i].name == "comdat") isComdat = true;
-        else if (mods[i].name == "nochecks") isNoChecks = true;
-        else if (mods[i].name == "noOptimize") isNoOpt = true;
-        else if (mods[i].name == "arrayable") isArrayable = true;
-        else if (mods[i].name == "conditions") conditions = (NodeArray*)mods[i].value;
-        else if (mods[i].name == "explicit") isExplicit = true;
-    }
+    processModifiers(callConv, conditions);
 
     if (!isTemplate && isCtargs) return {};
 
@@ -260,26 +264,12 @@ RaveValue NodeFunc::generate() {
             return {};
         }
     }
-    
+
     getParameters(callConv);
 
+    Types::replaceTemplates(&type);
+
     TypeFunc* tfunc = new TypeFunc(type, {}, isVararg);
-
-    Type* parent = nullptr;
-    Type* ty = type;
-
-    while (instanceof<TypePointer>(ty) || instanceof<TypeArray>(ty)) {
-        parent = ty;
-        ty = ty->getElType();
-    }
-
-    if (instanceof<TypeStruct>(ty)) {
-        if (generator->toReplace.find(ty->toString()) != generator->toReplace.end()) {
-            if (parent == nullptr) type = generator->toReplace[ty->toString()];
-            else if (instanceof<TypePointer>(parent)) ((TypePointer*)parent)->instance = generator->toReplace[ty->toString()];
-            else ((TypeArray*)parent)->element = generator->toReplace[ty->toString()];
-        }
-    }
 
     if (name.find('<') != std::string::npos && name.find("([]") != std::string::npos) {
         args[0].type = new TypePointer(new TypeStruct(name.substr(0, name.find('('))));
@@ -304,8 +294,6 @@ RaveValue NodeFunc::generate() {
         tfunc->args.push_back(new TypeFuncArg(cp, args[i].name));
     }
 
-    tfunc->main = type;
-
     LLVMValueRef fn = LLVMGetNamedFunction(generator->lModule, linkName.c_str());
     if (fn != nullptr) return {};
 
@@ -318,7 +306,7 @@ RaveValue NodeFunc::generate() {
         LLVMSetLinkage(generator->functions[name].value, LLVMInternalLinkage);
 
         // Inlining of private functions
-        if (generator->settings.optLevel > 2 && generator->settings.noPrivateInlining) isInline = true;
+        if (generator->settings.optLevel > 2 && !generator->settings.noPrivateInlining) isInline = true;
     }
 
     LLVMSetFunctionCallConv(generator->functions[name].value, callConv);
