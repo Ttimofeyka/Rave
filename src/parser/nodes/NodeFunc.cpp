@@ -30,10 +30,10 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeCall.hpp"
 #include "../../include/parser/nodes/NodeImport.hpp"
 #include "../../include/parser/nodes/NodeForeach.hpp"
-#include <llvm-c/Comdat.h>
 #include <llvm-c/Analysis.h>
 #include <llvm-c/DebugInfo.h>
 #include <fstream>
+#include <llvm-c/Comdat.h>
 #include "../../include/compiler.hpp"
 #include "../../include/llvm.hpp"
 
@@ -77,6 +77,61 @@ void NodeFunc::processModifiers(int& callConv, NodeArray*& conditions) {
         else if (mods[i].name == "arrayable") isArrayable = true;
         else if (mods[i].name == "conditions") conditions = (NodeArray*)mods[i].value;
         else if (mods[i].name == "explicit") isExplicit = true;
+    }
+}
+
+void NodeFunc::createLLVMFunction(TypeFunc* tfunc, int callConv) {
+    generator->functions[name] = {LLVMAddFunction(
+        generator->lModule, linkName.c_str(),
+        LLVMFunctionType(generator->genType(tfunc->main, loc), genTypes.data(), genTypes.size(), isVararg)
+    ), tfunc};
+
+    if (isPrivate && !isExtern) {
+        LLVMSetLinkage(generator->functions[name].value, LLVMInternalLinkage);
+
+        // Inlining of private functions
+        if (generator->settings.optLevel > 2 && !generator->settings.noPrivateInlining) isInline = true;
+    }
+
+    LLVMSetFunctionCallConv(generator->functions[name].value, callConv);
+
+    size_t inTCount = 0;
+
+    for (size_t i=0; i<args.size(); i++) {
+        if (!(args[i].internalTypes.empty())) for (size_t j=0; j<args[i].internalTypes.size(); j++) {
+            inTCount += 1;
+            if (!(args[i].internalTypes.empty()) && instanceof<TypeByval>(args[i].internalTypes[0])) {
+                generator->addTypeAttr("byval", inTCount, generator->functions[name].value, loc, generator->genType(args[i].type, loc));
+                generator->addAttr("align", inTCount, generator->functions[name].value, loc, 8);
+            }
+        }
+        else inTCount += 1;
+    }
+
+    if (isInline) generator->addAttr("alwaysinline", LLVMAttributeFunctionIndex, generator->functions[name].value, loc);
+    else if (isNoOpt) {
+        generator->addAttr("noinline", LLVMAttributeFunctionIndex, generator->functions[name].value, loc);
+        generator->addAttr("optnone", LLVMAttributeFunctionIndex, generator->functions[name].value, loc);
+    }
+
+    if (isTemplatePart || isTemplate || isCtargsPart || isComdat) {
+        LLVMComdatRef comdat = LLVMGetOrInsertComdat(generator->lModule, linkName.c_str());
+        LLVMSetComdatSelectionKind(comdat, LLVMAnyComdatSelectionKind);
+        LLVMSetComdat(generator->functions[name].value, comdat);
+        LLVMSetLinkage(generator->functions[name].value, LLVMLinkOnceODRLinkage);
+        isExtern = false;
+    }
+}
+
+void NodeFunc::createDebugInfo() {
+    if (generator->settings.outDebugInfo) {
+        std::vector<LLVMMetadataRef> mTypes;
+        for (size_t i=0; i<args.size(); i++) mTypes.push_back(debugInfo->genType(args[i].type, loc));
+
+        LLVMMetadataRef funcType = LLVMDIBuilderCreateSubroutineType(debugInfo->diBuilder, debugInfo->diFile, mTypes.data(), mTypes.size(), LLVMDIFlagZero);
+
+        diFuncScope = LLVMDIBuilderCreateFunction(debugInfo->diBuilder, debugInfo->diScope, name.c_str(), name.length(), linkName.c_str(), linkName.length(), debugInfo->diFile,
+            loc, funcType, isPrivate, !isExtern, loc, LLVMDIFlagZero, generator->settings.optLevel > 0);
     }
 }
 
@@ -297,56 +352,8 @@ RaveValue NodeFunc::generate() {
     LLVMValueRef fn = LLVMGetNamedFunction(generator->lModule, linkName.c_str());
     if (fn != nullptr) return {};
 
-    generator->functions[name] = {LLVMAddFunction(
-        generator->lModule, linkName.c_str(),
-        LLVMFunctionType(generator->genType(type, loc), genTypes.data(), genTypes.size(), isVararg)
-    ), tfunc};
-
-    if (isPrivate && !isExtern) {
-        LLVMSetLinkage(generator->functions[name].value, LLVMInternalLinkage);
-
-        // Inlining of private functions
-        if (generator->settings.optLevel > 2 && !generator->settings.noPrivateInlining) isInline = true;
-    }
-
-    LLVMSetFunctionCallConv(generator->functions[name].value, callConv);
-
-    int inTCount = 0;
-
-    for (size_t i=0; i<args.size(); i++) {
-        if (!(args[i].internalTypes.empty())) for (int j=0; j<args[i].internalTypes.size(); j++) {
-            inTCount += 1;
-            if (!(args[i].internalTypes.empty()) && instanceof<TypeByval>(args[i].internalTypes[0])) {
-                generator->addTypeAttr("byval", inTCount, generator->functions[name].value, loc, generator->genType(args[i].type, loc));
-                generator->addAttr("align", inTCount, generator->functions[name].value, loc, 8);
-            }
-        }
-        else inTCount += 1;
-    }
-
-    if (isInline) generator->addAttr("alwaysinline", LLVMAttributeFunctionIndex, generator->functions[name].value, loc);
-    else if (isNoOpt) {
-        generator->addAttr("noinline", LLVMAttributeFunctionIndex, generator->functions[name].value, loc);
-        generator->addAttr("optnone", LLVMAttributeFunctionIndex, generator->functions[name].value, loc);
-    }
-
-    if (isTemplatePart || isTemplate || isCtargsPart || isComdat) {
-        LLVMComdatRef comdat = LLVMGetOrInsertComdat(generator->lModule, linkName.c_str());
-        LLVMSetComdatSelectionKind(comdat, LLVMAnyComdatSelectionKind);
-        LLVMSetComdat(generator->functions[name].value, comdat);
-        LLVMSetLinkage(generator->functions[name].value, LLVMLinkOnceODRLinkage);
-        isExtern = false;
-    }
-
-    if (generator->settings.outDebugInfo) {
-        std::vector<LLVMMetadataRef> mTypes;
-        for (size_t i=0; i<args.size(); i++) mTypes.push_back(debugInfo->genType(args[i].type, loc));
-
-        LLVMMetadataRef funcType = LLVMDIBuilderCreateSubroutineType(debugInfo->diBuilder, debugInfo->diFile, mTypes.data(), mTypes.size(), LLVMDIFlagZero);
-
-        diFuncScope = LLVMDIBuilderCreateFunction(debugInfo->diBuilder, debugInfo->diScope, name.c_str(), name.length(), linkName.c_str(), linkName.length(), debugInfo->diFile,
-            loc, funcType, isPrivate, !isExtern, loc, LLVMDIFlagZero, generator->settings.optLevel > 0);
-    }
+    createLLVMFunction(tfunc, callConv);
+    createDebugInfo();
 
     if (!isExtern) {
         if (isForwardDeclaration) return {};
@@ -410,10 +417,9 @@ RaveValue NodeFunc::generate() {
         if (!instanceof<TypeVoid>(type)) LLVMBuildRet(generator->builder, currScope->get("return", loc).value);
         else LLVMBuildRetVoid(generator->builder);
 
-        generator->builder = oldBuilder;
         currScope = oldScope;
+        generator->builder = oldBuilder;
         generator->currBB = oldCurrBB;
-
         generator->currentBuiltinArg = oldCurrentBuiltinArg;
     }
 

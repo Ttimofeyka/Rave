@@ -81,4 +81,6 @@ public:
 
 private:
     void processModifiers(int& callConv, NodeArray*& conditions);
+    void createLLVMFunction(TypeFunc* tfunc, int callConv);
+    void createDebugInfo();
 };
