@@ -10,43 +10,72 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <limits>
 #include <iostream>
 
-NodeFloat::NodeFloat(double value) {this->value = std::to_string(value);}
-NodeFloat::NodeFloat(std::string value) {this->value = value;}
-NodeFloat::NodeFloat(double value, bool isDouble) {if (isDouble) this->type = basicTypes[BasicType::Double]; this->value = std::to_string(value);}
-NodeFloat::NodeFloat(double value, TypeBasic* type) {this->value = std::to_string(value); this->type = type;}
-NodeFloat::NodeFloat(std::string value, TypeBasic* type) {this->value = value; this->type = type;}
+NodeFloat::NodeFloat(double value, TypeBasic* type, bool isDouble) 
+    : value(std::to_string(value)), type(type) {
+    if (isDouble && !type) this->type = basicTypes[BasicType::Double];
+}
+
+NodeFloat::NodeFloat(std::string value, TypeBasic* type) 
+    : value(value), type(type) {}
 
 Type* NodeFloat::getType() {
-    if (this->type != nullptr) return this->type;
+    if (type) return type;
 
-    if (this->isMustBeFloat) {
-        this->type = basicTypes[BasicType::Float];
-        return this->type;
+    if (isMustBeFloat) {
+        type = basicTypes[BasicType::Float];
+        return type;
     }
 
     R128 r128;
-    r128FromString(&r128, this->value.c_str(), nullptr);
-    this->type = new TypeBasic((r128 > R128(std::numeric_limits<float>::max())) ? BasicType::Double : (BasicType::Float));
+    r128FromString(&r128, value.c_str(), nullptr);
+    type = new TypeBasic((r128 > R128(std::numeric_limits<float>::max())) ? BasicType::Double : BasicType::Float);
+    return type;
+}
 
-    return this->type;
+namespace {
+    struct LLVMTypeMapping {
+        BasicType::BasicType basicType;
+        LLVMTypeRef (*getTypeFunc)(LLVMContextRef);
+    };
+
+    static const LLVMTypeMapping typeMappings[] = {
+        {BasicType::Half, LLVMHalfTypeInContext},
+        {BasicType::Bhalf, LLVMBFloatTypeInContext},
+        {BasicType::Float, LLVMFloatTypeInContext},
+        {BasicType::Double, LLVMDoubleTypeInContext},
+        {BasicType::Real, LLVMFP128TypeInContext}
+    };
+
+    static const size_t typeMappingsCount = sizeof(typeMappings) / sizeof(typeMappings[0]);
+
+    LLVMTypeRef getLLVMTypeForBasicType(BasicType::BasicType basicType, LLVMContextRef context) {
+        for (size_t i=0; i<typeMappingsCount; i++) {
+            if (typeMappings[i].basicType == basicType)
+                return typeMappings[i].getTypeFunc(context);
+        }
+        return LLVMDoubleTypeInContext(context);
+    }
 }
 
 RaveValue NodeFloat::generate() {
-    if (this->isMustBeFloat) {
-        if (this->type == nullptr || ((TypeBasic*)this->type)->type != BasicType::Float) this->type = basicTypes[BasicType::Float];
-        return {LLVMConstRealOfString(LLVMFloatTypeInContext(generator->context), this->value.c_str()), basicTypes[BasicType::Float]};
+    if (isMustBeFloat) {
+        if (!type || ((TypeBasic*)type)->type != BasicType::Float) type = basicTypes[BasicType::Float];
+
+        return { LLVMConstRealOfString(LLVMFloatTypeInContext(generator->context), value.c_str()), basicTypes[BasicType::Float] };
     }
 
-    if (this->type == nullptr) this->type = basicTypes[BasicType::Double];
-    else if (this->type->type == BasicType::Half) return {LLVMConstRealOfString(LLVMHalfTypeInContext(generator->context), this->value.c_str()), basicTypes[BasicType::Half]};
-    else if (this->type->type == BasicType::Bhalf) return {LLVMConstRealOfString(LLVMBFloatTypeInContext(generator->context), this->value.c_str()), basicTypes[BasicType::Bhalf]};
-    else if (this->type->type == BasicType::Real) return {LLVMConstRealOfString(LLVMFP128TypeInContext(generator->context), this->value.c_str()), basicTypes[BasicType::Real]};
-    return {LLVMConstRealOfString(LLVMDoubleTypeInContext(generator->context), this->value.c_str()), basicTypes[BasicType::Double]};
+    if (!type) type = basicTypes[BasicType::Double];
+
+    const auto basicType = static_cast<TypeBasic*>(type);
+    LLVMTypeRef llvmType = getLLVMTypeForBasicType(static_cast<BasicType::BasicType>(basicType->type), generator->context);
+    Type* resultType = basicTypes[static_cast<BasicType::BasicType>(basicType->type)];
+
+    return { LLVMConstRealOfString(llvmType, value.c_str()), resultType };
 }
 
 Node* NodeFloat::copy() {
-    NodeFloat* nf = new NodeFloat(this->value, (this->type == nullptr) ? nullptr : (TypeBasic*)this->type->copy());
-    nf->isMustBeFloat = this->isMustBeFloat;
+    NodeFloat* nf = new NodeFloat(value, type ? static_cast<TypeBasic*>(type->copy()) : nullptr);
+    nf->isMustBeFloat = isMustBeFloat;
     return nf;
 }
 

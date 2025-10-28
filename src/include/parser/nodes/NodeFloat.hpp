@@ -19,11 +19,8 @@ public:
     TypeBasic* type = nullptr;
     bool isMustBeFloat = false;
 
-    NodeFloat(double value);
-    NodeFloat(std::string value);
-    NodeFloat(double value, bool isDouble);
-    NodeFloat(double value, TypeBasic* type);
-    NodeFloat(std::string value, TypeBasic* type);
+    NodeFloat(double value, TypeBasic* type = nullptr, bool isDouble = false);
+    NodeFloat(std::string value, TypeBasic* type = nullptr);
     ~NodeFloat() {if (this->type != nullptr) delete this->type;}
     Type* getType() override;
     
