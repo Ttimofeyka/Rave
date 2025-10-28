@@ -193,9 +193,10 @@ void NodeFunc::check() {
             AST::funcTable[name] = this;
 
             for (size_t i=0; i<AST::funcVersionsTable[name].size(); i++) {
-                if (AST::funcVersionsTable[name][i]->isForwardDeclaration)
-                AST::funcVersionsTable[name].erase(AST::funcVersionsTable[name].begin() + i);
-                break;
+                if (AST::funcVersionsTable[name][i]->isForwardDeclaration) {
+                    AST::funcVersionsTable[name].erase(AST::funcVersionsTable[name].begin() + i);
+                    break;
+                }
             }
 
             for (auto node : block->nodes) node->check();
