@@ -10,18 +10,21 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeCast.hpp"
 #include <iostream>
 
-NodeNull::NodeNull(Type* type, int loc) {this->type = type; this->loc = loc;}
-Type* NodeNull::getType() {return (this->type == nullptr ? new TypePointer(typeVoid) : this->type);}
+NodeNull::NodeNull(Type* type, int loc) : type(type), loc(loc) {}
+
+Type* NodeNull::getType() { return (!type ? new TypePointer(typeVoid) : type); }
 
 RaveValue NodeNull::generate() {
-    if (this->type != nullptr) return {LLVMConstNull(generator->genType(this->type, this->loc)), this->type};
-    return {LLVMConstNull(LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0)), new TypePointer(typeVoid)};
+    if (type) return { LLVMConstNull(generator->genType(type, loc)), type };
+    return { LLVMConstNull(LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0)), new TypePointer(typeVoid) };
 }
 
-void NodeNull::check() {isChecked = true;}
-Node* NodeNull::comptime() {return this;}
-Node* NodeNull::copy() {return new NodeNull(this->type, this->loc);}
+void NodeNull::check() { isChecked = true; }
+
+Node* NodeNull::comptime() { return this; }
+
+Node* NodeNull::copy() { return new NodeNull(type, loc); }
 
 NodeNull::~NodeNull() {
-    if (this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
+    if (type && !instanceof<TypeBasic>(type) && !instanceof<TypeVoid>(type)) delete type;
 }

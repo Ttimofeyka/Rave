@@ -10,15 +10,13 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeItop.hpp"
 #include "../../include/parser/ast.hpp"
 
-NodeItop::NodeItop(Node* value, Type* type, int loc) {
-    this->value = value;
-    this->type = type;
-    this->loc = loc;
-}
+NodeItop::NodeItop(Node* value, Type* type, int loc) : value(value), type(type), loc(loc) {}
 
-Type* NodeItop::getType() {return this->type->copy();}
-Node* NodeItop::comptime() {return this;}
-Node* NodeItop::copy() {return new NodeItop(this->value->copy(), this->type->copy(), this->loc);}
+Type* NodeItop::getType() { return type->copy(); }
+
+Node* NodeItop::comptime() { return this; }
+
+Node* NodeItop::copy() { return new NodeItop(value->copy(), type->copy(), loc); }
 
 void NodeItop::check() {
     if (isChecked) return;
@@ -28,11 +26,10 @@ void NodeItop::check() {
 }
 
 RaveValue NodeItop::generate() {
-    RaveValue _int = this->value->generate();
-    return {LLVMBuildIntToPtr(generator->builder, _int.value, generator->genType(this->type, this->loc), "itop"), this->type};
+    return { LLVMBuildIntToPtr(generator->builder, value->generate().value, generator->genType(type, loc), "itop"), type };
 }
 
 NodeItop::~NodeItop() {
-    if (this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
-    if (this->value != nullptr) delete this->value;
+    if (type && !instanceof<TypeBasic>(type) && !instanceof<TypeVoid>(type)) delete type;
+    if (value) delete value;
 }

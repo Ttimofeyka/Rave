@@ -34,4 +34,7 @@ public:
     Node* comptime() override;
     void check() override;
     LLVMTypeRef getTypeForBasicType(char type);
+
+private:
+    char determineBaseType() const;
 };
