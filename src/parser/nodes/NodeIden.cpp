@@ -64,7 +64,11 @@ RaveValue NodeIden::generate() {
     }
 
     if (auto it = AST::funcTable.find(name); it != AST::funcTable.end()) {
-        if (generator->functions.find(name) == generator->functions.end()) it->second->generate();
+        if (generator->functions.find(name) == generator->functions.end()) {
+            if (it->second->isInfluencedByFD) it->second->generate();
+            else generator->error("unknown identifier \033[1m" + name + "\033[22m!", loc);
+        }
+
         generator->addAttr("noinline", LLVMAttributeFunctionIndex, generator->functions[name].value, loc);
         return generator->functions[name];
     }

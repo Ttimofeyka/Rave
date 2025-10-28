@@ -1,5 +1,7 @@
 import <std/io>
 
 void main {
-    
+    std::println(a);
 }
+
+void a {}

@@ -62,6 +62,7 @@ public:
     bool isNoCopy = false;
     bool isExplicit = false;
     bool isForwardDeclaration = false;
+    bool isInfluencedByFD = false;
 
     LLVMMetadataRef diFuncScope;
 

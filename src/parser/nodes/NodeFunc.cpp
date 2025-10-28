@@ -188,6 +188,20 @@ void NodeFunc::check() {
 
     // Check for existing function
     if (auto it = AST::funcTable.find(name); it != AST::funcTable.end()) {
+        if (it->second->isForwardDeclaration) {
+            isInfluencedByFD = true;
+            AST::funcTable[name] = this;
+
+            for (size_t i=0; i<AST::funcVersionsTable[name].size(); i++) {
+                if (AST::funcVersionsTable[name][i]->isForwardDeclaration)
+                AST::funcVersionsTable[name].erase(AST::funcVersionsTable[name].begin() + i);
+                break;
+            }
+
+            for (auto node : block->nodes) node->check();
+            return;
+        }
+
         std::string argTypes = typesToString(args);
         if (typesToString(it->second->args) == argTypes) {
             if (isCtargs || isCtargsPart || isTemplate) {
@@ -305,6 +319,7 @@ RaveValue NodeFunc::generate() {
     processModifiers(callConv, conditions);
 
     if (!isTemplate && isCtargs) return {};
+    if (isForwardDeclaration) return {};
 
     std::map<std::string, Type*> oldReplace = std::map<std::string, Type*>(generator->toReplace);
     if (isTemplate) {
@@ -356,8 +371,6 @@ RaveValue NodeFunc::generate() {
     createDebugInfo();
 
     if (!isExtern) {
-        if (isForwardDeclaration) return {};
-
         int oldCurrentBuiltinArg = generator->currentBuiltinArg;
         if (isCtargsPart || isCtargs) generator->currentBuiltinArg = 0;
 
