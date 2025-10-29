@@ -9,51 +9,38 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/ast.hpp"
 #include "../../include/parser/nodes/NodeFunc.hpp"
 #include "../../include/parser/nodes/NodeNull.hpp"
-#include "../../include/parser/nodes/NodeLambda.hpp"
 #include "../../include/parser/nodes/NodeIden.hpp"
-#include "../../include/parser/nodes/NodeGet.hpp"
-#include "../../include/parser/nodes/NodeIndex.hpp"
 #include "../../include/parser/nodes/NodeVar.hpp"
 
-namespace AST {
-    extern std::map<std::string, NodeFunc*> funcTable;
-}
+NodeRet::NodeRet(Node* value, int loc) : value(!value ? nullptr : value->copy()), loc(loc) {}
 
-NodeRet::NodeRet(Node* value, int loc) {
-    this->value = (value == nullptr ? nullptr : value->copy());
-    this->loc = loc;
-}
+Node* NodeRet::copy() { return new NodeRet(value->copy(), loc); }
 
-Node* NodeRet::copy() {return new NodeRet(this->value->copy(), this->loc);}
-Type* NodeRet::getType() {return this->value->getType();}
-Node* NodeRet::comptime() {return this;}
+Type* NodeRet::getType() { return value->getType(); }
 
-NodeRet::~NodeRet() {
-    if (this->value != nullptr) delete this->value;
-}
+Node* NodeRet::comptime() { return this; }
 
-void NodeRet::check() {isChecked = true;}
+NodeRet::~NodeRet() { if (value) delete value; }
+
+void NodeRet::check() { isChecked = true; }
 
 Loop NodeRet::getParentBlock(int n) {
     if (generator->activeLoops.size() == 0) return Loop{.isActive = false, .start = nullptr, .end = nullptr, .hasEnd = false, .isIf = false, .loopRets = std::vector<LoopReturn>()};
-    return generator->activeLoops[generator->activeLoops.size()-1];
+    return generator->activeLoops[generator->activeLoops.size() - 1];
 }
 
 void NodeRet::setParentBlock(Loop value, int n) {
     if (generator->activeLoops.size() > 0) {
-        if (n == -1) generator->activeLoops[generator->activeLoops.size()-1] = value;
+        if (n == -1) generator->activeLoops[generator->activeLoops.size() - 1] = value;
         else generator->activeLoops[n] = value;
     }
 }
 
 RaveValue NodeRet::generate() {
-    if (currScope == nullptr || !currScope->has("return")) {
-        value->generate();
-        return {};
-    }
+    if (currScope == nullptr || !currScope->has("return")) { value->generate(); return {}; }
 
-    if (this->value == nullptr) this->value = new NodeNull(currScope->getVar("return", loc)->getType(), this->loc);
-    
+    if (!value) value = new NodeNull(currScope->getVar("return", loc)->getType(), loc);
+
     RaveValue generated = value->generate();
 
     if (instanceof<TypeVoid>(generated.type)) generator->error("cannot return a \033[1mvoid\033[22m value in a non-void function!", loc);
