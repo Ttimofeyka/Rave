@@ -10,23 +10,29 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeRet.hpp"
 #include <string>
 
-NodeBreak::NodeBreak(int loc) {this->loc = loc;}
-void NodeBreak::check() {isChecked = true;}
-Type* NodeBreak::getType() {return typeVoid;}
-Node* NodeBreak::comptime() {return this;}
-Node* NodeBreak::copy() {return new NodeBreak(this->loc);}
+NodeBreak::NodeBreak(int loc) : loc(loc) {}
+
+void NodeBreak::check() { isChecked = true; }
+
+Type* NodeBreak::getType() { return typeVoid; }
+
+Node* NodeBreak::comptime() { return this; }
+
+Node* NodeBreak::copy() { return new NodeBreak(loc); }
 
 int NodeBreak::getWhileLoop() {
+    if (generator->activeLoops.empty()) return -1;
+
     int i = generator->activeLoops.size() - 1;
+
     while ((i >= 0) && generator->activeLoops[i].isIf) i -= 1;
     if (generator->activeLoops[i].isIf) i = -1;
+
     return i;
 }
 
 RaveValue NodeBreak::generate() {
-    if (generator->activeLoops.empty()) generator->error("attempt to call \033[1mbreak\033[22m out of the loop!", this->loc);
-
-    int id = this->getWhileLoop();
+    int id = getWhileLoop();
     if (id == -1) generator->error("attempt to call \033[1mbreak\033[22m out of the loop!", this->loc);
 
     generator->activeLoops[generator->activeLoops.size() - 1].hasEnd = true;
