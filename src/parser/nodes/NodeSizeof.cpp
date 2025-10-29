@@ -9,37 +9,43 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeString.hpp"
 #include "../../include/parser/nodes/NodeType.hpp"
 
-NodeSizeof::NodeSizeof(Node* value, int loc) {
-    this->value = value;
-    this->loc = loc;
-}
+NodeSizeof::NodeSizeof(Node* value, int loc) : value(value), loc(loc) {}
 
-Type* NodeSizeof::getType() {return basicTypes[BasicType::Int];}
-Node* NodeSizeof::comptime() {return this;}
-Node* NodeSizeof::copy() {return new NodeSizeof(this->value->copy(), this->loc);}
-void NodeSizeof::check() {isChecked = true;}
+Type* NodeSizeof::getType() { return basicTypes[BasicType::Int]; }
+
+Node* NodeSizeof::comptime() { return this; }
+
+Node* NodeSizeof::copy() { return new NodeSizeof(value->copy(), loc); }
+
+void NodeSizeof::check() { isChecked = true; }
 
 RaveValue NodeSizeof::generate() {
-    if (instanceof<NodeType>(this->value)) {
-        Type* tp = ((NodeType*)this->value)->getType();
-        while (generator->toReplace.find(tp->toString()) != generator->toReplace.end()) tp = generator->toReplace[tp->toString()];
+    if (instanceof<NodeType>(value)) {
+        Type* tp = ((NodeType*)value)->getType();
+        Types::replaceTemplates(&tp);
+
         if (instanceof<TypeBasic>(tp)) {
             switch (((TypeBasic*)tp)->type) {
-                case BasicType::Uchar: case BasicType::Char: case BasicType::Bool: return {LLVMConstInt(LLVMInt32TypeInContext(generator->context), 1, false), basicTypes[BasicType::Int]};
-                case BasicType::Ushort: case BasicType::Short: case BasicType::Half: case BasicType::Bhalf: return {LLVMConstInt(LLVMInt32TypeInContext(generator->context), 2, false), basicTypes[BasicType::Int]};
-                case BasicType::Uint: case BasicType::Int:
-                case BasicType::Float: return {LLVMConstInt(LLVMInt32TypeInContext(generator->context), 4, false), basicTypes[BasicType::Int]};
-                case BasicType::Ulong: case BasicType::Long:
-                case BasicType::Double: return {LLVMConstInt(LLVMInt32TypeInContext(generator->context), 8, false), basicTypes[BasicType::Int]};
-                case BasicType::Ucent: case BasicType::Cent: return {LLVMConstInt(LLVMInt32TypeInContext(generator->context), 16, false), basicTypes[BasicType::Int]};
+                case BasicType::Uchar: case BasicType::Char: case BasicType::Bool:
+                    return { LLVM::makeInt(32, 1, false), basicTypes[BasicType::Int] };
+                case BasicType::Ushort: case BasicType::Short: case BasicType::Half: case BasicType::Bhalf:
+                    return { LLVM::makeInt(32, 2, false), basicTypes[BasicType::Int] };
+                case BasicType::Uint: case BasicType::Int: case BasicType::Float:
+                    return { LLVM::makeInt(32, 4, false), basicTypes[BasicType::Int] };
+                case BasicType::Ulong: case BasicType::Long: case BasicType::Double:
+                    return { LLVM::makeInt(32, 8, false), basicTypes[BasicType::Int] };
+                case BasicType::Ucent: case BasicType::Cent:
+                    return { LLVM::makeInt(32, 16, false), basicTypes[BasicType::Int] };
                 default: break;
             }
         }
-        else return {LLVMSizeOf(generator->genType(tp, loc)), basicTypes[BasicType::Long]};
+
+        return { LLVMSizeOf(generator->genType(tp, loc)), basicTypes[BasicType::Long] };
     }
-    return {LLVMSizeOf(LLVMTypeOf(this->value->generate().value)), basicTypes[BasicType::Long]};
+
+    return { LLVMSizeOf(LLVMTypeOf(value->generate().value)), basicTypes[BasicType::Long] };
 }
 
 NodeSizeof::~NodeSizeof() {
-    if (this->value != nullptr) delete this->value;
+    if (value) delete value;
 }
