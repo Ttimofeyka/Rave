@@ -33,6 +33,7 @@ public:
     ~NodeBuiltin() override;
 
     NodeType* asType(int n, bool isCompTime = false);
+    Type* asClearType(int n);
     BigInt asNumber(int n);
     NodeBool* asBool(int n);
     std::string getAliasName(int n);
@@ -43,4 +44,9 @@ public:
     RaveValue generate() override;
     Node* comptime() override;
     Node* copy() override;
+
+private:
+    void requireMinArgs(int n);
+    int handleAbstractBool();
+    int handleAbstractInt();
 };
