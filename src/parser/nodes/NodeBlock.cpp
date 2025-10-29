@@ -13,15 +13,11 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/Types.hpp"
 #include "../../include/utils.hpp"
 
-NodeBlock::NodeBlock(std::vector<Node*> nodes) {
-    this->nodes = std::vector<Node*>(nodes);
-}
+NodeBlock::NodeBlock(std::vector<Node*> nodes) : nodes(std::vector<Node*>(nodes)) {}
 
 Node* NodeBlock::copy() {
     std::vector<Node*> newNodes;
-    for (size_t i=0; i<this->nodes.size(); i++) {
-        if (this->nodes[i] != nullptr) newNodes.push_back(this->nodes[i]->copy());
-    }
+    for (size_t i=0; i<nodes.size(); i++) { if (nodes[i]) newNodes.push_back(nodes[i]->copy()); }
     return new NodeBlock(newNodes);
 }
 
@@ -29,27 +25,24 @@ void NodeBlock::check() {
     if (isChecked) return;
     isChecked = true;
 
-    for (size_t i=0; i<nodes.size(); i++) {
-        if (nodes[i] != nullptr) nodes[i]->check();
-    }
+    for (size_t i=0; i<nodes.size(); i++) { if (nodes[i]) nodes[i]->check(); }
 }
 
 void NodeBlock::optimize() {
-    for (Node* nd: this->nodes) {
-        NodeVar *ndvar = dynamic_cast<NodeVar*>(nd);
-        if (ndvar == nullptr) nd->optimize();
+    for (Node* nd: nodes) {
+        NodeVar* ndvar = dynamic_cast<NodeVar*>(nd);
+        if (!ndvar) nd->optimize();
         else if (!ndvar->isGlobal && !ndvar->isUsed) generator->warning("unused variable \033[1m" + ndvar->name + "\033[22m!", ndvar->loc);
     }
 }
 
-Node* NodeBlock::comptime() {return this;}
-Type* NodeBlock::getType() {return typeVoid;}
+Node* NodeBlock::comptime() { return this; }
+
+Type* NodeBlock::getType() { return typeVoid; }
 
 RaveValue NodeBlock::generate() {
-    for (Node* nd: this->nodes) if (nd != nullptr) nd->generate();
+    for (Node* nd: nodes) { if (nd) nd->generate(); }
     return {};
 }
 
-NodeBlock::~NodeBlock() {
-    for (Node* nd: this->nodes) if (nd != nullptr) delete nd;
-}
+NodeBlock::~NodeBlock() { for (Node* nd: nodes) { if (nd) delete nd; } }
