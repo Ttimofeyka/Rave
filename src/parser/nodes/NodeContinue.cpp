@@ -10,27 +10,32 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeRet.hpp"
 #include <string>
 
-NodeContinue::NodeContinue(int loc) {this->loc = loc;}
-void NodeContinue::check() {isChecked = true;}
-Type* NodeContinue::getType() {return typeVoid;}
-Node* NodeContinue::comptime() {return this;}
-Node* NodeContinue::copy() {return new NodeContinue(this->loc);}
+NodeContinue::NodeContinue(int loc) : loc(loc) {}
+
+void NodeContinue::check() { isChecked = true; }
+
+Type* NodeContinue::getType() { return typeVoid; }
+
+Node* NodeContinue::comptime() { return this; }
+
+Node* NodeContinue::copy() { return new NodeContinue(loc); }
 
 int NodeContinue::getWhileLoop() {
+    if (generator->activeLoops.empty()) return -1;
+
     int i = generator->activeLoops.size() - 1;
+
     while ((i >= 0) && generator->activeLoops[i].isIf) i -= 1;
     if (generator->activeLoops[i].isIf) i = -1;
+
     return i;
 }
 
 RaveValue NodeContinue::generate() {
-    if (generator->activeLoops.empty()) generator->error("attempt to call \033[1mcontinue\033[22m out of the loop!", this->loc);
-
-    int id = this->getWhileLoop();
-    if (id == -1) generator->error("attempt to call \033[22mcontinue\033[22m out of the loop!", this->loc);
+    int id = getWhileLoop();
+    if (id == -1) generator->error("attempt to call \033[1mcontinue\033[22m out of the loop!", this->loc);
 
     LLVMBuildBr(generator->builder, generator->activeLoops[id].start);
-
     generator->activeLoops[id].hasEnd = true;
 
     return {};
