@@ -14,33 +14,25 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/utils.hpp"
 #include "../../include/parser/ast.hpp"
 
-NodeComptime::NodeComptime(Node* node) {
-    this->node = node;
-}
+NodeComptime::NodeComptime(Node* node) : node(node) {}
 
-Node* NodeComptime::copy() {
-    return new NodeComptime(this->node->copy());
-}
+Node* NodeComptime::copy() { return new NodeComptime(node->copy()); }
 
-void NodeComptime::check() {
-    isChecked = true;
-}
+void NodeComptime::check() { isChecked = true; }
 
-Type* NodeComptime::getType() {
-    return this->node->getType();
-}
+Type* NodeComptime::getType() { return node->getType(); }
 
 Node* NodeComptime::comptime() {
-    if (this->isImported) {
-        if (instanceof<NodeIf>(this->node)) ((NodeIf*)this->node)->isImported = true;
-        else if (instanceof<NodeFunc>(this->node)) ((NodeFunc*)this->node)->isExtern = true;
-        else if (instanceof<NodeComptime>(this->node)) ((NodeComptime*)this->node)->isImported = true;
-        else if (instanceof<NodeVar>(this->node)) ((NodeVar*)this->node)->isExtern = true;
-        else if (instanceof<NodeNamespace>(this->node)) ((NodeNamespace*)this->node)->isImported = true;
-        else if (instanceof<NodeBuiltin>(this->node)) ((NodeBuiltin*)this->node)->isImport = true;
-        else if (instanceof<NodeStruct>(this->node)) ((NodeStruct*)this->node)->isImported = true;
-        else if (instanceof<NodeBlock>(this->node)) {
-            NodeBlock* block = (NodeBlock*)this->node;
+    if (isImported) {
+        if (instanceof<NodeIf>(node)) ((NodeIf*)node)->isImported = true;
+        else if (instanceof<NodeFunc>(node)) ((NodeFunc*)node)->isExtern = true;
+        else if (instanceof<NodeComptime>(node)) ((NodeComptime*)node)->isImported = true;
+        else if (instanceof<NodeVar>(node)) ((NodeVar*)node)->isExtern = true;
+        else if (instanceof<NodeNamespace>(node)) ((NodeNamespace*)node)->isImported = true;
+        else if (instanceof<NodeBuiltin>(node)) ((NodeBuiltin*)node)->isImport = true;
+        else if (instanceof<NodeStruct>(node)) ((NodeStruct*)node)->isImported = true;
+        else if (instanceof<NodeBlock>(node)) {
+            NodeBlock* block = (NodeBlock*)node;
 
             for (Node* nd: block->nodes) {
                 if (instanceof<NodeIf>(nd)) ((NodeIf*)nd)->isImported = true;
@@ -54,14 +46,9 @@ Node* NodeComptime::comptime() {
         }
     }
 
-    return this->node->comptime();
+    return node->comptime();
 }
 
-RaveValue NodeComptime::generate() {
-    this->comptime();
-    return {};
-}
+RaveValue NodeComptime::generate() { comptime(); return {}; }
 
-NodeComptime::~NodeComptime() {
-    if (this->node != nullptr) delete this->node;
-}
+NodeComptime::~NodeComptime() { if (node) delete node; }
