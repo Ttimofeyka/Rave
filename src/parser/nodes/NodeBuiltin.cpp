@@ -226,7 +226,7 @@ RaveValue NodeBuiltin::generate() {
     if (name[0] == '@') name = name.substr(1);
 
     if (name == "baseType") {
-        if (args.size() < 1) generator->error("at least one argument is required!", loc);
+        requireMinArgs(1);
 
         Type* ty = asType(0)->type;
         if (instanceof<TypeArray>(ty)) type = ((TypeArray*)ty)->element;
@@ -544,8 +544,7 @@ RaveValue NodeBuiltin::generate() {
         if (Compiler::features.find("+sse3") == std::string::npos || Compiler::features.find("+ssse3") == std::string::npos)
             generator->error("your target does not support SSE3/SSSE3!", loc);
 
-
-        if (args.size() < 2) generator->error("at least two arguments are required!", loc);
+        requireMinArgs(2);
 
         RaveValue vector1 = args[0]->generate();
         RaveValue vector2 = args[1]->generate();
@@ -565,7 +564,7 @@ RaveValue NodeBuiltin::generate() {
             return {};
         }
 
-        if (args.size() < 2) generator->error("at least two arguments are required!", loc);
+        requireMinArgs(2);
 
         RaveValue vector1 = args[0]->generate();
         RaveValue vector2 = args[1]->generate();
@@ -581,7 +580,7 @@ RaveValue NodeBuiltin::generate() {
     else if (name == "vMoveMask128") {
         if (Compiler::features.find("+sse2") == std::string::npos)  generator->error("your target does not support SSE2!", loc);
 
-        if (args.size() < 1) generator->error("at least one argument is required!", loc);
+        requireMinArgs(1);
 
         RaveValue value = args[0]->generate();
 
@@ -600,7 +599,7 @@ RaveValue NodeBuiltin::generate() {
     else if (name == "vMoveMask256") {
         if (Compiler::features.find("+avx2") == std::string::npos)  generator->error("your target does not support AVX2!", loc);
 
-        if (args.size() < 1) generator->error("at least one argument is required!", loc);
+       requireMinArgs(1);
 
         RaveValue value = args[0]->generate();
 
@@ -617,7 +616,7 @@ RaveValue NodeBuiltin::generate() {
         return LLVM::call(generator->functions["llvm.x86.avx2.pmovmskb"], std::vector<LLVMValueRef>({value.value}).data(), 1, "vMoveMask256");
     }
     else if (name == "vSqrt") {
-        if (args.size() < 1) generator->error("at least one argument is required!", loc);
+        requireMinArgs(1);
 
         RaveValue value = args[0]->generate();
 
@@ -653,7 +652,7 @@ RaveValue NodeBuiltin::generate() {
         return LLVM::call(generator->functions[vecFuncName], std::vector<LLVMValueRef>({value.value}).data(), 1, "vSqrt");
     }
     else if (name == "vAbs") {
-        if (args.size() < 1) generator->error("at least one argument is required!", loc);
+        requireMinArgs(1);
 
         RaveValue value = args[0]->generate();
 
@@ -689,7 +688,7 @@ RaveValue NodeBuiltin::generate() {
         return LLVM::call(generator->functions[vecFuncName], std::vector<LLVMValueRef>({value.value, LLVM::makeInt(1, 0, false)}).data(), 2, "vSqrt");
     }
     else if (name == "cttz") {
-        if (args.size() < 2) generator->error("at least two arguments are required!", loc);
+        requireMinArgs(2);
 
         RaveValue value = args[0]->generate();
         RaveValue isZeroPoison = args[1]->generate();
@@ -710,7 +709,7 @@ RaveValue NodeBuiltin::generate() {
         return LLVM::call(generator->functions[funcName], std::vector<LLVMValueRef>({value.value, isZeroPoison.value}).data(), 2, "cttz");
     }
     else if (name == "ctlz") {
-        if (args.size() < 2) generator->error("at least two arguments are required!", loc);
+        requireMinArgs(2);
 
         RaveValue value = args[0]->generate();
         RaveValue isZeroPoison = args[1]->generate();
@@ -731,7 +730,7 @@ RaveValue NodeBuiltin::generate() {
         return LLVM::call(generator->functions[funcName], std::vector<LLVMValueRef>({value.value, isZeroPoison.value}).data(), 2, "ctlz");
     }
     else if (name == "alloca") {
-        if (args.size() < 1) generator->error("at least one argument is required!", loc);
+        requireMinArgs(1);
         RaveValue size = args[0]->generate();
 
         return (
@@ -743,7 +742,7 @@ RaveValue NodeBuiltin::generate() {
         )->generate();
     }
     else if (name == "minOf") {
-        if (args.size() < 1) generator->error("at least one argument is required!", loc);
+        requireMinArgs(1);
         Type* type = asType(0)->type;
 
         if (!instanceof<TypeVoid>(type) && !instanceof<TypeBasic>(type)) generator->error("the type must be a basic!", loc);
@@ -763,7 +762,7 @@ RaveValue NodeBuiltin::generate() {
         }
     }
     else if (name == "maxOf") {
-        if (args.size() < 1) generator->error("at least one argument is required!", loc);
+        requireMinArgs(1);
         Type* type = asType(0)->type;
 
         if (!instanceof<TypeVoid>(type) && !instanceof<TypeBasic>(type)) generator->error("the type must be a basic!", loc);
@@ -858,7 +857,7 @@ Node* NodeBuiltin::comptime() {
         return new NodeBool(AST::structTable[tstruct->name]->destructor == nullptr);
     }
     else if (name == "minOf") {
-        if (args.size() < 1) generator->error("at least one argument is required!", loc);
+        requireMinArgs(1);
         Type* type = asType(0)->type;
 
         if (!instanceof<TypeVoid>(type) && !instanceof<TypeBasic>(type)) generator->error("the type must be a basic!", loc);
@@ -878,7 +877,7 @@ Node* NodeBuiltin::comptime() {
         }
     }
     else if (name == "maxOf") {
-        if (args.size() < 1) generator->error("at least one argument is required!", loc);
+        requireMinArgs(1);
         Type* type = asType(0)->type;
 
         if (!instanceof<TypeVoid>(type) && !instanceof<TypeBasic>(type)) generator->error("the type must be a basic!", loc);
