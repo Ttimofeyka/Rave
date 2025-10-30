@@ -10,21 +10,20 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/utf8.h"
 #include "../../include/llvm.hpp"
 
-NodeString::NodeString(std::string value, bool isWide) {
-    this->value = value;
-    this->isWide = isWide;
-}
+NodeString::NodeString(std::string value, bool isWide) : value(value), isWide(isWide) {}
 
-Node* NodeString::copy() {return new NodeString(this->value, this->isWide);}
-Type* NodeString::getType() {return new TypePointer(basicTypes[isWide ? BasicType::Uint : BasicType::Char]);}
-Node* NodeString::comptime() {return this;}
-void NodeString::check() {isChecked = true;}
+Node* NodeString::copy() { return new NodeString(value, isWide); }
+
+Type* NodeString::getType() { return new TypePointer(basicTypes[isWide ? BasicType::Uint : BasicType::Char]); }
+
+Node* NodeString::comptime() { return this; }
+
+void NodeString::check() { isChecked = true; }
 
 RaveValue NodeString::generate() {
     LLVMTypeRef elemType = isWide ? LLVMInt32TypeInContext(generator->context) : LLVMInt8TypeInContext(generator->context);
-    LLVMTypeRef arrayType = LLVMArrayType(elemType, value.size() + 1);
 
-    LLVMValueRef globalStr = LLVMAddGlobal(generator->lModule, arrayType, "_str");
+    LLVMValueRef globalStr = LLVMAddGlobal(generator->lModule, LLVMArrayType(elemType, value.size() + 1), "_str");
     LLVMSetGlobalConstant(globalStr, true);
     LLVMSetUnnamedAddr(globalStr, true);
     LLVMSetLinkage(globalStr, LLVMPrivateLinkage);
@@ -38,9 +37,8 @@ RaveValue NodeString::generate() {
         LLVMSetInitializer(globalStr, LLVMConstArray(elemType, values.data(), values.size()));
     }
 
-    LLVMValueRef indices[2] = {LLVM::makeInt(32, 0, false), LLVM::makeInt(32, 0, false)};
-
+    LLVMValueRef indices[2] = { LLVM::makeInt(32, 0, false), LLVM::makeInt(32, 0, false) };
     Type* tp = new TypePointer(basicTypes[isWide ? BasicType::Int : BasicType::Char]);
 
-    return {LLVM::cInboundsGep({globalStr, tp}, indices, 2).value, tp};
+    return { LLVM::cInboundsGep({globalStr, tp}, indices, 2).value, tp };
 }
