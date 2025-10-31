@@ -6,17 +6,16 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "../../include/parser/nodes/NodeType.hpp"
 
-NodeType::NodeType(Type* type, int loc) {
-    this->type = type;
-    this->loc = loc;
-}
+NodeType::NodeType(Type* type, int loc) : type(type), loc(loc) {}
 
-Type* NodeType::getType() {return this->type;}
-void NodeType::check() {isChecked = true;}
-RaveValue NodeType::generate() {return {};}
-Node* NodeType::comptime() {return this;}
-Node* NodeType::copy() {return new NodeType(this->type->copy(), this->loc);}
+Type* NodeType::getType() { return type; }
 
-NodeType::~NodeType() {
-    if (this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
-}
+void NodeType::check() { isChecked = true; }
+
+RaveValue NodeType::generate() { return {}; }
+
+Node* NodeType::comptime() { return this; }
+
+Node* NodeType::copy() { return new NodeType(type->copy(), loc); }
+
+NodeType::~NodeType() { if (type && !instanceof<TypeBasic>(type) && !instanceof<TypeVoid>(type)) delete type; }
