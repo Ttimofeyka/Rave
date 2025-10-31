@@ -8,30 +8,25 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/utils.hpp"
 #include "../../include/parser/ast.hpp"
 
-NodeCmpxchg::NodeCmpxchg(Node* ptr, Node* value1, Node* value2, int loc) {
-    this->ptr = ptr;
-    this->value1 = value1;
-    this->value2 = value2;
-    this->loc = loc;
-}
+NodeCmpxchg::NodeCmpxchg(Node* ptr, Node* value1, Node* value2, int loc) : ptr(ptr), value1(value1), value2(value2), loc(loc) {}
 
 NodeCmpxchg::~NodeCmpxchg() {
-    if (ptr != nullptr) delete ptr;
-    if (value1 != nullptr) delete value1;
-    if (value2 != nullptr) delete value2;
+    if (ptr) delete ptr;
+    if (value1) delete value1;
+    if (value2) delete value2;
 }
 
-Node* NodeCmpxchg::copy() {return new NodeCmpxchg(this->ptr->copy(), this->value1->copy(), this->value2->copy(), this->loc);}
+Node* NodeCmpxchg::copy() { return new NodeCmpxchg(ptr->copy(), value1->copy(), value2->copy(), loc); }
 
-Type* NodeCmpxchg::getType() {return typeVoid;}
+Type* NodeCmpxchg::getType() { return typeVoid; }
 
-void NodeCmpxchg::check() {isChecked = true;}
+void NodeCmpxchg::check() { isChecked = true; }
 
-Node* NodeCmpxchg::comptime() {return this;}
+Node* NodeCmpxchg::comptime() { return this; }
 
 RaveValue NodeCmpxchg::generate() {
     return {LLVMBuildAtomicCmpXchg(
-        generator->builder, this->ptr->generate().value, this->value1->generate().value,
-        this->value2->generate().value, LLVMAtomicOrderingSequentiallyConsistent, LLVMAtomicOrderingSequentiallyConsistent, false
-    ), this->ptr->getType()};
+        generator->builder, ptr->generate().value, value1->generate().value,
+        value2->generate().value, LLVMAtomicOrderingSequentiallyConsistent, LLVMAtomicOrderingSequentiallyConsistent, false
+    ), ptr->getType()};
 }
