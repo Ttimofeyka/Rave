@@ -15,17 +15,9 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeStruct.hpp"
 #include "../../include/utils.hpp"
 
-NodeIf::NodeIf(Node* cond, Node* body, Node* _else, int loc, bool isStatic) {
-    this->cond = cond;
-    this->body = body;
-    this->_else = _else;
-    this->loc = loc;
-    this->isStatic = isStatic;
-    this->isLikely = false;
-    this->isUnlikely = false;
-}
+NodeIf::NodeIf(Node* cond, Node* body, Node* _else, int loc, bool isStatic) : cond(cond), body(body), _else(_else), loc(loc), isStatic(isStatic), isLikely(false), isUnlikely(false) {}
 
-Type* NodeIf::getType() {return typeVoid;}
+Type* NodeIf::getType() { return typeVoid; }
 
 void NodeIf::check() {
     if (!isChecked && !isStatic) {
@@ -38,10 +30,7 @@ void NodeIf::check() {
 }
 
 RaveValue NodeIf::generate() {
-    if (isStatic) {
-        this->comptime();
-        return {};
-    }
+    if (isStatic) { comptime(); return {}; }
 
     LLVMBasicBlockRef thenBlock = LLVM::makeBlock("then", currScope->funcName);
 	LLVMBasicBlockRef elseBlock = LLVM::makeBlock("else", currScope->funcName);
@@ -74,7 +63,7 @@ RaveValue NodeIf::generate() {
 
     currScope = copyScope(origScope);
 
-    if (this->body != nullptr) this->body->generate();
+    if (body) body->generate();
     if (!generator->activeLoops[selfNum].hasEnd) LLVMBuildBr(generator->builder, endBlock);
 
     bool hasEnd1 = generator->activeLoops[selfNum].hasEnd;
@@ -85,7 +74,7 @@ RaveValue NodeIf::generate() {
     currScope = copyScope(origScope);
 
     LLVM::Builder::atEnd(elseBlock);
-    if (this->_else != nullptr) this->_else->generate();
+    if (_else) _else->generate();
 
     if (!generator->activeLoops[selfNum].hasEnd) LLVMBuildBr(generator->builder, endBlock);
 
@@ -97,11 +86,11 @@ RaveValue NodeIf::generate() {
     generator->activeLoops.erase(selfNum);
 
     LLVMValueRef lastInstr = LLVMGetLastInstruction(endBlock);
-    if (lastInstr != nullptr && LLVMGetInstructionOpcode(lastInstr) == LLVMBr) LLVMInstructionEraseFromParent(lastInstr);
+    if (lastInstr && LLVMGetInstructionOpcode(lastInstr) == LLVMBr) LLVMInstructionEraseFromParent(lastInstr);
 
     lastInstr = LLVMGetLastInstruction(thenBlock);
-    if (lastInstr != nullptr && LLVMGetInstructionOpcode(lastInstr) == LLVMBr &&
-       LLVMGetPreviousInstruction(lastInstr) != nullptr &&
+    if (lastInstr && LLVMGetInstructionOpcode(lastInstr) == LLVMBr &&
+       LLVMGetPreviousInstruction(lastInstr) &&
        LLVMGetInstructionOpcode(LLVMGetPreviousInstruction(lastInstr)) == LLVMBr) LLVMInstructionEraseFromParent(lastInstr);
 
     if (hasEnd1 && hasEnd2 && generator->activeLoops.size() == 0) LLVMBuildRet(generator->builder, LLVMConstNull(generator->genType(AST::funcTable[currScope->funcName]->type, this->loc)));
@@ -110,19 +99,19 @@ RaveValue NodeIf::generate() {
 }
 
 void NodeIf::optimize() {
-    if (body != nullptr) body->optimize();
-    if (_else != nullptr) _else->optimize();
+    if (body) body->optimize();
+    if (_else) _else->optimize();
 }
 
 Node* NodeIf::comptime() {
-    NodeBool* val = (NodeBool*)cond->comptime();
+    if (!body) return this;
 
-    if (body == nullptr) return this;
+    NodeBool* val = (NodeBool*)cond->comptime();
 
     Node* node = body;
 
     if (!val->value) {
-        if (_else != nullptr) node = _else;
+        if (_else) node = _else;
         else return this;
     }
 
@@ -156,14 +145,14 @@ Node* NodeIf::comptime() {
 }
 
 Node* NodeIf::copy() {
-    NodeIf* _if = new NodeIf(cond->copy(), (body == nullptr ? nullptr : body->copy()), (_else == nullptr ? nullptr : _else->copy()), loc, isStatic);
+    NodeIf* _if = new NodeIf(cond->copy(), (!body ? nullptr : body->copy()), (!_else ? nullptr : _else->copy()), loc, isStatic);
     _if->isLikely = isLikely;
     _if->isUnlikely = isUnlikely;
     return _if;
 }
 
 NodeIf::~NodeIf() {
-    if (cond != nullptr) delete cond;
-    if (body != nullptr) delete body;
-    if (_else != nullptr) delete _else;
+    if (cond) delete cond;
+    if (body) delete body;
+    if (_else) delete _else;
 }
