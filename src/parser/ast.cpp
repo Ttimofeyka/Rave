@@ -368,116 +368,139 @@ LLVMMetadataRef DebugGen::genType(Type* type, int loc) {
     return nullptr;
 }
 
-LLVMTypeRef LLVMGen::genType(Type* type, int loc) {
-    if (type == nullptr) return LLVMPointerType(LLVMInt8TypeInContext(this->context), 0);
-
-    if (instanceof<TypeByval>(type)) return LLVMPointerType(generator->genType(type->getElType(), loc), 0);
-
-    if (instanceof<TypeAlias>(type)) return nullptr;
-
-    if (instanceof<TypeBasic>(type)) {
-        static std::unordered_map<char, LLVMTypeRef (*)(LLVMContextRef)> typeMap = {
-            {BasicType::Bool, LLVMInt1TypeInContext},
-            {BasicType::Char, LLVMInt8TypeInContext}, {BasicType::Uchar, LLVMInt8TypeInContext},
-            {BasicType::Short, LLVMInt16TypeInContext}, {BasicType::Ushort, LLVMInt16TypeInContext},
-            {BasicType::Half, LLVMHalfTypeInContext},
-            {BasicType::Bhalf, LLVMBFloatTypeInContext},
-            {BasicType::Int, LLVMInt32TypeInContext}, {BasicType::Uint, LLVMInt32TypeInContext},
-            {BasicType::Long, LLVMInt64TypeInContext}, {BasicType::Ulong, LLVMInt64TypeInContext},
-            {BasicType::Cent, LLVMInt128TypeInContext}, {BasicType::Ucent, LLVMInt128TypeInContext},
-            {BasicType::Float, LLVMFloatTypeInContext},
-            {BasicType::Double, LLVMDoubleTypeInContext},
-            {BasicType::Real, LLVMFP128TypeInContext}
-        };
-
-        auto it = typeMap.find(((TypeBasic*)type)->type);
-        return it != typeMap.end() ? it->second(context) : nullptr;
+LLVMTypeRef LLVMGen::genBasicType(TypeBasic* basicType) {
+    switch (basicType->type) {
+        case BasicType::Bool: return LLVMInt1TypeInContext(context);
+        case BasicType::Char: case BasicType::Uchar: return LLVMInt8TypeInContext(context);
+        case BasicType::Short: case BasicType::Ushort: return LLVMInt16TypeInContext(context);
+        case BasicType::Half: return LLVMHalfTypeInContext(context);
+        case BasicType::Bhalf: return LLVMBFloatTypeInContext(context);
+        case BasicType::Int: case BasicType::Uint: return LLVMInt32TypeInContext(context);
+        case BasicType::Long: case BasicType::Ulong: return LLVMInt64TypeInContext(context);
+        case BasicType::Cent: case BasicType::Ucent: return LLVMInt128TypeInContext(context);
+        case BasicType::Float: return LLVMFloatTypeInContext(context);
+        case BasicType::Double: return LLVMDoubleTypeInContext(context);
+        case BasicType::Real: return LLVMFP128TypeInContext(context);
+        default: return nullptr;
     }
+}
 
-    if (instanceof<TypePointer>(type)) {
-        Type* instance = type->getElType();
-        if (instanceof<TypeVoid>(instance)) return LLVMPointerType(LLVMInt8TypeInContext(context), 0);
-        if (instanceof<TypeAlias>(instance)) error("cannot generate \033[1malias\033[22m as the part of another type!", loc);
+LLVMTypeRef LLVMGen::genPointerType(Type* instance, int loc) {
+    if (instanceof<TypeVoid>(instance)) return LLVMPointerType(LLVMInt8TypeInContext(context), 0);
+    if (instanceof<TypeAlias>(instance)) error("cannot generate \033[1malias\033[22m as the part of another type!", loc);
+    return LLVMPointerType(genType(instance, loc), 0);
+}
 
-        return LLVMPointerType(genType(instance, loc), 0);
-    }
+LLVMTypeRef LLVMGen::genArrayType(TypeArray* arrayType, int loc) {
+    Type* element = arrayType->getElType();
+    if (instanceof<TypeAlias>(element)) error("cannot generate \033[1malias\033[22m as the part of another type!", loc);
+    return LLVMArrayType(genType(element, loc), ((NodeInt*)arrayType->count->comptime())->value.to_int());
+}
 
-    if (instanceof<TypeArray>(type)) {
-        Type* element = type->getElType();
-        if (instanceof<TypeAlias>(element)) error("cannot generate \033[1malias\033[22m as the part of another type!", loc);
+Type* LLVMGen::resolveTemplateType(TypeStruct* s) {
+    if (s->name.find('<') == std::string::npos) return s;
 
-        return LLVMArrayType(genType(element, loc), ((NodeInt*)((TypeArray*)type)->count->comptime())->value.to_int());
-    }
+    TypeStruct* sCopy = (TypeStruct*)s->copy();
+    if (!sCopy->types.empty()) {
+        for (size_t i = 0; i < sCopy->types.size(); i++) {
+            Type* ty = sCopy->types[i];
+            while (instanceof<TypeConst>(ty) || instanceof<TypeByval>(ty) || instanceof<TypeArray>(ty) || instanceof<TypePointer>(ty))
+                ty = ty->getElType();
 
-    if (instanceof<TypeStruct>(type)) {
-        TypeStruct* s = (TypeStruct*)type;
-
-        if (structures.find(s->name) == structures.end()) {
-            if (AST::structTable.find(s->name) != AST::structTable.end() && AST::structTable[s->name]->templateNames.size() > 0)
-                error("trying to generate template structure without templates!", loc);
-
-            if (toReplace.find(s->name) != toReplace.end()) return genType(toReplace[s->name], loc);
-
-            if (s->name.find('<') != std::string::npos) {
-                TypeStruct* sCopy = (TypeStruct*)s->copy();
-                if (sCopy->types.size() > 0) {
-                    for (size_t i=0; i<sCopy->types.size(); i++) {
-                        Type* ty = sCopy->types[i];
-
-                        while (instanceof<TypeConst>(ty) || instanceof<TypeByval>(ty) || instanceof<TypeArray>(ty) || instanceof<TypePointer>(ty)) ty = ty->getElType();
-
-                        if (generator->toReplace.find(ty->toString()) != generator->toReplace.end())
-                            sCopy->types[i] = generator->toReplace[ty->toString()];
-                    }
-
-                    sCopy->updateByTypes();
-                }
-
-                if (structures.find(sCopy->name) != structures.end()) return structures[sCopy->name];
-                std::string origStruct = sCopy->name.substr(0, sCopy->name.find('<'));
-
-                if (AST::structTable.find(origStruct) != AST::structTable.end())
-                    return AST::structTable[origStruct]->genWithTemplate(sCopy->name.substr(sCopy->name.find('<'), sCopy->name.size()), sCopy->types);
-            }
-
-            if (AST::structTable.find(s->name) != AST::structTable.end()) {
-                AST::structTable[s->name]->check();
-                AST::structTable[s->name]->generate();
-                return genType(type, loc);
-            }
-            else if (AST::aliasTypes.find(s->name) != AST::aliasTypes.end()) return genType(AST::aliasTypes[s->name], loc);
-
-            error("unknown structure \033[1m" + s->name + "\033[22m!", loc);
+            auto it = toReplace.find(ty->toString());
+            if (it != toReplace.end()) sCopy->types[i] = it->second;
         }
-
-        return structures[s->name];
+        sCopy->updateByTypes();
     }
 
-    if (instanceof<TypeVoid>(type)) return LLVMVoidTypeInContext(context);
+    return sCopy;
+}
 
-    if (instanceof<TypeFunc>(type)) {
-        TypeFunc* tf = (TypeFunc*)type;
-        if (instanceof<TypeVoid>(tf->main)) tf->main = basicTypes[BasicType::Char];
+LLVMTypeRef LLVMGen::genStructType(TypeStruct* s, int loc) {
+    auto cacheIt = structures.find(s->name);
+    if (cacheIt != structures.end()) return cacheIt->second;
 
-        std::vector<LLVMTypeRef> types;
-        for (size_t i=0; i<tf->args.size(); i++) types.push_back(genType(tf->args[i]->type, loc));
+    auto replaceIt = toReplace.find(s->name);
+    if (replaceIt != toReplace.end()) return genType(replaceIt->second, loc);
 
-        return LLVMPointerType(LLVMFunctionType(genType(tf->main, loc), types.data(), types.size(), false), 0);
+    if (s->name.find('<') != std::string::npos) {
+        TypeStruct* resolvedStruct = (TypeStruct*)resolveTemplateType(s);
+
+        cacheIt = structures.find(resolvedStruct->name);
+        if (cacheIt != structures.end()) return cacheIt->second;
+
+        size_t templateStart = resolvedStruct->name.find('<');
+        std::string origStruct = resolvedStruct->name.substr(0, templateStart);
+        
+        auto structIt = AST::structTable.find(origStruct);
+        if (structIt != AST::structTable.end()) {
+            return structIt->second->genWithTemplate(
+                resolvedStruct->name.substr(templateStart), 
+                resolvedStruct->types
+            );
+        }
     }
 
-    if (instanceof<TypeFuncArg>(type)) return genType(((TypeFuncArg*)type)->type, loc);
+    auto structIt = AST::structTable.find(s->name);
+    if (structIt != AST::structTable.end()) {
+        structIt->second->check();
+        structIt->second->generate();
+        return genType(s, loc);
+    }
 
-    if (instanceof<TypeConst>(type)) {
+    auto aliasIt = AST::aliasTypes.find(s->name);
+    if (aliasIt != AST::aliasTypes.end()) return genType(aliasIt->second, loc);
+
+    error("unknown structure \033[1m" + s->name + "\033[22m!", loc);
+    return nullptr;
+}
+
+LLVMTypeRef LLVMGen::genFuncType(TypeFunc* tf, int loc) {
+    if (instanceof<TypeVoid>(tf->main)) tf->main = basicTypes[BasicType::Char];
+
+    std::vector<LLVMTypeRef> types;
+    types.reserve(tf->args.size());
+    for (size_t i = 0; i < tf->args.size(); i++)
+        types.push_back(genType(tf->args[i]->type, loc));
+
+    return LLVMPointerType(
+        LLVMFunctionType(genType(tf->main, loc), types.data(), types.size(), false), 
+        0
+    );
+}
+
+LLVMTypeRef LLVMGen::genType(Type* type, int loc) {
+    if (!type) return LLVMPointerType(LLVMInt8TypeInContext(context), 0);
+    
+    // Check cache first
+    std::string typeStr = type->toString();
+    auto cacheIt = typeCache.find(typeStr);
+    if (cacheIt != typeCache.end()) return cacheIt->second;
+
+    LLVMTypeRef result = nullptr;
+
+    if (instanceof<TypeByval>(type)) result = LLVMPointerType(genType(type->getElType(), loc), 0);
+    else if (instanceof<TypeAlias>(type)) return nullptr;
+    else if (instanceof<TypeBasic>(type)) result = genBasicType((TypeBasic*)type);
+    else if (instanceof<TypePointer>(type)) result = genPointerType(type->getElType(), loc);
+    else if (instanceof<TypeArray>(type)) result = genArrayType((TypeArray*)type, loc);
+    else if (instanceof<TypeStruct>(type)) result = genStructType((TypeStruct*)type, loc);
+    else if (instanceof<TypeVoid>(type)) result = LLVMVoidTypeInContext(context);
+    else if (instanceof<TypeFunc>(type)) result = genFuncType((TypeFunc*)type, loc);
+    else if (instanceof<TypeFuncArg>(type)) result = genType(((TypeFuncArg*)type)->type, loc);
+    else if (instanceof<TypeConst>(type)) {
         Type* instance = type->getElType();
         if (instanceof<TypeAlias>(instance)) error("cannot generate \033[1malias\033[22m as the part of another type!", loc);
-        return genType(instance, loc);
+        result = genType(instance, loc);
     }
+    else if (instanceof<TypeVector>(type))
+        result = LLVMVectorType(genType(((TypeVector*)type)->mainType, loc), ((TypeVector*)type)->count);
+    else if (instanceof<TypeLLVM>(type)) result = ((TypeLLVM*)type)->tr;
+    else { error("undefined type!", loc); return nullptr; }
 
-    if (instanceof<TypeVector>(type)) return LLVMVectorType(genType(((TypeVector*)type)->mainType, loc), ((TypeVector*)type)->count);
-    if (instanceof<TypeLLVM>(type)) return ((TypeLLVM*)type)->tr;
-
-    error("undefined type!", loc);
-    return nullptr;
+    if (result) typeCache[typeStr] = result;
+    
+    return result;
 }
 
 RaveValue LLVMGen::byIndex(RaveValue value, std::vector<LLVMValueRef> indexes) {

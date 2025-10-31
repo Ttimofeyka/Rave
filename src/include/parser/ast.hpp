@@ -37,6 +37,7 @@ class NodeCall;
 class TypeFunc;
 class TypeBasic;
 class TypeStruct;
+class TypeArray;
 struct Loop;
 
 struct StructMember {
@@ -109,6 +110,7 @@ public:
 
     std::map<std::string, Type*> toReplace;
     std::map<std::string, Node*> toReplaceValues;
+    std::unordered_map<std::string, LLVMTypeRef> typeCache;
 
     LLVMBasicBlockRef currBB;
 
@@ -124,6 +126,14 @@ public:
     std::string mangle(std::string name, bool isFunc, bool isMethod);
 
     LLVMTypeRef genType(Type* type, int loc);
+
+    LLVMTypeRef genBasicType(TypeBasic* basicType);
+    LLVMTypeRef genPointerType(Type* instance, int loc);
+    LLVMTypeRef genArrayType(TypeArray* arrayType, int loc);
+    LLVMTypeRef genStructType(TypeStruct* s, int loc);
+    LLVMTypeRef genFuncType(TypeFunc* tf, int loc);
+    Type* resolveTemplateType(TypeStruct* s);
+
     RaveValue byIndex(RaveValue value, std::vector<LLVMValueRef> indexes);
     void addAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, int loc, unsigned long value = 0);
     void addTypeAttr(std::string name, LLVMAttributeIndex index, LLVMValueRef ptr, int loc, LLVMTypeRef type);
