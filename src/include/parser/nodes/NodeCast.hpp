@@ -8,7 +8,6 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <llvm-c/Core.h>
 #include "Node.hpp"
-#include "../Types.hpp"
 
 class NodeCast : public Node {
 public:

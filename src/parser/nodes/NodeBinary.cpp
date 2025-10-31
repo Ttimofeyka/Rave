@@ -13,13 +13,9 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeInt.hpp"
 #include "../../include/parser/nodes/NodeFloat.hpp"
 #include "../../include/parser/nodes/NodeString.hpp"
-#include "../../include/parser/nodes/NodeNull.hpp"
 #include "../../include/parser/nodes/NodeBool.hpp"
-#include "../../include/parser/nodes/NodeDone.hpp"
 #include "../../include/parser/nodes/NodeType.hpp"
 #include "../../include/llvm.hpp"
-#include "../../include/compiler.hpp"
-#include <iostream>
 
 NodeBinary::NodeBinary(char op, Node* first, Node* second, int loc, bool isStatic) {
     this->op = op;

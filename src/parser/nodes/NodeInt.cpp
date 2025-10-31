@@ -7,6 +7,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeInt.hpp"
 #include "../../include/utils.hpp"
 #include "../../include/parser/ast.hpp"
+#include "llvm-c/Core.h"
+#include <iostream>
 
 NodeInt::NodeInt(BigInt value, unsigned char sys) 
     : value(value), sys(sys), type(BasicType::Int), isVarVal(nullptr), 

@@ -74,3 +74,6 @@ LLVM
 
 *.bin
 *.a
+
+compile_commands.json
+.cache
