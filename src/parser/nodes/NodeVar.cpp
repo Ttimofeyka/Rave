@@ -102,6 +102,8 @@ void NodeVar::prepareType() {
 
     Types::replaceTemplates(&type);
     Types::replaceComptime(type);
+
+    if (instanceof<TypeVoid>(type)) generator->error("using \033[1mvoid\033[22m as a variable type is prohibited!", loc);
 }
 
 void NodeVar::processGlobalModifiers(int& alignment, bool& noMangling) {
@@ -266,23 +268,14 @@ RaveValue NodeVar::generateAutoTypeLocal() {
 RaveValue NodeVar::generateGlobalVariable() {
     prepareType();
 
-    if (instanceof<TypeVoid>(type)) {
-        generator->error("using \033[1mvoid\033[22m as a variable type is prohibited!", loc);
-        return {};
-    }
+    if (instanceof<TypeAlias>(type)) { AST::aliasTable[name] = value; return {}; }
 
-    if (instanceof<TypeAlias>(type)) {
-        if (currScope != nullptr) currScope->aliasTable[name] = value;
-        else AST::aliasTable[name] = value;
-        return {};
-    }
-
-    if (instanceof<TypeAuto>(this->type) && value == nullptr) {
+    if (instanceof<TypeAuto>(type) && !value) {
         generator->error("using \033[1mauto\033[22m without an explicit value is prohibited!", loc);
         return {};
     }
 
-    if (type != nullptr) checkForTemplated(type);
+    if (type) checkForTemplated(type);
 
     isUsed = true;
     bool noMangling = false;
@@ -298,7 +291,7 @@ RaveValue NodeVar::generateGlobalVariable() {
     createLLVMGlobal(alignment, noMangling);
 
     if (!isExtern) {
-        if (value != nullptr) LLVMSetInitializer(generator->globals[name].value, value->generate().value);
+        if (value) LLVMSetInitializer(generator->globals[name].value, value->generate().value);
         else if (!noZeroInit) LLVMSetInitializer(generator->globals[name].value, LLVMConstNull(generator->genType(type, loc)));
 
         LLVMSetGlobalConstant(generator->globals[name].value, isConst);
@@ -315,6 +308,8 @@ RaveValue NodeVar::generateLocalVariable() {
 
     prepareType();
 
+    if (instanceof<TypeAlias>(type)) { currScope->aliasTable[name] = value; return {}; }
+
     if (instanceof<TypeAuto>(type)) return generateAutoTypeLocal();
 
     if (instanceof<NodeInt>(value) && !isFloatType(type)) ((NodeInt*)value)->isVarVal = type;
@@ -329,7 +324,7 @@ RaveValue NodeVar::generateLocalVariable() {
 
     if (instanceof<TypeStruct>(type)) Predefines::handle(type, new NodeIden(name, loc), loc);
 
-    if (value != nullptr) Binary::operation(TokType::Equ, new NodeIden(name, loc), value, loc);
+    if (value) Binary::operation(TokType::Equ, new NodeIden(name, loc), value, loc);
     else if ((instanceof<TypeBasic>(type) || instanceof<TypePointer>(type)) && !noZeroInit) 
         LLVMBuildStore(generator->builder, LLVMConstNull(gT), currScope->localScope[name].value);
 
@@ -337,6 +332,6 @@ RaveValue NodeVar::generateLocalVariable() {
 }
 
 RaveValue NodeVar::generate() {
-    if (currScope == nullptr) return generateGlobalVariable();
+    if (!currScope) return generateGlobalVariable();
     else return generateLocalVariable();
 }
