@@ -33,8 +33,11 @@ public:
     
     void error(std::string msg);
     void error(std::string msg, int line);
+    void error(std::string msg, int line, bool isCritical);
     void warning(std::string msg);
     void warning(std::string msg, int line);
+
+    void checkEOF(std::string msg);
 
     Token* skipStmt();
     Token* skip(int openType, int closeType);

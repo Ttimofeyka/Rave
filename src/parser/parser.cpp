@@ -93,14 +93,19 @@ Parser::Parser(std::vector<Token*> tokens, std::string file)
     };
 }
 
-void Parser::error(std::string msg, int line) {
+void Parser::error(std::string msg, int line, bool isCritical) {
     std::cout << "\033[0;31mError in \033[1m" + file + "\033[22m file at " 
               << line << " line: " << msg << "\033[0;0m" << std::endl;
 
     haveErrors = true;
+    if (isCritical) std::exit(1);
 }
 
+void Parser::error(std::string msg, int line) { error(msg, line, false); }
+
 void Parser::error(std::string msg) { error(msg, peek()->line); }
+
+void Parser::checkEOF(std::string msg) { if(peek()->type == TokType::Eof) error(msg, peek()->line, true); }
 
 void Parser::warning(std::string msg, int line) {
     std::cout << "\033[0;33mWarning in \033[1m" + file + "\033[22m file at " 
@@ -176,6 +181,7 @@ void Parser::parseTopLevel(std::vector<Node*>& list, std::string s) {
 
         Token* tok = peek();
         next();
+        checkEOF("the builtin's name was expected!");
 
         std::vector<Node*> args;
         if (peek()->type == TokType::Rpar) {
@@ -205,6 +211,8 @@ void Parser::parseTopLevel(std::vector<Node*>& list, std::string s) {
         next();
 
         while (peek()->type != TokType::Lpar) {
+            checkEOF("expected expression!");
+
             std::string name = peek()->value;
             next();
 
@@ -225,6 +233,8 @@ void Parser::parseTopLevel(std::vector<Node*>& list, std::string s) {
         if (peek()->value != "struct") return parseDecl(list, s, mods);
         return list.push_back(parseStruct(mods));
     }
+
+    if (peek()->type != TokType::Identifier) error("a declaration was expected!", peek()->line, true);
 
     return parseDecl(list, s);
 }
@@ -379,7 +389,7 @@ void Parser::parseDecl(std::vector<Node*>& list, std::string s, std::vector<Decl
     std::string name = "";
     bool isExtern = false;
 
-    if (peek()->value == "extern") {isExtern = true; next();}
+    if (peek()->value == "extern") { isExtern = true; next(); }
 
     if (peek()->type == TokType::Rpar) {
         next();
