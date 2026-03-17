@@ -1,0 +1,40 @@
+// -Ofast -flto
+
+import <std/io>
+
+alias WIDTH = 4096;
+alias HEIGHT = 4096;
+alias MAX_ITER = 1000;
+
+int mandelbrot(double cr, double ci) {
+    double zr = 0.0;
+    double zi = 0.0;
+    int n = 0;
+
+    while (n < MAX_ITER) {
+        double zr2 = zr * zr;
+        double zi2 = zi * zi;
+        if (zr2 + zi2 > 4.0) {
+            @return(n);
+        }
+        double temp = zr2 - zi2 + cr;
+        zi = 2.0 * zr * zi + ci;
+        zr = temp;
+        n += 1;
+    }
+    @return(n);
+}
+
+void main {
+    long sum = 0;
+
+    for (int y = 0; y < HEIGHT; y++) {
+        for (int x = 0; x < WIDTH; x++) {
+            double cr = (cast(double)x / cast(double)WIDTH) * 3.5 - 2.5;
+            double ci = (cast(double)y / cast(double)HEIGHT) * 2.0 - 1.0;
+            sum += mandelbrot(cr, ci);
+        }
+    }
+
+    std::println(sum);
+}
