@@ -51,7 +51,8 @@ benchmarks/c/dirichlet
 benchmarks/rave/dirichlet
 
 # Tests
-tests/io
+tests/rave/io
+tests/test_nodes
 
 std/*.o
 src/*.o

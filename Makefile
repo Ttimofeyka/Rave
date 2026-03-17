@@ -102,3 +102,9 @@ clean:
 
 cleanStd:
 	rm -rf std/*.o std/*.ll
+
+test: tests/test_nodes
+	./tests/test_nodes
+
+tests/test_nodes: tests/unit/test_nodes.cpp tests/unit/r128_impl.cpp $(OBJ)
+	$(COMPILER) tests/unit/test_nodes.cpp tests/unit/r128_impl.cpp $(filter-out obj/linux/./src/main.o obj/win/./src/main.o, $(OBJ)) -o tests/test_nodes -DLLVM_VERSION=$(LLVM_VERSION) -std=c++17 -Wno-deprecated $(FLAGS) $(LLVM_FLAGS) -fexceptions
