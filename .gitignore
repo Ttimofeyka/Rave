@@ -53,6 +53,7 @@ benchmarks/rave/dirichlet
 # Tests
 tests/rave/io
 tests/test_nodes
+tests/test_parser
 
 std/*.o
 src/*.o
