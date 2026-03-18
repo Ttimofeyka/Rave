@@ -11,6 +11,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../Types.hpp"
 
 class NodeFunc;
+class NodeGet;
 
 struct CallSettings {
     bool isCW64;
@@ -20,6 +21,7 @@ struct CallSettings {
 
 namespace Template {
     extern std::string fromTypes(std::vector<Type*>& types);
+    extern std::vector<Type*> parseTemplateTypes(const std::string& templateStr);
 }
 
 namespace Call {
@@ -30,6 +32,13 @@ namespace Call {
     extern NodeVar* findVarFunction(std::string structName, std::string variable);
     extern std::map<std::pair<std::string, std::string>, NodeFunc*>::iterator findMethod(std::string structName, std::string methodName, std::vector<Node*>& arguments, int loc);
     extern RaveValue make(int loc, Node* function, std::vector<Node*> arguments);
+
+    // Refactored helper functions
+    extern Node* resolveAlias(const std::string& name);
+    extern RaveValue callNamedFunction(int loc, const std::string& name, std::vector<Node*>& arguments);
+    extern RaveValue callTemplateFunction(int loc, const std::string& name, std::vector<Node*>& arguments);
+    extern RaveValue callMethodOnGet(int loc, NodeGet* getFunc, std::vector<Node*>& arguments);
+    extern RaveValue callVarFunction(int loc, const std::string& name, std::vector<Node*>& arguments);
 }
 
 class NodeCall : public Node {
@@ -45,7 +54,7 @@ public:
     RaveValue generate() override;
     Type* __getType(Node* fn);
     Type* getType() override;
-    
+
     Node* comptime() override;
     Node* copy() override;
     void check() override;
