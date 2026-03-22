@@ -1,0 +1,73 @@
+import <std/string> <std/io>
+
+void main {
+    // Test string creation and basic operations
+    std::string s = std::string("hello");
+    std::assert(s.length == 5, "String length should be 5\n");
+    std::assert(s.at(0) == 'h', "First character should be 'h'\n");
+    std::assert(s.at(4) == 'o', "Last character should be 'o'\n");
+
+    // Test string concatenation
+    std::string s2 = std::string(" world");
+    std::string combined = s + s2;
+    std::assert(combined.length == 11, "Combined length should be 11\n");
+    std::assert(combined == "hello world", "Combined string should be 'hello world'\n");
+
+    // Test string add
+    std::string s3 = std::string("test");
+    s3.add('!');
+    std::assert(s3.length == 5, "Length after add should be 5\n");
+    std::assert(s3.at(4) == '!', "Added character should be '!'\n");
+
+    // Test indexOf
+    std::string s4 = std::string("hello world");
+    std::assert(s4.indexOf('o') == 4, "Index of 'o' should be 4\n");
+    std::assert(s4.indexOf("world") == 6, "Index of 'world' should be 6\n");
+
+    // Test substring
+    std::string sub = s4.substring(0, 5);
+    std::assert(sub.length == 5, "Substring length should be 5\n");
+    std::assert(sub == "hello", "Substring should be 'hello'\n");
+
+    // Test replace character
+    std::string s5 = std::string("hello");
+    s5.replace('l', 'x');
+    std::assert(s5 == "hexxo", "After replace should be 'hexxo'\n");
+
+    // Test split
+    std::string s6 = std::string("a,b,c,d");
+    std::vector<std::string> parts = s6.split(',');
+    std::assert(parts.length == 4, "Split should produce 4 parts\n");
+    std::assert(parts[0] == "a", "First part should be 'a'\n");
+    std::assert(parts[3] == "d", "Last part should be 'd'\n");
+
+    // Test trim
+    std::string s7 = std::string("  hello  ");
+    std::string trimmed = s7.trim();
+    std::assert(trimmed == "hello", "Trimmed should be 'hello'\n");
+
+    // Test fromNumber
+    std::string numStr = std::string::fromNumber(42);
+    std::assert(numStr == "42", "fromNumber should produce '42'\n");
+
+    // Test toInt
+    std::string numStr2 = std::string("123");
+    std::assert(numStr2.toInt() == 123, "toInt should return 123\n");
+
+    // Test insert
+    std::string s8 = std::string("helloworld");
+    std::string inserted = s8.insert(5, " ");
+    std::assert(inserted == "hello world", "After insert should be 'hello world'\n");
+
+    // Test copy
+    std::string original = std::string("original");
+    std::string copied = original.copy();
+    std::assert(copied == original, "Copy should equal original\n");
+
+    // Clean up
+    ~s; ~s2; ~combined; ~s3; ~s4; ~sub; ~s5;
+    ~s6; ~s7; ~trimmed; ~numStr; ~numStr2; ~s8; ~inserted;
+    ~original; ~copied;
+
+    std::println("Test passed!");
+}

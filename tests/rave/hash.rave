@@ -1,0 +1,40 @@
+import <std/hash> <std/io>
+
+void main {
+    // Test crc32 with known values
+    char* empty = "";
+    uint emptyHash = std::hash::crc32(empty, 0);
+    std::assert(emptyHash == 0, "Empty string hash should be 0\n");
+
+    // Test hash consistency
+    char* test1 = "hello";
+    uint hash1 = std::hash::crc32(test1, 5);
+    uint hash2 = std::hash::crc32(test1, 5);
+    std::assert(hash1 == hash2, "Same input should produce same hash\n");
+
+    // Test different inputs produce different hashes
+    char* test2 = "world";
+    uint hash3 = std::hash::crc32(test2, 5);
+    std::assert(hash1 != hash3, "Different inputs should produce different hashes\n");
+
+    // Test longer string
+    char* longStr = "The quick brown fox jumps over the lazy dog";
+    uint longHash = std::hash::crc32(longStr, 43);
+    std::assert(longHash != 0, "Long string hash should not be 0\n");
+
+    // Test hash consistency for longer string
+    uint longHash2 = std::hash::crc32(longStr, 43);
+    std::assert(longHash == longHash2, "Same long string should produce same hash\n");
+
+    // Test single character
+    char* single = "a";
+    uint singleHash = std::hash::crc32(single, 1);
+    std::assert(singleHash != 0, "Single char hash should not be 0\n");
+
+    // Test numeric characters
+    char* numbers = "12345";
+    uint numHash = std::hash::crc32(numbers, 5);
+    std::assert(numHash != 0, "Numbers hash should not be 0\n");
+
+    std::println("Test passed!");
+}

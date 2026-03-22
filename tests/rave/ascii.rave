@@ -1,0 +1,55 @@
+import <std/ascii> <std/io>
+
+void main {
+    // Test isSpace
+    std::assert(std::ascii::isSpace(' '), "Space should be a space\n");
+    std::assert(std::ascii::isSpace('\t'), "Tab should be a space\n");
+    std::assert(std::ascii::isSpace('\n'), "Newline should be a space\n");
+    std::assert(std::ascii::isSpace('\r'), "Carriage return should be a space\n");
+    std::assert(!std::ascii::isSpace('a'), "'a' should not be a space\n");
+
+    // Test isPrint
+    std::assert(std::ascii::isPrint('a'), "'a' should be printable\n");
+    std::assert(std::ascii::isPrint('Z'), "'Z' should be printable\n");
+    std::assert(std::ascii::isPrint(' '), "Space should be printable\n");
+    std::assert(!std::ascii::isPrint(1c), "Control char should not be printable\n");
+
+    // Test isLower
+    std::assert(std::ascii::isLower('a'), "'a' should be lowercase\n");
+    std::assert(std::ascii::isLower('z'), "'z' should be lowercase\n");
+    std::assert(!std::ascii::isLower('A'), "'A' should not be lowercase\n");
+    std::assert(!std::ascii::isLower('1'), "'1' should not be lowercase\n");
+
+    // Test isUpper
+    std::assert(std::ascii::isUpper('A'), "'A' should be uppercase\n");
+    std::assert(std::ascii::isUpper('Z'), "'Z' should be uppercase\n");
+    std::assert(!std::ascii::isUpper('a'), "'a' should not be uppercase\n");
+    std::assert(!std::ascii::isUpper('1'), "'1' should not be uppercase\n");
+
+    // Test isDigit
+    std::assert(std::ascii::isDigit('0'), "'0' should be a digit\n");
+    std::assert(std::ascii::isDigit('5'), "'5' should be a digit\n");
+    std::assert(std::ascii::isDigit('9'), "'9' should be a digit\n");
+    std::assert(!std::ascii::isDigit('a'), "'a' should not be a digit\n");
+
+    // Test isXDigit
+    std::assert(std::ascii::isXDigit('0'), "'0' should be a hex digit\n");
+    std::assert(std::ascii::isXDigit('9'), "'9' should be a hex digit\n");
+    std::assert(std::ascii::isXDigit('a'), "'a' should be a hex digit\n");
+    std::assert(std::ascii::isXDigit('F'), "'F' should be a hex digit\n");
+    std::assert(!std::ascii::isXDigit('g'), "'g' should not be a hex digit\n");
+
+    // Test toLower
+    std::assert(std::ascii::toLower('A') == 'a', "toLower('A') should be 'a'\n");
+    std::assert(std::ascii::toLower('Z') == 'z', "toLower('Z') should be 'z'\n");
+    std::assert(std::ascii::toLower('a') == 'a', "toLower('a') should be 'a'\n");
+    std::assert(std::ascii::toLower('1') == '1', "toLower('1') should be '1'\n");
+
+    // Test toUpper
+    std::assert(std::ascii::toUpper('a') == 'A', "toUpper('a') should be 'A'\n");
+    std::assert(std::ascii::toUpper('z') == 'Z', "toUpper('z') should be 'Z'\n");
+    std::assert(std::ascii::toUpper('A') == 'A', "toUpper('A') should be 'A'\n");
+    std::assert(std::ascii::toUpper('1') == '1', "toUpper('1') should be '1'\n");
+
+    std::println("Test passed!");
+}

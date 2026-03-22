@@ -1,0 +1,30 @@
+import <std/time> <std/io>
+
+void main {
+    // Test getCurrentTime
+    std::time t1;
+    int result = std::getCurrentTime(&t1);
+    std::assert(result == 0, "getCurrentTime should return 0\n");
+    std::assert(t1.seconds > 0, "Seconds should be positive\n");
+
+    // Test that time progresses
+    std::time t2;
+    std::sleep(10); // Sleep 10ms
+    std::getCurrentTime(&t2);
+    std::assert(t2.seconds >= t1.seconds, "Time should progress\n");
+
+    // Test sleep (basic functionality - just ensure it doesn't crash)
+    std::sleep(5); // Short sleep
+    std::sleep(0); // Zero sleep
+
+    // Test multiple time calls
+    std::time t3;
+    std::time t4;
+    std::getCurrentTime(&t3);
+    std::getCurrentTime(&t4);
+    // Both should succeed
+    std::assert(t3.seconds > 0, "Time should be valid\n");
+    std::assert(t4.seconds > 0, "Time should be valid\n");
+
+    std::println("Test passed!");
+}
