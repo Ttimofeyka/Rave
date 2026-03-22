@@ -7,6 +7,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeStruct.hpp"
 #include "../../include/utils.hpp"
 #include "../../include/parser/ast.hpp"
+#include "../../include/parser/FuncRegistry.hpp"
 #include "../../include/parser/nodes/NodeVar.hpp"
 #include "../../include/parser/nodes/NodeFunc.hpp"
 #include "../../include/parser/nodes/NodeBinary.hpp"
@@ -152,6 +153,7 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
             else if (func->origName == "~this") {
                 this->destructor = func;
                 func->name = "~" + this->origname;
+                func->structContext = this->name;  // Set struct context for destructor
                 func->namespacesNames = std::vector<std::string>(this->namespacesNames);
                 func->isTemplatePart = this->isLinkOnce;
                 func->isComdat = this->isComdat;
@@ -199,6 +201,8 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 if (oper != TokType::Rbra) func->name = func->name + typesToString(func->args);
                 this->operators[oper][(oper != TokType::Rbra ? typesToString(func->args) : "")] = func;
                 this->methods.push_back(func);
+                // Register operator with FuncRegistry
+                FuncRegistry::instance().registerOperator(func, this->name, oper);
                 func->check();
             }
             else {
@@ -215,6 +219,7 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                 func->isTemplatePart = this->isLinkOnce;
                 func->name = this->name + "." + func->origName;
                 func->isMethod = true;
+                func->structContext = this->name;  // Set struct context for methods
                 func->isExtern = (func->isExtern || this->isImported);
                 func->isComdat = this->isComdat;
 
@@ -231,6 +236,7 @@ std::vector<LLVMTypeRef> NodeStruct::getParameters(bool isLinkOnce) {
                     else generator->error("method \033[1m" + func->origName + "\033[22m has already been declared on \033[1m" + std::to_string(AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)]->loc) + "\033[22m line!", this->loc);
                 }
                 else AST::methodTable[std::pair<std::string, std::string>(this->name, func->origName)] = func;
+                func->check();
                 this->methods.push_back(func);
             }
         }

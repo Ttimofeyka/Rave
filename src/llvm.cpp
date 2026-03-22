@@ -52,7 +52,13 @@ RaveValue LLVM::call(RaveValue fn, LLVMValueRef* args, unsigned int argsCount, c
 
 // Wrapper for the LLVMBuildCall2 function using RaveValue; accepts a vector of RaveValue instead of pointer to LLVMValueRef.
 RaveValue LLVM::call(RaveValue fn, std::vector<RaveValue> args, const char* name, std::vector<int> byVals) {
+    if (fn.type == nullptr) {
+        return {nullptr, nullptr};
+    }
     TypeFunc* tfunc = instanceof<TypePointer>(fn.type) ? (TypeFunc*)fn.type->getElType() : (TypeFunc*)fn.type;
+    if (tfunc == nullptr) {
+        return {nullptr, nullptr};
+    }
     std::vector<LLVMValueRef> lArgs(args.size());
     std::transform(args.begin(), args.end(), lArgs.begin(), [](RaveValue& arg) { return arg.value; });
 

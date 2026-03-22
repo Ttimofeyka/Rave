@@ -5,6 +5,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 #include "../../include/parser/ast.hpp"
+#include "../../include/parser/FuncRegistry.hpp"
+#include "../../include/parser/FuncSignature.hpp"
 #include <vector>
 #include <string>
 #include "../../include/parser/nodes/NodeFunc.hpp"
@@ -179,8 +181,14 @@ void NodeFunc::check() {
 
     // Process modifiers
     for (const auto& mod : mods) {
-        if (mod.name == "method") name = "{" + args[0].type->toString() + "}" + name;
+        if (mod.name == "method") {
+            name = "{" + args[0].type->toString() + "}" + name;
+            structContext = args[0].type->toString();
+        }
         else if (mod.name == "noNamespaces") isNoNamespaces = true;
+        else if (mod.name == "vararg") isVararg = true;
+        else if (mod.name == "cdecl64") isCdecl64 = true;
+        else if (mod.name == "win64") isWin64 = true;
     }
 
     // Handle namespaces
@@ -197,6 +205,14 @@ void NodeFunc::check() {
                     AST::funcVersionsTable[name].erase(AST::funcVersionsTable[name].begin() + i);
                     break;
                 }
+            }
+
+            // Register with FuncRegistry
+            mangledName = name;
+            if (!structContext.empty()) {
+                FuncRegistry::instance().registerMethod(this, structContext);
+            } else {
+                FuncRegistry::instance().registerFunc(this);
             }
 
             for (auto node : block->nodes) node->check();
@@ -220,8 +236,18 @@ void NodeFunc::check() {
     }
     else AST::funcVersionsTable[name].push_back(this);
 
-    // Register function
+    // Store the mangled name for LLVM
+    mangledName = name;
+
+    // Register function in legacy table
     AST::funcTable[name] = this;
+
+    // Register with FuncRegistry
+    if (!structContext.empty()) {
+        FuncRegistry::instance().registerMethod(this, structContext);
+    } else {
+        FuncRegistry::instance().registerFunc(this);
+    }
 
     // Check block contents
     if (block == nullptr) {
@@ -366,7 +392,11 @@ RaveValue NodeFunc::generate() {
     }
 
     LLVMValueRef fn = LLVMGetNamedFunction(generator->lModule, linkName.c_str());
-    if (fn != nullptr) return {};
+    if (fn != nullptr) {
+        // Function already exists in LLVM module, register it in generator->functions
+        generator->functions[name] = {fn, tfunc};
+        return {};
+    }
 
     createLLVMFunction(tfunc, callConv);
     createDebugInfo();
@@ -491,6 +521,7 @@ RaveValue NodeFunc::generateWithTemplate(std::vector<Type*>& types, const std::s
     NodeFunc* _f = new NodeFunc(all, args, (NodeBlock*)block->copy(), isExtern, mods, loc, type->copy(), templateNames);
     _f->isTemplate = true;
     _f->isMethod = isMethod;
+    _f->structContext = structContext;  // Preserve struct context for methods
     _f->check();
     _f->templateTypes = std::move(types);
     RaveValue v = _f->generate();
@@ -542,4 +573,32 @@ Type* NodeFunc::getArgType(std::string name) {
         if (args[i].name == name) return args[i].type;
     }
     return nullptr;
+}
+
+FuncSignature NodeFunc::getSignature() const {
+    std::vector<Type*> paramTypes;
+    for (const auto& arg : args) {
+        paramTypes.push_back(arg.type);
+    }
+    return FuncSignature(origName, paramTypes, structContext);
+}
+
+std::string NodeFunc::computeMangledName() const {
+    if (!mangledName.empty()) return mangledName;
+
+    std::string result;
+
+    // Add struct context for methods
+    if (!structContext.empty()) {
+        result = "{" + structContext + "}";
+    }
+
+    result += origName;
+
+    // Add type signature for overloads
+    if (!args.empty()) {
+        result += typesToString(const_cast<std::vector<FuncArgSet>&>(args));
+    }
+
+    return result;
 }

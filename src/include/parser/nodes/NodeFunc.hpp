@@ -11,6 +11,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "NodeBlock.hpp"
 #include "../parser.hpp"
 #include "../Types.hpp"
+#include "../FuncSignature.hpp"
 #include <vector>
 #include <string>
 
@@ -20,9 +21,11 @@ struct RetGenStmt;
 
 class NodeFunc : public Node {
 public:
-    std::string name;
-    std::string origName;
-    std::string linkName;
+    std::string name;           // Mangled name (for backward compatibility during migration)
+    std::string origName;       // Original clean function name
+    std::string linkName;       // LLVM link name
+    std::string mangledName;    // Computed mangled name for LLVM (set during check)
+    std::string structContext;  // Struct name if this is a method, empty otherwise
     std::vector<std::string> namespacesNames;
     std::vector<std::string> templateNames;
     std::vector<Type*> templateTypes;
@@ -79,6 +82,12 @@ public:
     Type* getInternalArgType(LLVMValueRef value);
     std::string generateWithCtargs(std::vector<Type*> args);
     RaveValue generateWithTemplate(std::vector<Type*>& types, const std::string& all);
+
+    // Get the function signature for registry lookup
+    FuncSignature getSignature() const;
+
+    // Compute the mangled name for LLVM linkage
+    std::string computeMangledName() const;
 
 private:
     void processModifiers(int& callConv, NodeArray*& conditions);

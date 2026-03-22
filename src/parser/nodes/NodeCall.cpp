@@ -21,6 +21,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeType.hpp"
 #include "../../include/parser/Types.hpp"
 #include "../../include/parser/ast.hpp"
+#include "../../include/parser/FuncRegistry.hpp"
+#include "../../include/parser/TypeMatching.hpp"
 #include "../../include/lexer/lexer.hpp"
 #include "../../include/llvm.hpp"
 
@@ -33,7 +35,12 @@ NodeCall::~NodeCall() {
 }
 
 inline void checkAndGenerate(std::string name) {
-    if (generator->functions.find(name) == generator->functions.end()) AST::funcTable[name]->generate();
+    if (generator->functions.find(name) == generator->functions.end()) {
+        if (AST::funcTable.find(name) == AST::funcTable.end()) {
+            return;
+        }
+        AST::funcTable[name]->generate();
+    }
 }
 
 bool hasIdenticallyArgs(const std::vector<Type*>& one, const std::vector<FuncArgSet>& two, NodeFunc* fn) {
@@ -104,9 +111,9 @@ RaveValue checkThis(int loc, const std::string& ifName, std::vector<Node*> argum
 
         arguments.insert(arguments.begin(), new NodeIden("this", loc));
         auto methodf = Call::findMethod(_struct->name, ifName, arguments, loc);
-        std::vector<RaveValue> params = Call::genParameters(arguments, byVals, methodf->second, loc);
+        std::vector<RaveValue> params = Call::genParameters(arguments, byVals, methodf, loc);
         if (instanceof<TypePointer>(params[0].type->getElType())) params[0] = LLVM::load(params[0], "NodeCall_load", loc);
-        return LLVM::call(generator->functions[methodf->second->name], params, (instanceof<TypeVoid>(methodf->second->type) ? "" : "callFunc"), byVals);
+        return LLVM::call(generator->functions[methodf->name], params, (instanceof<TypeVoid>(methodf->type) ? "" : "callFunc"), byVals);
     }
     return {nullptr, nullptr};
 }
@@ -263,7 +270,7 @@ NodeVar* Call::findVarFunction(std::string structName, std::string varName) {
     return (AST::structMembersTable.find(var) != AST::structMembersTable.end()) ? AST::structMembersTable[var].var : nullptr;
 }
 
-std::map<std::pair<std::string, std::string>, NodeFunc*>::iterator Call::findMethod(std::string structName, std::string methodName, std::vector<Node*>& arguments, int loc) {
+NodeFunc* Call::findMethod(std::string structName, std::string methodName, std::vector<Node*>& arguments, int loc) {
     std::string templateTypes = "";
 
     if (methodName.find('<') != std::string::npos) {
@@ -272,34 +279,55 @@ std::map<std::pair<std::string, std::string>, NodeFunc*>::iterator Call::findMet
         methodName = methodName.substr(0, methodName.find('<'));
     }
 
-    auto method = std::pair<std::string, std::string>(structName, methodName);
-    auto methodf = AST::methodTable.find(method);
+    // Get argument types for signature matching
+    std::vector<Type*> argTypes = Call::getTypes(arguments);
 
-    if (methodf == AST::methodTable.end() || !hasIdenticallyArgs(Call::getTypes(arguments), methodf->second->args, methodf->second)) {
-        std::vector<Type*> types = Call::getTypes(arguments);
-        method.second += typesToString(types);
-        methodf = AST::methodTable.find(method);
+    // Create signature for method lookup
+    FuncSignature sig(methodName, argTypes, structName);
+
+    // Try FuncRegistry with signature
+    NodeFunc* methodFunc = FuncRegistry::instance().findBestMatch(sig);
+
+    // If found but it's a template base (not a specialization), we need to look for a specialization
+    if (methodFunc != nullptr && !methodFunc->templateNames.empty() && !methodFunc->isTemplate) {
+        methodFunc = nullptr;  // Reset to try legacy lookup
     }
 
-    if (methodf == AST::methodTable.end()) {method.second = method.second.substr(0, method.second.find('[')); methodf = AST::methodTable.find(method);}
+    // Fallback to legacy lookup if not found
+    if (methodFunc == nullptr) {
+        auto method = std::pair<std::string, std::string>(structName, methodName);
+        auto methodf = AST::methodTable.find(method);
 
-    if (methodf == AST::methodTable.end() || methodf->second->args.size() != arguments.size()) {
-        for (auto& it : AST::methodTable) {
-            if (it.first.first != structName || it.second->args.size() != arguments.size()) continue;
-            if (it.first.second != methodName) {
-                if (it.first.second.find(methodName + "[") != 0 && it.first.second.find(methodName + "<") != 0) continue;
-            }
-            method.second = it.first.second;
+        if (methodf == AST::methodTable.end() || !hasIdenticallyArgs(argTypes, methodf->second->args, methodf->second)) {
+            method.second += typesToString(argTypes);
             methodf = AST::methodTable.find(method);
-            break;
         }
-    }
 
-    if (methodf == AST::methodTable.end())
-        generator->error("undefined method \033[1m" + methodName + "\033[22m of the structure \033[1m" + structName + "\033[22m!", loc);
+        if (methodf == AST::methodTable.end()) {
+            method.second = method.second.substr(0, method.second.find('['));
+            methodf = AST::methodTable.find(method);
+        }
+
+        if (methodf == AST::methodTable.end() || methodf->second->args.size() != arguments.size()) {
+            for (auto& it : AST::methodTable) {
+                if (it.first.first != structName || it.second->args.size() != arguments.size()) continue;
+                if (it.first.second != methodName) {
+                    if (it.first.second.find(methodName + "[") != 0 && it.first.second.find(methodName + "<") != 0) continue;
+                }
+                method.second = it.first.second;
+                methodf = AST::methodTable.find(method);
+                break;
+            }
+        }
+
+        if (methodf == AST::methodTable.end())
+            generator->error("undefined method \033[1m" + methodName + "\033[22m of the structure \033[1m" + structName + "\033[22m!", loc);
+
+        methodFunc = methodf->second;
+    }
 
     if (templateTypes.length() > 0) {
-        if (generator->functions.find(methodf->second->name + "<" + templateTypes + ">") == generator->functions.end()) {
+        if (generator->functions.find(methodFunc->name + "<" + templateTypes + ">") == generator->functions.end()) {
             std::vector<Type*> types = Template::parseTemplateTypes(templateTypes);
             templateTypes = "<";
             for (size_t i=0; i<types.size(); i++) {
@@ -307,13 +335,18 @@ std::map<std::pair<std::string, std::string>, NodeFunc*>::iterator Call::findMet
                 templateTypes += types[i]->toString() + ",";
             }
             templateTypes.back() = '>';
-            methodf->second->generateWithTemplate(types, methodName + templateTypes);
-            methodf = AST::methodTable.find(std::pair<std::string, std::string>(methodf->first.first, methodName + templateTypes));
+            methodFunc->generateWithTemplate(types, methodName + templateTypes);
+            // Find the newly generated method
+            FuncSignature newSig(methodName + templateTypes, argTypes, structName);
+            NodeFunc* newMethod = FuncRegistry::instance().findBestMatch(newSig);
+            if (newMethod != nullptr) methodFunc = newMethod;
         }
     }
-    else if (generator->functions.find(methodf->second->name) == generator->functions.end()) methodf->second->generate();
+    else if (generator->functions.find(methodFunc->name) == generator->functions.end()) {
+        methodFunc->generate();
+    }
 
-    return methodf;
+    return methodFunc;
 }
 
 RaveValue Call::callVarFunction(int loc, const std::string& name, std::vector<Node*>& arguments) {
@@ -393,54 +426,99 @@ RaveValue Call::callTemplateFunction(int loc, const std::string& name, std::vect
 
 RaveValue Call::callNamedFunction(int loc, const std::string& name, std::vector<Node*>& arguments) {
     std::vector<int> byVals;
-    checkAndGenerate(name);
 
+    // Get argument types for signature matching
     std::vector<Type*> types = Call::getTypes(arguments);
-    std::string sTypes = typesToString(types);
 
-    if (generator->functions.find(name) == generator->functions.end()) {
-        if (AST::funcTable[name]->isCtargs) {
-            std::vector<RaveValue> params = Call::genParameters(arguments, byVals, AST::funcTable[name], loc);
-            if (generator->functions.find(name + sTypes) != generator->functions.end())
-                return LLVM::call(generator->functions[name + sTypes], params, (instanceof<TypeVoid>(AST::funcTable[name]->type) ? "" : "callFunc"), byVals);
-            return LLVM::call(generator->functions[AST::funcTable[name]->generateWithCtargs(Call::getParamsTypes(params))], params, (instanceof<TypeVoid>(AST::funcTable[name]->type) ? "" : "callFunc"));
+    // First, check if there's a vararg/cdecl64/win64 function by base name
+    // These functions accept any number of args >= declared params
+    NodeFunc* targetFunc = nullptr;
+    auto overloads = FuncRegistry::instance().findAllOverloads(name);
+    for (auto* func : overloads) {
+        if ((func->isVararg || func->isCdecl64 || func->isWin64) && func->args.size() <= arguments.size()) {
+            targetFunc = func;
+            break;
         }
+    }
 
-        if (AST::funcTable[name]->templateNames.size() > 0) {
-            std::string sTypes = Template::fromTypes(types);
-            if (AST::funcTable[name]->args.size() != arguments.size() && !AST::funcTable[name]->isCdecl64 && !AST::funcTable[name]->isWin64 && !AST::funcTable[name]->isVararg)
-                generator->error("wrong number of arguments for calling function \033[1m" + name + sTypes + "\033[22m (\033[1m" + std::to_string(AST::funcTable[name]->args.size()) + "\033[22m expected, \033[1m" + std::to_string(arguments.size()) + "\033[22m provided)!", loc);
-
-            if (AST::funcTable.find(name + sTypes) != AST::funcTable.end()) {
-                std::vector<RaveValue> params = Call::genParameters(arguments, byVals, AST::funcTable[name + sTypes], loc);
-                return LLVM::call(generator->functions[name + sTypes], params, (instanceof<TypeVoid>(AST::funcTable[name + sTypes]->type) ? "" : "callFunc"), byVals);
-            }
-
-            size_t tnSize = AST::funcTable[name]->templateNames.size();
-            NodeFunc* tnFunction = AST::funcTable[name];
-            std::vector<RaveValue> params = Call::genParameters(arguments, byVals, tnFunction, loc);
-            types = Call::getParamsTypes(params);
-
-            while (types.size() > tnSize) types.pop_back();
-            sTypes = Template::fromTypes(types);
-
-            if (types.size() == tnSize)
-                return LLVM::call(tnFunction->generateWithTemplate(types, name + sTypes), params, (instanceof<TypeVoid>(tnFunction->type) ? "" : "callFunc"), byVals);
-            else generator->error("wrong number of template types for calling function \033[1m" + name + "\033[22m (\033[1m" + std::to_string(tnSize) + "\033[22m expected, \033[1m" + std::to_string(types.size()) + "\033[22m provided)!", loc);
+    // Also check legacy funcTable for vararg functions
+    if (targetFunc == nullptr && AST::funcTable.find(name) != AST::funcTable.end()) {
+        NodeFunc* func = AST::funcTable[name];
+        if ((func->isVararg || func->isCdecl64 || func->isWin64) && func->args.size() <= arguments.size()) {
+            targetFunc = func;
         }
+    }
 
+    // If not vararg, try signature matching
+    if (targetFunc == nullptr) {
+        FuncSignature sig(name, types);
+        targetFunc = FuncRegistry::instance().findBestMatch(sig);
+        // If found but it's a template base (not a specialization), skip it
+        if (targetFunc != nullptr && !targetFunc->templateNames.empty() && !targetFunc->isTemplate) {
+            targetFunc = nullptr;
+        }
+    }
+
+    // If still not found, try by base name for other cases
+    if (targetFunc == nullptr) {
+        targetFunc = FuncRegistry::instance().findBestMatch(name, types);
+        // If found but it's a template base (not a specialization), skip it
+        if (targetFunc != nullptr && !targetFunc->templateNames.empty() && !targetFunc->isTemplate) {
+            targetFunc = nullptr;
+        }
+    }
+
+    // Fallback to legacy lookup if not found in registry
+    if (targetFunc == nullptr && AST::funcTable.find(name) != AST::funcTable.end()) {
+        targetFunc = AST::funcTable[name];
+    }
+
+    if (targetFunc == nullptr) {
         generator->error("undefined function \033[1m" + name + "\033[22m!", loc);
     }
 
-    if (AST::funcTable.find(name + sTypes) != AST::funcTable.end()) {
-        checkAndGenerate(name + sTypes);
-        std::vector<RaveValue> params = Call::genParameters(arguments, byVals, AST::funcTable[name + sTypes], loc);
-        return LLVM::call(generator->functions[name + sTypes], params, (instanceof<TypeVoid>(AST::funcTable[name + sTypes]->type) ? "" : "callFunc"), byVals);
+    // Handle ctargs functions
+    if (targetFunc->isCtargs) {
+        checkAndGenerate(targetFunc->name);
+        std::vector<RaveValue> params = Call::genParameters(arguments, byVals, targetFunc, loc);
+        std::string sTypes = typesToString(types);
+
+        if (generator->functions.find(targetFunc->name + sTypes) != generator->functions.end())
+            return LLVM::call(generator->functions[targetFunc->name + sTypes], params, (instanceof<TypeVoid>(targetFunc->type) ? "" : "callFunc"), byVals);
+        return LLVM::call(generator->functions[targetFunc->generateWithCtargs(Call::getParamsTypes(params))], params, (instanceof<TypeVoid>(targetFunc->type) ? "" : "callFunc"));
     }
 
-    std::vector<NodeFunc*>& related = AST::funcVersionsTable[name];
+    // Handle template functions
+    if (!targetFunc->templateNames.empty()) {
+        std::string sTypes = Template::fromTypes(types);
+        if (targetFunc->args.size() != arguments.size() && !targetFunc->isCdecl64 && !targetFunc->isWin64 && !targetFunc->isVararg)
+            generator->error("wrong number of arguments for calling function \033[1m" + name + sTypes + "\033[22m (\033[1m" + std::to_string(targetFunc->args.size()) + "\033[22m expected, \033[1m" + std::to_string(arguments.size()) + "\033[22m provided)!", loc);
 
-    if (AST::funcTable[name]->isArrayable && arguments.size() > 0) {
+        // Check if template specialization already exists
+        FuncSignature specializedSig(name + sTypes, types);
+        NodeFunc* specialized = FuncRegistry::instance().findBySignature(specializedSig);
+
+        if (specialized != nullptr) {
+            checkAndGenerate(specialized->name);
+            std::vector<RaveValue> params = Call::genParameters(arguments, byVals, specialized, loc);
+            return LLVM::call(generator->functions[specialized->name], params, (instanceof<TypeVoid>(specialized->type) ? "" : "callFunc"), byVals);
+        }
+
+        // Generate template specialization
+        size_t tnSize = targetFunc->templateNames.size();
+        std::vector<RaveValue> params = Call::genParameters(arguments, byVals, targetFunc, loc);
+        types = Call::getParamsTypes(params);
+
+        while (types.size() > tnSize) types.pop_back();
+        sTypes = Template::fromTypes(types);
+
+        if (types.size() == tnSize)
+            return LLVM::call(targetFunc->generateWithTemplate(types, name + sTypes), params, (instanceof<TypeVoid>(targetFunc->type) ? "" : "callFunc"), byVals);
+        else generator->error("wrong number of template types for calling function \033[1m" + name + "\033[22m (\033[1m" + std::to_string(tnSize) + "\033[22m expected, \033[1m" + std::to_string(types.size()) + "\033[22m provided)!", loc);
+    }
+
+    // Handle arrayable flag - transform arguments if needed
+    if (targetFunc->isArrayable && arguments.size() > 0) {
         std::vector<Node*> newArgs;
         bool isChanged = false;
         for (size_t i=0; i<arguments.size(); i++) {
@@ -453,23 +531,27 @@ RaveValue Call::callNamedFunction(int loc, const std::string& name, std::vector<
         if (isChanged) {
             arguments = newArgs;
             types = Call::getTypes(newArgs);
-            sTypes = typesToString(types);
+            // Re-resolve with new argument types
+            FuncSignature newSig(name, types);
+            NodeFunc* newTarget = FuncRegistry::instance().findBestMatch(newSig);
+            if (newTarget != nullptr) targetFunc = newTarget;
         }
     }
 
-    for (size_t i=0; i<related.size(); i++) {
-        if (hasIdenticallyArgs(types, related[i]->args, related[i])) {
-            checkAndGenerate(related[i]->name);
-            std::vector<RaveValue> params = Call::genParameters(arguments, byVals, related[i], loc);
-            return LLVM::call(generator->functions[related[i]->name], params, (instanceof<TypeVoid>(related[i]->type) ? "" : "callFunc"), byVals);
-        }
+    // Check argument count for regular functions
+    if (!targetFunc->isCdecl64 && !targetFunc->isWin64 && !targetFunc->isVararg && targetFunc->args.size() != arguments.size())
+        generator->error("wrong number of arguments for calling function \033[1m" + name + "\033[22m (\033[1m" + std::to_string(targetFunc->args.size()) + "\033[22m expected, \033[1m" + std::to_string(arguments.size()) + "\033[22m provided)!", loc);
+
+    // Generate function call
+    checkAndGenerate(targetFunc->name);
+    if (generator->functions.find(targetFunc->name) == generator->functions.end()) {
+        generator->error("internal error: function \033[1m" + targetFunc->name + "\033[22m not found in generator!", loc);
     }
-
-    if (!AST::funcTable[name]->isCdecl64 && !AST::funcTable[name]->isWin64 && !AST::funcTable[name]->isVararg && AST::funcTable[name]->args.size() != arguments.size())
-        generator->error("wrong number of arguments for calling function \033[1m" + name + "\033[22m (\033[1m" + std::to_string(AST::funcTable[name]->args.size()) + "\033[22m expected, \033[1m" + std::to_string(arguments.size()) + "\033[22m provided)!", loc);
-
-    std::vector<RaveValue> params = Call::genParameters(arguments, byVals, AST::funcTable[name], loc);
-    return LLVM::call(generator->functions[name], params, (instanceof<TypeVoid>(AST::funcTable[name]->type) ? "" : "callFunc"), byVals);
+    if (generator->functions[targetFunc->name].value == nullptr) {
+        generator->error("internal error: function \033[1m" + targetFunc->name + "\033[22m has null LLVM value!", loc);
+    }
+    std::vector<RaveValue> params = Call::genParameters(arguments, byVals, targetFunc, loc);
+    return LLVM::call(generator->functions[targetFunc->name], params, (instanceof<TypeVoid>(targetFunc->type) ? "" : "callFunc"), byVals);
 }
 
 RaveValue Call::callMethodOnGet(int loc, NodeGet* getFunc, std::vector<Node*>& arguments) {
@@ -498,9 +580,12 @@ RaveValue Call::callMethodOnGet(int loc, NodeGet* getFunc, std::vector<Node*>& a
 
             arguments.insert(arguments.begin(), getFunc->base);
             auto methodf = Call::findMethod(structure->name, getFunc->field, arguments, loc);
-            std::vector<RaveValue> params = Call::genParameters(arguments, byVals, methodf->second, loc);
+            if (generator->functions.find(methodf->name) == generator->functions.end()) {
+                generator->error("internal error: method \033[1m" + methodf->name + "\033[22m not found in generator!", loc);
+            }
+            std::vector<RaveValue> params = Call::genParameters(arguments, byVals, methodf, loc);
             if (instanceof<TypePointer>(params[0].type->getElType())) params[0] = LLVM::load(params[0], "NodeCall_load", loc);
-            return LLVM::call(generator->functions[methodf->second->name], params, (instanceof<TypeVoid>(methodf->second->type) ? "" : "callFunc"), byVals);
+            return LLVM::call(generator->functions[methodf->name], params, (instanceof<TypeVoid>(methodf->type) ? "" : "callFunc"), byVals);
         }
 
         generator->error("structure \033[1m" + structure->name + "\033[22m does not exist!", loc);
@@ -534,9 +619,12 @@ RaveValue Call::callMethodOnGet(int loc, NodeGet* getFunc, std::vector<Node*>& a
     if (AST::structTable.find(structure->toString()) != AST::structTable.end()) {
         arguments.insert(arguments.begin(), getFunc->base);
         auto methodf = Call::findMethod(structure->toString(), getFunc->field, arguments, loc);
-        std::vector<RaveValue> params = Call::genParameters(arguments, byVals, methodf->second, loc);
+        if (generator->functions.find(methodf->name) == generator->functions.end()) {
+            generator->error("internal error: method \033[1m" + methodf->name + "\033[22m not found in generator!", loc);
+        }
+        std::vector<RaveValue> params = Call::genParameters(arguments, byVals, methodf, loc);
         if (instanceof<TypePointer>(params[0].type->getElType())) params[0] = LLVM::load(params[0], "NodeCall_load", loc);
-        return LLVM::call(generator->functions[methodf->second->name], params, (instanceof<TypeVoid>(methodf->second->type) ? "" : "callFunc"), byVals);
+        return LLVM::call(generator->functions[methodf->name], params, (instanceof<TypeVoid>(methodf->type) ? "" : "callFunc"), byVals);
     }
 
     generator->error("structure \033[1m" + structure->toString() + "\033[22m does not exist!", loc);
