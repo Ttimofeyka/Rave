@@ -409,3 +409,94 @@ void main {
     void* ptr = @alloca(4);
 }
 ```
+
+**@atomicTAS(ptr, value)** - Atomic test-and-set operation. Atomically exchanges the value at the pointer with the new value and returns the old value.
+
+Example:
+
+```d
+int lock = 0;
+int old = @atomicTAS(&lock, 1); // Returns 0, lock is now 1
+```
+
+**@atomicClear(ptr)** - Atomically clears (sets to zero) the value at the pointer.
+
+Example:
+
+```d
+int lock = 1;
+@atomicClear(&lock); // lock is now 0
+```
+
+**@ctlz(value, isZeroPoison)** - Count leading zeros in an integer. If `isZeroPoison` is true and the value is zero, the result is undefined.
+
+Example:
+
+```d
+int leading = @ctlz(16, false); // Returns 27 (for 32-bit int: 0x00000010 has 27 leading zeros)
+```
+
+**@cttz(value, isZeroPoison)** - Count trailing zeros in an integer. If `isZeroPoison` is true and the value is zero, the result is undefined.
+
+Example:
+
+```d
+int trailing = @cttz(16, false); // Returns 4 (16 = 0x10 has 4 trailing zeros)
+```
+
+**@minOf(type), @maxOf(type)** - Get the minimum or maximum value that a numeric type can hold.
+
+Example:
+
+```d
+int minInt = @minOf(int);    // -2147483647
+int maxInt = @maxOf(int);    // 2147483647
+ulong maxUlong = @maxOf(ulong); // 18446744073709551615
+```
+
+**@isFloat(type), @isUnsigned(type)** - Check if a type is a floating-point type or an unsigned integer type.
+
+Example:
+
+```d
+@if (@isFloat(float)) { /* true */ }
+@if (@isFloat(double)) { /* true */ }
+@if (@isUnsigned(uint)) { /* true */ }
+@if (@isUnsigned(ulong)) { /* true */ }
+```
+
+**@addLibrary(name)** - Add a library to the linker at compile time.
+
+Example:
+
+```d
+@addLibrary("pthread");
+@addLibrary("m"); // Link with libm (math library)
+```
+
+**@return(value)** - Early return from a function inside an expression context.
+
+Example:
+
+```d
+int factorial(int n) {
+    @if (n <= 1) @return(1);
+} => n * factorial(n - 1);
+```
+
+**@fmodf(value, divisor)** - Floating-point modulo operation. Returns the remainder of division.
+
+Example:
+
+```d
+float rem = @fmodf(7.5f, 2.0f); // Returns 1.5
+int irem = @fmodf(7, 3); // Returns 1
+```
+
+**@value(type, name)** - Insert values directly into structure templates at compile time.
+
+Example:
+
+```d
+// Used internally for template value parameters
+```

@@ -17,6 +17,33 @@ List of possible declarations:
 - noOptimize - Forces the compiler to bypass the function during optimization.
 - align: number - Allows you to set the alignment value. It is mainly used in SIMD.
 - explicit - Disables the possibility of using the implicit overload of operator `=` when calling a function.
+- inline - Forces the function to be inlined at every call site. The compiler will apply the `alwaysinline` attribute.
+- arrayable - Used on constructors to allow passing array literals as arguments. Enables syntax like `std::vector<int>([1, 2, 3])`.
+- noOperators - Disables operator overloading for a variable. Useful when you want to prevent implicit conversions or operator calls.
+
+## Struct Parameters
+
+Structs can have special parameters in their declaration:
+
+- data: "fieldName" - Specifies which field contains the data array for `foreach` iteration.
+- length: "fieldName" - Specifies which field contains the length for `foreach` iteration.
+- conditions: [...] - Compile-time conditions that must be met for the struct to be valid.
+
+Example:
+
+```d
+// Struct with foreach support and template constraint
+(data: "data", length: "length", conditions: [T != void])
+struct vector<T> {
+    T* data;
+    usize length;
+
+    // Constructor with array literal support
+    (arrayable) std::vector<T> this {
+        // ...
+    } => this;
+}
+```
 
 Also, it should be noted that you cannot use the parameter C with linkname, since they interfere with each other.
 
@@ -28,4 +55,11 @@ Examples:
 namespace std {
     extern(linkname: "printf", vararg) int print(char* fmt);
 }
+
+(inline) int square(int x) => x * x;
+
+// Using arrayable constructor
+std::vector<int> v = std::vector<int>([1, 2, 3]);
+
+(noOperators) std::string str = "hello"; // No operator overloading
 ```

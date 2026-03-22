@@ -62,3 +62,47 @@ Example:
 int4 foo = @vFrom(int4, 100); // 100, 100, 100, 100
 foo = @vHAdd32x4(foo, foo); // 200, 200, 200, 200
 ```
+
+**@vSqrt(vector)** - Compute the square root of each element in a vector.
+
+Requires SSE for float4, SSE2 for double2, and AVX for larger vectors.
+
+Example:
+
+```d
+float4 values = @vFrom(float4, 16.0f);
+float4 roots = @vSqrt(values); // 4.0, 4.0, 4.0, 4.0
+```
+
+**@vAbs(vector)** - Compute the absolute value of each element in a vector.
+
+Works with `short8` and `int4`/`int8`. Requires SSSE3 or AVX2 depending on the vector type.
+
+Example:
+
+```d
+int4 values = @vFrom(int4, -5);
+int4 absolutes = @vAbs(values); // 5, 5, 5, 5
+```
+
+**@vMoveMask128(vector)** - Extract a sign bit mask from a 128-bit vector. Returns an integer where each bit represents the sign bit of the corresponding vector element.
+
+Requires SSE2 support.
+
+Example:
+
+```d
+float4 values = @vFrom(float4, -1.0f); // All negative
+int mask = @vMoveMask128(values); // Sign bits packed into integer
+```
+
+**@vMoveMask256(vector)** - Extract a sign bit mask from a 256-bit vector. Returns an integer where each bit represents the sign bit of the corresponding vector element.
+
+Requires AVX2 support.
+
+Example:
+
+```d
+float8 values = @vFrom(float8, -1.0f); // All negative
+int mask = @vMoveMask256(values); // Sign bits packed into integer
+```
