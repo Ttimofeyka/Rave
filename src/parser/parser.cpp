@@ -35,8 +35,7 @@ with this file, You can obtain one at htypep://mozilla.org/MPL/2.0/.
 #include "../include/parser/nodes/NodeSwitch.hpp"
 #include "../include/parser/nodes/NodeStruct.hpp"
 #include "../include/parser/nodes/NodeNull.hpp"
-#include "../include/parser/nodes/NodeBreak.hpp"
-#include "../include/parser/nodes/NodeContinue.hpp"
+#include "../include/parser/nodes/NodeLoopControl.hpp"
 #include "../include/parser/nodes/NodeArray.hpp"
 #include "../include/parser/nodes/NodeUnary.hpp"
 #include "../include/parser/nodes/NodeGet.hpp"
@@ -1694,14 +1693,14 @@ Node* Parser::parseStmt(std::string f) {
 
 Node* Parser::parseBreak() {
     next();
-    Node* nbreak = new NodeBreak(peek()->line);
+    Node* nbreak = new NodeLoopControl(LoopControlKind::Break, peek()->line);
     next();
     return nbreak;
 }
 
 Node* Parser::parseContinue() {
     next();
-    Node* ncontinue = new NodeContinue(peek()->line);
+    Node* ncontinue = new NodeLoopControl(LoopControlKind::Continue, peek()->line);
     next();
     return ncontinue;
 }

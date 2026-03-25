@@ -17,10 +17,8 @@ bool areTypesCompatible(Type* param, Type* arg, bool isExplicit) {
     if (param == nullptr || arg == nullptr) return false;
 
     // Handle const types
-    Type* t1 = arg;
-    Type* t2 = param;
-    while (instanceof<TypeConst>(t1)) t1 = t1->getElType();
-    while (instanceof<TypeConst>(t2)) t2 = t2->getElType();
+    Type* t1 = Types::stripConst(arg);
+    Type* t2 = Types::stripConst(param);
 
     // Handle struct with implicit conversion operator
     if (instanceof<TypeStruct>(t2) && !instanceof<TypeStruct>(t1)) {
@@ -107,10 +105,8 @@ int calculateMatchScore(const std::vector<FuncArgSet>& params,
         }
 
         // Handle const stripping
-        Type* tc1 = t1;
-        Type* tc2 = t2;
-        while (instanceof<TypeConst>(tc1)) tc1 = tc1->getElType();
-        while (instanceof<TypeConst>(tc2)) tc2 = tc2->getElType();
+        Type* tc1 = Types::stripConst(t1);
+        Type* tc2 = Types::stripConst(t2);
 
         if (tc1->toString() == tc2->toString()) {
             score += 8;

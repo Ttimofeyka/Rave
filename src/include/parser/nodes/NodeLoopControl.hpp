@@ -10,15 +10,24 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "Node.hpp"
 #include "../Types.hpp"
 
-class NodeContinue : public Node {
+// Unified loop control node for both break and continue statements
+// This replaces the separate NodeBreak and NodeContinue classes
+enum class LoopControlKind {
+    Break,
+    Continue
+};
+
+class NodeLoopControl : public Node {
 public:
+    LoopControlKind kind;
     int loc;
 
-    NodeContinue(int loc);
+    NodeLoopControl(LoopControlKind kind, int loc);
+
     int getWhileLoop();
     RaveValue generate() override;
     Type* getType() override;
-    
+
     Node* comptime() override;
     Node* copy() override;
     void check() override;

@@ -91,7 +91,7 @@ Type* TypePointer::getElType() {
 }
 
 TypePointer::~TypePointer() {
-    if (this->instance != nullptr && !instanceof<TypeBasic>(this->instance) && !instanceof<TypeVoid>(this->instance)) delete this->instance;
+    if (Types::shouldDeleteType(this->instance)) delete this->instance;
 }
 
 // TypeArray
@@ -120,7 +120,7 @@ std::string TypeArray::toString() {
 Type* TypeArray::getElType() {return element;}
 
 TypeArray::~TypeArray() {
-    if (this->element != nullptr && !instanceof<TypeBasic>(this->element) && !instanceof<TypeVoid>(this->element)) delete this->element;
+    if (Types::shouldDeleteType(this->element)) delete this->element;
 }
 
 // TypeAlias
@@ -147,7 +147,7 @@ int TypeConst::getSize() {return this->instance->getSize();}
 std::string TypeConst::toString() {return this->instance->toString();}
 Type* TypeConst::getElType() {return this->instance;}
 TypeConst::~TypeConst() {
-    if (this->instance != nullptr && !instanceof<TypeBasic>(this->instance) && !instanceof<TypeVoid>(this->instance)) delete this->instance;
+    if (Types::shouldDeleteType(this->instance)) delete this->instance;
 }
 
 // TypeStruct
@@ -290,7 +290,7 @@ Type* TypeByval::copy() {return new TypeByval(this->type);}
 
 Type* TypeByval::getElType() {return this->type;}
 
-int TypeByval::getSize() {return 64;}
+int TypeByval::getSize() {return pointerSize;}
 
 Type* TypeByval::check(Type* parent) {return nullptr;}
 
@@ -316,7 +316,7 @@ int TypeTemplateMember::getSize() {return this->type->getSize();}
 Type* TypeTemplateMember::getElType() {return this->type->getElType();}
 
 TypeTemplateMember::~TypeTemplateMember() {
-    if (this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
+    if (Types::shouldDeleteType(this->type)) delete this->type;
 }
 
 // TypeTemplateMemberDefinition
@@ -332,7 +332,7 @@ int TypeTemplateMemberDefinition::getSize() {return this->type->getSize();}
 Type* TypeTemplateMemberDefinition::getElType() {return this->type->getElType();}
 
 TypeTemplateMemberDefinition::~TypeTemplateMemberDefinition() {
-    if (this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
+    if (Types::shouldDeleteType(this->type)) delete this->type;
 }
 
 // TypeFuncArg
@@ -348,7 +348,7 @@ int TypeFuncArg::getSize() {return this->type->getSize();}
 Type* TypeFuncArg::getElType() {return this->type->getElType();}
 
 TypeFuncArg::~TypeFuncArg() {
-    if (this->type != nullptr && !instanceof<TypeBasic>(this->type) && !instanceof<TypeVoid>(this->type)) delete this->type;
+    if (Types::shouldDeleteType(this->type)) delete this->type;
 }
 
 // TypeFunc
@@ -358,7 +358,7 @@ TypeFunc::TypeFunc(Type* main, std::vector<TypeFuncArg*> args, bool isVarArg) {
     this->isVarArg = isVarArg;
 }
 
-int TypeFunc::getSize() {return 64;}
+int TypeFunc::getSize() {return pointerSize;}
 
 Type* TypeFunc::copy() {
     std::vector<TypeFuncArg*> _copied;
@@ -367,14 +367,27 @@ Type* TypeFunc::copy() {
     return new TypeFunc(this->main->copy(), _copied, isVarArg);
 }
 
-std::string TypeFunc::toString() {return "NotImplemented";}
+std::string TypeFunc::toString() {
+    std::string result = "fn(";
+    for (size_t i = 0; i < args.size(); i++) {
+        if (i > 0) result += ", ";
+        result += args[i]->type->toString();
+    }
+    if (isVarArg) {
+        if (!args.empty()) result += ", ";
+        result += "...";
+    }
+    result += ") -> " + main->toString();
+    return result;
+}
 Type* TypeFunc::check(Type* parent) {return nullptr;}
 Type* TypeFunc::getElType() {return this;}
 
 TypeFunc::~TypeFunc() {
-    if (this->main != nullptr && !instanceof<TypeBasic>(this->main) && !instanceof<TypeVoid>(this->main)) delete this->main;
-
-    for (size_t i=0; i<this->args.size(); i++) if (this->args[i] != nullptr && !instanceof<TypeBasic>(this->args[i]) && !instanceof<TypeVoid>(this->args[i])) delete this->args[i];
+    if (Types::shouldDeleteType(this->main)) delete this->main;
+    for (size_t i = 0; i < this->args.size(); i++) {
+        if (Types::shouldDeleteType(this->args[i])) delete this->args[i];
+    }
 }
 
 // TypeBuiltin
@@ -547,4 +560,20 @@ void Types::replaceComptime(Type* _type) {
 
         Types::replaceComptime(array->element);
     }
+}
+
+Type* Types::stripConst(Type* type) {
+    while (instanceof<TypeConst>(type)) {
+        type = type->getElType();
+    }
+    return type;
+}
+
+Type* Types::stripQualifiers(Type* type) {
+    while (instanceof<TypeConst>(type) ||
+           instanceof<TypePointer>(type) ||
+           instanceof<TypeArray>(type)) {
+        type = type->getElType();
+    }
+    return type;
 }

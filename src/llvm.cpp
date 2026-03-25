@@ -227,8 +227,8 @@ void LLVM::cast(RaveValue& value, Type* type, int loc) {
 }
 
 void LLVM::castForExpression(RaveValue& first, RaveValue& second) {
-    while (instanceof<TypeConst>(first.type)) first.type = first.type->getElType();
-    while (instanceof<TypeConst>(second.type)) second.type = second.type->getElType();
+    first.type = Types::stripConst(first.type);
+    second.type = Types::stripConst(second.type);
 
     TypeBasic* fType = (TypeBasic*)first.type;
     TypeBasic* sType = (TypeBasic*)second.type;

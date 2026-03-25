@@ -280,6 +280,22 @@ extern TypeVoid* typeVoid;
 extern int pointerSize;
 
 namespace Types {
+    // Replace template types with concrete instantiations
     extern bool replaceTemplates(Type** type);
+    // Evaluate compile-time array sizes
     extern void replaceComptime(Type* type);
+
+    // Strip TypeConst wrappers from a type (returns same type if not const)
+    // Useful for getting the underlying type without const qualification
+    extern Type* stripConst(Type* type);
+
+    // Strip all qualifiers (TypeConst, TypePointer, TypeArray) to get innermost type
+    extern Type* stripQualifiers(Type* type);
+
+    // Helper for destructors - returns true if type should be deleted
+    inline bool shouldDeleteType(Type* type) {
+        return type != nullptr &&
+               !instanceof<TypeBasic>(type) &&
+               !instanceof<TypeVoid>(type);
+    }
 }

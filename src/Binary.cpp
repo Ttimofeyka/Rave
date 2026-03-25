@@ -287,8 +287,8 @@ RaveValue Binary::operation(char op, Node* first, Node* second, int loc) {
     RaveValue vFirst = first->generate();
     RaveValue vSecond = second->generate();
 
-    while (instanceof<TypeConst>(vFirst.type)) vFirst.type = vFirst.type->getElType();
-    while (instanceof<TypeConst>(vSecond.type)) vSecond.type = vSecond.type->getElType();
+    vFirst.type = Types::stripConst(vFirst.type);
+    vSecond.type = Types::stripConst(vSecond.type);
 
     if (instanceof<TypeStruct>(first->getType()) || instanceof<TypePointer>(first->getType())
      && !instanceof<TypeStruct>(second->getType()) && !instanceof<TypePointer>(second->getType())) {

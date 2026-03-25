@@ -154,13 +154,15 @@ public:
     std::map<std::string, NodeVar*> argVars;
     std::map<std::string, Node*> aliasTable;
     LLVMBasicBlockRef fnEnd;
-    bool detectMemoryLeaks = false;
 
     Scope(std::string funcName, std::map<std::string, int> args, std::map<std::string, NodeVar*> argVars);
 
     RaveValue get(std::string name, int loc = -1);
     RaveValue getWithoutLoad(std::string name, int loc = -1);
     NodeVar* getVar(std::string name, int loc = -1);
+
+    // Helper: get the struct type of "this" variable, returns nullptr if not applicable
+    TypeStruct* getThisStructType(int loc = -1);
 
     bool has(std::string name);
     bool hasAtThis(std::string name);
