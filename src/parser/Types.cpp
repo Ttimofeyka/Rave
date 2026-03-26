@@ -87,7 +87,7 @@ int TypePointer::getSize() {
 std::string TypePointer::toString() {return instance->toString() + "*";}
 Type* TypePointer::getElType() {
     while (instanceof<TypeConst>(instance)) instance = instance->getElType();
-    return instanceof<TypeVoid>(instance) ? new TypeBasic(BasicType::Char) : instance;
+    return instance;
 }
 
 TypePointer::~TypePointer() {
@@ -504,7 +504,7 @@ bool isFloatType(Type* type) {
 
 bool isBytePointer(Type* type) {
     std::string str = type->toString();
-    return str == "void*" || str == "char*" || str == "uchar*";
+    return str == "char*" || str == "uchar*";
 }
 
 bool Types::replaceTemplates(Type** _type) {

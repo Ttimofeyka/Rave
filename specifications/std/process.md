@@ -44,7 +44,7 @@ Creates child process. Returns 0 in child, child PID in parent.
 
 ### clone
 ```d
-int clone(int(void*) fn, void* stack, int flags, void* arg, int* pTID, void* tls, int* cTID)
+int clone(int(char*) fn, char* stack, int flags, char* arg, int* pTID, char* tls, int* cTID)
 ```
 Linux-specific process/thread creation with fine-grained control.
 

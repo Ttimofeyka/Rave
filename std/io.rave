@@ -8,7 +8,7 @@ import <std/arg> <std/string> <std/utf> <std/thread> <std/process> <std/time>
 
 namespace libc {
     struct File {
-	    void* __builtInLibc;
+	    char* __builtInLibc;
     }
 }
 
@@ -66,7 +66,7 @@ namespace std {
     namespace std {
         struct securityAttributes {
             uint nLength;
-            void* lpSecurityDescriptor;
+            char* lpSecurityDescriptor;
             int bInheritHandle;
         }
 
@@ -305,15 +305,15 @@ namespace std {
             alias fileShareRead = 1;
             alias fileShareWrite = 2;
 
-            extern(linkname: "GetStdHandle") void* GetStdHandle(int nStdHandle);
-            extern(linkname: "CreateFileW") void* CreateFileW(ushort* fName, int dAccess, int sMod, void* sAttributes, int cDisposition, int fAndAttributes, void* templateFile);
-            extern(linkname: "WriteFile") char WriteFile(void* file, void* buffer, int length, int* out, void* overlapped);
-            extern(linkname: "ReadFile") char ReadFile(void* file, void* buffer, int length, int* out, void* overlapped);
-            extern(linkname: "SetFilePointerEx") int SetFilePointerEx(void* file, long distToMove, long* newFilePtr, uint moveMethod);
+            extern(linkname: "GetStdHandle") char* GetStdHandle(int nStdHandle);
+            extern(linkname: "CreateFileW") char* CreateFileW(ushort* fName, int dAccess, int sMod, char* sAttributes, int cDisposition, int fAndAttributes, char* templateFile);
+            extern(linkname: "WriteFile") char WriteFile(char* file, char* buffer, int length, int* out, char* overlapped);
+            extern(linkname: "ReadFile") char ReadFile(char* file, char* buffer, int length, int* out, char* overlapped);
+            extern(linkname: "SetFilePointerEx") int SetFilePointerEx(char* file, long distToMove, long* newFilePtr, uint moveMethod);
         }
 
         struct file {
-            void* fd;
+            char* fd;
             char* buffer; // Default: 1024
             int bufferSize;
             int bufferPos;
@@ -377,7 +377,7 @@ namespace std {
                 else fd = null;
             }
 
-            void openFd(char* mode, void* fd) {
+            void openFd(char* mode, char* fd) {
                 this.fd = fd;
                 if (std::cstring::strcmp(mode, "w") || std::cstring::strcmp(mode, "rw") || std::cstring::strcmp(mode, "wr") || std::cstring::strcmp(mode, "r+") || std::cstring::strcmp(mode, "w+")) {
                     if (buffer == null) buffer = std::malloc(bufferSize);
@@ -481,7 +481,7 @@ namespace std {
 
             void ~this {
                 if (this.__name != null) {
-                    std::free(cast(void*)(this.__name));
+                    std::free(cast(char*)(this.__name));
                     this.__name = null;
                 }
 
@@ -514,10 +514,10 @@ namespace std {
         extern(linkname: "fscanf", vararg) int fscanf(libc::File* file, char* fmt);
         extern(linkname: "feof") int feof(libc::File* file);
         extern(linkname: "fgetc") char fgetc(libc::File* file);
-        extern(linkname: "fread") int fread(void* buffer, int size, int n, libc::File* file);
+        extern(linkname: "fread") int fread(char* buffer, int size, int n, libc::File* file);
         extern(linkname: "fseek") int fseek(libc::File* stream, int offset, int origin);
         extern(linkname: "ftell") int ftell(libc::File* stream);
-        extern(linkname: "fwrite") int fwrite(void* buffer, int size, int n, libc::File* stream);
+        extern(linkname: "fwrite") int fwrite(char* buffer, int size, int n, libc::File* stream);
         extern(linkname: "getline") int getline(char** buffer, int* len, int fd);
     }
 
@@ -566,8 +566,8 @@ namespace std {
                 this.name = to;
             }
 
-            int read(void* buffer, int size) => libc::fread(buffer, 1, size, this._file);
-            int write(void* buffer, int size) => libc::fwrite(buffer, 1, size, this._file);
+            int read(char* buffer, int size) => libc::fread(buffer, 1, size, this._file);
+            int write(char* buffer, int size) => libc::fwrite(buffer, 1, size, this._file);
 
             char getc => libc::fgetc(this._file);
 
@@ -908,9 +908,9 @@ namespace std {
             short wFinderFlags;
         }
         
-        extern(linkname: "FindFirstFileW") void* FindFirstFileW(ushort* fname, std::__findDataW* data);
-        extern(linkname: "FindNextFileW") char FindNextFileW(void* file, std::__findDataW* data);
-        extern(linkname: "FindClose") char FindClose(void* file);
+        extern(linkname: "FindFirstFileW") char* FindFirstFileW(ushort* fname, std::__findDataW* data);
+        extern(linkname: "FindNextFileW") char FindNextFileW(char* file, std::__findDataW* data);
+        extern(linkname: "FindClose") char FindClose(char* file);
 
         struct directory {
             char* path;
@@ -951,9 +951,9 @@ namespace std {
 
             void readEntriesBuffer(std::vector<std::string>* list) {
                 std::__findDataW* data = cast(std::__findDataW*)std::malloc(sizeof(std::__findDataW));
-                defer std::free(cast(void*)data);
+                defer std::free(cast(char*)data);
 
-                void* handle = std::FindFirstFileW(__pathSearch, data);
+                char* handle = std::FindFirstFileW(__pathSearch, data);
 
                 if (handle != null) {
                     while (true) {

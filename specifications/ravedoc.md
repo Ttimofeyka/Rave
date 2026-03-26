@@ -22,7 +22,7 @@ int sum(int a, int b) => a + b;
 
 ```d
 struct A {
-    void* ptr;
+    char* ptr;
 
     /**
     * Constructor of A.

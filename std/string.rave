@@ -425,7 +425,7 @@ namespace std {
                 result.appendC(cast(char*)&nBuffer);
             }
 
-            @if ((@getCurrArgType() == char*) || (@getCurrArgType() == uchar*) || (@getCurrArgType() == void*)) {
+            @if ((@getCurrArgType() == char*) || (@getCurrArgType() == uchar*)) {
                 char* str = @getCurrArg(char*);
                 if (str != null) result.appendC(str);
                 else result.appendC("null", 4);

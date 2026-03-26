@@ -6,7 +6,7 @@ System call interface for Linux and FreeBSD.
 
 ### syscall
 ```d
-void* syscall(int number, ...)
+char* syscall(int number, ...)
 ```
 Invokes system call with variadic arguments. Returns result as void pointer.
 

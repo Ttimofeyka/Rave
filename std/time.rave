@@ -120,7 +120,7 @@ namespace std {
 }
 @else {
     namespace libc {
-        extern(linkname: "time") long getTime(void* v);
+        extern(linkname: "time") long getTime(char* v);
         extern(linkname: "ftime") void getFTime(std::timeb* tm);
         extern(linkname: "nanosleep") int nanosleep(std::__time* req, std::__time* rem);
     }

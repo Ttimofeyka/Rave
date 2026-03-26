@@ -28,8 +28,8 @@ namespace std {
     namespace std {
         struct sigaction {
             void(int) handler;
-            void* saction;
-            void* mask;
+            char* saction;
+            char* mask;
             int flags;
             void() restorer;
         }
@@ -39,7 +39,7 @@ namespace std {
             std::sigaction oldAct;
 
             act.handler = catcher;
-            std::memset(act.&handler, sizeof(void*), 0);
+            std::memset(act.&handler, sizeof(char*), 0);
             act.flags = 0;
 
             act.flags = act.flags | 268435456;

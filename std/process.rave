@@ -83,8 +83,8 @@ import <std/error>
                 alias cloneParentSetTID = 0x00100000;
                 alias cloneChildClearTID = 0x00200000;
     
-                (inline) int clone(int(void*) fn, void* stack, int flags, void* arg, int* pTID, void* tls, int* cTID) => cast(int)std::syscall(std::sysctable::Clone, fn, stack, flags, arg, pTID, tls, cTID);
-                (inline) int fork => cast(int)std::process::clone(cast(int(void*))null, null, 0, null, null, null, null);
+                (inline) int clone(int(char*) fn, char* stack, int flags, char* arg, int* pTID, char* tls, int* cTID) => cast(int)std::syscall(std::sysctable::Clone, fn, stack, flags, arg, pTID, tls, cTID);
+                (inline) int fork => cast(int)std::process::clone(cast(int(char*))null, null, 0, null, null, null, null);
             }
         }
     }
@@ -100,7 +100,7 @@ import <std/error>
     namespace std {
         struct securityAttributes {
             uint nLength;
-            void* lpSecurityDescriptor;
+            char* lpSecurityDescriptor;
             int bInheritHandle;
         }
 
@@ -108,14 +108,14 @@ import <std/error>
             alias Terminate = 1;
             alias SuspendAndResume = 2048;
 
-            extern(linkname: "OpenProcess") void* __OpenProcess(int access, char inheritHandle, int pid);
+            extern(linkname: "OpenProcess") char* __OpenProcess(int access, char inheritHandle, int pid);
             extern(linkname: "GetCurrentProcessId") int __GetCurrentProcessId();
-            extern(linkname: "CloseHandle") char __CloseHandle(void* handle);
-            extern(linkname: "TerminateProcess") char __TerminateProcess(void* handle, uint exitCode);
-            extern(linkname: "CreatePipe") int __CreatePipe(void** hReadPipe, void** hWritePipe, std::securityAttributes* lpPipeAttributes, uint nSize);
+            extern(linkname: "CloseHandle") char __CloseHandle(char* handle);
+            extern(linkname: "TerminateProcess") char __TerminateProcess(char* handle, uint exitCode);
+            extern(linkname: "CreatePipe") int __CreatePipe(char** hReadPipe, char** hWritePipe, std::securityAttributes* lpPipeAttributes, uint nSize);
 
             int kill(int pid, int sig) {
-                void* handle = std::process::__OpenProcess(std::process::Terminate | std::process::SuspendAndResume, cast(char)false, pid);
+                char* handle = std::process::__OpenProcess(std::process::Terminate | std::process::SuspendAndResume, cast(char)false, pid);
                 if (handle != null) {   
                     switch (sig) {
                         case(std::SigTerm) return = (std::process::__TerminateProcess(handle, 1) != 0c);

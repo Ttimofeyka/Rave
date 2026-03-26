@@ -39,7 +39,7 @@ Example:
 
 ```d
 long* foo = cast(long*)std::malloc(128);
-std::realloc(cast(void*)foo, 256);
+std::realloc(cast(char*)foo, 256);
 ```
 
 ## std::calloc
@@ -49,7 +49,7 @@ Returns a pointer to the allocated memory with the size as a multiplication of t
 Example:
 
 ```d
-void* bow = std::calloc(64, 2); // 64 length, 2 each => 128 size
+char* bow = std::calloc(64, 2); // 64 length, 2 each => 128 size
 ```
 
 ## std::memcpy, std::memmove, std::memcmp, std::memset
@@ -67,8 +67,8 @@ These functions are designed to work with pointers in the same way as in C.
 Example:
 
 ```d
-void* ptr1 = std::malloc(4);
-void* ptr2 = std::malloc(7);
+char* ptr1 = std::malloc(4);
+char* ptr2 = std::malloc(7);
 
 for (int i=0; i<4; i++) ptr1[i] = '0';
 for (int i=0; i<7; i++) ptr2[i] = '1';
@@ -91,8 +91,8 @@ Swap a certain number of bytes in both pointers.
 Example:
 
 ```d
-void* ptr1 = std::malloc(2);
-void* ptr2 = std::malloc(2);
+char* ptr1 = std::malloc(2);
+char* ptr2 = std::malloc(2);
 
 for (int i=0; i<2; i++) {
     ptr1[i] = 'A';

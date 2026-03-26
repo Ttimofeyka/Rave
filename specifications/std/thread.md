@@ -11,7 +11,7 @@ Run the specified function with the specified argument through a new thread.
 Example:
 
 ```d
-int foo(void* arg) => std::println("Hello from thread!");
+int foo(char* arg) => std::println("Hello from thread!");
 
 void main {
     std::thread thr = std::thread();
@@ -29,11 +29,11 @@ Example:
 int data1 = 2;
 int data2 = 2;
 
-int foo(void* arg) {
+int foo(char* arg) {
     while (data1 != 64) data1 *= 2;
 }
 
-int bow(void* arg) {
+int bow(char* arg) {
     while (data2 != 64) data2 *= 2;
 }
 
@@ -70,13 +70,13 @@ int data = 2;
 
 int splock;
 
-int foo(void* arg) {
+int foo(char* arg) {
     std::thread::spinlock::lock(&splock);
     data *= 2;
     std::thread::spinlock::unlock(&splock);
 }
 
-int bow(void* arg) {
+int bow(char* arg) {
     std::thread::spinlock::lock(&splock);
     data *= 2;
     std::thread::spinlock::unlock(&splock);
@@ -107,13 +107,13 @@ int data = 2;
 
 std::spinlock splock;
 
-int foo(void* arg) {
+int foo(char* arg) {
     splock.lock();
     data *= 2;
     splock.unlock();
 }
 
-int bow(void* arg) {
+int bow(char* arg) {
     splock.lock();
     data *= 2;
     splock.unlock();

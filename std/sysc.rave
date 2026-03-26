@@ -10,7 +10,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 @if (__RAVE_OS == "LINUX") {
     @if (__RAVE_PLATFORM == "X86_64") {
         namespace std {
-            extern(linkname: "syscall", vararg) void* syscall(int number);
+            extern(linkname: "syscall", vararg) char* syscall(int number);
         }
 
         namespace std {
@@ -68,7 +68,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
     @if (__RAVE_PLATFORM == "X86") {
         namespace std {
-            extern(linkname: "syscall", vararg) void* syscall(int number);
+            extern(linkname: "syscall", vararg) char* syscall(int number);
         }
 
         namespace std {
@@ -126,7 +126,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
     @if (__RAVE_PLATFORM == "AARCH64") {
         namespace std {
-            extern(linkname: "syscall", vararg) void* syscall(int number);
+            extern(linkname: "syscall", vararg) char* syscall(int number);
         }
 
         namespace std {
@@ -184,7 +184,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
     @if (__RAVE_PLATFORM == "ARM") {
         namespace std {
-            extern(linkname: "syscall", vararg) void* syscall(int number);
+            extern(linkname: "syscall", vararg) char* syscall(int number);
         }
 
         namespace std {
@@ -242,7 +242,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
     @if (__RAVE_PLATFORM == "POWERPC") {
         namespace std {
-            extern(linkname: "syscall", vararg) void* syscall(int number);
+            extern(linkname: "syscall", vararg) char* syscall(int number);
         }
 
         namespace std {
@@ -300,7 +300,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
     @if (__RAVE_PLATFORM == "POWERPC64") {
         namespace std {
-            extern(linkname: "syscall", vararg) void* syscall(int number);
+            extern(linkname: "syscall", vararg) char* syscall(int number);
         }
 
         namespace std {
@@ -358,7 +358,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
     @if (__RAVE_PLATFORM == "MIPS64") {
         namespace std {
-            extern(linkname: "syscall", vararg) void* syscall(int number);
+            extern(linkname: "syscall", vararg) char* syscall(int number);
         }
 
         namespace std {
@@ -416,7 +416,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 }
 @else @if (__RAVE_OS == "FREEBSD") {
     namespace std {
-        extern(linkname: "syscall", vararg) void* syscall(int number);
+        extern(linkname: "syscall", vararg) char* syscall(int number);
     }
 
     namespace std {

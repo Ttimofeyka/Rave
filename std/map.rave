@@ -58,7 +58,7 @@ namespace std {
                         defer std::free(current);
 
                         @if (@hasMethod(K, hash)) uint index = current.key.hash() % mapSize;
-                        @else uint index = std::hash::crc32(cast(void*)current.&key, sizeof(K)) % mapSize;
+                        @else uint index = std::hash::crc32(cast(char*)current.&key, sizeof(K)) % mapSize;
 
                         std::hashmap::entry<K, V>* entry = newTable[index];
                         while (entry != null) {
@@ -88,7 +88,7 @@ namespace std {
             }
 
             @if (@hasMethod(K, hash)) uint index = key.hash() % mapSize;
-            @else uint index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
+            @else uint index = std::hash::crc32(cast(char*)&key, sizeof(K)) % mapSize;
 
             std::hashmap::entry<K, V>* entry = table[index];
             bool setted = false;
@@ -134,7 +134,7 @@ namespace std {
             return = cast(std::hashmap::entry<K, V>*)null;
 
             @if (@hasMethod(K, hash)) uint index = key.hash() % mapSize;
-            @else uint index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
+            @else uint index = std::hash::crc32(cast(char*)&key, sizeof(K)) % mapSize;
 
             std::hashmap::entry<K, V>* entry = table[index];
             while (entry != null) {
@@ -159,7 +159,7 @@ namespace std {
             return = false;
 
             @if (@hasMethod(K, hash)) uint index = key.hash() % mapSize;
-            @else uint index = std::hash::crc32(cast(void*)&key, sizeof(K)) % mapSize;
+            @else uint index = std::hash::crc32(cast(char*)&key, sizeof(K)) % mapSize;
 
             std::hashmap::entry<K, V>* entry = table[index];
             std::hashmap::entry<K, V>* prev = null;
@@ -187,7 +187,7 @@ namespace std {
                 while (entry != null) {
                     old = entry;
                     entry = entry.next;
-                    std::free(cast(void*)old);
+                    std::free(cast(char*)old);
                 }
 
                 table[i] = null;
@@ -240,7 +240,7 @@ namespace std {
 
         void ~this {
             if (this.table != null) {
-                defer std::free(cast(void*)(this.table));
+                defer std::free(cast(char*)(this.table));
                 for (int i=0; i<this.mapSize; i++) {
                     std::hashmap::entry<K, V>* entry = this.table[i];
                     std::hashmap::entry<K, V>* old = null;
@@ -248,7 +248,7 @@ namespace std {
                     while (entry != null) {
                         old = entry;
                         entry = entry.next;
-                        std::free(cast(void*)old);
+                        std::free(cast(char*)old);
                     }
                 }
 

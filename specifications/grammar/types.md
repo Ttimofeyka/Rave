@@ -72,5 +72,5 @@ Examples:
 
 ```cpp
 type intptr = int*;
-type any = void*;
+type any = char*;
 ```

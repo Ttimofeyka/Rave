@@ -19,7 +19,7 @@ Platform-specific structure for variadic argument handling. Implementation varie
 ### __builtin_va_start
 
 ```d
-void __builtin_va_start(void* va)
+void __builtin_va_start(char* va)
 ```
 
 Initializes variadic argument list. Must be called before accessing arguments.
@@ -27,7 +27,7 @@ Initializes variadic argument list. Must be called before accessing arguments.
 ### __builtin_va_end
 
 ```d
-void __builtin_va_end(void* va)
+void __builtin_va_end(char* va)
 ```
 
 Cleans up variadic argument list after use.
@@ -35,7 +35,7 @@ Cleans up variadic argument list after use.
 ### __builtin_va_copy
 
 ```d
-void __builtin_va_copy(void* dest, void* src)
+void __builtin_va_copy(char* dest, char* src)
 ```
 
 Copies variadic argument list from src to dest.

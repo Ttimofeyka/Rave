@@ -11,13 +11,13 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
         namespace library {
             alias RtldLazy = 0x00001;
 
-            extern(linkname: "LoadLibraryA") void* __LoadLibraryA(char* str);
-            extern(linkname: "FreeLibrary") int __FreeLibrary(void* ptr);
-            extern(linkname: "GetProcAddressA") void* __GetProcAddressA(void* handle, char* name);
+            extern(linkname: "LoadLibraryA") char* __LoadLibraryA(char* str);
+            extern(linkname: "FreeLibrary") int __FreeLibrary(char* ptr);
+            extern(linkname: "GetProcAddressA") char* __GetProcAddressA(char* handle, char* name);
         
-            (inline) void* open(char* filename) => std::library::__LoadLibraryA(filename);
-            (inline) int close(void* handle) => std::library::__FreeLibrary(handle);
-            (inline) void* sym(void* handle, char* name) => std::library::__GetProcAddressA(handle, name);
+            (inline) char* open(char* filename) => std::library::__LoadLibraryA(filename);
+            (inline) int close(char* handle) => std::library::__FreeLibrary(handle);
+            (inline) char* sym(char* handle, char* name) => std::library::__GetProcAddressA(handle, name);
             (inline) char* error => null;
         }
     }
@@ -27,10 +27,10 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
         namespace library {
             alias RtldLazy = 0x00001;
         
-            extern(linkname: "dlopen") void* __open(char* filename, int flag);
-            (inline) void* open(char* filename) => std::library::__open(filename, std::library::RtldLazy);
-            extern(linkname: "dlclose") int close(void* handle);
-            extern(linkname: "dlsym") void* sym(void* handle, char* name);
+            extern(linkname: "dlopen") char* __open(char* filename, int flag);
+            (inline) char* open(char* filename) => std::library::__open(filename, std::library::RtldLazy);
+            extern(linkname: "dlclose") int close(char* handle);
+            extern(linkname: "dlsym") char* sym(char* handle, char* name);
             extern(linkname: "dlerror") char* error();
         }
     }

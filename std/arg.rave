@@ -8,8 +8,8 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
     struct va_list {
         int gp_offset;
         int fp_offset;
-        void* overflow_arg_area;
-        void* reg_save_area;
+        char* overflow_arg_area;
+        char* reg_save_area;
     }
 }
 @if (
@@ -17,15 +17,15 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
     (__RAVE_PLATFORM == "AVR") || (__RAVE_PLATFORM == "WASM") || (__RAVE_PLATFORM == "UNKNOWN")
 ) {
     struct va_list {
-        void* __ap;
+        char* __ap;
     }
 }
 
 @if (__RAVE_PLATFORM == "AARCH64") {
     struct va_list {
-        void* __stack;
-        void* __gr_top;
-        void* __vr_top;
+        char* __stack;
+        char* __gr_top;
+        char* __vr_top;
         int __gr_offs;
         int __vr_offs;
     }
@@ -50,6 +50,6 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
     }
 }
 
-extern(linkname: "llvm.va_start") void __builtin_va_start(void* va);
-extern(linkname: "llvm.va_end") void __builtin_va_end(void* va);
-extern(linkname: "llvm.va_copy") void __builtin_va_copy(void* dest, void* src);
+extern(linkname: "llvm.va_start") void __builtin_va_start(char* va);
+extern(linkname: "llvm.va_end") void __builtin_va_end(char* va);
+extern(linkname: "llvm.va_copy") void __builtin_va_copy(char* dest, char* src);

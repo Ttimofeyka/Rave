@@ -19,14 +19,14 @@ namespace std {
         }
 
         struct Value {
-            void* value;
+            char* value;
             int type;
             uint length;
             char* name;
 
             void makeBoolean(bool value) {
                 this.type = std::json::ValueType::Boolean;
-                this.value = cast(void*)value;
+                this.value = cast(char*)value;
                 this.length = 1;
                 this.name = null;
             }
@@ -34,7 +34,7 @@ namespace std {
             void makeInteger(long value) {
                 this.type = std::json::ValueType::Integer;
 
-                long* ptr = cast(void*)std::malloc(8);
+                long* ptr = cast(char*)std::malloc(8);
                 ptr[0] = value;
                 this.value = ptr;
                 
@@ -45,7 +45,7 @@ namespace std {
             void makeReal(double value) {
                 this.type = std::json::ValueType::Real;
                 
-                double* ptr = cast(void*)std::malloc(8);
+                double* ptr = cast(char*)std::malloc(8);
                 ptr[0] = value;
                 this.value = ptr;
 
@@ -62,14 +62,14 @@ namespace std {
 
             void makeArray(std::json::Value* values, uint length) {
                 this.type = std::json::ValueType::Array;
-                this.value = cast(void*)values;
+                this.value = cast(char*)values;
                 this.length = length;
                 this.name = null;
             }
 
             void makeObject(std::json::Value* kv, uint length) {
                 this.type = std::json::ValueType::Object;
-                this.value = cast(void*)kv;
+                this.value = cast(char*)kv;
                 this.length = length;
                 this.name = null;
             }

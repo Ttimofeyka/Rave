@@ -26,18 +26,18 @@ namespace std {
         alias MsgNoSig = 16384;
 
         struct iovec {
-            void* iov_base;
+            char* iov_base;
             int iov_len;
         }
 
         struct msghdr {
-            void* msg_name;       
+            char* msg_name;       
             int msg_namelen;
 
             std::socket::iovec* msg_iov;
             int msg_iovlen;    
 
-            void* msg_control;    
+            char* msg_control;    
             int msg_controllen;
 
             int msg_flags;
@@ -131,7 +131,7 @@ namespace std {
             (inline) int setSockOpt(int sock, int level, int optionName, char* optionValue, int optionLen) => cast(int)std::syscall(std::sysctable::SetSockOpt, sock, level, optionName, optionValue, optionLen);
 
             (inline) int listen(int sock, int backlog) => cast(int)std::syscall(std::sysctable::Listen, sock, backlog);
-            (inline) int recvFrom(int sock, void* buffer, int length, int flags, std::socket::sockaddr* address, int* address_len) => cast(int)std::syscall(std::sysctable::RecvFrom, sock, buffer, length, flags, address, address_len);
+            (inline) int recvFrom(int sock, char* buffer, int length, int flags, std::socket::sockaddr* address, int* address_len) => cast(int)std::syscall(std::sysctable::RecvFrom, sock, buffer, length, flags, address, address_len);
             (inline) int recv(int sock, char* buffer, int length, int flags) => cast(int)std::socket::recvFrom(sock, buffer, length, flags, null, null);
             (inline) int recvMsg(int sock, std::socket::msghdr* message, int flags) => cast(int)std::syscall(std::sysctable::RecvFrom, sock, message, flags);
 
@@ -149,8 +149,8 @@ namespace std {
             extern(linkname: "freeaddrinfo") void freeAddrInfo(std::socket::addrinfo* res);
             extern(linkname: "gai_strerror") char* getAddrInfoStrErr(int errcode);
 
-            extern(linkname: "inet_pton") int inetPton(int af, char* src, void* dst);
-            extern(linkname: "inet_ntop") char* inetNtop(int af, void* src, char* dst, int cnt);
+            extern(linkname: "inet_pton") int inetPton(int af, char* src, char* dst);
+            extern(linkname: "inet_ntop") char* inetNtop(int af, char* src, char* dst, int cnt);
             extern(linkname: "inet_addr") std::socket::in_addr inetAddr(char* cp);
 
             extern(linkname: "gethostbyname") std::socket::hostent* getHostByName(char* name);
@@ -318,8 +318,8 @@ namespace std {
             extern(linkname: "freeaddrinfo") void freeAddrInfo(std::socket::addrinfo* res);
             extern(linkname: "gai_strerror") char* getAddrInfoStrErr(int errcode);
 
-            extern(linkname: "inet_pton") int inetPton(int af, char* src, void* dst);
-            extern(linkname: "inet_ntop") char* inetNtop(int af, void* src, char* dst, int cnt);
+            extern(linkname: "inet_pton") int inetPton(int af, char* src, char* dst);
+            extern(linkname: "inet_ntop") char* inetNtop(int af, char* src, char* dst, int cnt);
             extern(linkname: "inet_addr") std::socket::in_addr inetAddr(char* cp);
 
             extern(linkname: "gethostbyname") std::socket::hostent* getHostByName(char* name);

@@ -147,7 +147,7 @@ int x;
 std::input(&x);
 
 if (x == 0) {
-    void* ptr = std::malloc(32);
+    char* ptr = std::malloc(32);
     defer std::free(ptr);
 
     // Some work with ptr...
@@ -163,7 +163,7 @@ if (x == 0) {
 Example:
 
 ```d
-void* ptr = std::malloc(32);
+char* ptr = std::malloc(32);
 fdefer std::free(ptr);
 
 // Some work with ptr...
@@ -406,7 +406,7 @@ Example:
 
 ```d
 void main {
-    void* ptr = @alloca(4);
+    char* ptr = @alloca(4);
 }
 ```
 

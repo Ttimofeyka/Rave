@@ -29,7 +29,7 @@ namespace std {
                 int bufferSize = std::system::__getCurrentDirectory(0, cast(ushort*)null);
 
                 ushort* buffer = cast(ushort*)std::malloc(bufferSize);
-                defer std::free(cast(void*)buffer);
+                defer std::free(cast(char*)buffer);
 
                 std::system::__getCurrentDirectory(bufferSize, buffer);
 

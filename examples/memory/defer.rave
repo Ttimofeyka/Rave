@@ -2,7 +2,7 @@ import <std/memory>
 
 void main {
     // Allocating the space
-    void* ptr = std::malloc(64);
+    char* ptr = std::malloc(64);
 
     // Add defer to free this pointer
     defer std::free(ptr);

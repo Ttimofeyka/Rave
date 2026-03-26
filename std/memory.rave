@@ -5,27 +5,27 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
 namespace std {
-    extern(linkname: "aligned_alloc") void* amalloc(usize alignment, usize size);
-    extern(linkname: "malloc") void* malloc(usize size);
-    extern(linkname: "free") void free(void* ptr);
-    extern(linkname: "realloc") void* realloc(void* ptr, usize newsize);
+    extern(linkname: "aligned_alloc") char* amalloc(usize alignment, usize size);
+    extern(linkname: "malloc") char* malloc(usize size);
+    extern(linkname: "free") void free(char* ptr);
+    extern(linkname: "realloc") char* realloc(char* ptr, usize newsize);
 
-    (inline) void* calloc(usize num, usize size) => std::malloc(num * size);
+    (inline) char* calloc(usize num, usize size) => std::malloc(num * size);
 }
 
 namespace std {
-    (nochecks) void* memcpy(void* dest, void* src, usize n) {
+    (nochecks) char* memcpy(char* dest, char* src, usize n) {
         for (usize i=0; i<n; i+=1) dest[i] = src[i];
     } => dest;
 
-    (nochecks) void* memmove(void* dest, void* src, usize n) {
-        void* temp = std::malloc(n);
+    (nochecks) char* memmove(char* dest, char* src, usize n) {
+        char* temp = std::malloc(n);
         for (usize i=0; i<n; i++) temp[i] = src[i];
         for (usize i=0; i<n; i++) dest[i] = temp[i];
         std::free(temp);
     } => dest;
 
-    (nochecks) void swap(void* one, void* two, usize size) {
+    (nochecks) void swap(char* one, char* two, usize size) {
         for (usize i=0; i<size; i++) {
             char old = one[i];
             one[i] = two[i];
@@ -33,7 +33,7 @@ namespace std {
         }
     }
 
-    (nochecks) void memset(void* dest, char c, usize n) {
+    (nochecks) void memset(char* dest, char c, usize n) {
         usize idx = 0;
 
         @if (__RAVE_AVX2) {
@@ -65,7 +65,7 @@ namespace std {
     }
 
     // TODO: Remake for libc compability
-    (nochecks) bool memcmp(void* one, void* two, usize n) {
+    (nochecks) bool memcmp(char* one, char* two, usize n) {
         return = true;
 
         usize i = 0;

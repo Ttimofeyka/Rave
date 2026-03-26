@@ -31,10 +31,10 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 }
 
 namespace pthread {
-    extern(linkname: "pthread_create") int create(ulong* thread, pthread::attribute* attr, void*(void*) start, void* arg);
-    extern(linkname: "pthread_join") int join(ulong thread, void** valuePtr);
+    extern(linkname: "pthread_create") int create(ulong* thread, pthread::attribute* attr, char*(char*) start, char* arg);
+    extern(linkname: "pthread_join") int join(ulong thread, char** valuePtr);
     extern(linkname: "pthread_self") ulong self();
-    extern(linkname: "pthread_exit") void exit(void* retVal);
+    extern(linkname: "pthread_exit") void exit(char* retVal);
     extern(linkname: "pthread_cancel") int cancel(ulong thread);
     extern(linkname: "pthread_detach") int detach(ulong thread);
 }

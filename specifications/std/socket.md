@@ -150,8 +150,8 @@ DNS hostname resolution.
 
 ### IP Address Conversion
 ```d
-int inetPton(int af, char* src, void* dst)
-char* inetNtop(int af, void* src, char* dst, int cnt)
+int inetPton(int af, char* src, char* dst)
+char* inetNtop(int af, char* src, char* dst, int cnt)
 std::socket::in_addr inetAddr(char* cp)
 ```
 Convert between text and binary IP addresses.

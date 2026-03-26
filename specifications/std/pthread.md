@@ -16,7 +16,7 @@ Mutex structure for thread synchronization (platform-specific size).
 
 ### create
 ```d
-int create(ulong* thread, pthread::attribute* attr, void*(void*) start, void* arg)
+int create(ulong* thread, pthread::attribute* attr, char*(char*) start, char* arg)
 ```
 Creates new thread. Returns 0 on success.
 
@@ -28,7 +28,7 @@ Creates new thread. Returns 0 on success.
 
 ### join
 ```d
-int join(ulong thread, void** valuePtr)
+int join(ulong thread, char** valuePtr)
 ```
 Waits for thread to terminate. Returns 0 on success.
 
@@ -40,7 +40,7 @@ Returns calling thread's ID.
 
 ### exit
 ```d
-void exit(void* retVal)
+void exit(char* retVal)
 ```
 Terminates calling thread with return value.
 
@@ -61,7 +61,7 @@ Detaches thread (resources freed on termination). Returns 0 on success.
 ```d
 import <std/pthread>
 
-void* threadFunc(void* arg) {
+char* threadFunc(char* arg) {
     int* num = cast(int*)arg;
     std::print("Thread received: ", num[0], "\n");
     pthread::exit(null);
