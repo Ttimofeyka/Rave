@@ -50,17 +50,20 @@ std::string Lexer::unescape(const std::string& str) {
 std::string Lexer::getIdentifier() {
     static std::unordered_set<char> specialChars = {
         '+', '-', '*', '/', '>', '<', ',', '.', ';', '(', ')', '[', ']', '&',
-        '\'', '"', '~', '=', '{', '}', '!', ' ', '\n', '\r', ':', '@'
+        '\'', '"', '~', '=', '{', '}', '!', ' ', '\n', '\r', '@'
     };
 
     std::string buffer = "";
 
     while (specialChars.find(peek()) == specialChars.end()) {
-        buffer += peek();
-        idx += 1;
         if (peek() == ':' && this->text[this->idx + 1] == ':') {
             buffer += "::";
             idx += 2;
+        }
+        else {
+            if (peek() == ':') break;
+            buffer += peek();
+            idx += 1;
         }
     }
 

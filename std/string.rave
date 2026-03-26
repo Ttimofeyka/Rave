@@ -4,7 +4,7 @@ Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
 
-import <std/vector> <std/cstring> <std/ascii> <std/utf> <std/thread> <std/hash>
+import <std/vector> <std/cstring> <std/ascii> <std/utf> <std/thread> <std/hash> <std/math>
 
 namespace std {
     (data: "data", length: "length") struct string {
