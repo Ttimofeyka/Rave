@@ -316,7 +316,7 @@ RaveValue NodeBuiltin::generate() {
     }
     else if (name == "getArgType") {
         requireMinArgs(1);
-        type = currScope->getVar("_RaveArg" + asNumber(1).to_string())->type;
+        type = currScope->getVar("_RaveArg" + asNumber(1).to_string(), loc)->type;
         return {};
     }
     else if (name == "skipArg") {
@@ -811,7 +811,7 @@ Node* NodeBuiltin::comptime() {
     else if (int hab = handleAbstractBool(); hab != -1) return new NodeBool((bool)hab);
     else if (int hai = handleAbstractInt(); hai != -1) return new NodeInt(hai);
     else if (name == "getArgType") {
-        type = currScope->getVar("_RaveArg" + asNumber(1).to_string())->type;
+        type = currScope->getVar("_RaveArg" + asNumber(1).to_string(), loc)->type;
         return new NodeType(type, loc);
     }
     else if (name == "getCurrArgType") {

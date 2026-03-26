@@ -93,8 +93,9 @@ Parser::Parser(std::vector<Token*> tokens, std::string file)
 }
 
 void Parser::error(std::string msg, int line, bool isCritical) {
-    std::cout << "\033[0;31mError in \033[1m" + file + "\033[22m file at " 
-              << line << " line: " << msg << "\033[0;0m" << std::endl;
+    std::string lineStr = (line == -1) ? "unknown line" : std::to_string(line);
+    std::cout << "\033[0;31mError in \033[1m" + file + "\033[22m file at "
+              << lineStr << ": " << msg << "\033[0;0m" << std::endl;
 
     haveErrors = true;
     if (isCritical) std::exit(1);
@@ -107,8 +108,9 @@ void Parser::error(std::string msg) { error(msg, peek()->line); }
 void Parser::checkEOF(std::string msg) { if(peek()->type == TokType::Eof) error(msg, peek()->line, true); }
 
 void Parser::warning(std::string msg, int line) {
-    std::cout << "\033[0;33mWarning in \033[1m" + file + "\033[22m file at " 
-              << line << " line: " << msg << "\033[0;0m" << std::endl;
+    std::string lineStr = (line == -1) ? "unknown line" : std::to_string(line);
+    std::cout << "\033[0;33mWarning in \033[1m" + file + "\033[22m file at "
+              << lineStr << ": " << msg << "\033[0;0m" << std::endl;
 }
 
 void Parser::warning(std::string msg) { warning(msg, peek()->line); }

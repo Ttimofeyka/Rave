@@ -45,14 +45,14 @@ namespace LLVM {
 
     extern void makeAsPointer(RaveValue& value);
 
-    extern void cast(RaveValue& value, Type* type, int loc = -1);
-    extern void castForExpression(RaveValue& one, RaveValue& two);
+    extern void cast(RaveValue& value, Type* type, int loc);
+    extern void castForExpression(RaveValue& one, RaveValue& two, int loc);
 
     extern RaveValue sum(RaveValue first, RaveValue second);
     extern RaveValue sub(RaveValue first, RaveValue second);
     extern RaveValue mul(RaveValue first, RaveValue second);
     extern RaveValue div(RaveValue first, RaveValue second, bool isUnsigned = false);
-    extern RaveValue compare(RaveValue first, RaveValue second, char op);
+    extern RaveValue compare(RaveValue first, RaveValue second, char op, int loc);
 
     namespace Builder {
         extern void atEnd(LLVMBasicBlockRef block);

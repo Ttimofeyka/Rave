@@ -48,8 +48,9 @@ namespace Debug {
     // Log with location info
     inline void log(Category cat, const std::string& msg, int line) {
         if (enabled) {
+            std::string lineStr = (line == -1) ? "unknown line" : std::to_string(line);
             std::cerr << "[\033[36m" << categoryToString(cat) << "\033[0m] "
-                      << msg << " (line " << line << ")" << std::endl;
+                      << msg << " (line " << lineStr << ")" << std::endl;
         }
     }
 }

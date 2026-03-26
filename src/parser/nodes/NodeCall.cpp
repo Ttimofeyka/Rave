@@ -120,7 +120,7 @@ std::vector<RaveValue> Call::genParameters(std::vector<Node*>& arguments, std::v
             if (instanceof<TypeStruct>(fas[i].type->getElType()) && !instanceof<TypePointer>(params[i].type))
                 LLVM::makeAsPointer(params[i]);
             else if (isBytePointer(fas[i].type) && fas[i].type->toString() != params[i].type->toString())
-                LLVM::cast(params[i], new TypePointer(basicTypes[BasicType::Char]));
+                LLVM::cast(params[i], new TypePointer(basicTypes[BasicType::Char]), settings.loc);
         }
         else {
             while (instanceof<TypePointer>(params[i].type))
@@ -128,7 +128,7 @@ std::vector<RaveValue> Call::genParameters(std::vector<Node*>& arguments, std::v
 
             if (instanceof<TypeBasic>(fas[i].type)) {
                 if (instanceof<TypeBasic>(params[i].type) && ((TypeBasic*)fas[i].type) != ((TypeBasic*)params[i].type))
-                    LLVM::cast(params[i], fas[i].type);
+                    LLVM::cast(params[i], fas[i].type, settings.loc);
             }
         }
 
@@ -326,7 +326,7 @@ RaveValue Call::make(int loc, Node* function, std::vector<Node*> arguments) {
                             std::vector<FuncArgSet> fas = tfaToFas(((TypeFunc*)it->type)->args);
                             std::vector<RaveValue> params = Call::genParameters(arguments, byVals, fas,
                                 CallSettings{false, ((TypeFunc*)it->type)->isVarArg, loc});
-                            return LLVM::call(currScope->getWithoutLoad(it->name), params,
+                            return LLVM::call(currScope->getWithoutLoad(it->name, loc), params,
                                 (instanceof<TypeVoid>(it->type) ? "" : "callFunc"), byVals);
                         }
                     }

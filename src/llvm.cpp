@@ -226,7 +226,7 @@ void LLVM::cast(RaveValue& value, Type* type, int loc) {
     }
 }
 
-void LLVM::castForExpression(RaveValue& first, RaveValue& second) {
+void LLVM::castForExpression(RaveValue& first, RaveValue& second, int loc) {
     first.type = Types::stripConst(first.type);
     second.type = Types::stripConst(second.type);
 
@@ -236,20 +236,20 @@ void LLVM::castForExpression(RaveValue& first, RaveValue& second) {
     if (fType->type != sType->type) {
         if (fType->isFloat()) {
             if (sType->isFloat()) {
-                if (fType->getSize() > sType->getSize()) LLVM::cast(second, fType);
-                else LLVM::cast(first, sType);
+                if (fType->getSize() > sType->getSize()) LLVM::cast(second, fType, loc);
+                else LLVM::cast(first, sType, loc);
             }
-            else LLVM::cast(second, fType);
+            else LLVM::cast(second, fType, loc);
         }
-        else if (sType->isFloat()) LLVM::cast(first, sType);
+        else if (sType->isFloat()) LLVM::cast(first, sType, loc);
         else {
             if (fType->getSize() > sType->getSize()) {
                 if (!fType->isUnsigned() && sType->isUnsigned()) fType = basicTypes[fType->type + 10];
-                LLVM::cast(second, fType);
+                LLVM::cast(second, fType, loc);
             }
             else {
                 if (fType->isUnsigned() && !sType->isUnsigned()) sType = basicTypes[sType->type + 10];
-                LLVM::cast(first, sType);
+                LLVM::cast(first, sType, loc);
             }
         }
     }
@@ -276,10 +276,10 @@ RaveValue LLVM::div(RaveValue first, RaveValue second, bool isUnsigned) {
     return {LLVMBuildSDiv(generator->builder, first.value, second.value, "LLVM_div"), first.type};
 }
 
-RaveValue LLVM::compare(RaveValue first, RaveValue second, char op) {
+RaveValue LLVM::compare(RaveValue first, RaveValue second, char op, int loc) {
     if (instanceof<TypePointer>(first.type) && instanceof<TypePointer>(second.type)) {
-        LLVM::cast(first, basicTypes[BasicType::Long]);
-        LLVM::cast(second, basicTypes[BasicType::Long]);
+        LLVM::cast(first, basicTypes[BasicType::Long], loc);
+        LLVM::cast(second, basicTypes[BasicType::Long], loc);
     }
 
     Type* returnType = basicTypes[BasicType::Bool];
@@ -309,7 +309,7 @@ RaveValue LLVM::compare(RaveValue first, RaveValue second, char op) {
         }
     }
 
-    if (instanceof<TypeVector>(first.type) && instanceof<TypeVector>(second.type)) LLVM::cast(value, new TypeVector(first.type->getElType(), ((TypeVector*)(first.type))->count), -1);
+    if (instanceof<TypeVector>(first.type) && instanceof<TypeVector>(second.type)) LLVM::cast(value, new TypeVector(first.type->getElType(), ((TypeVector*)(first.type))->count), loc);
 
     return value;
 }

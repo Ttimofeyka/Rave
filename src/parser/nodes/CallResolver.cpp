@@ -166,7 +166,7 @@ RaveValue Call::callVarFunction(int loc, const std::string& name, std::vector<No
     TypeFunc* fn = (TypeFunc*)currScope->getVar(name, loc)->type;
     std::vector<FuncArgSet> fas = tfaToFas(fn->args);
     std::vector<RaveValue> params = Call::genParameters(arguments, byVals, fas, CallSettings{false, fn->isVarArg, loc});
-    return LLVM::call(currScope->get(name), params, (instanceof<TypeVoid>(fn->main) ? "" : "callFunc"), byVals);
+    return LLVM::call(currScope->get(name, loc), params, (instanceof<TypeVoid>(fn->main) ? "" : "callFunc"), byVals);
 }
 
 RaveValue Call::callMethodOnGet(int loc, NodeGet* getFunc, std::vector<Node*>& arguments) {

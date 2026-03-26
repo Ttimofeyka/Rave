@@ -312,7 +312,7 @@ RaveValue Binary::operation(char op, Node* first, Node* second, int loc) {
     Types::replaceTemplates(&vFirst.type);
     Types::replaceTemplates(&vSecond.type);
 
-    if (instanceof<TypeBasic>(vFirst.type) && instanceof<TypeBasic>(vSecond.type)) LLVM::castForExpression(vFirst, vSecond);
+    if (instanceof<TypeBasic>(vFirst.type) && instanceof<TypeBasic>(vSecond.type)) LLVM::castForExpression(vFirst, vSecond, loc);
 
     if (op == TokType::In || op == TokType::NeIn) return handleIn(first, second, vFirst, vSecond, op, loc);
 
@@ -327,7 +327,7 @@ RaveValue Binary::operation(char op, Node* first, Node* second, int loc) {
                 Type* oldType = vFirst.type;
 
                 LLVM::cast(vFirst, new TypeVector(basicTypes[BasicType::Int], ((TypeVector*)vFirst.type)->count), loc);
-                LLVM::cast(vSecond, vFirst.type);
+                LLVM::cast(vSecond, vFirst.type, loc);
 
                 RaveValue result = {(op == TokType::And ? LLVMBuildAnd(generator->builder, vFirst.value, vSecond.value, "NodeBinary_and") :
                     (op == TokType::Or ? LLVMBuildOr(generator->builder, vFirst.value, vSecond.value, "NodeBinary_or") :
@@ -346,7 +346,7 @@ RaveValue Binary::operation(char op, Node* first, Node* second, int loc) {
         case TokType::Divide: return LLVM::div(vFirst, vSecond, (instanceof<TypeBasic>(first->getType()) && ((TypeBasic*)first->getType())->isUnsigned()));
         case TokType::Equal: case TokType::Nequal:
         case TokType::Less: case TokType::More:
-        case TokType::LessEqual: case TokType::MoreEqual: return LLVM::compare(vFirst, vSecond, op);
+        case TokType::LessEqual: case TokType::MoreEqual: return LLVM::compare(vFirst, vSecond, op, loc);
         case TokType::Amp: return {LLVMBuildAnd(generator->builder, vFirst.value, vSecond.value, "NodeBinary_and"), vFirst.type};
         case TokType::BitOr: return {LLVMBuildOr(generator->builder, vFirst.value, vSecond.value, "NodeBinary_or"), vFirst.type};
         case TokType::BitXor: return {LLVMBuildXor(generator->builder, vFirst.value, vSecond.value, "NodeBinary_xor"), vFirst.type};

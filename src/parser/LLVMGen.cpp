@@ -66,14 +66,16 @@ LLVMGen::LLVMGen(std::string file, genSettings settings, nlohmann::json options)
 }
 
 void LLVMGen::error(std::string msg, int line) {
+    std::string lineStr = (line == -1) ? "unknown line" : std::to_string(line);
     std::cout << "\033[0;31mError in \033[1m" + this->file + "\033[22m file at \033[1m" +
-        std::to_string(line) + "\033[22m line: " + msg + "\033[0;0m" << std::endl;
+        lineStr + "\033[22m: " + msg + "\033[0;0m" << std::endl;
     std::exit(1);
 }
 
 void LLVMGen::warning(std::string msg, int line) {
+    std::string lineStr = (line == -1) ? "unknown line" : std::to_string(line);
     std::cout << "\033[0;33mWarning in \033[1m" + this->file + "\033[22m file at \033[1m" +
-        std::to_string(line) + "\033[22m line: " + msg + "\033[0;0m" << std::endl;
+        lineStr + "\033[22m: " + msg + "\033[0;0m" << std::endl;
 }
 
 std::string LLVMGen::mangle(std::string name, bool isFunc, bool isMethod) {
