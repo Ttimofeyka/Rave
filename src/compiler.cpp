@@ -559,7 +559,15 @@ void Compiler::compile(std::string file) {
     LLVMDisposePassBuilderOptions(pbOptions);
     #endif
 
-    LLVMTargetMachineEmitToFile(machine, generator->lModule, (char*)(std::regex_replace(file, std::regex("\\.rave"), ".o")).c_str(), LLVMObjectFile, &errors);
+    std::string objectFile;
+    // When -c is used with -o and there's only one source file, use the output path
+    if (Compiler::settings.onlyObject && Compiler::outFile != "" && Compiler::files.size() == 1 && file == Compiler::files[0]) {
+        objectFile = Compiler::outFile;
+    } else {
+        objectFile = std::regex_replace(file, std::regex("\\.rave"), ".o");
+    }
+
+    LLVMTargetMachineEmitToFile(machine, generator->lModule, (char*)objectFile.c_str(), LLVMObjectFile, &errors);
     if (errors != nullptr) {
         Compiler::error("target machine emit to file: " + std::string(errors));
         std::exit(1);
@@ -594,7 +602,13 @@ void Compiler::compileAll() {
                 LLVMPrintModuleToFile(generator->lModule, (Compiler::files[i]+".ll").c_str(), &err);
             }
 
-            std::string compiledFile = std::regex_replace(Compiler::files[i], std::regex("\\.rave"), ".o");
+            std::string compiledFile;
+            // When -c is used with -o and there's only one source file, use the output path
+            if (Compiler::settings.onlyObject && Compiler::outFile != "" && Compiler::files.size() == 1) {
+                compiledFile = Compiler::outFile;
+            } else {
+                compiledFile = std::regex_replace(Compiler::files[i], std::regex("\\.rave"), ".o");
+            }
             Compiler::linkString += compiledFile + " ";
             if (!Compiler::settings.saveObjectFiles && !Compiler::settings.onlyObject) toRemove.push_back(compiledFile);
         }
