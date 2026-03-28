@@ -462,6 +462,12 @@ namespace std {
             if (two > one) return = two;
         }
 
+        (conditions: [CLAMP_T != void]) CLAMP_T clamp<CLAMP_T>(CLAMP_T value, CLAMP_T one, CLAMP_T two) {
+            return = value;
+            if (value < one) return = one;
+            else if (value > two) return = two;
+        }
+
         double sin(double x) {
             double t = x;
             double sine = t;
