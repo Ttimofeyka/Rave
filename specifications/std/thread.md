@@ -132,3 +132,61 @@ void main {
     // data == 8
 }
 ```
+
+## std::mutex
+
+Blocking mutex implementation that uses kernel-level synchronization primitives:
+- On Unix: uses pthread mutex (futex-based blocking)
+- On Windows: uses CRITICAL_SECTION
+
+This is more efficient than spinlock for longer-held locks, as waiting threads are put to sleep instead of spinning.
+
+### lock
+
+Acquires the mutex, blocking if it's already held by another thread.
+
+### unlock
+
+Releases the mutex, allowing other waiting threads to acquire it.
+
+### trylock
+
+Attempts to acquire the mutex without blocking. Returns 0 on success, non-zero if the mutex is already locked.
+
+### destroy
+
+Destroys the mutex and releases associated resources. Should be called when the mutex is no longer needed.
+
+Example:
+
+```d
+import <std/io> <std/thread>
+
+int counter = 0;
+std::mutex mtx;
+
+int increment(char* arg) {
+    for (int i=0; i<10000; i++) {
+        mtx.lock();
+        counter += 1;
+        mtx.unlock();
+    }
+}
+
+void main {
+    std::thread t1 = std::thread();
+    std::thread t2 = std::thread();
+    std::thread t3 = std::thread();
+
+    t1.run(increment, null);
+    t2.run(increment, null);
+    t3.run(increment, null);
+
+    t1.join();
+    t2.join();
+    t3.join();
+
+    mtx.destroy();
+
+    std::println("Counter: ", counter);
+}

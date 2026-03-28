@@ -11,6 +11,10 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
             int __align;
         }
 
+        struct mutexattr {
+            char[40] __data;
+        }
+
         struct mutex {
             char[40] __data;
         }
@@ -22,6 +26,10 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
         struct attribute {
             char[36] __size;
             int __align;
+        }
+
+        struct mutexattr {
+            char[24] __data;
         }
 
         struct mutex {
@@ -37,4 +45,11 @@ namespace pthread {
     extern(linkname: "pthread_exit") void exit(char* retVal);
     extern(linkname: "pthread_cancel") int cancel(ulong thread);
     extern(linkname: "pthread_detach") int detach(ulong thread);
+
+    // Mutex functions
+    extern(linkname: "pthread_mutex_init") int mutex_init(pthread::mutex* mutex, pthread::mutexattr* attr);
+    extern(linkname: "pthread_mutex_lock") int mutex_lock(pthread::mutex* mutex);
+    extern(linkname: "pthread_mutex_unlock") int mutex_unlock(pthread::mutex* mutex);
+    extern(linkname: "pthread_mutex_destroy") int mutex_destroy(pthread::mutex* mutex);
+    extern(linkname: "pthread_mutex_trylock") int mutex_trylock(pthread::mutex* mutex);
 }

@@ -105,3 +105,58 @@ namespace std {
         (inline) void unlock => std::thread::spinlock::unlock(this.&value);
     }
 }
+
+// Blocking mutex implementation (not spinning)
+@if (__RAVE_OS != "WINDOWS") {
+    namespace std {
+        struct mutex {
+            pthread::mutex __mutex;
+
+            std::mutex this {
+                pthread::mutex_init(return.&__mutex, cast(pthread::mutexattr*)null);
+            }
+
+            (inline) void lock => pthread::mutex_lock(this.&__mutex);
+
+            (inline) void unlock => pthread::mutex_unlock(this.&__mutex);
+
+            (inline) int trylock => pthread::mutex_trylock(this.&__mutex);
+
+            (inline) void destroy => pthread::mutex_destroy(this.&__mutex);
+        }
+    }
+}
+@else {
+    namespace std {
+        // Windows CRITICAL_SECTION provides blocking mutex
+        namespace thread {
+            extern(linkname: "InitializeCriticalSection") void __InitCriticalSection(char* cs);
+            extern(linkname: "EnterCriticalSection") void __EnterCriticalSection(char* cs);
+            extern(linkname: "LeaveCriticalSection") void __LeaveCriticalSection(char* cs);
+            extern(linkname: "DeleteCriticalSection") void __DeleteCriticalSection(char* cs);
+            extern(linkname: "TryEnterCriticalSection") int __TryEnterCriticalSection(char* cs);
+        }
+
+        struct mutex {
+            // CRITICAL_SECTION structure size (platform-dependent)
+            @if (__RAVE_PLATFORM == "X86_64") {
+                char[40] __cs;
+            }
+            @else {
+                char[24] __cs;
+            }
+
+            std::mutex this {
+                std::thread::__InitCriticalSection(return.&__cs);
+            }
+
+            (inline) void lock => std::thread::__EnterCriticalSection(this.&__cs);
+
+            (inline) void unlock => std::thread::__LeaveCriticalSection(this.&__cs);
+
+            (inline) int trylock => std::thread::__TryEnterCriticalSection(this.&__cs);
+
+            (inline) void destroy => std::thread::__DeleteCriticalSection(this.&__cs);
+        }
+    }
+}
