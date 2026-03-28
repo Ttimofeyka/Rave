@@ -47,11 +47,6 @@ namespace std {
         STACK_T pop {
             if (this.length == 0) @return(null);
             return = this.top();
-
-            for (usize i=(this.length - 1); i<this.length; i++) {
-                if ((i + 1) < this.length) this.data[i] = this.data[i + 1];
-            }
-
             this.length -= 1;
         }
 
