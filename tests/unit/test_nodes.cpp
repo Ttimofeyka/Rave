@@ -20,8 +20,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../src/include/parser/nodes/NodePtoi.hpp"
 #include "../../src/include/parser/nodes/NodeItop.hpp"
 #include "../../src/include/parser/nodes/NodeComptime.hpp"
-#include "../../src/include/parser/nodes/NodeBreak.hpp"
-#include "../../src/include/parser/nodes/NodeContinue.hpp"
+#include "../../src/include/parser/nodes/NodeLoopControl.hpp"
 #include "../../src/include/lexer/tokens.hpp"
 #include <llvm-c/Core.h>
 #include <llvm-c/Target.h>
@@ -246,26 +245,39 @@ int main() {
         delete node;
     }
 
-    // Test NodeBreak
+    // Test NodeLoopControl (Break)
     {
-        NodeBreak* node = new NodeBreak(0);
+        NodeLoopControl* node = new NodeLoopControl(LoopControlKind::Break, 0);
         Type* type = node->getType();
-        TEST("NodeBreak getType") EXPECT_NOT_NULL(type);
-        TEST("NodeBreak type is void") EXPECT_TRUE(instanceof<TypeVoid>(type));
+        TEST("NodeLoopControl(Break) getType") EXPECT_NOT_NULL(type);
+        TEST("NodeLoopControl(Break) type is void") EXPECT_TRUE(instanceof<TypeVoid>(type));
         Node* ct = node->comptime();
-        TEST("NodeBreak comptime returns self") EXPECT_EQ(ct, node);
+        TEST("NodeLoopControl(Break) comptime returns self") EXPECT_EQ(ct, node);
         delete node;
     }
 
-    // Test NodeContinue
+    // Test NodeLoopControl (Continue)
     {
-        NodeContinue* node = new NodeContinue(0);
+        NodeLoopControl* node = new NodeLoopControl(LoopControlKind::Continue, 0);
         Type* type = node->getType();
-        TEST("NodeContinue getType") EXPECT_NOT_NULL(type);
-        TEST("NodeContinue type is void") EXPECT_TRUE(instanceof<TypeVoid>(type));
+        TEST("NodeLoopControl(Continue) getType") EXPECT_NOT_NULL(type);
+        TEST("NodeLoopControl(Continue) type is void") EXPECT_TRUE(instanceof<TypeVoid>(type));
         Node* ct = node->comptime();
-        TEST("NodeContinue comptime returns self") EXPECT_EQ(ct, node);
+        TEST("NodeLoopControl(Continue) comptime returns self") EXPECT_EQ(ct, node);
         delete node;
+    }
+
+    // Test NodeLoopControl copy
+    {
+        NodeLoopControl* original = new NodeLoopControl(LoopControlKind::Break, 0);
+        Node* copied = original->copy();
+        TEST("NodeLoopControl copy") EXPECT_NOT_NULL(copied);
+        TEST("NodeLoopControl copy is NodeLoopControl") EXPECT_TRUE(instanceof<NodeLoopControl>(copied));
+        if (instanceof<NodeLoopControl>(copied)) {
+            TEST("NodeLoopControl copy has same kind") EXPECT_EQ(((NodeLoopControl*)copied)->kind, LoopControlKind::Break);
+        }
+        delete original;
+        delete copied;
     }
 
     // Test Node copy methods

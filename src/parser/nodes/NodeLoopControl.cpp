@@ -55,12 +55,16 @@ RaveValue NodeLoopControl::generate() {
     }
 
     if (kind == LoopControlKind::Break) {
-        generator->activeLoops[generator->activeLoops.size() - 1].hasEnd = true;
+        // Set hasEnd for all entries from the loop up to current position (including nested if blocks)
+        for (size_t i = id; i < generator->activeLoops.size(); i++)
+            generator->activeLoops[i].hasEnd = true;
         LLVMBuildBr(generator->builder, generator->activeLoops[id].end);
     } else {
         // Continue: branch to loop start
+        // Set hasEnd for all entries from the loop up to current position (including nested if blocks)
+        for (size_t i = id; i < generator->activeLoops.size(); i++)
+            generator->activeLoops[i].hasEnd = true;
         LLVMBuildBr(generator->builder, generator->activeLoops[id].start);
-        generator->activeLoops[id].hasEnd = true;
     }
 
     return {};

@@ -542,6 +542,19 @@ bool Types::replaceTemplates(Type** _type) {
             if (isChanged) structure->updateByTypes();
         }
     }
+    else if (instanceof<TypeFunc>(type)) {
+        TypeFunc* func = (TypeFunc*)type;                                                                                                 
+
+        // Replace templates in return type                                                                                               
+        bool isChangedMain = Types::replaceTemplates(&func->main);                                                                        
+        isChanged = isChanged || isChangedMain;                                                                                           
+
+        // Replace templates in argument types                                                                                            
+        for (size_t i=0; i<func->args.size(); i++) {                                                                                      
+            bool isChangedArg = Types::replaceTemplates(&func->args[i]->type);                                                            
+            isChanged = isChanged || isChangedArg;                                                                                        
+        }
+    }
 
     return isChanged;
 }

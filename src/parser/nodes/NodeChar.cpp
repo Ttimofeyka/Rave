@@ -27,6 +27,15 @@ RaveValue NodeChar::generate() {
             case 'n': return {LLVM::makeInt(isWide ? 32 : 8, 10, false), isWide ? basicTypes[BasicType::Int] : basicTypes[BasicType::Char]};
             case 'v': return {LLVM::makeInt(isWide ? 32 : 8, 11, false), isWide ? basicTypes[BasicType::Int] : basicTypes[BasicType::Char]};
             case 'r': return {LLVM::makeInt(isWide ? 32 : 8, 13, false), isWide ? basicTypes[BasicType::Int] : basicTypes[BasicType::Char]};
+            case 't': return {LLVM::makeInt(isWide ? 32 : 8, 9, false), isWide ? basicTypes[BasicType::Int] : basicTypes[BasicType::Char]};
+            case '\\': return {LLVM::makeInt(isWide ? 32 : 8, 92, false), isWide ? basicTypes[BasicType::Int] : basicTypes[BasicType::Char]};
+            case '\'': return {LLVM::makeInt(isWide ? 32 : 8, 39, false), isWide ? basicTypes[BasicType::Int] : basicTypes[BasicType::Char]};
+            case '"': return {LLVM::makeInt(isWide ? 32 : 8, 34, false), isWide ? basicTypes[BasicType::Int] : basicTypes[BasicType::Char]};
+            case 'b': return {LLVM::makeInt(isWide ? 32 : 8, 8, false), isWide ? basicTypes[BasicType::Int] : basicTypes[BasicType::Char]};
+            case 'f': return {LLVM::makeInt(isWide ? 32 : 8, 12, false), isWide ? basicTypes[BasicType::Int] : basicTypes[BasicType::Char]};
+            case '0': return {LLVM::makeInt(isWide ? 32 : 8, 0, false), isWide ? basicTypes[BasicType::Int] : basicTypes[BasicType::Char]};
+            case 'a': return {LLVM::makeInt(isWide ? 32 : 8, 7, false), isWide ? basicTypes[BasicType::Int] : basicTypes[BasicType::Char]};
+            case 'e': return {LLVM::makeInt(isWide ? 32 : 8, 27, false), isWide ? basicTypes[BasicType::Int] : basicTypes[BasicType::Char]};
             default: break;
         }
     }
