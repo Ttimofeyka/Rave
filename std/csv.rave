@@ -1,0 +1,187 @@
+/*
+This Source Code Form is subject to the terms of the Mozilla
+Public License, v. 2.0. If a copy of the MPL was not distributed
+with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
+*/
+
+import <std/string> <std/vector> <std/cstring> <std/ascii>
+
+namespace std {
+    namespace csv {
+        struct Row {
+            char** cells;
+            uint* lengths;
+            uint length;
+
+            void add(char* cell, uint len) {
+                this.cells = std::realloc(this.cells, sizeof(char*) * (this.length + 1));
+                this.lengths = std::realloc(this.lengths, sizeof(uint) * (this.length + 1));
+                this.cells[this.length] = std::malloc(len + 1);
+                for (uint i = 0; i < len; i++) this.cells[this.length][i] = cell[i];
+                this.cells[this.length][len] = '\0';
+                this.lengths[this.length] = len;
+                this.length += 1;
+            }
+
+            (inline) void add(std::string str) => this.add(str.data, str.length);
+
+            char* get(uint idx) {
+                if (idx < this.length) return = this.cells[idx];
+                else return = null;
+            }
+
+            std::string toString {
+                std::string result = "";
+                for (uint i = 0; i < this.length; i++) {
+                    bool needsQuote = false;
+                    for (uint j = 0; (j < this.lengths[i]) && !needsQuote; j++) {
+                        char c = this.cells[i][j];
+                        if ((c == ',') || (c == '"') || (c == '\n')) needsQuote = true;
+                    }
+                    if (needsQuote) {
+                        result.add('"');
+                        for (uint j = 0; j < this.lengths[i]; j++) {
+                            if (this.cells[i][j] == '"') result.appendC("\"\"");
+                            else result.add(this.cells[i][j]);
+                        }
+                        result.add('"');
+                    }
+                    else result.appendC(this.cells[i]);
+                    if ((i + 1) < this.length) result.add(',');
+                }
+                return = result;
+            }
+
+            void ~this {
+                for (uint i = 0; i < this.length; i++) std::free(this.cells[i]);
+                std::free(this.cells);
+                std::free(this.lengths);
+            }
+        }
+
+        struct Document {
+            std::csv::Row* rows;
+            uint length;
+
+            void addRow(std::csv::Row row) {
+                this.rows = std::realloc(this.rows, sizeof(std::csv::Row) * (this.length + 1));
+                this.rows[this.length].cells = row.cells;
+                this.rows[this.length].lengths = row.lengths;
+                this.rows[this.length].length = row.length;
+                this.length += 1;
+
+                // Prevent row's destructor from freeing the transferred memory
+                row.cells = null;
+                row.lengths = null;
+                row.length = 0;
+            }
+
+            std::csv::Row* get(uint idx) {
+                if (idx < this.length) return = this.&rows[idx];
+                else return = null;
+            }
+
+            std::string toString {
+                std::string result = "";
+                for (uint i = 0; i < this.length; i++) {
+                    std::string rowStr = this.rows[i].toString();
+                    result.append(rowStr);
+                    if ((i + 1) < this.length) result.add('\n');
+                    ~rowStr;
+                }
+                return = result;
+            }
+
+            void ~this {
+                for (uint i = 0; i < this.length; i++) ~this.rows[i];
+                std::free(this.rows);
+            }
+        }
+
+        namespace parser {
+            void skip(std::cstring data, usize* idx) {
+                while ((idx[0] < data.length) && (data.at(idx[0]) == ' ')) idx[0] += 1;
+            }
+
+            char* parseCell(std::string* buffer, std::cstring data, usize* idx, uint* len) {
+                buffer.length = 0;
+                std::csv::parser::skip(data, idx);
+
+                bool quoted = false;
+                if ((idx[0] < data.length) && (data.at(idx[0]) == '"')) {
+                    quoted = true;
+                    idx[0] += 1;
+                    while (idx[0] < data.length) {
+                        if (data.at(idx[0]) == '"') {
+                            if ((idx[0] + 1 < data.length) && (data.at(idx[0] + 1) == '"')) {
+                                buffer.add('"');
+                                idx[0] += 2;
+                            }
+                            else {
+                                idx[0] += 1;
+                                break;
+                            }
+                        }
+                        else {
+                            buffer.add(data.at(idx[0]));
+                            idx[0] += 1;
+                        }
+                    }
+                }
+                else {
+                    while ((idx[0] < data.length) && (data.at(idx[0]) != ',') && (data.at(idx[0]) != '\n')) {
+                        buffer.add(data.at(idx[0]));
+                        idx[0] += 1;
+                    }
+                }
+
+                len[0] = buffer.length;
+                char* result = std::malloc(buffer.length + 1);
+                for (usize i = 0; i < buffer.length; i++) result[i] = buffer.data[i];
+                result[buffer.length] = '\0';
+                return = result;
+            }
+
+            std::csv::Row parseRow(std::string* buffer, std::cstring data, usize* idx) {
+                std::csv::Row row;
+                row.cells = null;
+                row.lengths = null;
+                row.length = 0;
+
+                while ((idx[0] < data.length) && (data.at(idx[0]) != '\n')) {
+                    uint len;
+                    char* cell = std::csv::parser::parseCell(buffer, data, idx, &len);
+                    row.add(cell, len);
+                    std::free(cell);
+
+                    if ((idx[0] < data.length) && (data.at(idx[0]) == ',')) idx[0] += 1;
+                }
+
+                if ((idx[0] < data.length) && (data.at(idx[0]) == '\n')) idx[0] += 1;
+                return = row;
+            }
+        }
+
+        std::csv::Document parse(std::cstring data) {
+            std::csv::Document doc;
+            doc.rows = null;
+            doc.length = 0;
+
+            std::string buffer = "";
+            usize idx = 0;
+
+            while (idx < data.length) {
+                std::csv::Row row = std::csv::parser::parseRow(&buffer, data, &idx);
+                doc.addRow(row);
+                row.cells = null;
+                row.lengths = null;
+                row.length = 0;
+            }
+
+            ~buffer;
+            return = doc;
+        }
+
+        (explicit, inline) std::csv::Document parse(std::string str) => std::csv::parse(std::cstring(str.data, str.length));
+    }
+}

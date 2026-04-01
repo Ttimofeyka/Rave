@@ -9,70 +9,37 @@ import <std/ascii>
 namespace std {
     namespace cstring {
         usize strlen(char* str) {
+            return = 0;
+
             @if (__RAVE_SSE2) {
-                isize align = 16 - (ptoi(str) & 15);
-
-                while (align != 0) {
-                    if (str[return] == '\0') @return();
-                    align -= 1;
-                    return += 1;
-                }
-
-                mask16 zero = @vFrom(mask16, 0c);
-                int4 data;
-                int mask = 0;
+                // Process 16 bytes at a time
+                int4 ones = @vFrom(int4, cast(int)0x01010101);
+                int4 highs = @vFrom(int4, cast(int)0x80808080);
+                int4 negOne = @vFrom(int4, cast(int)-1);
 
                 while (true) {
-                    data = @vLoad(int4, &str[return]);
-                    mask = @vMoveMask128((bitcast(mask16)data) == zero);
+                    int4 chunk = @vLoad(int4, &str[return], false);
 
-                    if (mask != 0) {
-                        return += @cttz(mask, true);
-                        break;
+                    // Null byte detection: (v - 0x01010101) & (~v & 0x80808080)
+                    int4 tmp = chunk - ones;
+                    int4 inv = chunk !! negOne;
+                    int4 masked = inv & highs;
+                    int4 test = tmp & masked;
+
+                    int combined = test[0] | test[1] | test[2] | test[3];
+
+                    if (combined == 0) return += 16;
+                    else {
+                        usize limit = return + 16;
+                        while ((return < limit) && (str[return] != '\0')) {
+                            return += 1;
+                        }
+                        @return();
                     }
-
-                    return += 16;
                 }
             }
-            @else {
-                @if ((__RAVE_PLATFORM == "X86_64") || (__RAVE_PLATFORM == "AARCH64") || (__RAVE_PLATFORM == "POWERPC64")) {
-                    ulong align = 8 - (ptoi(str) & 7);
 
-                    while (align != 0) {
-                        if (str[return] == '\0') @return();
-                        align -= 1;
-                        return += 1;
-                    }
-
-                    while (true) {
-                        ulong chunk = ((cast(ulong*)&str[return])[0]);
-
-                        if (((chunk - 0x0101010101010101) & (!chunk) & 0x8080808080808080) != 0) break;
-
-                        return += 8;
-                    }
-                }
-                @else @if ((__RAVE_PLATFORM == "X86") || (__RAVE_PLATFORM == "ARM") || (__RAVE_PLATFORM == "POWERPC")) {
-                    uint align = 4 - (ptoi(str) & 3);
-
-                    while (align != 0) {
-                        if (str[return] == '\0') @return();
-                        align -= 1;
-                        return += 1;
-                    }
-
-                    while (true) {
-                        uint chunk = ((cast(uint*)&str[return])[0]);
-
-                        if (((chunk - 0x01010101) & (!chunk) & 0x80808080) != 0) break;
-
-                        return += 4;
-                    }
-
-                }
-
-                while (str[return] != '\0') return += 1;
-            }
+            while (str[return] != '\0') return += 1;
         }
     }
 
