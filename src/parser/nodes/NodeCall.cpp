@@ -208,12 +208,36 @@ RaveValue Call::callNamedFunction(int loc, const std::string& name, std::vector<
         targetFunc = FuncRegistry::instance().findBestMatch(sig);
         if (targetFunc != nullptr && !targetFunc->templateNames.empty() && !targetFunc->isTemplate)
             targetFunc = nullptr;
+        if (targetFunc != nullptr && targetFunc->isCtargsPart) {
+            if (targetFunc->args.size() != types.size()) {
+                targetFunc = nullptr;
+            } else {
+                for (size_t i = 0; i < types.size(); i++) {
+                    if (targetFunc->args[i].type->toString() != types[i]->toString()) {
+                        targetFunc = nullptr;
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     if (targetFunc == nullptr) {
         targetFunc = FuncRegistry::instance().findBestMatch(name, types);
         if (targetFunc != nullptr && !targetFunc->templateNames.empty() && !targetFunc->isTemplate)
             targetFunc = nullptr;
+        if (targetFunc != nullptr && targetFunc->isCtargsPart) {
+            if (targetFunc->args.size() != types.size()) {
+                targetFunc = nullptr;
+            } else {
+                for (size_t i = 0; i < types.size(); i++) {
+                    if (targetFunc->args[i].type->toString() != types[i]->toString()) {
+                        targetFunc = nullptr;
+                        break;
+                    }
+                }
+            }
+        }
     }
 
     if (targetFunc == nullptr && AST::funcTable.find(name) != AST::funcTable.end())

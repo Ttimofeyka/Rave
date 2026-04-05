@@ -198,7 +198,9 @@ void LLVM::cast(RaveValue& value, Type* type, int loc) {
         }
     }
     else if (instanceof<TypeArray>(value.type)) generator->error("cannot cast an array to any type!", loc);
-    else if (instanceof<TypeStruct>(value.type)) generator->error("cannot cast a struct to any type!", loc);
+    else if (instanceof<TypeStruct>(value.type)) {
+        generator->error("cannot cast a struct to any type!", loc);
+    }
     else if (instanceof<TypeBasic>(value.type)) {
         if (instanceof<TypePointer>(type) || instanceof<TypeByval>(type)) {
             if (((TypeBasic*)value.type)->isFloat()) generator->error("cannot cast a float to a pointer!", loc);
