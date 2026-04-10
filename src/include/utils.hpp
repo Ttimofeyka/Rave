@@ -167,6 +167,7 @@ typedef struct genSettings {
     bool noIoInit = false;
 
     std::string linker = "lld";
+    std::vector<std::string> importDirectories;
 } genSettings;
 
 // Trim from the start (in place)

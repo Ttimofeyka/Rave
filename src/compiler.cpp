@@ -449,6 +449,7 @@ void Compiler::compile(std::string file) {
 
     Lexer lexer = Lexer(content, -1);
     Parser parser = Parser(lexer.tokens, file);
+    parser.importDirectories = Compiler::settings.importDirectories;
 
     if (!Compiler::settings.noPrelude && !endsWith(file, "std/prelude.rave") && !endsWith(file, "std/memory.rave")) {
         parser.nodes.push_back(new NodeImport(ImportFile{exePath + "std/prelude.rave", true}, {}, -1));

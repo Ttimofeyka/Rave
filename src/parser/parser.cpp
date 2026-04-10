@@ -58,6 +58,21 @@ with this file, You can obtain one at htypep://mozilla.org/MPL/2.0/.
 #include <inttypes.h>
 #include <sstream>
 
+#ifndef __has_include
+  static_assert(false, "__has_include not supported");
+#else
+#if __cplusplus >= 201703L && __has_include(<filesystem>)
+#include <filesystem>
+    namespace fs = std::filesystem;
+#elif __has_include(<experimental/filesystem>)
+#    include <experimental/filesystem>
+    namespace fs = std::experimental::filesystem;
+#elif __has_include(<boost/filesystem.hpp>)
+#include <boost/filesystem.hpp>
+    namespace fs = boost::filesystem;
+#  endif
+#endif
+
 std::map<char, int> operators;
 
 Parser::Parser(std::vector<Token*> tokens, std::string file) 
@@ -1032,6 +1047,10 @@ std::string getGlobalFile(Parser* parser) {
         parser->next();
         if (parser->peek()->type == TokType::Divide) {buffer += "/"; parser->next();}
         else if (parser->peek()->type != TokType::Divide && parser->peek()->type != TokType::More) parser->error("expected token '/' or '>'!");
+    }
+    if (fs::exists(exePath + buffer + ".rave")) return exePath + buffer;
+    for (const auto& dir : parser->importDirectories) {
+        if (fs::exists(dir + "/" + buffer + ".rave")) return dir + "/" + buffer;
     }
     return exePath + buffer;
 }

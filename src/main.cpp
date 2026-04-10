@@ -72,6 +72,10 @@ genSettings analyzeArguments(std::vector<std::string>& arguments) {
         else if (arguments[i] == "-nfm" || arguments[i] == "--noFastMath") settings.noFastMath = true; // Disables fast math
         else if (arguments[i] == "-npi" || arguments[i] == "--noPrivateInlining") settings.noPrivateInlining = true; // Disables inlining of private functions
         else if (arguments[i] == "-nio" || arguments[i] == "--noIoInit") settings.noIoInit = true; // Disables io initialize (temporarily does nothing)
+        else if (arguments[i] == "-I" || arguments[i] == "--importDirectory") {
+            if (i + 1 < arguments.size()) settings.importDirectories.push_back(arguments[i + 1]);
+            i += 1;
+        }
         else if (arguments[i][0] == '-') settings.linkParams += arguments[i] + " "; // Adds unknown argument to the linker
         else files.push_back(arguments[i]);
     }
@@ -119,6 +123,7 @@ int main(int argc, char** argv) {
         + "\n\t--noFastMath (-nfm) - Disable fast math."
         + "\n\t--noPrivateInlining (-npi) - Disable inlining of private functions."
         + "\n\t--noIoInit (-nio) - Disable the automatic std::io:initialize call at the beginning of 'main'."
+        + "\n\t--importDirectory (-I) <dir> - Add directory to import search path (can be used multiple times)."
         + "\nFor bug reporting, you can use Issues at https://github.com/Ttimofeyka/Rave.";
         std::cout << help << std::endl;
         return 0;

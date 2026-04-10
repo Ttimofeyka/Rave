@@ -30,6 +30,7 @@ public:
     std::vector<Node*> nodes;
     std::string file;
     bool haveErrors = false;
+    std::vector<std::string> importDirectories;
     
     void error(std::string msg);
     void error(std::string msg, int line);

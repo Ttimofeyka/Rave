@@ -96,6 +96,7 @@ RaveValue NodeImport::generate() {
 
         start = end;
         Parser parser = Parser(lexer.tokens, file.file);
+        parser.importDirectories = Compiler::settings.importDirectories;
         parser.parseAll();
         end = std::chrono::steady_clock::now();
         Compiler::parseTime += std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count();
