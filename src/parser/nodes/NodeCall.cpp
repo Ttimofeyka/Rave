@@ -445,7 +445,7 @@ Type* NodeCall::__getType(Node* _fn) {
 }
 
 Type* NodeCall::getType() { return __getType(this->func); }
-RaveValue NodeCall::generate() { return Call::make(loc, func, args); }
+RaveValue NodeCall::generate() { RaveValue r = Call::make(loc, func, args); debugInfo->setInstrLoc(loc); return r; }
 void NodeCall::check() { isChecked = true; }
 Node* NodeCall::comptime() { return this; }
 Node* NodeCall::copy() { return new NodeCall(this->loc, this->func, this->args); }

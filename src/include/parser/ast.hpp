@@ -80,12 +80,19 @@ public:
     LLVMDIBuilderRef diBuilder;
     LLVMMetadataRef diFile;
     LLVMMetadataRef diScope;
+    std::vector<LLVMMetadataRef> scopeStack;
 
     LLVMMetadataRef genBasicType(TypeBasic* type, int loc);
     LLVMMetadataRef genPointer(std::string previousName, LLVMMetadataRef type, int loc);
     LLVMMetadataRef genArray(int size, LLVMMetadataRef type, int loc);
     LLVMMetadataRef genStruct(TypeStruct* type, int loc);
     LLVMMetadataRef genType(Type* type, int loc);
+
+    void pushScope(LLVMMetadataRef scope);
+    void popScope();
+    LLVMMetadataRef currentScope();
+    void setInstrLoc(int line);
+    void genGlobalVariable(const char* name, LLVMMetadataRef type, LLVMValueRef variable, int line);
 
     DebugGen(genSettings settings, std::string file, LLVMModuleRef module);
     ~DebugGen();

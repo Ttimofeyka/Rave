@@ -50,6 +50,7 @@ RaveValue NodeRet::generate() {
     if (generated.type->toString() == ptr.type->toString()) generated = LLVM::load(generated, "NodeRet_load", loc);
 
     LLVMBuildStore(generator->builder, generated.value, ptr.value);
+    debugInfo->setInstrLoc(loc);
 
     currScope->funcHasRet = true;
     return {};

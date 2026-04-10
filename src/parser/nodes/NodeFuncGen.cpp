@@ -127,6 +127,8 @@ void NodeFunc::createDebugInfo() {
     diFuncScope = LLVMDIBuilderCreateFunction(debugInfo->diBuilder, debugInfo->diScope,
         name.c_str(), name.length(), linkName.c_str(), linkName.length(), debugInfo->diFile,
         loc, funcType, isPrivate, !isExtern, loc, LLVMDIFlagZero, generator->settings.optLevel > 0);
+
+    LLVMSetSubprogram(generator->functions[name].value, diFuncScope);
 }
 
 LLVMTypeRef* NodeFunc::getParameters(int callConv) {
@@ -281,6 +283,8 @@ RaveValue NodeFunc::generate() {
         int oldCurrentBuiltinArg = generator->currentBuiltinArg;
         if (isCtargsPart || isCtargs) generator->currentBuiltinArg = 0;
 
+        if (generator->settings.outDebugInfo) debugInfo->pushScope(diFuncScope);
+
         LLVMBasicBlockRef entry = LLVM::makeBlock("entry", name);
         exitBlock = LLVM::makeBlock("exit", name);
         builder = LLVMCreateBuilderInContext(generator->context);
@@ -349,6 +353,8 @@ RaveValue NodeFunc::generate() {
     }
 
     if (isTemplate) generator->toReplace = std::map<std::string, Type*>(oldReplace);
+
+    if (!isExtern && generator->settings.outDebugInfo) debugInfo->popScope();
 
     if (generator->settings.outDebugInfo) LLVMDIBuilderFinalizeSubprogram(debugInfo->diBuilder, diFuncScope);
 

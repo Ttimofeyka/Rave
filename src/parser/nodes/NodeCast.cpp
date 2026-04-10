@@ -59,16 +59,16 @@ RaveValue NodeCast::generate() {
             TypeBasic* tbasic2 = (TypeBasic*)result.type;
 
             if (tbasic->isFloat()) {
-                if (tbasic2->isFloat()) return {LLVMBuildFPCast(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_ftof"), this->type};
-                return {LLVMBuildSIToFP(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_itof"), this->type};
+                if (tbasic2->isFloat()) { RaveValue r = {LLVMBuildFPCast(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_ftof"), this->type}; debugInfo->setInstrLoc(this->loc); return r; }
+                { RaveValue r = {LLVMBuildSIToFP(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_itof"), this->type}; debugInfo->setInstrLoc(this->loc); return r; }
             }
 
-            if (tbasic2->isFloat()) return {LLVMBuildFPToSI(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_ftoi"), this->type};
-            return {LLVMBuildIntCast2(generator->builder, result.value, generator->genType(type, loc), !tbasic->isUnsigned(), "NodeCast_itoi"), this->type};
+            if (tbasic2->isFloat()) { RaveValue r = {LLVMBuildFPToSI(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_ftoi"), this->type}; debugInfo->setInstrLoc(this->loc); return r; }
+            { RaveValue r = {LLVMBuildIntCast2(generator->builder, result.value, generator->genType(type, loc), !tbasic->isUnsigned(), "NodeCast_itoi"), this->type}; debugInfo->setInstrLoc(this->loc); return r; }
         }
 
         if (instanceof<TypePointer>(result.type)) {
-            if (!tbasic->isFloat()) return {LLVMBuildPtrToInt(generator->builder, result.value, generator->genType(tbasic, this->loc), "NodeCast_ptoi"), this->type};
+            if (!tbasic->isFloat()) { RaveValue r = {LLVMBuildPtrToInt(generator->builder, result.value, generator->genType(tbasic, this->loc), "NodeCast_ptoi"), this->type}; debugInfo->setInstrLoc(this->loc); return r; }
             return {
                 LLVMBuildSIToFP(
                     generator->builder, LLVMBuildPtrToInt(generator->builder, result.value, LLVMInt64TypeInContext(generator->context), "NodeCast_temp"),
@@ -79,8 +79,8 @@ RaveValue NodeCast::generate() {
 
         if (instanceof<TypeStruct>(result.type)) generator->error("casting a structure to the basic type is prohibited!", loc);
 
-        if (tbasic->isFloat()) return {LLVMBuildFPCast(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_ftof"), this->type};
-        return {LLVMBuildFPToSI(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_ftoi"), this->type};
+        if (tbasic->isFloat()) { RaveValue r = {LLVMBuildFPCast(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_ftof"), this->type}; debugInfo->setInstrLoc(this->loc); return r; }
+        { RaveValue r = {LLVMBuildFPToSI(generator->builder, result.value, generator->genType(this->type, this->loc), "NodeCast_ftoi"), this->type}; debugInfo->setInstrLoc(this->loc); return r; }
     }
 
     result = this->value->generate();
@@ -88,7 +88,7 @@ RaveValue NodeCast::generate() {
     if (instanceof<TypePointer>(this->type)) {
         TypePointer* tpointer = (TypePointer*)this->type;
 
-        if (instanceof<TypeBasic>(result.type)) return {LLVMBuildIntToPtr(generator->builder, result.value, generator->genType(tpointer, this->loc), "NodeCast_itop"), this->type};
+        if (instanceof<TypeBasic>(result.type)) { RaveValue r = {LLVMBuildIntToPtr(generator->builder, result.value, generator->genType(tpointer, this->loc), "NodeCast_itop"), this->type}; debugInfo->setInstrLoc(this->loc); return r; }
 
         if (instanceof<TypeStruct>(result.type)) {
             if (instanceof<NodeIden>(this->value)) {((NodeIden*)this->value)->isMustBePtr = true; result = this->value->generate();}
@@ -103,8 +103,8 @@ RaveValue NodeCast::generate() {
 
     if (instanceof<TypeFunc>(this->type)) {
         TypeFunc* tfunc = (TypeFunc*)this->type;
-        if (instanceof<TypeBasic>(result.type)) return {LLVMBuildIntToPtr(generator->builder, result.value, generator->genType(tfunc, this->loc), "NodeCast_itofn"), this->type};
-        return {LLVMBuildPointerCast(generator->builder, result.value, generator->genType(tfunc, this->loc), "NodeCast_ptop"), this->type};
+        if (instanceof<TypeBasic>(result.type)) { RaveValue r = {LLVMBuildIntToPtr(generator->builder, result.value, generator->genType(tfunc, this->loc), "NodeCast_itofn"), this->type}; debugInfo->setInstrLoc(this->loc); return r; }
+        { RaveValue r = {LLVMBuildPointerCast(generator->builder, result.value, generator->genType(tfunc, this->loc), "NodeCast_ptop"), this->type}; debugInfo->setInstrLoc(this->loc); return r; }
     }
 
     if (instanceof<TypeStruct>(this->type)) {
@@ -129,11 +129,11 @@ RaveValue NodeCast::generate() {
     if (instanceof<TypeVector>(this->type)) {
         if (instanceof<TypeVector>(result.type)) {
             if (type->getSize() > result.type->getSize()) {
-                if (!isFloatType(type->getElType())) return {LLVMBuildSExt(generator->builder, result.value, generator->genType(type, loc), "NodeCast_castV"), type};
-                else return {LLVMBuildFPExt(generator->builder, result.value, generator->genType(type, loc), "NodeCast_castV"), type};
+            if (!isFloatType(type->getElType())) { RaveValue r = {LLVMBuildSExt(generator->builder, result.value, generator->genType(type, loc), "NodeCast_castV"), type}; debugInfo->setInstrLoc(this->loc); return r; }
+            else { RaveValue r = {LLVMBuildFPExt(generator->builder, result.value, generator->genType(type, loc), "NodeCast_castV"), type}; debugInfo->setInstrLoc(this->loc); return r; }
             }
 
-            return {LLVMBuildBitCast(generator->builder, result.value, generator->genType(type, loc), "NodeCast_castV"), type};
+            { RaveValue r = {LLVMBuildBitCast(generator->builder, result.value, generator->genType(type, loc), "NodeCast_castV"), type}; debugInfo->setInstrLoc(this->loc); return r; }
         }
     }
 

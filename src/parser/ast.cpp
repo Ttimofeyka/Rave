@@ -12,6 +12,11 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../include/parser/nodes/NodeInt.hpp"
 #include "../include/debug.hpp"
 #include <iostream>
+#include <cstring>
+
+#if LLVM_VERSION > 18
+#define LLVMDIBuilderInsertDeclareAtEnd LLVMDIBuilderInsertDeclareRecordAtEnd
+#endif
 
 // AST namespace globals
 std::map<std::string, Type*> AST::aliasTypes;
@@ -61,6 +66,43 @@ DebugGen::DebugGen(genSettings settings, std::string file, LLVMModuleRef module)
 
 DebugGen::~DebugGen() {
     LLVMDIBuilderFinalize(diBuilder);
+}
+
+void DebugGen::pushScope(LLVMMetadataRef scope) {
+    scopeStack.push_back(scope);
+}
+
+void DebugGen::popScope() {
+    if (!scopeStack.empty()) scopeStack.pop_back();
+}
+
+LLVMMetadataRef DebugGen::currentScope() {
+    if (scopeStack.empty()) return diScope;
+    return scopeStack.back();
+}
+
+void DebugGen::setInstrLoc(int line) {
+    if (!generator->settings.outDebugInfo) return;
+    if (scopeStack.empty()) return;
+
+    LLVMValueRef lastInstr = LLVMGetLastInstruction(generator->currBB);
+    if (lastInstr == nullptr) return;
+
+    LLVMMetadataRef loc = LLVMDIBuilderCreateDebugLocation(
+        generator->context, line, 0, currentScope(), nullptr);
+    LLVMInstructionSetDebugLoc(lastInstr, loc);
+}
+
+void DebugGen::genGlobalVariable(const char* name, LLVMMetadataRef type, LLVMValueRef variable, int line) {
+    if (!generator->settings.outDebugInfo) return;
+
+    LLVMMetadataRef expr = LLVMDIBuilderCreateExpression(diBuilder, nullptr, 0);
+    LLVMMetadataRef gv = LLVMDIBuilderCreateGlobalVariableExpression(
+        diBuilder, diScope, name, strlen(name), nullptr, 0, diFile, line, type,
+        0, expr, nullptr, 0);
+
+    LLVMDIBuilderInsertDeclareAtEnd(diBuilder, variable, gv, expr,
+        LLVMDIBuilderCreateDebugLocation(generator->context, line, 0, diScope, nullptr), generator->currBB);
 }
 
 LLVMMetadataRef DebugGen::genBasicType(TypeBasic* type, int loc) {

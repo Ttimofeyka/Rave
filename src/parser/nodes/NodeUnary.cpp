@@ -178,9 +178,7 @@ RaveValue NodeUnary::generateConst() {
     return {};
 }
 
-RaveValue NodeUnary::generate() {
-    return Unary::make(loc, type, base);
-}
+RaveValue NodeUnary::generate() { RaveValue r = Unary::make(loc, type, base); debugInfo->setInstrLoc(loc); return r; }
 
 Node* NodeUnary::comptime() {
     Node* comptimed = this->base->comptime();

@@ -40,9 +40,11 @@ RaveValue NodeWhile::generate() {
     currScope->blockExit = LLVM::makeBlock("exit", function.value);
 
     LLVMBuildBr(generator->builder, condBlock);
+    debugInfo->setInstrLoc(loc);
     LLVM::Builder::atEnd(condBlock);
 
     LLVMBuildCondBr(generator->builder, this->cond->generate().value, whileBlock, currScope->blockExit);
+    debugInfo->setInstrLoc(loc);
     LLVM::Builder::atEnd(whileBlock);
 
     size_t selfNumber = generator->activeLoops.size();
@@ -58,7 +60,7 @@ RaveValue NodeWhile::generate() {
     generator->currBB = whileBlock;
     this->body->generate();
     
-    if (!generator->activeLoops[selfNumber].hasEnd) LLVMBuildBr(generator->builder, condBlock);
+    if (!generator->activeLoops[selfNumber].hasEnd) { LLVMBuildBr(generator->builder, condBlock); debugInfo->setInstrLoc(loc); }
 
     LLVMPositionBuilderAtEnd(generator->builder, generator->activeLoops[selfNumber].end);
     generator->currBB = generator->activeLoops[selfNumber].end;

@@ -47,6 +47,7 @@ RaveValue NodeArray::generate() {
     for (size_t i=0; i<values.size(); i++)
         LLVMBuildStore(generator->builder, genValues[i].value, generator->byIndex(arr, std::vector<LLVMValueRef>({LLVM::makeInt(pointerSize, i, true)})).value);
 
+    debugInfo->setInstrLoc(loc);
     return LLVM::load(arr, "loadNodeArray", loc);
 }
 

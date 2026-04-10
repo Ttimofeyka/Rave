@@ -122,9 +122,11 @@ namespace {
                 if (instanceof<TypePointer>(ptr.type)) {
                     value = LLVM::load(ptr, "NodeBinary_TypeVector_load", loc);
                     value.value = LLVMBuildInsertElement(generator->builder, value.value, value.value, ind->indexes[0]->generate().value, "NodeBinary_TypeVector_insert");
+                    debugInfo->setInstrLoc(loc);
                 }
                 else {
                     value.value = LLVMBuildInsertElement(generator->builder, value.value, value.value, ind->indexes[0]->generate().value, "NodeBinary_TypeVector_insert");
+                    debugInfo->setInstrLoc(loc);
                     value.type = ptr.type;
                 }
             }
@@ -182,13 +184,15 @@ namespace {
         LLVMBasicBlockRef ascendBlock = LLVM::makeBlock("ascend", currScope->funcName); // Further calculations are necessary if reached
         LLVMBasicBlockRef mergeBlock = LLVM::makeBlock("merge", currScope->funcName);
 
-        if (op == TokType::And) LLVMBuildCondBr(generator->builder, vFirst.value, ascendBlock, mergeBlock);
-        else LLVMBuildCondBr(generator->builder, vFirst.value, mergeBlock, ascendBlock);
+    if (op == TokType::And) LLVMBuildCondBr(generator->builder, vFirst.value, ascendBlock, mergeBlock);
+    else LLVMBuildCondBr(generator->builder, vFirst.value, mergeBlock, ascendBlock);
+    debugInfo->setInstrLoc(loc);
         LLVMBasicBlockRef shortcutBlock = LLVMGetInsertBlock(generator->builder);
 
         LLVM::Builder::atEnd(ascendBlock);
         RaveValue vSecond = second->generate();
         LLVMBuildBr(generator->builder, mergeBlock);
+        debugInfo->setInstrLoc(loc);
         ascendBlock = LLVMGetInsertBlock(generator->builder);
 
         LLVM::Builder::atEnd(mergeBlock);
@@ -211,8 +215,8 @@ namespace {
 
         if (isFloatType(_first.type)) return (new NodeBuiltin("fmodf", {new NodeDone(_first), new NodeDone(_second)}, loc, nullptr))->generate();
 
-        if (((TypeBasic*)_first.type)->isUnsigned()) return {LLVMBuildURem(generator->builder, _first.value, _second.value, "LLVM_urem"), _first.type};
-        return {LLVMBuildSRem(generator->builder, _first.value, _second.value, "LLVM_srem"), _first.type};
+    if (((TypeBasic*)_first.type)->isUnsigned()) { RaveValue r = {LLVMBuildURem(generator->builder, _first.value, _second.value, "LLVM_urem"), _first.type}; debugInfo->setInstrLoc(loc); return r; }
+    { RaveValue r = {LLVMBuildSRem(generator->builder, _first.value, _second.value, "LLVM_srem"), _first.type}; debugInfo->setInstrLoc(loc); return r; }
     }
 }
 
@@ -241,6 +245,7 @@ void Binary::store(RaveValue pointer, RaveValue value, int loc) {
     }
 
     LLVMBuildStore(generator->builder, value.value, pointer.value);
+    debugInfo->setInstrLoc(loc);
 }
 
 std::pair<std::string, std::string> Binary::isOperatorOverload(Node* firstNode, Node* secondNode, RaveValue first, RaveValue second, char op) {
@@ -333,6 +338,7 @@ RaveValue Binary::operation(char op, Node* first, Node* second, int loc) {
                     (op == TokType::Or ? LLVMBuildOr(generator->builder, vFirst.value, vSecond.value, "NodeBinary_or") :
                     LLVMBuildXor(generator->builder, vFirst.value, vSecond.value, "NodeBinary_xor"))
                 ), vFirst.type};
+                debugInfo->setInstrLoc(loc);
 
                 LLVM::cast(result, oldType, loc);
             }
@@ -340,18 +346,18 @@ RaveValue Binary::operation(char op, Node* first, Node* second, int loc) {
     }
 
     switch (op) {
-        case TokType::Plus: return LLVM::sum(vFirst, vSecond);
-        case TokType::Minus: return LLVM::sub(vFirst, vSecond);
-        case TokType::Multiply: return LLVM::mul(vFirst, vSecond);
-        case TokType::Divide: return LLVM::div(vFirst, vSecond, (instanceof<TypeBasic>(first->getType()) && ((TypeBasic*)first->getType())->isUnsigned()));
+        case TokType::Plus: { RaveValue r = LLVM::sum(vFirst, vSecond); debugInfo->setInstrLoc(loc); return r; }
+        case TokType::Minus: { RaveValue r = LLVM::sub(vFirst, vSecond); debugInfo->setInstrLoc(loc); return r; }
+        case TokType::Multiply: { RaveValue r = LLVM::mul(vFirst, vSecond); debugInfo->setInstrLoc(loc); return r; }
+        case TokType::Divide: { RaveValue r = LLVM::div(vFirst, vSecond, (instanceof<TypeBasic>(first->getType()) && ((TypeBasic*)first->getType())->isUnsigned())); debugInfo->setInstrLoc(loc); return r; }
         case TokType::Equal: case TokType::Nequal:
         case TokType::Less: case TokType::More:
-        case TokType::LessEqual: case TokType::MoreEqual: return LLVM::compare(vFirst, vSecond, op, loc);
-        case TokType::Amp: return {LLVMBuildAnd(generator->builder, vFirst.value, vSecond.value, "NodeBinary_and"), vFirst.type};
-        case TokType::BitOr: return {LLVMBuildOr(generator->builder, vFirst.value, vSecond.value, "NodeBinary_or"), vFirst.type};
-        case TokType::BitXor: return {LLVMBuildXor(generator->builder, vFirst.value, vSecond.value, "NodeBinary_xor"), vFirst.type};
-        case TokType::BitLeft: return {LLVMBuildShl(generator->builder, vFirst.value, vSecond.value, "NodeBinary_and"), vFirst.type};
-        case TokType::BitRight: return {LLVMBuildLShr(generator->builder, vFirst.value, vSecond.value, "NodeBinary_and"), vFirst.type};
+        case TokType::LessEqual: case TokType::MoreEqual: { RaveValue r = LLVM::compare(vFirst, vSecond, op, loc); debugInfo->setInstrLoc(loc); return r; }
+        case TokType::Amp: { RaveValue r = {LLVMBuildAnd(generator->builder, vFirst.value, vSecond.value, "NodeBinary_and"), vFirst.type}; debugInfo->setInstrLoc(loc); return r; }
+        case TokType::BitOr: { RaveValue r = {LLVMBuildOr(generator->builder, vFirst.value, vSecond.value, "NodeBinary_or"), vFirst.type}; debugInfo->setInstrLoc(loc); return r; }
+        case TokType::BitXor: { RaveValue r = {LLVMBuildXor(generator->builder, vFirst.value, vSecond.value, "NodeBinary_xor"), vFirst.type}; debugInfo->setInstrLoc(loc); return r; }
+        case TokType::BitLeft: { RaveValue r = {LLVMBuildShl(generator->builder, vFirst.value, vSecond.value, "NodeBinary_and"), vFirst.type}; debugInfo->setInstrLoc(loc); return r; }
+        case TokType::BitRight: { RaveValue r = {LLVMBuildLShr(generator->builder, vFirst.value, vSecond.value, "NodeBinary_and"), vFirst.type}; debugInfo->setInstrLoc(loc); return r; }
         default: generator->error("undefined operator \033[1m" + std::to_string(op) + "\033[22m!", loc); return {};
     }
 }

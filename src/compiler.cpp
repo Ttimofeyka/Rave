@@ -568,6 +568,11 @@ void Compiler::compile(std::string file) {
         objectFile = std::regex_replace(file, std::regex("\\.rave"), ".o");
     }
 
+    if (debugInfo) {
+        delete debugInfo;
+        debugInfo = nullptr;
+    }
+
     LLVMTargetMachineEmitToFile(machine, generator->lModule, (char*)objectFile.c_str(), LLVMObjectFile, &errors);
     if (errors != nullptr) {
         Compiler::error("target machine emit to file: " + std::string(errors));
@@ -666,6 +671,8 @@ void Compiler::compileAll() {
     if (!Compiler::settings.onlyObject) {
         if (Compiler::settings.isStatic) Compiler::linkString += "-static ";
         if (Compiler::settings.isPIC) Compiler::linkString += "-no-pie ";
+
+        if (Compiler::settings.outDebugInfo && raveOs != "WINDOWS") Compiler::linkString += "-g ";
 
         Compiler::linkString += " " + Compiler::settings.linkParams + " -Wno-unused-command-line-argument ";
 

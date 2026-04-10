@@ -55,6 +55,7 @@ RaveValue NodeIf::generate() {
     }
 
     LLVMBuildCondBr(generator->builder, condValue.value, thenBlock, elseBlock);
+    debugInfo->setInstrLoc(loc);
 
     int selfNum = generator->activeLoops.size();
     generator->activeLoops[selfNum] = Loop{.isActive = true, .start = thenBlock, .end = endBlock, .hasEnd = false, .isIf = true, .loopRets = std::vector<LoopReturn>(), .owner = this};
@@ -64,7 +65,7 @@ RaveValue NodeIf::generate() {
     currScope = copyScope(origScope);
 
     if (body) body->generate();
-    if (!generator->activeLoops[selfNum].hasEnd) LLVMBuildBr(generator->builder, endBlock);
+    if (!generator->activeLoops[selfNum].hasEnd) { LLVMBuildBr(generator->builder, endBlock); debugInfo->setInstrLoc(loc); }
 
     bool hasEnd1 = generator->activeLoops[selfNum].hasEnd;
 
@@ -76,7 +77,7 @@ RaveValue NodeIf::generate() {
     LLVM::Builder::atEnd(elseBlock);
     if (_else) _else->generate();
 
-    if (!generator->activeLoops[selfNum].hasEnd) LLVMBuildBr(generator->builder, endBlock);
+    if (!generator->activeLoops[selfNum].hasEnd) { LLVMBuildBr(generator->builder, endBlock); debugInfo->setInstrLoc(loc); }
 
     bool hasEnd2 = generator->activeLoops[selfNum].hasEnd;
 
