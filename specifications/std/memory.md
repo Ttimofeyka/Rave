@@ -44,12 +44,12 @@ std::realloc(cast(char*)foo, 256);
 
 ## std::calloc
 
-Returns a pointer to the allocated memory with the size as a multiplication of two numeric arguments (count and size of each).
+Returns a pointer to zero-initialized memory. The total size is calculated as `num * size`. Equivalent to `malloc` followed by `memset` to zero.
 
 Example:
 
 ```d
-char* bow = std::calloc(64, 2); // 64 length, 2 each => 128 size
+int* arr = cast(int*)std::calloc(4, 64); // 64 ints, all set to 0
 ```
 
 ## std::memcpy, std::memmove, std::memcmp, std::memset
