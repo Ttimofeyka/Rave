@@ -147,8 +147,9 @@ Node* NodeNamespace::copy() {
     return new NodeNamespace(std::vector<std::string>(names), cNodes, loc);
 }
 
-Type* NodeNamespace::getType() {return typeVoid;}
-Node* NodeNamespace::comptime() {return nullptr;}
+Type* NodeNamespace::getType() { return typeVoid; }
+
+Node* NodeNamespace::comptime() { return nullptr; }
 
 void NodeNamespace::check() {
     if (isChecked) return;

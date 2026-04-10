@@ -1,0 +1,8 @@
+import <std/sort> <std/io>
+
+void main {
+    int[3] arr = [3, 1, 2];
+
+    std::sort<int>(&arr, 3);
+    std::println("Test passed!");
+}

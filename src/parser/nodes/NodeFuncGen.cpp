@@ -310,6 +310,10 @@ RaveValue NodeFunc::generate() {
             ((NodeVar*)block->nodes[0])->isUsed = true;
         }
 
+        // Clear templateNames before generating body to prevent recursive calls
+        // from triggering redundant template instantiation
+        if (isTemplate) templateNames.clear();
+
         block->generate();
 
         if (!isCtargs && !isCtargsPart && !Compiler::settings.disableWarnings) block->optimize();
@@ -398,6 +402,7 @@ RaveValue NodeFunc::generateWithTemplate(std::vector<Type*>& types, const std::s
     auto builder = generator->builder;
     auto currBB = generator->currBB;
     auto _scope = currScope;
+    auto oldReplace = generator->toReplace;
 
     NodeFunc* _f = new NodeFunc(all, args, (NodeBlock*)block->copy(), isExtern, mods, loc, type->copy(), templateNames);
     _f->isTemplate = true;
@@ -416,6 +421,7 @@ RaveValue NodeFunc::generateWithTemplate(std::vector<Type*>& types, const std::s
     generator->builder = builder;
     generator->currBB = currBB;
     currScope = _scope;
+    generator->toReplace = oldReplace;
 
     return v;
 }

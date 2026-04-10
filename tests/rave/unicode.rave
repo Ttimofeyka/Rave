@@ -1,0 +1,48 @@
+import <std/unicode> <std/io>
+
+void main {
+    // Test isSpace
+    std::assert(std::unicode::isSpace(' '), "' ' should be space\n");
+    std::assert(std::unicode::isSpace('\t'), "'\\t' should be space\n");
+    std::assert(std::unicode::isSpace('\n'), "'\\n' should be space\n");
+    std::assert(!std::unicode::isSpace('a'), "'a' should not be space\n");
+
+    // Test isDigit
+    std::assert(std::unicode::isDigit('0'), "'0' should be digit\n");
+    std::assert(std::unicode::isDigit('5'), "'5' should be digit\n");
+    std::assert(std::unicode::isDigit('9'), "'9' should be digit\n");
+    std::assert(!std::unicode::isDigit('a'), "'a' should not be digit\n");
+
+    // Test isLower (ASCII)
+    std::assert(std::unicode::isLower('a'), "'a' should be lowercase\n");
+    std::assert(std::unicode::isLower('z'), "'z' should be lowercase\n");
+    std::assert(!std::unicode::isLower('A'), "'A' should not be lowercase\n");
+
+    // Test isUpper (ASCII)
+    std::assert(std::unicode::isUpper('A'), "'A' should be uppercase\n");
+    std::assert(std::unicode::isUpper('Z'), "'Z' should be uppercase\n");
+    std::assert(!std::unicode::isUpper('a'), "'a' should not be uppercase\n");
+
+    // Test toLower / toUpper (ASCII)
+    std::assert(std::unicode::toLower('A') == 'a', "toLower('A') should be 'a'\n");
+    std::assert(std::unicode::toUpper('a') == 'A', "toUpper('a') should be 'A'\n");
+    std::assert(std::unicode::toLower('z') == 'z', "toLower('z') should be 'z'\n");
+
+    // Test isLower (Cyrillic) - 'a' Cyrillic = 1072
+    std::assert(std::unicode::isLower(1072), "Cyrillic 'a' (1072) should be lowercase\n");
+    std::assert(std::unicode::isLower(1103), "Cyrillic 'ya' (1103) should be lowercase\n");
+    std::assert(!std::unicode::isLower(1040), "Cyrillic 'A' (1040) should not be lowercase\n");
+
+    // Test isUpper (Cyrillic) - 'A' Cyrillic = 1040
+    std::assert(std::unicode::isUpper(1040), "Cyrillic 'A' (1040) should be uppercase\n");
+    std::assert(std::unicode::isUpper(1071), "Cyrillic 'YA' (1071) should be uppercase\n");
+    std::assert(!std::unicode::isUpper(1072), "Cyrillic 'a' (1072) should not be uppercase\n");
+
+    // Test toLower (Cyrillic)
+    std::assert(std::unicode::toLower(1040) == 1072, "toLower(Cyrillic 'A') should be Cyrillic 'a'\n");
+
+    // Test toUpper (Cyrillic)
+    std::assert(std::unicode::toUpper(1072) == 1040, "toUpper(Cyrillic 'a') should be Cyrillic 'A'\n");
+
+    std::println("Test passed!");
+}

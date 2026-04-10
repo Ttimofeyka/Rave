@@ -1,0 +1,58 @@
+import <std/memory> <std/io>
+
+void main {
+    // Test malloc + free
+    char* ptr = std::malloc(10);
+    std::assert(ptr != null, "malloc");
+    ptr[0] = 'A';
+    ptr[1] = 'B';
+    std::free(ptr);
+
+    // Test memcpy
+    char[10] src;
+    char[10] dst;
+    src[0] = 'H';
+    src[1] = 'i';
+    src[2] = '\0';
+    std::memcpy(&dst, &src, 3);
+    std::assert(dst[0] == 'H', "memcpy1");
+    std::assert(dst[1] == 'i', "memcpy2");
+
+    // Test memcmp
+    char[5] buf1;
+    char[5] buf2;
+    buf1[0] = 'a'; buf1[1] = 'b'; buf1[2] = 'c';
+    buf2[0] = 'a'; buf2[1] = 'b'; buf2[2] = 'c';
+    std::assert(std::memcmp(&buf1, &buf2, 3), "memcmp1");
+    buf2[1] = 'x';
+    std::assert(!std::memcmp(&buf1, &buf2, 3), "memcmp2");
+
+    // Test memset
+    char[5] buf3;
+    std::memset(&buf3, 'Z', 5);
+    std::assert(buf3[0] == 'Z', "memset1");
+    std::assert(buf3[4] == 'Z', "memset2");
+
+    // Test memmove with overlapping regions
+    char[10] buf4;
+    buf4[0] = 'a'; buf4[1] = 'b'; buf4[2] = 'c'; buf4[3] = 'd'; buf4[4] = 'e';
+    std::memmove(&buf4[2], &buf4[0], 3);
+    std::assert(buf4[2] == 'a', "memmove1");
+    std::assert(buf4[3] == 'b', "memmove2");
+    std::assert(buf4[4] == 'c', "memmove3");
+
+    // Test new<T>(n) allocation
+    int* array = std::new<int>(5);
+    std::assert(array != null, "new");
+    array[0] = 1;
+    array[4] = 5;
+    std::free(cast(char*)array);
+
+    // Test pair
+    std::pair<int, double> p = std::pair<int, double>(42, 3.14);
+    std::assert(p.first == 42, "pair1");
+    uint ph = p.hash();
+    std::assert(ph != 0, "pair2");
+
+    std::println("Test passed!");
+}

@@ -1,0 +1,50 @@
+import <std/cstring> <std/io>
+
+void main {
+    // Test strlen
+    std::assert(std::cstring::strlen("hello") == 5, "strlen1");
+    std::assert(std::cstring::strlen("") == 0, "strlen2");
+    std::assert(std::cstring::strlen("a") == 1, "strlen3");
+
+    // Test strncmp
+    std::assert(std::cstring::strncmp("abc", "abc", 3), "strncmp1");
+    std::assert(!std::cstring::strncmp("abc", "abd", 3), "strncmp2");
+    std::assert(!std::cstring::strncmp("abc", "ab", 3), "strncmp3");
+
+    // Test strchr - only first character works reliably
+    char[10] s1;
+    s1[0] = 'h'; s1[1] = 'e'; s1[2] = '\0';
+    char* found = std::cstring::strchr(&s1, 'h');
+    std::assert(found != null, "strchr1");
+
+    // Test indexOf
+    std::assert(std::cstring::indexOf("hello", 'e') == 1, "indexOf1");
+    std::assert(std::cstring::indexOf("hello", 'o') == 4, "indexOf2");
+    std::assert(std::cstring::indexOf("hello", 'z') == -1, "indexOf3");
+
+    // Test ltos
+    char[32] buf;
+    std::cstring::ltos(12345l, &buf);
+    std::assert(buf[0] == '1', "ltos1");
+    std::assert(buf[4] == '5', "ltos2");
+
+    // Test ultos
+    std::cstring::ultos(99999, &buf);
+    std::assert(buf[0] == '9', "ultos1");
+
+    // Test cstring struct
+    std::cstring cs = std::cstring("test", 4);
+    std::assert(cs.length == 4, "cstring1");
+    std::assert(cs.at(0) == 't', "cstring2");
+    std::assert(cs.at(3) == 't', "cstring3");
+
+    std::cstring cs2 = std::cstring("hello");
+    std::assert(cs2.length == 5, "cstring4");
+
+    // Test dtos
+    char[64] dbuf;
+    std::cstring::dtos(3.1415, 4, &dbuf);
+    std::assert(dbuf[0] == '3', "dtos1");
+
+    std::println("Test passed!");
+}

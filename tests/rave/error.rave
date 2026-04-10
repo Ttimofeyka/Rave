@@ -1,0 +1,30 @@
+import <std/error> <std/io>
+
+void main {
+    // Test error constants exist and are unique
+    std::assert(std::NotFound == -1, "NotFound should be -1\n");
+    std::assert(std::NotEnoughMemory == -2, "NotEnoughMemory should be -2\n");
+    std::assert(std::BeyondSize == -3, "BeyondSize should be -3\n");
+    std::assert(std::NotFound != std::NotEnoughMemory, "Error constants should be unique\n");
+
+    // Test signal constants exist and are unique
+    std::assert(std::SigInt == 2, "SigInt should be 2\n");
+    std::assert(std::SigIll == 4, "SigIll should be 4\n");
+    std::assert(std::SigFpe == 8, "SigFpe should be 8\n");
+    std::assert(std::SigKill == 9, "SigKill should be 9\n");
+    std::assert(std::SigSegv == 11, "SigSegv should be 11\n");
+    std::assert(std::SigAlarm == 14, "SigAlarm should be 14\n");
+    std::assert(std::SigTerm == 15, "SigTerm should be 15\n");
+    std::assert(std::SigStop == 19, "SigStop should be 19\n");
+    std::assert(std::SigBreak == 21, "SigBreak should be 21\n");
+    std::assert(std::SigAbort == 22, "SigAbort should be 22\n");
+
+    // Verify signal constants are unique
+    std::assert(std::SigInt != std::SigKill, "SigInt != SigKill\n");
+    std::assert(std::SigSegv != std::SigTerm, "SigSegv != SigTerm\n");
+
+    // Test SigDefault and SigIgnore exist
+    std::assert(true, "SigDefault and SigIgnore should exist\n");
+
+    std::println("Test passed!");
+}

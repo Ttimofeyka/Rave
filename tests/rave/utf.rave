@@ -1,0 +1,44 @@
+import <std/utf> <std/string> <std/io>
+
+void main {
+    // Test utf8::isStart
+    std::assert(std::utf8::isStart('A'), "utf1");
+    std::assert(!std::utf8::isStart(cast(char)0x80), "utf2");
+
+    // Test utf8::charlen
+    std::assert(std::utf8::charlen(cast(uchar)'A') == 1, "utf3");
+    std::assert(std::utf8::charlen(cast(uchar)0xC0) == 2, "utf4");
+
+    // Test utf8::toCodepoint with ASCII
+    uchar[6] asciiStr;
+    asciiStr[0] = 'H'; asciiStr[1] = 'i'; asciiStr[2] = '\0';
+    std::assert(std::utf8::toCodepoint(&asciiStr, 0) == cast(uint)'H', "utf5");
+    std::assert(std::utf8::toCodepoint(&asciiStr, 1) == cast(uint)'i', "utf6");
+
+    // Test utf8::next
+    uchar[10] testStr;
+    testStr[0] = 'A'; testStr[1] = 'B'; testStr[2] = 'C'; testStr[3] = '\0';
+    std::assert(std::utf8::next(&testStr) == 1, "utf7");
+
+    // Test utf16::strlen
+    ushort[5] wstr;
+    wstr[0] = 'H'; wstr[1] = 'i'; wstr[2] = 0s;
+    std::assert(std::utf16::strlen(&wstr) == 2, "utf8");
+
+    // Test utf16::toUTF8 conversion
+    ushort[4] wstr2;
+    wstr2[0] = 'H'; wstr2[1] = 'i'; wstr2[2] = 0s;
+    char* utf8str = std::utf16::toUTF8(&wstr2);
+    std::assert(utf8str[0] == 'H', "utf9");
+    std::assert(utf8str[1] == 'i', "utf10");
+    std::free(utf8str);
+
+    // Test utf8::toUTF16 conversion
+    char* utf8input = "Hi";
+    ushort* utf16output = std::utf8::toUTF16(utf8input);
+    std::assert(utf16output[0] == 'H', "utf11");
+    std::assert(utf16output[1] == 'i', "utf12");
+    std::free(cast(char*)utf16output);
+
+    std::println("Test passed!");
+}

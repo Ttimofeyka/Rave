@@ -1,0 +1,28 @@
+import <std/map> <std/io>
+
+void main {
+    // Test default constructor
+    std::hashmap<int, int> m = std::hashmap<int, int>();
+    std::assert(m.length == 0, "m1");
+
+    // Test set and get
+    m.set(1, 100);
+    m.set(2, 200);
+    std::assert(m.length == 2, "m2");
+    std::assert(m.get(1) == 100, "m3");
+    std::assert(m.get(2) == 200, "m4");
+
+    // Test contains
+    std::assert(m.contains(1), "m5");
+    std::assert(!m.contains(99), "m6");
+
+    // Test find
+    std::hashmap::entry<int, int>* entry = m.find(2);
+    std::assert(entry != null, "m7");
+    std::assert(entry.value == 200, "m8");
+
+    // Clean up
+    ~m;
+
+    std::println("Test passed!");
+}

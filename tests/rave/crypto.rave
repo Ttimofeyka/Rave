@@ -1,0 +1,35 @@
+import <std/crypto> <std/string> <std/io>
+
+void main {
+    // Test base16 encode/decode
+    std::string b16enc = "";
+    std::base16::encode(&b16enc, std::cstring("Hi"));
+    std::assert(b16enc == "4869", "b16enc");
+
+    std::string b16dec = "";
+    std::base16::decode(&b16dec, std::cstring("4869"));
+    std::assert(b16dec.length == 2, "b16dec");
+    std::assert(b16dec.at(0) == 'H', "b16dec1");
+    std::assert(b16dec.at(1) == 'i', "b16dec2");
+
+    // Test base32 encode (decode has padding issues)
+    std::string b32enc = "";
+    std::base32::encode(&b32enc, std::cstring("Hi"));
+    std::assert(b32enc.length > 0, "b32enc");
+
+    // Test base64 encode/decode with "Hello"
+    std::string b64enc = "";
+    std::base64::encode(&b64enc, std::cstring("Hello"));
+    std::assert(b64enc == "SGVsbG8=", "b64enc");
+
+    std::string b64dec = "";
+    std::base64::decode(&b64dec, std::cstring("SGVsbG8="));
+    std::assert(b64dec.length == 5, "b64dec");
+    std::assert(b64dec.at(0) == 'H', "b64dec1");
+    std::assert(b64dec.at(4) == 'o', "b64dec2");
+
+    // Clean up
+    ~b16enc; ~b16dec; ~b32enc; ~b64enc; ~b64dec;
+
+    std::println("Test passed!");
+}

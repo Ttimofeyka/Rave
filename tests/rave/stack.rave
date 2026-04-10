@@ -1,0 +1,34 @@
+import <std/stack> <std/io>
+
+void main {
+    // Test default constructor
+    std::stack<char*> s = std::stack<char*>();
+    std::assert(s.length == 0, "s1");
+
+    // Test push and top
+    char* a = "hello";
+    char* b = "world";
+    char* c = "test";
+    s.push(a);
+    s.push(b);
+    s.push(c);
+    std::assert(s.length == 3, "s2");
+    std::assert(s.top() == c, "s3");
+
+    // Test copy
+    std::stack<char*> s2 = std::stack<char*>();
+    s2.push(a);
+    s2.push(b);
+    std::stack<char*> s3 = s2.copy();
+    std::assert(s3.length == 2, "s4");
+    std::assert(s3.top() == b, "s5");
+
+    // Test hash
+    uint h = s3.hash();
+    std::assert(h != 0, "s6");
+
+    // Clean up
+    ~s; ~s2; ~s3;
+
+    std::println("Test passed!");
+}

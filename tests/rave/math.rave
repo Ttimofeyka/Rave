@@ -1,0 +1,44 @@
+import <std/math> <std/io>
+
+void main {
+    // Test abs
+    std::assert(std::math::abs(-5) == 5, "abs");
+
+    // Test min / max
+    std::assert(std::math::min(3, 7) == 3, "min");
+    std::assert(std::math::max(3, 7) == 7, "max");
+
+    // Test factorial
+    std::assert(std::math::factorial(0) == 1, "fact0");
+    std::assert(std::math::factorial(5) == 120, "fact5");
+    std::assert(std::math::factorial(10) == 3628800, "fact10");
+
+    // Test sqrt
+    double sv = std::math::sqrt(4.0);
+    std::assert((sv > 1.9) && (sv < 2.1), "sqrt");
+
+    // Test floor / ceil
+    std::assert(std::math::floor(3.7) == 3.0, "floor");
+    std::assert(std::math::ceil(3.2) == 4.0, "ceil");
+
+    // Test sin / cos at 0
+    std::assert(std::math::sin(0.0) < 0.01, "sin");
+    std::assert(std::math::cos(0.0) > 0.99, "cos");
+
+    // Test exp
+    std::assert(std::math::exp(0.0) > 0.99, "exp");
+
+    // Test pow
+    std::assert(std::math::pow(2.0, 3.0) > 7.9, "pow");
+
+    // Test isPrime
+    std::assert(std::math::isPrime(2), "prime2");
+    std::assert(std::math::isPrime(7), "prime7");
+    std::assert(!std::math::isPrime(4), "notprime");
+
+    // Test degToRad / radToDeg
+    std::assert(std::math::degToRad(180.0) > 3.1, "deg2rad");
+    std::assert(std::math::radToDeg(std::math::PI) > 179.0, "rad2deg");
+
+    std::println("Test passed!");
+}

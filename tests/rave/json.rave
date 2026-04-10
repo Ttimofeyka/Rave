@@ -1,0 +1,25 @@
+import <std/json> <std/string> <std/io>
+
+void main {
+    // Test parse simple JSON object
+    std::json::Value obj = std::json::parse(std::cstring("{\"name\":\"test\"}"));
+    std::assert(obj.type == std::json::ValueType::Object, "j1");
+
+    // Test get returns correct type
+    std::json::Value nameVal = obj.get("name");
+    std::assert(nameVal.type == std::json::ValueType::String, "j2");
+
+    // Test contains returns true/false correctly
+    std::assert(obj.contains("name"), "j3");
+    std::assert(!obj.contains("missing"), "j4");
+
+    // Test toString
+    std::string str = obj.toString();
+    std::assert(str.length > 0, "j5");
+    ~str;
+
+    // Clean up
+    ~obj;
+
+    std::println("Test passed!");
+}

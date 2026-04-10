@@ -1,0 +1,58 @@
+import <std/vector> <std/io>
+
+void main {
+    // Test default constructor
+    std::vector<int> v = std::vector<int>();
+    std::assert(v.length == 0, "v1");
+
+    // Test constructor with size
+    std::vector<int> v2 = std::vector<int>(5);
+    std::assert(v2.length == 5, "v2");
+
+    // Test add and operator[]
+    v.add(10);
+    v.add(20);
+    v.add(30);
+    std::assert(v.length == 3, "v3");
+    std::assert(v[0] == 10, "v4");
+    std::assert(v[1] == 20, "v5");
+    std::assert(v[2] == 30, "v6");
+
+    // Test set
+    v.set(1, 99);
+    std::assert(v[1] == 99, "v7");
+
+    // Test copy
+    std::vector<int> v3 = std::vector<int>();
+    v3.add(1);
+    v3.add(2);
+    v3.add(3);
+    std::vector<int> v4 = v3.copy();
+    std::assert(v4.length == 3, "v8");
+    std::assert(v4[0] == 1, "v9");
+
+    // Test zero
+    std::vector<int> v5 = std::vector<int>(3);
+    v5[0] = 42;
+    v5.zero();
+    std::assert(v5[0] == 0, "v10");
+
+    // Test concatenation with +
+    std::vector<int> a = std::vector<int>();
+    a.add(1);
+    std::vector<int> b = std::vector<int>();
+    b.add(2);
+    std::vector<int> c = a + b;
+    std::assert(c.length == 2, "v11");
+    std::assert(c[0] == 1, "v12");
+    std::assert(c[1] == 2, "v13");
+
+    // Test hash
+    uint h = v3.hash();
+    std::assert(h != 0, "v14");
+
+    // Clean up
+    ~v; ~v2; ~v3; ~v4; ~v5; ~a; ~b; ~c;
+
+    std::println("Test passed!");
+}

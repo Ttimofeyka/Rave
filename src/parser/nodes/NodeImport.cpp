@@ -49,10 +49,13 @@ NodeImport::NodeImport(ImportFile file, std::vector<std::string> functions, int 
     this->loc = loc;
 }
 
-Type* NodeImport::getType() {return typeVoid;}
-Node* NodeImport::comptime() {return this;}
-Node* NodeImport::copy() {return new NodeImport(this->file, this->functions, this->loc);}
-void NodeImport::check() {this->isChecked = true;}
+Type* NodeImport::getType() { return typeVoid; }
+
+Node* NodeImport::comptime() { return this; }
+
+Node* NodeImport::copy() { return new NodeImport(file, functions, loc); }
+
+void NodeImport::check() { isChecked = true; }
 
 RaveValue NodeImport::generate() {
     if (!file.isGlobal) {
@@ -167,9 +170,11 @@ NodeImports::NodeImports(std::vector<NodeImport*> imports, int loc) {
     this->loc = loc;
 }
 
-Node* NodeImports::comptime() {return nullptr;}
-void NodeImports::check() {isChecked = true;}
-Type* NodeImports::getType() {return typeVoid;}
+Node* NodeImports::comptime() { return nullptr; }
+
+void NodeImports::check() { isChecked = true; }
+
+Type* NodeImports::getType() { return typeVoid; }
 
 Node* NodeImports::copy() {
     std::vector<NodeImport*> buffer;

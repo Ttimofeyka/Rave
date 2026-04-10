@@ -1,0 +1,17 @@
+import <std/process> <std/io>
+
+void main {
+    // Test getPID returns positive value
+    int pid = std::process::getPID();
+    std::assert(pid > 0, "getPID should return positive value\n");
+
+    // Test getPPID returns non-negative value
+    int ppid = std::process::getPPID();
+    std::assert(ppid >= 0, "getPPID should return non-negative value\n");
+
+    // Test isNormalExit and isTermSignal with known values
+    std::assert(std::process::isNormalExit(0), "Exit status 0 should be normal\n");
+    std::assert(std::process::isNormalExit(65280), "65280 should be normal exit\n");
+
+    std::println("Test passed!");
+}

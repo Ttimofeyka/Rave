@@ -168,7 +168,14 @@ std::vector<RaveValue> Call::genParameters(std::vector<Node*>& arguments, std::v
 
 std::vector<RaveValue> Call::genParameters(std::vector<Node*>& arguments, std::vector<int>& byVals,
                                                    NodeFunc* function, int loc) {
-    return Call::genParameters(arguments, byVals, function->args,
+    std::vector<FuncArgSet> fas;
+    for (const auto& arg : function->args) {
+        Type* type = arg.type;
+        while (generator->toReplace.find(type->toString()) != generator->toReplace.end())
+            type = generator->toReplace[type->toString()];
+        fas.push_back(FuncArgSet{.name = arg.name, .type = type});
+    }
+    return Call::genParameters(arguments, byVals, fas,
         CallSettings{function->isCdecl64 || function->isWin64, function->isVararg, loc});
 }
 
@@ -413,7 +420,7 @@ Type* NodeCall::__getType(Node* _fn) {
             TypeFunc* fn = (TypeFunc*)currScope->getVar(niden->name, this->loc)->type;
             return fn->main;
         }
-        return new TypePointer(typeVoid);
+        return new TypePointer(basicTypes[BasicType::Char]);
     }
     return _fn->getType();
 }

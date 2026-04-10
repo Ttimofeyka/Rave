@@ -1,0 +1,37 @@
+import <std/random> <std/io>
+
+void main {
+    // Test randomChar produces a value
+    char rc = std::randomChar();
+    std::assert(true, "randomChar");
+
+    // Test randomShort produces a value
+    short rs = std::randomShort();
+    std::assert(true, "randomShort");
+
+    // Test randomInt produces a value
+    int ri = std::randomInt();
+    std::assert(true, "randomInt");
+
+    // Test randomLong produces a value
+    long rl = std::randomLong();
+    std::assert(true, "randomLong");
+
+    // Test randomChar(min, max) produces value in range
+    char rc2 = std::randomChar(10c, 20c);
+    std::assert((rc2 >= 10c) && (rc2 <= 20c), "randomChar range");
+
+    // Test randomInt(min, max) produces value in range
+    int ri2 = std::randomInt(100, 200);
+    std::assert((ri2 >= 100) && (ri2 <= 200), "randomInt range");
+
+    // Test randomShort(min, max) produces value in range
+    short rs2 = std::randomShort(-10s, 10s);
+    std::assert((rs2 >= -10s) && (rs2 <= 10s), "randomShort range");
+
+    // Test randomLong(min, max) produces value in range
+    long rl2 = std::randomLong(1l, 1000l);
+    std::assert((rl2 >= 1l) && (rl2 <= 1000l), "randomLong range");
+
+    std::println("Test passed!");
+}

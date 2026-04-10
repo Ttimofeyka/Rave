@@ -1,0 +1,12 @@
+import <std/system> <std/io>
+
+void main {
+    // Test getCwd returns non-empty buffer
+    char[512] cwd;
+    char* result = std::system::getCwd(&cwd, 512);
+    std::assert(result != null, "getCwd should return non-null\n");
+    std::assert(cwd[0] != '\0', "getCwd buffer should not be empty\n");
+    std::assert(cwd[0] == '/', "getCwd should start with '/' on Linux\n");
+
+    std::println("Test passed!");
+}

@@ -1,5 +1,5 @@
 /*
-This Source Code Form is subject to the terms of the Mozilla
+This Source Form is subject to the terms of the Mozilla
 Public License, v. 2.0. If a copy of the MPL was not distributed
 with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 */
@@ -156,5 +156,6 @@ RaveValue Call::callTemplateFunction(int loc, const std::string& name, std::vect
         return Call::make(loc, AST::funcTable[ifName], arguments);
     }
 
-    return Call::make(loc, new NodeIden(name, loc), arguments);
+    std::string generatedName = mainName + sTypes + (mainName.find('[') == std::string::npos ? callTypes : "");
+    return Call::callNamedFunction(loc, generatedName, arguments);
 }

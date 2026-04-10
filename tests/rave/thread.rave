@@ -1,0 +1,33 @@
+import <std/io>
+
+@if (__RAVE_OS != "WINDOWS") {
+    import <std/thread>
+
+    int threadFunc(char* arg) {
+        return = 0;
+    }
+}
+
+void main {
+    @if (__RAVE_OS != "WINDOWS") {
+        // Test create and join thread
+        std::thread t = std::thread();
+        t.run(threadFunc, null);
+        t.join();
+
+        // Test spinlock
+        std::spinlock sl;
+        sl.lock();
+        sl.unlock();
+
+        // Test mutex
+        std::mutex mtx;
+        mtx.lock();
+        mtx.unlock();
+        int tryResult = mtx.trylock();
+        mtx.unlock();
+        mtx.destroy();
+    }
+
+    std::println("Test passed!");
+}

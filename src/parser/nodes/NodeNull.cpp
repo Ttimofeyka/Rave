@@ -12,11 +12,11 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 NodeNull::NodeNull(Type* type, int loc) : type(type), loc(loc) {}
 
-Type* NodeNull::getType() { return (!type ? new TypePointer(typeVoid) : type); }
+Type* NodeNull::getType() { return (!type ? new TypePointer(basicTypes[BasicType::Char]) : type); }
 
 RaveValue NodeNull::generate() {
     if (type) return { LLVMConstNull(generator->genType(type, loc)), type };
-    return { LLVMConstNull(LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0)), new TypePointer(typeVoid) };
+    return { LLVMConstNull(LLVMPointerType(LLVMInt8TypeInContext(generator->context), 0)), new TypePointer(basicTypes[BasicType::Char]) };
 }
 
 void NodeNull::check() { isChecked = true; }

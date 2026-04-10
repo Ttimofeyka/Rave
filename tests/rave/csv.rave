@@ -1,0 +1,48 @@
+import <std/csv> <std/string> <std/io>
+
+void main {
+    // Test parse simple CSV
+    std::csv::Document doc = std::csv::parse(std::cstring("a,b,c\n1,2,3"));
+    std::assert(doc.length == 2, "Document should have 2 rows\n");
+
+    // Test Row::get returns correct cell values
+    std::csv::Row* row0 = doc.get(0);
+    std::assert(row0 != null, "Row 0 should exist\n");
+    std::assert(row0.length == 3, "Row 0 should have 3 cells\n");
+
+    // Test Document::get returns correct rows
+    std::csv::Row* row1 = doc.get(1);
+    std::assert(row1 != null, "Row 1 should exist\n");
+    std::assert(row1.length == 3, "Row 1 should have 3 cells\n");
+
+    // Test Document::toString
+    std::string docStr = doc.toString();
+    std::assert(docStr.length > 0, "Document toString should not be empty\n");
+    ~docStr;
+
+    // Test manual Row and Document creation
+    std::csv::Document doc2;
+    doc2.rows = null;
+    doc2.length = 0;
+
+    std::csv::Row row;
+    row.cells = null;
+    row.lengths = null;
+    row.length = 0;
+    row.add("hello", 5);
+    row.add("world", 5);
+    std::assert(row.length == 2, "Manual row should have 2 cells\n");
+    std::assert(row.get(0) != null, "row.get(0) should not be null\n");
+
+    doc2.addRow(row);
+    std::assert(doc2.length == 1, "Document should have 1 row after addRow\n");
+
+    std::string doc2Str = doc2.toString();
+    std::assert(doc2Str.length > 0, "Manual document toString should not be empty\n");
+    ~doc2Str;
+
+    // Clean up
+    ~doc; ~doc2;
+
+    std::println("Test passed!");
+}

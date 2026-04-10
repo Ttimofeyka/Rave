@@ -142,7 +142,7 @@ LLVMTypeRef LLVMGen::genBasicType(TypeBasic* basicType) {
 }
 
 LLVMTypeRef LLVMGen::genPointerType(Type* instance, int loc) {
-    if (instanceof<TypeVoid>(instance)) return LLVMPointerType(LLVMInt8TypeInContext(context), 0);
+    if (instanceof<TypeVoid>(instance)) error("cannot create pointer to \033[1mvoid\033[22m. Use \033[1mchar*\033[22m for generic pointers!", loc);
     if (instanceof<TypeAlias>(instance)) error("cannot generate \033[1malias\033[22m as the part of another type!", loc);
     return LLVMPointerType(genType(instance, loc), 0);
 }

@@ -40,9 +40,11 @@ Node* NodeFor::copy() {
     return new NodeFor(presets, (NodeBinary*)(this->cond->copy()), this->afters, (NodeBlock*)(this->block->copy()), this->loc);
 }
 
-Node* NodeFor::comptime() {return this;}
-void NodeFor::check() {isChecked = true;}
-Type* NodeFor::getType() {return typeVoid;}
+Node* NodeFor::comptime() { return this; }
+
+void NodeFor::check() { isChecked = true; }
+
+Type* NodeFor::getType() { return typeVoid; }
 
 RaveValue NodeFor::generate() {
     for (size_t i=0; i<this->presets.size(); i++) {
