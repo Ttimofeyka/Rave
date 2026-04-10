@@ -287,6 +287,25 @@ RaveValue Call::callNamedFunction(int loc, const std::string& name, std::vector<
         types = Call::getParamsTypes(params);
 
         while (types.size() > tnSize) types.pop_back();
+
+        for (size_t i = 0; i < types.size() && i < targetFunc->args.size(); i++) {
+            Type* paramType = targetFunc->args[i].type;
+            if (instanceof<TypePointer>(paramType) && instanceof<TypePointer>(types[i])) {
+                Type* paramElType = paramType->getElType();
+                for (const auto& tname : targetFunc->templateNames) {
+                    if (paramElType->toString() == tname) {
+                        Type* argElType = types[i]->getElType();
+                        if (instanceof<TypeArray>(argElType)) {
+                            types[i] = argElType->getElType();
+                        } else {
+                            types[i] = argElType;
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
         sTypes = Template::fromTypes(types);
 
         if (types.size() == tnSize)

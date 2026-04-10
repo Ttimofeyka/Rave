@@ -404,7 +404,16 @@ RaveValue NodeFunc::generateWithTemplate(std::vector<Type*>& types, const std::s
     auto _scope = currScope;
     auto oldReplace = generator->toReplace;
 
-    NodeFunc* _f = new NodeFunc(all, args, (NodeBlock*)block->copy(), isExtern, mods, loc, type->copy(), templateNames);
+    std::vector<FuncArgSet> copiedArgs;
+    for (size_t i = 0; i < args.size(); i++) {
+        FuncArgSet copied;
+        copied.name = args[i].name;
+        copied.type = args[i].type->copy();
+        for (auto* t : args[i].internalTypes) copied.internalTypes.push_back(t->copy());
+        copiedArgs.push_back(copied);
+    }
+
+    NodeFunc* _f = new NodeFunc(all, copiedArgs, (NodeBlock*)block->copy(), isExtern, mods, loc, type->copy(), templateNames);
     _f->isTemplate = true;
     _f->isMethod = isMethod;
     _f->structContext = structContext;
