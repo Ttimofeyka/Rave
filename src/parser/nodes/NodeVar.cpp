@@ -301,10 +301,8 @@ RaveValue NodeVar::generateGlobalVariable() {
     handleGlobalInitialization(alignment);
 
     if (generator->settings.outDebugInfo && !isExtern) {
-        LLVMMetadataRef expr = LLVMDIBuilderCreateExpression(debugInfo->diBuilder, nullptr, 0);
-        LLVMMetadataRef gv = LLVMDIBuilderCreateGlobalVariableExpression(
-            debugInfo->diBuilder, debugInfo->diScope, name.c_str(), name.length(), nullptr, 0,
-            debugInfo->diFile, loc, debugInfo->genType(type, loc), 0, expr, nullptr, 0);
+        debugInfo->genGlobalVariable(name.c_str(), debugInfo->genType(type, loc),
+            generator->globals[name].value, loc);
     }
 
     return {};

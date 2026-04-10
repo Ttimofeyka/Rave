@@ -100,9 +100,6 @@ void DebugGen::genGlobalVariable(const char* name, LLVMMetadataRef type, LLVMVal
     LLVMMetadataRef gv = LLVMDIBuilderCreateGlobalVariableExpression(
         diBuilder, diScope, name, strlen(name), nullptr, 0, diFile, line, type,
         0, expr, nullptr, 0);
-
-    LLVMDIBuilderInsertDeclareAtEnd(diBuilder, variable, gv, expr,
-        LLVMDIBuilderCreateDebugLocation(generator->context, line, 0, diScope, nullptr), generator->currBB);
 }
 
 LLVMMetadataRef DebugGen::genBasicType(TypeBasic* type, int loc) {
@@ -122,6 +119,7 @@ LLVMMetadataRef DebugGen::genBasicType(TypeBasic* type, int loc) {
         case BasicType::Bhalf: return LLVMDIBuilderCreateBasicType(diBuilder, "bhalf", 5, 16, 0, LLVMDIFlagZero);
         case BasicType::Float: return LLVMDIBuilderCreateBasicType(diBuilder, "float", 5, 32, 0, LLVMDIFlagZero);
         case BasicType::Double: return LLVMDIBuilderCreateBasicType(diBuilder, "double", 6, 64, 0, LLVMDIFlagZero);
+        case BasicType::Real: return LLVMDIBuilderCreateBasicType(diBuilder, "real", 4, 128, 0, LLVMDIFlagZero);
         default: return nullptr;
     }
 }
@@ -170,9 +168,9 @@ LLVMMetadataRef DebugGen::genType(Type* type, int loc) {
 
     if (instanceof<TypeFunc>(type)) {
         TypeFunc* tf = (TypeFunc*)type;
-        if (instanceof<TypeVoid>(tf->main)) tf->main = basicTypes[BasicType::Char];
 
         std::vector<LLVMMetadataRef> types;
+        types.push_back(genType(tf->main, loc));
         for (size_t i = 0; i < tf->args.size(); i++)
             types.push_back(genType(tf->args[i]->type, loc));
 

@@ -119,6 +119,7 @@ void NodeFunc::createDebugInfo() {
     if (!generator->settings.outDebugInfo) return;
 
     std::vector<LLVMMetadataRef> mTypes;
+    mTypes.push_back(debugInfo->genType(type, loc));
     for (size_t i = 0; i < args.size(); i++) mTypes.push_back(debugInfo->genType(args[i].type, loc));
 
     LLVMMetadataRef funcType = LLVMDIBuilderCreateSubroutineType(
