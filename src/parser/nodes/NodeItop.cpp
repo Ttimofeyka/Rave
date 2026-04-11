@@ -26,7 +26,9 @@ void NodeItop::check() {
 }
 
 RaveValue NodeItop::generate() {
-    return { LLVMBuildIntToPtr(generator->builder, value->generate().value, generator->genType(type, loc), "itop"), type };
+    RaveValue result = { LLVMBuildIntToPtr(generator->builder, value->generate().value, generator->genType(type, loc), "itop"), type };
+    debugInfo->setInstrLoc(this->loc);
+    return result;
 }
 
 NodeItop::~NodeItop() {

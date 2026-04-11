@@ -24,6 +24,10 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <llvm-c/DebugInfo.h>
 #include <llvm-c/Comdat.h>
 
+#if LLVM_VERSION > 18
+#define LLVMDIBuilderInsertDeclareAtEnd LLVMDIBuilderInsertDeclareRecordAtEnd
+#endif
+
 // Helper: get type by size for Win64/cdecl64 ABI
 Type* getTypeBySize(int size) {
     if (size == 8) return basicTypes[BasicType::Char];
@@ -130,6 +134,46 @@ void NodeFunc::createDebugInfo() {
         loc, funcType, isPrivate, !isExtern, loc, LLVMDIFlagZero, generator->settings.optLevel > 0);
 
     LLVMSetSubprogram(generator->functions[name].value, diFuncScope);
+}
+
+void NodeFunc::generateParameterDebugInfo(LLVMBasicBlockRef entry) {
+    if (!generator->settings.outDebugInfo) return;
+    if (args.empty()) return;
+
+    LLVMMetadataRef debugLoc = LLVMDIBuilderCreateDebugLocation(
+        generator->context, loc, 0, diFuncScope, nullptr);
+    LLVMMetadataRef emptyExpr = LLVMDIBuilderCreateExpression(debugInfo->diBuilder, nullptr, 0);
+
+    LLVMBuilderRef oldBuilder = generator->builder;
+    LLVMBasicBlockRef oldBB = generator->currBB;
+    generator->builder = LLVMCreateBuilderInContext(generator->context);
+    LLVMPositionBuilderAtEnd(generator->builder, entry);
+    generator->currBB = entry;
+
+    LLVMValueRef param = LLVMGetParam(generator->functions[name].value, 0);
+    for (size_t i = 0; i < args.size(); i++) {
+        LLVMMetadataRef paramType = debugInfo->genType(args[i].type, loc);
+        LLVMMetadataRef paramVar = LLVMDIBuilderCreateParameterVariable(
+            debugInfo->diBuilder, diFuncScope, args[i].name.c_str(), args[i].name.length(),
+            i + 1, debugInfo->diFile, loc, paramType, true, LLVMDIFlagZero);
+
+        LLVMValueRef addr = param;
+        if (LLVMGetTypeKind(LLVMTypeOf(param)) != LLVMPointerTypeKind) {
+            LLVMValueRef alloca = LLVMBuildAlloca(generator->builder, LLVMTypeOf(param), ("param." + args[i].name).c_str());
+            LLVMBuildStore(generator->builder, param, alloca);
+            addr = alloca;
+        }
+
+        LLVMDIBuilderInsertDeclareAtEnd(
+            debugInfo->diBuilder, addr, paramVar, emptyExpr, debugLoc, entry);
+
+        if (i + 1 < args.size())
+            param = LLVMGetParam(generator->functions[name].value, i + 1);
+    }
+
+    LLVMDisposeBuilder(generator->builder);
+    generator->builder = oldBuilder;
+    generator->currBB = oldBB;
 }
 
 LLVMTypeRef* NodeFunc::getParameters(int callConv) {
@@ -295,6 +339,8 @@ RaveValue NodeFunc::generate() {
 
         LLVMBasicBlockRef oldCurrBB = generator->currBB;
         LLVM::Builder::atEnd(entry);
+
+        generateParameterDebugInfo(entry);
 
         if (!Compiler::settings.noFastMath) LLVM::setFastMath(generator->builder, true, false, true, true);
 

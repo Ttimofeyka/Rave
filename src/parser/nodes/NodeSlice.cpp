@@ -106,6 +106,7 @@ RaveValue NodeSlice::generate() {
 
         _for->generate();
 
+        debugInfo->setInstrLoc(this->loc);
         return buffer;
     }
 
@@ -134,6 +135,7 @@ RaveValue NodeSlice::generate() {
                     ((NodeInt*)call->args[1])->value += 1;
                 }
 
+                debugInfo->setInstrLoc(this->loc);
                 return tempBuffer;
             }
         }
@@ -146,5 +148,6 @@ RaveValue NodeSlice::generate() {
         tempBuffer.value = LLVMBuildInsertValue(generator->builder, tempBuffer.value, LLVMBuildExtractValue(generator->builder, lBase.value, j, "extract"), j, "insert");
     }
 
+    debugInfo->setInstrLoc(this->loc);
     return tempBuffer;
 }

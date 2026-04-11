@@ -106,6 +106,7 @@ int main(int argc, char** argv) {
         + "\n\t--emitLLVM, -emit-llvm (-eml) - Create output files with LLVM IR."
         + "\n\t--recompileStd (-rcs) - Recompile the standard library with flags and replacing the cache version (if available)."
         + "\n\t-O0, -O1, -O2, -O3, -Ofast - Optimization levels (in ascending order of output program speed)."
+        + "\n\t-g - Generate debug information."
         + "\n\t--link (-l) <library> - Add the <library> library to the linker."
         + "\n\t--noStd (-ns) - Do not link with standart library."
         + "\n\t--noEntry (-ne) - Passes information to the compiler that there is no start point (main) in the code."

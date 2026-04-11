@@ -54,11 +54,22 @@ DebugGen::DebugGen(genSettings settings, std::string file, LLVMModuleRef module)
     DEBUG_LOG(Debug::Category::CodeGen, "DebugGen: Creating debug info for " + file);
 
     this->diBuilder = LLVMCreateDIBuilder(module);
-    this->diFile = LLVMDIBuilderCreateFile(diBuilder, file.c_str(), file.length(), "", 0);
+
+    size_t lastSlash = file.find_last_of('/');
+    std::string dirName;
+    std::string fileName;
+    if (lastSlash != std::string::npos) {
+        dirName = file.substr(0, lastSlash);
+        fileName = file.substr(lastSlash + 1);
+    } else {
+        fileName = file;
+    }
+
+    this->diFile = LLVMDIBuilderCreateFile(diBuilder, fileName.c_str(), fileName.length(), dirName.c_str(), dirName.length());
 
     this->diScope = LLVMDIBuilderCreateCompileUnit(
         diBuilder, LLVMDWARFSourceLanguageC,
-        LLVMDIBuilderCreateFile(diBuilder, file.c_str(), file.length(), "", 0),
+        LLVMDIBuilderCreateFile(diBuilder, fileName.c_str(), fileName.length(), dirName.c_str(), dirName.length()),
         "rave", 4, settings.optLevel > 0, nullptr, 0, 1, "", 0,
         LLVMDWARFEmissionFull, 0, true, true, "", 0, "", 0
     );

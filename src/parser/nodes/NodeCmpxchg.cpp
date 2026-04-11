@@ -25,8 +25,10 @@ void NodeCmpxchg::check() { isChecked = true; }
 Node* NodeCmpxchg::comptime() { return this; }
 
 RaveValue NodeCmpxchg::generate() {
-    return {LLVMBuildAtomicCmpXchg(
+    RaveValue result = {LLVMBuildAtomicCmpXchg(
         generator->builder, ptr->generate().value, value1->generate().value,
         value2->generate().value, LLVMAtomicOrderingSequentiallyConsistent, LLVMAtomicOrderingSequentiallyConsistent, false
     ), ptr->getType()};
+    debugInfo->setInstrLoc(this->loc);
+    return result;
 }

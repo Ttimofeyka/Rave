@@ -162,7 +162,14 @@ RaveValue NodeGet::generate() {
     const int fieldNumber = AST::structMembersTable[std::make_pair(structName, field)].number;
     RaveValue memberPtr = LLVM::structGep(ptr, fieldNumber, "NodeGet_generate_ptr");
 
-    return isMustBePtr ? memberPtr : LLVM::load(memberPtr, "NodeGet_generate_load", loc);
+    if (isMustBePtr) {
+        debugInfo->setInstrLoc(this->loc);
+        return memberPtr;
+    }
+    
+    RaveValue result = LLVM::load(memberPtr, "NodeGet_generate_load", loc);
+    debugInfo->setInstrLoc(this->loc);
+    return result;
 }
 
 void NodeGet::check() { isChecked = true; }

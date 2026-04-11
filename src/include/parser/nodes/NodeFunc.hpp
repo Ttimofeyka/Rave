@@ -93,4 +93,5 @@ private:
     void processModifiers(int& callConv, NodeArray*& conditions);
     void createLLVMFunction(TypeFunc* tfunc, int callConv);
     void createDebugInfo();
+    void generateParameterDebugInfo(LLVMBasicBlockRef entry);
 };

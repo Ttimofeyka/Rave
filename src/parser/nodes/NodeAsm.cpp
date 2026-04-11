@@ -42,7 +42,7 @@ RaveValue NodeAsm::generate() {
         types.push_back(LLVMTypeOf(value.value));
     }
 
-    return LLVM::call({LLVMGetInlineAsm(
+    RaveValue result = LLVM::call({LLVMGetInlineAsm(
         LLVMFunctionType(generator->genType(this->type, this->loc), types.data(), types.size(), false),
         (char*)this->line.c_str(),
         this->line.size(),
@@ -53,6 +53,8 @@ RaveValue NodeAsm::generate() {
         LLVMInlineAsmDialectATT,
         false
     ), tfunc}, values.data(), values.size(), (instanceof<TypeVoid>(this->type) ? "" : "asm_"));
+    debugInfo->setInstrLoc(this->loc);
+    return result;
 }
 
 NodeAsm::~NodeAsm() {

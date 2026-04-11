@@ -32,10 +32,12 @@ RaveValue NodePtoi::generate() {
     else if (pointerSize == 32) pointerType = LLVMInt32TypeInContext(generator->context);
     else pointerType == LLVMInt16TypeInContext(generator->context);
 
-    return {
+    RaveValue result = {
         LLVMBuildPtrToInt(generator->builder, value->generate().value, pointerType, "ptoi"),
         basicTypes[pointerSize == 64 ? BasicType::Long : pointerSize == 32 ? BasicType::Int : BasicType::Short]
     };
+    debugInfo->setInstrLoc(this->loc);
+    return result;
 }
 
 NodePtoi::~NodePtoi() { if (value) delete value; }
