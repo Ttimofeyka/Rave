@@ -58,7 +58,7 @@ RaveValue NodeIf::generate() {
     debugInfo->setInstrLoc(loc);
 
     int selfNum = generator->activeLoops.size();
-    generator->activeLoops[selfNum] = Loop{.isActive = true, .start = thenBlock, .end = endBlock, .hasEnd = false, .isIf = true, .loopRets = std::vector<LoopReturn>(), .owner = this};
+    generator->activeLoops[selfNum] = Loop{.isActive = true, .start = thenBlock, .then = thenBlock, ._else = elseBlock, .end = nullptr, .hasEnd = false, .isIf = true, .loopRets = std::vector<LoopReturn>(), .owner = this};
 
     LLVM::Builder::atEnd(thenBlock);
 
@@ -69,7 +69,7 @@ RaveValue NodeIf::generate() {
 
     bool hasEnd1 = generator->activeLoops[selfNum].hasEnd;
 
-    generator->activeLoops[selfNum] = Loop{.isActive = true, .start = elseBlock, .end = endBlock, .hasEnd = false, .isIf = true, .loopRets = std::vector<LoopReturn>(), .owner = this};
+    generator->activeLoops[selfNum] = Loop{.isActive = true, .start = elseBlock, .then = nullptr, ._else = elseBlock, .end = endBlock, .hasEnd = false, .isIf = true, .loopRets = std::vector<LoopReturn>(), .owner = this};
 
     delete currScope;
     currScope = copyScope(origScope);

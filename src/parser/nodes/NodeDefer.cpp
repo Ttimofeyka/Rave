@@ -8,23 +8,29 @@ with this file, You can obtain one at htypep://mozilla.org/MPL/2.0/.
 #include <llvm-c/Core.h>
 #include "../../include/parser/nodes/NodeRet.hpp"
 
+#include <iostream>
+
 void Defer::make(Node* value, bool isFunctionScope) {
     LLVMBasicBlockRef targetBlock = nullptr;
 
     // Determine target block: loop end for non-function scope, or function end
-    if (!isFunctionScope && !generator->activeLoops.empty()) targetBlock = generator->activeLoops.rbegin()->second.end;
+    if (!isFunctionScope && !generator->activeLoops.empty()) {
+        auto loop = generator->activeLoops.rbegin();
+        if (loop->second.isIf) targetBlock = loop->second.then ? loop->second.then : loop->second._else;
+        else targetBlock = loop->second.end;
+    }
     else if (currScope->fnEnd) targetBlock = currScope->fnEnd;
 
     if (targetBlock) {
         LLVMBasicBlockRef oldBB = generator->currBB;
+
         LLVM::Builder::atEnd(targetBlock);
+            auto oldScope = currScope;
+            currScope = copyScope(oldScope);
 
-        auto oldScope = currScope;
-        currScope = copyScope(oldScope);
-
-        value->generate();
-
+            value->generate();
         LLVM::Builder::atEnd(oldBB);
+
         delete currScope;
         currScope = oldScope;
     }

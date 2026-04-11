@@ -9,6 +9,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <llvm-c/Core.h>
 #include "Node.hpp"
 #include "../Types.hpp"
+#include "llvm-c/Types.h"
 #include <vector>
 #include <string>
 
@@ -37,6 +38,8 @@ struct LoopReturn {
 struct Loop {
     bool isActive;
     LLVMBasicBlockRef start;
+    LLVMBasicBlockRef then = nullptr; // IF only
+    LLVMBasicBlockRef _else = nullptr; // IF only
     LLVMBasicBlockRef end;
     bool hasEnd;
     bool isIf;
