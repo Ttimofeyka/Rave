@@ -54,6 +54,14 @@ benchmarks/rave/dirichlet
 tests/rave/io
 tests/test_nodes
 tests/test_parser
+tests/defer/test_defer_basic
+tests/defer/test_defer_if_both
+tests/defer/test_defer_if_else
+tests/defer/test_defer_if_then
+tests/defer/test_defer_lifo
+tests/defer/test_defer_nested_if
+tests/defer/test_defer_order
+tests/defer/test_defer_return
 
 std/*.o
 src/*.o

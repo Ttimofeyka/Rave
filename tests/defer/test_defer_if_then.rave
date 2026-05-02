@@ -1,0 +1,28 @@
+int globalVar = 0;
+
+bool getCond() {
+    return = true;
+}
+
+void testDeferInThen() {
+    bool cond = getCond();
+    if (cond) {
+        defer { globalVar = 10; }
+        // Defer should NOT have run yet
+        if (globalVar != 0) {
+            globalVar = 999;
+            @return();
+        }
+        globalVar = 1;
+    }
+}
+
+(C) void abort();
+
+int main() {
+    testDeferInThen();
+    // Expected: body sets 1, then defer sets 10
+    if (globalVar == 999) abort();
+    if (globalVar != 10) abort();
+    return = 0;
+}

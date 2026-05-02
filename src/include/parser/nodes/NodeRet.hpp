@@ -44,5 +44,6 @@ struct Loop {
     bool hasEnd;
     bool isIf;
     std::vector<LoopReturn> loopRets;
+    std::vector<Node*> defers;
     Node* owner;
 };

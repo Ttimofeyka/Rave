@@ -20,6 +20,9 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 namespace Defer {
     extern void make(Node* value, bool isFunctionScope);
+    extern void emit(Loop& loop);
+    extern void emit(Scope* scope);
+    extern void emitAll();
 }
 
 class NodeDefer : public Node {

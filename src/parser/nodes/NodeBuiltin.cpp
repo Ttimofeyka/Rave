@@ -21,6 +21,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeStruct.hpp"
 #include "../../include/parser/nodes/NodeDone.hpp"
 #include "../../include/parser/nodes/NodeRet.hpp"
+#include "../../include/parser/nodes/NodeDefer.hpp"
 #include "../../include/parser/nodes/NodeIndex.hpp"
 #include "../../include/parser/nodes/NodeArray.hpp"
 #include "../../include/llvm.hpp"
@@ -364,6 +365,7 @@ RaveValue NodeBuiltin::generate() {
         if (currScope != nullptr) {
             if (currScope->fnEnd != nullptr) {
                 if (args.size() == 1) Binary::operation(TokType::Equ, new NodeIden("return", loc), args[0], loc);
+                Defer::emitAll();
                 if (currScope->fnEnd != nullptr) LLVMBuildBr(generator->builder, currScope->fnEnd);
                 else LLVMBuildBr(generator->builder, AST::funcTable[currScope->funcName]->exitBlock);
                 if (generator->activeLoops.size() > 0) generator->activeLoops[generator->activeLoops.size()-1].hasEnd = true;

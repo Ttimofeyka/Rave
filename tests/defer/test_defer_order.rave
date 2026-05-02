@@ -1,0 +1,31 @@
+int globalVar = 0;
+
+bool getCond() {
+    return = true;
+}
+
+void testDeferOrderInIf() {
+    bool cond = getCond();
+    if (cond) {
+        defer { globalVar = 10; }
+        // At this point, defer should NOT have run yet
+        if (globalVar != 0) {
+            // If defer already ran, this is the old buggy behavior
+            globalVar = 999;
+            @return();
+        }
+        globalVar = 1;
+    }
+}
+
+(C) void abort();
+
+int main() {
+    testDeferOrderInIf();
+    // Expected: globalVar = 1 (body), then defer sets globalVar = 10
+    // If old behavior: globalVar = 10 (defer), then globalVar = 1, final = 1
+    // Also if old behavior with abort path: globalVar = 999
+    if (globalVar == 999) abort();
+    if (globalVar != 10) abort();
+    return = 0;
+}

@@ -9,6 +9,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "../../include/parser/nodes/NodeFunc.hpp"
 #include "../../include/parser/nodes/NodeRet.hpp"
+#include "../../include/parser/nodes/NodeDefer.hpp"
 #include "../../include/parser/nodes/NodeIden.hpp"
 #include "../../include/parser/nodes/NodeVar.hpp"
 #include "../../include/parser/nodes/NodeNull.hpp"
@@ -389,6 +390,8 @@ RaveValue NodeFunc::generate() {
         free(basicBlocks);
 
         LLVM::Builder::atEnd(exitBlock);
+
+        Defer::emit(currScope);
 
         if (!instanceof<TypeVoid>(type)) LLVMBuildRet(generator->builder, currScope->get("return", loc).value);
         else LLVMBuildRetVoid(generator->builder);

@@ -6,6 +6,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "../../include/parser/nodes/NodeIf.hpp"
 #include "../../include/parser/nodes/NodeRet.hpp"
+#include "../../include/parser/nodes/NodeDefer.hpp"
 #include "../../include/parser/nodes/NodeBool.hpp"
 #include "../../include/parser/nodes/NodeFunc.hpp"
 #include "../../include/parser/nodes/NodeVar.hpp"
@@ -65,6 +66,7 @@ RaveValue NodeIf::generate() {
     currScope = copyScope(origScope);
 
     if (body) body->generate();
+    Defer::emit(generator->activeLoops[selfNum]);
     if (!generator->activeLoops[selfNum].hasEnd) { LLVMBuildBr(generator->builder, endBlock); debugInfo->setInstrLoc(loc); }
 
     bool hasEnd1 = generator->activeLoops[selfNum].hasEnd;
@@ -76,7 +78,7 @@ RaveValue NodeIf::generate() {
 
     LLVM::Builder::atEnd(elseBlock);
     if (_else) _else->generate();
-
+    Defer::emit(generator->activeLoops[selfNum]);
     if (!generator->activeLoops[selfNum].hasEnd) { LLVMBuildBr(generator->builder, endBlock); debugInfo->setInstrLoc(loc); }
 
     bool hasEnd2 = generator->activeLoops[selfNum].hasEnd;

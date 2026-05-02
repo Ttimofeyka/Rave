@@ -1,0 +1,42 @@
+import <std/io>
+
+int globalVar = 0;
+
+bool outerCond() {
+    return = true;
+}
+
+bool innerCond() {
+    return = true;
+}
+
+void testNestedIfDefers() {
+    if (outerCond()) {
+        defer { globalVar = globalVar + 10; }
+        globalVar = 1;
+        if (innerCond()) {
+            defer { globalVar = globalVar + 100; }
+            globalVar = 2;
+        }
+        globalVar = 3;
+    }
+    globalVar = 4;
+}
+
+(C) void abort();
+
+int main() {
+    testNestedIfDefers();
+    // Execution flow:
+    // outerCond = true, so enter outer if
+    //   globalVar = 1
+    //   innerCond = true, so enter inner if
+    //     globalVar = 2
+    //     exit inner if: defer runs -> globalVar = 2 + 100 = 102
+    //   globalVar = 3
+    //   exit outer if: defer runs -> globalVar = 102 + 10 = 112
+    // globalVar = 4
+    // Final: globalVar = 4
+    if(globalVar != 4) abort();
+    return = 0;
+}

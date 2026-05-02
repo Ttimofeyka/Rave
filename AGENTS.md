@@ -2,6 +2,28 @@
 
 High-signal context for working in this repository.
 
+## Table of Contents
+
+- [Build](#build)
+- [CLI Options](#cli-options)
+- [Running Rave Programs](#running-rave-programs)
+- [Examples](#examples)
+- [Tests](#tests)
+- [Key Conventions](#key-conventions)
+- [Return Syntax](#return-syntax---critical)
+- [Types](#types)
+- [Builtins](#builtins-compile-time)
+- [Control Flow](#control-flow)
+- [Operators](#operators)
+- [Declarations](#declarations)
+- [Declaration Parameters](#declaration-parameters)
+- [Platform Constants](#platform-constants)
+- [Architecture](#architecture)
+- [options.json](#optionsjson)
+- [CI](#ci)
+- [Standard Library](#standard-library-std)
+- [References](#references)
+
 ## Build
 
 ```bash
@@ -15,9 +37,77 @@ make cleanStd           # Remove cached std/*.o and std/*.ll files
 
 **Variables**: `FLAGS` (default: `-O3`), `COMPILER`, `LLVM_STATIC=1` for static linking.
 
+## CLI Options
+
+```
+Usage: rave [files] [options]
+```
+
+| Option | Description |
+|--------|-------------|
+| `-v`, `--version` | Output the current version (v0.2.8-dev). |
+| `-o`, `--out <file>` | Place the output into `<file>`. |
+| `-c` | Do not create an output file (only object files). |
+| `-t`, `--target <target>` | Change the platform type to `<target>`. |
+| `-eml`, `--emitLLVM`, `-emit-llvm` | Create output files with LLVM IR. |
+| `-rcs`, `--recompileStd` | Recompile the standard library with flags and replace the cache version. |
+| `-O0`, `-O1`, `-O2`, `-O3`, `-Ofast` | Optimization levels (ascending order of output program speed). `-Ofast` also disables runtime checks. |
+| `-g` | Generate debug information (GDB-compatible). |
+| `-l`, `--link <library>` | Add the `<library>` library to the linker. |
+| `-ns`, `--noStd` | Do not link with the standard library. |
+| `-ne`, `--noEntry` | Pass information to the compiler that there is no start point (`main`) in the code. |
+| `-np`, `--noPrelude` | Disable automatic import of `<std/prelude>` and `<std/memory>`. |
+| `-nc`, `--noChecks` | Disables runtime checks (automatically enabled at `-Ofast`). |
+| `-sof`, `--saveObjectFiles` | Save the object files after compilation. |
+| `-dw`, `--disableWarnings` | Disables warnings. |
+| `-s`, `--shared` | Creates a shared output file. |
+| `-native` | Use optimizations from the current platform. |
+| `-noSSE`, `-noSSE2`, `-noSSE3`, `-noSSSE3`, `-noSSE4A`, `-noSSE4_1`, `-noSSE4_2` | Disable different SSE versions for compiler (if available). |
+| `-noAVX`, `-noAVX2`, `-noAVX512` | Disable different AVX versions for compiler (if available). |
+| `-noASIMD`, `-noFP`, `-noSVE`, `-noSVE2` | Disable different AARCH64 features for compiler (if available). |
+| `-noHALF` | Disable different ARM features for compiler (if available). |
+| `-nfm`, `--noFastMath` | Disable fast math. |
+| `-npi`, `--noPrivateInlining` | Disable inlining of private functions. |
+| `-nio`, `--noIoInit` | Disable the automatic `std::io::initialize` call at the beginning of `main`. |
+| `-I`, `--importDirectory <dir>` | Add directory to import search path (can be used multiple times). |
+| `--debug` | Enables compiler debug mode (internal diagnostics). |
+| `-h`, `--help` | Show all available options. |
+
+Unknown arguments starting with `-` are passed through to the linker.
+
+## Running Rave Programs
+
+```bash
+./rave source.rave -o output                       # Basic compilation
+./rave source.rave -o output -Ofast --recompileStd  # Max performance
+./rave source.rave -o output.exe -t i686-win32      # Cross-compile for Windows
+./rave source.rave -o output -g                     # With debug info
+./rave source.rave -o output -I /path/to/modules    # Custom import directories
+```
+
+## Examples
+
+The `examples/` directory contains sample programs organized by topic:
+
+```
+examples/
+├── hello_world.rave       # Basic "Hello, world!"
+├── first.rave             # Introduction example
+├── csv/                   # CSV parsing examples
+├── io/                    # File and console I/O
+├── json/                  # JSON parsing examples
+├── math/                  # Math and calculator demos
+├── memory/                # Memory management and defer
+├── multithread/           # Threading examples
+├── network/               # HTTP client/server and sockets
+├── simd/                  # SIMD vector operations
+└── time/                  # Time handling
+```
+
 ## Tests
 
 Unit tests use a custom macro framework in `tests/unit/test.hpp`:
+
 ```cpp
 TEST("name") EXPECT_TRUE(condition);
 TEST("name") EXPECT_EQ(a, b);
@@ -29,13 +119,15 @@ Test executables: `./tests/test_nodes`, `./tests/test_parser`
 
 **Writing new tests**: Must define `std::string exePath = "./";` before calling parser functions.
 
-## Running Rave Programs
-
-```bash
-./rave source.rave -o output           # Basic compilation
-./rave source.rave -o output -Ofast --recompileStd  # Max performance
-./rave source.rave -o output.exe -t i686-win32      # Cross-compile for Windows
-```
+Additional runtime tests for `defer` behavior are in `tests/defer/` and cover:
+- Basic defer (`test_defer_basic`)
+- LIFO ordering (`test_defer_lifo`)
+- Return paths (`test_defer_return`)
+- If-then branches (`test_defer_if_then`)
+- If-else branches (`test_defer_if_else`)
+- Both branches (`test_defer_if_both`)
+- Nested ifs (`test_defer_nested_if`)
+- Execution order (`test_defer_order`)
 
 ## Key Conventions
 
@@ -90,7 +182,23 @@ int add(int a, int b) {
 
 **Function introspection**: `@hasMethod(type, name)`, `@hasDestructor(type)`, `@getLinkName(func)`, `@callWithArgs(func, args)`, `@callWithBeforeArgs(func, args)`.
 
-**Other**: `@alloca(n)`, `@compileAndLink(files)`, `@addLibrary(name)`, `@aliasExists(name)`, `@return(value)`, `@fmodf(val, div)`, `@atomicTAS(ptr, val)`, `@atomicClear(ptr)`, `@ctlz(val, isZeroPoison)`, `@cttz(val, isZeroPoison)`.
+**SIMD operations**:
+- `@vLoad(type, ptr, [aligned])` - Load a vector from memory (uses struct+bitcast method like clang).
+- `@vStore(vector, ptr, [aligned])` - Store a vector to memory.
+- `@vFrom(type, value)` - Broadcast a scalar value into all lanes of a vector.
+- `@vShuffle(v1, v2, maskArray)` - Shuffle elements between two vectors using a constant integer array mask.
+- `@vHAdd32x4(v1, v2)` - Horizontal add of 32-bit x4 vectors (requires SSE3/SSSE3).
+- `@vHAdd16x8(v1, v2)` - Horizontal add of 16-bit x8 vectors (requires SSSE3).
+- `@vMoveMask128(v)` - Move mask from 128-bit vector (requires SSE2).
+- `@vMoveMask256(v)` - Move mask from 256-bit vector (requires AVX2).
+- `@vSqrt(v)` - Vector square root (SSE/AVX, float/double).
+- `@vAbs(v)` - Vector absolute value (SSSE3/AVX2, short/int).
+
+**Atomics**: `@atomicTAS(ptr, val)` (test-and-set), `@atomicClear(ptr)`.
+
+**Bitwise**: `@ctlz(val, isZeroPoison)`, `@cttz(val, isZeroPoison)` - count leading/trailing zeros.
+
+**Other**: `@alloca(n)`, `@compileAndLink(files)`, `@addLibrary(name)`, `@aliasExists(name)`, `@return(value)`, `@fmodf(val, div)`.
 
 ## Control Flow
 
@@ -153,12 +261,46 @@ src/
 ├── main.cpp        # CLI, arg parsing
 ├── compiler.cpp    # Orchestration, linking
 ├── llvm.cpp        # LLVM IR generation
+├── Binary.cpp      # Binary operation codegen
+├── BigInt.cpp      # Big integer support
+├── debug.cpp       # Debug info generation
 ├── lexer/          # Tokenization
+│   ├── lexer.cpp
+│   └── tokens.cpp
 └── parser/         # AST, type checking
+    ├── ast.cpp
+    ├── parser.cpp
+    ├── Scope.cpp
+    ├── Types.cpp
+    ├── TypeMatching.cpp
+    ├── TypeUtils.cpp
+    ├── FuncRegistry.cpp
+    ├── FuncSignature.cpp
+    ├── LLVMGen.cpp
+    ├── ParserUtils.cpp
     └── nodes/      # 47 AST node types (Node*.cpp)
 ```
 
 Pipeline: Lexer → Parser (AST + type check) → LLVM IR → Object files → Link
+
+## options.json
+
+Compiler behavior and target feature flags are controlled via `options.json`:
+
+```json
+{
+    "compiler": "clang",
+    "platforms": {
+        "X86": { "SSE": true, "SSE2": true, ... },
+        "X86_64": { "SSE": true, "AVX2": true, ... },
+        "AARCH64": { "ASIMD": true, ... },
+        "ARM": { "HALF": true }
+    }
+}
+```
+
+- `"compiler"`: The system compiler used for linking (e.g., `clang`, `gcc`, `i686-w64-mingw32-gcc-win32`).
+- `"platforms"`: Per-platform CPU feature flags. These are used alongside `-native` and can be overridden per-build with `-noSSE`, `-noAVX`, etc.
 
 ## CI
 
@@ -239,4 +381,4 @@ Without recompilation, the cached `std/*.o` files will be used and your changes 
 
 ## References
 
-- `specifications/` - Language specification documents
+- `specifications/` - Language specification documents (grammar, types, operators, platform constants, SIMD, std library docs)

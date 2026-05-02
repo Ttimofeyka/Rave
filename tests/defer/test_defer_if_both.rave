@@ -1,0 +1,36 @@
+import <std/io>
+
+int globalVar = 0;
+
+bool getCond() {
+    return = true;
+}
+
+void testDeferInBoth(bool cond) {
+    if (cond) {
+        defer { globalVar = 10; }
+        globalVar = 1;
+    } else {
+        defer { globalVar = 20; }
+        globalVar = 2;
+    }
+    globalVar = 3;
+}
+
+(C) void abort();
+
+int main() {
+    // Test then branch
+    globalVar = 0;
+    testDeferInBoth(true);
+    // Expected: globalVar = 1, defer sets 10, then globalVar = 3
+    if(globalVar != 3) abort();
+
+    // Test else branch
+    globalVar = 0;
+    testDeferInBoth(false);
+    // Expected: globalVar = 2, defer sets 20, then globalVar = 3
+    if(globalVar != 3) abort();
+
+    return = 0;
+}

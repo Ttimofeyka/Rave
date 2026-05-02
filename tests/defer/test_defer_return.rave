@@ -1,0 +1,20 @@
+import <std/io>
+
+int result = 0;
+
+int testDeferReturn() {
+    defer { result = 99; }
+    return = 42;
+    @return();
+}
+
+(C) void abort();
+
+int main() {
+    int ret = testDeferReturn();
+    // Defer should run before return, so result should be 99
+    if(result != 99) abort();
+    // Return value should still be 42
+    if(ret != 42) abort();
+    return = 0;
+}

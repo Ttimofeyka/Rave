@@ -190,6 +190,7 @@ Scope* copyScope(Scope* original) {
     newScope->localVars = original->localVars;
     newScope->localScope = original->localScope;
     newScope->aliasTable = original->aliasTable;
+    newScope->defers = original->defers;
     return newScope;
 }
 

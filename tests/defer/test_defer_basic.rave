@@ -1,0 +1,16 @@
+import <std/io>
+
+int globalVar = 0;
+
+void testBasicDefer() {
+    defer { globalVar = 99; }
+    globalVar = 1;
+}
+
+(C) void abort();
+
+int main() {
+    testBasicDefer();
+    if(globalVar != 99) abort();
+    return = 0;
+}

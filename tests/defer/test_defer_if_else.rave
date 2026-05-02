@@ -1,0 +1,28 @@
+import <std/io>
+
+int globalVar = 0;
+
+bool getCond() {
+    return = false;
+}
+
+void testDeferInElse() {
+    bool cond = getCond();
+    if (cond) {
+        globalVar = 1;
+    } else {
+        defer { globalVar = 20; }
+        globalVar = 2;
+    }
+    globalVar = 3;
+}
+
+(C) void abort();
+
+int main() {
+    testDeferInElse();
+    // Expected execution when cond=false:
+    // globalVar = 2, then defer sets globalVar = 20, then globalVar = 3
+    if(globalVar != 3) abort();
+    return = 0;
+}

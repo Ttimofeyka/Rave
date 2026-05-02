@@ -161,6 +161,7 @@ public:
     std::map<std::string, NodeVar*> argVars;
     std::map<std::string, Node*> aliasTable;
     LLVMBasicBlockRef fnEnd;
+    std::vector<Node*> defers;
 
     Scope(std::string funcName, std::map<std::string, int> args, std::map<std::string, NodeVar*> argVars);
 

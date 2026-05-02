@@ -1,0 +1,24 @@
+import <std/io>
+
+int order = 0;
+int result1 = 0;
+int result2 = 0;
+int result3 = 0;
+
+void testLifo() {
+    defer { result1 = order; order = order + 1; }
+    defer { result2 = order; order = order + 1; }
+    defer { result3 = order; order = order + 1; }
+}
+
+(C) void abort();
+
+int main() {
+    testLifo();
+    // Expected LIFO order: last defer runs first
+    // result3 = 0, result2 = 1, result1 = 2
+    if(result3 != 0) abort();
+    if(result2 != 1) abort();
+    if(result1 != 2) abort();
+    return = 0;
+}
