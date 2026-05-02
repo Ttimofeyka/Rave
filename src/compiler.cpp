@@ -14,7 +14,6 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include <fstream>
 #include <chrono>
 #include <ctime>
-#include <regex>
 #include "./include/lexer/lexer.hpp"
 #include "./include/parser/parser.hpp"
 #include <llvm-c/Target.h>
@@ -502,47 +501,32 @@ void Compiler::compile(std::string file) {
     LLVMPassManagerRef pm = LLVMCreatePassManager();
 
     if (Compiler::settings.optLevel > 0) {
+        LLVMAddPromoteMemoryToRegisterPass(pm);
         LLVMAddInstructionCombiningPass(pm);
-        LLVMAddStripDeadPrototypesPass(pm);
-
-        if (Compiler::settings.optLevel >= 2) {
-            LLVMAddCFGSimplificationPass(pm);
-	        LLVMAddJumpThreadingPass(pm);
-	        LLVMAddSimplifyLibCallsPass(pm);
-	        LLVMAddTailCallEliminationPass(pm);
-	        LLVMAddCFGSimplificationPass(pm);
-	        LLVMAddReassociatePass(pm);
-	        LLVMAddLoopRotatePass(pm);
-	        LLVMAddLICMPass(pm);
-	        LLVMAddCFGSimplificationPass(pm);
-	        LLVMAddLoopIdiomPass(pm);
-	        LLVMAddLoopDeletionPass(pm);
-	        LLVMAddMergedLoadStoreMotionPass(pm);
-	        LLVMAddMemCpyOptPass(pm);
-	        LLVMAddSCCPPass(pm);
-	        LLVMAddBitTrackingDCEPass(pm);
-            LLVMAddCalledValuePropagationPass(pm);
-            LLVMAddSLPVectorizePass(pm);
-	        LLVMAddLICMPass(pm);
-	        LLVMAddAlignmentFromAssumptionsPass(pm);
-	        LLVMAddStripDeadPrototypesPass(pm);
-            LLVMAddLoopRotatePass(pm);
-            LLVMAddLoopVectorizePass(pm);
-            LLVMAddTailCallEliminationPass(pm);
-        }
-
+        LLVMAddReassociatePass(pm);
+        LLVMAddGVNPass(pm);
         LLVMAddCFGSimplificationPass(pm);
+        LLVMAddJumpThreadingPass(pm);
+        LLVMAddSimplifyLibCallsPass(pm);
+        LLVMAddTailCallEliminationPass(pm);
+        LLVMAddLoopRotatePass(pm);
+        LLVMAddLICMPass(pm);
+        LLVMAddLoopIdiomPass(pm);
+        LLVMAddLoopDeletionPass(pm);
         LLVMAddIndVarSimplifyPass(pm);
         LLVMAddScalarReplAggregatesPass(pm);
+        LLVMAddMergedLoadStoreMotionPass(pm);
+        LLVMAddMemCpyOptPass(pm);
+        LLVMAddSCCPPass(pm);
+        LLVMAddBitTrackingDCEPass(pm);
+        LLVMAddCalledValuePropagationPass(pm);
+        LLVMAddAlignmentFromAssumptionsPass(pm);
         LLVMAddLoopVectorizePass(pm);
-        LLVMAddConstantMergePass(pm);
         LLVMAddSLPVectorizePass(pm);
-	    LLVMAddPromoteMemoryToRegisterPass(pm);
-	    LLVMAddMergedLoadStoreMotionPass(pm);
-	    LLVMAddAggressiveDCEPass(pm);
-	    LLVMAddAlwaysInlinerPass(pm);
-	    LLVMAddStripDeadPrototypesPass(pm);
-        LLVMAddCFGSimplificationPass(pm);
+        LLVMAddConstantMergePass(pm);
+        LLVMAddAggressiveDCEPass(pm);
+        LLVMAddAlwaysInlinerPass(pm);
+        LLVMAddStripDeadPrototypesPass(pm);
 
         LLVMPassManagerBuilderRef pmb = LLVMPassManagerBuilderCreate();
         LLVMPassManagerBuilderSetOptLevel(pmb, Compiler::settings.optLevel);
@@ -565,7 +549,7 @@ void Compiler::compile(std::string file) {
     if (Compiler::settings.onlyObject && Compiler::outFile != "" && Compiler::files.size() == 1 && file == Compiler::files[0]) {
         objectFile = Compiler::outFile;
     } else {
-        objectFile = std::regex_replace(file, std::regex("\\.rave"), ".o");
+        objectFile = replaceExtension(file, ".rave", ".o");
     }
 
     if (debugInfo) {
@@ -613,7 +597,7 @@ void Compiler::compileAll() {
             if (Compiler::settings.onlyObject && Compiler::outFile != "" && Compiler::files.size() == 1) {
                 compiledFile = Compiler::outFile;
             } else {
-                compiledFile = std::regex_replace(Compiler::files[i], std::regex("\\.rave"), ".o");
+                compiledFile = replaceExtension(Compiler::files[i], ".rave", ".o");
             }
             Compiler::linkString += compiledFile + " ";
             if (!Compiler::settings.saveObjectFiles && !Compiler::settings.onlyObject) toRemove.push_back(compiledFile);
@@ -638,8 +622,8 @@ void Compiler::compileAll() {
         else {
             if (
                 Compiler::toImport[i].find(exePath + "std/") != std::string::npos && !Compiler::settings.recompileStd &&
-                access(std::regex_replace(Compiler::toImport[i], std::regex("\\.rave"), std::string(".") + Compiler::outType + ".o").c_str(), 0) != -1
-            ) linkString += std::regex_replace(Compiler::toImport[i], std::regex("\\.rave"), std::string(".") + Compiler::outType + ".o") + " ";
+                access(replaceExtension(Compiler::toImport[i], ".rave", std::string(".") + Compiler::outType + ".o").c_str(), 0) != -1
+            ) linkString += replaceExtension(Compiler::toImport[i], ".rave", std::string(".") + Compiler::outType + ".o") + " ";
             else {
                 compile(Compiler::toImport[i]);
 
@@ -648,12 +632,12 @@ void Compiler::compileAll() {
                     LLVMPrintModuleToFile(generator->lModule, (Compiler::toImport[i] + ".ll").c_str(), &err);
                 }
 
-                std::string compiledFile = std::regex_replace(Compiler::toImport[i], std::regex("\\.rave"), ".o");
+                std::string compiledFile = replaceExtension(Compiler::toImport[i], ".rave", ".o");
                 linkString += compiledFile + " ";
 
                 if (Compiler::toImport[i].find(exePath + "std/") != std::string::npos) {
                     std::ifstream src(compiledFile, std::ios::binary);
-                    std::ofstream dst(std::regex_replace(compiledFile, std::regex("\\.o"), std::string(".") + Compiler::outType + ".o"), std::ios::binary);
+                    std::ofstream dst(replaceExtension(compiledFile, ".o", std::string(".") + Compiler::outType + ".o"), std::ios::binary);
                     dst << src.rdbuf();
                 }
 

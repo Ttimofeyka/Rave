@@ -18,6 +18,14 @@ static std::string replaceAll(std::string str, std::string substr1, std::string 
     return str;
 }
 
+static std::string replaceExtension(std::string path, const std::string& oldExt, const std::string& newExt) {
+    size_t pos = path.rfind(oldExt);
+    if (pos != std::string::npos && pos == path.size() - oldExt.size()) {
+        path.replace(pos, oldExt.size(), newExt);
+    }
+    return path;
+}
+
 static std::string namespacesToString(std::vector<std::string>& namespacesNames, std::string n) {
     std::string ret = n;
     for (size_t i=0; i<namespacesNames.size(); i++) ret = namespacesNames[i] + "::" + ret;

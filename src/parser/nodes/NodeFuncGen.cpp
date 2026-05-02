@@ -271,7 +271,7 @@ RaveValue NodeFunc::generate() {
     if (!isTemplate && isCtargs) return {};
     if (isForwardDeclaration) return {};
 
-    std::map<std::string, Type*> oldReplace = std::map<std::string, Type*>(generator->toReplace);
+    std::unordered_map<std::string, Type*> oldReplace = std::unordered_map<std::string, Type*>(generator->toReplace);
     if (isTemplate) {
         generator->toReplace.clear();
         for (size_t i = 0; i < templateNames.size(); i++)
@@ -345,8 +345,8 @@ RaveValue NodeFunc::generate() {
 
         if (!Compiler::settings.noFastMath) LLVM::setFastMath(generator->builder, true, false, true, true);
 
-        std::map<std::string, int> indexes;
-        std::map<std::string, NodeVar*> vars;
+        std::unordered_map<std::string, int> indexes;
+        std::unordered_map<std::string, NodeVar*> vars;
         for (size_t i = 0; i < args.size(); i++) {
             indexes.insert({args[i].name, i});
             vars.insert({args[i].name, new NodeVar(args[i].name, nullptr, false, true, false, {}, loc, args[i].type, false, false, false)});
@@ -402,7 +402,7 @@ RaveValue NodeFunc::generate() {
         generator->currentBuiltinArg = oldCurrentBuiltinArg;
     }
 
-    if (isTemplate) generator->toReplace = std::map<std::string, Type*>(oldReplace);
+    if (isTemplate) generator->toReplace = std::unordered_map<std::string, Type*>(oldReplace);
 
     if (!isExtern && generator->settings.outDebugInfo) debugInfo->popScope();
 
@@ -428,7 +428,7 @@ std::string NodeFunc::generateWithCtargs(std::vector<Type*> args) {
         newArgs.push_back(FuncArgSet{.name = "_RaveArg" + std::to_string(i), .type = newType, .internalTypes = {newType}});
     }
 
-    auto activeLoops = std::map<int32_t, Loop>(generator->activeLoops);
+    auto activeLoops = std::unordered_map<int32_t, Loop>(generator->activeLoops);
     auto builder = generator->builder;
     auto currBB = generator->currBB;
     auto _scope = currScope;
@@ -454,7 +454,7 @@ std::string NodeFunc::generateWithCtargs(std::vector<Type*> args) {
 RaveValue NodeFunc::generateWithTemplate(std::vector<Type*>& types, const std::string& all) {
     DEBUG_LOG(Debug::Category::Template, "Generating function with template: " + all);
 
-    auto activeLoops = std::map<int32_t, Loop>(generator->activeLoops);
+    auto activeLoops = std::unordered_map<int32_t, Loop>(generator->activeLoops);
     auto builder = generator->builder;
     auto currBB = generator->currBB;
     auto _scope = currScope;

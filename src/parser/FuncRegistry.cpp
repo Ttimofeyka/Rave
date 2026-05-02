@@ -74,7 +74,7 @@ NodeFunc* FuncRegistry::findBySignature(const FuncSignature& sig) const {
                     if (func->args.size() == sig.paramTypes.size()) {
                         bool match = true;
                         for (size_t i = 0; i < sig.paramTypes.size(); i++) {
-                            if (func->args[i].type->toString() != sig.paramTypes[i]->toString()) {
+                            if (!Types::typesEqual(func->args[i].type, sig.paramTypes[i])) {
                                 match = false;
                                 break;
                             }

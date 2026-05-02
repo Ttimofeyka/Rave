@@ -11,7 +11,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../Type.hpp"
 #include <vector>
 #include <string>
-#include <map>
+#include <unordered_map>
 #include "../parser.hpp"
 
 extern Type* checkForTemplated(Type* type);
@@ -28,7 +28,7 @@ public:
     std::string name;
     std::vector<Node*> elements;
     std::vector<NodeVar*> variables;
-    std::map<std::string, StructPredefined> predefines;
+    std::unordered_map<std::string, StructPredefined> predefines;
     std::vector<std::string> namespacesNames;
     int loc;
     std::string origname;
@@ -37,7 +37,7 @@ public:
     NodeFunc* with;
     std::vector<NodeFunc*> methods;
     std::string extends;
-    std::map<char, std::map<std::string, NodeFunc*>> operators;
+    std::unordered_map<char, std::unordered_map<std::string, NodeFunc*>> operators;
     std::vector<Node*> oldElements;
     std::vector<std::string> templateNames;
     std::vector<DeclarMod> mods;

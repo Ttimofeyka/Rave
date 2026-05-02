@@ -37,7 +37,7 @@ bool hasIdenticallyArgs(const std::vector<Type*>& one, const std::vector<FuncArg
                 auto& operators = AST::structTable[name]->operators;
                 if (operators.find(TokType::Equ) != operators.end()) {
                     Type* ty = operators[TokType::Equ].begin()->second->args[1].type;
-                    if ((isBytePointer(ty) && isBytePointer(t1)) || ty->toString() == t1->toString()) continue;
+                    if ((isBytePointer(ty) && isBytePointer(t1)) || Types::typesEqual(ty, t1)) continue;
                 }
             }
         }
@@ -49,7 +49,7 @@ bool hasIdenticallyArgs(const std::vector<Type*>& one, const std::vector<FuncArg
             continue;
         }
 
-        if (t1 == nullptr || t2 == nullptr || t1->toString() != t2->toString()) {
+        if (t1 == nullptr || t2 == nullptr || !Types::typesEqual(t1, t2)) {
             if (t1 != nullptr && t2 != nullptr) {
                 t1 = Types::stripConst(t1);
                 t2 = Types::stripConst(t2);

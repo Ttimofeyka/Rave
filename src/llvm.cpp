@@ -33,7 +33,7 @@ bool LLVM::isLoad(LLVMValueRef operation) {
 void LLVM::undoLoad(RaveValue& value) {
     LLVMValueRef origArg = LLVMGetArgOperand(value.value, 0);
     value.value = origArg;
-    value.type = new TypePointer(value.type);
+    value.type = Types::getPointerType(value.type);
 }
 
 // Wrapper for the LLVMBuildCall2 function using RaveValue.
@@ -99,7 +99,7 @@ RaveValue LLVM::cInboundsGep(RaveValue ptr, LLVMValueRef* indices, unsigned int 
 
 // Wrapper for the LLVMBuildGEP2 function using RaveValue.
 RaveValue LLVM::gep(RaveValue ptr, LLVMValueRef* indices, unsigned int indicesCount, const char* name) {
-    return {LLVMBuildGEP2(generator->builder, generator->genType(ptr.type->getElType(), -1), ptr.value, indices, indicesCount, name), new TypePointer(ptr.type->getElType())};
+    return {LLVMBuildGEP2(generator->builder, generator->genType(ptr.type->getElType(), -1), ptr.value, indices, indicesCount, name), Types::getPointerType(ptr.type->getElType())};
 }
 
 // Wrapper for the LLVMBuildStructGEP2 function using RaveValue.
@@ -109,7 +109,7 @@ RaveValue LLVM::structGep(RaveValue ptr, unsigned int idx, const char* name) {
     return {LLVMBuildStructGEP2(
         generator->builder, generator->genType(ts, -1),
         ptr.value, idx, name
-    ), new TypePointer(AST::structTable[ts->name]->variables[idx]->getType())};
+    ), Types::getPointerType(AST::structTable[ts->name]->variables[idx]->getType())};
 }
 
 // Wrapper for the LLVMBuildAlloca function using RaveValue. Builds alloca at the first basic block for saving stack memory (C behaviour).
@@ -117,12 +117,12 @@ RaveValue LLVM::alloc(Type* type, const char* name) {
     LLVMPositionBuilder(generator->builder, LLVMGetFirstBasicBlock(generator->functions[currScope->funcName].value), LLVMGetFirstInstruction(LLVMGetFirstBasicBlock(generator->functions[currScope->funcName].value)));
     LLVMValueRef value = LLVMBuildAlloca(generator->builder, generator->genType(type, -1), name);
     LLVMPositionBuilderAtEnd(generator->builder, generator->currBB);
-    return {value, new TypePointer(type)};
+    return {value, Types::getPointerType(type)};
 }
 
 // Wrapper for the LLVMBuildArrayAlloca function using RaveValue.
 RaveValue LLVM::alloc(RaveValue size, const char* name) {
-    return {LLVMBuildArrayAlloca(generator->builder, LLVMInt8TypeInContext(generator->context), size.value, name), new TypePointer(basicTypes[BasicType::Char])};
+    return {LLVMBuildArrayAlloca(generator->builder, LLVMInt8TypeInContext(generator->context), size.value, name), Types::getPointerType(basicTypes[BasicType::Char])};
 }
 
 // Enables/disables fast math.
@@ -151,7 +151,7 @@ LLVMValueRef LLVM::makeInt(size_t n, unsigned long long value, bool isUnsigned) 
 RaveValue LLVM::makeCArray(Type* ty, std::vector<RaveValue> values) {
     std::vector<LLVMValueRef> data;
     for (size_t i=0; i<values.size(); i++) data.push_back(values[i].value);
-    return {LLVMConstArray(generator->genType(ty, -1), data.data(), data.size()), new TypeArray(new NodeInt(data.size()), ty)};
+    return {LLVMConstArray(generator->genType(ty, -1), data.data(), data.size()), Types::getArrayType(new NodeInt(data.size()), ty)};
 }
 
 // Wrappers for LLVMAppendBasicBlockInContext
@@ -286,7 +286,7 @@ RaveValue LLVM::compare(RaveValue first, RaveValue second, char op, int loc) {
 
     Type* returnType = basicTypes[BasicType::Bool];
 
-    if (instanceof<TypeVector>(first.type) && instanceof<TypeVector>(second.type)) returnType = new TypeVector(basicTypes[BasicType::Bool], ((TypeVector*)(first.type))->count);
+    if (instanceof<TypeVector>(first.type) && instanceof<TypeVector>(second.type)) returnType = Types::getVectorType(basicTypes[BasicType::Bool], ((TypeVector*)(first.type))->count);
 
     RaveValue value = {nullptr, nullptr};
 
@@ -311,7 +311,7 @@ RaveValue LLVM::compare(RaveValue first, RaveValue second, char op, int loc) {
         }
     }
 
-    if (instanceof<TypeVector>(first.type) && instanceof<TypeVector>(second.type)) LLVM::cast(value, new TypeVector(first.type->getElType(), ((TypeVector*)(first.type))->count), loc);
+    if (instanceof<TypeVector>(first.type) && instanceof<TypeVector>(second.type)) LLVM::cast(value, Types::getVectorType(first.type->getElType(), ((TypeVector*)(first.type))->count), loc);
 
     return value;
 }

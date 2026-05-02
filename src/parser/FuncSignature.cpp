@@ -25,7 +25,7 @@ bool FuncSignature::operator==(const FuncSignature& other) const {
     if (paramTypes.size() != other.paramTypes.size()) return false;
 
     for (size_t i = 0; i < paramTypes.size(); i++) {
-        if (paramTypes[i]->toString() != other.paramTypes[i]->toString()) {
+        if (!Types::typesEqual(paramTypes[i], other.paramTypes[i])) {
             return false;
         }
     }
@@ -38,7 +38,7 @@ bool FuncSignature::operator<(const FuncSignature& other) const {
     if (paramTypes.size() != other.paramTypes.size()) return paramTypes.size() < other.paramTypes.size();
 
     for (size_t i = 0; i < paramTypes.size(); i++) {
-        if (paramTypes[i]->toString() != other.paramTypes[i]->toString()) {
+        if (!Types::typesEqual(paramTypes[i], other.paramTypes[i])) {
             return paramTypes[i]->toString() < other.paramTypes[i]->toString();
         }
     }

@@ -89,8 +89,11 @@ std::string LLVMGen::mangle(std::string name, bool isFunc, bool isMethod) {
 // Helper: Get true struct type by resolving template replacements
 Type* getTrueStructType(TypeStruct* ts) {
     Type* t = ts->copy();
-    while (generator->toReplace.find(t->toString()) != generator->toReplace.end())
-        t = generator->toReplace[t->toString()];
+    while (true) {
+        auto it = generator->toReplace.find(t->toString());
+        if (it == generator->toReplace.end()) break;
+        t = it->second;
+    }
     return t;
 }
 

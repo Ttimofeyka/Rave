@@ -177,8 +177,16 @@ void TypeStruct::updateByTypes() {
 int TypeStruct::getSize() {
     Type* t = this;
 
-    while (generator->toReplace.find(t->toString()) != generator->toReplace.end()) t = generator->toReplace[t->toString()];
-    while (AST::aliasTypes.find(t->toString()) != AST::aliasTypes.end()) t = AST::aliasTypes[t->toString()];
+    while (true) {
+        auto it = generator->toReplace.find(t->toString());
+        if (it == generator->toReplace.end()) break;
+        t = it->second;
+    }
+    while (true) {
+        auto it = AST::aliasTypes.find(t->toString());
+        if (it == AST::aliasTypes.end()) break;
+        t = it->second;
+    }
 
     if (instanceof<TypeStruct>(t)) {
         TypeStruct* ts = (TypeStruct*)t;
@@ -203,7 +211,11 @@ int TypeStruct::getSize() {
 bool TypeStruct::isSimple() {
     Type* t = this;
 
-    while (AST::aliasTypes.find(t->toString()) != AST::aliasTypes.end()) t = AST::aliasTypes[t->toString()];
+    while (true) {
+        auto it = AST::aliasTypes.find(t->toString());
+        if (it == AST::aliasTypes.end()) break;
+        t = it->second;
+    }
 
     Types::replaceTemplates(&t);
 
@@ -229,8 +241,16 @@ bool TypeStruct::isSimple() {
 int TypeStruct::getElCount() {
     Type* t = this;
 
-    while (generator->toReplace.find(t->toString()) != generator->toReplace.end()) t = generator->toReplace[t->toString()];
-    while (AST::aliasTypes.find(t->toString()) != AST::aliasTypes.end()) t = AST::aliasTypes[t->toString()];
+    while (true) {
+        auto it = generator->toReplace.find(t->toString());
+        if (it == generator->toReplace.end()) break;
+        t = it->second;
+    }
+    while (true) {
+        auto it = AST::aliasTypes.find(t->toString());
+        if (it == AST::aliasTypes.end()) break;
+        t = it->second;
+    }
 
     if (instanceof<TypeStruct>(t)) {
         TypeStruct* ts = (TypeStruct*)t;
@@ -589,4 +609,57 @@ Type* Types::stripQualifiers(Type* type) {
         type = type->getElType();
     }
     return type;
+}
+
+// Type flyweight caches
+static std::unordered_map<std::string, TypePointer*> pointerPool;
+static std::unordered_map<std::string, TypeVector*> vectorPool;
+static std::unordered_map<std::string, TypeArray*> arrayPool;
+static std::unordered_map<std::string, TypeConst*> constPool;
+
+TypePointer* Types::getPointerType(Type* instance) {
+    std::string key = instance->toString() + "*";
+    auto it = pointerPool.find(key);
+    if (it != pointerPool.end()) return it->second;
+    TypePointer* p = new TypePointer(instance);
+    pointerPool[key] = p;
+    return p;
+}
+
+TypeVector* Types::getVectorType(Type* instance, int count) {
+    std::string key = instance->toString() + std::to_string(count);
+    auto it = vectorPool.find(key);
+    if (it != vectorPool.end()) return it->second;
+    TypeVector* v = new TypeVector(instance, count);
+    vectorPool[key] = v;
+    return v;
+}
+
+TypeArray* Types::getArrayType(Node* count, Type* element) {
+    std::string key = element->toString() + "[" + count->getType()->toString() + "]";
+    auto it = arrayPool.find(key);
+    if (it != arrayPool.end()) return it->second;
+    TypeArray* a = new TypeArray(count, element);
+    arrayPool[key] = a;
+    return a;
+}
+
+TypeConst* Types::getConstType(Type* instance) {
+    std::string key = "const " + instance->toString();
+    auto it = constPool.find(key);
+    if (it != constPool.end()) return it->second;
+    TypeConst* c = new TypeConst(instance);
+    constPool[key] = c;
+    return c;
+}
+
+void Types::clearTypePools() {
+    for (auto& p : pointerPool) delete p.second;
+    pointerPool.clear();
+    for (auto& p : vectorPool) delete p.second;
+    vectorPool.clear();
+    for (auto& p : arrayPool) delete p.second;
+    arrayPool.clear();
+    for (auto& p : constPool) delete p.second;
+    constPool.clear();
 }

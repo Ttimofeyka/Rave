@@ -76,7 +76,7 @@ namespace {
 
             if (auto overloadResult = handleOperatorOverload(first, second, vFirst, vSecond, nvar->type); overloadResult.value) return overloadResult;
 
-            if (vSecond.type && vSecond.type->toString() == vFirst.type->toString()) vSecond = LLVM::load(vSecond, "Binary_NodeIden_load", loc);
+            if (vSecond.type && Types::typesEqual(vSecond.type, vFirst.type)) vSecond = LLVM::load(vSecond, "Binary_NodeIden_load", loc);
 
             if (instanceof<TypeArray>(vFirst.type->getElType()) && instanceof<TypePointer>(vSecond.type)) 
                 generator->error("cannot store a value of type \033[1m" + vSecond.type->toString() + "\033[22m into a variable of type \033[1m" + vFirst.type->getElType()->toString() + "\033[22m!", loc);
@@ -321,7 +321,7 @@ RaveValue Binary::operation(char op, Node* first, Node* second, int loc) {
 
     if (op == TokType::In || op == TokType::NeIn) return handleIn(first, second, vFirst, vSecond, op, loc);
 
-    if (vFirst.type->toString() != vSecond.type->toString()) {
+    if (!Types::typesEqual(vFirst.type, vSecond.type)) {
         if (!instanceof<TypeBasic>(vFirst.type) || !instanceof<TypeBasic>(vSecond.type)) generator->error("value types \033[1m" + vFirst.type->toString() + "\033[22m and \033[1m" + vSecond.type->toString() + "\033[22m are incompatible!", loc);
     }
 

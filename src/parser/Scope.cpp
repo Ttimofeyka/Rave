@@ -14,15 +14,15 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../include/parser/nodes/NodeFunc.hpp"
 #include "../include/debug.hpp"
 
-Scope::Scope(std::string funcName, std::map<std::string, int> args, std::map<std::string, NodeVar*> argVars) {
+Scope::Scope(std::string funcName, std::unordered_map<std::string, int> args, std::unordered_map<std::string, NodeVar*> argVars) {
     DEBUG_LOG(Debug::Category::Scope, "Scope: Creating scope for function " + funcName);
 
     this->funcName = funcName;
-    this->args = std::map<std::string, int>(args);
-    this->argVars = std::map<std::string, NodeVar*>(argVars);
-    this->aliasTable = std::map<std::string, Node*>();
-    this->localScope = std::map<std::string, RaveValue>();
-    this->localVars = std::map<std::string, NodeVar*>();
+    this->args = std::unordered_map<std::string, int>(args);
+    this->argVars = std::unordered_map<std::string, NodeVar*>(argVars);
+    this->aliasTable = std::unordered_map<std::string, Node*>();
+    this->localScope = std::unordered_map<std::string, RaveValue>();
+    this->localVars = std::unordered_map<std::string, NodeVar*>();
 }
 
 void Scope::remove(std::string name) {
@@ -58,23 +58,27 @@ RaveValue Scope::get(std::string name, int loc) {
     RaveValue value = {nullptr, nullptr};
 
     // Check various scopes in order of priority
-    if (AST::aliasTable.find(name) != AST::aliasTable.end())
-        value = AST::aliasTable[name]->generate();
-    else if (generator->toReplaceValues.find(name) != generator->toReplaceValues.end())
-        value = generator->toReplaceValues[name]->generate();
-    else if (this->aliasTable.find(name) != this->aliasTable.end())
-        value = this->aliasTable[name]->generate();
-    else if (localScope.find(name) != localScope.end())
-        value = localScope[name];
-    else if (generator->globals.find(name) != generator->globals.end())
-        value = generator->globals[name];
-    else if (generator->functions.find(this->funcName) != generator->functions.end()) {
-        if (this->args.find(name) == this->args.end()) {
-            if (generator->functions.find(name) != generator->functions.end())
-                generator->error(name, loc);
+    auto itNode = AST::aliasTable.find(name);
+    if (itNode != AST::aliasTable.end())
+        value = itNode->second->generate();
+    else if ((itNode = generator->toReplaceValues.find(name)) != generator->toReplaceValues.end())
+        value = itNode->second->generate();
+    else if ((itNode = this->aliasTable.find(name)) != this->aliasTable.end())
+        value = itNode->second->generate();
+    else {
+        auto itVal = localScope.find(name);
+        if (itVal != localScope.end())
+            value = itVal->second;
+        else if ((itVal = generator->globals.find(name)) != generator->globals.end())
+            value = itVal->second;
+        else if (generator->functions.find(this->funcName) != generator->functions.end()) {
+            if (this->args.find(name) == this->args.end()) {
+                if (generator->functions.find(name) != generator->functions.end())
+                    generator->error(name, loc);
+            }
+            else return {LLVMGetParam(generator->functions[this->funcName].value, this->args[name]),
+                AST::funcTable[this->funcName]->getArgType(name)};
         }
-        else return {LLVMGetParam(generator->functions[this->funcName].value, this->args[name]),
-            AST::funcTable[this->funcName]->getArgType(name)};
     }
 
     // Check if it's a member of "this" struct
@@ -101,16 +105,19 @@ RaveValue Scope::get(std::string name, int loc) {
 RaveValue Scope::getWithoutLoad(std::string name, int loc) {
     DEBUG_LOG(Debug::Category::Scope, "Scope::getWithoutLoad: Looking up " + name);
 
-    if (generator->toReplaceValues.find(name) != generator->toReplaceValues.end())
-        return generator->toReplaceValues[name]->generate();
-    if (AST::aliasTable.find(name) != AST::aliasTable.end())
-        return AST::aliasTable[name]->generate();
-    if (this->aliasTable.find(name) != this->aliasTable.end())
-        return this->aliasTable[name]->generate();
-    if (this->localScope.find(name) != this->localScope.end())
-        return this->localScope[name];
-    if (generator->globals.find(name) != generator->globals.end())
-        return generator->globals[name];
+    auto itNode = generator->toReplaceValues.find(name);
+    if (itNode != generator->toReplaceValues.end())
+        return itNode->second->generate();
+    if ((itNode = AST::aliasTable.find(name)) != AST::aliasTable.end())
+        return itNode->second->generate();
+    if ((itNode = this->aliasTable.find(name)) != this->aliasTable.end())
+        return itNode->second->generate();
+
+    auto itVal = this->localScope.find(name);
+    if (itVal != this->localScope.end())
+        return itVal->second;
+    if ((itVal = generator->globals.find(name)) != generator->globals.end())
+        return itVal->second;
     if (hasAtThis(name)) {
         TypeStruct* ts = getThisStructType(loc);
         if (ts != nullptr) {
@@ -150,17 +157,21 @@ bool Scope::locatedAtThis(std::string name) {
 NodeVar* Scope::getVar(std::string name, int loc) {
     DEBUG_LOG(Debug::Category::Scope, "Scope::getVar: Looking up variable " + name);
 
-    if (this->localVars.find(name) != this->localVars.end())
-        return this->localVars[name];
-    if (AST::varTable.find(name) != AST::varTable.end())
-        return AST::varTable[name];
-    if (this->argVars.find(name) != this->argVars.end()) {
-        this->argVars[name]->isUsed = true;
-        return this->argVars[name];
+    auto it = this->localVars.find(name);
+    if (it != this->localVars.end())
+        return it->second;
+    auto it2 = AST::varTable.find(name);
+    if (it2 != AST::varTable.end())
+        return it2->second;
+    auto it3 = this->argVars.find(name);
+    if (it3 != this->argVars.end()) {
+        it3->second->isUsed = true;
+        return it3->second;
     }
-    if (this->aliasTable.find(name) != this->aliasTable.end())
-        return (new NodeVar(name, this->aliasTable[name]->copy(), false, false, false, {}, loc,
-            this->aliasTable[name]->getType(), false, false, false));
+    auto it4 = this->aliasTable.find(name);
+    if (it4 != this->aliasTable.end())
+        return (new NodeVar(name, it4->second->copy(), false, false, false, {}, loc,
+            it4->second->getType(), false, false, false));
 
     // Check if it's a member of "this" struct
     TypeStruct* ts = getThisStructType(loc);
@@ -174,12 +185,15 @@ NodeVar* Scope::getVar(std::string name, int loc) {
 }
 
 void Scope::hasChanged(std::string name) {
-    if (this->localVars.find(name) != this->localVars.end())
-        ((NodeVar*)this->localVars[name])->isChanged = true;
-    if (AST::varTable.find(name) != AST::varTable.end())
-        AST::varTable[name]->isChanged = true;
-    if (this->argVars.find(name) != this->argVars.end())
-        ((NodeVar*)this->argVars[name])->isChanged = true;
+    auto it = this->localVars.find(name);
+    if (it != this->localVars.end())
+        ((NodeVar*)it->second)->isChanged = true;
+    auto it2 = AST::varTable.find(name);
+    if (it2 != AST::varTable.end())
+        it2->second->isChanged = true;
+    auto it3 = this->argVars.find(name);
+    if (it3 != this->argVars.end())
+        ((NodeVar*)it3->second)->isChanged = true;
 }
 
 // Helper function to copy scope

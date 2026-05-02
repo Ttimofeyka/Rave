@@ -105,7 +105,7 @@ std::vector<RaveValue> Call::genParameters(std::vector<Node*>& arguments, std::v
                 auto& operators = AST::structTable[name]->operators;
                 if (operators.find(TokType::Equ) != operators.end()) {
                     Type* ty = operators[TokType::Equ].begin()->second->args[1].type;
-                    if ((isBytePointer(ty) && isBytePointer(params[i].type)) || ty->toString() == params[i].type->toString()) {
+                    if ((isBytePointer(ty) && isBytePointer(params[i].type)) || Types::typesEqual(ty, params[i].type)) {
                         RaveValue tempVariable = LLVM::alloc(fas[i].type, "getParameters_implicit_op_tempvar");
                         Predefines::handle(fas[i].type, new NodeDone(tempVariable), -1);
                         checkAndGenerate(operators[TokType::Equ].begin()->second->name);
@@ -119,7 +119,7 @@ std::vector<RaveValue> Call::genParameters(std::vector<Node*>& arguments, std::v
         if (instanceof<TypePointer>(fas[i].type)) {
             if (instanceof<TypeStruct>(fas[i].type->getElType()) && !instanceof<TypePointer>(params[i].type))
                 LLVM::makeAsPointer(params[i]);
-            else if (isBytePointer(fas[i].type) && fas[i].type->toString() != params[i].type->toString())
+            else if (isBytePointer(fas[i].type) && !Types::typesEqual(fas[i].type, params[i].type))
                 LLVM::cast(params[i], new TypePointer(basicTypes[BasicType::Char]), settings.loc);
         }
         else {
@@ -220,7 +220,7 @@ RaveValue Call::callNamedFunction(int loc, const std::string& name, std::vector<
                 targetFunc = nullptr;
             } else {
                 for (size_t i = 0; i < types.size(); i++) {
-                    if (targetFunc->args[i].type->toString() != types[i]->toString()) {
+                    if (!Types::typesEqual(targetFunc->args[i].type, types[i])) {
                         targetFunc = nullptr;
                         break;
                     }
@@ -238,7 +238,7 @@ RaveValue Call::callNamedFunction(int loc, const std::string& name, std::vector<
                 targetFunc = nullptr;
             } else {
                 for (size_t i = 0; i < types.size(); i++) {
-                    if (targetFunc->args[i].type->toString() != types[i]->toString()) {
+                    if (!Types::typesEqual(targetFunc->args[i].type, types[i])) {
                         targetFunc = nullptr;
                         break;
                     }

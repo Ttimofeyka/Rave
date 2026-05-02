@@ -7,7 +7,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #pragma once
 
 #include <string>
-#include <map>
+#include <unordered_map>
 #include <llvm-c/Core.h>
 #include <llvm-c/DebugInfo.h>
 
@@ -51,19 +51,29 @@ struct FuncArgSet {
     std::vector<Type*> internalTypes;
 };
 
+namespace std {
+    template<> struct hash<std::pair<std::string, std::string>> {
+        size_t operator()(const std::pair<std::string, std::string>& p) const {
+            size_t h1 = hash<std::string>{}(p.first);
+            size_t h2 = hash<std::string>{}(p.second);
+            return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
+        }
+    };
+}
+
 namespace AST {
-    extern std::map<std::string, Type*> aliasTypes;
-    extern std::map<std::string, Node*> aliasTable;
-    extern std::map<std::string, NodeVar*> varTable;
-    extern std::map<std::string, NodeFunc*> funcTable;
-    extern std::map<std::string, std::vector<NodeFunc*>> funcVersionsTable;
-    extern std::map<std::string, NodeStruct*> structTable;
-    extern std::map<std::pair<std::string, std::string>, StructMember> structMembersTable;
-    extern std::map<std::string, NodeLambda*> lambdaTable;
-    extern std::map<std::pair<std::string, std::string>, NodeFunc*> methodTable;
+    extern std::unordered_map<std::string, Type*> aliasTypes;
+    extern std::unordered_map<std::string, Node*> aliasTable;
+    extern std::unordered_map<std::string, NodeVar*> varTable;
+    extern std::unordered_map<std::string, NodeFunc*> funcTable;
+    extern std::unordered_map<std::string, std::vector<NodeFunc*>> funcVersionsTable;
+    extern std::unordered_map<std::string, NodeStruct*> structTable;
+    extern std::unordered_map<std::pair<std::string, std::string>, StructMember> structMembersTable;
+    extern std::unordered_map<std::string, NodeLambda*> lambdaTable;
+    extern std::unordered_map<std::pair<std::string, std::string>, NodeFunc*> methodTable;
     extern std::vector<std::string> importedFiles;
     extern std::vector<std::string> addToImport;
-    extern std::map<std::string, std::vector<Node*>> parsed;
+    extern std::unordered_map<std::string, std::vector<Node*>> parsed;
     extern std::string mainFile;
     extern std::string currentFile;
     extern bool debugMode;
@@ -110,13 +120,13 @@ public:
     genSettings settings;
     nlohmann::json options;
 
-    std::map<std::string, RaveValue> globals;
-    std::map<std::string, RaveValue> functions;
-    std::map<std::string, LLVMTypeRef> structures;
-    std::map<int32_t, Loop> activeLoops;
+    std::unordered_map<std::string, RaveValue> globals;
+    std::unordered_map<std::string, RaveValue> functions;
+    std::unordered_map<std::string, LLVMTypeRef> structures;
+    std::unordered_map<int32_t, Loop> activeLoops;
 
-    std::map<std::string, Type*> toReplace;
-    std::map<std::string, Node*> toReplaceValues;
+    std::unordered_map<std::string, Type*> toReplace;
+    std::unordered_map<std::string, Node*> toReplaceValues;
     std::unordered_map<std::string, LLVMTypeRef> typeCache;
 
     LLVMBasicBlockRef currBB;
@@ -152,18 +162,18 @@ public:
 
 class Scope {
 public:
-    std::map<std::string, RaveValue> localScope;
-    std::map<std::string, int> args;
+    std::unordered_map<std::string, RaveValue> localScope;
+    std::unordered_map<std::string, int> args;
     std::string funcName;
     LLVMBasicBlockRef blockExit;
     bool funcHasRet = false;
-    std::map<std::string, NodeVar*> localVars;
-    std::map<std::string, NodeVar*> argVars;
-    std::map<std::string, Node*> aliasTable;
+    std::unordered_map<std::string, NodeVar*> localVars;
+    std::unordered_map<std::string, NodeVar*> argVars;
+    std::unordered_map<std::string, Node*> aliasTable;
     LLVMBasicBlockRef fnEnd;
     std::vector<Node*> defers;
 
-    Scope(std::string funcName, std::map<std::string, int> args, std::map<std::string, NodeVar*> argVars);
+    Scope(std::string funcName, std::unordered_map<std::string, int> args, std::unordered_map<std::string, NodeVar*> argVars);
 
     RaveValue get(std::string name, int loc = -1);
     RaveValue getWithoutLoad(std::string name, int loc = -1);

@@ -19,17 +19,17 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #endif
 
 // AST namespace globals
-std::map<std::string, Type*> AST::aliasTypes;
-std::map<std::string, Node*> AST::aliasTable;
-std::map<std::string, NodeVar*> AST::varTable;
-std::map<std::string, NodeFunc*> AST::funcTable;
-std::map<std::string, std::vector<NodeFunc*>> AST::funcVersionsTable;
-std::map<std::string, NodeLambda*> AST::lambdaTable;
-std::map<std::string, NodeStruct*> AST::structTable;
-std::map<std::pair<std::string, std::string>, NodeFunc*> AST::methodTable;
-std::map<std::pair<std::string, std::string>, StructMember> AST::structMembersTable;
+std::unordered_map<std::string, Type*> AST::aliasTypes;
+std::unordered_map<std::string, Node*> AST::aliasTable;
+std::unordered_map<std::string, NodeVar*> AST::varTable;
+std::unordered_map<std::string, NodeFunc*> AST::funcTable;
+std::unordered_map<std::string, std::vector<NodeFunc*>> AST::funcVersionsTable;
+std::unordered_map<std::string, NodeLambda*> AST::lambdaTable;
+std::unordered_map<std::string, NodeStruct*> AST::structTable;
+std::unordered_map<std::pair<std::string, std::string>, NodeFunc*> AST::methodTable;
+std::unordered_map<std::pair<std::string, std::string>, StructMember> AST::structMembersTable;
 std::vector<std::string> AST::importedFiles;
-std::map<std::string, std::vector<Node*>> AST::parsed;
+std::unordered_map<std::string, std::vector<Node*>> AST::parsed;
 std::string AST::mainFile;
 std::string AST::currentFile;
 std::vector<std::string> AST::addToImport;

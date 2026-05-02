@@ -29,7 +29,7 @@ bool areTypesCompatible(Type* param, Type* arg, bool isExplicit) {
             auto& operators = AST::structTable[name]->operators;
             if (operators.find(TokType::Equ) != operators.end()) {
                 Type* ty = operators[TokType::Equ].begin()->second->args[1].type;
-                if ((::isBytePointer(ty) && ::isBytePointer(t1)) || ty->toString() == t1->toString()) {
+                        if ((::isBytePointer(ty) && ::isBytePointer(t1)) || Types::typesEqual(ty, t1)) {
                     return true;
                 }
             }
@@ -47,7 +47,7 @@ bool areTypesCompatible(Type* param, Type* arg, bool isExplicit) {
     }
 
     // Handle struct/pointer conversion
-    if (t1->toString() != t2->toString()) {
+    if (!Types::typesEqual(t1, t2)) {
         if (instanceof<TypeStruct>(t1) && instanceof<TypePointer>(t2)) return true;
         if (instanceof<TypeStruct>(t2) && instanceof<TypePointer>(t1)) return true;
         return false;
@@ -73,7 +73,7 @@ bool doArgumentsMatch(const std::vector<FuncArgSet>& params,
                     auto& operators = AST::structTable[name]->operators;
                     if (operators.find(TokType::Equ) != operators.end()) {
                         Type* ty = operators[TokType::Equ].begin()->second->args[1].type;
-                        if ((::isBytePointer(ty) && ::isBytePointer(t1)) || ty->toString() == t1->toString()) {
+                if ((::isBytePointer(ty) && ::isBytePointer(t1)) || Types::typesEqual(ty, t1)) {
                             continue;
                         }
                     }
@@ -99,7 +99,7 @@ int calculateMatchScore(const std::vector<FuncArgSet>& params,
         if (t1 == nullptr || t2 == nullptr) return -1;
 
         // Exact match gives highest score
-        if (t1->toString() == t2->toString()) {
+        if (Types::typesEqual(t1, t2)) {
             score += 10;
             continue;
         }
@@ -108,7 +108,7 @@ int calculateMatchScore(const std::vector<FuncArgSet>& params,
         Type* tc1 = Types::stripConst(t1);
         Type* tc2 = Types::stripConst(t2);
 
-        if (tc1->toString() == tc2->toString()) {
+        if (Types::typesEqual(tc1, tc2)) {
             score += 8;
             continue;
         }

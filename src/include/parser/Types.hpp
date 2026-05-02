@@ -8,6 +8,7 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <string>
 #include <vector>
+#include <map>
 #include "../../include/parser/ast.hpp"
 #include "../../include/parser/nodes/Node.hpp"
 #include "../../include/parser/nodes/NodeBlock.hpp"
@@ -298,4 +299,18 @@ namespace Types {
                !instanceof<TypeBasic>(type) &&
                !instanceof<TypeVoid>(type);
     }
+
+    // Fast type equality: pointer check first, then structural comparison
+    inline bool typesEqual(Type* a, Type* b) {
+        if (a == b) return true;
+        if (a == nullptr || b == nullptr) return false;
+        return a->toString() == b->toString();
+    }
+
+    // Type flyweight/interning for common compound types
+    TypePointer* getPointerType(Type* instance);
+    TypeVector* getVectorType(Type* instance, int count);
+    TypeArray* getArrayType(Node* count, Type* element);
+    TypeConst* getConstType(Type* instance);
+    void clearTypePools();
 }

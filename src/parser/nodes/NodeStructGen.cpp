@@ -114,12 +114,12 @@ LLVMTypeRef NodeStruct::genWithTemplate(std::string sTypes, std::vector<Type*> t
     if (templateNames.size() == 0) return nullptr;
 
     // Save current state
-    std::map<int32_t, Loop> activeLoops = std::map<int32_t, Loop>(generator->activeLoops);
+    std::unordered_map<int32_t, Loop> activeLoops = std::unordered_map<int32_t, Loop>(generator->activeLoops);
     LLVMBuilderRef builder = generator->builder;
     LLVMBasicBlockRef currBB = generator->currBB;
     Scope* _scope = currScope;
-    std::map<std::string, Type*> toReplace = std::map<std::string, Type*>(generator->toReplace);
-    std::map<std::string, Node*> toReplaceValues = std::map<std::string, Node*>(generator->toReplaceValues);
+    std::unordered_map<std::string, Type*> toReplace = std::unordered_map<std::string, Type*>(generator->toReplace);
+    std::unordered_map<std::string, Node*> toReplaceValues = std::unordered_map<std::string, Node*>(generator->toReplaceValues);
 
     std::string _fn = "<";
 
@@ -159,12 +159,12 @@ LLVMTypeRef NodeStruct::genWithTemplate(std::string sTypes, std::vector<Type*> t
     _struct->generate();
 
     // Restore state
-    generator->activeLoops = std::map<int32_t, Loop>(activeLoops);
+    generator->activeLoops = std::unordered_map<int32_t, Loop>(activeLoops);
     generator->builder = builder;
     generator->currBB = currBB;
     currScope = _scope;
-    generator->toReplace = std::map<std::string, Type*>(toReplace);
-    generator->toReplaceValues = std::map<std::string, Node*>(toReplaceValues);
+    generator->toReplace = std::unordered_map<std::string, Type*>(toReplace);
+    generator->toReplaceValues = std::unordered_map<std::string, Node*>(toReplaceValues);
 
     return generator->structures[_struct->name];
 }

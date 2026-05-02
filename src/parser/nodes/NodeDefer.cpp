@@ -28,8 +28,9 @@ void Defer::emitAll() {
     // Emit block-scope defers from innermost to outermost.
     // Use copies because the normal execution path may also need to emit them.
     std::vector<Node*> copies;
-    for (auto it = generator->activeLoops.rbegin(); it != generator->activeLoops.rend(); ++it) {
-        for (auto dit = it->second.defers.rbegin(); dit != it->second.defers.rend(); ++dit) {
+    for (int i = generator->activeLoops.size() - 1; i >= 0; --i) {
+        auto& loop = generator->activeLoops[i];
+        for (auto dit = loop.defers.rbegin(); dit != loop.defers.rend(); ++dit) {
             Node* copy = (*dit)->copy();
             copies.push_back(copy);
             copy->generate();
@@ -41,14 +42,14 @@ void Defer::emitAll() {
 
 void Defer::make(Node* value, bool isFunctionScope) {
     if (!isFunctionScope && !generator->activeLoops.empty()) {
-        auto loop = generator->activeLoops.rbegin();
-        if (loop->second.isIf) {
+        auto& loop = generator->activeLoops[generator->activeLoops.size() - 1];
+        if (loop.isIf) {
             // For if/else blocks, collect defer for emission at block end
-            loop->second.defers.push_back(value);
+            loop.defers.push_back(value);
             return;
         }
         // For loops (while/for), emit immediately to end block (existing behavior)
-        LLVMBasicBlockRef targetBlock = loop->second.end;
+        LLVMBasicBlockRef targetBlock = loop.end;
         if (targetBlock) {
             LLVMBasicBlockRef oldBB = generator->currBB;
             LLVM::Builder::atEnd(targetBlock);

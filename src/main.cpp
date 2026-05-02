@@ -6,7 +6,6 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <iostream>
 #include <fstream>
-#include <regex>
 #include "./include/lexer/lexer.hpp"
 #include "./include/parser/parser.hpp"
 #include "./include/compiler.hpp"
@@ -136,7 +135,7 @@ int main(int argc, char** argv) {
             auto stdFiles = filesInDirectory(exePath + "std");
             for (size_t i=0; i<stdFiles.size(); i++) {
                 if (stdFiles[i].find(".ll") == std::string::npos && stdFiles[i].find(".rave") != std::string::npos) {
-                    std::string compiledFile = std::regex_replace(exePath + "std/" + stdFiles[i], std::regex("\\.rave"), ".o");
+                    std::string compiledFile = replaceExtension(exePath + "std/" + stdFiles[i], ".rave", ".o");
                     Compiler::compile(exePath + "std/" + stdFiles[i]);
 
                     if (options.emitLLVM) {
@@ -145,7 +144,7 @@ int main(int argc, char** argv) {
                     }
 
                     std::ifstream src(compiledFile, std::ios::binary);
-                    std::ofstream dst(std::regex_replace(compiledFile, std::regex("\\.o"), std::string(".") + Compiler::outType + ".o"), std::ios::binary);
+                    std::ofstream dst(replaceExtension(compiledFile, ".o", std::string(".") + Compiler::outType + ".o"), std::ios::binary);
                     dst << src.rdbuf();
                 }
             }

@@ -337,7 +337,7 @@ RaveValue NodeIndex::generate() {
             if (AST::structTable.find(tstruct->name) != AST::structTable.end()) {
                 auto& operators = AST::structTable[tstruct->name]->operators;
                 if (operators.find('&') != operators.end()) {
-                    std::map<std::string, NodeFunc*> functions = operators['&'];
+                    std::unordered_map<std::string, NodeFunc*> functions = operators['&'];
                     Node* value = nunary;
 
                     return (new NodeCall(loc, new NodeIden(functions.begin()->second->name, loc), {nunary, indexes[0]}))->generate();
