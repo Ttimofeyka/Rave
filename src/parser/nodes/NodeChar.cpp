@@ -6,9 +6,6 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include "../../include/parser/nodes/NodeChar.hpp"
 #include "../../include/utils.hpp"
-#include "../../include/parser/ast.hpp"
-#include "../../include/utf8.h"
-#include <iostream>
 
 NodeChar::NodeChar(std::string value, bool isWide) {
     this->value = value;
@@ -40,5 +37,5 @@ RaveValue NodeChar::generate() {
         }
     }
     if (this->value.size() < 2) return {LLVM::makeInt(isWide ? 32 : 8, value[0], false), isWide ? basicTypes[BasicType::Int] : basicTypes[BasicType::Char]};
-    return {LLVM::makeInt(32, utf8::utf8to32(this->value)[0], false), isWide ? basicTypes[BasicType::Int] : basicTypes[BasicType::Char]};
+    return {LLVM::makeInt(32, utf8ToU32(this->value)[0], false), isWide ? basicTypes[BasicType::Int] : basicTypes[BasicType::Char]};
 }

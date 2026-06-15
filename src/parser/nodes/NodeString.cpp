@@ -7,7 +7,6 @@ with this file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #include "../../include/parser/nodes/NodeString.hpp"
 #include "../../include/utils.hpp"
 #include "../../include/parser/ast.hpp"
-#include "../../include/utf8.h"
 #include "../../include/llvm.hpp"
 
 NodeString::NodeString(std::string value, bool isWide) : value(value), isWide(isWide) {}
@@ -31,7 +30,7 @@ RaveValue NodeString::generate() {
 
     if (!isWide) LLVMSetInitializer(globalStr, LLVMConstStringInContext(generator->context, value.c_str(), value.size(), false));
     else {
-        std::u32string u32Str = utf8::utf8to32(value);
+        std::u32string u32Str = utf8ToU32(value);
         std::vector<LLVMValueRef> values(u32Str.size());
         for (size_t i=0; i<u32Str.size(); i++) values[i] = LLVMConstInt(elemType, u32Str[i], false);
         LLVMSetInitializer(globalStr, LLVMConstArray(elemType, values.data(), values.size()));

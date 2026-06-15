@@ -32,6 +32,30 @@ static std::string namespacesToString(std::vector<std::string>& namespacesNames,
     return ret;
 }
 
+static std::u32string utf8ToU32(const std::string& s) {
+    std::u32string out;
+    out.reserve(s.size());
+    for (size_t i = 0; i < s.size();) {
+        unsigned char c = static_cast<unsigned char>(s[i]);
+        char32_t cp = 0;
+        size_t extra = 0;
+        if ((c & 0x80) == 0) { cp = c; extra = 0; }
+        else if ((c & 0xE0) == 0xC0) { cp = c & 0x1F; extra = 1; }
+        else if ((c & 0xF0) == 0xE0) { cp = c & 0x0F; extra = 2; }
+        else if ((c & 0xF8) == 0xF0) { cp = c & 0x07; extra = 3; }
+        else { cp = 0xFFFD; extra = 0; }
+        for (size_t j = 0; j < extra; ++j) {
+            if (i + 1 + j >= s.size()) { cp = 0xFFFD; break; }
+            unsigned char n = static_cast<unsigned char>(s[i + 1 + j]);
+            if ((n & 0xC0) != 0x80) { cp = 0xFFFD; break; }
+            cp = (cp << 6) | (n & 0x3F);
+        }
+        out.push_back(cp);
+        i += 1 + extra;
+    }
+    return out;
+}
+
 static bool isBasicType(std::string s) {
     return s == "char" || s == "uchar" || s == "short" || s == "ushort" || s == "int" || s == "uint" || s == "long" || s == "ulong"
     || s == "cent" || s == "ucent" || s == "void" || s == "float" || s == "isize" || s == "usize" || s == "double" || s == "real" || s == "half" || s == "bhalf"

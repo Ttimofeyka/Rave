@@ -76,7 +76,7 @@ RaveValue Unary::make(int loc, char type, Node* base) {
 
                 // If it is an array, generate pointer to the first element
                 if (instanceof<TypeArray>(currScope->getVar(id->name, loc)->type)) value = LLVM::gep(currScope->getWithoutLoad(id->name, loc),
-                    std::vector<LLVMValueRef>({LLVMConstInt(LLVMInt32Type(), 0, false), LLVMConstInt(LLVMInt32Type(), 0, false)}).data(),
+                    std::vector<LLVMValueRef>({LLVMConstInt(LLVMInt32TypeInContext(generator->context), 0, false), LLVMConstInt(LLVMInt32TypeInContext(generator->context), 0, false)}).data(),
                     2, "NodeUnary_gep");
                 else value = currScope->getWithoutLoad(id->name, loc);
             }
