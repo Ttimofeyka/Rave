@@ -186,6 +186,43 @@ Node* Call::resolveAlias(const std::string& name) {
     return nullptr;
 }
 
+// Helper: validate that a matched function is a valid call target given argument types
+static void validateTargetFunc(NodeFunc*& targetFunc, const std::vector<Type*>& types) {
+    if (targetFunc == nullptr) return;
+    if (!targetFunc->templateNames.empty() && !targetFunc->isTemplate) {
+        targetFunc = nullptr;
+        return;
+    }
+    if (targetFunc->isCtargsPart) {
+        if (targetFunc->args.size() != types.size()) {
+            targetFunc = nullptr;
+        } else {
+            for (size_t i = 0; i < types.size(); i++) {
+                if (!Types::typesEqual(targetFunc->args[i].type, types[i])) {
+                    targetFunc = nullptr;
+                    break;
+                }
+            }
+        }
+    }
+}
+
+// Helper: find a vararg/cdecl64/win64 function that accepts at least argCount arguments
+static NodeFunc* findVarargTarget(const std::string& name, size_t argCount) {
+    auto overloads = FuncRegistry::instance().findAllOverloads(name);
+    for (auto* func : overloads) {
+        if ((func->isVararg || func->isCdecl64 || func->isWin64) && func->args.size() <= argCount)
+            return func;
+    }
+    auto it = AST::funcTable.find(name);
+    if (it != AST::funcTable.end()) {
+        NodeFunc* func = it->second;
+        if ((func->isVararg || func->isCdecl64 || func->isWin64) && func->args.size() <= argCount)
+            return func;
+    }
+    return nullptr;
+}
+
 // External declaration for callNamedFunction (in CallResolver.cpp)
 RaveValue Call::callNamedFunction(int loc, const std::string& name, std::vector<Node*>& arguments) {
     DEBUG_LOG(Debug::Category::FuncCall, "Calling named function: " + name);
@@ -194,57 +231,18 @@ RaveValue Call::callNamedFunction(int loc, const std::string& name, std::vector<
     std::vector<Type*> types = Call::getTypes(arguments);
 
     // Check for vararg/cdecl64/win64 functions
-    NodeFunc* targetFunc = nullptr;
-    auto overloads = FuncRegistry::instance().findAllOverloads(name);
-    for (auto* func : overloads) {
-        if ((func->isVararg || func->isCdecl64 || func->isWin64) && func->args.size() <= arguments.size()) {
-            targetFunc = func;
-            break;
-        }
-    }
-
-    if (targetFunc == nullptr && AST::funcTable.find(name) != AST::funcTable.end()) {
-        NodeFunc* func = AST::funcTable[name];
-        if ((func->isVararg || func->isCdecl64 || func->isWin64) && func->args.size() <= arguments.size())
-            targetFunc = func;
-    }
+    NodeFunc* targetFunc = findVarargTarget(name, arguments.size());
 
     // Try signature matching
     if (targetFunc == nullptr) {
         FuncSignature sig(name, types);
         targetFunc = FuncRegistry::instance().findBestMatch(sig);
-        if (targetFunc != nullptr && !targetFunc->templateNames.empty() && !targetFunc->isTemplate)
-            targetFunc = nullptr;
-        if (targetFunc != nullptr && targetFunc->isCtargsPart) {
-            if (targetFunc->args.size() != types.size()) {
-                targetFunc = nullptr;
-            } else {
-                for (size_t i = 0; i < types.size(); i++) {
-                    if (!Types::typesEqual(targetFunc->args[i].type, types[i])) {
-                        targetFunc = nullptr;
-                        break;
-                    }
-                }
-            }
-        }
+        validateTargetFunc(targetFunc, types);
     }
 
     if (targetFunc == nullptr) {
         targetFunc = FuncRegistry::instance().findBestMatch(name, types);
-        if (targetFunc != nullptr && !targetFunc->templateNames.empty() && !targetFunc->isTemplate)
-            targetFunc = nullptr;
-        if (targetFunc != nullptr && targetFunc->isCtargsPart) {
-            if (targetFunc->args.size() != types.size()) {
-                targetFunc = nullptr;
-            } else {
-                for (size_t i = 0; i < types.size(); i++) {
-                    if (!Types::typesEqual(targetFunc->args[i].type, types[i])) {
-                        targetFunc = nullptr;
-                        break;
-                    }
-                }
-            }
-        }
+        validateTargetFunc(targetFunc, types);
     }
 
     if (targetFunc == nullptr && AST::funcTable.find(name) != AST::funcTable.end())
